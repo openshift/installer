@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (domain *Domain) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (domain *Domain) Owner() *genruntime.ResourceReference {
+	if domain.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(domain.Spec)
 	return domain.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (domain *Domain) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Domain_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	domain.Status = st
@@ -194,7 +198,7 @@ var _ genruntime.ConvertibleSpec = &Domain_Spec{}
 // ConvertSpecFrom populates our Domain_Spec from the provided source
 func (domain *Domain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == domain {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(domain)
@@ -203,7 +207,7 @@ func (domain *Domain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) er
 // ConvertSpecTo populates the provided destination from our Domain_Spec
 func (domain *Domain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == domain {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(domain)
@@ -235,7 +239,7 @@ var _ genruntime.ConvertibleStatus = &Domain_STATUS{}
 // ConvertStatusFrom populates our Domain_STATUS from the provided source
 func (domain *Domain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == domain {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(domain)
@@ -244,7 +248,7 @@ func (domain *Domain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStat
 // ConvertStatusTo populates the provided destination from our Domain_STATUS
 func (domain *Domain_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == domain {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(domain)

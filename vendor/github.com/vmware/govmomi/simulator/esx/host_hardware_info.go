@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package esx
@@ -187,7 +187,7 @@ var HostHardwareInfo = &types.HostHardwareInfo{
 			},
 		},
 	},
-	SmcPresent: types.NewBool(false),
+	SmcPresent: false,
 	PciDevice: []types.HostPciDevice{
 		{
 			Id:           "0000:00:00.0",

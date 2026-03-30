@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (authentication *ServersAzureADOnlyAuthentication) NewEmptyStatus() genrunt
 
 // Owner returns the ResourceReference of the owner
 func (authentication *ServersAzureADOnlyAuthentication) Owner() *genruntime.ResourceReference {
+	if authentication.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(authentication.Spec)
 	return authentication.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (authentication *ServersAzureADOnlyAuthentication) SetStatus(status genrunt
 	var st ServersAzureADOnlyAuthentication_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	authentication.Status = st
@@ -180,7 +184,7 @@ var _ genruntime.ConvertibleSpec = &ServersAzureADOnlyAuthentication_Spec{}
 // ConvertSpecFrom populates our ServersAzureADOnlyAuthentication_Spec from the provided source
 func (authentication *ServersAzureADOnlyAuthentication_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == authentication {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(authentication)
@@ -189,7 +193,7 @@ func (authentication *ServersAzureADOnlyAuthentication_Spec) ConvertSpecFrom(sou
 // ConvertSpecTo populates the provided destination from our ServersAzureADOnlyAuthentication_Spec
 func (authentication *ServersAzureADOnlyAuthentication_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == authentication {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(authentication)
@@ -210,7 +214,7 @@ var _ genruntime.ConvertibleStatus = &ServersAzureADOnlyAuthentication_STATUS{}
 // ConvertStatusFrom populates our ServersAzureADOnlyAuthentication_STATUS from the provided source
 func (authentication *ServersAzureADOnlyAuthentication_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == authentication {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(authentication)
@@ -219,7 +223,7 @@ func (authentication *ServersAzureADOnlyAuthentication_STATUS) ConvertStatusFrom
 // ConvertStatusTo populates the provided destination from our ServersAzureADOnlyAuthentication_STATUS
 func (authentication *ServersAzureADOnlyAuthentication_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == authentication {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(authentication)

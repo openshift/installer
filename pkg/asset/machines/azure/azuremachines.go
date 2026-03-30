@@ -26,16 +26,17 @@ const (
 
 // MachineInput defines the inputs needed to generate a machine asset.
 type MachineInput struct {
-	Subnet          string
-	Role            string
-	UserDataSecret  string
-	HyperVGen       string
-	StorageSuffix   string
-	UseImageGallery bool
-	Private         bool
-	UserTags        map[string]string
-	Platform        *aztypes.Platform
-	Pool            *types.MachinePool
+	Subnet         string
+	Role           string
+	UserDataSecret string
+	HyperVGen      string
+	StorageSuffix  string
+	Environment    aztypes.CloudEnvironment
+	Private        bool
+	UserTags       map[string]string
+	Platform       *aztypes.Platform
+	Pool           *types.MachinePool
+	RHCOS          string
 }
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
@@ -59,38 +60,8 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	if err != nil {
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
-
-	var image *capz.Image
-	osImage := mpool.OSImage
-	galleryName := strings.ReplaceAll(clusterID, "-", "_")
-
-	switch {
-	case osImage.Publisher != "":
-		image = &capz.Image{
-			Marketplace: &capz.AzureMarketplaceImage{
-				ImagePlan: capz.ImagePlan{
-					Publisher: osImage.Publisher,
-					Offer:     osImage.Offer,
-					SKU:       osImage.SKU,
-				},
-				Version:         osImage.Version,
-				ThirdPartyImage: osImage.Plan != aztypes.ImageNoPurchasePlan,
-			},
-		}
-	case in.UseImageGallery:
-		// image gallery names cannot have dashes
-		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
-		if in.HyperVGen == "V2" && in.Platform.CloudName != aztypes.StackCloud {
-			imageID += genV2Suffix
-		}
-		image = &capz.Image{ID: &imageID}
-	default:
-		// AzureStack is the only use for managed images & supports only Gen1 VMs:
-		// https://learn.microsoft.com/en-us/azure-stack/user/azure-stack-vm-considerations?view=azs-2501&tabs=az1%2Caz2#vm-differences
-		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", subscriptionID, resourceGroup, clusterID)
-		image = &capz.Image{ID: &imageID}
-	}
-
+	confidentialVM := mpool.Settings != nil && mpool.Settings.SecurityType != ""
+	image := capzImage(mpool.OSImage, in.Environment, confidentialVM, in.HyperVGen, resourceGroup, subscriptionID, clusterID, in.RHCOS)
 	// Set up OSDisk
 	osDisk := capz.OSDisk{
 		OSType:     "Linux",
@@ -233,13 +204,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		}
 
 		if in.Platform.CloudName == aztypes.StackCloud {
-			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
-				Boot: &capz.BootDiagnostics{
-					StorageAccountType: capz.UserManagedDiagnosticsStorage,
-					UserManaged: &capz.UserManagedBootDiagnostics{
-						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+			// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
+			if mpool.BootDiagnostics == nil {
+				azureMachine.Spec.Diagnostics = &capz.Diagnostics{
+					Boot: &capz.BootDiagnostics{
+						StorageAccountType: capz.UserManagedDiagnosticsStorage,
+						UserManaged: &capz.UserManagedBootDiagnostics{
+							StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+						},
 					},
-				},
+				}
 			}
 		}
 
@@ -307,13 +281,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	}
 
 	if in.Platform.CloudName == aztypes.StackCloud {
-		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
-			Boot: &capz.BootDiagnostics{
-				StorageAccountType: capz.UserManagedDiagnosticsStorage,
-				UserManaged: &capz.UserManagedBootDiagnostics{
-					StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+		// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
+		if mpool.BootDiagnostics == nil {
+			bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
+				Boot: &capz.BootDiagnostics{
+					StorageAccountType: capz.UserManagedDiagnosticsStorage,
+					UserManaged: &capz.UserManagedBootDiagnostics{
+						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+					},
 				},
-			},
+			}
 		}
 	}
 
@@ -382,4 +359,51 @@ func bootDiagStorageURIBuilder(diag *aztypes.BootDiagnostics, storageEndpointSuf
 		return fmt.Sprintf(storageAccountURI, diag.StorageAccountName, storageEndpointSuffix)
 	}
 	return ""
+}
+
+func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confidentialVM bool, gen, rg, sub, infraID, rhcosImg string) *capz.Image {
+	switch {
+	case osImage.Publisher != "":
+		return &capz.Image{
+			Marketplace: &capz.AzureMarketplaceImage{
+				ImagePlan: capz.ImagePlan{
+					Publisher: osImage.Publisher,
+					Offer:     osImage.Offer,
+					SKU:       osImage.SKU,
+				},
+				Version:         osImage.Version,
+				ThirdPartyImage: osImage.Plan != aztypes.ImageNoPurchasePlan,
+			},
+		}
+	case azEnv == aztypes.StackCloud:
+		// AzureStack is the only use for managed images & supports only Gen1 VMs:
+		// https://learn.microsoft.com/en-us/azure-stack/user/azure-stack-vm-considerations?view=azs-2501&tabs=az1%2Caz2#vm-differences
+		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", sub, rg, infraID)
+		return &capz.Image{ID: &imageID}
+	case strings.Count(rhcosImg, ":") == 3: // Marketplace Image URN contains 3 colons
+		rhcosMktImg := strings.Split(rhcosImg, ":")
+		return &capz.Image{
+			Marketplace: &capz.AzureMarketplaceImage{
+				ImagePlan: capz.ImagePlan{
+					Publisher: rhcosMktImg[0],
+					Offer:     rhcosMktImg[1],
+					SKU:       rhcosMktImg[2],
+				},
+				Version:         rhcosMktImg[3],
+				ThirdPartyImage: false,
+			},
+		}
+	case rhcosImg == "" && !confidentialVM:
+		// hive calls the machines function, but may pass an empty
+		// string for rhcos. In which case, allow MAO to choose default.
+		return &capz.Image{} // can't be nil or mapiImage will panic
+	default: // Installer-created image gallery, for OKD && confidential VMs.
+		// image gallery names cannot have dashes
+		galleryName := strings.ReplaceAll(infraID, "-", "_")
+		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", sub, rg, galleryName, infraID)
+		if gen == "V2" {
+			imageID += genV2Suffix
+		}
+		return &capz.Image{ID: &imageID}
+	}
 }

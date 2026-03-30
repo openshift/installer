@@ -3,7 +3,6 @@ package clientconfig
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -24,7 +23,7 @@ func defaultIfEmpty(value string, defaultValue string) string {
 
 // mergeCLouds merges two Clouds recursively (the AuthInfo also gets merged).
 // In case both Clouds define a value, the value in the 'override' cloud takes precedence
-func mergeClouds(override, cloud interface{}) (*Cloud, error) {
+func mergeClouds(override, cloud any) (*Cloud, error) {
 	overrideJson, err := json.Marshal(override)
 	if err != nil {
 		return nil, err
@@ -33,12 +32,12 @@ func mergeClouds(override, cloud interface{}) (*Cloud, error) {
 	if err != nil {
 		return nil, err
 	}
-	var overrideInterface interface{}
+	var overrideInterface any
 	err = json.Unmarshal(overrideJson, &overrideInterface)
 	if err != nil {
 		return nil, err
 	}
-	var cloudInterface interface{}
+	var cloudInterface any
 	err = json.Unmarshal(cloudJson, &cloudInterface)
 	if err != nil {
 		return nil, err
@@ -58,10 +57,10 @@ func mergeClouds(override, cloud interface{}) (*Cloud, error) {
 
 // merges two interfaces. In cases where a value is defined for both 'overridingInterface' and
 // 'inferiorInterface' the value in 'overridingInterface' will take precedence.
-func mergeInterfaces(overridingInterface, inferiorInterface interface{}) interface{} {
+func mergeInterfaces(overridingInterface, inferiorInterface any) any {
 	switch overriding := overridingInterface.(type) {
-	case map[string]interface{}:
-		interfaceMap, ok := inferiorInterface.(map[string]interface{})
+	case map[string]any:
+		interfaceMap, ok := inferiorInterface.(map[string]any)
 		if !ok {
 			return overriding
 		}
@@ -72,18 +71,16 @@ func mergeInterfaces(overridingInterface, inferiorInterface interface{}) interfa
 				overriding[k] = v
 			}
 		}
-	case []interface{}:
-		list, ok := inferiorInterface.([]interface{})
+	case []any:
+		list, ok := inferiorInterface.([]any)
 		if !ok {
 			return overriding
 		}
-		for i := range list {
-			overriding = append(overriding, list[i])
-		}
+		overriding = append(overriding, list...)
 		return overriding
 	case nil:
 		// mergeClouds(nil, map[string]interface{...}) -> map[string]interface{...}
-		v, ok := inferiorInterface.(map[string]interface{})
+		v, ok := inferiorInterface.(map[string]any)
 		if ok {
 			return v
 		}
@@ -109,7 +106,7 @@ func FindAndReadCloudsYAML() (string, []byte, error) {
 	// OS_CLIENT_CONFIG_FILE
 	if v := env.Getenv("OS_CLIENT_CONFIG_FILE"); v != "" {
 		if ok := fileExists(v); ok {
-			content, err := ioutil.ReadFile(v)
+			content, err := os.ReadFile(v)
 			return v, content, err
 		}
 	}
@@ -146,7 +143,7 @@ func FindAndReadYAML(yamlFile string) (string, []byte, error) {
 
 	filename := filepath.Join(cwd, yamlFile)
 	if ok := fileExists(filename); ok {
-		content, err := ioutil.ReadFile(filename)
+		content, err := os.ReadFile(filename)
 		return filename, content, err
 	}
 
@@ -156,7 +153,7 @@ func FindAndReadYAML(yamlFile string) (string, []byte, error) {
 		if homeDir != "" {
 			filename := filepath.Join(homeDir, ".config/openstack/"+yamlFile)
 			if ok := fileExists(filename); ok {
-				content, err := ioutil.ReadFile(filename)
+				content, err := os.ReadFile(filename)
 				return filename, content, err
 			}
 		}
@@ -165,7 +162,7 @@ func FindAndReadYAML(yamlFile string) (string, []byte, error) {
 	// unix-specific site config directory: /etc/openstack.
 	filename = "/etc/openstack/" + yamlFile
 	if ok := fileExists(filename); ok {
-		content, err := ioutil.ReadFile(filename)
+		content, err := os.ReadFile(filename)
 		return filename, content, err
 	}
 

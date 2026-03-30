@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
@@ -42,29 +42,26 @@ type Zone struct {
 }
 
 // describeAvailabilityZones retrieves a list of all zones for the given region.
-func describeAvailabilityZones(ctx context.Context, session *session.Session, region string, zones []string) ([]*ec2.AvailabilityZone, error) {
-	client := ec2.New(session, aws.NewConfig().WithRegion(region))
+func describeAvailabilityZones(ctx context.Context, client *ec2.Client, region string, zones []string) ([]ec2types.AvailabilityZone, error) {
 	input := &ec2.DescribeAvailabilityZonesInput{
 		AllAvailabilityZones: aws.Bool(true),
-		Filters: []*ec2.Filter{
+		Filters: []ec2types.Filter{
 			{
 				Name:   aws.String("region-name"),
-				Values: []*string{aws.String(region)},
+				Values: []string{region},
 			},
 			{
 				Name:   aws.String("state"),
-				Values: []*string{aws.String("available")},
+				Values: []string{"available"},
 			},
 		},
 	}
 	if len(zones) > 0 {
-		for _, zone := range zones {
-			input.ZoneNames = append(input.ZoneNames, aws.String(zone))
-		}
+		input.ZoneNames = zones
 	}
-	resp, err := client.DescribeAvailabilityZonesWithContext(ctx, input)
+	resp, err := client.DescribeAvailabilityZones(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("fetching zones: %w", err)
+		return nil, fmt.Errorf("failed to get availability zones: %w", err)
 	}
 
 	return resp.AvailabilityZones, nil
@@ -72,15 +69,15 @@ func describeAvailabilityZones(ctx context.Context, session *session.Session, re
 
 // filterZonesByType retrieves a list of zones by a given ZoneType attribute within the region.
 // ZoneType can be availability-zone, local-zone or wavelength-zone.
-func filterZonesByType(ctx context.Context, session *session.Session, region, zoneType string) ([]string, error) {
-	azs, err := describeAvailabilityZones(ctx, session, region, []string{})
+func filterZonesByType(ctx context.Context, client *ec2.Client, region, zoneType string) ([]string, error) {
+	azs, err := describeAvailabilityZones(ctx, client, region, []string{})
 	if err != nil {
-		return nil, fmt.Errorf("fetching %s: %w", zoneType, err)
+		return nil, fmt.Errorf("failed to filter zones by type %s: %w", zoneType, err)
 	}
 	zones := []string{}
 	for _, zone := range azs {
-		if aws.StringValue(zone.ZoneType) == zoneType {
-			zones = append(zones, aws.StringValue(zone.ZoneName))
+		if aws.ToString(zone.ZoneType) == zoneType {
+			zones = append(zones, aws.ToString(zone.ZoneName))
 		}
 	}
 
@@ -88,8 +85,8 @@ func filterZonesByType(ctx context.Context, session *session.Session, region, zo
 }
 
 // availabilityZones retrieves a list of zones type 'availability-zone' in the region.
-func availabilityZones(ctx context.Context, session *session.Session, region string) ([]string, error) {
-	zones, err := filterZonesByType(ctx, session, region, typesaws.AvailabilityZoneType)
+func availabilityZones(ctx context.Context, client *ec2.Client, region string) ([]string, error) {
+	zones, err := filterZonesByType(ctx, client, region, typesaws.AvailabilityZoneType)
 	if err != nil {
 		return nil, err
 	}
@@ -100,13 +97,13 @@ func availabilityZones(ctx context.Context, session *session.Session, region str
 }
 
 // edgeZones retrieves a list of zones type 'local-zone' and 'wavelength-zone' in the region.
-func edgeZones(ctx context.Context, session *session.Session, region string) ([]string, error) {
-	localZones, err := filterZonesByType(ctx, session, region, typesaws.LocalZoneType)
+func edgeZones(ctx context.Context, client *ec2.Client, region string) ([]string, error) {
+	localZones, err := filterZonesByType(ctx, client, region, typesaws.LocalZoneType)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Local Zone names: %w", err)
 	}
 
-	wavelengthZones, err := filterZonesByType(ctx, session, region, typesaws.WavelengthZoneType)
+	wavelengthZones, err := filterZonesByType(ctx, client, region, typesaws.WavelengthZoneType)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Wavelength Zone names: %w", err)
 	}
@@ -122,8 +119,8 @@ func edgeZones(ctx context.Context, session *session.Session, region string) ([]
 }
 
 // describeFilteredZones retrieves a list of all zones for the given region.
-func describeFilteredZones(ctx context.Context, session *session.Session, region string, zones []string) ([]*ec2.AvailabilityZone, error) {
-	azs, err := describeAvailabilityZones(ctx, session, region, zones)
+func describeFilteredZones(ctx context.Context, client *ec2.Client, region string, zones []string) ([]ec2types.AvailabilityZone, error) {
+	azs, err := describeAvailabilityZones(ctx, client, region, zones)
 	if err != nil {
 		return nil, fmt.Errorf("fetching %s: %w", zones, err)
 	}

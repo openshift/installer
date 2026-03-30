@@ -82,6 +82,10 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		}
 	}
 
+	if c.VSphere.DNSRecordsType == configv1.DNSRecordsTypeExternal && (c.VSphere.LoadBalancer == nil || c.VSphere.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsRecordsType"), c.VSphere.DNSRecordsType, "external DNS records can only be configured with user-managed loadbalancers"))
+	}
+
 	return allErrs
 }
 
@@ -228,6 +232,8 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 
 		if len(failureDomain.Topology.Datacenter) == 0 {
 			allErrs = append(allErrs, field.Required(topologyFld.Child("datacenter"), "must specify a datacenter"))
+		} else if associatedVCenter != nil && len(associatedVCenter.Datacenters) > 0 && !slices.Contains(associatedVCenter.Datacenters, failureDomain.Topology.Datacenter) {
+			allErrs = append(allErrs, field.Invalid(topologyFld.Child("datacenter"), failureDomain.Topology.Datacenter, fmt.Sprintf("datacenter must be defined in vCenter %s datacenters list", failureDomain.Server)))
 		}
 		if len(failureDomain.Topology.Datastore) == 0 {
 			allErrs = append(allErrs, field.Required(topologyFld.Child("datastore"), "must specify a datastore"))

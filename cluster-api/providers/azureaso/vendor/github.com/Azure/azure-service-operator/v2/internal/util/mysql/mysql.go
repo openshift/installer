@@ -12,8 +12,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql" // mysql drive link
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // ServerPort is the default server port for sql server
@@ -61,13 +60,13 @@ func CreateOrUpdateUser(ctx context.Context, db *sql.DB, username string, hostna
 	statement := "CREATE USER IF NOT EXISTS ?@? IDENTIFIED BY ?"
 	_, err := db.ExecContext(ctx, statement, username, hostname, password)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create user %s", username)
+		return eris.Wrapf(err, "failed to create user %s", username)
 	}
 
 	statement = "ALTER USER IF EXISTS ?@? IDENTIFIED BY ?"
 	_, err = db.ExecContext(ctx, statement, username, hostname, password)
 	if err != nil {
-		return errors.Wrapf(err, "failed to alter user %s", username)
+		return eris.Wrapf(err, "failed to alter user %s", username)
 	}
 
 	return nil
@@ -90,7 +89,7 @@ func CreateOrUpdateAADUser(ctx context.Context, db *sql.DB, username string, ali
 		_, err = db.ExecContext(ctx, statement, username)
 	}
 	if err != nil {
-		return errors.Wrapf(err, "failed to create user %s", username)
+		return eris.Wrapf(err, "failed to create user %s", username)
 	}
 
 	return nil
@@ -148,7 +147,7 @@ func connectToDB(ctx context.Context, c *mysql.Config) (*sql.DB, error) {
 	// https://github.com/go-sql-driver/mysql/wiki/Examples#a-word-on-sqlopen
 	err = db.PingContext(ctx)
 	if err != nil {
-		return db, errors.Wrapf(err, "error pinging the mysql db (%s/%s)", c.Addr, c.DBName)
+		return db, eris.Wrapf(err, "error pinging the mysql db (%s/%s)", c.Addr, c.DBName)
 	}
 
 	return db, err

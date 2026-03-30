@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (resolver *DnsResolver) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (resolver *DnsResolver) Owner() *genruntime.ResourceReference {
+	if resolver.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(resolver.Spec)
 	return resolver.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (resolver *DnsResolver) SetStatus(status genruntime.ConvertibleStatus) erro
 	var st DnsResolver_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	resolver.Status = st
@@ -185,7 +189,7 @@ var _ genruntime.ConvertibleSpec = &DnsResolver_Spec{}
 // ConvertSpecFrom populates our DnsResolver_Spec from the provided source
 func (resolver *DnsResolver_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == resolver {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(resolver)
@@ -194,7 +198,7 @@ func (resolver *DnsResolver_Spec) ConvertSpecFrom(source genruntime.ConvertibleS
 // ConvertSpecTo populates the provided destination from our DnsResolver_Spec
 func (resolver *DnsResolver_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == resolver {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(resolver)
@@ -223,7 +227,7 @@ var _ genruntime.ConvertibleStatus = &DnsResolver_STATUS{}
 // ConvertStatusFrom populates our DnsResolver_STATUS from the provided source
 func (resolver *DnsResolver_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == resolver {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(resolver)
@@ -232,7 +236,7 @@ func (resolver *DnsResolver_STATUS) ConvertStatusFrom(source genruntime.Converti
 // ConvertStatusTo populates the provided destination from our DnsResolver_STATUS
 func (resolver *DnsResolver_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == resolver {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(resolver)

@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package types
@@ -700,6 +700,42 @@ type PbmCapabilityProfile struct {
 	// Indicates the line of service
 	// `PbmLineOfServiceInfoLineOfServiceEnum_enum` of the data service policy.
 	LineOfService string `xml:"lineOfService,omitempty" json:"lineOfService,omitempty"`
+	// Indicates compliant name to be used as K8s `StorageClass` name when this policy is used
+	// for K8s workloads.
+	//
+	// It essentially maps Storage Policy to corresponding `StorageClass`
+	// name across Supervisor clusters within a vCenter server.
+	// When this policy is assigned to a K8s `Namespace`, then a `StorageClass` with name
+	// `#K8sCompliantName` and optionally a WaitForFirstConsumer(WFFC) `StorageClass`
+	// with the name '`#K8sCompliantName`-latebinding' gets created. Duplicating both K8s
+	// compliant name and latebinding K8s compliant name across storage profiles in a vCenter is not
+	// allowed, i.e. it shouldn't match with `PbmCapabilityProfile.k8sCompliantName` and
+	// `PbmCapabilityProfile.otherK8sCompliantNames` of any other profile.
+	// Once the value for this field is set, it can't be changed. This name is RFC 1123 compliant.
+	// For new storage policy being created, compliant name will automatically be generated and
+	// populated based on policy name if it's not provided in the profile createSpec.
+	// For pre-existing storage policies in the Brownfield setup, K8s compliant name would be set
+	// during the vCenter upgrade.
+	K8sCompliantName string `xml:"k8sCompliantName,omitempty" json:"k8sCompliantName,omitempty"`
+	// Indicates the reserved K8s compliant names other than `PbmCapabilityProfile.k8sCompliantName` for a profile.
+	//
+	// These names shouldn't be used as a K8s `StorageClass`'s name associated with any other
+	// profiles.
+	// Note that, it doesn't indicate that `StorageClass` with following names actually exists,
+	// i.e. it's not a profile->K8s `StorageClass` association data. These are used to keep
+	// track of all the reserved K8s compliant names which can't be used for any other profile and
+	// used to avoid any K8s compliant name collision when a profile is being created.
+	// It can include the following:
+	// 1\. K8s compliant name to be used for a WaitForFirstConsumer(WFFC) `StorageClass` which
+	// is in the format '`PbmCapabilityProfile.k8sCompliantName`-latebinding'.
+	// 2\. Name of all the `StorageClass`s except the one set in `PbmCapabilityProfile.k8sCompliantName` if
+	// it's a Brownfield profile associated with multiple K8s `StorageClass`s.
+	// For a new storage policy being created, WFFC `StorageClass` name is automatically
+	// generated and populated here. So a newly created profile will always have
+	// '`PbmCapabilityProfile.k8sCompliantName` -latebinding' as a `PbmCapabilityProfile.otherK8sCompliantNames`. Whereas for
+	// a Brownfield profile, WFFC `StorageClass` name is reserved only if it's not already
+	// taken by a different profile.
+	OtherK8sCompliantNames []string `xml:"otherK8sCompliantNames,omitempty" json:"otherK8sCompliantNames,omitempty"`
 }
 
 func init() {
@@ -739,6 +775,18 @@ type PbmCapabilityProfileCreateSpec struct {
 	//
 	// A subprofile corresponds to a rule set in the vSphere Web Client.
 	Constraints BasePbmCapabilityConstraints `xml:"constraints,typeattr" json:"constraints"`
+	// Indicates compliant name to be used as K8s `StorageClass` name when this policy is used
+	// for K8s workloads.
+	//
+	// If compliant name is specified, and it's not RFC 1123 compliant, then
+	// policy creation would fail.
+	// Duplicating the compliant name across storage profiles in a vCenter is not allowed. If either
+	// there is already a K8s `StorageClass` with this name or WaitForForFirstConsumer
+	// `StorageClass` with the name '`PbmCapabilityProfileCreateSpec.k8sCompliantName`-latebinding', then the policy
+	// creation would fail.
+	// Compliant name will automatically be generated and populated based on policy name if it's not
+	// provided.
+	K8sCompliantName string `xml:"k8sCompliantName,omitempty" json:"k8sCompliantName,omitempty"`
 }
 
 func init() {
@@ -1797,7 +1845,7 @@ type PbmFetchCapabilityMetadataRequestType struct {
 	// Unique identifier for the vendor/owner of capability
 	// metadata. The specified vendor ID must match
 	// `PbmCapabilitySchemaVendorInfo*.*PbmCapabilitySchemaVendorInfo.vendorUuid`.
-	// If omitted, the Server searchs all capability metadata registered with the system. If a
+	// If omitted, the Server searches all capability metadata registered with the system. If a
 	// <code>vendorUuid</code> unknown to the Server is specified, empty results will be returned.
 	VendorUuid string `xml:"vendorUuid,omitempty" json:"vendorUuid,omitempty"`
 }
@@ -1822,7 +1870,7 @@ func init() {
 type PbmFetchCapabilitySchemaRequestType struct {
 	This types.ManagedObjectReference `xml:"_this" json:"_this"`
 	// Unique identifier for the vendor/owner of capability metadata.
-	// If omitted, the server searchs all capability metadata registered
+	// If omitted, the server searches all capability metadata registered
 	// with the system. The specified vendor ID must match
 	// `PbmCapabilitySchemaVendorInfo*.*PbmCapabilitySchemaVendorInfo.vendorUuid`.
 	VendorUuid string `xml:"vendorUuid,omitempty" json:"vendorUuid,omitempty"`
@@ -2149,6 +2197,8 @@ type PbmPlacementCompatibilityResult struct {
 	// The <code>Datastore</code> or <code>StoragePod</code> under consideration
 	// as a location for virtual machine files.
 	Hub PbmPlacementHub `xml:"hub" json:"hub"`
+	// Additional information about `PbmPlacementCompatibilityResult.hub`
+	HubInfo *PbmPlacementHubInfo `xml:"hubInfo,omitempty" json:"hubInfo,omitempty"`
 	// Resources that match the policy.
 	//
 	// If populated, signifies that there are
@@ -2195,6 +2245,23 @@ type PbmPlacementHub struct {
 
 func init() {
 	types.Add("pbm:PbmPlacementHub", reflect.TypeOf((*PbmPlacementHub)(nil)).Elem())
+}
+
+// Data object to specify additional information related to a `PbmPlacementHub`.
+//
+// This structure may be used only with operations rendered under `/pbm`.
+type PbmPlacementHubInfo struct {
+	types.DynamicData
+
+	// Indicates `PbmServerObjectRef` of cluster(s) on which a compatible datastore is mounted
+	// fully on, when compatibility check is invoked with `PbmPlacementZoneTopologyRequirement` as input.
+	//
+	// Only those clusters which are part of vSphere `AvailabilityZone` are populated here.
+	ZoneClusters []PbmServerObjectRef `xml:"zoneClusters,omitempty" json:"zoneClusters,omitempty"`
+}
+
+func init() {
+	types.Add("pbm:PbmPlacementHubInfo", reflect.TypeOf((*PbmPlacementHubInfo)(nil)).Elem())
 }
 
 // Describes the collection of replication related resources that satisfy a
@@ -2267,6 +2334,32 @@ func init() {
 	types.Add("pbm:PbmPlacementResourceUtilization", reflect.TypeOf((*PbmPlacementResourceUtilization)(nil)).Elem())
 }
 
+// Defines a zone topology requirement for placing objects onto `PbmPlacementHub`s.
+//
+// It is invalid
+// to specify this requirement along with other conflicting requirements and also, it's invalid to
+// specify duplicate requirements.
+//
+// This structure may be used only with operations rendered under `/pbm`.
+type PbmPlacementZoneTopologyRequirement struct {
+	PbmPlacementCapabilityProfileRequirement
+
+	// References of Cluster server objects belonging to a `AvailabilityZone`.
+	//
+	// i.e. each
+	// referenced cluster must be tagged with a zone as this constraint is intended for scenarios
+	// where zone-specific behavior is required.
+	// Cluster which is not associated with any zone is not allowed in the input when using this
+	// constraint. Other type of server objects such as VirtualMachine are not allowed either.
+	// This field must be set to a non-empty array of cluster references, otherwise compatibility
+	// check fails.
+	Clusters []PbmServerObjectRef `xml:"clusters,omitempty" json:"clusters,omitempty"`
+}
+
+func init() {
+	types.Add("pbm:PbmPlacementZoneTopologyRequirement", reflect.TypeOf((*PbmPlacementZoneTopologyRequirement)(nil)).Elem())
+}
+
 // The `PbmProfile` data object is the base object
 // for storage capability profiles.
 //
@@ -2313,6 +2406,28 @@ type PbmProfileId struct {
 
 func init() {
 	types.Add("pbm:PbmProfileId", reflect.TypeOf((*PbmProfileId)(nil)).Elem())
+}
+
+// The data object defines the K8s compliant name(s) for a Storage Profile.
+//
+// This structure may be used only with operations rendered under `/pbm`.
+type PbmProfileK8sCompliantNameSpec struct {
+	types.DynamicData
+
+	// Profile unique identifier
+	ProfileId string `xml:"profileId" json:"profileId"`
+	// K8s compliant name matching `CapabilityBasedProfile.k8sCompliantName`.
+	K8sCompliantName string `xml:"k8sCompliantName" json:"k8sCompliantName"`
+	// Other K8s compliant names for a profile matching
+	// `CapabilityBasedProfile.otherK8sCompliantNames`.
+	//
+	// These are mutually exclusive with
+	// `PbmProfileK8sCompliantNameSpec.k8sCompliantName`.
+	OtherK8sCompliantNames []string `xml:"otherK8sCompliantNames,omitempty" json:"otherK8sCompliantNames,omitempty"`
+}
+
+func init() {
+	types.Add("pbm:PbmProfileK8sCompliantNameSpec", reflect.TypeOf((*PbmProfileK8sCompliantNameSpec)(nil)).Elem())
 }
 
 // The `PbmProfileOperationOutcome` data object describes the result
@@ -2949,13 +3064,13 @@ type PbmServerObjectRef struct {
 	// The value of <code>key</code> depends
 	// on the <code>objectType</code>.
 	//
-	// <table border="1"cellpadding="5">
+	// <table border="1" cellpadding="5">
 	// <tr><td>`*PbmObjectType**</td><td>*`key value**</td></tr>
 	// <tr><td>virtualMachine</td><td>_virtual-machine-MOR_</td></tr>
 	// <tr><td>virtualDiskId</td>
 	// <td>_virtual-disk-MOR_:_VirtualDisk.key_</td></tr>
 	// <tr><td>datastore</td><td>_datastore-MOR_</td></tr>
-	// <tr><td colspan="2"align="right">MOR = ManagedObjectReference</td></tr>
+	// <tr><td colspan="2" align="right">MOR = ManagedObjectReference</td></tr>
 	// </table>
 	Key string `xml:"key" json:"key"`
 	// vCenter Server UUID; the <code>ServiceContent.about.instanceUuid</code>

@@ -85,11 +85,18 @@ func createAndAttachFIP(ctx context.Context, client *gophercloud.ServiceClient, 
 		return nil, err
 	}
 
-	tag := fmt.Sprintf("openshiftClusterID=%s", infraID)
-	err = attributestags.Add(ctx, client, "floatingips", floatingIP.ID, tag).ExtractErr()
+	// Tag the floating IP with cluster ID and role for proper lifecycle management
+	clusterTag := fmt.Sprintf("openshiftClusterID=%s", infraID)
+	err = attributestags.Add(ctx, client, "floatingips", floatingIP.ID, clusterTag).ExtractErr()
 	if err != nil {
 		return nil, err
 	}
 
-	return floatingIP, err
+	roleTag := fmt.Sprintf("openshiftRole=%s", role)
+	err = attributestags.Add(ctx, client, "floatingips", floatingIP.ID, roleTag).ExtractErr()
+	if err != nil {
+		return nil, err
+	}
+
+	return floatingIP, nil
 }

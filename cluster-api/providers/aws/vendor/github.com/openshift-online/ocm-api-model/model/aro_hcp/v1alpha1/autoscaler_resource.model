@@ -14,15 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Manages a specific cluster autoscaler.
+// Manages global autoscaler configurations for a cluster.
 resource Autoscaler {
-    // Retrieves the details of the cluster autoscaler.
-    method Get {
-        out Body ClusterAutoscaler
-    }
+	// Retrieves the autoscaler of a cluster.
+	method Get {
+		out Body ClusterAutoscaler
+	}
+
 
 	// Updates the cluster autoscaler.
 	method Update {
 		in out Body ClusterAutoscaler
 	}
+
 }

@@ -9,20 +9,17 @@ import (
 	arm "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -74,29 +71,6 @@ func (registry *Registry) ConvertTo(hub conversion.Hub) error {
 
 	return registry.AssignProperties_To_Registry(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-machinelearningservices-azure-com-v1api20240401-registry,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=machinelearningservices.azure.com,resources=registries,verbs=create;update,versions=v1api20240401,name=default.v1api20240401.registries.machinelearningservices.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Registry{}
-
-// Default applies defaults to the Registry resource
-func (registry *Registry) Default() {
-	registry.defaultImpl()
-	var temp any = registry
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (registry *Registry) defaultAzureName() {
-	if registry.Spec.AzureName == "" {
-		registry.Spec.AzureName = registry.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Registry resource
-func (registry *Registry) defaultImpl() { registry.defaultAzureName() }
 
 var _ configmaps.Exporter = &Registry{}
 
@@ -199,6 +173,10 @@ func (registry *Registry) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (registry *Registry) Owner() *genruntime.ResourceReference {
+	if registry.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(registry.Spec)
 	return registry.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -215,121 +193,11 @@ func (registry *Registry) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st RegistryTrackedResource_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	registry.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-machinelearningservices-azure-com-v1api20240401-registry,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=machinelearningservices.azure.com,resources=registries,verbs=create;update,versions=v1api20240401,name=validate.v1api20240401.registries.machinelearningservices.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Registry{}
-
-// ValidateCreate validates the creation of the resource
-func (registry *Registry) ValidateCreate() (admission.Warnings, error) {
-	validations := registry.createValidations()
-	var temp any = registry
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (registry *Registry) ValidateDelete() (admission.Warnings, error) {
-	validations := registry.deleteValidations()
-	var temp any = registry
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (registry *Registry) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := registry.updateValidations()
-	var temp any = registry
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (registry *Registry) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){registry.validateResourceReferences, registry.validateOwnerReference, registry.validateSecretDestinations, registry.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (registry *Registry) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (registry *Registry) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return registry.validateResourceReferences()
-		},
-		registry.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return registry.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return registry.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return registry.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (registry *Registry) validateConfigMapDestinations() (admission.Warnings, error) {
-	if registry.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.ConfigMapDestination
-	if registry.Spec.OperatorSpec.ConfigMaps != nil {
-		toValidate = []*genruntime.ConfigMapDestination{
-			registry.Spec.OperatorSpec.ConfigMaps.DiscoveryUrl,
-			registry.Spec.OperatorSpec.ConfigMaps.MlFlowRegistryUri,
-		}
-	}
-	return configmaps.ValidateDestinations(registry, toValidate, registry.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (registry *Registry) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(registry)
-}
-
-// validateResourceReferences validates all resource references
-func (registry *Registry) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&registry.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (registry *Registry) validateSecretDestinations() (admission.Warnings, error) {
-	if registry.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(registry, nil, registry.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (registry *Registry) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Registry)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, registry)
 }
 
 // AssignProperties_From_Registry populates our Registry from the provided source Registry
@@ -342,7 +210,7 @@ func (registry *Registry) AssignProperties_From_Registry(source *storage.Registr
 	var spec Registry_Spec
 	err := spec.AssignProperties_From_Registry_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Registry_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Registry_Spec() to populate field Spec")
 	}
 	registry.Spec = spec
 
@@ -350,7 +218,7 @@ func (registry *Registry) AssignProperties_From_Registry(source *storage.Registr
 	var status RegistryTrackedResource_STATUS
 	err = status.AssignProperties_From_RegistryTrackedResource_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RegistryTrackedResource_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_RegistryTrackedResource_STATUS() to populate field Status")
 	}
 	registry.Status = status
 
@@ -368,7 +236,7 @@ func (registry *Registry) AssignProperties_To_Registry(destination *storage.Regi
 	var spec storage.Registry_Spec
 	err := registry.Spec.AssignProperties_To_Registry_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Registry_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Registry_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -376,7 +244,7 @@ func (registry *Registry) AssignProperties_To_Registry(destination *storage.Regi
 	var status storage.RegistryTrackedResource_STATUS
 	err = registry.Status.AssignProperties_To_RegistryTrackedResource_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RegistryTrackedResource_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_RegistryTrackedResource_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -725,13 +593,13 @@ func (registry *Registry_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 	src = &storage.Registry_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = registry.AssignProperties_From_Registry_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -749,13 +617,13 @@ func (registry *Registry_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 	dst = &storage.Registry_Spec{}
 	err := registry.AssignProperties_To_Registry_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -775,7 +643,7 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 		var identity ManagedServiceIdentity
 		err := identity.AssignProperties_From_ManagedServiceIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
 		}
 		registry.Identity = &identity
 	} else {
@@ -796,7 +664,7 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 		var managedResourceGroup ArmResourceId
 		err := managedResourceGroup.AssignProperties_From_ArmResourceId(source.ManagedResourceGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId() to populate field ManagedResourceGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_ArmResourceId() to populate field ManagedResourceGroup")
 		}
 		registry.ManagedResourceGroup = &managedResourceGroup
 	} else {
@@ -811,7 +679,7 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 		var operatorSpec RegistryOperatorSpec
 		err := operatorSpec.AssignProperties_From_RegistryOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RegistryOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RegistryOperatorSpec() to populate field OperatorSpec")
 		}
 		registry.OperatorSpec = &operatorSpec
 	} else {
@@ -838,7 +706,7 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 			var regionDetail RegistryRegionArmDetails
 			err := regionDetail.AssignProperties_From_RegistryRegionArmDetails(&regionDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_RegistryRegionArmDetails() to populate field RegionDetails")
+				return eris.Wrap(err, "calling AssignProperties_From_RegistryRegionArmDetails() to populate field RegionDetails")
 			}
 			regionDetailList[regionDetailIndex] = regionDetail
 		}
@@ -856,7 +724,7 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 			var registryPrivateEndpointConnection RegistryPrivateEndpointConnection
 			err := registryPrivateEndpointConnection.AssignProperties_From_RegistryPrivateEndpointConnection(&registryPrivateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_RegistryPrivateEndpointConnection() to populate field RegistryPrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_RegistryPrivateEndpointConnection() to populate field RegistryPrivateEndpointConnections")
 			}
 			registryPrivateEndpointConnectionList[registryPrivateEndpointConnectionIndex] = registryPrivateEndpointConnection
 		}
@@ -870,7 +738,7 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		registry.Sku = &sku
 	} else {
@@ -900,7 +768,7 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 		var identity storage.ManagedServiceIdentity
 		err := registry.Identity.AssignProperties_To_ManagedServiceIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -921,7 +789,7 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 		var managedResourceGroup storage.ArmResourceId
 		err := registry.ManagedResourceGroup.AssignProperties_To_ArmResourceId(&managedResourceGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId() to populate field ManagedResourceGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_ArmResourceId() to populate field ManagedResourceGroup")
 		}
 		destination.ManagedResourceGroup = &managedResourceGroup
 	} else {
@@ -936,7 +804,7 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 		var operatorSpec storage.RegistryOperatorSpec
 		err := registry.OperatorSpec.AssignProperties_To_RegistryOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RegistryOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RegistryOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -966,7 +834,7 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 			var regionDetail storage.RegistryRegionArmDetails
 			err := regionDetailItem.AssignProperties_To_RegistryRegionArmDetails(&regionDetail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_RegistryRegionArmDetails() to populate field RegionDetails")
+				return eris.Wrap(err, "calling AssignProperties_To_RegistryRegionArmDetails() to populate field RegionDetails")
 			}
 			regionDetailList[regionDetailIndex] = regionDetail
 		}
@@ -984,7 +852,7 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 			var registryPrivateEndpointConnection storage.RegistryPrivateEndpointConnection
 			err := registryPrivateEndpointConnectionItem.AssignProperties_To_RegistryPrivateEndpointConnection(&registryPrivateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_RegistryPrivateEndpointConnection() to populate field RegistryPrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_RegistryPrivateEndpointConnection() to populate field RegistryPrivateEndpointConnections")
 			}
 			registryPrivateEndpointConnectionList[registryPrivateEndpointConnectionIndex] = registryPrivateEndpointConnection
 		}
@@ -998,7 +866,7 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 		var sku storage.Sku
 		err := registry.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1030,7 +898,7 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 		var identity ManagedServiceIdentity
 		err := identity.Initialize_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		registry.Identity = &identity
 	} else {
@@ -1051,7 +919,7 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 		var managedResourceGroup ArmResourceId
 		err := managedResourceGroup.Initialize_From_ArmResourceId_STATUS(source.ManagedResourceGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ArmResourceId_STATUS() to populate field ManagedResourceGroup")
+			return eris.Wrap(err, "calling Initialize_From_ArmResourceId_STATUS() to populate field ManagedResourceGroup")
 		}
 		registry.ManagedResourceGroup = &managedResourceGroup
 	} else {
@@ -1073,7 +941,7 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 			var regionDetail RegistryRegionArmDetails
 			err := regionDetail.Initialize_From_RegistryRegionArmDetails_STATUS(&regionDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_RegistryRegionArmDetails_STATUS() to populate field RegionDetails")
+				return eris.Wrap(err, "calling Initialize_From_RegistryRegionArmDetails_STATUS() to populate field RegionDetails")
 			}
 			regionDetailList[regionDetailIndex] = regionDetail
 		}
@@ -1091,7 +959,7 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 			var registryPrivateEndpointConnection RegistryPrivateEndpointConnection
 			err := registryPrivateEndpointConnection.Initialize_From_RegistryPrivateEndpointConnection_STATUS(&registryPrivateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_RegistryPrivateEndpointConnection_STATUS() to populate field RegistryPrivateEndpointConnections")
+				return eris.Wrap(err, "calling Initialize_From_RegistryPrivateEndpointConnection_STATUS() to populate field RegistryPrivateEndpointConnections")
 			}
 			registryPrivateEndpointConnectionList[registryPrivateEndpointConnectionIndex] = registryPrivateEndpointConnection
 		}
@@ -1105,7 +973,7 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 		var sku Sku
 		err := sku.Initialize_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
 		}
 		registry.Sku = &sku
 	} else {
@@ -1196,13 +1064,13 @@ func (resource *RegistryTrackedResource_STATUS) ConvertStatusFrom(source genrunt
 	src = &storage.RegistryTrackedResource_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = resource.AssignProperties_From_RegistryTrackedResource_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1220,13 +1088,13 @@ func (resource *RegistryTrackedResource_STATUS) ConvertStatusTo(destination genr
 	dst = &storage.RegistryTrackedResource_STATUS{}
 	err := resource.AssignProperties_To_RegistryTrackedResource_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1416,7 +1284,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 		var identity ManagedServiceIdentity_STATUS
 		err := identity.AssignProperties_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		resource.Identity = &identity
 	} else {
@@ -1437,7 +1305,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 		var managedResourceGroup ArmResourceId_STATUS
 		err := managedResourceGroup.AssignProperties_From_ArmResourceId_STATUS(source.ManagedResourceGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ManagedResourceGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ManagedResourceGroup")
 		}
 		resource.ManagedResourceGroup = &managedResourceGroup
 	} else {
@@ -1462,7 +1330,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 			var regionDetail RegistryRegionArmDetails_STATUS
 			err := regionDetail.AssignProperties_From_RegistryRegionArmDetails_STATUS(&regionDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_RegistryRegionArmDetails_STATUS() to populate field RegionDetails")
+				return eris.Wrap(err, "calling AssignProperties_From_RegistryRegionArmDetails_STATUS() to populate field RegionDetails")
 			}
 			regionDetailList[regionDetailIndex] = regionDetail
 		}
@@ -1480,7 +1348,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 			var registryPrivateEndpointConnection RegistryPrivateEndpointConnection_STATUS
 			err := registryPrivateEndpointConnection.AssignProperties_From_RegistryPrivateEndpointConnection_STATUS(&registryPrivateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_RegistryPrivateEndpointConnection_STATUS() to populate field RegistryPrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_RegistryPrivateEndpointConnection_STATUS() to populate field RegistryPrivateEndpointConnections")
 			}
 			registryPrivateEndpointConnectionList[registryPrivateEndpointConnectionIndex] = registryPrivateEndpointConnection
 		}
@@ -1494,7 +1362,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		resource.Sku = &sku
 	} else {
@@ -1506,7 +1374,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		resource.SystemData = &systemDatum
 	} else {
@@ -1542,7 +1410,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 		var identity storage.ManagedServiceIdentity_STATUS
 		err := resource.Identity.AssignProperties_To_ManagedServiceIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1563,7 +1431,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 		var managedResourceGroup storage.ArmResourceId_STATUS
 		err := resource.ManagedResourceGroup.AssignProperties_To_ArmResourceId_STATUS(&managedResourceGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ManagedResourceGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ManagedResourceGroup")
 		}
 		destination.ManagedResourceGroup = &managedResourceGroup
 	} else {
@@ -1588,7 +1456,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 			var regionDetail storage.RegistryRegionArmDetails_STATUS
 			err := regionDetailItem.AssignProperties_To_RegistryRegionArmDetails_STATUS(&regionDetail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_RegistryRegionArmDetails_STATUS() to populate field RegionDetails")
+				return eris.Wrap(err, "calling AssignProperties_To_RegistryRegionArmDetails_STATUS() to populate field RegionDetails")
 			}
 			regionDetailList[regionDetailIndex] = regionDetail
 		}
@@ -1606,7 +1474,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 			var registryPrivateEndpointConnection storage.RegistryPrivateEndpointConnection_STATUS
 			err := registryPrivateEndpointConnectionItem.AssignProperties_To_RegistryPrivateEndpointConnection_STATUS(&registryPrivateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_RegistryPrivateEndpointConnection_STATUS() to populate field RegistryPrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_RegistryPrivateEndpointConnection_STATUS() to populate field RegistryPrivateEndpointConnections")
 			}
 			registryPrivateEndpointConnectionList[registryPrivateEndpointConnectionIndex] = registryPrivateEndpointConnection
 		}
@@ -1620,7 +1488,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 		var sku storage.Sku_STATUS
 		err := resource.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1632,7 +1500,7 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 		var systemDatum storage.SystemData_STATUS
 		err := resource.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1905,7 +1773,7 @@ func (identity *ManagedServiceIdentity) AssignProperties_From_ManagedServiceIden
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -1940,7 +1808,7 @@ func (identity *ManagedServiceIdentity) AssignProperties_To_ManagedServiceIdenti
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2080,7 +1948,7 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_From_ManagedServ
 			var userAssignedIdentity UserAssignedIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -2121,7 +1989,7 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_To_ManagedServic
 			var userAssignedIdentity storage.UserAssignedIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -2179,7 +2047,7 @@ func (operator *RegistryOperatorSpec) AssignProperties_From_RegistryOperatorSpec
 		var configMap RegistryOperatorConfigMaps
 		err := configMap.AssignProperties_From_RegistryOperatorConfigMaps(source.ConfigMaps)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RegistryOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_From_RegistryOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		operator.ConfigMaps = &configMap
 	} else {
@@ -2236,7 +2104,7 @@ func (operator *RegistryOperatorSpec) AssignProperties_To_RegistryOperatorSpec(d
 		var configMap storage.RegistryOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_RegistryOperatorConfigMaps(&configMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RegistryOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_To_RegistryOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		destination.ConfigMaps = &configMap
 	} else {
@@ -2436,7 +2304,7 @@ func (connection *RegistryPrivateEndpointConnection) AssignProperties_From_Regis
 		var privateEndpoint PrivateEndpointResource
 		err := privateEndpoint.AssignProperties_From_PrivateEndpointResource(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointResource() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointResource() to populate field PrivateEndpoint")
 		}
 		connection.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -2459,7 +2327,7 @@ func (connection *RegistryPrivateEndpointConnection) AssignProperties_From_Regis
 		var registryPrivateLinkServiceConnectionState RegistryPrivateLinkServiceConnectionState
 		err := registryPrivateLinkServiceConnectionState.AssignProperties_From_RegistryPrivateLinkServiceConnectionState(source.RegistryPrivateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RegistryPrivateLinkServiceConnectionState() to populate field RegistryPrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling AssignProperties_From_RegistryPrivateLinkServiceConnectionState() to populate field RegistryPrivateLinkServiceConnectionState")
 		}
 		connection.RegistryPrivateLinkServiceConnectionState = &registryPrivateLinkServiceConnectionState
 	} else {
@@ -2486,7 +2354,7 @@ func (connection *RegistryPrivateEndpointConnection) AssignProperties_To_Registr
 		var privateEndpoint storage.PrivateEndpointResource
 		err := connection.PrivateEndpoint.AssignProperties_To_PrivateEndpointResource(&privateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointResource() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointResource() to populate field PrivateEndpoint")
 		}
 		destination.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -2509,7 +2377,7 @@ func (connection *RegistryPrivateEndpointConnection) AssignProperties_To_Registr
 		var registryPrivateLinkServiceConnectionState storage.RegistryPrivateLinkServiceConnectionState
 		err := connection.RegistryPrivateLinkServiceConnectionState.AssignProperties_To_RegistryPrivateLinkServiceConnectionState(&registryPrivateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RegistryPrivateLinkServiceConnectionState() to populate field RegistryPrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling AssignProperties_To_RegistryPrivateLinkServiceConnectionState() to populate field RegistryPrivateLinkServiceConnectionState")
 		}
 		destination.RegistryPrivateLinkServiceConnectionState = &registryPrivateLinkServiceConnectionState
 	} else {
@@ -2541,7 +2409,7 @@ func (connection *RegistryPrivateEndpointConnection) Initialize_From_RegistryPri
 		var privateEndpoint PrivateEndpointResource
 		err := privateEndpoint.Initialize_From_PrivateEndpointResource_STATUS(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PrivateEndpointResource_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling Initialize_From_PrivateEndpointResource_STATUS() to populate field PrivateEndpoint")
 		}
 		connection.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -2564,7 +2432,7 @@ func (connection *RegistryPrivateEndpointConnection) Initialize_From_RegistryPri
 		var registryPrivateLinkServiceConnectionState RegistryPrivateLinkServiceConnectionState
 		err := registryPrivateLinkServiceConnectionState.Initialize_From_RegistryPrivateLinkServiceConnectionState_STATUS(source.RegistryPrivateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_RegistryPrivateLinkServiceConnectionState_STATUS() to populate field RegistryPrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling Initialize_From_RegistryPrivateLinkServiceConnectionState_STATUS() to populate field RegistryPrivateLinkServiceConnectionState")
 		}
 		connection.RegistryPrivateLinkServiceConnectionState = &registryPrivateLinkServiceConnectionState
 	} else {
@@ -2690,7 +2558,7 @@ func (connection *RegistryPrivateEndpointConnection_STATUS) AssignProperties_Fro
 		var privateEndpoint PrivateEndpointResource_STATUS
 		err := privateEndpoint.AssignProperties_From_PrivateEndpointResource_STATUS(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointResource_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointResource_STATUS() to populate field PrivateEndpoint")
 		}
 		connection.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -2705,7 +2573,7 @@ func (connection *RegistryPrivateEndpointConnection_STATUS) AssignProperties_Fro
 		var registryPrivateLinkServiceConnectionState RegistryPrivateLinkServiceConnectionState_STATUS
 		err := registryPrivateLinkServiceConnectionState.AssignProperties_From_RegistryPrivateLinkServiceConnectionState_STATUS(source.RegistryPrivateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RegistryPrivateLinkServiceConnectionState_STATUS() to populate field RegistryPrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling AssignProperties_From_RegistryPrivateLinkServiceConnectionState_STATUS() to populate field RegistryPrivateLinkServiceConnectionState")
 		}
 		connection.RegistryPrivateLinkServiceConnectionState = &registryPrivateLinkServiceConnectionState
 	} else {
@@ -2735,7 +2603,7 @@ func (connection *RegistryPrivateEndpointConnection_STATUS) AssignProperties_To_
 		var privateEndpoint storage.PrivateEndpointResource_STATUS
 		err := connection.PrivateEndpoint.AssignProperties_To_PrivateEndpointResource_STATUS(&privateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointResource_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointResource_STATUS() to populate field PrivateEndpoint")
 		}
 		destination.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -2750,7 +2618,7 @@ func (connection *RegistryPrivateEndpointConnection_STATUS) AssignProperties_To_
 		var registryPrivateLinkServiceConnectionState storage.RegistryPrivateLinkServiceConnectionState_STATUS
 		err := connection.RegistryPrivateLinkServiceConnectionState.AssignProperties_To_RegistryPrivateLinkServiceConnectionState_STATUS(&registryPrivateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RegistryPrivateLinkServiceConnectionState_STATUS() to populate field RegistryPrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling AssignProperties_To_RegistryPrivateLinkServiceConnectionState_STATUS() to populate field RegistryPrivateLinkServiceConnectionState")
 		}
 		destination.RegistryPrivateLinkServiceConnectionState = &registryPrivateLinkServiceConnectionState
 	} else {
@@ -2869,7 +2737,7 @@ func (details *RegistryRegionArmDetails) AssignProperties_From_RegistryRegionArm
 			var acrDetail AcrDetails
 			err := acrDetail.AssignProperties_From_AcrDetails(&acrDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AcrDetails() to populate field AcrDetails")
+				return eris.Wrap(err, "calling AssignProperties_From_AcrDetails() to populate field AcrDetails")
 			}
 			acrDetailList[acrDetailIndex] = acrDetail
 		}
@@ -2890,7 +2758,7 @@ func (details *RegistryRegionArmDetails) AssignProperties_From_RegistryRegionArm
 			var storageAccountDetail StorageAccountDetails
 			err := storageAccountDetail.AssignProperties_From_StorageAccountDetails(&storageAccountDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_StorageAccountDetails() to populate field StorageAccountDetails")
+				return eris.Wrap(err, "calling AssignProperties_From_StorageAccountDetails() to populate field StorageAccountDetails")
 			}
 			storageAccountDetailList[storageAccountDetailIndex] = storageAccountDetail
 		}
@@ -2917,7 +2785,7 @@ func (details *RegistryRegionArmDetails) AssignProperties_To_RegistryRegionArmDe
 			var acrDetail storage.AcrDetails
 			err := acrDetailItem.AssignProperties_To_AcrDetails(&acrDetail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AcrDetails() to populate field AcrDetails")
+				return eris.Wrap(err, "calling AssignProperties_To_AcrDetails() to populate field AcrDetails")
 			}
 			acrDetailList[acrDetailIndex] = acrDetail
 		}
@@ -2938,7 +2806,7 @@ func (details *RegistryRegionArmDetails) AssignProperties_To_RegistryRegionArmDe
 			var storageAccountDetail storage.StorageAccountDetails
 			err := storageAccountDetailItem.AssignProperties_To_StorageAccountDetails(&storageAccountDetail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_StorageAccountDetails() to populate field StorageAccountDetails")
+				return eris.Wrap(err, "calling AssignProperties_To_StorageAccountDetails() to populate field StorageAccountDetails")
 			}
 			storageAccountDetailList[storageAccountDetailIndex] = storageAccountDetail
 		}
@@ -2970,7 +2838,7 @@ func (details *RegistryRegionArmDetails) Initialize_From_RegistryRegionArmDetail
 			var acrDetail AcrDetails
 			err := acrDetail.Initialize_From_AcrDetails_STATUS(&acrDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_AcrDetails_STATUS() to populate field AcrDetails")
+				return eris.Wrap(err, "calling Initialize_From_AcrDetails_STATUS() to populate field AcrDetails")
 			}
 			acrDetailList[acrDetailIndex] = acrDetail
 		}
@@ -2991,7 +2859,7 @@ func (details *RegistryRegionArmDetails) Initialize_From_RegistryRegionArmDetail
 			var storageAccountDetail StorageAccountDetails
 			err := storageAccountDetail.Initialize_From_StorageAccountDetails_STATUS(&storageAccountDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_StorageAccountDetails_STATUS() to populate field StorageAccountDetails")
+				return eris.Wrap(err, "calling Initialize_From_StorageAccountDetails_STATUS() to populate field StorageAccountDetails")
 			}
 			storageAccountDetailList[storageAccountDetailIndex] = storageAccountDetail
 		}
@@ -3072,7 +2940,7 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_From_RegistryRe
 			var acrDetail AcrDetails_STATUS
 			err := acrDetail.AssignProperties_From_AcrDetails_STATUS(&acrDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AcrDetails_STATUS() to populate field AcrDetails")
+				return eris.Wrap(err, "calling AssignProperties_From_AcrDetails_STATUS() to populate field AcrDetails")
 			}
 			acrDetailList[acrDetailIndex] = acrDetail
 		}
@@ -3093,7 +2961,7 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_From_RegistryRe
 			var storageAccountDetail StorageAccountDetails_STATUS
 			err := storageAccountDetail.AssignProperties_From_StorageAccountDetails_STATUS(&storageAccountDetailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_StorageAccountDetails_STATUS() to populate field StorageAccountDetails")
+				return eris.Wrap(err, "calling AssignProperties_From_StorageAccountDetails_STATUS() to populate field StorageAccountDetails")
 			}
 			storageAccountDetailList[storageAccountDetailIndex] = storageAccountDetail
 		}
@@ -3120,7 +2988,7 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_To_RegistryRegi
 			var acrDetail storage.AcrDetails_STATUS
 			err := acrDetailItem.AssignProperties_To_AcrDetails_STATUS(&acrDetail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AcrDetails_STATUS() to populate field AcrDetails")
+				return eris.Wrap(err, "calling AssignProperties_To_AcrDetails_STATUS() to populate field AcrDetails")
 			}
 			acrDetailList[acrDetailIndex] = acrDetail
 		}
@@ -3141,7 +3009,7 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_To_RegistryRegi
 			var storageAccountDetail storage.StorageAccountDetails_STATUS
 			err := storageAccountDetailItem.AssignProperties_To_StorageAccountDetails_STATUS(&storageAccountDetail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_StorageAccountDetails_STATUS() to populate field StorageAccountDetails")
+				return eris.Wrap(err, "calling AssignProperties_To_StorageAccountDetails_STATUS() to populate field StorageAccountDetails")
 			}
 			storageAccountDetailList[storageAccountDetailIndex] = storageAccountDetail
 		}
@@ -3664,9 +3532,6 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 type AcrDetails struct {
 	// SystemCreatedAcrAccount: Details of system created ACR account to be used for the Registry
 	SystemCreatedAcrAccount *SystemCreatedAcrAccount `json:"systemCreatedAcrAccount,omitempty"`
-
-	// UserCreatedAcrAccount: Details of user created ACR account to be used for the Registry
-	UserCreatedAcrAccount *UserCreatedAcrAccount `json:"userCreatedAcrAccount,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &AcrDetails{}
@@ -3686,16 +3551,6 @@ func (details *AcrDetails) ConvertToARM(resolved genruntime.ConvertToARMResolved
 		}
 		systemCreatedAcrAccount := *systemCreatedAcrAccount_ARM.(*arm.SystemCreatedAcrAccount)
 		result.SystemCreatedAcrAccount = &systemCreatedAcrAccount
-	}
-
-	// Set property "UserCreatedAcrAccount":
-	if details.UserCreatedAcrAccount != nil {
-		userCreatedAcrAccount_ARM, err := (*details.UserCreatedAcrAccount).ConvertToARM(resolved)
-		if err != nil {
-			return nil, err
-		}
-		userCreatedAcrAccount := *userCreatedAcrAccount_ARM.(*arm.UserCreatedAcrAccount)
-		result.UserCreatedAcrAccount = &userCreatedAcrAccount
 	}
 	return result, nil
 }
@@ -3723,17 +3578,6 @@ func (details *AcrDetails) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 		details.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	}
 
-	// Set property "UserCreatedAcrAccount":
-	if typedInput.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount1 UserCreatedAcrAccount
-		err := userCreatedAcrAccount1.PopulateFromARM(owner, *typedInput.UserCreatedAcrAccount)
-		if err != nil {
-			return err
-		}
-		userCreatedAcrAccount := userCreatedAcrAccount1
-		details.UserCreatedAcrAccount = &userCreatedAcrAccount
-	}
-
 	// No error
 	return nil
 }
@@ -3746,23 +3590,11 @@ func (details *AcrDetails) AssignProperties_From_AcrDetails(source *storage.AcrD
 		var systemCreatedAcrAccount SystemCreatedAcrAccount
 		err := systemCreatedAcrAccount.AssignProperties_From_SystemCreatedAcrAccount(source.SystemCreatedAcrAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemCreatedAcrAccount() to populate field SystemCreatedAcrAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemCreatedAcrAccount() to populate field SystemCreatedAcrAccount")
 		}
 		details.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	} else {
 		details.SystemCreatedAcrAccount = nil
-	}
-
-	// UserCreatedAcrAccount
-	if source.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount UserCreatedAcrAccount
-		err := userCreatedAcrAccount.AssignProperties_From_UserCreatedAcrAccount(source.UserCreatedAcrAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserCreatedAcrAccount() to populate field UserCreatedAcrAccount")
-		}
-		details.UserCreatedAcrAccount = &userCreatedAcrAccount
-	} else {
-		details.UserCreatedAcrAccount = nil
 	}
 
 	// No error
@@ -3779,23 +3611,11 @@ func (details *AcrDetails) AssignProperties_To_AcrDetails(destination *storage.A
 		var systemCreatedAcrAccount storage.SystemCreatedAcrAccount
 		err := details.SystemCreatedAcrAccount.AssignProperties_To_SystemCreatedAcrAccount(&systemCreatedAcrAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemCreatedAcrAccount() to populate field SystemCreatedAcrAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemCreatedAcrAccount() to populate field SystemCreatedAcrAccount")
 		}
 		destination.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	} else {
 		destination.SystemCreatedAcrAccount = nil
-	}
-
-	// UserCreatedAcrAccount
-	if details.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount storage.UserCreatedAcrAccount
-		err := details.UserCreatedAcrAccount.AssignProperties_To_UserCreatedAcrAccount(&userCreatedAcrAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserCreatedAcrAccount() to populate field UserCreatedAcrAccount")
-		}
-		destination.UserCreatedAcrAccount = &userCreatedAcrAccount
-	} else {
-		destination.UserCreatedAcrAccount = nil
 	}
 
 	// Update the property bag
@@ -3817,23 +3637,11 @@ func (details *AcrDetails) Initialize_From_AcrDetails_STATUS(source *AcrDetails_
 		var systemCreatedAcrAccount SystemCreatedAcrAccount
 		err := systemCreatedAcrAccount.Initialize_From_SystemCreatedAcrAccount_STATUS(source.SystemCreatedAcrAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SystemCreatedAcrAccount_STATUS() to populate field SystemCreatedAcrAccount")
+			return eris.Wrap(err, "calling Initialize_From_SystemCreatedAcrAccount_STATUS() to populate field SystemCreatedAcrAccount")
 		}
 		details.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	} else {
 		details.SystemCreatedAcrAccount = nil
-	}
-
-	// UserCreatedAcrAccount
-	if source.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount UserCreatedAcrAccount
-		err := userCreatedAcrAccount.Initialize_From_UserCreatedAcrAccount_STATUS(source.UserCreatedAcrAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UserCreatedAcrAccount_STATUS() to populate field UserCreatedAcrAccount")
-		}
-		details.UserCreatedAcrAccount = &userCreatedAcrAccount
-	} else {
-		details.UserCreatedAcrAccount = nil
 	}
 
 	// No error
@@ -3844,9 +3652,6 @@ func (details *AcrDetails) Initialize_From_AcrDetails_STATUS(source *AcrDetails_
 type AcrDetails_STATUS struct {
 	// SystemCreatedAcrAccount: Details of system created ACR account to be used for the Registry
 	SystemCreatedAcrAccount *SystemCreatedAcrAccount_STATUS `json:"systemCreatedAcrAccount,omitempty"`
-
-	// UserCreatedAcrAccount: Details of user created ACR account to be used for the Registry
-	UserCreatedAcrAccount *UserCreatedAcrAccount_STATUS `json:"userCreatedAcrAccount,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &AcrDetails_STATUS{}
@@ -3874,17 +3679,6 @@ func (details *AcrDetails_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwne
 		details.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	}
 
-	// Set property "UserCreatedAcrAccount":
-	if typedInput.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount1 UserCreatedAcrAccount_STATUS
-		err := userCreatedAcrAccount1.PopulateFromARM(owner, *typedInput.UserCreatedAcrAccount)
-		if err != nil {
-			return err
-		}
-		userCreatedAcrAccount := userCreatedAcrAccount1
-		details.UserCreatedAcrAccount = &userCreatedAcrAccount
-	}
-
 	// No error
 	return nil
 }
@@ -3897,23 +3691,11 @@ func (details *AcrDetails_STATUS) AssignProperties_From_AcrDetails_STATUS(source
 		var systemCreatedAcrAccount SystemCreatedAcrAccount_STATUS
 		err := systemCreatedAcrAccount.AssignProperties_From_SystemCreatedAcrAccount_STATUS(source.SystemCreatedAcrAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemCreatedAcrAccount_STATUS() to populate field SystemCreatedAcrAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemCreatedAcrAccount_STATUS() to populate field SystemCreatedAcrAccount")
 		}
 		details.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	} else {
 		details.SystemCreatedAcrAccount = nil
-	}
-
-	// UserCreatedAcrAccount
-	if source.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount UserCreatedAcrAccount_STATUS
-		err := userCreatedAcrAccount.AssignProperties_From_UserCreatedAcrAccount_STATUS(source.UserCreatedAcrAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserCreatedAcrAccount_STATUS() to populate field UserCreatedAcrAccount")
-		}
-		details.UserCreatedAcrAccount = &userCreatedAcrAccount
-	} else {
-		details.UserCreatedAcrAccount = nil
 	}
 
 	// No error
@@ -3930,23 +3712,11 @@ func (details *AcrDetails_STATUS) AssignProperties_To_AcrDetails_STATUS(destinat
 		var systemCreatedAcrAccount storage.SystemCreatedAcrAccount_STATUS
 		err := details.SystemCreatedAcrAccount.AssignProperties_To_SystemCreatedAcrAccount_STATUS(&systemCreatedAcrAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemCreatedAcrAccount_STATUS() to populate field SystemCreatedAcrAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemCreatedAcrAccount_STATUS() to populate field SystemCreatedAcrAccount")
 		}
 		destination.SystemCreatedAcrAccount = &systemCreatedAcrAccount
 	} else {
 		destination.SystemCreatedAcrAccount = nil
-	}
-
-	// UserCreatedAcrAccount
-	if details.UserCreatedAcrAccount != nil {
-		var userCreatedAcrAccount storage.UserCreatedAcrAccount_STATUS
-		err := details.UserCreatedAcrAccount.AssignProperties_To_UserCreatedAcrAccount_STATUS(&userCreatedAcrAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserCreatedAcrAccount_STATUS() to populate field UserCreatedAcrAccount")
-		}
-		destination.UserCreatedAcrAccount = &userCreatedAcrAccount
-	} else {
-		destination.UserCreatedAcrAccount = nil
 	}
 
 	// Update the property bag
@@ -4531,9 +4301,6 @@ var skuTier_STATUS_Values = map[string]SkuTier_STATUS{
 type StorageAccountDetails struct {
 	// SystemCreatedStorageAccount: Details of system created storage account to be used for the registry
 	SystemCreatedStorageAccount *SystemCreatedStorageAccount `json:"systemCreatedStorageAccount,omitempty"`
-
-	// UserCreatedStorageAccount: Details of user created storage account to be used for the registry
-	UserCreatedStorageAccount *UserCreatedStorageAccount `json:"userCreatedStorageAccount,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &StorageAccountDetails{}
@@ -4553,16 +4320,6 @@ func (details *StorageAccountDetails) ConvertToARM(resolved genruntime.ConvertTo
 		}
 		systemCreatedStorageAccount := *systemCreatedStorageAccount_ARM.(*arm.SystemCreatedStorageAccount)
 		result.SystemCreatedStorageAccount = &systemCreatedStorageAccount
-	}
-
-	// Set property "UserCreatedStorageAccount":
-	if details.UserCreatedStorageAccount != nil {
-		userCreatedStorageAccount_ARM, err := (*details.UserCreatedStorageAccount).ConvertToARM(resolved)
-		if err != nil {
-			return nil, err
-		}
-		userCreatedStorageAccount := *userCreatedStorageAccount_ARM.(*arm.UserCreatedStorageAccount)
-		result.UserCreatedStorageAccount = &userCreatedStorageAccount
 	}
 	return result, nil
 }
@@ -4590,17 +4347,6 @@ func (details *StorageAccountDetails) PopulateFromARM(owner genruntime.Arbitrary
 		details.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	}
 
-	// Set property "UserCreatedStorageAccount":
-	if typedInput.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount1 UserCreatedStorageAccount
-		err := userCreatedStorageAccount1.PopulateFromARM(owner, *typedInput.UserCreatedStorageAccount)
-		if err != nil {
-			return err
-		}
-		userCreatedStorageAccount := userCreatedStorageAccount1
-		details.UserCreatedStorageAccount = &userCreatedStorageAccount
-	}
-
 	// No error
 	return nil
 }
@@ -4613,23 +4359,11 @@ func (details *StorageAccountDetails) AssignProperties_From_StorageAccountDetail
 		var systemCreatedStorageAccount SystemCreatedStorageAccount
 		err := systemCreatedStorageAccount.AssignProperties_From_SystemCreatedStorageAccount(source.SystemCreatedStorageAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemCreatedStorageAccount() to populate field SystemCreatedStorageAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemCreatedStorageAccount() to populate field SystemCreatedStorageAccount")
 		}
 		details.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	} else {
 		details.SystemCreatedStorageAccount = nil
-	}
-
-	// UserCreatedStorageAccount
-	if source.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount UserCreatedStorageAccount
-		err := userCreatedStorageAccount.AssignProperties_From_UserCreatedStorageAccount(source.UserCreatedStorageAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserCreatedStorageAccount() to populate field UserCreatedStorageAccount")
-		}
-		details.UserCreatedStorageAccount = &userCreatedStorageAccount
-	} else {
-		details.UserCreatedStorageAccount = nil
 	}
 
 	// No error
@@ -4646,23 +4380,11 @@ func (details *StorageAccountDetails) AssignProperties_To_StorageAccountDetails(
 		var systemCreatedStorageAccount storage.SystemCreatedStorageAccount
 		err := details.SystemCreatedStorageAccount.AssignProperties_To_SystemCreatedStorageAccount(&systemCreatedStorageAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemCreatedStorageAccount() to populate field SystemCreatedStorageAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemCreatedStorageAccount() to populate field SystemCreatedStorageAccount")
 		}
 		destination.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	} else {
 		destination.SystemCreatedStorageAccount = nil
-	}
-
-	// UserCreatedStorageAccount
-	if details.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount storage.UserCreatedStorageAccount
-		err := details.UserCreatedStorageAccount.AssignProperties_To_UserCreatedStorageAccount(&userCreatedStorageAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserCreatedStorageAccount() to populate field UserCreatedStorageAccount")
-		}
-		destination.UserCreatedStorageAccount = &userCreatedStorageAccount
-	} else {
-		destination.UserCreatedStorageAccount = nil
 	}
 
 	// Update the property bag
@@ -4684,23 +4406,11 @@ func (details *StorageAccountDetails) Initialize_From_StorageAccountDetails_STAT
 		var systemCreatedStorageAccount SystemCreatedStorageAccount
 		err := systemCreatedStorageAccount.Initialize_From_SystemCreatedStorageAccount_STATUS(source.SystemCreatedStorageAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SystemCreatedStorageAccount_STATUS() to populate field SystemCreatedStorageAccount")
+			return eris.Wrap(err, "calling Initialize_From_SystemCreatedStorageAccount_STATUS() to populate field SystemCreatedStorageAccount")
 		}
 		details.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	} else {
 		details.SystemCreatedStorageAccount = nil
-	}
-
-	// UserCreatedStorageAccount
-	if source.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount UserCreatedStorageAccount
-		err := userCreatedStorageAccount.Initialize_From_UserCreatedStorageAccount_STATUS(source.UserCreatedStorageAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UserCreatedStorageAccount_STATUS() to populate field UserCreatedStorageAccount")
-		}
-		details.UserCreatedStorageAccount = &userCreatedStorageAccount
-	} else {
-		details.UserCreatedStorageAccount = nil
 	}
 
 	// No error
@@ -4711,9 +4421,6 @@ func (details *StorageAccountDetails) Initialize_From_StorageAccountDetails_STAT
 type StorageAccountDetails_STATUS struct {
 	// SystemCreatedStorageAccount: Details of system created storage account to be used for the registry
 	SystemCreatedStorageAccount *SystemCreatedStorageAccount_STATUS `json:"systemCreatedStorageAccount,omitempty"`
-
-	// UserCreatedStorageAccount: Details of user created storage account to be used for the registry
-	UserCreatedStorageAccount *UserCreatedStorageAccount_STATUS `json:"userCreatedStorageAccount,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &StorageAccountDetails_STATUS{}
@@ -4741,17 +4448,6 @@ func (details *StorageAccountDetails_STATUS) PopulateFromARM(owner genruntime.Ar
 		details.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	}
 
-	// Set property "UserCreatedStorageAccount":
-	if typedInput.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount1 UserCreatedStorageAccount_STATUS
-		err := userCreatedStorageAccount1.PopulateFromARM(owner, *typedInput.UserCreatedStorageAccount)
-		if err != nil {
-			return err
-		}
-		userCreatedStorageAccount := userCreatedStorageAccount1
-		details.UserCreatedStorageAccount = &userCreatedStorageAccount
-	}
-
 	// No error
 	return nil
 }
@@ -4764,23 +4460,11 @@ func (details *StorageAccountDetails_STATUS) AssignProperties_From_StorageAccoun
 		var systemCreatedStorageAccount SystemCreatedStorageAccount_STATUS
 		err := systemCreatedStorageAccount.AssignProperties_From_SystemCreatedStorageAccount_STATUS(source.SystemCreatedStorageAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemCreatedStorageAccount_STATUS() to populate field SystemCreatedStorageAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemCreatedStorageAccount_STATUS() to populate field SystemCreatedStorageAccount")
 		}
 		details.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	} else {
 		details.SystemCreatedStorageAccount = nil
-	}
-
-	// UserCreatedStorageAccount
-	if source.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount UserCreatedStorageAccount_STATUS
-		err := userCreatedStorageAccount.AssignProperties_From_UserCreatedStorageAccount_STATUS(source.UserCreatedStorageAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserCreatedStorageAccount_STATUS() to populate field UserCreatedStorageAccount")
-		}
-		details.UserCreatedStorageAccount = &userCreatedStorageAccount
-	} else {
-		details.UserCreatedStorageAccount = nil
 	}
 
 	// No error
@@ -4797,23 +4481,11 @@ func (details *StorageAccountDetails_STATUS) AssignProperties_To_StorageAccountD
 		var systemCreatedStorageAccount storage.SystemCreatedStorageAccount_STATUS
 		err := details.SystemCreatedStorageAccount.AssignProperties_To_SystemCreatedStorageAccount_STATUS(&systemCreatedStorageAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemCreatedStorageAccount_STATUS() to populate field SystemCreatedStorageAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemCreatedStorageAccount_STATUS() to populate field SystemCreatedStorageAccount")
 		}
 		destination.SystemCreatedStorageAccount = &systemCreatedStorageAccount
 	} else {
 		destination.SystemCreatedStorageAccount = nil
-	}
-
-	// UserCreatedStorageAccount
-	if details.UserCreatedStorageAccount != nil {
-		var userCreatedStorageAccount storage.UserCreatedStorageAccount_STATUS
-		err := details.UserCreatedStorageAccount.AssignProperties_To_UserCreatedStorageAccount_STATUS(&userCreatedStorageAccount)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserCreatedStorageAccount_STATUS() to populate field UserCreatedStorageAccount")
-		}
-		destination.UserCreatedStorageAccount = &userCreatedStorageAccount
-	} else {
-		destination.UserCreatedStorageAccount = nil
 	}
 
 	// Update the property bag
@@ -5179,7 +4851,7 @@ func (account *SystemCreatedAcrAccount_STATUS) AssignProperties_From_SystemCreat
 		var armResourceId ArmResourceId_STATUS
 		err := armResourceId.AssignProperties_From_ArmResourceId_STATUS(source.ArmResourceId)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ArmResourceId")
+			return eris.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ArmResourceId")
 		}
 		account.ArmResourceId = &armResourceId
 	} else {
@@ -5206,7 +4878,7 @@ func (account *SystemCreatedAcrAccount_STATUS) AssignProperties_To_SystemCreated
 		var armResourceId storage.ArmResourceId_STATUS
 		err := account.ArmResourceId.AssignProperties_To_ArmResourceId_STATUS(&armResourceId)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ArmResourceId")
+			return eris.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ArmResourceId")
 		}
 		destination.ArmResourceId = &armResourceId
 	} else {
@@ -5511,7 +5183,7 @@ func (account *SystemCreatedStorageAccount_STATUS) AssignProperties_From_SystemC
 		var armResourceId ArmResourceId_STATUS
 		err := armResourceId.AssignProperties_From_ArmResourceId_STATUS(source.ArmResourceId)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ArmResourceId")
+			return eris.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ArmResourceId")
 		}
 		account.ArmResourceId = &armResourceId
 	} else {
@@ -5554,7 +5226,7 @@ func (account *SystemCreatedStorageAccount_STATUS) AssignProperties_To_SystemCre
 		var armResourceId storage.ArmResourceId_STATUS
 		err := account.ArmResourceId.AssignProperties_To_ArmResourceId_STATUS(&armResourceId)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ArmResourceId")
+			return eris.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ArmResourceId")
 		}
 		destination.ArmResourceId = &armResourceId
 	} else {
@@ -5574,406 +5246,6 @@ func (account *SystemCreatedStorageAccount_STATUS) AssignProperties_To_SystemCre
 
 	// StorageAccountType
 	destination.StorageAccountType = genruntime.ClonePointerToString(account.StorageAccountType)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-type UserCreatedAcrAccount struct {
-	// ArmResourceId: ARM ResourceId of a resource
-	ArmResourceId *ArmResourceId `json:"armResourceId,omitempty"`
-}
-
-var _ genruntime.ARMTransformer = &UserCreatedAcrAccount{}
-
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (account *UserCreatedAcrAccount) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if account == nil {
-		return nil, nil
-	}
-	result := &arm.UserCreatedAcrAccount{}
-
-	// Set property "ArmResourceId":
-	if account.ArmResourceId != nil {
-		armResourceId_ARM, err := (*account.ArmResourceId).ConvertToARM(resolved)
-		if err != nil {
-			return nil, err
-		}
-		armResourceId := *armResourceId_ARM.(*arm.ArmResourceId)
-		result.ArmResourceId = &armResourceId
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (account *UserCreatedAcrAccount) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.UserCreatedAcrAccount{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (account *UserCreatedAcrAccount) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.UserCreatedAcrAccount)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.UserCreatedAcrAccount, got %T", armInput)
-	}
-
-	// Set property "ArmResourceId":
-	if typedInput.ArmResourceId != nil {
-		var armResourceId1 ArmResourceId
-		err := armResourceId1.PopulateFromARM(owner, *typedInput.ArmResourceId)
-		if err != nil {
-			return err
-		}
-		armResourceId := armResourceId1
-		account.ArmResourceId = &armResourceId
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_UserCreatedAcrAccount populates our UserCreatedAcrAccount from the provided source UserCreatedAcrAccount
-func (account *UserCreatedAcrAccount) AssignProperties_From_UserCreatedAcrAccount(source *storage.UserCreatedAcrAccount) error {
-
-	// ArmResourceId
-	if source.ArmResourceId != nil {
-		var armResourceId ArmResourceId
-		err := armResourceId.AssignProperties_From_ArmResourceId(source.ArmResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId() to populate field ArmResourceId")
-		}
-		account.ArmResourceId = &armResourceId
-	} else {
-		account.ArmResourceId = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_UserCreatedAcrAccount populates the provided destination UserCreatedAcrAccount from our UserCreatedAcrAccount
-func (account *UserCreatedAcrAccount) AssignProperties_To_UserCreatedAcrAccount(destination *storage.UserCreatedAcrAccount) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// ArmResourceId
-	if account.ArmResourceId != nil {
-		var armResourceId storage.ArmResourceId
-		err := account.ArmResourceId.AssignProperties_To_ArmResourceId(&armResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId() to populate field ArmResourceId")
-		}
-		destination.ArmResourceId = &armResourceId
-	} else {
-		destination.ArmResourceId = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UserCreatedAcrAccount_STATUS populates our UserCreatedAcrAccount from the provided source UserCreatedAcrAccount_STATUS
-func (account *UserCreatedAcrAccount) Initialize_From_UserCreatedAcrAccount_STATUS(source *UserCreatedAcrAccount_STATUS) error {
-
-	// ArmResourceId
-	if source.ArmResourceId != nil {
-		var armResourceId ArmResourceId
-		err := armResourceId.Initialize_From_ArmResourceId_STATUS(source.ArmResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ArmResourceId_STATUS() to populate field ArmResourceId")
-		}
-		account.ArmResourceId = &armResourceId
-	} else {
-		account.ArmResourceId = nil
-	}
-
-	// No error
-	return nil
-}
-
-type UserCreatedAcrAccount_STATUS struct {
-	// ArmResourceId: ARM ResourceId of a resource
-	ArmResourceId *ArmResourceId_STATUS `json:"armResourceId,omitempty"`
-}
-
-var _ genruntime.FromARMConverter = &UserCreatedAcrAccount_STATUS{}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (account *UserCreatedAcrAccount_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.UserCreatedAcrAccount_STATUS{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (account *UserCreatedAcrAccount_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.UserCreatedAcrAccount_STATUS)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.UserCreatedAcrAccount_STATUS, got %T", armInput)
-	}
-
-	// Set property "ArmResourceId":
-	if typedInput.ArmResourceId != nil {
-		var armResourceId1 ArmResourceId_STATUS
-		err := armResourceId1.PopulateFromARM(owner, *typedInput.ArmResourceId)
-		if err != nil {
-			return err
-		}
-		armResourceId := armResourceId1
-		account.ArmResourceId = &armResourceId
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_UserCreatedAcrAccount_STATUS populates our UserCreatedAcrAccount_STATUS from the provided source UserCreatedAcrAccount_STATUS
-func (account *UserCreatedAcrAccount_STATUS) AssignProperties_From_UserCreatedAcrAccount_STATUS(source *storage.UserCreatedAcrAccount_STATUS) error {
-
-	// ArmResourceId
-	if source.ArmResourceId != nil {
-		var armResourceId ArmResourceId_STATUS
-		err := armResourceId.AssignProperties_From_ArmResourceId_STATUS(source.ArmResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ArmResourceId")
-		}
-		account.ArmResourceId = &armResourceId
-	} else {
-		account.ArmResourceId = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_UserCreatedAcrAccount_STATUS populates the provided destination UserCreatedAcrAccount_STATUS from our UserCreatedAcrAccount_STATUS
-func (account *UserCreatedAcrAccount_STATUS) AssignProperties_To_UserCreatedAcrAccount_STATUS(destination *storage.UserCreatedAcrAccount_STATUS) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// ArmResourceId
-	if account.ArmResourceId != nil {
-		var armResourceId storage.ArmResourceId_STATUS
-		err := account.ArmResourceId.AssignProperties_To_ArmResourceId_STATUS(&armResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ArmResourceId")
-		}
-		destination.ArmResourceId = &armResourceId
-	} else {
-		destination.ArmResourceId = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-type UserCreatedStorageAccount struct {
-	// ArmResourceId: ARM ResourceId of a resource
-	ArmResourceId *ArmResourceId `json:"armResourceId,omitempty"`
-}
-
-var _ genruntime.ARMTransformer = &UserCreatedStorageAccount{}
-
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (account *UserCreatedStorageAccount) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if account == nil {
-		return nil, nil
-	}
-	result := &arm.UserCreatedStorageAccount{}
-
-	// Set property "ArmResourceId":
-	if account.ArmResourceId != nil {
-		armResourceId_ARM, err := (*account.ArmResourceId).ConvertToARM(resolved)
-		if err != nil {
-			return nil, err
-		}
-		armResourceId := *armResourceId_ARM.(*arm.ArmResourceId)
-		result.ArmResourceId = &armResourceId
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (account *UserCreatedStorageAccount) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.UserCreatedStorageAccount{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (account *UserCreatedStorageAccount) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.UserCreatedStorageAccount)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.UserCreatedStorageAccount, got %T", armInput)
-	}
-
-	// Set property "ArmResourceId":
-	if typedInput.ArmResourceId != nil {
-		var armResourceId1 ArmResourceId
-		err := armResourceId1.PopulateFromARM(owner, *typedInput.ArmResourceId)
-		if err != nil {
-			return err
-		}
-		armResourceId := armResourceId1
-		account.ArmResourceId = &armResourceId
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_UserCreatedStorageAccount populates our UserCreatedStorageAccount from the provided source UserCreatedStorageAccount
-func (account *UserCreatedStorageAccount) AssignProperties_From_UserCreatedStorageAccount(source *storage.UserCreatedStorageAccount) error {
-
-	// ArmResourceId
-	if source.ArmResourceId != nil {
-		var armResourceId ArmResourceId
-		err := armResourceId.AssignProperties_From_ArmResourceId(source.ArmResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId() to populate field ArmResourceId")
-		}
-		account.ArmResourceId = &armResourceId
-	} else {
-		account.ArmResourceId = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_UserCreatedStorageAccount populates the provided destination UserCreatedStorageAccount from our UserCreatedStorageAccount
-func (account *UserCreatedStorageAccount) AssignProperties_To_UserCreatedStorageAccount(destination *storage.UserCreatedStorageAccount) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// ArmResourceId
-	if account.ArmResourceId != nil {
-		var armResourceId storage.ArmResourceId
-		err := account.ArmResourceId.AssignProperties_To_ArmResourceId(&armResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId() to populate field ArmResourceId")
-		}
-		destination.ArmResourceId = &armResourceId
-	} else {
-		destination.ArmResourceId = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UserCreatedStorageAccount_STATUS populates our UserCreatedStorageAccount from the provided source UserCreatedStorageAccount_STATUS
-func (account *UserCreatedStorageAccount) Initialize_From_UserCreatedStorageAccount_STATUS(source *UserCreatedStorageAccount_STATUS) error {
-
-	// ArmResourceId
-	if source.ArmResourceId != nil {
-		var armResourceId ArmResourceId
-		err := armResourceId.Initialize_From_ArmResourceId_STATUS(source.ArmResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ArmResourceId_STATUS() to populate field ArmResourceId")
-		}
-		account.ArmResourceId = &armResourceId
-	} else {
-		account.ArmResourceId = nil
-	}
-
-	// No error
-	return nil
-}
-
-type UserCreatedStorageAccount_STATUS struct {
-	// ArmResourceId: ARM ResourceId of a resource
-	ArmResourceId *ArmResourceId_STATUS `json:"armResourceId,omitempty"`
-}
-
-var _ genruntime.FromARMConverter = &UserCreatedStorageAccount_STATUS{}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (account *UserCreatedStorageAccount_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.UserCreatedStorageAccount_STATUS{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (account *UserCreatedStorageAccount_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.UserCreatedStorageAccount_STATUS)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.UserCreatedStorageAccount_STATUS, got %T", armInput)
-	}
-
-	// Set property "ArmResourceId":
-	if typedInput.ArmResourceId != nil {
-		var armResourceId1 ArmResourceId_STATUS
-		err := armResourceId1.PopulateFromARM(owner, *typedInput.ArmResourceId)
-		if err != nil {
-			return err
-		}
-		armResourceId := armResourceId1
-		account.ArmResourceId = &armResourceId
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_UserCreatedStorageAccount_STATUS populates our UserCreatedStorageAccount_STATUS from the provided source UserCreatedStorageAccount_STATUS
-func (account *UserCreatedStorageAccount_STATUS) AssignProperties_From_UserCreatedStorageAccount_STATUS(source *storage.UserCreatedStorageAccount_STATUS) error {
-
-	// ArmResourceId
-	if source.ArmResourceId != nil {
-		var armResourceId ArmResourceId_STATUS
-		err := armResourceId.AssignProperties_From_ArmResourceId_STATUS(source.ArmResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ArmResourceId_STATUS() to populate field ArmResourceId")
-		}
-		account.ArmResourceId = &armResourceId
-	} else {
-		account.ArmResourceId = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_UserCreatedStorageAccount_STATUS populates the provided destination UserCreatedStorageAccount_STATUS from our UserCreatedStorageAccount_STATUS
-func (account *UserCreatedStorageAccount_STATUS) AssignProperties_To_UserCreatedStorageAccount_STATUS(destination *storage.UserCreatedStorageAccount_STATUS) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// ArmResourceId
-	if account.ArmResourceId != nil {
-		var armResourceId storage.ArmResourceId_STATUS
-		err := account.ArmResourceId.AssignProperties_To_ArmResourceId_STATUS(&armResourceId)
-		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ArmResourceId_STATUS() to populate field ArmResourceId")
-		}
-		destination.ArmResourceId = &armResourceId
-	} else {
-		destination.ArmResourceId = nil
-	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

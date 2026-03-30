@@ -124,6 +124,7 @@ SignalR_STATUS: Object (10 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 SignalR_Spec: Object (7 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (3 values)
@@ -204,3 +205,4 @@ SignalR_Spec: Object (7 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+

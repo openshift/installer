@@ -53,9 +53,6 @@ type TemplateData struct {
 	// BaremetalIntrospectionEndpointOverride contains the url for the baremetal introspection endpoint
 	BaremetalIntrospectionEndpointOverride string
 
-	// ClusterOSImage contains 4 URLs to download RHCOS live iso, kernel, rootfs and initramfs
-	ClusterOSImage string
-
 	// API VIP for use by ironic during bootstrap.
 	APIVIPs []string
 
@@ -89,6 +86,8 @@ type TemplateData struct {
 
 	// AdditionalNTPServers holds a list of additional NTP servers to be used for provisioning
 	AdditionalNTPServers []string
+
+	BMCVerifyCA string
 }
 
 func externalURLs(apiVIPs []string, protocol string) (externalURLv4 string, externalURLv6 string) {
@@ -126,6 +125,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ExternalStaticGateway = config.BootstrapExternalStaticGateway
 	templateData.ExternalStaticDNS = config.BootstrapExternalStaticDNS
 	templateData.ExternalMACAddress = config.ExternalMACAddress
+	templateData.BMCVerifyCA = config.BMCVerifyCA
 
 	if len(config.AdditionalNTPServers) > 0 {
 		templateData.AdditionalNTPServers = config.AdditionalNTPServers
@@ -174,25 +174,23 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	}
 
 	if config.BootstrapExternalStaticIP != "" {
-		for _, network := range networks {
-			cidr, _ := network.CIDR.Mask.Size()
-			templateData.ExternalSubnetCIDR = cidr
-			break
+		bootstrapExternalIP := net.ParseIP(config.BootstrapExternalStaticIP)
+		externalMaskLen := 64
+		if defaultMask := bootstrapExternalIP.DefaultMask(); defaultMask != nil {
+			externalMaskLen, _ = defaultMask.Size()
 		}
-	}
-
-	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
-		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
-		templateData.ProvisioningCIDR = cidr
-		templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
-		templateData.ProvisioningInterfaceMAC = config.ProvisioningMACAddress
-		templateData.ProvisioningDNSMasq = true
+		for _, network := range networks {
+			if network.CIDR.Contains(bootstrapExternalIP) {
+				externalMaskLen, _ = network.CIDR.Mask.Size()
+				break
+			}
+		}
+		templateData.ExternalSubnetCIDR = externalMaskLen
 	}
 
 	switch config.ProvisioningNetwork {
 	case baremetal.ManagedProvisioningNetwork:
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
-
 		// When provisioning network is managed, we set a DHCP range including
 		// netmask for dnsmasq.
 		templateData.ProvisioningDHCPRange = fmt.Sprintf("%s,%d", config.ProvisioningDHCPRange, cidr)
@@ -204,6 +202,13 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 			}
 		}
 		templateData.ProvisioningDHCPAllowList = strings.Join(dhcpAllowList, " ")
+		fallthrough
+	case baremetal.UnmanagedProvisioningNetwork:
+		templateData.ProvisioningDNSMasq = true
+		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
+		templateData.ProvisioningCIDR = cidr
+		templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
+		templateData.ProvisioningInterfaceMAC = config.ProvisioningMACAddress
 	case baremetal.DisabledProvisioningNetwork:
 		templateData.ProvisioningInterfaceMAC = config.ExternalMACAddress
 		templateData.ProvisioningDNSMasq = false
@@ -222,7 +227,6 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	templateData.IronicUsername = ironicUsername
 	templateData.IronicPassword = ironicPassword
-	templateData.ClusterOSImage = config.ClusterOSImage
 
 	return &templateData
 }

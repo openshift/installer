@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (vault *Vault) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = vault.AssignProperties_From_Vault(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to vault")
+		return eris.Wrap(err, "converting from source to vault")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (vault *Vault) ConvertTo(hub conversion.Hub) error {
 	var destination storage.Vault
 	err := vault.AssignProperties_To_Vault(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from vault")
+		return eris.Wrap(err, "converting to destination from vault")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-keyvault-azure-com-v1api20210401preview-vault,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=keyvault.azure.com,resources=vaults,verbs=create;update,versions=v1api20210401preview,name=default.v1api20210401preview.vaults.keyvault.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Vault{}
-
-// Default applies defaults to the Vault resource
-func (vault *Vault) Default() {
-	vault.defaultImpl()
-	var temp any = vault
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (vault *Vault) defaultAzureName() {
-	if vault.Spec.AzureName == "" {
-		vault.Spec.AzureName = vault.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Vault resource
-func (vault *Vault) defaultImpl() { vault.defaultAzureName() }
 
 var _ configmaps.Exporter = &Vault{}
 
@@ -176,6 +150,10 @@ func (vault *Vault) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (vault *Vault) Owner() *genruntime.ResourceReference {
+	if vault.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(vault.Spec)
 	return vault.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,126 +170,11 @@ func (vault *Vault) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Vault_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	vault.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-keyvault-azure-com-v1api20210401preview-vault,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=keyvault.azure.com,resources=vaults,verbs=create;update,versions=v1api20210401preview,name=validate.v1api20210401preview.vaults.keyvault.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Vault{}
-
-// ValidateCreate validates the creation of the resource
-func (vault *Vault) ValidateCreate() (admission.Warnings, error) {
-	validations := vault.createValidations()
-	var temp any = vault
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (vault *Vault) ValidateDelete() (admission.Warnings, error) {
-	validations := vault.deleteValidations()
-	var temp any = vault
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (vault *Vault) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := vault.updateValidations()
-	var temp any = vault
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (vault *Vault) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){vault.validateResourceReferences, vault.validateOwnerReference, vault.validateSecretDestinations, vault.validateConfigMapDestinations, vault.validateOptionalConfigMapReferences}
-}
-
-// deleteValidations validates the deletion of the resource
-func (vault *Vault) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (vault *Vault) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateResourceReferences()
-		},
-		vault.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateConfigMapDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateOptionalConfigMapReferences()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (vault *Vault) validateConfigMapDestinations() (admission.Warnings, error) {
-	if vault.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(vault, nil, vault.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
-func (vault *Vault) validateOptionalConfigMapReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&vault.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return configmaps.ValidateOptionalReferences(refs)
-}
-
-// validateOwnerReference validates the owner field
-func (vault *Vault) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(vault)
-}
-
-// validateResourceReferences validates all resource references
-func (vault *Vault) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&vault.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (vault *Vault) validateSecretDestinations() (admission.Warnings, error) {
-	if vault.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(vault, nil, vault.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (vault *Vault) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Vault)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, vault)
 }
 
 // AssignProperties_From_Vault populates our Vault from the provided source Vault
@@ -324,7 +187,7 @@ func (vault *Vault) AssignProperties_From_Vault(source *storage.Vault) error {
 	var spec Vault_Spec
 	err := spec.AssignProperties_From_Vault_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Vault_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Vault_Spec() to populate field Spec")
 	}
 	vault.Spec = spec
 
@@ -332,7 +195,7 @@ func (vault *Vault) AssignProperties_From_Vault(source *storage.Vault) error {
 	var status Vault_STATUS
 	err = status.AssignProperties_From_Vault_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Vault_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Vault_STATUS() to populate field Status")
 	}
 	vault.Status = status
 
@@ -350,7 +213,7 @@ func (vault *Vault) AssignProperties_To_Vault(destination *storage.Vault) error 
 	var spec storage.Vault_Spec
 	err := vault.Spec.AssignProperties_To_Vault_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Vault_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Vault_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -358,7 +221,7 @@ func (vault *Vault) AssignProperties_To_Vault(destination *storage.Vault) error 
 	var status storage.Vault_STATUS
 	err = vault.Status.AssignProperties_To_Vault_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Vault_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Vault_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -522,13 +385,13 @@ func (vault *Vault_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) erro
 	src = &storage.Vault_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = vault.AssignProperties_From_Vault_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -546,13 +409,13 @@ func (vault *Vault_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) e
 	dst = &storage.Vault_Spec{}
 	err := vault.AssignProperties_To_Vault_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -572,7 +435,7 @@ func (vault *Vault_Spec) AssignProperties_From_Vault_Spec(source *storage.Vault_
 		var operatorSpec VaultOperatorSpec
 		err := operatorSpec.AssignProperties_From_VaultOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VaultOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_VaultOperatorSpec() to populate field OperatorSpec")
 		}
 		vault.OperatorSpec = &operatorSpec
 	} else {
@@ -592,7 +455,7 @@ func (vault *Vault_Spec) AssignProperties_From_Vault_Spec(source *storage.Vault_
 		var property VaultProperties
 		err := property.AssignProperties_From_VaultProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VaultProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_VaultProperties() to populate field Properties")
 		}
 		vault.Properties = &property
 	} else {
@@ -622,7 +485,7 @@ func (vault *Vault_Spec) AssignProperties_To_Vault_Spec(destination *storage.Vau
 		var operatorSpec storage.VaultOperatorSpec
 		err := vault.OperatorSpec.AssignProperties_To_VaultOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VaultOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_VaultOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -645,7 +508,7 @@ func (vault *Vault_Spec) AssignProperties_To_Vault_Spec(destination *storage.Vau
 		var property storage.VaultProperties
 		err := vault.Properties.AssignProperties_To_VaultProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VaultProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_VaultProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -715,13 +578,13 @@ func (vault *Vault_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus
 	src = &storage.Vault_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = vault.AssignProperties_From_Vault_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -739,13 +602,13 @@ func (vault *Vault_STATUS) ConvertStatusTo(destination genruntime.ConvertibleSta
 	dst = &storage.Vault_STATUS{}
 	err := vault.AssignProperties_To_Vault_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -845,7 +708,7 @@ func (vault *Vault_STATUS) AssignProperties_From_Vault_STATUS(source *storage.Va
 		var property VaultProperties_STATUS
 		err := property.AssignProperties_From_VaultProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VaultProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_VaultProperties_STATUS() to populate field Properties")
 		}
 		vault.Properties = &property
 	} else {
@@ -857,7 +720,7 @@ func (vault *Vault_STATUS) AssignProperties_From_Vault_STATUS(source *storage.Va
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		vault.SystemData = &systemDatum
 	} else {
@@ -896,7 +759,7 @@ func (vault *Vault_STATUS) AssignProperties_To_Vault_STATUS(destination *storage
 		var property storage.VaultProperties_STATUS
 		err := vault.Properties.AssignProperties_To_VaultProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VaultProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_VaultProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -908,7 +771,7 @@ func (vault *Vault_STATUS) AssignProperties_To_Vault_STATUS(destination *storage
 		var systemDatum storage.SystemData_STATUS
 		err := vault.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1365,7 +1228,7 @@ func (properties *VaultProperties) ConvertToARM(resolved genruntime.ConvertToARM
 	if properties.TenantIdFromConfig != nil {
 		tenantIdValue, err := resolved.ResolvedConfigMaps.Lookup(*properties.TenantIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property TenantId")
+			return nil, eris.Wrap(err, "looking up configmap for property TenantId")
 		}
 		tenantId := tenantIdValue
 		result.TenantId = &tenantId
@@ -1511,7 +1374,7 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 			var accessPolicy AccessPolicyEntry
 			err := accessPolicy.AssignProperties_From_AccessPolicyEntry(&accessPolicyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AccessPolicyEntry() to populate field AccessPolicies")
+				return eris.Wrap(err, "calling AssignProperties_From_AccessPolicyEntry() to populate field AccessPolicies")
 			}
 			accessPolicyList[accessPolicyIndex] = accessPolicy
 		}
@@ -1582,7 +1445,7 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 		var networkAcl NetworkRuleSet
 		err := networkAcl.AssignProperties_From_NetworkRuleSet(source.NetworkAcls)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkRuleSet() to populate field NetworkAcls")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkRuleSet() to populate field NetworkAcls")
 		}
 		properties.NetworkAcls = &networkAcl
 	} else {
@@ -1603,7 +1466,7 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		properties.Sku = &sku
 	} else {
@@ -1614,12 +1477,7 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 	properties.SoftDeleteRetentionInDays = genruntime.ClonePointerToInt(source.SoftDeleteRetentionInDays)
 
 	// TenantId
-	if source.TenantId != nil {
-		tenantId := *source.TenantId
-		properties.TenantId = &tenantId
-	} else {
-		properties.TenantId = nil
-	}
+	properties.TenantId = genruntime.ClonePointerToString(source.TenantId)
 
 	// TenantIdFromConfig
 	if source.TenantIdFromConfig != nil {
@@ -1650,7 +1508,7 @@ func (properties *VaultProperties) AssignProperties_To_VaultProperties(destinati
 			var accessPolicy storage.AccessPolicyEntry
 			err := accessPolicyItem.AssignProperties_To_AccessPolicyEntry(&accessPolicy)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AccessPolicyEntry() to populate field AccessPolicies")
+				return eris.Wrap(err, "calling AssignProperties_To_AccessPolicyEntry() to populate field AccessPolicies")
 			}
 			accessPolicyList[accessPolicyIndex] = accessPolicy
 		}
@@ -1720,7 +1578,7 @@ func (properties *VaultProperties) AssignProperties_To_VaultProperties(destinati
 		var networkAcl storage.NetworkRuleSet
 		err := properties.NetworkAcls.AssignProperties_To_NetworkRuleSet(&networkAcl)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkRuleSet() to populate field NetworkAcls")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkRuleSet() to populate field NetworkAcls")
 		}
 		destination.NetworkAcls = &networkAcl
 	} else {
@@ -1740,7 +1598,7 @@ func (properties *VaultProperties) AssignProperties_To_VaultProperties(destinati
 		var sku storage.Sku
 		err := properties.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1751,12 +1609,7 @@ func (properties *VaultProperties) AssignProperties_To_VaultProperties(destinati
 	destination.SoftDeleteRetentionInDays = genruntime.ClonePointerToInt(properties.SoftDeleteRetentionInDays)
 
 	// TenantId
-	if properties.TenantId != nil {
-		tenantId := *properties.TenantId
-		destination.TenantId = &tenantId
-	} else {
-		destination.TenantId = nil
-	}
+	destination.TenantId = genruntime.ClonePointerToString(properties.TenantId)
 
 	// TenantIdFromConfig
 	if properties.TenantIdFromConfig != nil {
@@ -1993,7 +1846,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 			var accessPolicy AccessPolicyEntry_STATUS
 			err := accessPolicy.AssignProperties_From_AccessPolicyEntry_STATUS(&accessPolicyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AccessPolicyEntry_STATUS() to populate field AccessPolicies")
+				return eris.Wrap(err, "calling AssignProperties_From_AccessPolicyEntry_STATUS() to populate field AccessPolicies")
 			}
 			accessPolicyList[accessPolicyIndex] = accessPolicy
 		}
@@ -2067,7 +1920,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 		var networkAcl NetworkRuleSet_STATUS
 		err := networkAcl.AssignProperties_From_NetworkRuleSet_STATUS(source.NetworkAcls)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkRuleSet_STATUS() to populate field NetworkAcls")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkRuleSet_STATUS() to populate field NetworkAcls")
 		}
 		properties.NetworkAcls = &networkAcl
 	} else {
@@ -2083,7 +1936,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 			var privateEndpointConnection PrivateEndpointConnectionItem_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnectionItem_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnectionItem_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnectionItem_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -2106,7 +1959,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		properties.Sku = &sku
 	} else {
@@ -2140,7 +1993,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 			var accessPolicy storage.AccessPolicyEntry_STATUS
 			err := accessPolicyItem.AssignProperties_To_AccessPolicyEntry_STATUS(&accessPolicy)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AccessPolicyEntry_STATUS() to populate field AccessPolicies")
+				return eris.Wrap(err, "calling AssignProperties_To_AccessPolicyEntry_STATUS() to populate field AccessPolicies")
 			}
 			accessPolicyList[accessPolicyIndex] = accessPolicy
 		}
@@ -2213,7 +2066,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 		var networkAcl storage.NetworkRuleSet_STATUS
 		err := properties.NetworkAcls.AssignProperties_To_NetworkRuleSet_STATUS(&networkAcl)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkRuleSet_STATUS() to populate field NetworkAcls")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkRuleSet_STATUS() to populate field NetworkAcls")
 		}
 		destination.NetworkAcls = &networkAcl
 	} else {
@@ -2229,7 +2082,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 			var privateEndpointConnection storage.PrivateEndpointConnectionItem_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnectionItem_STATUS(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnectionItem_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnectionItem_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -2251,7 +2104,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 		var sku storage.Sku_STATUS
 		err := properties.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -2326,7 +2179,7 @@ func (entry *AccessPolicyEntry) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if entry.ApplicationIdFromConfig != nil {
 		applicationIdValue, err := resolved.ResolvedConfigMaps.Lookup(*entry.ApplicationIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property ApplicationId")
+			return nil, eris.Wrap(err, "looking up configmap for property ApplicationId")
 		}
 		applicationId := applicationIdValue
 		result.ApplicationId = &applicationId
@@ -2340,7 +2193,7 @@ func (entry *AccessPolicyEntry) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if entry.ObjectIdFromConfig != nil {
 		objectIdValue, err := resolved.ResolvedConfigMaps.Lookup(*entry.ObjectIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property ObjectId")
+			return nil, eris.Wrap(err, "looking up configmap for property ObjectId")
 		}
 		objectId := objectIdValue
 		result.ObjectId = &objectId
@@ -2364,7 +2217,7 @@ func (entry *AccessPolicyEntry) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if entry.TenantIdFromConfig != nil {
 		tenantIdValue, err := resolved.ResolvedConfigMaps.Lookup(*entry.TenantIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property TenantId")
+			return nil, eris.Wrap(err, "looking up configmap for property TenantId")
 		}
 		tenantId := tenantIdValue
 		result.TenantId = &tenantId
@@ -2427,12 +2280,7 @@ func (entry *AccessPolicyEntry) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 func (entry *AccessPolicyEntry) AssignProperties_From_AccessPolicyEntry(source *storage.AccessPolicyEntry) error {
 
 	// ApplicationId
-	if source.ApplicationId != nil {
-		applicationId := *source.ApplicationId
-		entry.ApplicationId = &applicationId
-	} else {
-		entry.ApplicationId = nil
-	}
+	entry.ApplicationId = genruntime.ClonePointerToString(source.ApplicationId)
 
 	// ApplicationIdFromConfig
 	if source.ApplicationIdFromConfig != nil {
@@ -2458,7 +2306,7 @@ func (entry *AccessPolicyEntry) AssignProperties_From_AccessPolicyEntry(source *
 		var permission Permissions
 		err := permission.AssignProperties_From_Permissions(source.Permissions)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Permissions() to populate field Permissions")
+			return eris.Wrap(err, "calling AssignProperties_From_Permissions() to populate field Permissions")
 		}
 		entry.Permissions = &permission
 	} else {
@@ -2466,12 +2314,7 @@ func (entry *AccessPolicyEntry) AssignProperties_From_AccessPolicyEntry(source *
 	}
 
 	// TenantId
-	if source.TenantId != nil {
-		tenantId := *source.TenantId
-		entry.TenantId = &tenantId
-	} else {
-		entry.TenantId = nil
-	}
+	entry.TenantId = genruntime.ClonePointerToString(source.TenantId)
 
 	// TenantIdFromConfig
 	if source.TenantIdFromConfig != nil {
@@ -2491,12 +2334,7 @@ func (entry *AccessPolicyEntry) AssignProperties_To_AccessPolicyEntry(destinatio
 	propertyBag := genruntime.NewPropertyBag()
 
 	// ApplicationId
-	if entry.ApplicationId != nil {
-		applicationId := *entry.ApplicationId
-		destination.ApplicationId = &applicationId
-	} else {
-		destination.ApplicationId = nil
-	}
+	destination.ApplicationId = genruntime.ClonePointerToString(entry.ApplicationId)
 
 	// ApplicationIdFromConfig
 	if entry.ApplicationIdFromConfig != nil {
@@ -2522,7 +2360,7 @@ func (entry *AccessPolicyEntry) AssignProperties_To_AccessPolicyEntry(destinatio
 		var permission storage.Permissions
 		err := entry.Permissions.AssignProperties_To_Permissions(&permission)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Permissions() to populate field Permissions")
+			return eris.Wrap(err, "calling AssignProperties_To_Permissions() to populate field Permissions")
 		}
 		destination.Permissions = &permission
 	} else {
@@ -2530,12 +2368,7 @@ func (entry *AccessPolicyEntry) AssignProperties_To_AccessPolicyEntry(destinatio
 	}
 
 	// TenantId
-	if entry.TenantId != nil {
-		tenantId := *entry.TenantId
-		destination.TenantId = &tenantId
-	} else {
-		destination.TenantId = nil
-	}
+	destination.TenantId = genruntime.ClonePointerToString(entry.TenantId)
 
 	// TenantIdFromConfig
 	if entry.TenantIdFromConfig != nil {
@@ -2634,7 +2467,7 @@ func (entry *AccessPolicyEntry_STATUS) AssignProperties_From_AccessPolicyEntry_S
 		var permission Permissions_STATUS
 		err := permission.AssignProperties_From_Permissions_STATUS(source.Permissions)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Permissions_STATUS() to populate field Permissions")
+			return eris.Wrap(err, "calling AssignProperties_From_Permissions_STATUS() to populate field Permissions")
 		}
 		entry.Permissions = &permission
 	} else {
@@ -2664,7 +2497,7 @@ func (entry *AccessPolicyEntry_STATUS) AssignProperties_To_AccessPolicyEntry_STA
 		var permission storage.Permissions_STATUS
 		err := entry.Permissions.AssignProperties_To_Permissions_STATUS(&permission)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Permissions_STATUS() to populate field Permissions")
+			return eris.Wrap(err, "calling AssignProperties_To_Permissions_STATUS() to populate field Permissions")
 		}
 		destination.Permissions = &permission
 	} else {
@@ -2847,7 +2680,7 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *stor
 			var ipRule IPRule
 			err := ipRule.AssignProperties_From_IPRule(&ipRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IPRule() to populate field IpRules")
+				return eris.Wrap(err, "calling AssignProperties_From_IPRule() to populate field IpRules")
 			}
 			ipRuleList[ipRuleIndex] = ipRule
 		}
@@ -2865,7 +2698,7 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *stor
 			var virtualNetworkRule VirtualNetworkRule
 			err := virtualNetworkRule.AssignProperties_From_VirtualNetworkRule(&virtualNetworkRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkRule() to populate field VirtualNetworkRules")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkRule() to populate field VirtualNetworkRules")
 			}
 			virtualNetworkRuleList[virtualNetworkRuleIndex] = virtualNetworkRule
 		}
@@ -2908,7 +2741,7 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *s
 			var ipRule storage.IPRule
 			err := ipRuleItem.AssignProperties_To_IPRule(&ipRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IPRule() to populate field IpRules")
+				return eris.Wrap(err, "calling AssignProperties_To_IPRule() to populate field IpRules")
 			}
 			ipRuleList[ipRuleIndex] = ipRule
 		}
@@ -2926,7 +2759,7 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *s
 			var virtualNetworkRule storage.VirtualNetworkRule
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule(&virtualNetworkRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkRule() to populate field VirtualNetworkRules")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkRule() to populate field VirtualNetworkRules")
 			}
 			virtualNetworkRuleList[virtualNetworkRuleIndex] = virtualNetworkRule
 		}
@@ -3047,7 +2880,7 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 			var ipRule IPRule_STATUS
 			err := ipRule.AssignProperties_From_IPRule_STATUS(&ipRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IPRule_STATUS() to populate field IpRules")
+				return eris.Wrap(err, "calling AssignProperties_From_IPRule_STATUS() to populate field IpRules")
 			}
 			ipRuleList[ipRuleIndex] = ipRule
 		}
@@ -3065,7 +2898,7 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 			var virtualNetworkRule VirtualNetworkRule_STATUS
 			err := virtualNetworkRule.AssignProperties_From_VirtualNetworkRule_STATUS(&virtualNetworkRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkRule_STATUS() to populate field VirtualNetworkRules")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkRule_STATUS() to populate field VirtualNetworkRules")
 			}
 			virtualNetworkRuleList[virtualNetworkRuleIndex] = virtualNetworkRule
 		}
@@ -3108,7 +2941,7 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 			var ipRule storage.IPRule_STATUS
 			err := ipRuleItem.AssignProperties_To_IPRule_STATUS(&ipRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IPRule_STATUS() to populate field IpRules")
+				return eris.Wrap(err, "calling AssignProperties_To_IPRule_STATUS() to populate field IpRules")
 			}
 			ipRuleList[ipRuleIndex] = ipRule
 		}
@@ -3126,7 +2959,7 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 			var virtualNetworkRule storage.VirtualNetworkRule_STATUS
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule_STATUS(&virtualNetworkRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkRule_STATUS() to populate field VirtualNetworkRules")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkRule_STATUS() to populate field VirtualNetworkRules")
 			}
 			virtualNetworkRuleList[virtualNetworkRuleIndex] = virtualNetworkRule
 		}
@@ -3247,7 +3080,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_From_PrivateE
 		var privateEndpoint PrivateEndpoint_STATUS
 		err := privateEndpoint.AssignProperties_From_PrivateEndpoint_STATUS(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpoint_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpoint_STATUS() to populate field PrivateEndpoint")
 		}
 		item.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -3259,7 +3092,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_From_PrivateE
 		var privateLinkServiceConnectionState PrivateLinkServiceConnectionState_STATUS
 		err := privateLinkServiceConnectionState.AssignProperties_From_PrivateLinkServiceConnectionState_STATUS(source.PrivateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceConnectionState_STATUS() to populate field PrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceConnectionState_STATUS() to populate field PrivateLinkServiceConnectionState")
 		}
 		item.PrivateLinkServiceConnectionState = &privateLinkServiceConnectionState
 	} else {
@@ -3295,7 +3128,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_To_PrivateEnd
 		var privateEndpoint storage.PrivateEndpoint_STATUS
 		err := item.PrivateEndpoint.AssignProperties_To_PrivateEndpoint_STATUS(&privateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpoint_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpoint_STATUS() to populate field PrivateEndpoint")
 		}
 		destination.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -3307,7 +3140,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_To_PrivateEnd
 		var privateLinkServiceConnectionState storage.PrivateLinkServiceConnectionState_STATUS
 		err := item.PrivateLinkServiceConnectionState.AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(&privateLinkServiceConnectionState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceConnectionState_STATUS() to populate field PrivateLinkServiceConnectionState")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceConnectionState_STATUS() to populate field PrivateLinkServiceConnectionState")
 		}
 		destination.PrivateLinkServiceConnectionState = &privateLinkServiceConnectionState
 	} else {

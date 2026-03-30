@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501
 ----------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-05-01"
+
 AfdCustomDomain: Resource
 ├── Owner: Profile
 ├── Spec: Object (8 properties)
@@ -88,6 +89,7 @@ AfdCustomDomain: Resource
     └── ValidationProperties: *Object (2 properties)
         ├── ExpirationDate: *string
         └── ValidationToken: *string
+
 AfdEndpoint: Resource
 ├── Owner: Profile
 ├── Spec: Object (7 properties)
@@ -149,9 +151,10 @@ AfdEndpoint: Resource
     │       └── "user"
     ├── Tags: map[string]string
     └── Type: *string
+
 AfdOrigin: Resource
 ├── Owner: AfdOriginGroup
-├── Spec: Object (13 properties)
+├── Spec: Object (14 properties)
 │   ├── AzureName: string
 │   ├── AzureOrigin: *Object (1 property)
 │   │   └── Reference: *genruntime.ResourceReference
@@ -160,6 +163,7 @@ AfdOrigin: Resource
 │   │   └── "Enabled"
 │   ├── EnforceCertificateNameCheck: *bool
 │   ├── HostName: *string
+│   ├── HostNameFromConfig: *genruntime.ConfigMapReference
 │   ├── HttpPort: Validated<*int> (2 rules)
 │   │   ├── Rule 0: Maximum: 65535
 │   │   └── Rule 1: Minimum: 1
@@ -245,6 +249,7 @@ AfdOrigin: Resource
     │       └── "user"
     ├── Type: *string
     └── Weight: *int
+
 AfdOriginGroup: Resource
 ├── Owner: Profile
 ├── Spec: Object (7 properties)
@@ -327,6 +332,7 @@ AfdOriginGroup: Resource
     │       └── "user"
     ├── TrafficRestorationTimeToHealedOrNewEndpointsInMinutes: *int
     └── Type: *string
+
 Profile: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -430,6 +436,7 @@ Profile: Resource
     │       └── "user"
     ├── Tags: map[string]string
     └── Type: *string
+
 Route: Resource
 ├── Owner: AfdEndpoint
 ├── Spec: Object (14 properties)
@@ -538,6 +545,7 @@ Route: Resource
     │       ├── "managedIdentity"
     │       └── "user"
     └── Type: *string
+
 Rule: Resource
 ├── Owner: RuleSet
 ├── Spec: Object (7 properties)
@@ -1748,6 +1756,7 @@ Rule: Resource
     │       ├── "managedIdentity"
     │       └── "user"
     └── Type: *string
+
 RuleSet: Resource
 ├── Owner: Profile
 ├── Spec: Object (3 properties)
@@ -1788,6 +1797,7 @@ RuleSet: Resource
     │       ├── "managedIdentity"
     │       └── "user"
     └── Type: *string
+
 Secret: Resource
 ├── Owner: Profile
 ├── Spec: Object (4 properties)
@@ -1886,6 +1896,7 @@ Secret: Resource
     │       ├── "managedIdentity"
     │       └── "user"
     └── Type: *string
+
 SecurityPolicy: Resource
 ├── Owner: Profile
 ├── Spec: Object (4 properties)
@@ -1946,3 +1957,4 @@ SecurityPolicy: Resource
     │       ├── "managedIdentity"
     │       └── "user"
     └── Type: *string
+

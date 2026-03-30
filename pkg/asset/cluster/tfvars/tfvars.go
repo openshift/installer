@@ -35,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
@@ -101,6 +102,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		new(rhcos.Release),
 		new(rhcos.BootstrapImage),
+		&releaseimage.Image{},
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
 		&machine.Arbiter{},
@@ -129,8 +131,9 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	rhcosImage := new(rhcos.Image)
 	rhcosRelease := new(rhcos.Release)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
+	releaseImage := &releaseimage.Image{}
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, arbiterIgnAsset, arbiterAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, arbiterIgnAsset, arbiterAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, releaseImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -248,13 +251,19 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			}
 		}
 
-		sess, err := installConfig.AWS.Session(ctx)
-		if err != nil {
-			return err
-		}
 		object := "bootstrap.ign"
 		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
-		url, err := awsconfig.PresignedS3URL(sess, installConfig.Config.Platform.AWS.Region, bucket, object)
+
+		platformAWS := installConfig.Config.Platform.AWS
+		client, err := awsconfig.NewS3Client(ctx, awsconfig.EndpointOptions{
+			Region:    platformAWS.Region,
+			Endpoints: platformAWS.ServiceEndpoints,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create s3 client: %w", err)
+		}
+
+		url, err := awsconfig.PresignedS3URL(ctx, client, bucket, object)
 		if err != nil {
 			return err
 		}
@@ -373,14 +382,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
-		client, err := installConfig.Azure.Client()
-		if err != nil {
-			return err
-		}
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(ctx, masterConfigs[0].VMSize, masterConfigs[0].Location, "")
-		if err != nil {
-			return err
-		}
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 
@@ -427,7 +428,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				OutboundType:                    installConfig.Config.Azure.OutboundType,
 				BootstrapIgnStub:                bootstrapIgnStub,
 				BootstrapIgnitionURLPlaceholder: bootstrapIgnURLPlaceholder,
-				HyperVGeneration:                hyperVGeneration,
 				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 				InfrastructureName:              clusterID.InfraID,
 				KeyVault:                        managedKeys.KeyVault,
@@ -767,7 +767,10 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	case baremetal.Name:
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
-			string(*rhcosBootstrapImage),
+			installConfig.Config.FIPS,
+			releaseImage.PullSpec,
+			installConfig.Config.PullSecret,
+			types.BuildMirrorConfig(installConfig.Config),
 			installConfig.Config.Platform.BareMetal.ExternalBridge,
 			installConfig.Config.Platform.BareMetal.ExternalMACAddress,
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,

@@ -19,10 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // GCPImageOverrideKind is the name of the type used to represent objects
 // of type 'GCP_image_override'.
 const GCPImageOverrideKind = "GCPImageOverride"
@@ -42,9 +38,9 @@ type GCPImageOverride struct {
 	fieldSet_    []bool
 	id           string
 	href         string
-	billingModel *v1.BillingModelItem
+	billingModel *BillingModelItem
 	imageID      string
-	product      *v1.Product
+	product      *Product
 	projectID    string
 }
 
@@ -119,7 +115,7 @@ func (o *GCPImageOverride) Empty() bool {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the billing model.
-func (o *GCPImageOverride) BillingModel() *v1.BillingModelItem {
+func (o *GCPImageOverride) BillingModel() *BillingModelItem {
 	if o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3] {
 		return o.billingModel
 	}
@@ -130,7 +126,7 @@ func (o *GCPImageOverride) BillingModel() *v1.BillingModelItem {
 // a flag indicating if the attribute has a value.
 //
 // Link to the billing model.
-func (o *GCPImageOverride) GetBillingModel() (value *v1.BillingModelItem, ok bool) {
+func (o *GCPImageOverride) GetBillingModel() (value *BillingModelItem, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3]
 	if ok {
 		value = o.billingModel
@@ -165,7 +161,7 @@ func (o *GCPImageOverride) GetImageID() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the product type.
-func (o *GCPImageOverride) Product() *v1.Product {
+func (o *GCPImageOverride) Product() *Product {
 	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.product
 	}
@@ -176,7 +172,7 @@ func (o *GCPImageOverride) Product() *v1.Product {
 // a flag indicating if the attribute has a value.
 //
 // Link to the product type.
-func (o *GCPImageOverride) GetProduct() (value *v1.Product, ok bool) {
+func (o *GCPImageOverride) GetProduct() (value *Product, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.product

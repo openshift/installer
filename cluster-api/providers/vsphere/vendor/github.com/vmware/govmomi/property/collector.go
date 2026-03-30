@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2015-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package property
 
@@ -39,7 +27,7 @@ var ErrConcurrentCollector = fmt.Errorf(
 // Collector models the PropertyCollector managed object.
 //
 // For more information, see:
-// http://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvmodl.query.PropertyCollector.html
+// https://developer.broadcom.com/xapis/vsphere-web-services-api/latest/vmodl.query.PropertyCollector.html
 type Collector struct {
 	mu           sync.Mutex
 	roundTripper soap.RoundTripper
@@ -173,7 +161,7 @@ func (p *Collector) RetrieveProperties(
 // the properties slice is nil, all properties are loaded.
 // Note that pointer types are optional fields that may be left as a nil value.
 // The caller should check such fields for a nil value before dereferencing.
-func (p *Collector) Retrieve(ctx context.Context, objs []types.ManagedObjectReference, ps []string, dst interface{}) error {
+func (p *Collector) Retrieve(ctx context.Context, objs []types.ManagedObjectReference, ps []string, dst any) error {
 	if len(objs) == 0 {
 		return errors.New("object references is empty")
 	}
@@ -233,7 +221,7 @@ func (p *Collector) RetrieveWithFilter(
 	ctx context.Context,
 	objs []types.ManagedObjectReference,
 	ps []string,
-	dst interface{},
+	dst any,
 	filter Match) error {
 
 	if len(filter) == 0 {
@@ -257,7 +245,7 @@ func (p *Collector) RetrieveWithFilter(
 }
 
 // RetrieveOne calls Retrieve with a single managed object reference via Collector.Retrieve().
-func (p *Collector) RetrieveOne(ctx context.Context, obj types.ManagedObjectReference, ps []string, dst interface{}) error {
+func (p *Collector) RetrieveOne(ctx context.Context, obj types.ManagedObjectReference, ps []string, dst any) error {
 	var objs = []types.ManagedObjectReference{obj}
 	return p.Retrieve(ctx, objs, ps, dst)
 }

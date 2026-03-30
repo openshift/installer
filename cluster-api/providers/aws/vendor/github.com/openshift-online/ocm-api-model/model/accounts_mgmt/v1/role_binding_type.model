@@ -20,6 +20,8 @@ class RoleBinding {
 	SubscriptionID String
 	Account Account
 	AccountID String
+	AccountGroup AccountGroup
+	AccountGroupID String
 	Organization Organization
 	OrganizationID String
 	Role Role
@@ -27,5 +29,5 @@ class RoleBinding {
 	ConfigManaged Boolean
 	CreatedAt Date
 	UpdatedAt Date
-	ManagedBy String
+	ManagedBy String 
 }

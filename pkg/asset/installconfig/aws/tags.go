@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 )
 
@@ -12,9 +13,17 @@ const (
 	// to differentiate multiple logically independent clusters running in the same AZ.
 	TagNameKubernetesClusterPrefix = "kubernetes.io/cluster/"
 
+	// TagNameAWSProviderClusterPrefix is the tag prefix added by CAPI/CAPA to differentiate
+	// cluster-api-provider-aws owned components.
+	TagNameAWSProviderClusterPrefix = "sigs.k8s.io/cluster-api-provider-aws/cluster/"
+
 	// TagValueOwned is the tag value to indicate that a resource is considered owned
 	// and managed by the cluster.
 	TagValueOwned = "owned"
+
+	// TagValueShared is the tag value to indicate that a resource is considered shared
+	// with the cluster.
+	TagValueShared = "shared"
 
 	// TagNameKubernetesUnmanaged is the tag name to indicate that a resource is unmanaged
 	// by the cluster and should be ignored by CCM. For example, kubernetes.io/cluster/unmanaged=true.
@@ -54,23 +63,32 @@ func (t Tags) HasTagKeyPrefix(prefix string) bool {
 	return len(keys) > 0
 }
 
-// HasClusterOwnedTag returns true if there is a cluster owned tag.
-// That is  kubernetes.io/cluster/<cluster-id>: owned.
-func (t Tags) HasClusterOwnedTag() bool {
-	clusterIDs := t.GetOwnedClusterIDs()
-	return len(clusterIDs) > 0
-}
-
-// GetOwnedClusterIDs returns the cluster IDs from tag "kubernetes.io/cluster/<cluster-id>: owned" if any.
-func (t Tags) GetOwnedClusterIDs() []string {
+// getClusterIDsWithPrefix is a helper to extract cluster IDs from tags with a given prefix and resource lifecycle.
+// The values of resourceLifeCycle can be "owned" or "shared".
+func (t Tags) getClusterIDsWithPrefix(tagPrefix string, resourceLifeCycle string) []string {
 	clusterIDs := make([]string, 0)
-	keys := t.GetTagKeysWithPrefix(TagNameKubernetesClusterPrefix)
+	keys := t.GetTagKeysWithPrefix(tagPrefix)
 	for _, key := range keys {
-		if value := t[key]; value == TagValueOwned {
-			if clusterID := strings.TrimPrefix(key, TagNameKubernetesClusterPrefix); clusterID != "" {
+		if value := t[key]; value == resourceLifeCycle {
+			if clusterID := strings.TrimPrefix(key, tagPrefix); clusterID != "" {
 				clusterIDs = append(clusterIDs, clusterID)
 			}
 		}
 	}
 	return clusterIDs
+}
+
+// GetClusterIDs returns the unique cluster IDs from either tag if any:
+// - "kubernetes.io/cluster/<cluster-id>: <resourceLifeCycle>"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<cluster-id>: <resourceLifeCycle>"
+// The values of resourceLifeCycle can be "owned" or "shared".
+func (t Tags) GetClusterIDs(resourceLifeCycle string) []string {
+	clusterIDs := t.getClusterIDsWithPrefix(TagNameKubernetesClusterPrefix, resourceLifeCycle)
+	clusterIDs = append(clusterIDs, t.getClusterIDsWithPrefix(TagNameAWSProviderClusterPrefix, resourceLifeCycle)...)
+
+	uniqueClusterIDs := sets.New[string]()
+	for _, id := range clusterIDs {
+		uniqueClusterIDs.Insert(id)
+	}
+	return uniqueClusterIDs.UnsortedList()
 }

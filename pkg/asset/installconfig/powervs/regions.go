@@ -136,6 +136,9 @@ func GetZone(region string, defaultZone string) (string, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				choice := zoneTransform(ans).(core.OptionAnswer).Value
+				sort.Slice(zones, func(i, j int) bool {
+					return strings.ToLower(zones[i]) < strings.ToLower(zones[j])
+				})
 				i := sort.SearchStrings(zones, choice)
 				if i == len(zones) || zones[i] != choice {
 					return fmt.Errorf("invalid zone %q", choice)

@@ -98,11 +98,15 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 			break
 		}
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			sess, err := installConfig.AWS.Session(ctx)
+			client, err := icaws.NewRoute53Client(ctx, icaws.EndpointOptions{
+				Region:    installConfig.Config.AWS.Region,
+				Endpoints: installConfig.Config.AWS.ServiceEndpoints,
+			}, "")
 			if err != nil {
-				return errors.Wrap(err, "failed to initialize session")
+				return fmt.Errorf("failed to create route 53 client: %w", err)
 			}
-			zone, err := icaws.GetPublicZone(sess, installConfig.Config.BaseDomain)
+
+			zone, err := icaws.GetPublicZone(ctx, client, installConfig.Config.BaseDomain)
 			if err != nil {
 				return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
 			}
@@ -138,7 +142,15 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
 			}
 		}
-		if installConfig.Azure.CloudName != azuretypes.StackCloud {
+
+		// Azure Stack Hub only supports "DNS zones"--there is not a private/public zone distinction.
+		// Set PrivateZone to the base domain zone for ASH, or cluster private zone for regular Azure.
+		if installConfig.Azure.CloudName == azuretypes.StackCloud {
+			// Azure Stack Hub uses the base domain zone for all DNS records (api, api-int, *.apps)
+			config.Spec.PrivateZone = &configv1.DNSZone{
+				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
+			}
+		} else {
 			config.Spec.PrivateZone = &configv1.DNSZone{
 				ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
 			}

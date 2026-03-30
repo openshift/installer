@@ -15,7 +15,7 @@ import (
 	"github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/ext"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"github.com/samber/lo"
 
 	asometrics "github.com/Azure/azure-service-operator/v2/internal/metrics"
@@ -187,7 +187,7 @@ type ExpressionResult struct {
 // secret is the set of secrets associated with the resource (which may be empty).
 func (e *expressionEvaluator) CompileAndRun(expression string, self any, secret map[string]string) (*ExpressionResult, error) {
 	if self == nil {
-		return nil, errors.New("self cannot be nil")
+		return nil, eris.New("self cannot be nil")
 	}
 
 	// Cache lookup also compiles and checks the program for errors
@@ -203,7 +203,7 @@ func (e *expressionEvaluator) CompileAndRun(expression string, self any, secret 
 	// TODO: We may want to use ContextEval here, alongside prgm, err := env.cel.Program(ast, cel.InterruptCheckFrequency(10))
 	out, _, err := program.Program.Eval(input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to eval CEL expression: %q", expression)
+		return nil, eris.Wrapf(err, "failed to eval CEL expression: %q", expression)
 	}
 
 	// We could use out.Type(), which is a CEL type, rather than out.Value(), which is a Go value, but there's not
@@ -229,7 +229,7 @@ func (e *expressionEvaluator) CompileAndRun(expression string, self any, secret 
 // Returns the cel OutputType of the expression.
 func (e *expressionEvaluator) Check(expression string, self any) (*cel.Type, error) {
 	if self == nil {
-		return nil, errors.New("self cannot be nil")
+		return nil, eris.New("self cannot be nil")
 	}
 
 	// Cache lookup also compiles, checks the program for errors, and ensures that it outputs an allowed type.
@@ -392,20 +392,20 @@ func makeUnexpectedResultError(ast *cel.Ast, allowed ...*cel.Type) error {
 			return item.String()
 		})
 	expectedTypesStr := strings.Join(expectedTypes, ",")
-	return errors.Errorf("expression %q must return one of [%s], but was %s", ast.Source().Content(), expectedTypesStr, ast.OutputType().String())
+	return eris.Errorf("expression %q must return one of [%s], but was %s", ast.Source().Content(), expectedTypesStr, ast.OutputType().String())
 }
 
 func valToMap(val ref.Val) (map[string]string, error) {
 	// Convert the CEL value to a native Go map
 	nativeVal, err := val.ConvertToNative(reflect.TypeOf(map[string]string{}))
 	if err != nil {
-		return nil, errors.Wrap(err, "error converting CEL value to native")
+		return nil, eris.Wrap(err, "error converting CEL value to native")
 	}
 
 	// Type assert the native value to a map[string]string
 	result, ok := nativeVal.(map[string]string)
 	if !ok {
-		return nil, errors.Errorf("expectedStr map[string]string but got %T", nativeVal)
+		return nil, eris.Errorf("expectedStr map[string]string but got %T", nativeVal)
 	}
 
 	return result, nil

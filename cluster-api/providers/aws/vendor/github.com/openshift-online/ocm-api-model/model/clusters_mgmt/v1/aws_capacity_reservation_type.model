@@ -24,4 +24,12 @@ struct AWSCapacityReservation {
     // "OnDemand": EC2 instances run as standard On-Demand instances.
     // "CapacityBlocks": scheduled pre-purchased compute capacity.
     MarketType MarketType
+
+	// preference specifies how capacity reservations should be used with this NodePool
+	// "none": EC2 instances in this NodePool should never make use of capacity reservations. Note that this value cannot
+	// be specified if a capacity reservation Id is also specified
+	// "capacity-reservations-only": EC2 instances in this NodePool should only run in a capacity reservation
+	// "open": EC2 instances in this NodePool should run in an Open capacity reservation if available, otherwise run on demand.
+	// Note that this value cannot be specified if a capacity reservation Id is also specified
+	Preference CapacityReservationPreference
 }

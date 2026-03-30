@@ -1,16 +1,5 @@
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package otlptracegrpc // import "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
@@ -20,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	coltracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
+	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -31,8 +22,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/otlpconfig"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/retry"
-	coltracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
-	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 )
 
 type client struct {
@@ -89,11 +78,11 @@ func newClient(opts ...Option) *client {
 }
 
 // Start establishes a gRPC connection to the collector.
-func (c *client) Start(ctx context.Context) error {
+func (c *client) Start(context.Context) error {
 	if c.conn == nil {
 		// If the caller did not provide a ClientConn when the client was
 		// created, create one using the configuration they did provide.
-		conn, err := grpc.DialContext(ctx, c.endpoint, c.dialOpts...)
+		conn, err := grpc.NewClient(c.endpoint, c.dialOpts...)
 		if err != nil {
 			return err
 		}
@@ -234,13 +223,18 @@ func (c *client) exportContext(parent context.Context) (context.Context, context
 	)
 
 	if c.exportTimeout > 0 {
-		ctx, cancel = context.WithTimeout(parent, c.exportTimeout)
+		ctx, cancel = context.WithTimeoutCause(parent, c.exportTimeout, errors.New("exporter export timeout"))
 	} else {
 		ctx, cancel = context.WithCancel(parent)
 	}
 
 	if c.metadata.Len() > 0 {
-		ctx = metadata.NewOutgoingContext(ctx, c.metadata)
+		md := c.metadata
+		if outMD, ok := metadata.FromOutgoingContext(ctx); ok {
+			md = metadata.Join(md, outMD)
+		}
+
+		ctx = metadata.NewOutgoingContext(ctx, md)
 	}
 
 	// Unify the client stopCtx with the parent.
@@ -295,12 +289,12 @@ func throttleDelay(s *status.Status) (bool, time.Duration) {
 }
 
 // MarshalLog is the marshaling function used by the logging system to represent this Client.
-func (c *client) MarshalLog() interface{} {
+func (c *client) MarshalLog() any {
 	return struct {
 		Type     string
 		Endpoint string
 	}{
-		Type:     "otlphttpgrpc",
+		Type:     "otlptracegrpc",
 		Endpoint: c.endpoint,
 	}
 }

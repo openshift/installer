@@ -21,14 +21,15 @@ package v1 // github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v
 
 // Representation of a Control Plane
 type ControlPlaneBuilder struct {
-	fieldSet_ []bool
-	backup    *BackupBuilder
+	fieldSet_     []bool
+	backup        *BackupBuilder
+	logForwarders *LogForwarderListBuilder
 }
 
 // NewControlPlane creates a new builder of 'control_plane' objects.
 func NewControlPlane() *ControlPlaneBuilder {
 	return &ControlPlaneBuilder{
-		fieldSet_: make([]bool, 1),
+		fieldSet_: make([]bool, 2),
 	}
 }
 
@@ -50,7 +51,7 @@ func (b *ControlPlaneBuilder) Empty() bool {
 // Representation of a Backup.
 func (b *ControlPlaneBuilder) Backup(value *BackupBuilder) *ControlPlaneBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 1)
+		b.fieldSet_ = make([]bool, 2)
 	}
 	b.backup = value
 	if value != nil {
@@ -58,6 +59,16 @@ func (b *ControlPlaneBuilder) Backup(value *BackupBuilder) *ControlPlaneBuilder 
 	} else {
 		b.fieldSet_[0] = false
 	}
+	return b
+}
+
+// LogForwarders sets the value of the 'log_forwarders' attribute to the given values.
+func (b *ControlPlaneBuilder) LogForwarders(value *LogForwarderListBuilder) *ControlPlaneBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 2)
+	}
+	b.logForwarders = value
+	b.fieldSet_[1] = true
 	return b
 }
 
@@ -75,6 +86,11 @@ func (b *ControlPlaneBuilder) Copy(object *ControlPlane) *ControlPlaneBuilder {
 	} else {
 		b.backup = nil
 	}
+	if object.logForwarders != nil {
+		b.logForwarders = NewLogForwarderList().Copy(object.logForwarders)
+	} else {
+		b.logForwarders = nil
+	}
 	return b
 }
 
@@ -87,6 +103,12 @@ func (b *ControlPlaneBuilder) Build() (object *ControlPlane, err error) {
 	}
 	if b.backup != nil {
 		object.backup, err = b.backup.Build()
+		if err != nil {
+			return
+		}
+	}
+	if b.logForwarders != nil {
+		object.logForwarders, err = b.logForwarders.Build()
 		if err != nil {
 			return
 		}

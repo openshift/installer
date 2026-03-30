@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	clusterv1exp "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1exp "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/storage
 ---------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-09-01"
+
 SearchService: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (17 properties)
@@ -90,3 +91,4 @@ SearchService: Resource
     ├── StatusDetails: *string
     ├── Tags: map[string]string
     └── Type: *string
+

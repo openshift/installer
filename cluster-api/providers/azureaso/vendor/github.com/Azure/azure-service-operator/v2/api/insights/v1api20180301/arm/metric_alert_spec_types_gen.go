@@ -102,12 +102,15 @@ func (criteria MetricAlertCriteria) MarshalJSON() ([]byte, error) {
 	if criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric != nil {
 		return json.Marshal(criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric)
 	}
+
 	if criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric != nil {
 		return json.Marshal(criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric)
 	}
+
 	if criteria.MicrosoftAzureMonitorWebtestLocationAvailability != nil {
 		return json.Marshal(criteria.MicrosoftAzureMonitorWebtestLocationAvailability)
 	}
+
 	return nil, nil
 }
 
@@ -235,9 +238,11 @@ func (criteria MultiMetricCriteria) MarshalJSON() ([]byte, error) {
 	if criteria.Dynamic != nil {
 		return json.Marshal(criteria.Dynamic)
 	}
+
 	if criteria.Static != nil {
 		return json.Marshal(criteria.Static)
 	}
+
 	return nil, nil
 }
 

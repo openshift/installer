@@ -17,11 +17,9 @@ limitations under the License.
 package context
 
 import (
-	"context"
 	"fmt"
 
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -33,18 +31,6 @@ type VSphereDeploymentZoneContext struct {
 	VSphereDeploymentZone *infrav1.VSphereDeploymentZone
 	PatchHelper           *patch.Helper
 	AuthSession           *session.Session
-}
-
-// Patch patches the VSphereDeploymentZone.
-func (c *VSphereDeploymentZoneContext) Patch(ctx context.Context) error {
-	conditions.SetSummary(c.VSphereDeploymentZone,
-		conditions.WithConditions(
-			infrav1.VCenterAvailableCondition,
-			infrav1.VSphereFailureDomainValidatedCondition,
-			infrav1.PlacementConstraintMetCondition,
-		),
-	)
-	return c.PatchHelper.Patch(ctx, c.VSphereDeploymentZone)
 }
 
 // String returns a string with the GroupVersionKind and name of the VSphereDeploymentZone.

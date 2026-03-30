@@ -69,6 +69,7 @@ Namespace_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Namespace_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -108,6 +109,7 @@ Namespace_Spec: Object (6 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+
 NamespacesAuthorizationRule_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -133,6 +135,7 @@ NamespacesAuthorizationRule_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesAuthorizationRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -140,6 +143,7 @@ NamespacesAuthorizationRule_Spec: Object (2 properties)
         ├── "Listen"
         ├── "Manage"
         └── "Send"
+
 NamespacesEventhub_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -193,6 +197,7 @@ NamespacesEventhub_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesEventhub_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -215,6 +220,7 @@ NamespacesEventhub_Spec: Object (2 properties)
     │   └── SkipEmptyArchives: *bool
     ├── MessageRetentionInDays: *int
     └── PartitionCount: *int
+
 NamespacesEventhubsAuthorizationRule_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -240,6 +246,7 @@ NamespacesEventhubsAuthorizationRule_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesEventhubsAuthorizationRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -247,6 +254,7 @@ NamespacesEventhubsAuthorizationRule_Spec: Object (2 properties)
         ├── "Listen"
         ├── "Manage"
         └── "Send"
+
 NamespacesEventhubsConsumerGroup_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -271,7 +279,9 @@ NamespacesEventhubsConsumerGroup_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesEventhubsConsumerGroup_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
     └── UserMetadata: *string
+

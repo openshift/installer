@@ -80,6 +80,24 @@ type QuotaContextInfo struct {
 	noSmithyDocumentSerde
 }
 
+// Information on your Service Quotas for [Service Quotas Automatic Management]. Automatic Management monitors your
+// Service Quotas utilization and notifies you before you run out of your allocated
+// quotas.
+//
+// [Service Quotas Automatic Management]: https://docs.aws.amazon.com/servicequotas/latest/userguide/automatic-management.html
+type QuotaInfo struct {
+
+	// The Service Quotas code for the Amazon Web Services service monitored with
+	// Automatic Management.
+	QuotaCode *string
+
+	// The Service Quotas name for the Amazon Web Services service monitored with
+	// Automatic Management.
+	QuotaName *string
+
+	noSmithyDocumentSerde
+}
+
 // Information about the quota period.
 type QuotaPeriod struct {
 
@@ -88,6 +106,43 @@ type QuotaPeriod struct {
 
 	// The value associated with the reported PeriodUnit .
 	PeriodValue *int32
+
+	noSmithyDocumentSerde
+}
+
+// Information about a quota's utilization, including the quota code, service
+// information, current usage, and applied limits.
+type QuotaUtilizationInfo struct {
+
+	// Indicates whether the quota value can be increased.
+	Adjustable bool
+
+	// The applied value of the quota, which may be higher than the default value if a
+	// quota increase has been requested and approved.
+	AppliedValue *float64
+
+	// The default value of the quota.
+	DefaultValue *float64
+
+	// The namespace of the metric used to track quota usage.
+	Namespace *string
+
+	// The quota identifier.
+	QuotaCode *string
+
+	// The quota name.
+	QuotaName *string
+
+	// The service identifier.
+	ServiceCode *string
+
+	// The service name.
+	ServiceName *string
+
+	// The utilization percentage of the quota, calculated as (current usage / applied
+	// value) × 100. Values range from 0.0 to 100.0 or higher if usage exceeds the
+	// quota limit.
+	Utilization *float64
 
 	noSmithyDocumentSerde
 }
@@ -131,6 +186,14 @@ type RequestedServiceQuotaChange struct {
 	// Filters the response to return quota requests for the ACCOUNT , RESOURCE , or
 	// ALL levels. ACCOUNT is the default.
 	QuotaRequestedAtLevel AppliedLevelEnum
+
+	// The type of quota increase request. Possible values include:
+	//
+	//   - AutomaticManagement - The request was automatically created by Service
+	//   Quotas Automatic Management when quota utilization approached the limit.
+	//
+	// If this field is not present, the request was manually created by a user.
+	RequestType RequestType
 
 	// The IAM identity of the requester.
 	Requester *string

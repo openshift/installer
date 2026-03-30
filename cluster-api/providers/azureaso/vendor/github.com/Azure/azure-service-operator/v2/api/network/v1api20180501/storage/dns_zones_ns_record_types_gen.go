@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (record *DnsZonesNSRecord) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (record *DnsZonesNSRecord) Owner() *genruntime.ResourceReference {
+	if record.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(record.Spec)
 	return record.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (record *DnsZonesNSRecord) SetStatus(status genruntime.ConvertibleStatus) e
 	var st DnsZonesNSRecord_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	record.Status = st
@@ -196,7 +200,7 @@ var _ genruntime.ConvertibleSpec = &DnsZonesNSRecord_Spec{}
 // ConvertSpecFrom populates our DnsZonesNSRecord_Spec from the provided source
 func (record *DnsZonesNSRecord_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(record)
@@ -205,7 +209,7 @@ func (record *DnsZonesNSRecord_Spec) ConvertSpecFrom(source genruntime.Convertib
 // ConvertSpecTo populates the provided destination from our DnsZonesNSRecord_Spec
 func (record *DnsZonesNSRecord_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(record)
@@ -241,7 +245,7 @@ var _ genruntime.ConvertibleStatus = &DnsZonesNSRecord_STATUS{}
 // ConvertStatusFrom populates our DnsZonesNSRecord_STATUS from the provided source
 func (record *DnsZonesNSRecord_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(record)
@@ -250,7 +254,7 @@ func (record *DnsZonesNSRecord_STATUS) ConvertStatusFrom(source genruntime.Conve
 // ConvertStatusTo populates the provided destination from our DnsZonesNSRecord_STATUS
 func (record *DnsZonesNSRecord_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == record {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(record)

@@ -2,4 +2,8 @@
 github.com/Azure/azure-service-operator/v2/api/web/customizations
 -----------------------------------------------------------------
 ServerFarmExtension: Object (0 properties)
+
 SiteExtension: Object (0 properties)
+
+SitesSourcecontrolExtension: Object (0 properties)
+

@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (account *BatchAccount) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (account *BatchAccount) Owner() *genruntime.ResourceReference {
+	if account.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(account.Spec)
 	return account.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (account *BatchAccount) SetStatus(status genruntime.ConvertibleStatus) erro
 	var st BatchAccount_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	account.Status = st
@@ -197,7 +201,7 @@ var _ genruntime.ConvertibleSpec = &BatchAccount_Spec{}
 // ConvertSpecFrom populates our BatchAccount_Spec from the provided source
 func (account *BatchAccount_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == account {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(account)
@@ -206,7 +210,7 @@ func (account *BatchAccount_Spec) ConvertSpecFrom(source genruntime.ConvertibleS
 // ConvertSpecTo populates the provided destination from our BatchAccount_Spec
 func (account *BatchAccount_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == account {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(account)
@@ -244,7 +248,7 @@ var _ genruntime.ConvertibleStatus = &BatchAccount_STATUS{}
 // ConvertStatusFrom populates our BatchAccount_STATUS from the provided source
 func (account *BatchAccount_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == account {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(account)
@@ -253,7 +257,7 @@ func (account *BatchAccount_STATUS) ConvertStatusFrom(source genruntime.Converti
 // ConvertStatusTo populates the provided destination from our BatchAccount_STATUS
 func (account *BatchAccount_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == account {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(account)

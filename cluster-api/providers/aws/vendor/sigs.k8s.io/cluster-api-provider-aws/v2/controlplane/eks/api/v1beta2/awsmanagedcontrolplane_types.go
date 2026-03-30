@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -137,7 +137,7 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// ImageLookupFormat is the AMI naming format to look up machine images when
 	// a machine does not specify an AMI. When set, this will be used for all
@@ -195,6 +195,11 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// AccessConfig specifies the access configuration information for the cluster
 	// +optional
 	AccessConfig *AccessConfig `json:"accessConfig,omitempty"`
+
+	// AccessEntries specifies the access entries for the cluster
+	// Access entries require AuthenticationMode to be either "api" or "api_and_config_map"
+	// +optional
+	AccessEntries []AccessEntry `json:"accessEntries,omitempty"`
 
 	// VpcCni is used to set configuration options for the VPC CNI plugin
 	// +optional
@@ -276,6 +281,59 @@ type AccessConfig struct {
 	BootstrapClusterCreatorAdminPermissions *bool `json:"bootstrapClusterCreatorAdminPermissions,omitempty"`
 }
 
+// AccessEntry represents an AWS EKS access entry for IAM principals
+type AccessEntry struct {
+	// PrincipalARN is the Amazon Resource Name (ARN) of the IAM principal
+	// +kubebuilder:validation:Required
+	PrincipalARN string `json:"principalARN"`
+
+	// Type is the type of access entry. Defaults to standard if not specified.
+	// +kubebuilder:default=standard
+	// +kubebuilder:validation:Enum=standard;ec2_linux;ec2_windows;fargate_linux;ec2;hybrid_linux;hyperpod_linux
+	// +optional
+	Type AccessEntryType `json:"type,omitempty"`
+
+	// KubernetesGroups represents the Kubernetes groups for the access entry
+	// Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+	// +optional
+	KubernetesGroups []string `json:"kubernetesGroups,omitempty"`
+
+	// Username is the username for the access entry
+	// +optional
+	Username string `json:"username,omitempty"`
+
+	// AccessPolicies specifies the policies to associate with this access entry
+	// Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+	// +optional
+	// +kubebuilder:validation:MaxItems=20
+	AccessPolicies []AccessPolicyReference `json:"accessPolicies,omitempty"`
+}
+
+// AccessPolicyReference represents a reference to an AWS EKS access policy
+type AccessPolicyReference struct {
+	// PolicyARN is the Amazon Resource Name (ARN) of the access policy
+	// +kubebuilder:validation:Required
+	PolicyARN string `json:"policyARN"`
+
+	// AccessScope specifies the scope for the policy
+	// +kubebuilder:validation:Required
+	AccessScope AccessScope `json:"accessScope"`
+}
+
+// AccessScope represents the scope for an access policy
+type AccessScope struct {
+	// Type is the type of access scope. Defaults to "cluster".
+	// +kubebuilder:validation:Enum=cluster;namespace
+	// +kubebuilder:default=cluster
+	Type AccessScopeType `json:"type"`
+
+	// Namespaces are the namespaces for the access scope
+	// Only valid when Type is namespace
+	// +optional
+	// +kubebuilder:validation:MinItems=1
+	Namespaces []string `json:"namespaces,omitempty"`
+}
+
 // EncryptionConfig specifies the encryption configuration for the EKS clsuter.
 type EncryptionConfig struct {
 	// Provider specifies the ARN or alias of the CMK (in AWS KMS)
@@ -308,7 +366,7 @@ type AWSManagedControlPlaneStatus struct {
 	Network infrav1.NetworkStatus `json:"networkStatus,omitempty"`
 	// FailureDomains specifies a list fo available availability zones that can be used
 	// +optional
-	FailureDomains clusterv1.FailureDomains `json:"failureDomains,omitempty"`
+	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 	// Bastion holds details of the instance that is used as a bastion jump box
 	// +optional
 	Bastion *infrav1.Instance `json:"bastion,omitempty"`
@@ -332,7 +390,7 @@ type AWSManagedControlPlaneStatus struct {
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 	// Conditions specifies the cpnditions for the managed control plane
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 	// Addons holds the current status of the EKS addons
 	// +optional
 	Addons []AddonState `json:"addons,omitempty"`
@@ -375,12 +433,12 @@ type AWSManagedControlPlaneList struct {
 }
 
 // GetConditions returns the control planes conditions.
-func (r *AWSManagedControlPlane) GetConditions() clusterv1.Conditions {
+func (r *AWSManagedControlPlane) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
 // SetConditions sets the status conditions for the AWSManagedControlPlane.
-func (r *AWSManagedControlPlane) SetConditions(conditions clusterv1.Conditions) {
+func (r *AWSManagedControlPlane) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

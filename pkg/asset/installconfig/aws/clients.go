@@ -7,8 +7,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/efs"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
@@ -30,6 +35,44 @@ func NewEC2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...f
 	ec2Opts = append(ec2Opts, optFns...)
 
 	return ec2.NewFromConfig(cfg, ec2Opts...), nil
+}
+
+// NewELBClient creates a new ELB (classic) client.
+func NewELBClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elb.Options)) (*elb.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	elbOpts := []func(*elb.Options){
+		func(o *elb.Options) {
+			o.EndpointResolverV2 = &ELBEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	elbOpts = append(elbOpts, optFns...)
+
+	return elb.NewFromConfig(cfg, elbOpts...), nil
+}
+
+// NewELBV2Client creates a new ELBV2 client.
+func NewELBV2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elbv2.Options)) (*elbv2.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	elbv2Opts := []func(*elbv2.Options){
+		func(o *elbv2.Options) {
+			o.EndpointResolverV2 = &ELBV2EndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	elbv2Opts = append(elbv2Opts, optFns...)
+
+	return elbv2.NewFromConfig(cfg, elbv2Opts...), nil
 }
 
 // NewIAMClient creates a new IAM API client.
@@ -115,4 +158,70 @@ func NewServiceQuotasClient(ctx context.Context, endpointOpts EndpointOptions, o
 	sqOpts = append(sqOpts, optFns...)
 
 	return servicequotas.NewFromConfig(cfg, sqOpts...), nil
+}
+
+// NewS3Client creates a new S3 API client.
+func NewS3Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*s3.Options)) (*s3.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	s3Opts := []func(*s3.Options){
+		func(o *s3.Options) {
+			o.EndpointResolverV2 = &S3EndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	s3Opts = append(s3Opts, optFns...)
+
+	return s3.NewFromConfig(cfg, s3Opts...), nil
+}
+
+// NewEFSClient creates a new EFS API client.
+func NewEFSClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*efs.Options)) (*efs.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	efsOpts := []func(*efs.Options){
+		func(o *efs.Options) {
+			o.EndpointResolverV2 = &EFSEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	efsOpts = append(efsOpts, optFns...)
+
+	return efs.NewFromConfig(cfg, efsOpts...), nil
+}
+
+// NewResourceGroupsTaggingAPIClient creates a new Resource Groups Tagging API client.
+func NewResourceGroupsTaggingAPIClient(ctx context.Context, endpointOpts EndpointOptions, roleArn string, optFns ...func(*resourcegroupstaggingapi.Options)) (*resourcegroupstaggingapi.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(roleArn) > 0 {
+		stsClient, err := NewSTSClient(ctx, endpointOpts)
+		if err != nil {
+			return nil, err
+		}
+		creds := stscreds.NewAssumeRoleProvider(stsClient, roleArn)
+		cfg.Credentials = aws.NewCredentialsCache(creds)
+	}
+
+	taggingOpts := []func(*resourcegroupstaggingapi.Options){
+		func(o *resourcegroupstaggingapi.Options) {
+			o.EndpointResolverV2 = &ResourceGroupsTaggingAPIEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	taggingOpts = append(taggingOpts, optFns...)
+
+	return resourcegroupstaggingapi.NewFromConfig(cfg, taggingOpts...), nil
 }

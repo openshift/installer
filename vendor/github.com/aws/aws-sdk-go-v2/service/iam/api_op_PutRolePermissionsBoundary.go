@@ -14,12 +14,15 @@ import (
 // boundary. You can use an Amazon Web Services managed policy or a customer
 // managed policy to set the boundary for a role. Use the boundary to control the
 // maximum permissions that the role can have. Setting a permissions boundary is an
-// advanced feature that can affect the permissions for the role. You cannot set
-// the boundary for a service-linked role. Policies used as permissions boundaries
-// do not provide permissions. You must also attach a permissions policy to the
-// role. To learn how the effective permissions for a role are evaluated, see IAM
-// JSON policy evaluation logic (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
-// in the IAM User Guide.
+// advanced feature that can affect the permissions for the role.
+//
+// You cannot set the boundary for a service-linked role.
+//
+// Policies used as permissions boundaries do not provide permissions. You must
+// also attach a permissions policy to the role. To learn how the effective
+// permissions for a role are evaluated, see [IAM JSON policy evaluation logic]in the IAM User Guide.
+//
+// [IAM JSON policy evaluation logic]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
 func (c *Client) PutRolePermissionsBoundary(ctx context.Context, params *PutRolePermissionsBoundaryInput, optFns ...func(*Options)) (*PutRolePermissionsBoundaryOutput, error) {
 	if params == nil {
 		params = &PutRolePermissionsBoundaryInput{}
@@ -38,14 +41,18 @@ func (c *Client) PutRolePermissionsBoundary(ctx context.Context, params *PutRole
 type PutRolePermissionsBoundaryInput struct {
 
 	// The ARN of the managed policy that is used to set the permissions boundary for
-	// the role. A permissions boundary policy defines the maximum permissions that
+	// the role.
+	//
+	// A permissions boundary policy defines the maximum permissions that
 	// identity-based policies can grant to an entity, but does not grant permissions.
 	// Permissions boundaries do not define the maximum permissions that a
-	// resource-based policy can grant to an entity. To learn more, see Permissions
-	// boundaries for IAM entities (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
-	// in the IAM User Guide. For more information about policy types, see Policy
-	// types  (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types)
-	// in the IAM User Guide.
+	// resource-based policy can grant to an entity. To learn more, see [Permissions boundaries for IAM entities]in the IAM
+	// User Guide.
+	//
+	// For more information about policy types, see [Policy types] in the IAM User Guide.
+	//
+	// [Policy types]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types
+	// [Permissions boundaries for IAM entities]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
 	//
 	// This member is required.
 	PermissionsBoundary *string
@@ -109,6 +116,9 @@ func (c *Client) addOperationPutRolePermissionsBoundaryMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +129,15 @@ func (c *Client) addOperationPutRolePermissionsBoundaryMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutRolePermissionsBoundaryValidationMiddleware(stack); err != nil {
@@ -140,6 +159,15 @@ func (c *Client) addOperationPutRolePermissionsBoundaryMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

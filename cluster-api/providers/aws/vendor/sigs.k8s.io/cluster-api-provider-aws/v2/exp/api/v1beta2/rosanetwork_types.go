@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // ROSANetworkFinalizer allows the controller to clean up resources on delete.
@@ -108,7 +108,7 @@ type ROSANetworkStatus struct {
 	Resources []CFResource `json:"resources,omitempty"`
 
 	// Conditions specifies the conditions for ROSANetwork
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -135,12 +135,12 @@ type ROSANetworkList struct {
 }
 
 // GetConditions returns the observations of the operational state of the ROSANetwork resource.
-func (r *ROSANetwork) GetConditions() clusterv1.Conditions {
+func (r *ROSANetwork) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the ROSANetwork to the predescribed clusterv1.Conditions.
-func (r *ROSANetwork) SetConditions(conditions clusterv1.Conditions) {
+// SetConditions sets the underlying service state of the ROSANetwork to the predescribed clusterv1beta1.Conditions.
+func (r *ROSANetwork) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

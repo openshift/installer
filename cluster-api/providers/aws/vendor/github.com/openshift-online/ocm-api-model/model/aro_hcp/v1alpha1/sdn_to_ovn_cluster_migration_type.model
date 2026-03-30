@@ -1,0 +1,33 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Details for `SdnToOvn` cluster migrations.
+struct SdnToOvnClusterMigration {
+    // The IP address range to use for the internalTransSwitchSubnet parameter of OVN-Kubernetes
+    // upon migration.
+    @json(name = "transit_ipv4")
+    TransitIpv4 String
+
+    // The IP address range to use for the internalJoinSubnet parameter of OVN-Kubernetes
+    // upon migration.
+    @json(name = "join_ipv4")
+    JoinIpv4 String
+
+    // The IP address range to us for the internalMasqueradeSubnet parameter of OVN-Kubernetes
+    // upon migration.
+    @json(name = "masquerade_ipv4")
+    MasqueradeIpv4 String
+}

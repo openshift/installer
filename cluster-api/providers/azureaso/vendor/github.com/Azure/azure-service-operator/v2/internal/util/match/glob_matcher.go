@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 )
@@ -66,7 +66,7 @@ func (gm *globMatcher) WasMatched() error {
 	}
 
 	choices := set.AsSortedSlice(gm.candidates)
-	return errors.Errorf(
+	return eris.Errorf(
 		"no match for %q (available candidates were %s)",
 		gm.glob,
 		strings.Join(choices, ", "))

@@ -11,3 +11,4 @@ ExecStart=/usr/local/bin/agent-extract-tui.sh
 TimeoutStartSec=300s
 
 [Install]
+WantedBy=agent-interactive-console.service

@@ -47,4 +47,14 @@ resource Organization {
 	locator QuotaCost {
 		target QuotaCost
 	}
+
+  // Reference to the service that manages the account groups for this organization.
+  locator AccountGroups {
+    target AccountGroups
+  }
+
+  // Reference to the service that manages the account group assignments for this organization.
+  locator AccountGroupAssignments {
+    target AccountGroupAssignments 
+  }
 }

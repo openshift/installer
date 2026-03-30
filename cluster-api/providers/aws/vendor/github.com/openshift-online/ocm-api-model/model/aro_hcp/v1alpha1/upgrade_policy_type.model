@@ -1,0 +1,39 @@
+/*
+Copyright (c) 2020 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of an upgrade policy that can be set for a cluster.
+class UpgradePolicy {
+	// Cluster ID this upgrade policy is defined for.
+	ClusterID String
+
+	// Schedule cron expression that defines automatic upgrade scheduling.
+	Schedule String
+
+	// Schedule type of the upgrade.
+	ScheduleType ScheduleType
+
+	// Upgrade type specify the type of the upgrade.
+	UpgradeType UpgradeType
+
+	// Version is the desired upgrade version.
+	Version String
+
+	// Next time the upgrade should run.
+	NextRun Date
+
+	// Indicates if minor version upgrades are allowed for automatic upgrades (for manual it's always allowed).
+	EnableMinorVersionUpgrades Boolean
+}

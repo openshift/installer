@@ -84,8 +84,9 @@ func (c *ARMClientCache) getARMClientFromCredential(cred *identity.Credential) (
 	}
 
 	options := &genericarmclient.GenericClientOptions{
-		HttpClient: c.httpClient,
-		Metrics:    c.armMetrics,
+		HTTPClient:        c.httpClient,
+		Metrics:           c.armMetrics,
+		AdditionalTenants: cred.AdditionalTenants(),
 	}
 	newClient, err := genericarmclient.NewGenericClient(c.cloudConfig, cred.TokenCredential(), options)
 	if err != nil {

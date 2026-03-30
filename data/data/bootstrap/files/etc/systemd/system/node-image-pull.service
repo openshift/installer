@@ -1,7 +1,8 @@
 [Unit]
 Description=Node Image Pull
+Wants=var-ostreecontainer.mount
 Requires=network.target NetworkManager.service
-After=network.target
+After=network.target var-ostreecontainer.mount
 
 [Service]
 Type=oneshot

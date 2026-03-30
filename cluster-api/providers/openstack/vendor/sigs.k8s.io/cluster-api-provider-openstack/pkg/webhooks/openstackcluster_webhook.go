@@ -72,8 +72,62 @@ func (*openStackClusterWebhook) ValidateCreate(_ context.Context, objRaw runtime
 	return aggregateObjErrors(newObj.GroupVersionKind().GroupKind(), newObj.Name, allErrs)
 }
 
+// allowSubnetFilterToIDTransition checks if changes to OpenStackCluster.Spec.Subnets
+// are transitioning from a Filter-based definition to an ID-based one, and whether
+// those transitions are valid based on the current status.network.subnets.
+//
+// This function only allows Filter → ID transitions when the filter name in the old
+// spec matches the subnet name in status, and the new ID matches the corresponding subnet ID.
+//
+// Returns true if all such transitions are valid; false otherwise.
+func allowSubnetFilterToIDTransition(oldObj, newObj *infrav1.OpenStackCluster) bool {
+	if newObj.Spec.Network == nil || oldObj.Spec.Network == nil || oldObj.Status.Network == nil {
+		return false
+	}
+
+	if len(newObj.Spec.Subnets) != len(oldObj.Spec.Subnets) || len(oldObj.Status.Network.Subnets) == 0 {
+		return false
+	}
+
+	for i := range newObj.Spec.Subnets {
+		oldSubnet := oldObj.Spec.Subnets[i]
+		newSubnet := newObj.Spec.Subnets[i]
+
+		// Allow Filter → ID only if both values match a known subnet in status
+		if oldSubnet.Filter != nil && newSubnet.ID != nil && newSubnet.Filter == nil {
+			matchFound := false
+			for _, statusSubnet := range oldObj.Status.Network.Subnets {
+				if oldSubnet.Filter.Name == statusSubnet.Name && *newSubnet.ID == statusSubnet.ID {
+					matchFound = true
+					break
+				}
+			}
+			if !matchFound {
+				return false
+			}
+		}
+
+		// Reject any change from ID → Filter
+		if oldSubnet.ID != nil && newSubnet.Filter != nil {
+			return false
+		}
+
+		// Reject changes to Filter or ID if they do not match the old values
+		if oldSubnet.Filter != nil && newSubnet.Filter != nil &&
+			oldSubnet.Filter.Name != newSubnet.Filter.Name {
+			return false
+		}
+		if oldSubnet.ID != nil && newSubnet.ID != nil &&
+			*oldSubnet.ID != *newSubnet.ID {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (*openStackClusterWebhook) ValidateUpdate(_ context.Context, oldObjRaw, newObjRaw runtime.Object) (admission.Warnings, error) {
+func (*openStackClusterWebhook) ValidateUpdate(_ context.Context, oldObjRaw, newObjRaw runtime.Object) (admission.Warnings, error) { //nolint:gocyclo,cyclop
 	var allErrs field.ErrorList
 	oldObj, err := castToOpenStackCluster(oldObjRaw)
 	if err != nil {
@@ -119,7 +173,7 @@ func (*openStackClusterWebhook) ValidateUpdate(_ context.Context, oldObjRaw, new
 	oldObj.Spec.Bastion = &infrav1.Bastion{}
 	newObj.Spec.Bastion = &infrav1.Bastion{}
 
-	// Allow changes to the managed allNodesSecurityGroupRules.
+	// Allow changes to the managed securityGroupRules.
 	if newObj.Spec.ManagedSecurityGroups != nil {
 		if oldObj.Spec.ManagedSecurityGroups == nil {
 			oldObj.Spec.ManagedSecurityGroups = &infrav1.ManagedSecurityGroups{}
@@ -128,15 +182,61 @@ func (*openStackClusterWebhook) ValidateUpdate(_ context.Context, oldObjRaw, new
 		oldObj.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
 		newObj.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
 
+		oldObj.Spec.ManagedSecurityGroups.ControlPlaneNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
+		newObj.Spec.ManagedSecurityGroups.ControlPlaneNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
+
+		oldObj.Spec.ManagedSecurityGroups.WorkerNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
+		newObj.Spec.ManagedSecurityGroups.WorkerNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
+
 		// Allow change to the allowAllInClusterTraffic.
 		oldObj.Spec.ManagedSecurityGroups.AllowAllInClusterTraffic = false
 		newObj.Spec.ManagedSecurityGroups.AllowAllInClusterTraffic = false
+	}
+
+	// Allow changes only to DNSNameservers in ManagedSubnets spec
+	if newObj.Spec.ManagedSubnets != nil && oldObj.Spec.ManagedSubnets != nil {
+		// Check if any fields other than DNSNameservers have changed
+		if len(oldObj.Spec.ManagedSubnets) != len(newObj.Spec.ManagedSubnets) {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "managedSubnets"), "cannot add or remove subnets"))
+		} else {
+			// Build maps of subnets by CIDR
+			oldSubnetMap := make(map[string]*infrav1.SubnetSpec)
+
+			for i := range oldObj.Spec.ManagedSubnets {
+				oldSubnet := &oldObj.Spec.ManagedSubnets[i]
+				oldSubnetMap[oldSubnet.CIDR] = oldSubnet
+			}
+
+			// Check if all new subnets have matching old subnets with the same CIDR
+			for i := range newObj.Spec.ManagedSubnets {
+				newSubnet := &newObj.Spec.ManagedSubnets[i]
+
+				oldSubnet, exists := oldSubnetMap[newSubnet.CIDR]
+				if !exists {
+					allErrs = append(allErrs, field.Forbidden(
+						field.NewPath("spec", "managedSubnets"),
+						fmt.Sprintf("cannot change subnet CIDR from existing value to %s", newSubnet.CIDR),
+					))
+					continue
+				}
+
+				// DNSNameservers is mutable
+				oldSubnet.DNSNameservers = nil
+				newSubnet.DNSNameservers = nil
+			}
+		}
 	}
 
 	// Allow changes on AllowedCIDRs
 	if newObj.Spec.APIServerLoadBalancer != nil && oldObj.Spec.APIServerLoadBalancer != nil {
 		oldObj.Spec.APIServerLoadBalancer.AllowedCIDRs = []string{}
 		newObj.Spec.APIServerLoadBalancer.AllowedCIDRs = []string{}
+	}
+
+	// Allow changes on APIServerLB monitors
+	if newObj.Spec.APIServerLoadBalancer != nil && oldObj.Spec.APIServerLoadBalancer != nil {
+		oldObj.Spec.APIServerLoadBalancer.Monitor = &infrav1.APIServerLoadBalancerMonitor{}
+		newObj.Spec.APIServerLoadBalancer.Monitor = &infrav1.APIServerLoadBalancerMonitor{}
 	}
 
 	// Allow changes to the availability zones.
@@ -152,6 +252,20 @@ func (*openStackClusterWebhook) ValidateUpdate(_ context.Context, oldObjRaw, new
 	if oldObj.Status.APIServerLoadBalancer != nil && ptr.Deref(newObj.Spec.APIServerFloatingIP, "") == oldObj.Status.APIServerLoadBalancer.IP {
 		newObj.Spec.APIServerFloatingIP = nil
 		oldObj.Spec.APIServerFloatingIP = nil
+	}
+
+	// Allow changes from filter to id for spec.network and spec.subnets
+	if newObj.Spec.Network != nil && oldObj.Spec.Network != nil && oldObj.Status.Network != nil {
+		// Allow change from spec.network.subnets from filter to id if it matches the current subnets.
+		if allowSubnetFilterToIDTransition(oldObj, newObj) {
+			oldObj.Spec.Subnets = nil
+			newObj.Spec.Subnets = nil
+		}
+		// Allow change from spec.network.filter to spec.network.id only if it matches the current network.
+		if ptr.Deref(newObj.Spec.Network.ID, "") == oldObj.Status.Network.ID {
+			newObj.Spec.Network = nil
+			oldObj.Spec.Network = nil
+		}
 	}
 
 	if !reflect.DeepEqual(oldObj.Spec, newObj.Spec) {

@@ -6,6 +6,19 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
+// FirewallRulesManagementPolicy defines the management policy for firewall rules in the cluster.
+// +kubebuilder:validation:Enum:="Managed";"Unmanaged"
+type FirewallRulesManagementPolicy string
+
+const (
+	// ManagedFirewallRules indicates that the firewall rules should be managed by the cluster.
+	ManagedFirewallRules FirewallRulesManagementPolicy = "Managed"
+
+	// UnmanagedFirewallRules indicates that the firewall rules should be managed by the user. The
+	// firewall rules should exist prior to the installation occurs.
+	UnmanagedFirewallRules FirewallRulesManagementPolicy = "Unmanaged"
+)
+
 // DNS contains the gcp dns zone information for the cluster.
 type DNS struct {
 	// PrivateZone contains the information for a private DNS zone. The Private DNS Zone can
@@ -31,11 +44,6 @@ type DNSZone struct {
 type PSCEndpoint struct {
 	// Name contains the name of the private service connect endpoint.
 	Name string `json:"name"`
-
-	// Region is the region where the endpoint resides.
-	// When the region is empty, the location is assumed to be global.
-	// +optional
-	Region string `json:"region,omitempty"`
 
 	// ClusterUseOnly should be set to true when the installer should use
 	// the public api endpoints and all cluster operators should use the
@@ -107,6 +115,17 @@ type Platform struct {
 	// only be supplied during Shared VPC (XPN) installs.
 	// +optional
 	DNS *DNS `json:"dns,omitempty"`
+
+	// FirewallRulesManagement specifies the management policy for the cluster. "Managed" indicates that
+	// the firewall rules will be created and destroyed by the cluster. "Unmanaged" indicates that the
+	// user should create and destroy the firewall rules. For Shared VPC installation, if the installer
+	// credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+	// can be absent or set to "Unmanaged" explicitly. For non-Shared VPC installation, if the installer
+	// credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+	// must be set to "Unmanaged" explicitly. And in this case, the user needs to pre-configure the VPC network
+	// and the firewall rules before the installation.
+	// +optional
+	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

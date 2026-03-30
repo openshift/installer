@@ -113,7 +113,7 @@ func (*openStackServerWebhook) ValidateUpdate(ctx context.Context, oldObjRaw, ne
 	delete(oldOpenStackServerSpec, "identityRef")
 	delete(newOpenStackServerSpec, "identityRef")
 
-	if !topology.ShouldSkipImmutabilityChecks(req, newObj) &&
+	if !topology.IsDryRunRequest(req, newObj) &&
 		!reflect.DeepEqual(newObj.Spec, oldObj.Spec) {
 		allErrs = append(allErrs,
 			field.Forbidden(field.NewPath("spec"), "OpenStackServer spec field is immutable. Please create a new resource instead."),

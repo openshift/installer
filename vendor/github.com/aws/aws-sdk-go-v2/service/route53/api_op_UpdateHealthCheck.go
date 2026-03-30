@@ -66,8 +66,9 @@ type UpdateHealthCheckInput struct {
 	//
 	// After you disable a health check, Route 53 considers the status of the health
 	// check to always be healthy. If you configured DNS failover, Route 53 continues
-	// to route traffic to the corresponding resources. If you want to stop routing
-	// traffic to a resource, change the value of [Inverted].
+	// to route traffic to the corresponding resources. Additionally, in disabled
+	// state, you can also invert the status of the health check to route traffic
+	// differently. For more information, see [Inverted].
 	//
 	// Charges for a health check still apply when the health check is disabled. For
 	// more information, see [Amazon Route 53 Pricing].
@@ -103,8 +104,8 @@ type UpdateHealthCheckInput struct {
 	// healthy or vice versa. For more information, see [How Amazon Route 53 Determines Whether an Endpoint Is Healthy]in the Amazon Route 53
 	// Developer Guide.
 	//
-	// If you don't specify a value for FailureThreshold , the default value is three
-	// health checks.
+	// Otherwise, if you don't specify a value for FailureThreshold , the default value
+	// is three health checks.
 	//
 	// [How Amazon Route 53 Determines Whether an Endpoint Is Healthy]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html
 	FailureThreshold *int32
@@ -400,6 +401,9 @@ func (c *Client) addOperationUpdateHealthCheckMiddlewares(stack *middleware.Stac
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpUpdateHealthCheckValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -421,16 +425,13 @@ func (c *Client) addOperationUpdateHealthCheckMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

@@ -18,13 +18,16 @@ import (
 
 // Retrieves information about the specified role, including the role's path,
 // GUID, ARN, and the role's trust policy that grants permission to assume the
-// role. For more information about roles, see IAM roles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
-// in the IAM User Guide. Policies returned by this operation are URL-encoded
-// compliant with RFC 3986 (https://tools.ietf.org/html/rfc3986) . You can use a
-// URL decoding method to convert the policy back to plain JSON text. For example,
-// if you use Java, you can use the decode method of the java.net.URLDecoder
-// utility class in the Java SDK. Other languages and SDKs provide similar
-// functionality.
+// role. For more information about roles, see [IAM roles]in the IAM User Guide.
+//
+// Policies returned by this operation are URL-encoded compliant with [RFC 3986]. You can
+// use a URL decoding method to convert the policy back to plain JSON text. For
+// example, if you use Java, you can use the decode method of the
+// java.net.URLDecoder utility class in the Java SDK. Other languages and SDKs
+// provide similar functionality, and some SDKs do this decoding automatically.
+//
+// [RFC 3986]: https://tools.ietf.org/html/rfc3986
+// [IAM roles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html
 func (c *Client) GetRole(ctx context.Context, params *GetRoleInput, optFns ...func(*Options)) (*GetRoleOutput, error) {
 	if params == nil {
 		params = &GetRoleInput{}
@@ -42,10 +45,13 @@ func (c *Client) GetRole(ctx context.Context, params *GetRoleInput, optFns ...fu
 
 type GetRoleInput struct {
 
-	// The name of the IAM role to get information about. This parameter allows
-	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
-	// characters consisting of upper and lowercase alphanumeric characters with no
-	// spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the IAM role to get information about.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	RoleName *string
@@ -53,7 +59,9 @@ type GetRoleInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetRole request.
+// Contains the response to a successful [GetRole] request.
+//
+// [GetRole]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetRole.html
 type GetRoleOutput struct {
 
 	// A structure containing details about the IAM role.
@@ -110,6 +118,9 @@ func (c *Client) addOperationGetRoleMiddlewares(stack *middleware.Stack, options
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +131,15 @@ func (c *Client) addOperationGetRoleMiddlewares(stack *middleware.Stack, options
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetRoleValidationMiddleware(stack); err != nil {
@@ -143,15 +163,17 @@ func (c *Client) addOperationGetRoleMiddlewares(stack *middleware.Stack, options
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetRoleAPIClient is a client that implements the GetRole operation.
-type GetRoleAPIClient interface {
-	GetRole(context.Context, *GetRoleInput, ...func(*Options)) (*GetRoleOutput, error)
-}
-
-var _ GetRoleAPIClient = (*Client)(nil)
 
 // RoleExistsWaiterOptions are waiter options for RoleExistsWaiter
 type RoleExistsWaiterOptions struct {
@@ -185,12 +207,13 @@ type RoleExistsWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *GetRoleInput, *GetRoleOutput, error) (bool, error)
 }
 
@@ -266,7 +289,13 @@ func (w *RoleExistsWaiter) WaitForOutput(ctx context.Context, params *GetRoleInp
 		}
 
 		out, err := w.client.GetRole(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -320,8 +349,18 @@ func roleExistsStateRetryable(ctx context.Context, input *GetRoleInput, output *
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
+
+// GetRoleAPIClient is a client that implements the GetRole operation.
+type GetRoleAPIClient interface {
+	GetRole(context.Context, *GetRoleInput, ...func(*Options)) (*GetRoleOutput, error)
+}
+
+var _ GetRoleAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetRole(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

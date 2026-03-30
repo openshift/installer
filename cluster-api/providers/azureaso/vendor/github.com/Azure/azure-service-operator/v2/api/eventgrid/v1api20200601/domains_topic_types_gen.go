@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (topic *DomainsTopic) ConvertTo(hub conversion.Hub) error {
 
 	return topic.AssignProperties_To_DomainsTopic(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-eventgrid-azure-com-v1api20200601-domainstopic,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventgrid.azure.com,resources=domainstopics,verbs=create;update,versions=v1api20200601,name=default.v1api20200601.domainstopics.eventgrid.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &DomainsTopic{}
-
-// Default applies defaults to the DomainsTopic resource
-func (topic *DomainsTopic) Default() {
-	topic.defaultImpl()
-	var temp any = topic
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (topic *DomainsTopic) defaultAzureName() {
-	if topic.Spec.AzureName == "" {
-		topic.Spec.AzureName = topic.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the DomainsTopic resource
-func (topic *DomainsTopic) defaultImpl() { topic.defaultAzureName() }
 
 var _ configmaps.Exporter = &DomainsTopic{}
 
@@ -173,6 +147,10 @@ func (topic *DomainsTopic) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (topic *DomainsTopic) Owner() *genruntime.ResourceReference {
+	if topic.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(topic.Spec)
 	return topic.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (topic *DomainsTopic) SetStatus(status genruntime.ConvertibleStatus) error 
 	var st DomainsTopic_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	topic.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-eventgrid-azure-com-v1api20200601-domainstopic,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventgrid.azure.com,resources=domainstopics,verbs=create;update,versions=v1api20200601,name=validate.v1api20200601.domainstopics.eventgrid.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &DomainsTopic{}
-
-// ValidateCreate validates the creation of the resource
-func (topic *DomainsTopic) ValidateCreate() (admission.Warnings, error) {
-	validations := topic.createValidations()
-	var temp any = topic
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (topic *DomainsTopic) ValidateDelete() (admission.Warnings, error) {
-	validations := topic.deleteValidations()
-	var temp any = topic
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (topic *DomainsTopic) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := topic.updateValidations()
-	var temp any = topic
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (topic *DomainsTopic) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){topic.validateResourceReferences, topic.validateOwnerReference, topic.validateSecretDestinations, topic.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (topic *DomainsTopic) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (topic *DomainsTopic) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return topic.validateResourceReferences()
-		},
-		topic.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return topic.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return topic.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return topic.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (topic *DomainsTopic) validateConfigMapDestinations() (admission.Warnings, error) {
-	if topic.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(topic, nil, topic.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (topic *DomainsTopic) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(topic)
-}
-
-// validateResourceReferences validates all resource references
-func (topic *DomainsTopic) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&topic.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (topic *DomainsTopic) validateSecretDestinations() (admission.Warnings, error) {
-	if topic.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(topic, nil, topic.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (topic *DomainsTopic) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*DomainsTopic)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, topic)
 }
 
 // AssignProperties_From_DomainsTopic populates our DomainsTopic from the provided source DomainsTopic
@@ -309,7 +184,7 @@ func (topic *DomainsTopic) AssignProperties_From_DomainsTopic(source *storage.Do
 	var spec DomainsTopic_Spec
 	err := spec.AssignProperties_From_DomainsTopic_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DomainsTopic_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_DomainsTopic_Spec() to populate field Spec")
 	}
 	topic.Spec = spec
 
@@ -317,7 +192,7 @@ func (topic *DomainsTopic) AssignProperties_From_DomainsTopic(source *storage.Do
 	var status DomainsTopic_STATUS
 	err = status.AssignProperties_From_DomainsTopic_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DomainsTopic_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_DomainsTopic_STATUS() to populate field Status")
 	}
 	topic.Status = status
 
@@ -335,7 +210,7 @@ func (topic *DomainsTopic) AssignProperties_To_DomainsTopic(destination *storage
 	var spec storage.DomainsTopic_Spec
 	err := topic.Spec.AssignProperties_To_DomainsTopic_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DomainsTopic_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_DomainsTopic_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (topic *DomainsTopic) AssignProperties_To_DomainsTopic(destination *storage
 	var status storage.DomainsTopic_STATUS
 	err = topic.Status.AssignProperties_To_DomainsTopic_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DomainsTopic_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_DomainsTopic_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -441,13 +316,13 @@ func (topic *DomainsTopic_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpe
 	src = &storage.DomainsTopic_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = topic.AssignProperties_From_DomainsTopic_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -465,13 +340,13 @@ func (topic *DomainsTopic_Spec) ConvertSpecTo(destination genruntime.Convertible
 	dst = &storage.DomainsTopic_Spec{}
 	err := topic.AssignProperties_To_DomainsTopic_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -488,7 +363,7 @@ func (topic *DomainsTopic_Spec) AssignProperties_From_DomainsTopic_Spec(source *
 		var operatorSpec DomainsTopicOperatorSpec
 		err := operatorSpec.AssignProperties_From_DomainsTopicOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DomainsTopicOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DomainsTopicOperatorSpec() to populate field OperatorSpec")
 		}
 		topic.OperatorSpec = &operatorSpec
 	} else {
@@ -520,7 +395,7 @@ func (topic *DomainsTopic_Spec) AssignProperties_To_DomainsTopic_Spec(destinatio
 		var operatorSpec storage.DomainsTopicOperatorSpec
 		err := topic.OperatorSpec.AssignProperties_To_DomainsTopicOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DomainsTopicOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DomainsTopicOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -598,13 +473,13 @@ func (topic *DomainsTopic_STATUS) ConvertStatusFrom(source genruntime.Convertibl
 	src = &storage.DomainsTopic_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = topic.AssignProperties_From_DomainsTopic_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -622,13 +497,13 @@ func (topic *DomainsTopic_STATUS) ConvertStatusTo(destination genruntime.Convert
 	dst = &storage.DomainsTopic_STATUS{}
 	err := topic.AssignProperties_To_DomainsTopic_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -720,7 +595,7 @@ func (topic *DomainsTopic_STATUS) AssignProperties_From_DomainsTopic_STATUS(sour
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		topic.SystemData = &systemDatum
 	} else {
@@ -761,7 +636,7 @@ func (topic *DomainsTopic_STATUS) AssignProperties_To_DomainsTopic_STATUS(destin
 		var systemDatum storage.SystemData_STATUS
 		err := topic.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

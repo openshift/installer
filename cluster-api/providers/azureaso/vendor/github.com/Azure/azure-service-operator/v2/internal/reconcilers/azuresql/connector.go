@@ -8,7 +8,7 @@ package sql
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	ctrlconversion "sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	asosql "github.com/Azure/azure-service-operator/v2/api/sql/v1"
@@ -38,7 +38,7 @@ func getOwnerDetails(ctx context.Context, resourceResolver *resolver.Resolver, u
 	// Note that this is not actually possible for this type because we don't allow ARMID references for these owners,
 	// but protecting against it here anyway.
 	if !owner.FoundKubernetesOwner() {
-		return ownerDetails{}, errors.Errorf("user owner must exist in Kubernetes for user %s", user.Name)
+		return ownerDetails{}, eris.Errorf("user owner must exist in Kubernetes for user %s", user.Name)
 	}
 
 	hierarchy, err := resourceResolver.ResolveResourceHierarchy(ctx, owner.Owner)
@@ -47,7 +47,7 @@ func getOwnerDetails(ctx context.Context, resourceResolver *resolver.Resolver, u
 	}
 
 	if len(hierarchy) != 3 {
-		return ownerDetails{}, errors.Errorf("failed to look up ownerDetails: expected resource hierarchy len=3 but was %d", len(hierarchy))
+		return ownerDetails{}, eris.Errorf("failed to look up ownerDetails: expected resource hierarchy len=3 but was %d", len(hierarchy))
 	}
 
 	genericServer := hierarchy[1]
@@ -55,12 +55,12 @@ func getOwnerDetails(ctx context.Context, resourceResolver *resolver.Resolver, u
 
 	server, ok := genericServer.(*sql.Server)
 	if !ok {
-		return ownerDetails{}, errors.Errorf("owner's owner was not type Server, instead: %T", genericServer)
+		return ownerDetails{}, eris.Errorf("owner's owner was not type Server, instead: %T", genericServer)
 	}
 
 	database, ok := genericDatabase.(*sql.ServersDatabase)
 	if !ok {
-		return ownerDetails{}, errors.Errorf("owner was not type ServersDatabase, instead: %T", genericDatabase)
+		return ownerDetails{}, eris.Errorf("owner was not type ServersDatabase, instead: %T", genericDatabase)
 	}
 
 	// Assertion to ensure that this is still the storage type
@@ -77,7 +77,7 @@ func getOwnerDetails(ctx context.Context, resourceResolver *resolver.Resolver, u
 	// TODO: owners.
 	if server.Status.FullyQualifiedDomainName == nil {
 		// This possibly means that the server hasn't finished deploying yet
-		err = errors.Errorf("owning Server %q '.status.fullyQualifiedDomainName' not set. Has the server been provisioned successfully?", server.Name)
+		err = eris.Errorf("owning Server %q '.status.fullyQualifiedDomainName' not set. Has the server been provisioned successfully?", server.Name)
 		return ownerDetails{}, conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonWaitingForOwner)
 	}
 	serverFQDN := *server.Status.FullyQualifiedDomainName

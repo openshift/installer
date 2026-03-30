@@ -31,9 +31,6 @@ func ValidateDiskEncryption(p *azure.MachinePool, cloudName azure.CloudEnvironme
 	if diskEncryptionSet != nil && cloudName == azure.StackCloud {
 		return append(allErrs, field.Invalid(childFldPath.Child("diskEncryptionSet"), diskEncryptionSet, "disk encryption sets are not supported on this platform"))
 	}
-	if diskEncryptionSet.SubscriptionID == "" {
-		return append(allErrs, field.Required(childFldPath.Child("subscriptionID"), "subscription ID is required"))
-	}
 	if !RxSubscriptionID.MatchString(diskEncryptionSet.SubscriptionID) {
 		return append(allErrs, field.Invalid(childFldPath.Child("subscriptionID"), diskEncryptionSet.SubscriptionID, "invalid subscription ID format"))
 	}

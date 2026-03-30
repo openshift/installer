@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-11-01"
+
 LoadBalancer: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -300,6 +301,7 @@ LoadBalancer: Resource
     │   └── Tier: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 LoadBalancersInboundNatRule: Resource
 ├── Owner: network/v1api20201101.LoadBalancer
 ├── Spec: Object (12 properties)
@@ -340,6 +342,7 @@ LoadBalancersInboundNatRule: Resource
     ├── Protocol: *string
     ├── ProvisioningState: *string
     └── Type: *string
+
 NetworkInterface: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -482,6 +485,7 @@ NetworkInterface: Resource
     └── VirtualMachine: *Object (2 properties)
         ├── Id: *string
         └── PropertyBag: genruntime.PropertyBag
+
 NetworkSecurityGroup: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (7 properties)
@@ -518,6 +522,7 @@ NetworkSecurityGroup: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 NetworkSecurityGroupsSecurityRule: Resource
 ├── Owner: network/v1api20201101.NetworkSecurityGroup
 ├── Spec: Object (20 properties)
@@ -575,6 +580,7 @@ NetworkSecurityGroupsSecurityRule: Resource
     ├── SourcePortRange: *string
     ├── SourcePortRanges: string[]
     └── Type: *string
+
 PublicIPAddress: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (21 properties)
@@ -679,6 +685,7 @@ PublicIPAddress: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 RouteTable: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -705,6 +712,7 @@ RouteTable: Resource
     ├── ResourceGuid: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 RouteTablesRoute: Resource
 ├── Owner: network/v1api20201101.RouteTable
 ├── Spec: Object (8 properties)
@@ -731,6 +739,7 @@ RouteTablesRoute: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── ProvisioningState: *string
     └── Type: *string
+
 VirtualNetwork: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -798,6 +807,7 @@ VirtualNetwork: Resource
     ├── ResourceGuid: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 VirtualNetworkGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (22 properties)
@@ -988,6 +998,7 @@ VirtualNetworkGateway: Resource
     │       └── PublicCertData: *string
     ├── VpnGatewayGeneration: *string
     └── VpnType: *string
+
 VirtualNetworksSubnet: Resource
 ├── Owner: network/v1api20201101.VirtualNetwork
 ├── Spec: Object (17 properties)
@@ -1089,6 +1100,7 @@ VirtualNetworksSubnet: Resource
     │   ├── ProvisioningState: *string
     │   └── Service: *string
     └── Type: *string
+
 VirtualNetworksVirtualNetworkPeering: Resource
 ├── Owner: network/v1api20201101.VirtualNetwork
 ├── Spec: Object (14 properties)
@@ -1140,162 +1152,322 @@ VirtualNetworksVirtualNetworkPeering: Resource
     ├── ResourceGuid: *string
     ├── Type: *string
     └── UseRemoteGateways: *bool
+
 augmentConversionForAddressSpace: Interface
+
 augmentConversionForAddressSpace_STATUS: Interface
+
 augmentConversionForApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationGatewayIPConfiguration_STATUS_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationGatewayIPConfiguration_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationSecurityGroupSpec_NetworkSecurityGroups_SecurityRule_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationSecurityGroup_STATUS_NetworkSecurityGroups_SecurityRule_SubResourceEmbedded: Interface
+
 augmentConversionForBackendAddressPool_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForBackendAddressPool_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForBackendAddressPool_STATUS_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForBgpSettings: Interface
+
 augmentConversionForBgpSettings_STATUS: Interface
+
 augmentConversionForDdosSettings: Interface
+
 augmentConversionForDdosSettings_STATUS: Interface
+
 augmentConversionForDelegation: Interface
+
 augmentConversionForDelegation_STATUS: Interface
+
 augmentConversionForDhcpOptions: Interface
+
 augmentConversionForDhcpOptions_STATUS: Interface
+
 augmentConversionForExtendedLocation: Interface
+
 augmentConversionForExtendedLocation_STATUS: Interface
+
 augmentConversionForFrontendIPConfiguration_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForFrontendIPConfiguration_STATUS_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForIPConfigurationBgpPeeringAddress: Interface
+
 augmentConversionForIPConfigurationBgpPeeringAddress_STATUS: Interface
+
 augmentConversionForIPConfigurationProfile_STATUS: Interface
+
 augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded: Interface
+
 augmentConversionForIPConfiguration_STATUS_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForInboundNatPool: Interface
+
 augmentConversionForInboundNatPool_STATUS: Interface
+
 augmentConversionForInboundNatRule_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForInboundNatRule_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForInboundNatRule_STATUS_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForInboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForIpTag: Interface
+
 augmentConversionForIpTag_STATUS: Interface
+
 augmentConversionForIpsecPolicy: Interface
+
 augmentConversionForIpsecPolicy_STATUS: Interface
+
 augmentConversionForLoadBalancer: Interface
+
 augmentConversionForLoadBalancerBackendAddress: Interface
+
 augmentConversionForLoadBalancerBackendAddress_STATUS: Interface
+
 augmentConversionForLoadBalancerOperatorSpec: Interface
+
 augmentConversionForLoadBalancerSku: Interface
+
 augmentConversionForLoadBalancerSku_STATUS: Interface
+
 augmentConversionForLoadBalancer_STATUS: Interface
+
 augmentConversionForLoadBalancer_Spec: Interface
+
 augmentConversionForLoadBalancersInboundNatRule: Interface
+
 augmentConversionForLoadBalancersInboundNatRuleOperatorSpec: Interface
+
 augmentConversionForLoadBalancersInboundNatRule_STATUS: Interface
+
 augmentConversionForLoadBalancersInboundNatRule_Spec: Interface
+
 augmentConversionForLoadBalancingRule: Interface
+
 augmentConversionForLoadBalancingRule_STATUS: Interface
+
 augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded: Interface
+
 augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterface: Interface
+
 augmentConversionForNetworkInterfaceDnsSettings: Interface
+
 augmentConversionForNetworkInterfaceDnsSettings_STATUS: Interface
+
 augmentConversionForNetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS: Interface
+
 augmentConversionForNetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterfaceOperatorSpec: Interface
+
 augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterface_Spec: Interface
+
 augmentConversionForNetworkSecurityGroup: Interface
+
 augmentConversionForNetworkSecurityGroupOperatorSpec: Interface
+
 augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkSecurityGroupSpec_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkSecurityGroup_STATUS_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkSecurityGroup_Spec: Interface
+
 augmentConversionForNetworkSecurityGroupsSecurityRule: Interface
+
 augmentConversionForNetworkSecurityGroupsSecurityRuleOperatorSpec: Interface
+
 augmentConversionForNetworkSecurityGroupsSecurityRule_STATUS: Interface
+
 augmentConversionForNetworkSecurityGroupsSecurityRule_Spec: Interface
+
 augmentConversionForOutboundRule: Interface
+
 augmentConversionForOutboundRule_STATUS: Interface
+
 augmentConversionForPrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForPrivateEndpoint_STATUS_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForPrivateLinkServiceSpec: Interface
+
 augmentConversionForPrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForProbe: Interface
+
 augmentConversionForProbe_STATUS: Interface
+
 augmentConversionForPublicIPAddress: Interface
+
 augmentConversionForPublicIPAddressDnsSettings: Interface
+
 augmentConversionForPublicIPAddressDnsSettings_STATUS: Interface
+
 augmentConversionForPublicIPAddressOperatorSpec: Interface
+
 augmentConversionForPublicIPAddressSku: Interface
+
 augmentConversionForPublicIPAddressSku_STATUS: Interface
+
 augmentConversionForPublicIPAddressSpec_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForPublicIPAddressSpec_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded: Interface
+
 augmentConversionForPublicIPAddress_STATUS: Interface
+
 augmentConversionForPublicIPAddress_STATUS_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForPublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForPublicIPAddress_Spec: Interface
+
 augmentConversionForRadiusServer: Interface
+
 augmentConversionForRadiusServer_STATUS: Interface
+
 augmentConversionForResourceNavigationLink_STATUS: Interface
+
 augmentConversionForRouteTable: Interface
+
 augmentConversionForRouteTableOperatorSpec: Interface
+
 augmentConversionForRouteTableSpec_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForRouteTable_STATUS: Interface
+
 augmentConversionForRouteTable_STATUS_SubResourceEmbedded: Interface
+
 augmentConversionForRouteTable_Spec: Interface
+
 augmentConversionForRouteTablesRoute: Interface
+
 augmentConversionForRouteTablesRouteOperatorSpec: Interface
+
 augmentConversionForRouteTablesRoute_STATUS: Interface
+
 augmentConversionForRouteTablesRoute_Spec: Interface
+
 augmentConversionForSecurityRule_STATUS: Interface
+
 augmentConversionForServiceAssociationLink_STATUS: Interface
+
 augmentConversionForServiceEndpointPolicySpec_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForServiceEndpointPolicy_STATUS_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
+
 augmentConversionForServiceEndpointPropertiesFormat: Interface
+
 augmentConversionForServiceEndpointPropertiesFormat_STATUS: Interface
+
 augmentConversionForSubResource: Interface
+
 augmentConversionForSubResource_STATUS: Interface
+
 augmentConversionForSubnet_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_STATUS_LoadBalancer_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Interface
+
 augmentConversionForVirtualNetwork: Interface
+
 augmentConversionForVirtualNetworkBgpCommunities: Interface
+
 augmentConversionForVirtualNetworkBgpCommunities_STATUS: Interface
+
 augmentConversionForVirtualNetworkGateway: Interface
+
 augmentConversionForVirtualNetworkGatewayIPConfiguration: Interface
+
 augmentConversionForVirtualNetworkGatewayIPConfiguration_STATUS: Interface
+
 augmentConversionForVirtualNetworkGatewayOperatorSpec: Interface
+
 augmentConversionForVirtualNetworkGatewaySku: Interface
+
 augmentConversionForVirtualNetworkGatewaySku_STATUS: Interface
+
 augmentConversionForVirtualNetworkGateway_STATUS: Interface
+
 augmentConversionForVirtualNetworkGateway_Spec: Interface
+
 augmentConversionForVirtualNetworkOperatorSpec: Interface
+
 augmentConversionForVirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForVirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+
 augmentConversionForVirtualNetwork_STATUS: Interface
+
 augmentConversionForVirtualNetwork_Spec: Interface
+
 augmentConversionForVirtualNetworksSubnet: Interface
+
 augmentConversionForVirtualNetworksSubnetOperatorSpec: Interface
+
 augmentConversionForVirtualNetworksSubnet_STATUS: Interface
+
 augmentConversionForVirtualNetworksSubnet_Spec: Interface
+
 augmentConversionForVirtualNetworksVirtualNetworkPeering: Interface
+
 augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec: Interface
+
 augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS: Interface
+
 augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec: Interface
+
 augmentConversionForVpnClientConfiguration: Interface
+
 augmentConversionForVpnClientConfiguration_STATUS: Interface
+
 augmentConversionForVpnClientRevokedCertificate: Interface
+
 augmentConversionForVpnClientRevokedCertificate_STATUS: Interface
+
 augmentConversionForVpnClientRootCertificate: Interface
+
 augmentConversionForVpnClientRootCertificate_STATUS: Interface
+

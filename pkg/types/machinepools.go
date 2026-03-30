@@ -23,6 +23,8 @@ const (
 	MachinePoolControlPlaneRoleName = "master"
 	// MachinePoolArbiterRoleName name associated with the control plane machinepool for smaller sized limited nodes.
 	MachinePoolArbiterRoleName = "arbiter"
+	// MachinePoolDefaultConfig name associated with the generic default configs for machine pool.
+	MachinePoolDefaultConfig = "default"
 )
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.
@@ -128,6 +130,17 @@ type MachinePool struct {
 	// The available types are etcd, swap and user-defined.
 	// +optional
 	DiskSetup []Disk `json:"diskSetup,omitempty"`
+
+	// Management is the API that will be used for machine management in the cluster.
+	// Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
+	// Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
+	// Supported platforms: aws
+	// Default is ClusterAPI.
+	//
+	// +kubebuilder:default=ClusterAPI
+	// +kubebuilder:validation:Enum=ClusterAPI;MachineAPI
+	// +optional
+	Management MachineManagementAPI `json:"management,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine
@@ -218,14 +231,24 @@ const (
 
 // Credential stores the information about a baremetal host's management controller.
 type Credential struct {
-	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
-	Address  string `json:"address" validate:"required,uniqueField"`
+	HostName string `json:"hostName,omitempty" yaml:"hostname,omitempty" validate:"required,uniqueField"`
+	Username string `json:"username" yaml:"username" validate:"required"`
+	Password string `json:"password" yaml:"password" validate:"required"`
+	Address  string `json:"address" yaml:"address" validate:"required,uniqueField"`
 	// CertificateVerification Defines whether ssl certificate verification is required or not.
 	// If omitted, the platform chooses a default, that default is enabled.
 	// +kubebuilder:default:="Enabled"
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
-	CertificateVerification CertificateVerificationPolicy `json:"certificateVerification,omitempty"`
+	CertificateVerification CertificateVerificationPolicy `json:"certificateVerification,omitempty" yaml:"certificateVerification,omitempty"`
 }
+
+// MachineManagementAPI is the API used for machine management in the cluster.
+type MachineManagementAPI string
+
+const (
+	// ClusterAPI indicates that the machine management API is ClusterAPI.
+	ClusterAPI MachineManagementAPI = "ClusterAPI"
+	// MachineAPI indicates that the machine management API is MachineAPI.
+	MachineAPI MachineManagementAPI = "MachineAPI"
+)

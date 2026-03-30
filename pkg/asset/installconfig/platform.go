@@ -58,7 +58,7 @@ func (a *platform) Generate(ctx context.Context, _ asset.Parents) error {
 
 	switch platform {
 	case aws.Name:
-		a.AWS, err = awsconfig.Platform()
+		a.AWS, err = awsconfig.Platform(ctx)
 		if err != nil {
 			return err
 		}

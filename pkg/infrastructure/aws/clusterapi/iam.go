@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
@@ -18,6 +17,8 @@ import (
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 const (
@@ -97,21 +98,15 @@ var (
 // createIAMRoles creates the roles used by control-plane and compute nodes.
 func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.InstallConfig) error {
 	logrus.Infoln("Reconciling IAM roles for control-plane and compute nodes")
-	// Create the IAM Role with the aws sdk.
-	// https://docs.aws.amazon.com/sdk-for-go/api/service/iam/#IAM.CreateRole
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
 
-	client := iam.NewFromConfig(cfg, func(options *iam.Options) {
-		options.Region = ic.Config.Platform.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "iam") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	platformAWS := ic.Config.Platform.AWS
+	client, err := awsconfig.NewIAMClient(ctx, awsconfig.EndpointOptions{
+		Region:    platformAWS.Region,
+		Endpoints: platformAWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create iam client: %w", err)
+	}
 
 	// Create the IAM Roles for master and workers.
 	tags := []iamtypes.Tag{
@@ -128,6 +123,11 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 		})
 	}
 
+	ec2SvcPrincipal, err := getEC2ServicePrincipal(ic.AWS.Region)
+	if err != nil {
+		return fmt.Errorf("failed to get EC2 service principal for IAM roles: %w", err)
+	}
+
 	assumePolicy := &iamv1.PolicyDocument{
 		Version: "2012-10-17",
 		Statement: iamv1.Statements{
@@ -135,7 +135,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 				Effect: "Allow",
 				Principal: iamv1.Principals{
 					iamv1.PrincipalService: []string{
-						getPartitionDNSSuffix(ic.AWS.Region),
+						ec2SvcPrincipal,
 					},
 				},
 				Action: iamv1.Actions{
@@ -194,11 +194,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 			}
 
 			waiter := iam.NewInstanceProfileExistsWaiter(client)
-			if err := waiter.Wait(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}, 2*time.Minute,
-				func(o *iam.InstanceProfileExistsWaiterOptions) {
-					o.MaxDelay = 5 * time.Second
-					o.MinDelay = 1 * time.Second
-				}); err != nil {
+			if err := waiter.Wait(ctx, &iam.GetInstanceProfileInput{InstanceProfileName: profileName}, 15*time.Minute); err != nil {
 				return fmt.Errorf("failed to wait for %s instance profile to exist: %w", role, err)
 			}
 
@@ -259,11 +255,7 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 			return "", fmt.Errorf("failed to create %s role: %w", nodeRole, err)
 		}
 		waiter := iam.NewRoleExistsWaiter(svc)
-		if err := waiter.Wait(ctx, &iam.GetRoleInput{RoleName: roleName}, 2*time.Minute,
-			func(o *iam.RoleExistsWaiterOptions) {
-				o.MaxDelay = 5 * time.Second
-				o.MinDelay = 1 * time.Second
-			}); err != nil {
+		if err := waiter.Wait(ctx, &iam.GetRoleInput{RoleName: roleName}, 15*time.Minute); err != nil {
 			return "", fmt.Errorf("failed to wait for %s role to exist: %w", nodeRole, err)
 		}
 	}
@@ -285,28 +277,31 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 	return *roleName, nil
 }
 
-func getPartitionDNSSuffix(region string) string {
+func getEC2ServicePrincipal(region string) (string, error) {
 	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
 	if err != nil {
-		logrus.Errorf("failed to resolve AWS ec2 endpoint: %v", err)
-		return ""
+		return "", fmt.Errorf("failed to resolve AWS ec2 endpoint: %w", err)
 	}
 
 	u, err := url.Parse(endpoint.URL)
 	if err != nil {
-		logrus.Errorf("failed to parse partition ID URL: %v", err)
-		return ""
+		return "", fmt.Errorf("failed to parse partition ID URL: %w", err)
 	}
 
 	domain := "amazonaws.com"
-	// Extract the hostname
-	host := u.Hostname()
-	// Split the hostname by "." to get the domain parts
-	parts := strings.Split(host, ".")
-	if len(parts) > 2 {
-		domain = strings.Join(parts[2:], ".")
+	switch endpoint.PartitionID {
+	case awstypes.AwsEuscPartitionID:
+		// AWS Europe Sovereign Cloud uses ec2.amazonaws.com as service principal
+	default:
+		// Extract the hostname
+		host := u.Hostname()
+		// Split the hostname by "." to get the domain parts
+		parts := strings.Split(host, ".")
+		if len(parts) > 2 {
+			domain = strings.Join(parts[2:], ".")
+		}
 	}
 
-	logrus.Debugf("Using domain name: %s", domain)
-	return fmt.Sprintf("ec2.%s", domain)
+	logrus.Debugf("Using domain name: %s for EC2 service principal ID", domain)
+	return fmt.Sprintf("ec2.%s", domain), nil
 }

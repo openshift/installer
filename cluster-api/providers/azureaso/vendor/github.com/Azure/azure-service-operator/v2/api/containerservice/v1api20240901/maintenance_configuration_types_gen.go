@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (configuration *MaintenanceConfiguration) ConvertTo(hub conversion.Hub) err
 
 	return configuration.AssignProperties_To_MaintenanceConfiguration(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-containerservice-azure-com-v1api20240901-maintenanceconfiguration,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerservice.azure.com,resources=maintenanceconfigurations,verbs=create;update,versions=v1api20240901,name=default.v1api20240901.maintenanceconfigurations.containerservice.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &MaintenanceConfiguration{}
-
-// Default applies defaults to the MaintenanceConfiguration resource
-func (configuration *MaintenanceConfiguration) Default() {
-	configuration.defaultImpl()
-	var temp any = configuration
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (configuration *MaintenanceConfiguration) defaultAzureName() {
-	if configuration.Spec.AzureName == "" {
-		configuration.Spec.AzureName = configuration.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the MaintenanceConfiguration resource
-func (configuration *MaintenanceConfiguration) defaultImpl() { configuration.defaultAzureName() }
 
 var _ configmaps.Exporter = &MaintenanceConfiguration{}
 
@@ -173,6 +147,10 @@ func (configuration *MaintenanceConfiguration) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (configuration *MaintenanceConfiguration) Owner() *genruntime.ResourceReference {
+	if configuration.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(configuration.Spec)
 	return configuration.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (configuration *MaintenanceConfiguration) SetStatus(status genruntime.Conve
 	var st MaintenanceConfiguration_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	configuration.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-containerservice-azure-com-v1api20240901-maintenanceconfiguration,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerservice.azure.com,resources=maintenanceconfigurations,verbs=create;update,versions=v1api20240901,name=validate.v1api20240901.maintenanceconfigurations.containerservice.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &MaintenanceConfiguration{}
-
-// ValidateCreate validates the creation of the resource
-func (configuration *MaintenanceConfiguration) ValidateCreate() (admission.Warnings, error) {
-	validations := configuration.createValidations()
-	var temp any = configuration
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (configuration *MaintenanceConfiguration) ValidateDelete() (admission.Warnings, error) {
-	validations := configuration.deleteValidations()
-	var temp any = configuration
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (configuration *MaintenanceConfiguration) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := configuration.updateValidations()
-	var temp any = configuration
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (configuration *MaintenanceConfiguration) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (configuration *MaintenanceConfiguration) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (configuration *MaintenanceConfiguration) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateResourceReferences()
-		},
-		configuration.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (configuration *MaintenanceConfiguration) validateConfigMapDestinations() (admission.Warnings, error) {
-	if configuration.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(configuration, nil, configuration.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (configuration *MaintenanceConfiguration) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(configuration)
-}
-
-// validateResourceReferences validates all resource references
-func (configuration *MaintenanceConfiguration) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&configuration.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (configuration *MaintenanceConfiguration) validateSecretDestinations() (admission.Warnings, error) {
-	if configuration.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(configuration, nil, configuration.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (configuration *MaintenanceConfiguration) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*MaintenanceConfiguration)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, configuration)
 }
 
 // AssignProperties_From_MaintenanceConfiguration populates our MaintenanceConfiguration from the provided source MaintenanceConfiguration
@@ -309,7 +184,7 @@ func (configuration *MaintenanceConfiguration) AssignProperties_From_Maintenance
 	var spec MaintenanceConfiguration_Spec
 	err := spec.AssignProperties_From_MaintenanceConfiguration_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_MaintenanceConfiguration_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_MaintenanceConfiguration_Spec() to populate field Spec")
 	}
 	configuration.Spec = spec
 
@@ -317,7 +192,7 @@ func (configuration *MaintenanceConfiguration) AssignProperties_From_Maintenance
 	var status MaintenanceConfiguration_STATUS
 	err = status.AssignProperties_From_MaintenanceConfiguration_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_MaintenanceConfiguration_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_MaintenanceConfiguration_STATUS() to populate field Status")
 	}
 	configuration.Status = status
 
@@ -335,7 +210,7 @@ func (configuration *MaintenanceConfiguration) AssignProperties_To_MaintenanceCo
 	var spec storage.MaintenanceConfiguration_Spec
 	err := configuration.Spec.AssignProperties_To_MaintenanceConfiguration_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_MaintenanceConfiguration_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_MaintenanceConfiguration_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (configuration *MaintenanceConfiguration) AssignProperties_To_MaintenanceCo
 	var status storage.MaintenanceConfiguration_STATUS
 	err = configuration.Status.AssignProperties_To_MaintenanceConfiguration_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_MaintenanceConfiguration_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_MaintenanceConfiguration_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -525,13 +400,13 @@ func (configuration *MaintenanceConfiguration_Spec) ConvertSpecFrom(source genru
 	src = &storage.MaintenanceConfiguration_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = configuration.AssignProperties_From_MaintenanceConfiguration_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -549,13 +424,13 @@ func (configuration *MaintenanceConfiguration_Spec) ConvertSpecTo(destination ge
 	dst = &storage.MaintenanceConfiguration_Spec{}
 	err := configuration.AssignProperties_To_MaintenanceConfiguration_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -572,7 +447,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_Mainte
 		var maintenanceWindow MaintenanceWindow
 		err := maintenanceWindow.AssignProperties_From_MaintenanceWindow(source.MaintenanceWindow)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MaintenanceWindow() to populate field MaintenanceWindow")
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceWindow() to populate field MaintenanceWindow")
 		}
 		configuration.MaintenanceWindow = &maintenanceWindow
 	} else {
@@ -588,7 +463,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_Mainte
 			var notAllowedTime TimeSpan
 			err := notAllowedTime.AssignProperties_From_TimeSpan(&notAllowedTimeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TimeSpan() to populate field NotAllowedTime")
+				return eris.Wrap(err, "calling AssignProperties_From_TimeSpan() to populate field NotAllowedTime")
 			}
 			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
 		}
@@ -602,7 +477,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_Mainte
 		var operatorSpec MaintenanceConfigurationOperatorSpec
 		err := operatorSpec.AssignProperties_From_MaintenanceConfigurationOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MaintenanceConfigurationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceConfigurationOperatorSpec() to populate field OperatorSpec")
 		}
 		configuration.OperatorSpec = &operatorSpec
 	} else {
@@ -626,7 +501,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_Mainte
 			var timeInWeek TimeInWeek
 			err := timeInWeek.AssignProperties_From_TimeInWeek(&timeInWeekItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TimeInWeek() to populate field TimeInWeek")
+				return eris.Wrap(err, "calling AssignProperties_From_TimeInWeek() to populate field TimeInWeek")
 			}
 			timeInWeekList[timeInWeekIndex] = timeInWeek
 		}
@@ -652,7 +527,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 		var maintenanceWindow storage.MaintenanceWindow
 		err := configuration.MaintenanceWindow.AssignProperties_To_MaintenanceWindow(&maintenanceWindow)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MaintenanceWindow() to populate field MaintenanceWindow")
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceWindow() to populate field MaintenanceWindow")
 		}
 		destination.MaintenanceWindow = &maintenanceWindow
 	} else {
@@ -668,7 +543,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 			var notAllowedTime storage.TimeSpan
 			err := notAllowedTimeItem.AssignProperties_To_TimeSpan(&notAllowedTime)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TimeSpan() to populate field NotAllowedTime")
+				return eris.Wrap(err, "calling AssignProperties_To_TimeSpan() to populate field NotAllowedTime")
 			}
 			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
 		}
@@ -682,7 +557,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 		var operatorSpec storage.MaintenanceConfigurationOperatorSpec
 		err := configuration.OperatorSpec.AssignProperties_To_MaintenanceConfigurationOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MaintenanceConfigurationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceConfigurationOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -709,7 +584,7 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 			var timeInWeek storage.TimeInWeek
 			err := timeInWeekItem.AssignProperties_To_TimeInWeek(&timeInWeek)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TimeInWeek() to populate field TimeInWeek")
+				return eris.Wrap(err, "calling AssignProperties_To_TimeInWeek() to populate field TimeInWeek")
 			}
 			timeInWeekList[timeInWeekIndex] = timeInWeek
 		}
@@ -737,7 +612,7 @@ func (configuration *MaintenanceConfiguration_Spec) Initialize_From_MaintenanceC
 		var maintenanceWindow MaintenanceWindow
 		err := maintenanceWindow.Initialize_From_MaintenanceWindow_STATUS(source.MaintenanceWindow)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+			return eris.Wrap(err, "calling Initialize_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
 		}
 		configuration.MaintenanceWindow = &maintenanceWindow
 	} else {
@@ -753,7 +628,7 @@ func (configuration *MaintenanceConfiguration_Spec) Initialize_From_MaintenanceC
 			var notAllowedTime TimeSpan
 			err := notAllowedTime.Initialize_From_TimeSpan_STATUS(&notAllowedTimeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_TimeSpan_STATUS() to populate field NotAllowedTime")
+				return eris.Wrap(err, "calling Initialize_From_TimeSpan_STATUS() to populate field NotAllowedTime")
 			}
 			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
 		}
@@ -771,7 +646,7 @@ func (configuration *MaintenanceConfiguration_Spec) Initialize_From_MaintenanceC
 			var timeInWeek TimeInWeek
 			err := timeInWeek.Initialize_From_TimeInWeek_STATUS(&timeInWeekItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_TimeInWeek_STATUS() to populate field TimeInWeek")
+				return eris.Wrap(err, "calling Initialize_From_TimeInWeek_STATUS() to populate field TimeInWeek")
 			}
 			timeInWeekList[timeInWeekIndex] = timeInWeek
 		}
@@ -835,13 +710,13 @@ func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusFrom(source g
 	src = &storage.MaintenanceConfiguration_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = configuration.AssignProperties_From_MaintenanceConfiguration_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -859,13 +734,13 @@ func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.MaintenanceConfiguration_STATUS{}
 	err := configuration.AssignProperties_To_MaintenanceConfiguration_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -974,7 +849,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_Main
 		var maintenanceWindow MaintenanceWindow_STATUS
 		err := maintenanceWindow.AssignProperties_From_MaintenanceWindow_STATUS(source.MaintenanceWindow)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
 		}
 		configuration.MaintenanceWindow = &maintenanceWindow
 	} else {
@@ -993,7 +868,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_Main
 			var notAllowedTime TimeSpan_STATUS
 			err := notAllowedTime.AssignProperties_From_TimeSpan_STATUS(&notAllowedTimeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TimeSpan_STATUS() to populate field NotAllowedTime")
+				return eris.Wrap(err, "calling AssignProperties_From_TimeSpan_STATUS() to populate field NotAllowedTime")
 			}
 			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
 		}
@@ -1007,7 +882,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_Main
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		configuration.SystemData = &systemDatum
 	} else {
@@ -1023,7 +898,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_Main
 			var timeInWeek TimeInWeek_STATUS
 			err := timeInWeek.AssignProperties_From_TimeInWeek_STATUS(&timeInWeekItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TimeInWeek_STATUS() to populate field TimeInWeek")
+				return eris.Wrap(err, "calling AssignProperties_From_TimeInWeek_STATUS() to populate field TimeInWeek")
 			}
 			timeInWeekList[timeInWeekIndex] = timeInWeek
 		}
@@ -1055,7 +930,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_Mainte
 		var maintenanceWindow storage.MaintenanceWindow_STATUS
 		err := configuration.MaintenanceWindow.AssignProperties_To_MaintenanceWindow_STATUS(&maintenanceWindow)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
 		}
 		destination.MaintenanceWindow = &maintenanceWindow
 	} else {
@@ -1074,7 +949,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_Mainte
 			var notAllowedTime storage.TimeSpan_STATUS
 			err := notAllowedTimeItem.AssignProperties_To_TimeSpan_STATUS(&notAllowedTime)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TimeSpan_STATUS() to populate field NotAllowedTime")
+				return eris.Wrap(err, "calling AssignProperties_To_TimeSpan_STATUS() to populate field NotAllowedTime")
 			}
 			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
 		}
@@ -1088,7 +963,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_Mainte
 		var systemDatum storage.SystemData_STATUS
 		err := configuration.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1104,7 +979,7 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_Mainte
 			var timeInWeek storage.TimeInWeek_STATUS
 			err := timeInWeekItem.AssignProperties_To_TimeInWeek_STATUS(&timeInWeek)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TimeInWeek_STATUS() to populate field TimeInWeek")
+				return eris.Wrap(err, "calling AssignProperties_To_TimeInWeek_STATUS() to populate field TimeInWeek")
 			}
 			timeInWeekList[timeInWeekIndex] = timeInWeek
 		}
@@ -1383,12 +1258,7 @@ func (window *MaintenanceWindow) PopulateFromARM(owner genruntime.ArbitraryOwner
 func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source *storage.MaintenanceWindow) error {
 
 	// DurationHours
-	if source.DurationHours != nil {
-		durationHour := *source.DurationHours
-		window.DurationHours = &durationHour
-	} else {
-		window.DurationHours = nil
-	}
+	window.DurationHours = genruntime.ClonePointerToInt(source.DurationHours)
 
 	// NotAllowedDates
 	if source.NotAllowedDates != nil {
@@ -1399,7 +1269,7 @@ func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source 
 			var notAllowedDate DateSpan
 			err := notAllowedDate.AssignProperties_From_DateSpan(&notAllowedDateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DateSpan() to populate field NotAllowedDates")
+				return eris.Wrap(err, "calling AssignProperties_From_DateSpan() to populate field NotAllowedDates")
 			}
 			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
 		}
@@ -1413,7 +1283,7 @@ func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source 
 		var schedule Schedule
 		err := schedule.AssignProperties_From_Schedule(source.Schedule)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Schedule() to populate field Schedule")
+			return eris.Wrap(err, "calling AssignProperties_From_Schedule() to populate field Schedule")
 		}
 		window.Schedule = &schedule
 	} else {
@@ -1424,20 +1294,10 @@ func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source 
 	window.StartDate = genruntime.ClonePointerToString(source.StartDate)
 
 	// StartTime
-	if source.StartTime != nil {
-		startTime := *source.StartTime
-		window.StartTime = &startTime
-	} else {
-		window.StartTime = nil
-	}
+	window.StartTime = genruntime.ClonePointerToString(source.StartTime)
 
 	// UtcOffset
-	if source.UtcOffset != nil {
-		utcOffset := *source.UtcOffset
-		window.UtcOffset = &utcOffset
-	} else {
-		window.UtcOffset = nil
-	}
+	window.UtcOffset = genruntime.ClonePointerToString(source.UtcOffset)
 
 	// No error
 	return nil
@@ -1449,12 +1309,7 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DurationHours
-	if window.DurationHours != nil {
-		durationHour := *window.DurationHours
-		destination.DurationHours = &durationHour
-	} else {
-		destination.DurationHours = nil
-	}
+	destination.DurationHours = genruntime.ClonePointerToInt(window.DurationHours)
 
 	// NotAllowedDates
 	if window.NotAllowedDates != nil {
@@ -1465,7 +1320,7 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 			var notAllowedDate storage.DateSpan
 			err := notAllowedDateItem.AssignProperties_To_DateSpan(&notAllowedDate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DateSpan() to populate field NotAllowedDates")
+				return eris.Wrap(err, "calling AssignProperties_To_DateSpan() to populate field NotAllowedDates")
 			}
 			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
 		}
@@ -1479,7 +1334,7 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 		var schedule storage.Schedule
 		err := window.Schedule.AssignProperties_To_Schedule(&schedule)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Schedule() to populate field Schedule")
+			return eris.Wrap(err, "calling AssignProperties_To_Schedule() to populate field Schedule")
 		}
 		destination.Schedule = &schedule
 	} else {
@@ -1490,20 +1345,10 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 	destination.StartDate = genruntime.ClonePointerToString(window.StartDate)
 
 	// StartTime
-	if window.StartTime != nil {
-		startTime := *window.StartTime
-		destination.StartTime = &startTime
-	} else {
-		destination.StartTime = nil
-	}
+	destination.StartTime = genruntime.ClonePointerToString(window.StartTime)
 
 	// UtcOffset
-	if window.UtcOffset != nil {
-		utcOffset := *window.UtcOffset
-		destination.UtcOffset = &utcOffset
-	} else {
-		destination.UtcOffset = nil
-	}
+	destination.UtcOffset = genruntime.ClonePointerToString(window.UtcOffset)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -1520,12 +1365,7 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 func (window *MaintenanceWindow) Initialize_From_MaintenanceWindow_STATUS(source *MaintenanceWindow_STATUS) error {
 
 	// DurationHours
-	if source.DurationHours != nil {
-		durationHour := *source.DurationHours
-		window.DurationHours = &durationHour
-	} else {
-		window.DurationHours = nil
-	}
+	window.DurationHours = genruntime.ClonePointerToInt(source.DurationHours)
 
 	// NotAllowedDates
 	if source.NotAllowedDates != nil {
@@ -1536,7 +1376,7 @@ func (window *MaintenanceWindow) Initialize_From_MaintenanceWindow_STATUS(source
 			var notAllowedDate DateSpan
 			err := notAllowedDate.Initialize_From_DateSpan_STATUS(&notAllowedDateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_DateSpan_STATUS() to populate field NotAllowedDates")
+				return eris.Wrap(err, "calling Initialize_From_DateSpan_STATUS() to populate field NotAllowedDates")
 			}
 			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
 		}
@@ -1550,7 +1390,7 @@ func (window *MaintenanceWindow) Initialize_From_MaintenanceWindow_STATUS(source
 		var schedule Schedule
 		err := schedule.Initialize_From_Schedule_STATUS(source.Schedule)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Schedule_STATUS() to populate field Schedule")
+			return eris.Wrap(err, "calling Initialize_From_Schedule_STATUS() to populate field Schedule")
 		}
 		window.Schedule = &schedule
 	} else {
@@ -1561,20 +1401,10 @@ func (window *MaintenanceWindow) Initialize_From_MaintenanceWindow_STATUS(source
 	window.StartDate = genruntime.ClonePointerToString(source.StartDate)
 
 	// StartTime
-	if source.StartTime != nil {
-		startTime := *source.StartTime
-		window.StartTime = &startTime
-	} else {
-		window.StartTime = nil
-	}
+	window.StartTime = genruntime.ClonePointerToString(source.StartTime)
 
 	// UtcOffset
-	if source.UtcOffset != nil {
-		utcOffset := *source.UtcOffset
-		window.UtcOffset = &utcOffset
-	} else {
-		window.UtcOffset = nil
-	}
+	window.UtcOffset = genruntime.ClonePointerToString(source.UtcOffset)
 
 	// No error
 	return nil
@@ -1684,7 +1514,7 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_From_MaintenanceWindow_
 			var notAllowedDate DateSpan_STATUS
 			err := notAllowedDate.AssignProperties_From_DateSpan_STATUS(&notAllowedDateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DateSpan_STATUS() to populate field NotAllowedDates")
+				return eris.Wrap(err, "calling AssignProperties_From_DateSpan_STATUS() to populate field NotAllowedDates")
 			}
 			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
 		}
@@ -1698,7 +1528,7 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_From_MaintenanceWindow_
 		var schedule Schedule_STATUS
 		err := schedule.AssignProperties_From_Schedule_STATUS(source.Schedule)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Schedule_STATUS() to populate field Schedule")
+			return eris.Wrap(err, "calling AssignProperties_From_Schedule_STATUS() to populate field Schedule")
 		}
 		window.Schedule = &schedule
 	} else {
@@ -1735,7 +1565,7 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_To_MaintenanceWindow_ST
 			var notAllowedDate storage.DateSpan_STATUS
 			err := notAllowedDateItem.AssignProperties_To_DateSpan_STATUS(&notAllowedDate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DateSpan_STATUS() to populate field NotAllowedDates")
+				return eris.Wrap(err, "calling AssignProperties_To_DateSpan_STATUS() to populate field NotAllowedDates")
 			}
 			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
 		}
@@ -1749,7 +1579,7 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_To_MaintenanceWindow_ST
 		var schedule storage.Schedule_STATUS
 		err := window.Schedule.AssignProperties_To_Schedule_STATUS(&schedule)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Schedule_STATUS() to populate field Schedule")
+			return eris.Wrap(err, "calling AssignProperties_To_Schedule_STATUS() to populate field Schedule")
 		}
 		destination.Schedule = &schedule
 	} else {
@@ -2707,7 +2537,7 @@ func (schedule *Schedule) AssignProperties_From_Schedule(source *storage.Schedul
 		var absoluteMonthly AbsoluteMonthlySchedule
 		err := absoluteMonthly.AssignProperties_From_AbsoluteMonthlySchedule(source.AbsoluteMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AbsoluteMonthlySchedule() to populate field AbsoluteMonthly")
+			return eris.Wrap(err, "calling AssignProperties_From_AbsoluteMonthlySchedule() to populate field AbsoluteMonthly")
 		}
 		schedule.AbsoluteMonthly = &absoluteMonthly
 	} else {
@@ -2719,7 +2549,7 @@ func (schedule *Schedule) AssignProperties_From_Schedule(source *storage.Schedul
 		var daily DailySchedule
 		err := daily.AssignProperties_From_DailySchedule(source.Daily)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DailySchedule() to populate field Daily")
+			return eris.Wrap(err, "calling AssignProperties_From_DailySchedule() to populate field Daily")
 		}
 		schedule.Daily = &daily
 	} else {
@@ -2731,7 +2561,7 @@ func (schedule *Schedule) AssignProperties_From_Schedule(source *storage.Schedul
 		var relativeMonthly RelativeMonthlySchedule
 		err := relativeMonthly.AssignProperties_From_RelativeMonthlySchedule(source.RelativeMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RelativeMonthlySchedule() to populate field RelativeMonthly")
+			return eris.Wrap(err, "calling AssignProperties_From_RelativeMonthlySchedule() to populate field RelativeMonthly")
 		}
 		schedule.RelativeMonthly = &relativeMonthly
 	} else {
@@ -2743,7 +2573,7 @@ func (schedule *Schedule) AssignProperties_From_Schedule(source *storage.Schedul
 		var weekly WeeklySchedule
 		err := weekly.AssignProperties_From_WeeklySchedule(source.Weekly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WeeklySchedule() to populate field Weekly")
+			return eris.Wrap(err, "calling AssignProperties_From_WeeklySchedule() to populate field Weekly")
 		}
 		schedule.Weekly = &weekly
 	} else {
@@ -2764,7 +2594,7 @@ func (schedule *Schedule) AssignProperties_To_Schedule(destination *storage.Sche
 		var absoluteMonthly storage.AbsoluteMonthlySchedule
 		err := schedule.AbsoluteMonthly.AssignProperties_To_AbsoluteMonthlySchedule(&absoluteMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AbsoluteMonthlySchedule() to populate field AbsoluteMonthly")
+			return eris.Wrap(err, "calling AssignProperties_To_AbsoluteMonthlySchedule() to populate field AbsoluteMonthly")
 		}
 		destination.AbsoluteMonthly = &absoluteMonthly
 	} else {
@@ -2776,7 +2606,7 @@ func (schedule *Schedule) AssignProperties_To_Schedule(destination *storage.Sche
 		var daily storage.DailySchedule
 		err := schedule.Daily.AssignProperties_To_DailySchedule(&daily)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DailySchedule() to populate field Daily")
+			return eris.Wrap(err, "calling AssignProperties_To_DailySchedule() to populate field Daily")
 		}
 		destination.Daily = &daily
 	} else {
@@ -2788,7 +2618,7 @@ func (schedule *Schedule) AssignProperties_To_Schedule(destination *storage.Sche
 		var relativeMonthly storage.RelativeMonthlySchedule
 		err := schedule.RelativeMonthly.AssignProperties_To_RelativeMonthlySchedule(&relativeMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RelativeMonthlySchedule() to populate field RelativeMonthly")
+			return eris.Wrap(err, "calling AssignProperties_To_RelativeMonthlySchedule() to populate field RelativeMonthly")
 		}
 		destination.RelativeMonthly = &relativeMonthly
 	} else {
@@ -2800,7 +2630,7 @@ func (schedule *Schedule) AssignProperties_To_Schedule(destination *storage.Sche
 		var weekly storage.WeeklySchedule
 		err := schedule.Weekly.AssignProperties_To_WeeklySchedule(&weekly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WeeklySchedule() to populate field Weekly")
+			return eris.Wrap(err, "calling AssignProperties_To_WeeklySchedule() to populate field Weekly")
 		}
 		destination.Weekly = &weekly
 	} else {
@@ -2826,7 +2656,7 @@ func (schedule *Schedule) Initialize_From_Schedule_STATUS(source *Schedule_STATU
 		var absoluteMonthly AbsoluteMonthlySchedule
 		err := absoluteMonthly.Initialize_From_AbsoluteMonthlySchedule_STATUS(source.AbsoluteMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
+			return eris.Wrap(err, "calling Initialize_From_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
 		}
 		schedule.AbsoluteMonthly = &absoluteMonthly
 	} else {
@@ -2838,7 +2668,7 @@ func (schedule *Schedule) Initialize_From_Schedule_STATUS(source *Schedule_STATU
 		var daily DailySchedule
 		err := daily.Initialize_From_DailySchedule_STATUS(source.Daily)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DailySchedule_STATUS() to populate field Daily")
+			return eris.Wrap(err, "calling Initialize_From_DailySchedule_STATUS() to populate field Daily")
 		}
 		schedule.Daily = &daily
 	} else {
@@ -2850,7 +2680,7 @@ func (schedule *Schedule) Initialize_From_Schedule_STATUS(source *Schedule_STATU
 		var relativeMonthly RelativeMonthlySchedule
 		err := relativeMonthly.Initialize_From_RelativeMonthlySchedule_STATUS(source.RelativeMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
+			return eris.Wrap(err, "calling Initialize_From_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
 		}
 		schedule.RelativeMonthly = &relativeMonthly
 	} else {
@@ -2862,7 +2692,7 @@ func (schedule *Schedule) Initialize_From_Schedule_STATUS(source *Schedule_STATU
 		var weekly WeeklySchedule
 		err := weekly.Initialize_From_WeeklySchedule_STATUS(source.Weekly)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WeeklySchedule_STATUS() to populate field Weekly")
+			return eris.Wrap(err, "calling Initialize_From_WeeklySchedule_STATUS() to populate field Weekly")
 		}
 		schedule.Weekly = &weekly
 	} else {
@@ -2959,7 +2789,7 @@ func (schedule *Schedule_STATUS) AssignProperties_From_Schedule_STATUS(source *s
 		var absoluteMonthly AbsoluteMonthlySchedule_STATUS
 		err := absoluteMonthly.AssignProperties_From_AbsoluteMonthlySchedule_STATUS(source.AbsoluteMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
+			return eris.Wrap(err, "calling AssignProperties_From_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
 		}
 		schedule.AbsoluteMonthly = &absoluteMonthly
 	} else {
@@ -2971,7 +2801,7 @@ func (schedule *Schedule_STATUS) AssignProperties_From_Schedule_STATUS(source *s
 		var daily DailySchedule_STATUS
 		err := daily.AssignProperties_From_DailySchedule_STATUS(source.Daily)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DailySchedule_STATUS() to populate field Daily")
+			return eris.Wrap(err, "calling AssignProperties_From_DailySchedule_STATUS() to populate field Daily")
 		}
 		schedule.Daily = &daily
 	} else {
@@ -2983,7 +2813,7 @@ func (schedule *Schedule_STATUS) AssignProperties_From_Schedule_STATUS(source *s
 		var relativeMonthly RelativeMonthlySchedule_STATUS
 		err := relativeMonthly.AssignProperties_From_RelativeMonthlySchedule_STATUS(source.RelativeMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
+			return eris.Wrap(err, "calling AssignProperties_From_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
 		}
 		schedule.RelativeMonthly = &relativeMonthly
 	} else {
@@ -2995,7 +2825,7 @@ func (schedule *Schedule_STATUS) AssignProperties_From_Schedule_STATUS(source *s
 		var weekly WeeklySchedule_STATUS
 		err := weekly.AssignProperties_From_WeeklySchedule_STATUS(source.Weekly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WeeklySchedule_STATUS() to populate field Weekly")
+			return eris.Wrap(err, "calling AssignProperties_From_WeeklySchedule_STATUS() to populate field Weekly")
 		}
 		schedule.Weekly = &weekly
 	} else {
@@ -3016,7 +2846,7 @@ func (schedule *Schedule_STATUS) AssignProperties_To_Schedule_STATUS(destination
 		var absoluteMonthly storage.AbsoluteMonthlySchedule_STATUS
 		err := schedule.AbsoluteMonthly.AssignProperties_To_AbsoluteMonthlySchedule_STATUS(&absoluteMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
+			return eris.Wrap(err, "calling AssignProperties_To_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
 		}
 		destination.AbsoluteMonthly = &absoluteMonthly
 	} else {
@@ -3028,7 +2858,7 @@ func (schedule *Schedule_STATUS) AssignProperties_To_Schedule_STATUS(destination
 		var daily storage.DailySchedule_STATUS
 		err := schedule.Daily.AssignProperties_To_DailySchedule_STATUS(&daily)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DailySchedule_STATUS() to populate field Daily")
+			return eris.Wrap(err, "calling AssignProperties_To_DailySchedule_STATUS() to populate field Daily")
 		}
 		destination.Daily = &daily
 	} else {
@@ -3040,7 +2870,7 @@ func (schedule *Schedule_STATUS) AssignProperties_To_Schedule_STATUS(destination
 		var relativeMonthly storage.RelativeMonthlySchedule_STATUS
 		err := schedule.RelativeMonthly.AssignProperties_To_RelativeMonthlySchedule_STATUS(&relativeMonthly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
+			return eris.Wrap(err, "calling AssignProperties_To_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
 		}
 		destination.RelativeMonthly = &relativeMonthly
 	} else {
@@ -3052,7 +2882,7 @@ func (schedule *Schedule_STATUS) AssignProperties_To_Schedule_STATUS(destination
 		var weekly storage.WeeklySchedule_STATUS
 		err := schedule.Weekly.AssignProperties_To_WeeklySchedule_STATUS(&weekly)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WeeklySchedule_STATUS() to populate field Weekly")
+			return eris.Wrap(err, "calling AssignProperties_To_WeeklySchedule_STATUS() to populate field Weekly")
 		}
 		destination.Weekly = &weekly
 	} else {
@@ -3223,20 +3053,10 @@ func (schedule *AbsoluteMonthlySchedule) PopulateFromARM(owner genruntime.Arbitr
 func (schedule *AbsoluteMonthlySchedule) AssignProperties_From_AbsoluteMonthlySchedule(source *storage.AbsoluteMonthlySchedule) error {
 
 	// DayOfMonth
-	if source.DayOfMonth != nil {
-		dayOfMonth := *source.DayOfMonth
-		schedule.DayOfMonth = &dayOfMonth
-	} else {
-		schedule.DayOfMonth = nil
-	}
+	schedule.DayOfMonth = genruntime.ClonePointerToInt(source.DayOfMonth)
 
 	// IntervalMonths
-	if source.IntervalMonths != nil {
-		intervalMonth := *source.IntervalMonths
-		schedule.IntervalMonths = &intervalMonth
-	} else {
-		schedule.IntervalMonths = nil
-	}
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
 
 	// No error
 	return nil
@@ -3248,20 +3068,10 @@ func (schedule *AbsoluteMonthlySchedule) AssignProperties_To_AbsoluteMonthlySche
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DayOfMonth
-	if schedule.DayOfMonth != nil {
-		dayOfMonth := *schedule.DayOfMonth
-		destination.DayOfMonth = &dayOfMonth
-	} else {
-		destination.DayOfMonth = nil
-	}
+	destination.DayOfMonth = genruntime.ClonePointerToInt(schedule.DayOfMonth)
 
 	// IntervalMonths
-	if schedule.IntervalMonths != nil {
-		intervalMonth := *schedule.IntervalMonths
-		destination.IntervalMonths = &intervalMonth
-	} else {
-		destination.IntervalMonths = nil
-	}
+	destination.IntervalMonths = genruntime.ClonePointerToInt(schedule.IntervalMonths)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3278,20 +3088,10 @@ func (schedule *AbsoluteMonthlySchedule) AssignProperties_To_AbsoluteMonthlySche
 func (schedule *AbsoluteMonthlySchedule) Initialize_From_AbsoluteMonthlySchedule_STATUS(source *AbsoluteMonthlySchedule_STATUS) error {
 
 	// DayOfMonth
-	if source.DayOfMonth != nil {
-		dayOfMonth := *source.DayOfMonth
-		schedule.DayOfMonth = &dayOfMonth
-	} else {
-		schedule.DayOfMonth = nil
-	}
+	schedule.DayOfMonth = genruntime.ClonePointerToInt(source.DayOfMonth)
 
 	// IntervalMonths
-	if source.IntervalMonths != nil {
-		intervalMonth := *source.IntervalMonths
-		schedule.IntervalMonths = &intervalMonth
-	} else {
-		schedule.IntervalMonths = nil
-	}
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
 
 	// No error
 	return nil
@@ -3423,12 +3223,7 @@ func (schedule *DailySchedule) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 func (schedule *DailySchedule) AssignProperties_From_DailySchedule(source *storage.DailySchedule) error {
 
 	// IntervalDays
-	if source.IntervalDays != nil {
-		intervalDay := *source.IntervalDays
-		schedule.IntervalDays = &intervalDay
-	} else {
-		schedule.IntervalDays = nil
-	}
+	schedule.IntervalDays = genruntime.ClonePointerToInt(source.IntervalDays)
 
 	// No error
 	return nil
@@ -3440,12 +3235,7 @@ func (schedule *DailySchedule) AssignProperties_To_DailySchedule(destination *st
 	propertyBag := genruntime.NewPropertyBag()
 
 	// IntervalDays
-	if schedule.IntervalDays != nil {
-		intervalDay := *schedule.IntervalDays
-		destination.IntervalDays = &intervalDay
-	} else {
-		destination.IntervalDays = nil
-	}
+	destination.IntervalDays = genruntime.ClonePointerToInt(schedule.IntervalDays)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3462,12 +3252,7 @@ func (schedule *DailySchedule) AssignProperties_To_DailySchedule(destination *st
 func (schedule *DailySchedule) Initialize_From_DailySchedule_STATUS(source *DailySchedule_STATUS) error {
 
 	// IntervalDays
-	if source.IntervalDays != nil {
-		intervalDay := *source.IntervalDays
-		schedule.IntervalDays = &intervalDay
-	} else {
-		schedule.IntervalDays = nil
-	}
+	schedule.IntervalDays = genruntime.ClonePointerToInt(source.IntervalDays)
 
 	// No error
 	return nil
@@ -3633,12 +3418,7 @@ func (schedule *RelativeMonthlySchedule) AssignProperties_From_RelativeMonthlySc
 	}
 
 	// IntervalMonths
-	if source.IntervalMonths != nil {
-		intervalMonth := *source.IntervalMonths
-		schedule.IntervalMonths = &intervalMonth
-	} else {
-		schedule.IntervalMonths = nil
-	}
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
 
 	// WeekIndex
 	if source.WeekIndex != nil {
@@ -3667,12 +3447,7 @@ func (schedule *RelativeMonthlySchedule) AssignProperties_To_RelativeMonthlySche
 	}
 
 	// IntervalMonths
-	if schedule.IntervalMonths != nil {
-		intervalMonth := *schedule.IntervalMonths
-		destination.IntervalMonths = &intervalMonth
-	} else {
-		destination.IntervalMonths = nil
-	}
+	destination.IntervalMonths = genruntime.ClonePointerToInt(schedule.IntervalMonths)
 
 	// WeekIndex
 	if schedule.WeekIndex != nil {
@@ -3705,12 +3480,7 @@ func (schedule *RelativeMonthlySchedule) Initialize_From_RelativeMonthlySchedule
 	}
 
 	// IntervalMonths
-	if source.IntervalMonths != nil {
-		intervalMonth := *source.IntervalMonths
-		schedule.IntervalMonths = &intervalMonth
-	} else {
-		schedule.IntervalMonths = nil
-	}
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
 
 	// WeekIndex
 	if source.WeekIndex != nil {
@@ -3920,12 +3690,7 @@ func (schedule *WeeklySchedule) AssignProperties_From_WeeklySchedule(source *sto
 	}
 
 	// IntervalWeeks
-	if source.IntervalWeeks != nil {
-		intervalWeek := *source.IntervalWeeks
-		schedule.IntervalWeeks = &intervalWeek
-	} else {
-		schedule.IntervalWeeks = nil
-	}
+	schedule.IntervalWeeks = genruntime.ClonePointerToInt(source.IntervalWeeks)
 
 	// No error
 	return nil
@@ -3945,12 +3710,7 @@ func (schedule *WeeklySchedule) AssignProperties_To_WeeklySchedule(destination *
 	}
 
 	// IntervalWeeks
-	if schedule.IntervalWeeks != nil {
-		intervalWeek := *schedule.IntervalWeeks
-		destination.IntervalWeeks = &intervalWeek
-	} else {
-		destination.IntervalWeeks = nil
-	}
+	destination.IntervalWeeks = genruntime.ClonePointerToInt(schedule.IntervalWeeks)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3975,12 +3735,7 @@ func (schedule *WeeklySchedule) Initialize_From_WeeklySchedule_STATUS(source *We
 	}
 
 	// IntervalWeeks
-	if source.IntervalWeeks != nil {
-		intervalWeek := *source.IntervalWeeks
-		schedule.IntervalWeeks = &intervalWeek
-	} else {
-		schedule.IntervalWeeks = nil
-	}
+	schedule.IntervalWeeks = genruntime.ClonePointerToInt(source.IntervalWeeks)
 
 	// No error
 	return nil

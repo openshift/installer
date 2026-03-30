@@ -2,11 +2,12 @@
 package aws
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
 
-	"github.com/aws/aws-sdk-go/aws/session"
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -28,8 +29,14 @@ const (
 	// PermissionCreateNetworking is an additional set of permissions required when the installer creates networking resources.
 	PermissionCreateNetworking PermissionGroup = "create-networking"
 
+	// PermissionCreateDualstackNetworking is an additional set of permissions required when the installer creates dualstack networking resources.
+	PermissionCreateDualstackNetworking PermissionGroup = "create-dualstack-networking"
+
 	// PermissionDeleteNetworking is a set of permissions required when the installer destroys networking resources.
 	PermissionDeleteNetworking PermissionGroup = "delete-networking"
+
+	// PermissionDeleteDualstackNetworking is an additional set of permissions required when the installer destroys dualstack networking resources.
+	PermissionDeleteDualstackNetworking PermissionGroup = "delete-dualstack-networking"
 
 	// PermissionDeleteSharedNetworking is a set of permissions required when the installer destroys resources from a shared-network cluster.
 	PermissionDeleteSharedNetworking PermissionGroup = "delete-shared-networking"
@@ -84,6 +91,12 @@ const (
 
 	// PermissionPassthroughCreds is a permission set required when using passthrough credentials.
 	PermissionPassthroughCreds PermissionGroup = "permission-passthrough-creds"
+
+	// PermissionDedicatedHosts is a permission set required when using user-provided dedicated hosts.
+	PermissionDedicatedHosts PermissionGroup = "permission-dedicated-hosts"
+
+	// PermissionDynamicHostAllocation is a permission set required when cleaning up dynamic hosts that were allocated during the life of the cluster.
+	PermissionDynamicHostAllocation PermissionGroup = "permission-dynamic-host-allocation"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -173,7 +186,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListRoles",
 		"iam:ListUsers",
 		"iam:PassRole",
-		"iam:SimulatePrincipalPolicy",
 		"iam:TagInstanceProfile",
 		"iam:TagRole",
 
@@ -258,6 +270,11 @@ var permissions = map[PermissionGroup][]string{
 		// Needed by CAPA to update outdated routes
 		"ec2:ReplaceRoute",
 	},
+	// Permissions required for creating dualstack network resources
+	PermissionCreateDualstackNetworking: {
+		"ec2:DescribeEgressOnlyInternetGateways",
+		"ec2:CreateEgressOnlyInternetGateway",
+	},
 	// Permissions required for deleting network resources
 	PermissionDeleteNetworking: {
 		"ec2:DeleteDhcpOptions",
@@ -272,6 +289,10 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DisassociateRouteTable",
 		"ec2:ReleaseAddress",
 		"ec2:ReplaceRouteTableAssociation",
+	},
+	// Permissions required for deleting dualstack network resources
+	PermissionDeleteDualstackNetworking: {
+		"ec2:DeleteEgressOnlyInternetGateway",
 	},
 	// Permissions required for deleting a cluster with shared network resources
 	PermissionDeleteSharedNetworking: {
@@ -375,7 +396,6 @@ var permissions = map[PermissionGroup][]string{
 	PermissionPassthroughCreds: {
 		// so we can query whether we have the below list of creds
 		"iam:GetUser",
-		"iam:SimulatePrincipalPolicy",
 
 		// openshift-ingress
 		"elasticloadbalancing:DescribeLoadBalancers",
@@ -430,19 +450,31 @@ var permissions = map[PermissionGroup][]string{
 		"iam:GetUserPolicy",
 		"iam:ListAccessKeys",
 	},
+	PermissionDedicatedHosts: {
+		// Used when user-provided dedicated hosts are configured in the install-config.yaml or when dynamic dedicated hosts are detected during cluster destroy.
+		"ec2:DescribeHosts",
+	},
+	PermissionDynamicHostAllocation: {
+		// This is only used during cluster destroy if during cluster destroy we detect a dedicated host with appropriate tags on it.
+		"ec2:ReleaseHosts",
+	},
 }
 
 // ValidateCreds will try to create an AWS session, and also verify that the current credentials
 // are sufficient to perform an installation, and that they can be used for cluster runtime
 // as either capable of creating new credentials for components that interact with the cloud or
 // being able to be passed through as-is to the components that need cloud credentials
-func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string) error {
+func ValidateCreds(ctx context.Context, awsconfig awssdk.Config, groups []PermissionGroup, region string, iamEndpoint string) error {
 	requiredPermissions, err := PermissionsList(groups)
 	if err != nil {
 		return err
 	}
 
-	client := ccaws.NewClientFromSession(ssn)
+	// The CCO helper only accepts a single endpoint for IAM API call
+	client, err := ccaws.NewClientFromConfig(awsconfig, iamEndpoint)
+	if err != nil {
+		return err
+	}
 
 	sParams := &ccaws.SimulateParams{
 		Region: region,
@@ -450,7 +482,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 
 	// Check whether we can do an installation
 	logger := logrus.StandardLogger()
-	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, sParams, logger)
+	canInstall, err := ccaws.CheckPermissionsAgainstActions(ctx, client, requiredPermissions, sParams, logger)
 	if err != nil {
 		return fmt.Errorf("checking install permissions: %w", err)
 	}
@@ -459,7 +491,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	}
 
 	// Check whether we can mint new creds for cluster services needing to interact with the cloud
-	canMint, err := ccaws.CheckCloudCredCreation(client, logger)
+	canMint, err := ccaws.CheckCloudCredCreation(ctx, client, logger)
 	if err != nil {
 		return fmt.Errorf("mint credentials check: %w", err)
 	}
@@ -469,7 +501,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 
 	// Check whether we can use the current credentials in passthrough mode to satisfy
 	// cluster services needing to interact with the cloud
-	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, sParams, logger)
+	canPassthrough, err := ccaws.CheckCloudCredPassthrough(ctx, client, sParams, logger)
 	if err != nil {
 		return fmt.Errorf("passthrough credentials check: %w", err)
 	}
@@ -488,6 +520,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 
 	if !usingExistingVPC {
 		permissionGroups = append(permissionGroups, PermissionCreateNetworking)
+
+		if ic.AWS.IPFamily.DualStackEnabled() {
+			permissionGroups = append(permissionGroups, PermissionCreateDualstackNetworking)
+		}
 	}
 
 	if !usingExistingPrivateZone {
@@ -511,6 +547,9 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 			permissionGroups = append(permissionGroups, PermissionDeleteSharedNetworking)
 		} else {
 			permissionGroups = append(permissionGroups, PermissionDeleteNetworking)
+			if ic.AWS.IPFamily.DualStackEnabled() {
+				permissionGroups = append(permissionGroups, PermissionDeleteDualstackNetworking)
+			}
 		}
 		if !usingExistingPrivateZone {
 			permissionGroups = append(permissionGroups, PermissionDeleteHostedZone)
@@ -559,6 +598,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 
 	if includesEdgeDefaultInstanceType(ic) {
 		permissionGroups = append(permissionGroups, PermissionEdgeDefaultInstance)
+	}
+
+	if includesDedicatedHosts(ic) {
+		permissionGroups = append(permissionGroups, PermissionDedicatedHosts)
 	}
 
 	return permissionGroups
@@ -739,8 +782,9 @@ func includesAssumeRole(installConfig *types.InstallConfig) bool {
 }
 
 func includesWavelengthZones(installConfig *types.InstallConfig) bool {
-	// Examples of WL zones: us-east-1-wl1-atl-wlz-1, eu-west-2-wl1-lon-wlz-1, eu-west-2-wl2-man-wlz1 ...
-	isWLZoneRegex := regexp.MustCompile(`wl\d\-.*$`)
+	// Examples of WL zones: us-east-1-wl1-atl-wlz-1, eu-west-2-wl1-lon-wlz-1, eu-west-2-wl2-man-wlz-1, etc
+	// https://docs.aws.amazon.com/wavelength/latest/developerguide/available-wavelength-zones.html
+	isWLZoneRegex := regexp.MustCompile(`-wlz.*$`)
 
 	for _, mpool := range installConfig.Compute {
 		if mpool.Name != types.MachinePoolEdgeRoleName || mpool.Platform.AWS == nil {
@@ -763,6 +807,19 @@ func includesEdgeDefaultInstanceType(installConfig *types.InstallConfig) bool {
 			continue
 		}
 		if mpool.Platform.AWS == nil || len(mpool.Platform.AWS.InstanceType) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// includesDedicatedHosts checks if any dedicated hosts are specified for worker machine pools.
+func includesDedicatedHosts(installConfig *types.InstallConfig) bool {
+	for _, mpool := range installConfig.Compute {
+		if mpool.Name != types.MachinePoolComputeRoleName {
+			continue
+		}
+		if mpool.Platform.AWS != nil && mpool.Platform.AWS.HostPlacement != nil {
 			return true
 		}
 	}

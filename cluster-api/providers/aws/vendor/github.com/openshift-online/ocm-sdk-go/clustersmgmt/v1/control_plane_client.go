@@ -35,7 +35,7 @@ import (
 
 // ControlPlaneClient is the client of the 'control_plane' resource.
 //
-// Manages a specific upgrade policy.
+// Manages control plane resources.
 type ControlPlaneClient struct {
 	transport http.RoundTripper
 	path      string
@@ -71,9 +71,19 @@ func (c *ControlPlaneClient) Update() *ControlPlaneUpdateRequest {
 	}
 }
 
+// LogForwarders returns the target 'log_forwarders' resource.
+//
+// Reference to the collection of log forwarders for the control plane.
+func (c *ControlPlaneClient) LogForwarders() *LogForwardersClient {
+	return NewLogForwardersClient(
+		c.transport,
+		path.Join(c.path, "log_forwarders"),
+	)
+}
+
 // UpgradePolicies returns the target 'control_plane_upgrade_policies' resource.
 //
-// Reference to the state of the upgrade policy.
+// Reference to the collection of upgrade policies for the control plane.
 func (c *ControlPlaneClient) UpgradePolicies() *ControlPlaneUpgradePoliciesClient {
 	return NewControlPlaneUpgradePoliciesClient(
 		c.transport,

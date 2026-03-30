@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 // MachineInput defines the inputs needed to generate a machine asset.
@@ -32,6 +33,7 @@ type MachineInput struct {
 	Tags           capa.Tags
 	PublicIP       bool
 	PublicIpv4Pool string
+	IPFamily       network.IPFamily
 	Ignition       *capa.Ignition
 }
 
@@ -118,6 +120,29 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
 
+		if throughput := mpool.EC2RootVolume.Throughput; throughput != nil {
+			awsMachine.Spec.RootVolume.Throughput = ptr.To(int64(*throughput))
+		}
+
+		if in.IPFamily.DualStackEnabled() {
+			awsMachine.Spec.PrivateDNSName = &capa.PrivateDNSName{
+				EnableResourceNameDNSAAAARecord: ptr.To(true),
+				EnableResourceNameDNSARecord:    ptr.To(true),
+				// Only resource-name supports A and AAAA records for private host names
+				// See: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/hostname-types.html#ec2-instance-private-hostnames
+				HostnameType: ptr.To("resource-name"),
+			}
+			awsMachine.Spec.InstanceMetadataOptions.HTTPProtocolIPv6 = capa.InstanceMetadataEndpointStateEnabled
+
+			// AssignPrimaryIPv6 is required for IPv6 primary to register instances to IPv6 target groups
+			switch in.IPFamily {
+			case network.DualStackIPv6Primary:
+				awsMachine.Spec.AssignPrimaryIPv6 = ptr.To(capa.PrimaryIPv6AssignmentStateEnabled)
+			case network.DualStackIPv4Primary:
+				awsMachine.Spec.AssignPrimaryIPv6 = ptr.To(capa.PrimaryIPv6AssignmentStateDisabled)
+			}
+		}
+
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)
 			awsMachine.Labels["install.openshift.io/bootstrap"] = ""
@@ -137,6 +162,16 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				awsMachine.Spec.AdditionalSecurityGroups,
 				capa.AWSResourceReference{ID: ptr.To(sg)},
 			)
+		}
+
+		if mpool.CPUOptions != nil {
+			cpuOptions := capa.CPUOptions{}
+
+			if mpool.CPUOptions.ConfidentialCompute != nil {
+				cpuOptions.ConfidentialCompute = capa.AWSConfidentialComputePolicy(*mpool.CPUOptions.ConfidentialCompute)
+			}
+
+			awsMachine.Spec.CPUOptions = cpuOptions
 		}
 
 		result = append(result, &asset.RuntimeFile{

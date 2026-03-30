@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/dns"
-	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -20,18 +19,6 @@ func TestFeatureGates(t *testing.T) {
 		installConfig *types.InstallConfig
 		expected      string
 	}{
-		{
-			name: "GCP Custom API Endpoints is not allowed without Feature Gates",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.GCP = validGCPPlatform()
-				c.GCP.Endpoint = &gcptypes.PSCEndpoint{
-					Name: "test-endpoint",
-				}
-				return c
-			}(),
-			expected: `^platform.gcp.endpoint: Forbidden: this field is protected by the GCPCustomAPIEndpointsInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
-		},
 		{
 			name: "AWS UserProvisionedDNS is not allowed without Feature Gates",
 			installConfig: func() *types.InstallConfig {
@@ -52,6 +39,36 @@ func TestFeatureGates(t *testing.T) {
 				return c
 			}(),
 			expected: `^platform.azure.userProvisionedDNS: Forbidden: this field is protected by the AzureClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "AWS Sovereign Cloud is not allowed without Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.AWS.Region = "eusc-de-east-1"
+				return c
+			}(),
+			expected: `^platform.aws.region: Forbidden: this field is protected by the AWSEuropeanSovereignCloudInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "AWS Sovereign Cloud is allowed with TechPreview Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.AWS.Region = "eusc-de-east-1"
+				return c
+			}(),
+		},
+		{
+			name: "AWS Sovereign Cloud is allowed with DevPreview Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.AWS.Region = "eusc-de-east-1"
+				return c
+			}(),
 		},
 		{
 			name: "vSphere hosts is allowed with Feature Gates enabled",
@@ -206,6 +223,59 @@ func TestFeatureGates(t *testing.T) {
 				c.ControlPlane.Fencing = &types.Fencing{Credentials: []*types.Credential{{HostName: "host1"}, {HostName: "host2"}}}
 				return c
 			}(),
+		},
+		{
+			name: "OKD featureset requires SCOS-compiled installer",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.OKD
+				return c
+			}(),
+			// This test will fail when installer is compiled without TAGS=scos
+			// When compiled with TAGS=scos, this should pass (no error)
+			expected: func() string {
+				// Only expect error if not compiled with SCOS
+				if !types.SCOS {
+					return `^featureSet: Forbidden: OKD featureset is not supported on OpenShift clusters$`
+				}
+				return ""
+			}(),
+		},
+		{
+			name: "Control Plane CAPI machine management is allowed with DevPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.ControlPlane.Management = types.ClusterAPI
+				return c
+			}(),
+		},
+		{
+			name: "Compute CAPI machine management is allowed with DevPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.Compute[0].Management = types.ClusterAPI
+				return c
+			}(),
+		},
+		{
+			name: "Control Plane CAPI machine management is not allowed with Default Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Management = types.ClusterAPI
+				return c
+			}(),
+			expected: `^controlPlane.management: Forbidden: this field is protected by the ClusterAPIControlPlaneInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "Compute CAPI machine management is not allowed with the Default Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Management = types.ClusterAPI
+				return c
+			}(),
+			expected: `^compute.management: Forbidden: this field is protected by the ClusterAPIComputeInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 	}
 

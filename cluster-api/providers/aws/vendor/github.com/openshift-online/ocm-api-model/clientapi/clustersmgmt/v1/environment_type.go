@@ -27,11 +27,14 @@ import (
 //
 // Description of an environment
 type Environment struct {
-	fieldSet_                 []bool
-	backplaneURL              string
-	lastLimitedSupportCheck   time.Time
-	lastUpgradeAvailableCheck time.Time
-	name                      string
+	fieldSet_                       []bool
+	backplaneURL                    string
+	lastClusterImagesetSync         time.Time
+	lastHibernationCheck            time.Time
+	lastLimitedSupportCheck         time.Time
+	lastLimitedSupportOverrideCheck time.Time
+	lastUpgradeAvailableCheck       time.Time
+	name                            string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -70,12 +73,58 @@ func (o *Environment) GetBackplaneURL() (value string, ok bool) {
 	return
 }
 
+// LastClusterImagesetSync returns the value of the 'last_cluster_imageset_sync' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// last time that the cluster imageset sync worker checked for version updates
+func (o *Environment) LastClusterImagesetSync() time.Time {
+	if o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1] {
+		return o.lastClusterImagesetSync
+	}
+	return time.Time{}
+}
+
+// GetLastClusterImagesetSync returns the value of the 'last_cluster_imageset_sync' attribute and
+// a flag indicating if the attribute has a value.
+//
+// last time that the cluster imageset sync worker checked for version updates
+func (o *Environment) GetLastClusterImagesetSync() (value time.Time, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1]
+	if ok {
+		value = o.lastClusterImagesetSync
+	}
+	return
+}
+
+// LastHibernationCheck returns the value of the 'last_hibernation_check' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// last time that the hibernation worker checked for hibernating clusters
+func (o *Environment) LastHibernationCheck() time.Time {
+	if o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2] {
+		return o.lastHibernationCheck
+	}
+	return time.Time{}
+}
+
+// GetLastHibernationCheck returns the value of the 'last_hibernation_check' attribute and
+// a flag indicating if the attribute has a value.
+//
+// last time that the hibernation worker checked for hibernating clusters
+func (o *Environment) GetLastHibernationCheck() (value time.Time, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2]
+	if ok {
+		value = o.lastHibernationCheck
+	}
+	return
+}
+
 // LastLimitedSupportCheck returns the value of the 'last_limited_support_check' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // last time that the worker checked for limited support clusters
 func (o *Environment) LastLimitedSupportCheck() time.Time {
-	if o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1] {
+	if o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3] {
 		return o.lastLimitedSupportCheck
 	}
 	return time.Time{}
@@ -86,9 +135,32 @@ func (o *Environment) LastLimitedSupportCheck() time.Time {
 //
 // last time that the worker checked for limited support clusters
 func (o *Environment) GetLastLimitedSupportCheck() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1]
+	ok = o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3]
 	if ok {
 		value = o.lastLimitedSupportCheck
+	}
+	return
+}
+
+// LastLimitedSupportOverrideCheck returns the value of the 'last_limited_support_override_check' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// last time that the limited support override worker checked for clusters
+func (o *Environment) LastLimitedSupportOverrideCheck() time.Time {
+	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
+		return o.lastLimitedSupportOverrideCheck
+	}
+	return time.Time{}
+}
+
+// GetLastLimitedSupportOverrideCheck returns the value of the 'last_limited_support_override_check' attribute and
+// a flag indicating if the attribute has a value.
+//
+// last time that the limited support override worker checked for clusters
+func (o *Environment) GetLastLimitedSupportOverrideCheck() (value time.Time, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
+	if ok {
+		value = o.lastLimitedSupportOverrideCheck
 	}
 	return
 }
@@ -98,7 +170,7 @@ func (o *Environment) GetLastLimitedSupportCheck() (value time.Time, ok bool) {
 //
 // last time that the worker checked for available upgrades
 func (o *Environment) LastUpgradeAvailableCheck() time.Time {
-	if o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2] {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.lastUpgradeAvailableCheck
 	}
 	return time.Time{}
@@ -109,7 +181,7 @@ func (o *Environment) LastUpgradeAvailableCheck() time.Time {
 //
 // last time that the worker checked for available upgrades
 func (o *Environment) GetLastUpgradeAvailableCheck() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2]
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.lastUpgradeAvailableCheck
 	}
@@ -121,7 +193,7 @@ func (o *Environment) GetLastUpgradeAvailableCheck() (value time.Time, ok bool) 
 //
 // environment name
 func (o *Environment) Name() string {
-	if o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3] {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
 		return o.name
 	}
 	return ""
@@ -132,7 +204,7 @@ func (o *Environment) Name() string {
 //
 // environment name
 func (o *Environment) GetName() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3]
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
 	if ok {
 		value = o.name
 	}

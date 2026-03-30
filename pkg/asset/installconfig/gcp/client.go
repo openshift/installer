@@ -545,7 +545,7 @@ func GetZones(ctx context.Context, svc *compute.Service, project, region string)
 	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
 		for _, zone := range page.Items {
-			if strings.HasSuffix(zone.Region, region) && strings.EqualFold(zone.Status, "UP") {
+			if strings.HasSuffix(zone.Region, region) && strings.EqualFold(zone.Status, "UP") && !aiZone(zone.Name) {
 				zones = append(zones, zone)
 			}
 		}
@@ -770,13 +770,7 @@ func GetPrivateServiceConnectEndpoint(client *compute.Service, project string, e
 		return nil, nil
 	}
 
-	var forwardingRules *compute.ForwardingRuleList
-	var forwardingRuleErr error
-	if endpoint.Region != "" {
-		forwardingRules, forwardingRuleErr = client.ForwardingRules.List(project, endpoint.Region).Do()
-	} else {
-		forwardingRules, forwardingRuleErr = client.GlobalForwardingRules.List(project).Do()
-	}
+	forwardingRules, forwardingRuleErr := client.GlobalForwardingRules.List(project).Do()
 	if forwardingRuleErr != nil {
 		return nil, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
 	}
@@ -799,4 +793,13 @@ func (c *Client) GetPrivateServiceConnectEndpoint(ctx context.Context, project s
 		return nil, fmt.Errorf("failed to create Compute service: %w", err)
 	}
 	return GetPrivateServiceConnectEndpoint(svc, project, endpoint)
+}
+
+// aiZone returns true if the GCP zone follows the AI naming convention.
+// Uses the regular expression pattern as documented in GCP API docs:
+// "To match zones containing ai in their name, use the filter query parameter with the regular expression name eq '.*-ai.*'."
+// e.g. us-south1-ai1b, us-central1-ai1a.
+// See: https://docs.cloud.google.com/compute/docs/regions-zones/ai-zones
+func aiZone(zone string) bool {
+	return strings.Contains(zone, "-ai")
 }

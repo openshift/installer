@@ -10,14 +10,15 @@ import (
 	"fmt"
 	"strings"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	postgresql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201/storage"
+	postgresql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
@@ -39,7 +40,7 @@ func (ext *FlexibleServerExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*postgresql.FlexibleServer)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *postgresql.FlexibleServer", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *postgresql.FlexibleServer", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -111,7 +112,7 @@ func (ext *FlexibleServerExtension) PreReconcileCheck(
 	server, ok := obj.(*postgresql.FlexibleServer)
 	if !ok {
 		return extensions.PreReconcileCheckResult{},
-			errors.Errorf("cannot run on unknown resource type %T, expected *postgresql.FlexibleServer", obj)
+			eris.Errorf("cannot run on unknown resource type %T, expected *postgresql.FlexibleServer", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if

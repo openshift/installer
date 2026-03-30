@@ -5,9 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func validPlatform() *azure.Platform {
@@ -23,8 +25,17 @@ func validNetworkPlatform() *azure.Platform {
 	p := validPlatform()
 	p.NetworkResourceGroupName = "networkresourcegroup"
 	p.VirtualNetwork = "virtualnetwork"
-	p.ComputeSubnet = "computesubnet"
-	p.ControlPlaneSubnet = "controlplanesubnet"
+	p.Subnets = []azure.SubnetSpec{
+		{
+			Name: "controlplanesubnet",
+			Role: v1beta1.SubnetControlPlane,
+		},
+		{
+			Name: "computesubnet",
+			Role: v1beta1.SubnetNode,
+		},
+	}
+
 	return p
 }
 
@@ -85,7 +96,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "missing subnets",
 			platform: func() *azure.Platform {
 				p := validNetworkPlatform()
-				p.ControlPlaneSubnet = ""
+				p.Subnets = p.Subnets[1:]
 				return p
 			}(),
 			expected: `^test-path\.controlPlaneSubnet: Required value: must provide a control plane subnet when a virtual network is specified$`,
@@ -94,7 +105,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "subnets missing virtual network",
 			platform: func() *azure.Platform {
 				p := validNetworkPlatform()
-				p.ControlPlaneSubnet = ""
+				p.Subnets = p.Subnets[0:1]
 				p.VirtualNetwork = ""
 				return p
 			}(),
@@ -134,7 +145,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.OutboundType = "random-egress"
 				return p
 			}(),
-			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewaySingleZone", "UserDefinedRouting"$`,
+			expected: `^test-path\.outboundType: Unsupported value: "random-egress": supported values: "Loadbalancer", "NATGatewayMultiZone", "NATGatewaySingleZone", "UserDefinedRouting"$`,
 		},
 		{
 			name: "invalid user defined type",
@@ -216,6 +227,67 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^test-path\.customerManagedKey: Invalid value: "-": invalid user assigned identity key for encryption$`,
+		},
+		{
+			name: "valid ipFamily IPv4",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.IPv4
+				return p
+			}(),
+		},
+		{
+			name: "valid ipFamily DualStackIPv4Primary",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.DualStackIPv4Primary
+				return p
+			}(),
+		},
+		{
+			name: "valid ipFamily DualStackIPv6Primary",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.DualStackIPv6Primary
+				return p
+			}(),
+		},
+		{
+			name: "valid ipFamily empty",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = ""
+				return p
+			}(),
+		},
+		{
+			name: "invalid ipFamily value",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = "InvalidValue"
+				return p
+			}(),
+			expected: `^test-path\.ipFamily: Unsupported value: "InvalidValue"`,
+		},
+		{
+			name: "invalid ipFamily DualStack",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = "DualStack"
+				return p
+			}(),
+			expected: `^test-path\.ipFamily: Unsupported value: "DualStack"`,
+		},
+		{
+			name: "Azure Stack Hub with userProvisionedDNS enabled",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.StackCloud
+				p.ARMEndpoint = "https://management.local.azurestack.external"
+				p.UserProvisionedDNS = "Enabled"
+				return p
+			}(),
+			expected: `^test-path\.userProvisionedDNS: Invalid value: "Enabled": userProvisionedDNS is not supported on Azure Stack Hub$`,
 		},
 	}
 	ic := types.InstallConfig{}

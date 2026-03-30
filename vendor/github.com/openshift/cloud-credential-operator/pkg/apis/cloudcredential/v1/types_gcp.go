@@ -39,6 +39,18 @@ type GCPProviderSpec struct {
 	// have the necessary services enabled
 	// +optional
 	SkipServiceCheck bool `json:"skipServiceCheck,omitempty"`
+
+	// The following fields are only required for Google Workload Identity Federation.
+
+	// ServiceAccountEmail that will be impersonated during Workload Identity Federation.
+	// +optional
+	ServiceAccountEmail string `json:"serviceAccountEmail,omitempty"`
+
+	// Audience that will be used with Workload Identity Federation.
+	// It should be formatted as follows:
+	// "//iam.googleapis.com/projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>"
+	// For more information see https://cloud.google.com/iam/docs/workload-identity-federation-with-other-providers#create-credential-config
+	Audience string `json:"audience,omitempty"`
 }
 
 // GCPProviderStatus contains the status of the GCP credentials request.

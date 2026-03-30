@@ -84,6 +84,7 @@ BackupVaultResource_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 BackupVault_Spec: Object (5 properties)
 ├── Identity: *Object (1 property)
 │   └── Type: *string
@@ -123,6 +124,7 @@ BackupVault_Spec: Object (5 properties)
 │           ├── "LocallyRedundant"
 │           └── "ZoneRedundant"
 └── Tags: map[string]string
+
 BackupVaultsBackupPolicy_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -261,6 +263,7 @@ BackupVaultsBackupPolicy_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 BackupVaultsBackupPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -378,3 +381,4 @@ BackupVaultsBackupPolicy_Spec: Object (2 properties)
                 ├── Name: *string
                 └── ObjectType: Enum (1 value)
                     └── "AzureRetentionRule"
+

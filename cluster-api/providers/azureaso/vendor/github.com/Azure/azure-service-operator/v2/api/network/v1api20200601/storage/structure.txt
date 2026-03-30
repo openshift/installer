@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-06-01"
+
 PrivateDnsZonesAAAARecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -96,6 +97,7 @@ PrivateDnsZonesAAAARecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesARecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -189,6 +191,7 @@ PrivateDnsZonesARecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesCNAMERecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -282,6 +285,7 @@ PrivateDnsZonesCNAMERecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesMXRecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -375,6 +379,7 @@ PrivateDnsZonesMXRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesPTRRecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -468,6 +473,7 @@ PrivateDnsZonesPTRRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesSRVRecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -561,6 +567,7 @@ PrivateDnsZonesSRVRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesTXTRecord: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -654,6 +661,7 @@ PrivateDnsZonesTXTRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesVirtualNetworkLink: Resource
 ├── Owner: network/v1api20200601.PrivateDnsZone
 ├── Spec: Object (10 properties)
@@ -687,53 +695,104 @@ PrivateDnsZonesVirtualNetworkLink: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── VirtualNetworkLinkState: *string
+
 augmentConversionForARecord: Interface
+
 augmentConversionForARecord_STATUS: Interface
+
 augmentConversionForAaaaRecord: Interface
+
 augmentConversionForAaaaRecord_STATUS: Interface
+
 augmentConversionForCnameRecord: Interface
+
 augmentConversionForCnameRecord_STATUS: Interface
+
 augmentConversionForMxRecord: Interface
+
 augmentConversionForMxRecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesAAAARecord: Interface
+
 augmentConversionForPrivateDnsZonesAAAARecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesAAAARecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesAAAARecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesARecord: Interface
+
 augmentConversionForPrivateDnsZonesARecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesARecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesARecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesCNAMERecord: Interface
+
 augmentConversionForPrivateDnsZonesCNAMERecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesCNAMERecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesCNAMERecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesMXRecord: Interface
+
 augmentConversionForPrivateDnsZonesMXRecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesMXRecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesMXRecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesPTRRecord: Interface
+
 augmentConversionForPrivateDnsZonesPTRRecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesPTRRecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesPTRRecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesSRVRecord: Interface
+
 augmentConversionForPrivateDnsZonesSRVRecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesSRVRecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesSRVRecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesTXTRecord: Interface
+
 augmentConversionForPrivateDnsZonesTXTRecordOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesTXTRecord_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesTXTRecord_Spec: Interface
+
 augmentConversionForPrivateDnsZonesVirtualNetworkLink: Interface
+
 augmentConversionForPrivateDnsZonesVirtualNetworkLinkOperatorSpec: Interface
+
 augmentConversionForPrivateDnsZonesVirtualNetworkLink_STATUS: Interface
+
 augmentConversionForPrivateDnsZonesVirtualNetworkLink_Spec: Interface
+
 augmentConversionForPtrRecord: Interface
+
 augmentConversionForPtrRecord_STATUS: Interface
+
 augmentConversionForSoaRecord: Interface
+
 augmentConversionForSoaRecord_STATUS: Interface
+
 augmentConversionForSrvRecord: Interface
+
 augmentConversionForSrvRecord_STATUS: Interface
+
 augmentConversionForSubResource: Interface
+
 augmentConversionForSubResource_STATUS: Interface
+
 augmentConversionForTxtRecord: Interface
+
 augmentConversionForTxtRecord_STATUS: Interface
+

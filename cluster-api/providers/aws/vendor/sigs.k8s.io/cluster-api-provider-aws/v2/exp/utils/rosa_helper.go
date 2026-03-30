@@ -45,6 +45,7 @@ func NodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 		AdditionalSecurityGroups: nodePool.AWSNodePool().AdditionalSecurityGroupIds(),
 		VolumeSize:               nodePool.AWSNodePool().RootVolume().Size(),
 		CapacityReservationID:    nodePool.AWSNodePool().CapacityReservation().Id(),
+		ImageType:                string(nodePool.ImageType()),
 		// nodePool.AWSNodePool().Tags() returns all tags including "system" tags if "fetchUserTagsOnly" parameter is not specified.
 		// TODO: enable when AdditionalTags day2 changes is supported.
 		// AdditionalTags:           nodePool.AWSNodePool().Tags(),

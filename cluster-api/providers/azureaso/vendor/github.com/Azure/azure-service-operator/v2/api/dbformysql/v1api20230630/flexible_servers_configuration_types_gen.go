@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &FlexibleServersConfiguration{}
 
 // ConvertFrom populates our FlexibleServersConfiguration from the provided hub FlexibleServersConfiguration
 func (configuration *FlexibleServersConfiguration) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersConfiguration)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20230630/storage/FlexibleServersConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersConfiguration
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return configuration.AssignProperties_From_FlexibleServersConfiguration(source)
+	err = configuration.AssignProperties_From_FlexibleServersConfiguration(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to configuration")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersConfiguration from our FlexibleServersConfiguration
 func (configuration *FlexibleServersConfiguration) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersConfiguration)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20230630/storage/FlexibleServersConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersConfiguration
+	err := configuration.AssignProperties_To_FlexibleServersConfiguration(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from configuration")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return configuration.AssignProperties_To_FlexibleServersConfiguration(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-dbformysql-azure-com-v1api20230630-flexibleserversconfiguration,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversconfigurations,verbs=create;update,versions=v1api20230630,name=default.v1api20230630.flexibleserversconfigurations.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &FlexibleServersConfiguration{}
-
-// Default applies defaults to the FlexibleServersConfiguration resource
-func (configuration *FlexibleServersConfiguration) Default() {
-	configuration.defaultImpl()
-	var temp any = configuration
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (configuration *FlexibleServersConfiguration) defaultAzureName() {
-	if configuration.Spec.AzureName == "" {
-		configuration.Spec.AzureName = configuration.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the FlexibleServersConfiguration resource
-func (configuration *FlexibleServersConfiguration) defaultImpl() { configuration.defaultAzureName() }
 
 var _ configmaps.Exporter = &FlexibleServersConfiguration{}
 
@@ -112,17 +100,6 @@ func (configuration *FlexibleServersConfiguration) SecretDestinationExpressions(
 		return nil
 	}
 	return configuration.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersConfiguration{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (configuration *FlexibleServersConfiguration) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersConfiguration_STATUS); ok {
-		return configuration.Spec.Initialize_From_FlexibleServersConfiguration_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersConfiguration_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersConfiguration{}
@@ -172,6 +149,10 @@ func (configuration *FlexibleServersConfiguration) NewEmptyStatus() genruntime.C
 
 // Owner returns the ResourceReference of the owner
 func (configuration *FlexibleServersConfiguration) Owner() *genruntime.ResourceReference {
+	if configuration.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(configuration.Spec)
 	return configuration.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -188,114 +169,11 @@ func (configuration *FlexibleServersConfiguration) SetStatus(status genruntime.C
 	var st FlexibleServersConfiguration_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	configuration.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-dbformysql-azure-com-v1api20230630-flexibleserversconfiguration,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversconfigurations,verbs=create;update,versions=v1api20230630,name=validate.v1api20230630.flexibleserversconfigurations.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &FlexibleServersConfiguration{}
-
-// ValidateCreate validates the creation of the resource
-func (configuration *FlexibleServersConfiguration) ValidateCreate() (admission.Warnings, error) {
-	validations := configuration.createValidations()
-	var temp any = configuration
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (configuration *FlexibleServersConfiguration) ValidateDelete() (admission.Warnings, error) {
-	validations := configuration.deleteValidations()
-	var temp any = configuration
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (configuration *FlexibleServersConfiguration) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := configuration.updateValidations()
-	var temp any = configuration
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (configuration *FlexibleServersConfiguration) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (configuration *FlexibleServersConfiguration) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (configuration *FlexibleServersConfiguration) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateResourceReferences()
-		},
-		configuration.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return configuration.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (configuration *FlexibleServersConfiguration) validateConfigMapDestinations() (admission.Warnings, error) {
-	if configuration.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(configuration, nil, configuration.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (configuration *FlexibleServersConfiguration) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(configuration)
-}
-
-// validateResourceReferences validates all resource references
-func (configuration *FlexibleServersConfiguration) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&configuration.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (configuration *FlexibleServersConfiguration) validateSecretDestinations() (admission.Warnings, error) {
-	if configuration.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(configuration, nil, configuration.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (configuration *FlexibleServersConfiguration) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*FlexibleServersConfiguration)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, configuration)
 }
 
 // AssignProperties_From_FlexibleServersConfiguration populates our FlexibleServersConfiguration from the provided source FlexibleServersConfiguration
@@ -308,7 +186,7 @@ func (configuration *FlexibleServersConfiguration) AssignProperties_From_Flexibl
 	var spec FlexibleServersConfiguration_Spec
 	err := spec.AssignProperties_From_FlexibleServersConfiguration_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersConfiguration_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersConfiguration_Spec() to populate field Spec")
 	}
 	configuration.Spec = spec
 
@@ -316,7 +194,7 @@ func (configuration *FlexibleServersConfiguration) AssignProperties_From_Flexibl
 	var status FlexibleServersConfiguration_STATUS
 	err = status.AssignProperties_From_FlexibleServersConfiguration_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersConfiguration_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersConfiguration_STATUS() to populate field Status")
 	}
 	configuration.Status = status
 
@@ -334,7 +212,7 @@ func (configuration *FlexibleServersConfiguration) AssignProperties_To_FlexibleS
 	var spec storage.FlexibleServersConfiguration_Spec
 	err := configuration.Spec.AssignProperties_To_FlexibleServersConfiguration_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersConfiguration_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersConfiguration_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -342,7 +220,7 @@ func (configuration *FlexibleServersConfiguration) AssignProperties_To_FlexibleS
 	var status storage.FlexibleServersConfiguration_STATUS
 	err = configuration.Status.AssignProperties_To_FlexibleServersConfiguration_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersConfiguration_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersConfiguration_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -499,13 +377,13 @@ func (configuration *FlexibleServersConfiguration_Spec) ConvertSpecFrom(source g
 	src = &storage.FlexibleServersConfiguration_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = configuration.AssignProperties_From_FlexibleServersConfiguration_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -523,13 +401,13 @@ func (configuration *FlexibleServersConfiguration_Spec) ConvertSpecTo(destinatio
 	dst = &storage.FlexibleServersConfiguration_Spec{}
 	err := configuration.AssignProperties_To_FlexibleServersConfiguration_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -549,7 +427,7 @@ func (configuration *FlexibleServersConfiguration_Spec) AssignProperties_From_Fl
 		var operatorSpec FlexibleServersConfigurationOperatorSpec
 		err := operatorSpec.AssignProperties_From_FlexibleServersConfigurationOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersConfigurationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersConfigurationOperatorSpec() to populate field OperatorSpec")
 		}
 		configuration.OperatorSpec = &operatorSpec
 	} else {
@@ -596,7 +474,7 @@ func (configuration *FlexibleServersConfiguration_Spec) AssignProperties_To_Flex
 		var operatorSpec storage.FlexibleServersConfigurationOperatorSpec
 		err := configuration.OperatorSpec.AssignProperties_To_FlexibleServersConfigurationOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersConfigurationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersConfigurationOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -631,27 +509,6 @@ func (configuration *FlexibleServersConfiguration_Spec) AssignProperties_To_Flex
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_FlexibleServersConfiguration_STATUS populates our FlexibleServersConfiguration_Spec from the provided source FlexibleServersConfiguration_STATUS
-func (configuration *FlexibleServersConfiguration_Spec) Initialize_From_FlexibleServersConfiguration_STATUS(source *FlexibleServersConfiguration_STATUS) error {
-
-	// CurrentValue
-	configuration.CurrentValue = genruntime.ClonePointerToString(source.CurrentValue)
-
-	// Source
-	if source.Source != nil {
-		sourceAsConfigurationProperties_Source := genruntime.ToEnum(string(*source.Source), configurationProperties_Source_Values)
-		configuration.Source = &sourceAsConfigurationProperties_Source
-	} else {
-		configuration.Source = nil
-	}
-
-	// Value
-	configuration.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -732,13 +589,13 @@ func (configuration *FlexibleServersConfiguration_STATUS) ConvertStatusFrom(sour
 	src = &storage.FlexibleServersConfiguration_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = configuration.AssignProperties_From_FlexibleServersConfiguration_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -756,13 +613,13 @@ func (configuration *FlexibleServersConfiguration_STATUS) ConvertStatusTo(destin
 	dst = &storage.FlexibleServersConfiguration_STATUS{}
 	err := configuration.AssignProperties_To_FlexibleServersConfiguration_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -995,7 +852,7 @@ func (configuration *FlexibleServersConfiguration_STATUS) AssignProperties_From_
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		configuration.SystemData = &systemDatum
 	} else {
@@ -1081,7 +938,7 @@ func (configuration *FlexibleServersConfiguration_STATUS) AssignProperties_To_Fl
 		var systemDatum storage.SystemData_STATUS
 		err := configuration.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

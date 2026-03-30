@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20240101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=servicebus.azure.com,resources=namespacesqueues,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=servicebus.azure.com,resources={namespacesqueues/status,namespacesqueues/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (queue *NamespacesQueue) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (queue *NamespacesQueue) SetConditions(conditions conditions.Conditions) {
 	queue.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &NamespacesQueue{}
+
+// ConvertFrom populates our NamespacesQueue from the provided hub NamespacesQueue
+func (queue *NamespacesQueue) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.NamespacesQueue)
+	if !ok {
+		return fmt.Errorf("expected servicebus/v1api20240101/storage/NamespacesQueue but received %T instead", hub)
+	}
+
+	return queue.AssignProperties_From_NamespacesQueue(source)
+}
+
+// ConvertTo populates the provided hub NamespacesQueue from our NamespacesQueue
+func (queue *NamespacesQueue) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.NamespacesQueue)
+	if !ok {
+		return fmt.Errorf("expected servicebus/v1api20240101/storage/NamespacesQueue but received %T instead", hub)
+	}
+
+	return queue.AssignProperties_To_NamespacesQueue(destination)
 }
 
 var _ configmaps.Exporter = &NamespacesQueue{}
@@ -115,6 +136,10 @@ func (queue *NamespacesQueue) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (queue *NamespacesQueue) Owner() *genruntime.ResourceReference {
+	if queue.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(queue.Spec)
 	return queue.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,15 +156,82 @@ func (queue *NamespacesQueue) SetStatus(status genruntime.ConvertibleStatus) err
 	var st NamespacesQueue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	queue.Status = st
 	return nil
 }
 
-// Hub marks that this NamespacesQueue is the hub type for conversion
-func (queue *NamespacesQueue) Hub() {}
+// AssignProperties_From_NamespacesQueue populates our NamespacesQueue from the provided source NamespacesQueue
+func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *storage.NamespacesQueue) error {
+
+	// ObjectMeta
+	queue.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec NamespacesQueue_Spec
+	err := spec.AssignProperties_From_NamespacesQueue_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueue_Spec() to populate field Spec")
+	}
+	queue.Spec = spec
+
+	// Status
+	var status NamespacesQueue_STATUS
+	err = status.AssignProperties_From_NamespacesQueue_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueue_STATUS() to populate field Status")
+	}
+	queue.Status = status
+
+	// Invoke the augmentConversionForNamespacesQueue interface (if implemented) to customize the conversion
+	var queueAsAny any = queue
+	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue); ok {
+		err := augmentedQueue.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesQueue populates the provided destination NamespacesQueue from our NamespacesQueue
+func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *storage.NamespacesQueue) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *queue.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.NamespacesQueue_Spec
+	err := queue.Spec.AssignProperties_To_NamespacesQueue_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueue_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.NamespacesQueue_STATUS
+	err = queue.Status.AssignProperties_To_NamespacesQueue_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueue_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForNamespacesQueue interface (if implemented) to customize the conversion
+	var queueAsAny any = queue
+	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue); ok {
+		err := augmentedQueue.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (queue *NamespacesQueue) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type NamespacesQueueList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NamespacesQueue `json:"items"`
+}
+
+type augmentConversionForNamespacesQueue interface {
+	AssignPropertiesFrom(src *storage.NamespacesQueue) error
+	AssignPropertiesTo(dst *storage.NamespacesQueue) error
 }
 
 // Storage version of v1api20211101.NamespacesQueue_Spec
@@ -197,20 +294,302 @@ var _ genruntime.ConvertibleSpec = &NamespacesQueue_Spec{}
 
 // ConvertSpecFrom populates our NamespacesQueue_Spec from the provided source
 func (queue *NamespacesQueue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.NamespacesQueue_Spec)
+	if ok {
+		// Populate our instance from source
+		return queue.AssignProperties_From_NamespacesQueue_Spec(src)
 	}
 
-	return source.ConvertSpecTo(queue)
+	// Convert to an intermediate form
+	src = &storage.NamespacesQueue_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = queue.AssignProperties_From_NamespacesQueue_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our NamespacesQueue_Spec
 func (queue *NamespacesQueue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.NamespacesQueue_Spec)
+	if ok {
+		// Populate destination from our instance
+		return queue.AssignProperties_To_NamespacesQueue_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(queue)
+	// Convert to an intermediate form
+	dst = &storage.NamespacesQueue_Spec{}
+	err := queue.AssignProperties_To_NamespacesQueue_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NamespacesQueue_Spec populates our NamespacesQueue_Spec from the provided source NamespacesQueue_Spec
+func (queue *NamespacesQueue_Spec) AssignProperties_From_NamespacesQueue_Spec(source *storage.NamespacesQueue_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoDeleteOnIdle
+	queue.AutoDeleteOnIdle = genruntime.ClonePointerToString(source.AutoDeleteOnIdle)
+
+	// AzureName
+	queue.AzureName = source.AzureName
+
+	// DeadLetteringOnMessageExpiration
+	if source.DeadLetteringOnMessageExpiration != nil {
+		deadLetteringOnMessageExpiration := *source.DeadLetteringOnMessageExpiration
+		queue.DeadLetteringOnMessageExpiration = &deadLetteringOnMessageExpiration
+	} else {
+		queue.DeadLetteringOnMessageExpiration = nil
+	}
+
+	// DefaultMessageTimeToLive
+	queue.DefaultMessageTimeToLive = genruntime.ClonePointerToString(source.DefaultMessageTimeToLive)
+
+	// DuplicateDetectionHistoryTimeWindow
+	queue.DuplicateDetectionHistoryTimeWindow = genruntime.ClonePointerToString(source.DuplicateDetectionHistoryTimeWindow)
+
+	// EnableBatchedOperations
+	if source.EnableBatchedOperations != nil {
+		enableBatchedOperation := *source.EnableBatchedOperations
+		queue.EnableBatchedOperations = &enableBatchedOperation
+	} else {
+		queue.EnableBatchedOperations = nil
+	}
+
+	// EnableExpress
+	if source.EnableExpress != nil {
+		enableExpress := *source.EnableExpress
+		queue.EnableExpress = &enableExpress
+	} else {
+		queue.EnableExpress = nil
+	}
+
+	// EnablePartitioning
+	if source.EnablePartitioning != nil {
+		enablePartitioning := *source.EnablePartitioning
+		queue.EnablePartitioning = &enablePartitioning
+	} else {
+		queue.EnablePartitioning = nil
+	}
+
+	// ForwardDeadLetteredMessagesTo
+	queue.ForwardDeadLetteredMessagesTo = genruntime.ClonePointerToString(source.ForwardDeadLetteredMessagesTo)
+
+	// ForwardTo
+	queue.ForwardTo = genruntime.ClonePointerToString(source.ForwardTo)
+
+	// LockDuration
+	queue.LockDuration = genruntime.ClonePointerToString(source.LockDuration)
+
+	// MaxDeliveryCount
+	queue.MaxDeliveryCount = genruntime.ClonePointerToInt(source.MaxDeliveryCount)
+
+	// MaxMessageSizeInKilobytes
+	queue.MaxMessageSizeInKilobytes = genruntime.ClonePointerToInt(source.MaxMessageSizeInKilobytes)
+
+	// MaxSizeInMegabytes
+	queue.MaxSizeInMegabytes = genruntime.ClonePointerToInt(source.MaxSizeInMegabytes)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NamespacesQueueOperatorSpec
+		err := operatorSpec.AssignProperties_From_NamespacesQueueOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+		}
+		queue.OperatorSpec = &operatorSpec
+	} else {
+		queue.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	queue.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		queue.Owner = &owner
+	} else {
+		queue.Owner = nil
+	}
+
+	// RequiresDuplicateDetection
+	if source.RequiresDuplicateDetection != nil {
+		requiresDuplicateDetection := *source.RequiresDuplicateDetection
+		queue.RequiresDuplicateDetection = &requiresDuplicateDetection
+	} else {
+		queue.RequiresDuplicateDetection = nil
+	}
+
+	// RequiresSession
+	if source.RequiresSession != nil {
+		requiresSession := *source.RequiresSession
+		queue.RequiresSession = &requiresSession
+	} else {
+		queue.RequiresSession = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		queue.PropertyBag = propertyBag
+	} else {
+		queue.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesQueue_Spec interface (if implemented) to customize the conversion
+	var queueAsAny any = queue
+	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_Spec); ok {
+		err := augmentedQueue.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesQueue_Spec populates the provided destination NamespacesQueue_Spec from our NamespacesQueue_Spec
+func (queue *NamespacesQueue_Spec) AssignProperties_To_NamespacesQueue_Spec(destination *storage.NamespacesQueue_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(queue.PropertyBag)
+
+	// AutoDeleteOnIdle
+	destination.AutoDeleteOnIdle = genruntime.ClonePointerToString(queue.AutoDeleteOnIdle)
+
+	// AzureName
+	destination.AzureName = queue.AzureName
+
+	// DeadLetteringOnMessageExpiration
+	if queue.DeadLetteringOnMessageExpiration != nil {
+		deadLetteringOnMessageExpiration := *queue.DeadLetteringOnMessageExpiration
+		destination.DeadLetteringOnMessageExpiration = &deadLetteringOnMessageExpiration
+	} else {
+		destination.DeadLetteringOnMessageExpiration = nil
+	}
+
+	// DefaultMessageTimeToLive
+	destination.DefaultMessageTimeToLive = genruntime.ClonePointerToString(queue.DefaultMessageTimeToLive)
+
+	// DuplicateDetectionHistoryTimeWindow
+	destination.DuplicateDetectionHistoryTimeWindow = genruntime.ClonePointerToString(queue.DuplicateDetectionHistoryTimeWindow)
+
+	// EnableBatchedOperations
+	if queue.EnableBatchedOperations != nil {
+		enableBatchedOperation := *queue.EnableBatchedOperations
+		destination.EnableBatchedOperations = &enableBatchedOperation
+	} else {
+		destination.EnableBatchedOperations = nil
+	}
+
+	// EnableExpress
+	if queue.EnableExpress != nil {
+		enableExpress := *queue.EnableExpress
+		destination.EnableExpress = &enableExpress
+	} else {
+		destination.EnableExpress = nil
+	}
+
+	// EnablePartitioning
+	if queue.EnablePartitioning != nil {
+		enablePartitioning := *queue.EnablePartitioning
+		destination.EnablePartitioning = &enablePartitioning
+	} else {
+		destination.EnablePartitioning = nil
+	}
+
+	// ForwardDeadLetteredMessagesTo
+	destination.ForwardDeadLetteredMessagesTo = genruntime.ClonePointerToString(queue.ForwardDeadLetteredMessagesTo)
+
+	// ForwardTo
+	destination.ForwardTo = genruntime.ClonePointerToString(queue.ForwardTo)
+
+	// LockDuration
+	destination.LockDuration = genruntime.ClonePointerToString(queue.LockDuration)
+
+	// MaxDeliveryCount
+	destination.MaxDeliveryCount = genruntime.ClonePointerToInt(queue.MaxDeliveryCount)
+
+	// MaxMessageSizeInKilobytes
+	destination.MaxMessageSizeInKilobytes = genruntime.ClonePointerToInt(queue.MaxMessageSizeInKilobytes)
+
+	// MaxSizeInMegabytes
+	destination.MaxSizeInMegabytes = genruntime.ClonePointerToInt(queue.MaxSizeInMegabytes)
+
+	// OperatorSpec
+	if queue.OperatorSpec != nil {
+		var operatorSpec storage.NamespacesQueueOperatorSpec
+		err := queue.OperatorSpec.AssignProperties_To_NamespacesQueueOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = queue.OriginalVersion
+
+	// Owner
+	if queue.Owner != nil {
+		owner := queue.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// RequiresDuplicateDetection
+	if queue.RequiresDuplicateDetection != nil {
+		requiresDuplicateDetection := *queue.RequiresDuplicateDetection
+		destination.RequiresDuplicateDetection = &requiresDuplicateDetection
+	} else {
+		destination.RequiresDuplicateDetection = nil
+	}
+
+	// RequiresSession
+	if queue.RequiresSession != nil {
+		requiresSession := *queue.RequiresSession
+		destination.RequiresSession = &requiresSession
+	} else {
+		destination.RequiresSession = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesQueue_Spec interface (if implemented) to customize the conversion
+	var queueAsAny any = queue
+	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_Spec); ok {
+		err := augmentedQueue.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20211101.NamespacesQueue_STATUS
@@ -250,20 +629,374 @@ var _ genruntime.ConvertibleStatus = &NamespacesQueue_STATUS{}
 
 // ConvertStatusFrom populates our NamespacesQueue_STATUS from the provided source
 func (queue *NamespacesQueue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.NamespacesQueue_STATUS)
+	if ok {
+		// Populate our instance from source
+		return queue.AssignProperties_From_NamespacesQueue_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(queue)
+	// Convert to an intermediate form
+	src = &storage.NamespacesQueue_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = queue.AssignProperties_From_NamespacesQueue_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our NamespacesQueue_STATUS
 func (queue *NamespacesQueue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.NamespacesQueue_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return queue.AssignProperties_To_NamespacesQueue_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(queue)
+	// Convert to an intermediate form
+	dst = &storage.NamespacesQueue_STATUS{}
+	err := queue.AssignProperties_To_NamespacesQueue_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NamespacesQueue_STATUS populates our NamespacesQueue_STATUS from the provided source NamespacesQueue_STATUS
+func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATUS(source *storage.NamespacesQueue_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessedAt
+	queue.AccessedAt = genruntime.ClonePointerToString(source.AccessedAt)
+
+	// AutoDeleteOnIdle
+	queue.AutoDeleteOnIdle = genruntime.ClonePointerToString(source.AutoDeleteOnIdle)
+
+	// Conditions
+	queue.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CountDetails
+	if source.CountDetails != nil {
+		var countDetail MessageCountDetails_STATUS
+		err := countDetail.AssignProperties_From_MessageCountDetails_STATUS(source.CountDetails)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MessageCountDetails_STATUS() to populate field CountDetails")
+		}
+		queue.CountDetails = &countDetail
+	} else {
+		queue.CountDetails = nil
+	}
+
+	// CreatedAt
+	queue.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// DeadLetteringOnMessageExpiration
+	if source.DeadLetteringOnMessageExpiration != nil {
+		deadLetteringOnMessageExpiration := *source.DeadLetteringOnMessageExpiration
+		queue.DeadLetteringOnMessageExpiration = &deadLetteringOnMessageExpiration
+	} else {
+		queue.DeadLetteringOnMessageExpiration = nil
+	}
+
+	// DefaultMessageTimeToLive
+	queue.DefaultMessageTimeToLive = genruntime.ClonePointerToString(source.DefaultMessageTimeToLive)
+
+	// DuplicateDetectionHistoryTimeWindow
+	queue.DuplicateDetectionHistoryTimeWindow = genruntime.ClonePointerToString(source.DuplicateDetectionHistoryTimeWindow)
+
+	// EnableBatchedOperations
+	if source.EnableBatchedOperations != nil {
+		enableBatchedOperation := *source.EnableBatchedOperations
+		queue.EnableBatchedOperations = &enableBatchedOperation
+	} else {
+		queue.EnableBatchedOperations = nil
+	}
+
+	// EnableExpress
+	if source.EnableExpress != nil {
+		enableExpress := *source.EnableExpress
+		queue.EnableExpress = &enableExpress
+	} else {
+		queue.EnableExpress = nil
+	}
+
+	// EnablePartitioning
+	if source.EnablePartitioning != nil {
+		enablePartitioning := *source.EnablePartitioning
+		queue.EnablePartitioning = &enablePartitioning
+	} else {
+		queue.EnablePartitioning = nil
+	}
+
+	// ForwardDeadLetteredMessagesTo
+	queue.ForwardDeadLetteredMessagesTo = genruntime.ClonePointerToString(source.ForwardDeadLetteredMessagesTo)
+
+	// ForwardTo
+	queue.ForwardTo = genruntime.ClonePointerToString(source.ForwardTo)
+
+	// Id
+	queue.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	queue.Location = genruntime.ClonePointerToString(source.Location)
+
+	// LockDuration
+	queue.LockDuration = genruntime.ClonePointerToString(source.LockDuration)
+
+	// MaxDeliveryCount
+	queue.MaxDeliveryCount = genruntime.ClonePointerToInt(source.MaxDeliveryCount)
+
+	// MaxMessageSizeInKilobytes
+	queue.MaxMessageSizeInKilobytes = genruntime.ClonePointerToInt(source.MaxMessageSizeInKilobytes)
+
+	// MaxSizeInMegabytes
+	queue.MaxSizeInMegabytes = genruntime.ClonePointerToInt(source.MaxSizeInMegabytes)
+
+	// MessageCount
+	queue.MessageCount = genruntime.ClonePointerToInt(source.MessageCount)
+
+	// Name
+	queue.Name = genruntime.ClonePointerToString(source.Name)
+
+	// RequiresDuplicateDetection
+	if source.RequiresDuplicateDetection != nil {
+		requiresDuplicateDetection := *source.RequiresDuplicateDetection
+		queue.RequiresDuplicateDetection = &requiresDuplicateDetection
+	} else {
+		queue.RequiresDuplicateDetection = nil
+	}
+
+	// RequiresSession
+	if source.RequiresSession != nil {
+		requiresSession := *source.RequiresSession
+		queue.RequiresSession = &requiresSession
+	} else {
+		queue.RequiresSession = nil
+	}
+
+	// SizeInBytes
+	queue.SizeInBytes = genruntime.ClonePointerToInt(source.SizeInBytes)
+
+	// Status
+	queue.Status = genruntime.ClonePointerToString(source.Status)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		queue.SystemData = &systemDatum
+	} else {
+		queue.SystemData = nil
+	}
+
+	// Type
+	queue.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UpdatedAt
+	queue.UpdatedAt = genruntime.ClonePointerToString(source.UpdatedAt)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		queue.PropertyBag = propertyBag
+	} else {
+		queue.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesQueue_STATUS interface (if implemented) to customize the conversion
+	var queueAsAny any = queue
+	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_STATUS); ok {
+		err := augmentedQueue.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesQueue_STATUS populates the provided destination NamespacesQueue_STATUS from our NamespacesQueue_STATUS
+func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(destination *storage.NamespacesQueue_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(queue.PropertyBag)
+
+	// AccessedAt
+	destination.AccessedAt = genruntime.ClonePointerToString(queue.AccessedAt)
+
+	// AutoDeleteOnIdle
+	destination.AutoDeleteOnIdle = genruntime.ClonePointerToString(queue.AutoDeleteOnIdle)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(queue.Conditions)
+
+	// CountDetails
+	if queue.CountDetails != nil {
+		var countDetail storage.MessageCountDetails_STATUS
+		err := queue.CountDetails.AssignProperties_To_MessageCountDetails_STATUS(&countDetail)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
+		}
+		destination.CountDetails = &countDetail
+	} else {
+		destination.CountDetails = nil
+	}
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(queue.CreatedAt)
+
+	// DeadLetteringOnMessageExpiration
+	if queue.DeadLetteringOnMessageExpiration != nil {
+		deadLetteringOnMessageExpiration := *queue.DeadLetteringOnMessageExpiration
+		destination.DeadLetteringOnMessageExpiration = &deadLetteringOnMessageExpiration
+	} else {
+		destination.DeadLetteringOnMessageExpiration = nil
+	}
+
+	// DefaultMessageTimeToLive
+	destination.DefaultMessageTimeToLive = genruntime.ClonePointerToString(queue.DefaultMessageTimeToLive)
+
+	// DuplicateDetectionHistoryTimeWindow
+	destination.DuplicateDetectionHistoryTimeWindow = genruntime.ClonePointerToString(queue.DuplicateDetectionHistoryTimeWindow)
+
+	// EnableBatchedOperations
+	if queue.EnableBatchedOperations != nil {
+		enableBatchedOperation := *queue.EnableBatchedOperations
+		destination.EnableBatchedOperations = &enableBatchedOperation
+	} else {
+		destination.EnableBatchedOperations = nil
+	}
+
+	// EnableExpress
+	if queue.EnableExpress != nil {
+		enableExpress := *queue.EnableExpress
+		destination.EnableExpress = &enableExpress
+	} else {
+		destination.EnableExpress = nil
+	}
+
+	// EnablePartitioning
+	if queue.EnablePartitioning != nil {
+		enablePartitioning := *queue.EnablePartitioning
+		destination.EnablePartitioning = &enablePartitioning
+	} else {
+		destination.EnablePartitioning = nil
+	}
+
+	// ForwardDeadLetteredMessagesTo
+	destination.ForwardDeadLetteredMessagesTo = genruntime.ClonePointerToString(queue.ForwardDeadLetteredMessagesTo)
+
+	// ForwardTo
+	destination.ForwardTo = genruntime.ClonePointerToString(queue.ForwardTo)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(queue.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(queue.Location)
+
+	// LockDuration
+	destination.LockDuration = genruntime.ClonePointerToString(queue.LockDuration)
+
+	// MaxDeliveryCount
+	destination.MaxDeliveryCount = genruntime.ClonePointerToInt(queue.MaxDeliveryCount)
+
+	// MaxMessageSizeInKilobytes
+	destination.MaxMessageSizeInKilobytes = genruntime.ClonePointerToInt(queue.MaxMessageSizeInKilobytes)
+
+	// MaxSizeInMegabytes
+	destination.MaxSizeInMegabytes = genruntime.ClonePointerToInt(queue.MaxSizeInMegabytes)
+
+	// MessageCount
+	destination.MessageCount = genruntime.ClonePointerToInt(queue.MessageCount)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(queue.Name)
+
+	// RequiresDuplicateDetection
+	if queue.RequiresDuplicateDetection != nil {
+		requiresDuplicateDetection := *queue.RequiresDuplicateDetection
+		destination.RequiresDuplicateDetection = &requiresDuplicateDetection
+	} else {
+		destination.RequiresDuplicateDetection = nil
+	}
+
+	// RequiresSession
+	if queue.RequiresSession != nil {
+		requiresSession := *queue.RequiresSession
+		destination.RequiresSession = &requiresSession
+	} else {
+		destination.RequiresSession = nil
+	}
+
+	// SizeInBytes
+	destination.SizeInBytes = genruntime.ClonePointerToInt(queue.SizeInBytes)
+
+	// Status
+	destination.Status = genruntime.ClonePointerToString(queue.Status)
+
+	// SystemData
+	if queue.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := queue.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(queue.Type)
+
+	// UpdatedAt
+	destination.UpdatedAt = genruntime.ClonePointerToString(queue.UpdatedAt)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesQueue_STATUS interface (if implemented) to customize the conversion
+	var queueAsAny any = queue
+	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_STATUS); ok {
+		err := augmentedQueue.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNamespacesQueue_Spec interface {
+	AssignPropertiesFrom(src *storage.NamespacesQueue_Spec) error
+	AssignPropertiesTo(dst *storage.NamespacesQueue_Spec) error
+}
+
+type augmentConversionForNamespacesQueue_STATUS interface {
+	AssignPropertiesFrom(src *storage.NamespacesQueue_STATUS) error
+	AssignPropertiesTo(dst *storage.NamespacesQueue_STATUS) error
 }
 
 // Storage version of v1api20211101.MessageCountDetails_STATUS
@@ -277,12 +1010,224 @@ type MessageCountDetails_STATUS struct {
 	TransferMessageCount           *int                   `json:"transferMessageCount,omitempty"`
 }
 
+// AssignProperties_From_MessageCountDetails_STATUS populates our MessageCountDetails_STATUS from the provided source MessageCountDetails_STATUS
+func (details *MessageCountDetails_STATUS) AssignProperties_From_MessageCountDetails_STATUS(source *storage.MessageCountDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActiveMessageCount
+	details.ActiveMessageCount = genruntime.ClonePointerToInt(source.ActiveMessageCount)
+
+	// DeadLetterMessageCount
+	details.DeadLetterMessageCount = genruntime.ClonePointerToInt(source.DeadLetterMessageCount)
+
+	// ScheduledMessageCount
+	details.ScheduledMessageCount = genruntime.ClonePointerToInt(source.ScheduledMessageCount)
+
+	// TransferDeadLetterMessageCount
+	details.TransferDeadLetterMessageCount = genruntime.ClonePointerToInt(source.TransferDeadLetterMessageCount)
+
+	// TransferMessageCount
+	details.TransferMessageCount = genruntime.ClonePointerToInt(source.TransferMessageCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMessageCountDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForMessageCountDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MessageCountDetails_STATUS populates the provided destination MessageCountDetails_STATUS from our MessageCountDetails_STATUS
+func (details *MessageCountDetails_STATUS) AssignProperties_To_MessageCountDetails_STATUS(destination *storage.MessageCountDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// ActiveMessageCount
+	destination.ActiveMessageCount = genruntime.ClonePointerToInt(details.ActiveMessageCount)
+
+	// DeadLetterMessageCount
+	destination.DeadLetterMessageCount = genruntime.ClonePointerToInt(details.DeadLetterMessageCount)
+
+	// ScheduledMessageCount
+	destination.ScheduledMessageCount = genruntime.ClonePointerToInt(details.ScheduledMessageCount)
+
+	// TransferDeadLetterMessageCount
+	destination.TransferDeadLetterMessageCount = genruntime.ClonePointerToInt(details.TransferDeadLetterMessageCount)
+
+	// TransferMessageCount
+	destination.TransferMessageCount = genruntime.ClonePointerToInt(details.TransferMessageCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMessageCountDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForMessageCountDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20211101.NamespacesQueueOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type NamespacesQueueOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NamespacesQueueOperatorSpec populates our NamespacesQueueOperatorSpec from the provided source NamespacesQueueOperatorSpec
+func (operator *NamespacesQueueOperatorSpec) AssignProperties_From_NamespacesQueueOperatorSpec(source *storage.NamespacesQueueOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesQueueOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesQueueOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesQueueOperatorSpec populates the provided destination NamespacesQueueOperatorSpec from our NamespacesQueueOperatorSpec
+func (operator *NamespacesQueueOperatorSpec) AssignProperties_To_NamespacesQueueOperatorSpec(destination *storage.NamespacesQueueOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesQueueOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesQueueOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMessageCountDetails_STATUS interface {
+	AssignPropertiesFrom(src *storage.MessageCountDetails_STATUS) error
+	AssignPropertiesTo(dst *storage.MessageCountDetails_STATUS) error
+}
+
+type augmentConversionForNamespacesQueueOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.NamespacesQueueOperatorSpec) error
+	AssignPropertiesTo(dst *storage.NamespacesQueueOperatorSpec) error
 }
 
 func init() {

@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
@@ -52,7 +54,8 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
-		_, err := ic.AWS.Session(ctx)
+		region := ic.Config.AWS.Region
+		_, err := awsconfig.GetConfigWithOptions(ctx, config.WithRegion(region))
 		if err != nil {
 			return err
 		}

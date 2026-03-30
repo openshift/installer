@@ -27,6 +27,7 @@ FlexibleServersAdministrator_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FlexibleServersAdministrator_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (5 properties)
@@ -36,6 +37,7 @@ FlexibleServersAdministrator_Spec: Object (2 properties)
     ├── Login: *string
     ├── Sid: *string
     └── TenantId: *string
+
 FlexibleServersConfiguration_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -75,6 +77,7 @@ FlexibleServersConfiguration_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FlexibleServersConfiguration_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -83,3 +86,4 @@ FlexibleServersConfiguration_Spec: Object (2 properties)
     │   ├── "system-default"
     │   └── "user-override"
     └── Value: *string
+

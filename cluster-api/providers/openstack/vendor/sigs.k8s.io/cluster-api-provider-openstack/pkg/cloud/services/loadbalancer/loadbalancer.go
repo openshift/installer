@@ -17,6 +17,7 @@ limitations under the License.
 package loadbalancer
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -51,6 +52,14 @@ const (
 const (
 	loadBalancerProvisioningStatusActive        = "ACTIVE"
 	loadBalancerProvisioningStatusPendingDelete = "PENDING_DELETE"
+)
+
+// Default values for Monitor, sync with `kubebuilder:default` annotations on APIServerLoadBalancerMonitor object.
+const (
+	defaultMonitorDelay          = 10
+	defaultMonitorTimeout        = 5
+	defaultMonitorMaxRetries     = 5
+	defaultMonitorMaxRetriesDown = 3
 )
 
 // We wrap the LookupHost function in a variable to allow overriding it in unit tests.
@@ -305,9 +314,10 @@ func (s *Service) getOrCreateAPILoadBalancer(openStackCluster *infrav1.OpenStack
 	if vipNetworkID == "" && vipSubnetID == "" {
 		// keep the default and create the VIP on the first cluster subnet
 		vipSubnetID = openStackCluster.Status.Network.Subnets[0].ID
+		s.scope.Logger().Info("No load balancer network specified, creating load balancer in the default subnet", "subnetID", vipSubnetID, "name", loadBalancerName)
+	} else {
+		s.scope.Logger().Info("Creating load balancer in subnet", "subnetID", vipSubnetID, "name", loadBalancerName)
 	}
-
-	s.scope.Logger().Info("Creating load balancer in subnet", "subnetID", vipSubnetID, "name", loadBalancerName)
 
 	providers, err := s.loadbalancerClient.ListLoadBalancerProviders()
 	if err != nil {
@@ -405,8 +415,7 @@ func (s *Service) reconcileAPILoadBalancerListener(lb *loadbalancers.LoadBalance
 	if err != nil {
 		return err
 	}
-
-	if err := s.getOrCreateMonitor(openStackCluster, lbPortObjectsName, pool.ID, lb.ID); err != nil {
+	if err := s.ensureMonitor(openStackCluster, lbPortObjectsName, pool.ID, lb.ID); err != nil {
 		return err
 	}
 
@@ -531,35 +540,88 @@ func (s *Service) getOrCreatePool(openStackCluster *infrav1.OpenStackCluster, po
 	return pool, nil
 }
 
-func (s *Service) getOrCreateMonitor(openStackCluster *infrav1.OpenStackCluster, monitorName, poolID, lbID string) error {
+func (s *Service) ensureMonitor(openStackCluster *infrav1.OpenStackCluster, monitorName, poolID, lbID string) error {
+	var cfg infrav1.APIServerLoadBalancerMonitor
+
+	if openStackCluster.Spec.APIServerLoadBalancer.Monitor != nil {
+		cfg = *openStackCluster.Spec.APIServerLoadBalancer.Monitor
+	}
+
+	cfg.Delay = cmp.Or(cfg.Delay, defaultMonitorDelay)
+	cfg.Timeout = cmp.Or(cfg.Timeout, defaultMonitorTimeout)
+	cfg.MaxRetries = cmp.Or(cfg.MaxRetries, defaultMonitorMaxRetries)
+	cfg.MaxRetriesDown = cmp.Or(cfg.MaxRetriesDown, defaultMonitorMaxRetriesDown)
+
 	monitor, err := s.checkIfMonitorExists(monitorName)
 	if err != nil {
 		return err
 	}
 
 	if monitor != nil {
+		needsUpdate := false
+		monitorUpdateOpts := monitors.UpdateOpts{}
+
+		if monitor.Delay != cfg.Delay {
+			s.scope.Logger().Info("Monitor delay needs update", "current", monitor.Delay, "desired", cfg.Delay)
+			monitorUpdateOpts.Delay = cfg.Delay
+			needsUpdate = true
+		}
+
+		if monitor.Timeout != cfg.Timeout {
+			s.scope.Logger().Info("Monitor timeout needs update", "current", monitor.Timeout, "desired", cfg.Timeout)
+			monitorUpdateOpts.Timeout = cfg.Timeout
+			needsUpdate = true
+		}
+
+		if monitor.MaxRetries != cfg.MaxRetries {
+			s.scope.Logger().Info("Monitor maxRetries needs update", "current", monitor.MaxRetries, "desired", cfg.MaxRetries)
+			monitorUpdateOpts.MaxRetries = cfg.MaxRetries
+			needsUpdate = true
+		}
+
+		if monitor.MaxRetriesDown != cfg.MaxRetriesDown {
+			s.scope.Logger().Info("Monitor maxRetriesDown needs update", "current", monitor.MaxRetriesDown, "desired", cfg.MaxRetriesDown)
+			monitorUpdateOpts.MaxRetriesDown = cfg.MaxRetriesDown
+			needsUpdate = true
+		}
+
+		if needsUpdate {
+			s.scope.Logger().Info("Updating load balancer monitor", "loadBalancerID", lbID, "name", monitorName, "monitorID", monitor.ID)
+
+			updatedMonitor, err := s.loadbalancerClient.UpdateMonitor(monitor.ID, monitorUpdateOpts)
+			if err != nil {
+				record.Warnf(openStackCluster, "FailedUpdateMonitor", "Failed to update monitor %s with id %s: %v", monitorName, monitor.ID, err)
+				return err
+			}
+
+			if _, err = s.waitForLoadBalancerActive(lbID); err != nil {
+				record.Warnf(openStackCluster, "FailedUpdateMonitor", "Failed to update monitor %s with id %s: wait for load balancer active %s: %v", monitorName, monitor.ID, lbID, err)
+				return err
+			}
+
+			record.Eventf(openStackCluster, "SuccessfulUpdateMonitor", "Updated monitor %s with id %s", monitorName, updatedMonitor.ID)
+		}
+
 		return nil
 	}
 
 	s.scope.Logger().Info("Creating load balancer monitor for pool", "loadBalancerID", lbID, "name", monitorName, "poolID", poolID)
 
-	monitorCreateOpts := monitors.CreateOpts{
+	monitor, err = s.loadbalancerClient.CreateMonitor(monitors.CreateOpts{
 		Name:           monitorName,
 		PoolID:         poolID,
 		Type:           "TCP",
-		Delay:          10,
-		MaxRetries:     5,
-		MaxRetriesDown: 3,
-		Timeout:        5,
-	}
-	monitor, err = s.loadbalancerClient.CreateMonitor(monitorCreateOpts)
-	// Skip creating monitor if it is not supported by Octavia provider
-	if capoerrors.IsNotImplementedError(err) {
-		record.Warnf(openStackCluster, "SkippedCreateMonitor", "Health Monitor is not created as it's not implemented with the current Octavia provider.")
-		return nil
-	}
-
+		Delay:          cfg.Delay,
+		Timeout:        cfg.Timeout,
+		MaxRetries:     cfg.MaxRetries,
+		MaxRetriesDown: cfg.MaxRetriesDown,
+	})
 	if err != nil {
+		if capoerrors.IsNotImplementedError(err) {
+			record.Warnf(openStackCluster, "SkippedCreateMonitor", "Health Monitor is not created as it's not implemented with the current Octavia provider.")
+			return nil
+		}
+
 		record.Warnf(openStackCluster, "FailedCreateMonitor", "Failed to create monitor %s: %v", monitorName, err)
 		return err
 	}

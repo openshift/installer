@@ -51,6 +51,8 @@ func (c *Client) Get() *MetadataRequest {
 }
 
 // Clusters returns the target 'clusters' resource.
+//
+// Reference to the resource that manages the collection of clusters.
 func (c *Client) Clusters() *ClustersClient {
 	return NewClustersClient(
 		c.transport,
@@ -67,6 +69,8 @@ func (c *Client) ManagedIdentitiesRequirements() *ManagedIdentitiesRequirementsC
 }
 
 // Versions returns the target 'versions' resource.
+//
+// Reference to the resource that manage the collection of versions.
 func (c *Client) Versions() *VersionsClient {
 	return NewVersionsClient(
 		c.transport,

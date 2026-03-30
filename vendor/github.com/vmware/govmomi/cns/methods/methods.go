@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package methods
@@ -346,6 +346,46 @@ func (b *CnsSyncDatastoreBody) Fault() *soap.Fault { return b.Fault_ }
 // Note: To be used only by VMware's internal support tools.
 func CnsSyncDatastore(ctx context.Context, r soap.RoundTripper, req *types.CnsSyncDatastore) (*types.CnsSyncDatastoreResponse, error) {
 	var reqBody, resBody CnsSyncDatastoreBody
+
+	reqBody.Req = req
+
+	if err := r.RoundTrip(ctx, &reqBody, &resBody); err != nil {
+		return nil, err
+	}
+
+	return resBody.Res, nil
+}
+
+type CnsSyncVolumeBody struct {
+	Req    *types.CnsSyncVolume         `xml:"urn:vsan CnsSyncVolume,omitempty"`
+	Res    *types.CnsSyncVolumeResponse `xml:"urn:vsan CnsSyncVolumeResponse,omitempty"`
+	Fault_ *soap.Fault                  `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
+}
+
+func (b *CnsSyncVolumeBody) Fault() *soap.Fault { return b.Fault_ }
+
+func CnsSyncVolume(ctx context.Context, r soap.RoundTripper, req *types.CnsSyncVolume) (*types.CnsSyncVolumeResponse, error) {
+	var reqBody, resBody CnsSyncVolumeBody
+
+	reqBody.Req = req
+
+	if err := r.RoundTrip(ctx, &reqBody, &resBody); err != nil {
+		return nil, err
+	}
+
+	return resBody.Res, nil
+}
+
+type CnsUnregisterVolumeBody struct {
+	Req    *types.CnsUnregisterVolume         `xml:"urn:vsan CnsUnregisterVolume,omitempty"`
+	Res    *types.CnsUnregisterVolumeResponse `xml:"urn:vsan CnsUnregisterVolumeResponse,omitempty"`
+	Fault_ *soap.Fault                        `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
+}
+
+func (b *CnsUnregisterVolumeBody) Fault() *soap.Fault { return b.Fault_ }
+
+func CnsUnregisterVolume(ctx context.Context, r soap.RoundTripper, req *types.CnsUnregisterVolume) (*types.CnsUnregisterVolumeResponse, error) {
+	var reqBody, resBody CnsUnregisterVolumeBody
 
 	reqBody.Req = req
 

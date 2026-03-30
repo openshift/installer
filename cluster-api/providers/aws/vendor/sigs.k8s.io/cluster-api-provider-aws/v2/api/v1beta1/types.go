@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // AWSResourceReference is a reference to a specific AWS resource by ID or filters.
@@ -32,6 +32,7 @@ type AWSResourceReference struct {
 
 	// ARN of resource.
 	// +optional
+	//
 	// Deprecated: This field has no function and is going to be removed in the next release.
 	ARN *string `json:"arn,omitempty"`
 
@@ -165,7 +166,7 @@ type Instance struct {
 	IAMProfile string `json:"iamProfile,omitempty"`
 
 	// Addresses contains the AWS instance associated addresses.
-	Addresses []clusterv1.MachineAddress `json:"addresses,omitempty"`
+	Addresses []clusterv1beta1.MachineAddress `json:"addresses,omitempty"`
 
 	// The private IPv4 address assigned to the instance.
 	PrivateIP *string `json:"privateIp,omitempty"`

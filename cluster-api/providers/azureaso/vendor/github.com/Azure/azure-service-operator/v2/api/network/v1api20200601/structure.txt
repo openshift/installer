@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20200601
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-06-01"
+
 PrivateDnsZonesAAAARecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -76,6 +77,7 @@ PrivateDnsZonesAAAARecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesARecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -149,6 +151,7 @@ PrivateDnsZonesARecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesCNAMERecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -222,6 +225,7 @@ PrivateDnsZonesCNAMERecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesMXRecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -295,6 +299,7 @@ PrivateDnsZonesMXRecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesPTRRecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -368,6 +373,7 @@ PrivateDnsZonesPTRRecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesSRVRecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -441,6 +447,7 @@ PrivateDnsZonesSRVRecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesTXTRecord: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (14 properties)
@@ -514,6 +521,7 @@ PrivateDnsZonesTXTRecord: Resource
     ├── TxtRecords: Object (1 property)[]
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesVirtualNetworkLink: Resource
 ├── Owner: PrivateDnsZone
 ├── Spec: Object (8 properties)
@@ -549,3 +557,4 @@ PrivateDnsZonesVirtualNetworkLink: Resource
     └── VirtualNetworkLinkState: *Enum (2 values)
         ├── "Completed"
         └── "InProgress"
+

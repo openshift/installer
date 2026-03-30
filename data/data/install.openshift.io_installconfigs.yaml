@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: installconfigs.install.openshift.io
 spec:
   group: install.openshift.io
@@ -143,6 +143,18 @@ spec:
                 - Enabled
                 - Disabled
                 type: string
+              management:
+                default: ClusterAPI
+                description: |-
+                  Management is the API that will be used for machine management in the cluster.
+                  Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
+                  Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
+                  Supported platforms: aws
+                  Default is ClusterAPI.
+                enum:
+                - ClusterAPI
+                - MachineAPI
+                type: string
               name:
                 description: |-
                   Name is the name of the machine pool.
@@ -171,6 +183,84 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            enum:
+                            - Disabled
+                            - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                        type: object
+                      hostPlacement:
+                        description: |-
+                          hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host
+                          for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL),
+                          and to gain visibility and control over instance placement on a physical server.
+                          When omitted, the instance is not constrained to a dedicated host.
+                        properties:
+                          affinity:
+                            description: |-
+                              affinity specifies the affinity setting for the instance.
+                              Allowed values are AnyAvailable and DedicatedHost.
+                              When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set.
+                              When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.
+                            enum:
+                            - DedicatedHost
+                            - AnyAvailable
+                            type: string
+                          dedicatedHost:
+                            description: |-
+                              dedicatedHost specifies the exact host that an instance should be restarted on if stopped.
+                              dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.
+                            items:
+                              description: DedicatedHost represents the configuration
+                                for the usage of dedicated host.
+                              properties:
+                                id:
+                                  description: |-
+                                    id identifies the AWS Dedicated Host on which the instance must run.
+                                    The value must start with "h-" followed by 17 lowercase hexadecimal characters (0-9 and a-f).
+                                    Must be exactly 19 characters in length.
+                                  maxLength: 19
+                                  minLength: 19
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: hostID must start with 'h-' followed
+                                      by 17 lowercase hexadecimal characters (0-9
+                                      and a-f)
+                                    rule: self.matches('^h-[0-9a-f]{17}$')
+                              required:
+                              - id
+                              type: object
+                            type: array
+                        required:
+                        - affinity
+                        type: object
+                        x-kubernetes-validations:
+                        - message: dedicatedHost is required when affinity is DedicatedHost,
+                            and forbidden otherwise
+                          rule: 'has(self.affinity) && self.affinity == ''DedicatedHost''
+                            ?  has(self.dedicatedHost) : !has(self.dedicatedHost)'
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -220,6 +310,20 @@ spec:
                             description: Size defines the size of the volume in gibibytes
                               (GiB).
                             minimum: 0
+                            type: integer
+                          throughput:
+                            description: |-
+                              Throughput to provision in MiB/s supported for the volume type. Not applicable to all types.
+
+                              This parameter is valid only for gp3 volumes.
+                              Valid Range: Minimum value of 125. Maximum value of 2000.
+
+                              When omitted, this means no opinion, and the platform is left to
+                              choose a reasonable default, which is subject to change over time.
+                              The current default is 125.
+                            format: int32
+                            maximum: 2000
+                            minimum: 125
                             type: integer
                           type:
                             description: Type defines the type of the volume.
@@ -441,11 +545,11 @@ spec:
                                 description: |-
                                   SubscriptionID defines the Azure subscription the disk encryption
                                   set is in.
+                                  Must be the same subscription ID as the resource group of the installer.
                                 type: string
                             required:
                             - name
                             - resourceGroup
-                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -485,11 +589,11 @@ spec:
                                     description: |-
                                       SubscriptionID defines the Azure subscription the disk encryption
                                       set is in.
+                                      Must be the same subscription ID as the resource group of the installer.
                                     type: string
                                 required:
                                 - name
                                 - resourceGroup
-                                - subscriptionId
                                 type: object
                               securityEncryptionType:
                                 description: |-
@@ -1666,6 +1770,18 @@ spec:
                   - Enabled
                   - Disabled
                   type: string
+                management:
+                  default: ClusterAPI
+                  description: |-
+                    Management is the API that will be used for machine management in the cluster.
+                    Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
+                    Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
+                    Supported platforms: aws
+                    Default is ClusterAPI.
+                  enum:
+                  - ClusterAPI
+                  - MachineAPI
+                  type: string
                 name:
                   description: |-
                     Name is the name of the machine pool.
@@ -1694,6 +1810,84 @@ spec:
                             AMIID is the AMI that should be used to boot the ec2 instance.
                             If set, the AMI should belong to the same region as the cluster.
                           type: string
+                        cpuOptions:
+                          description: |-
+                            CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                            When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                            More info:
+                            https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                            https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                          minProperties: 1
+                          properties:
+                            confidentialCompute:
+                              description: |-
+                                ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                                and, if so, which confidential computing technology to use.
+                                Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                                When set to Disabled, confidential computing will be disabled for the instance.
+                                When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                                In this case, ensure the following conditions are met:
+                                1) The selected instance type supports AMD SEV-SNP.
+                                2) The selected AWS region supports AMD SEV-SNP.
+                                3) The selected AMI supports AMD SEV-SNP.
+                                More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                                When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                                which is subject to change without notice. The current default is Disabled.
+                              enum:
+                              - Disabled
+                              - AMDEncryptedVirtualizationNestedPaging
+                              type: string
+                          type: object
+                        hostPlacement:
+                          description: |-
+                            hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host
+                            for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL),
+                            and to gain visibility and control over instance placement on a physical server.
+                            When omitted, the instance is not constrained to a dedicated host.
+                          properties:
+                            affinity:
+                              description: |-
+                                affinity specifies the affinity setting for the instance.
+                                Allowed values are AnyAvailable and DedicatedHost.
+                                When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set.
+                                When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.
+                              enum:
+                              - DedicatedHost
+                              - AnyAvailable
+                              type: string
+                            dedicatedHost:
+                              description: |-
+                                dedicatedHost specifies the exact host that an instance should be restarted on if stopped.
+                                dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.
+                              items:
+                                description: DedicatedHost represents the configuration
+                                  for the usage of dedicated host.
+                                properties:
+                                  id:
+                                    description: |-
+                                      id identifies the AWS Dedicated Host on which the instance must run.
+                                      The value must start with "h-" followed by 17 lowercase hexadecimal characters (0-9 and a-f).
+                                      Must be exactly 19 characters in length.
+                                    maxLength: 19
+                                    minLength: 19
+                                    type: string
+                                    x-kubernetes-validations:
+                                    - message: hostID must start with 'h-' followed
+                                        by 17 lowercase hexadecimal characters (0-9
+                                        and a-f)
+                                      rule: self.matches('^h-[0-9a-f]{17}$')
+                                required:
+                                - id
+                                type: object
+                              type: array
+                          required:
+                          - affinity
+                          type: object
+                          x-kubernetes-validations:
+                          - message: dedicatedHost is required when affinity is DedicatedHost,
+                              and forbidden otherwise
+                            rule: 'has(self.affinity) && self.affinity == ''DedicatedHost''
+                              ?  has(self.dedicatedHost) : !has(self.dedicatedHost)'
                         iamProfile:
                           description: |-
                             IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -1743,6 +1937,20 @@ spec:
                               description: Size defines the size of the volume in
                                 gibibytes (GiB).
                               minimum: 0
+                              type: integer
+                            throughput:
+                              description: |-
+                                Throughput to provision in MiB/s supported for the volume type. Not applicable to all types.
+
+                                This parameter is valid only for gp3 volumes.
+                                Valid Range: Minimum value of 125. Maximum value of 2000.
+
+                                When omitted, this means no opinion, and the platform is left to
+                                choose a reasonable default, which is subject to change over time.
+                                The current default is 125.
+                              format: int32
+                              maximum: 2000
+                              minimum: 125
                               type: integer
                             type:
                               description: Type defines the type of the volume.
@@ -1965,11 +2173,11 @@ spec:
                                   description: |-
                                     SubscriptionID defines the Azure subscription the disk encryption
                                     set is in.
+                                    Must be the same subscription ID as the resource group of the installer.
                                   type: string
                               required:
                               - name
                               - resourceGroup
-                              - subscriptionId
                               type: object
                             diskSizeGB:
                               description: DiskSizeGB defines the size of disk in
@@ -2010,11 +2218,11 @@ spec:
                                       description: |-
                                         SubscriptionID defines the Azure subscription the disk encryption
                                         set is in.
+                                        Must be the same subscription ID as the resource group of the installer.
                                       type: string
                                   required:
                                   - name
                                   - resourceGroup
-                                  - subscriptionId
                                   type: object
                                 securityEncryptionType:
                                   description: |-
@@ -3129,6 +3337,18 @@ spec:
                 - Enabled
                 - Disabled
                 type: string
+              management:
+                default: ClusterAPI
+                description: |-
+                  Management is the API that will be used for machine management in the cluster.
+                  Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
+                  Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
+                  Supported platforms: aws
+                  Default is ClusterAPI.
+                enum:
+                - ClusterAPI
+                - MachineAPI
+                type: string
               name:
                 description: |-
                   Name is the name of the machine pool.
@@ -3157,6 +3377,84 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            enum:
+                            - Disabled
+                            - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                        type: object
+                      hostPlacement:
+                        description: |-
+                          hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host
+                          for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL),
+                          and to gain visibility and control over instance placement on a physical server.
+                          When omitted, the instance is not constrained to a dedicated host.
+                        properties:
+                          affinity:
+                            description: |-
+                              affinity specifies the affinity setting for the instance.
+                              Allowed values are AnyAvailable and DedicatedHost.
+                              When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set.
+                              When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.
+                            enum:
+                            - DedicatedHost
+                            - AnyAvailable
+                            type: string
+                          dedicatedHost:
+                            description: |-
+                              dedicatedHost specifies the exact host that an instance should be restarted on if stopped.
+                              dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.
+                            items:
+                              description: DedicatedHost represents the configuration
+                                for the usage of dedicated host.
+                              properties:
+                                id:
+                                  description: |-
+                                    id identifies the AWS Dedicated Host on which the instance must run.
+                                    The value must start with "h-" followed by 17 lowercase hexadecimal characters (0-9 and a-f).
+                                    Must be exactly 19 characters in length.
+                                  maxLength: 19
+                                  minLength: 19
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: hostID must start with 'h-' followed
+                                      by 17 lowercase hexadecimal characters (0-9
+                                      and a-f)
+                                    rule: self.matches('^h-[0-9a-f]{17}$')
+                              required:
+                              - id
+                              type: object
+                            type: array
+                        required:
+                        - affinity
+                        type: object
+                        x-kubernetes-validations:
+                        - message: dedicatedHost is required when affinity is DedicatedHost,
+                            and forbidden otherwise
+                          rule: 'has(self.affinity) && self.affinity == ''DedicatedHost''
+                            ?  has(self.dedicatedHost) : !has(self.dedicatedHost)'
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -3206,6 +3504,20 @@ spec:
                             description: Size defines the size of the volume in gibibytes
                               (GiB).
                             minimum: 0
+                            type: integer
+                          throughput:
+                            description: |-
+                              Throughput to provision in MiB/s supported for the volume type. Not applicable to all types.
+
+                              This parameter is valid only for gp3 volumes.
+                              Valid Range: Minimum value of 125. Maximum value of 2000.
+
+                              When omitted, this means no opinion, and the platform is left to
+                              choose a reasonable default, which is subject to change over time.
+                              The current default is 125.
+                            format: int32
+                            maximum: 2000
+                            minimum: 125
                             type: integer
                           type:
                             description: Type defines the type of the volume.
@@ -3427,11 +3739,11 @@ spec:
                                 description: |-
                                   SubscriptionID defines the Azure subscription the disk encryption
                                   set is in.
+                                  Must be the same subscription ID as the resource group of the installer.
                                 type: string
                             required:
                             - name
                             - resourceGroup
-                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -3471,11 +3783,11 @@ spec:
                                     description: |-
                                       SubscriptionID defines the Azure subscription the disk encryption
                                       set is in.
+                                      Must be the same subscription ID as the resource group of the installer.
                                     type: string
                                 required:
                                 - name
                                 - resourceGroup
-                                - subscriptionId
                                 type: object
                               securityEncryptionType:
                                 description: |-
@@ -4774,6 +5086,13 @@ spec:
                 - Internal
                 type: string
             type: object
+          osImageStream:
+            description: OSImageStream is the global OS Image Stream to be used for
+              all machines in the cluster.
+            enum:
+            - rhel-9
+            - rhel-10
+            type: string
           platform:
             description: |-
               Platform is the configuration for the specific platform upon which to
@@ -4813,6 +5132,84 @@ spec:
                           AMIID is the AMI that should be used to boot the ec2 instance.
                           If set, the AMI should belong to the same region as the cluster.
                         type: string
+                      cpuOptions:
+                        description: |-
+                          CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+                          When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+                          More info:
+                          https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+                          https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+                        minProperties: 1
+                        properties:
+                          confidentialCompute:
+                            description: |-
+                              ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+                              and, if so, which confidential computing technology to use.
+                              Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+                              When set to Disabled, confidential computing will be disabled for the instance.
+                              When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+                              In this case, ensure the following conditions are met:
+                              1) The selected instance type supports AMD SEV-SNP.
+                              2) The selected AWS region supports AMD SEV-SNP.
+                              3) The selected AMI supports AMD SEV-SNP.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                            enum:
+                            - Disabled
+                            - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                        type: object
+                      hostPlacement:
+                        description: |-
+                          hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host
+                          for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL),
+                          and to gain visibility and control over instance placement on a physical server.
+                          When omitted, the instance is not constrained to a dedicated host.
+                        properties:
+                          affinity:
+                            description: |-
+                              affinity specifies the affinity setting for the instance.
+                              Allowed values are AnyAvailable and DedicatedHost.
+                              When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set.
+                              When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.
+                            enum:
+                            - DedicatedHost
+                            - AnyAvailable
+                            type: string
+                          dedicatedHost:
+                            description: |-
+                              dedicatedHost specifies the exact host that an instance should be restarted on if stopped.
+                              dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.
+                            items:
+                              description: DedicatedHost represents the configuration
+                                for the usage of dedicated host.
+                              properties:
+                                id:
+                                  description: |-
+                                    id identifies the AWS Dedicated Host on which the instance must run.
+                                    The value must start with "h-" followed by 17 lowercase hexadecimal characters (0-9 and a-f).
+                                    Must be exactly 19 characters in length.
+                                  maxLength: 19
+                                  minLength: 19
+                                  type: string
+                                  x-kubernetes-validations:
+                                  - message: hostID must start with 'h-' followed
+                                      by 17 lowercase hexadecimal characters (0-9
+                                      and a-f)
+                                    rule: self.matches('^h-[0-9a-f]{17}$')
+                              required:
+                              - id
+                              type: object
+                            type: array
+                        required:
+                        - affinity
+                        type: object
+                        x-kubernetes-validations:
+                        - message: dedicatedHost is required when affinity is DedicatedHost,
+                            and forbidden otherwise
+                          rule: 'has(self.affinity) && self.affinity == ''DedicatedHost''
+                            ?  has(self.dedicatedHost) : !has(self.dedicatedHost)'
                       iamProfile:
                         description: |-
                           IAMProfile is the name of the IAM instance profile to use for the machine.
@@ -4863,6 +5260,20 @@ spec:
                               (GiB).
                             minimum: 0
                             type: integer
+                          throughput:
+                            description: |-
+                              Throughput to provision in MiB/s supported for the volume type. Not applicable to all types.
+
+                              This parameter is valid only for gp3 volumes.
+                              Valid Range: Minimum value of 125. Maximum value of 2000.
+
+                              When omitted, this means no opinion, and the platform is left to
+                              choose a reasonable default, which is subject to change over time.
+                              The current default is 125.
+                            format: int32
+                            maximum: 2000
+                            minimum: 125
+                            type: integer
                           type:
                             description: Type defines the type of the volume.
                             type: string
@@ -4899,6 +5310,19 @@ spec:
                       different account than the rest of the cluster resources.
                       If HostedZoneRole is set, HostedZone must also be set.
                     type: string
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VPC
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   lbType:
                     description: |-
                       LBType is an optional field to specify a load balancer type.
@@ -4917,8 +5341,13 @@ spec:
                       transport layer (TCP/SSL). See the following for additional details:
                       https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
 
-                      If this field is not set explicitly, it defaults to "Classic".  This
-                      default is subject to change over time.
+                      If this field is not set explicitly, the default value depends on the ipFamily field:
+                      * "Classic" when ipFamily is not set or set to "IPv4"
+                      * "NLB" when ipFamily is set to "DualStackIPv4Primary" or "DualStackIPv6Primary"
+                      This default is subject to change over time.
+                    enum:
+                    - Classic
+                    - NLB
                     type: string
                   preserveBootstrapIgnition:
                     description: PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition
@@ -5060,6 +5489,12 @@ spec:
               azure:
                 description: Azure is the configuration used when installing on Azure.
                 properties:
+                  allowSharedKeyAccess:
+                    description: |-
+                      AllowSharedKeyAccess specifies if shared access key should be enabled for the storage account.
+                      Default value is true.
+                      Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+                    type: boolean
                   armEndpoint:
                     description: ARMEndpoint is the endpoint for the Azure API when
                       installing on Azure Stack.
@@ -5089,12 +5524,16 @@ spec:
                       is required for Azure Stack and not applicable to Azure.
                     type: string
                   computeSubnet:
-                    description: ComputeSubnet specifies an existing subnet for use
-                      by compute nodes
+                    description: |-
+                      ComputeSubnet specifies an existing subnet for use by compute nodes
+
+                      Deprecated: use platform.Azure.Subnets section
                     type: string
                   controlPlaneSubnet:
-                    description: ControlPlaneSubnet specifies an existing subnet for
-                      use by the control plane nodes
+                    description: |-
+                      ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+
+                      Deprecated: use platform.Azure.Subnets section
                     type: string
                   customerManagedKey:
                     description: CustomerManagedKey has the keys needed to encrypt
@@ -5328,11 +5767,11 @@ spec:
                                 description: |-
                                   SubscriptionID defines the Azure subscription the disk encryption
                                   set is in.
+                                  Must be the same subscription ID as the resource group of the installer.
                                 type: string
                             required:
                             - name
                             - resourceGroup
-                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -5372,11 +5811,11 @@ spec:
                                     description: |-
                                       SubscriptionID defines the Azure subscription the disk encryption
                                       set is in.
+                                      Must be the same subscription ID as the resource group of the installer.
                                     type: string
                                 required:
                                 - name
                                 - resourceGroup
-                                - subscriptionId
                                 type: object
                               securityEncryptionType:
                                 description: |-
@@ -5541,6 +5980,19 @@ spec:
                           type: string
                         type: array
                     type: object
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VNet
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   networkResourceGroupName:
                     description: NetworkResourceGroupName specifies the network resource
                       group that contains an existing VNet
@@ -5553,6 +6005,7 @@ spec:
                     - ""
                     - Loadbalancer
                     - NATGatewaySingleZone
+                    - NATGatewayMultiZone
                     - UserDefinedRouting
                     type: string
                   region:
@@ -5568,6 +6021,28 @@ spec:
                       This resource group must be empty with no other resources when trying to use it for creating a cluster.
                       If empty, a new resource group will created for the cluster.
                     type: string
+                  subnets:
+                    description: Subnets is the list of subnets the user can bring
+                      into the cluster to be used.
+                    items:
+                      description: SubnetSpec specifies the properties the subnet
+                        needs to be used in the cluster.
+                      properties:
+                        name:
+                          description: Name of the subnet.
+                          type: string
+                        role:
+                          description: Role specifies the actual role which the subnet
+                            should be used in.
+                          enum:
+                          - node
+                          - control-plane
+                          type: string
+                      required:
+                      - name
+                      - role
+                      type: object
+                    type: array
                   userProvisionedDNS:
                     default: Disabled
                     description: |-
@@ -5619,6 +6094,8 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
+                  bmcVerifyCA:
+                    type: string
                   bootstrapExternalStaticDNS:
                     description: |-
                       BootstrapExternalStaticDNS is the static network DNS of the bootstrap node.
@@ -5642,6 +6119,7 @@ spec:
                       BootstrapOSImage is a URL to override the default OS image
                       for the bootstrap node. The URL must contain a sha256 hash of the image
                       e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...
+                      Deprecated: This is no longer used.
                     type: string
                   bootstrapProvisioningIP:
                     description: |-
@@ -5655,6 +6133,8 @@ spec:
                       ClusterOSImage is a URL to override the default OS image
                       for cluster nodes. The URL must contain a sha256 hash of the image
                       e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
+                      Deprecated: This is no longer required, the OS image is now part of the
+                      OpenShift release.
                     type: string
                   clusterProvisioningIP:
                     description: |-
@@ -5668,6 +6148,24 @@ spec:
                       installing on bare metal for machine pools which do not define their own
                       platform configuration.
                     type: object
+                  dnsRecordsType:
+                    description: |-
+                      dnsRecordsType determines whether records for api, api-int, and ingress
+                      are provided by the internal DNS service or externally.
+                      Allowed values are `Internal`, `External`, and omitted.
+                      When set to `Internal`, records are provided by the internal infrastructure and
+                      no additional user configuration is required for the cluster to function.
+                      When set to `External`, records are not provided by the internal infrastructure
+                      and must be configured by the user on a DNS server outside the cluster.
+                      Cluster nodes must use this external server for their upstream DNS requests.
+                      This value may only be set when loadBalancer.type is set to UserManaged.
+                      When omitted, this means the user has no opinion and the platform is left
+                      to choose reasonable defaults. These defaults are subject to change over time.
+                      The current default is `Internal`.
+                    enum:
+                    - Internal
+                    - External
+                    type: string
                   externalBridge:
                     description: External bridge is used for external communication.
                     type: string
@@ -6111,14 +6609,23 @@ spec:
                         description: Name contains the name of the private service
                           connect endpoint.
                         type: string
-                      region:
-                        description: |-
-                          Region is the region where the endpoint resides.
-                          When the region is empty, the location is assumed to be global.
-                        type: string
                     required:
                     - name
                     type: object
+                  firewallRulesManagement:
+                    description: |-
+                      FirewallRulesManagement specifies the management policy for the cluster. "Managed" indicates that
+                      the firewall rules will be created and destroyed by the cluster. "Unmanaged" indicates that the
+                      user should create and destroy the firewall rules. For Shared VPC installation, if the installer
+                      credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+                      can be absent or set to "Unmanaged" explicitly. For non-Shared VPC installation, if the installer
+                      credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+                      must be set to "Unmanaged" explicitly. And in this case, the user needs to pre-configure the VPC network
+                      and the firewall rules before the installation.
+                    enum:
+                    - Managed
+                    - Unmanaged
+                    type: string
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created
@@ -6640,6 +7147,24 @@ spec:
                         - type
                         type: object
                     type: object
+                  dnsRecordsType:
+                    description: |-
+                      dnsRecordsType determines whether records for api, api-int, and ingress
+                      are provided by the internal DNS service or externally.
+                      Allowed values are `Internal`, `External`, and omitted.
+                      When set to `Internal`, records are provided by the internal infrastructure and
+                      no additional user configuration is required for the cluster to function.
+                      When set to `External`, records are not provided by the internal infrastructure
+                      and must be configured by the user on a DNS server outside the cluster.
+                      Cluster nodes must use this external server for their upstream DNS requests.
+                      This value may only be set when loadBalancer.type is set to UserManaged.
+                      When omitted, this means the user has no opinion and the platform is left
+                      to choose reasonable defaults. These defaults are subject to change over time.
+                      The current default is `Internal`.
+                    enum:
+                    - Internal
+                    - External
+                    type: string
                   failureDomains:
                     description: FailureDomains configures failure domains for the
                       Nutanix platform.
@@ -7053,6 +7578,24 @@ spec:
                     required:
                     - type
                     type: object
+                  dnsRecordsType:
+                    description: |-
+                      dnsRecordsType determines whether records for api, api-int, and ingress
+                      are provided by the internal DNS service or externally.
+                      Allowed values are `Internal`, `External`, and omitted.
+                      When set to `Internal`, records are provided by the internal infrastructure and
+                      no additional user configuration is required for the cluster to function.
+                      When set to `External`, records are not provided by the internal infrastructure
+                      and must be configured by the user on a DNS server outside the cluster.
+                      Cluster nodes must use this external server for their upstream DNS requests.
+                      This value may only be set when loadBalancer.type is set to UserManaged.
+                      When omitted, this means the user has no opinion and the platform is left
+                      to choose reasonable defaults. These defaults are subject to change over time.
+                      The current default is `Internal`.
+                    enum:
+                    - Internal
+                    - External
+                    type: string
                   externalDNS:
                     description: |-
                       ExternalDNS holds the IP addresses of dns servers that will
@@ -7850,6 +8393,24 @@ spec:
                     - thin
                     - thick
                     - eagerZeroedThick
+                    type: string
+                  dnsRecordsType:
+                    description: |-
+                      dnsRecordsType determines whether records for api, api-int, and ingress
+                      are provided by the internal DNS service or externally.
+                      Allowed values are `Internal`, `External`, and omitted.
+                      When set to `Internal`, records are provided by the internal infrastructure and
+                      no additional user configuration is required for the cluster to function.
+                      When set to `External`, records are not provided by the internal infrastructure
+                      and must be configured by the user on a DNS server outside the cluster.
+                      Cluster nodes must use this external server for their upstream DNS requests.
+                      This value may only be set when loadBalancer.type is set to UserManaged.
+                      When omitted, this means the user has no opinion and the platform is left
+                      to choose reasonable defaults. These defaults are subject to change over time.
+                      The current default is `Internal`.
+                    enum:
+                    - Internal
+                    - External
                     type: string
                   failureDomains:
                     description: |-

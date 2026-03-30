@@ -37,7 +37,7 @@ type suspExtension interface {
 	Descriptor() string
 	Source() string
 	Version() uint8
-	GetFileExtensions(string, bool, bool) ([]directoryEntrySystemUseExtension, error)
+	GetFileExtensions(*finalizeFileInfo, bool, bool) ([]directoryEntrySystemUseExtension, error)
 	GetFinalizeExtensions(*finalizeFileInfo) ([]directoryEntrySystemUseExtension, error)
 	Relocatable() bool
 	Relocate(map[string]*finalizeFileInfo) ([]*finalizeFileInfo, map[string]*finalizeFileInfo, error)

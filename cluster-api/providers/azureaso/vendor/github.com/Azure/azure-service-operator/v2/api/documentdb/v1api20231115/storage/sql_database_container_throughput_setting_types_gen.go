@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources=sqldatabasecontainerthroughputsettings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources={sqldatabasecontainerthroughputsettings/status,sqldatabasecontainerthroughputsettings/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (setting *SqlDatabaseContainerThroughputSetting) GetConditions() conditions
 // SetConditions sets the conditions on the resource status
 func (setting *SqlDatabaseContainerThroughputSetting) SetConditions(conditions conditions.Conditions) {
 	setting.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &SqlDatabaseContainerThroughputSetting{}
+
+// ConvertFrom populates our SqlDatabaseContainerThroughputSetting from the provided hub SqlDatabaseContainerThroughputSetting
+func (setting *SqlDatabaseContainerThroughputSetting) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.SqlDatabaseContainerThroughputSetting)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/SqlDatabaseContainerThroughputSetting but received %T instead", hub)
+	}
+
+	return setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting(source)
+}
+
+// ConvertTo populates the provided hub SqlDatabaseContainerThroughputSetting from our SqlDatabaseContainerThroughputSetting
+func (setting *SqlDatabaseContainerThroughputSetting) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.SqlDatabaseContainerThroughputSetting)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/SqlDatabaseContainerThroughputSetting but received %T instead", hub)
+	}
+
+	return setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting(destination)
 }
 
 var _ configmaps.Exporter = &SqlDatabaseContainerThroughputSetting{}
@@ -114,6 +135,10 @@ func (setting *SqlDatabaseContainerThroughputSetting) NewEmptyStatus() genruntim
 
 // Owner returns the ResourceReference of the owner
 func (setting *SqlDatabaseContainerThroughputSetting) Owner() *genruntime.ResourceReference {
+	if setting.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(setting.Spec)
 	return setting.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -130,15 +155,82 @@ func (setting *SqlDatabaseContainerThroughputSetting) SetStatus(status genruntim
 	var st SqlDatabaseContainerThroughputSetting_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	setting.Status = st
 	return nil
 }
 
-// Hub marks that this SqlDatabaseContainerThroughputSetting is the hub type for conversion
-func (setting *SqlDatabaseContainerThroughputSetting) Hub() {}
+// AssignProperties_From_SqlDatabaseContainerThroughputSetting populates our SqlDatabaseContainerThroughputSetting from the provided source SqlDatabaseContainerThroughputSetting
+func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_From_SqlDatabaseContainerThroughputSetting(source *storage.SqlDatabaseContainerThroughputSetting) error {
+
+	// ObjectMeta
+	setting.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec SqlDatabaseContainerThroughputSetting_Spec
+	err := spec.AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec() to populate field Spec")
+	}
+	setting.Spec = spec
+
+	// Status
+	var status SqlDatabaseContainerThroughputSetting_STATUS
+	err = status.AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS() to populate field Status")
+	}
+	setting.Status = status
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSetting interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerThroughputSetting populates the provided destination SqlDatabaseContainerThroughputSetting from our SqlDatabaseContainerThroughputSetting
+func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_To_SqlDatabaseContainerThroughputSetting(destination *storage.SqlDatabaseContainerThroughputSetting) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *setting.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.SqlDatabaseContainerThroughputSetting_Spec
+	err := setting.Spec.AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.SqlDatabaseContainerThroughputSetting_STATUS
+	err = setting.Status.AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSetting interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (setting *SqlDatabaseContainerThroughputSetting) OriginalGVK() *schema.GroupVersionKind {
@@ -158,6 +250,11 @@ type SqlDatabaseContainerThroughputSettingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []SqlDatabaseContainerThroughputSetting `json:"items"`
+}
+
+type augmentConversionForSqlDatabaseContainerThroughputSetting interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerThroughputSetting) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerThroughputSetting) error
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerThroughputSetting_Spec
@@ -180,20 +277,182 @@ var _ genruntime.ConvertibleSpec = &SqlDatabaseContainerThroughputSetting_Spec{}
 
 // ConvertSpecFrom populates our SqlDatabaseContainerThroughputSetting_Spec from the provided source
 func (setting *SqlDatabaseContainerThroughputSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == setting {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.SqlDatabaseContainerThroughputSetting_Spec)
+	if ok {
+		// Populate our instance from source
+		return setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec(src)
 	}
 
-	return source.ConvertSpecTo(setting)
+	// Convert to an intermediate form
+	src = &storage.SqlDatabaseContainerThroughputSetting_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our SqlDatabaseContainerThroughputSetting_Spec
 func (setting *SqlDatabaseContainerThroughputSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == setting {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.SqlDatabaseContainerThroughputSetting_Spec)
+	if ok {
+		// Populate destination from our instance
+		return setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(setting)
+	// Convert to an intermediate form
+	dst = &storage.SqlDatabaseContainerThroughputSetting_Spec{}
+	err := setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec populates our SqlDatabaseContainerThroughputSetting_Spec from the provided source SqlDatabaseContainerThroughputSetting_Spec
+func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec(source *storage.SqlDatabaseContainerThroughputSetting_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Location
+	setting.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec SqlDatabaseContainerThroughputSettingOperatorSpec
+		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec() to populate field OperatorSpec")
+		}
+		setting.OperatorSpec = &operatorSpec
+	} else {
+		setting.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	setting.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		setting.Owner = &owner
+	} else {
+		setting.Owner = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource ThroughputSettingsResource
+		err := resource.AssignProperties_From_ThroughputSettingsResource(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ThroughputSettingsResource() to populate field Resource")
+		}
+		setting.Resource = &resource
+	} else {
+		setting.Resource = nil
+	}
+
+	// Tags
+	setting.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		setting.PropertyBag = propertyBag
+	} else {
+		setting.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSetting_Spec interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_Spec); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec populates the provided destination SqlDatabaseContainerThroughputSetting_Spec from our SqlDatabaseContainerThroughputSetting_Spec
+func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec(destination *storage.SqlDatabaseContainerThroughputSetting_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(setting.PropertyBag)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(setting.Location)
+
+	// OperatorSpec
+	if setting.OperatorSpec != nil {
+		var operatorSpec storage.SqlDatabaseContainerThroughputSettingOperatorSpec
+		err := setting.OperatorSpec.AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = setting.OriginalVersion
+
+	// Owner
+	if setting.Owner != nil {
+		owner := setting.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Resource
+	if setting.Resource != nil {
+		var resource storage.ThroughputSettingsResource
+		err := setting.Resource.AssignProperties_To_ThroughputSettingsResource(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ThroughputSettingsResource() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(setting.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSetting_Spec interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_Spec); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerThroughputSetting_STATUS
@@ -212,20 +471,170 @@ var _ genruntime.ConvertibleStatus = &SqlDatabaseContainerThroughputSetting_STAT
 
 // ConvertStatusFrom populates our SqlDatabaseContainerThroughputSetting_STATUS from the provided source
 func (setting *SqlDatabaseContainerThroughputSetting_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == setting {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.SqlDatabaseContainerThroughputSetting_STATUS)
+	if ok {
+		// Populate our instance from source
+		return setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(setting)
+	// Convert to an intermediate form
+	src = &storage.SqlDatabaseContainerThroughputSetting_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our SqlDatabaseContainerThroughputSetting_STATUS
 func (setting *SqlDatabaseContainerThroughputSetting_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == setting {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.SqlDatabaseContainerThroughputSetting_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(setting)
+	// Convert to an intermediate form
+	dst = &storage.SqlDatabaseContainerThroughputSetting_STATUS{}
+	err := setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS populates our SqlDatabaseContainerThroughputSetting_STATUS from the provided source SqlDatabaseContainerThroughputSetting_STATUS
+func (setting *SqlDatabaseContainerThroughputSetting_STATUS) AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS(source *storage.SqlDatabaseContainerThroughputSetting_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	setting.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	setting.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	setting.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	setting.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Resource
+	if source.Resource != nil {
+		var resource ThroughputSettingsGetProperties_Resource_STATUS
+		err := resource.AssignProperties_From_ThroughputSettingsGetProperties_Resource_STATUS(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ThroughputSettingsGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		setting.Resource = &resource
+	} else {
+		setting.Resource = nil
+	}
+
+	// Tags
+	setting.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	setting.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		setting.PropertyBag = propertyBag
+	} else {
+		setting.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS populates the provided destination SqlDatabaseContainerThroughputSetting_STATUS from our SqlDatabaseContainerThroughputSetting_STATUS
+func (setting *SqlDatabaseContainerThroughputSetting_STATUS) AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS(destination *storage.SqlDatabaseContainerThroughputSetting_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(setting.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(setting.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(setting.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(setting.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(setting.Name)
+
+	// Resource
+	if setting.Resource != nil {
+		var resource storage.ThroughputSettingsGetProperties_Resource_STATUS
+		err := setting.Resource.AssignProperties_To_ThroughputSettingsGetProperties_Resource_STATUS(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ThroughputSettingsGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(setting.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(setting.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSqlDatabaseContainerThroughputSetting_Spec interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerThroughputSetting_Spec) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerThroughputSetting_Spec) error
+}
+
+type augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerThroughputSetting_STATUS) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerThroughputSetting_STATUS) error
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerThroughputSettingOperatorSpec
@@ -234,6 +643,133 @@ type SqlDatabaseContainerThroughputSettingOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec populates our SqlDatabaseContainerThroughputSettingOperatorSpec from the provided source SqlDatabaseContainerThroughputSettingOperatorSpec
+func (operator *SqlDatabaseContainerThroughputSettingOperatorSpec) AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec(source *storage.SqlDatabaseContainerThroughputSettingOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec populates the provided destination SqlDatabaseContainerThroughputSettingOperatorSpec from our SqlDatabaseContainerThroughputSettingOperatorSpec
+func (operator *SqlDatabaseContainerThroughputSettingOperatorSpec) AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec(destination *storage.SqlDatabaseContainerThroughputSettingOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerThroughputSettingOperatorSpec) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerThroughputSettingOperatorSpec) error
 }
 
 func init() {

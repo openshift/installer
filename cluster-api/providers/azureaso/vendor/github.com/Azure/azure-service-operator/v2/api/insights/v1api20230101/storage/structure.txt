@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/storage
 -----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-01-01"
+
 ActionGroup: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (20 properties)
@@ -170,3 +171,4 @@ ActionGroup: Resource
         ├── TenantId: *string
         ├── UseAadAuth: *bool
         └── UseCommonAlertSchema: *bool
+

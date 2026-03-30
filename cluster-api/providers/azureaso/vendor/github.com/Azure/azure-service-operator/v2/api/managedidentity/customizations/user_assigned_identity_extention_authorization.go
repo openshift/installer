@@ -9,12 +9,13 @@ import (
 	"context"
 	"fmt"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	v20230131s "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20230131/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -68,12 +69,9 @@ func secretsSpecified(obj *v20230131s.UserAssignedIdentity) bool {
 	}
 
 	specSecrets := obj.Spec.OperatorSpec.Secrets
-	hasSecrets := false
-	if specSecrets.ClientId != nil ||
+	hasSecrets := specSecrets.ClientId != nil ||
 		specSecrets.PrincipalId != nil ||
-		specSecrets.TenantId != nil {
-		hasSecrets = true
-	}
+		specSecrets.TenantId != nil
 
 	return hasSecrets
 }

@@ -7,19 +7,16 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -71,29 +68,6 @@ func (rule *SmartDetectorAlertRule) ConvertTo(hub conversion.Hub) error {
 
 	return rule.AssignProperties_To_SmartDetectorAlertRule(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-alertsmanagement-azure-com-v1api20210401-smartdetectoralertrule,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=alertsmanagement.azure.com,resources=smartdetectoralertrules,verbs=create;update,versions=v1api20210401,name=default.v1api20210401.smartdetectoralertrules.alertsmanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &SmartDetectorAlertRule{}
-
-// Default applies defaults to the SmartDetectorAlertRule resource
-func (rule *SmartDetectorAlertRule) Default() {
-	rule.defaultImpl()
-	var temp any = rule
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (rule *SmartDetectorAlertRule) defaultAzureName() {
-	if rule.Spec.AzureName == "" {
-		rule.Spec.AzureName = rule.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the SmartDetectorAlertRule resource
-func (rule *SmartDetectorAlertRule) defaultImpl() { rule.defaultAzureName() }
 
 var _ configmaps.Exporter = &SmartDetectorAlertRule{}
 
@@ -174,6 +148,10 @@ func (rule *SmartDetectorAlertRule) NewEmptyStatus() genruntime.ConvertibleStatu
 
 // Owner returns the ResourceReference of the owner
 func (rule *SmartDetectorAlertRule) Owner() *genruntime.ResourceReference {
+	if rule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(rule.Spec)
 	return rule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (rule *SmartDetectorAlertRule) SetStatus(status genruntime.ConvertibleStatu
 	var st SmartDetectorAlertRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	rule.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-alertsmanagement-azure-com-v1api20210401-smartdetectoralertrule,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=alertsmanagement.azure.com,resources=smartdetectoralertrules,verbs=create;update,versions=v1api20210401,name=validate.v1api20210401.smartdetectoralertrules.alertsmanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &SmartDetectorAlertRule{}
-
-// ValidateCreate validates the creation of the resource
-func (rule *SmartDetectorAlertRule) ValidateCreate() (admission.Warnings, error) {
-	validations := rule.createValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (rule *SmartDetectorAlertRule) ValidateDelete() (admission.Warnings, error) {
-	validations := rule.deleteValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (rule *SmartDetectorAlertRule) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := rule.updateValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (rule *SmartDetectorAlertRule) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (rule *SmartDetectorAlertRule) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (rule *SmartDetectorAlertRule) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateResourceReferences()
-		},
-		rule.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (rule *SmartDetectorAlertRule) validateConfigMapDestinations() (admission.Warnings, error) {
-	if rule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (rule *SmartDetectorAlertRule) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(rule)
-}
-
-// validateResourceReferences validates all resource references
-func (rule *SmartDetectorAlertRule) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&rule.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (rule *SmartDetectorAlertRule) validateSecretDestinations() (admission.Warnings, error) {
-	if rule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (rule *SmartDetectorAlertRule) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*SmartDetectorAlertRule)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, rule)
 }
 
 // AssignProperties_From_SmartDetectorAlertRule populates our SmartDetectorAlertRule from the provided source SmartDetectorAlertRule
@@ -310,7 +185,7 @@ func (rule *SmartDetectorAlertRule) AssignProperties_From_SmartDetectorAlertRule
 	var spec SmartDetectorAlertRule_Spec
 	err := spec.AssignProperties_From_SmartDetectorAlertRule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRule_Spec() to populate field Spec")
 	}
 	rule.Spec = spec
 
@@ -318,7 +193,7 @@ func (rule *SmartDetectorAlertRule) AssignProperties_From_SmartDetectorAlertRule
 	var status SmartDetectorAlertRule_STATUS
 	err = status.AssignProperties_From_SmartDetectorAlertRule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRule_STATUS() to populate field Status")
 	}
 	rule.Status = status
 
@@ -336,7 +211,7 @@ func (rule *SmartDetectorAlertRule) AssignProperties_To_SmartDetectorAlertRule(d
 	var spec storage.SmartDetectorAlertRule_Spec
 	err := rule.Spec.AssignProperties_To_SmartDetectorAlertRule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (rule *SmartDetectorAlertRule) AssignProperties_To_SmartDetectorAlertRule(d
 	var status storage.SmartDetectorAlertRule_STATUS
 	err = rule.Status.AssignProperties_To_SmartDetectorAlertRule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -659,13 +534,13 @@ func (rule *SmartDetectorAlertRule_Spec) ConvertSpecFrom(source genruntime.Conve
 	src = &storage.SmartDetectorAlertRule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_SmartDetectorAlertRule_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -683,13 +558,13 @@ func (rule *SmartDetectorAlertRule_Spec) ConvertSpecTo(destination genruntime.Co
 	dst = &storage.SmartDetectorAlertRule_Spec{}
 	err := rule.AssignProperties_To_SmartDetectorAlertRule_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -703,7 +578,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_From_SmartDetectorAler
 		var actionGroup ActionGroupsInformation
 		err := actionGroup.AssignProperties_From_ActionGroupsInformation(source.ActionGroups)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ActionGroupsInformation() to populate field ActionGroups")
+			return eris.Wrap(err, "calling AssignProperties_From_ActionGroupsInformation() to populate field ActionGroups")
 		}
 		rule.ActionGroups = &actionGroup
 	} else {
@@ -721,7 +596,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_From_SmartDetectorAler
 		var detector Detector
 		err := detector.AssignProperties_From_Detector(source.Detector)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Detector() to populate field Detector")
+			return eris.Wrap(err, "calling AssignProperties_From_Detector() to populate field Detector")
 		}
 		rule.Detector = &detector
 	} else {
@@ -739,7 +614,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_From_SmartDetectorAler
 		var operatorSpec SmartDetectorAlertRuleOperatorSpec
 		err := operatorSpec.AssignProperties_From_SmartDetectorAlertRuleOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		rule.OperatorSpec = &operatorSpec
 	} else {
@@ -793,7 +668,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_From_SmartDetectorAler
 		var throttling ThrottlingInformation
 		err := throttling.AssignProperties_From_ThrottlingInformation(source.Throttling)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ThrottlingInformation() to populate field Throttling")
+			return eris.Wrap(err, "calling AssignProperties_From_ThrottlingInformation() to populate field Throttling")
 		}
 		rule.Throttling = &throttling
 	} else {
@@ -814,7 +689,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertR
 		var actionGroup storage.ActionGroupsInformation
 		err := rule.ActionGroups.AssignProperties_To_ActionGroupsInformation(&actionGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ActionGroupsInformation() to populate field ActionGroups")
+			return eris.Wrap(err, "calling AssignProperties_To_ActionGroupsInformation() to populate field ActionGroups")
 		}
 		destination.ActionGroups = &actionGroup
 	} else {
@@ -832,7 +707,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertR
 		var detector storage.Detector
 		err := rule.Detector.AssignProperties_To_Detector(&detector)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Detector() to populate field Detector")
+			return eris.Wrap(err, "calling AssignProperties_To_Detector() to populate field Detector")
 		}
 		destination.Detector = &detector
 	} else {
@@ -850,7 +725,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertR
 		var operatorSpec storage.SmartDetectorAlertRuleOperatorSpec
 		err := rule.OperatorSpec.AssignProperties_To_SmartDetectorAlertRuleOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -905,7 +780,7 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertR
 		var throttling storage.ThrottlingInformation
 		err := rule.Throttling.AssignProperties_To_ThrottlingInformation(&throttling)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ThrottlingInformation() to populate field Throttling")
+			return eris.Wrap(err, "calling AssignProperties_To_ThrottlingInformation() to populate field Throttling")
 		}
 		destination.Throttling = &throttling
 	} else {
@@ -931,7 +806,7 @@ func (rule *SmartDetectorAlertRule_Spec) Initialize_From_SmartDetectorAlertRule_
 		var actionGroup ActionGroupsInformation
 		err := actionGroup.Initialize_From_ActionGroupsInformation_STATUS(source.ActionGroups)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ActionGroupsInformation_STATUS() to populate field ActionGroups")
+			return eris.Wrap(err, "calling Initialize_From_ActionGroupsInformation_STATUS() to populate field ActionGroups")
 		}
 		rule.ActionGroups = &actionGroup
 	} else {
@@ -946,7 +821,7 @@ func (rule *SmartDetectorAlertRule_Spec) Initialize_From_SmartDetectorAlertRule_
 		var detector Detector
 		err := detector.Initialize_From_Detector_STATUS(source.Detector)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Detector_STATUS() to populate field Detector")
+			return eris.Wrap(err, "calling Initialize_From_Detector_STATUS() to populate field Detector")
 		}
 		rule.Detector = &detector
 	} else {
@@ -983,7 +858,7 @@ func (rule *SmartDetectorAlertRule_Spec) Initialize_From_SmartDetectorAlertRule_
 		var throttling ThrottlingInformation
 		err := throttling.Initialize_From_ThrottlingInformation_STATUS(source.Throttling)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ThrottlingInformation_STATUS() to populate field Throttling")
+			return eris.Wrap(err, "calling Initialize_From_ThrottlingInformation_STATUS() to populate field Throttling")
 		}
 		rule.Throttling = &throttling
 	} else {
@@ -1061,13 +936,13 @@ func (rule *SmartDetectorAlertRule_STATUS) ConvertStatusFrom(source genruntime.C
 	src = &storage.SmartDetectorAlertRule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_SmartDetectorAlertRule_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1085,13 +960,13 @@ func (rule *SmartDetectorAlertRule_STATUS) ConvertStatusTo(destination genruntim
 	dst = &storage.SmartDetectorAlertRule_STATUS{}
 	err := rule.AssignProperties_To_SmartDetectorAlertRule_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1247,7 +1122,7 @@ func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_From_SmartDetectorAl
 		var actionGroup ActionGroupsInformation_STATUS
 		err := actionGroup.AssignProperties_From_ActionGroupsInformation_STATUS(source.ActionGroups)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ActionGroupsInformation_STATUS() to populate field ActionGroups")
+			return eris.Wrap(err, "calling AssignProperties_From_ActionGroupsInformation_STATUS() to populate field ActionGroups")
 		}
 		rule.ActionGroups = &actionGroup
 	} else {
@@ -1265,7 +1140,7 @@ func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_From_SmartDetectorAl
 		var detector Detector_STATUS
 		err := detector.AssignProperties_From_Detector_STATUS(source.Detector)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Detector_STATUS() to populate field Detector")
+			return eris.Wrap(err, "calling AssignProperties_From_Detector_STATUS() to populate field Detector")
 		}
 		rule.Detector = &detector
 	} else {
@@ -1313,7 +1188,7 @@ func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_From_SmartDetectorAl
 		var throttling ThrottlingInformation_STATUS
 		err := throttling.AssignProperties_From_ThrottlingInformation_STATUS(source.Throttling)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ThrottlingInformation_STATUS() to populate field Throttling")
+			return eris.Wrap(err, "calling AssignProperties_From_ThrottlingInformation_STATUS() to populate field Throttling")
 		}
 		rule.Throttling = &throttling
 	} else {
@@ -1337,7 +1212,7 @@ func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_To_SmartDetectorAler
 		var actionGroup storage.ActionGroupsInformation_STATUS
 		err := rule.ActionGroups.AssignProperties_To_ActionGroupsInformation_STATUS(&actionGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ActionGroupsInformation_STATUS() to populate field ActionGroups")
+			return eris.Wrap(err, "calling AssignProperties_To_ActionGroupsInformation_STATUS() to populate field ActionGroups")
 		}
 		destination.ActionGroups = &actionGroup
 	} else {
@@ -1355,7 +1230,7 @@ func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_To_SmartDetectorAler
 		var detector storage.Detector_STATUS
 		err := rule.Detector.AssignProperties_To_Detector_STATUS(&detector)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Detector_STATUS() to populate field Detector")
+			return eris.Wrap(err, "calling AssignProperties_To_Detector_STATUS() to populate field Detector")
 		}
 		destination.Detector = &detector
 	} else {
@@ -1401,7 +1276,7 @@ func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_To_SmartDetectorAler
 		var throttling storage.ThrottlingInformation_STATUS
 		err := rule.Throttling.AssignProperties_To_ThrottlingInformation_STATUS(&throttling)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ThrottlingInformation_STATUS() to populate field Throttling")
+			return eris.Wrap(err, "calling AssignProperties_To_ThrottlingInformation_STATUS() to populate field Throttling")
 		}
 		destination.Throttling = &throttling
 	} else {
@@ -1988,7 +1863,7 @@ func (detector *Detector_STATUS) AssignProperties_From_Detector_STATUS(source *s
 			var parameterDefinition DetectorParameterDefinition_STATUS
 			err := parameterDefinition.AssignProperties_From_DetectorParameterDefinition_STATUS(&parameterDefinitionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DetectorParameterDefinition_STATUS() to populate field ParameterDefinitions")
+				return eris.Wrap(err, "calling AssignProperties_From_DetectorParameterDefinition_STATUS() to populate field ParameterDefinitions")
 			}
 			parameterDefinitionList[parameterDefinitionIndex] = parameterDefinition
 		}
@@ -2056,7 +1931,7 @@ func (detector *Detector_STATUS) AssignProperties_To_Detector_STATUS(destination
 			var parameterDefinition storage.DetectorParameterDefinition_STATUS
 			err := parameterDefinitionItem.AssignProperties_To_DetectorParameterDefinition_STATUS(&parameterDefinition)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DetectorParameterDefinition_STATUS() to populate field ParameterDefinitions")
+				return eris.Wrap(err, "calling AssignProperties_To_DetectorParameterDefinition_STATUS() to populate field ParameterDefinitions")
 			}
 			parameterDefinitionList[parameterDefinitionIndex] = parameterDefinition
 		}

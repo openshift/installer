@@ -1,6 +1,8 @@
 package isoeditor
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"math"
@@ -8,11 +10,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cavaliercoder/go-cpio"
 	diskfs "github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"github.com/pkg/errors"
+)
+
+const (
+	AMD64CPUArchitecture   = "amd64"
+	X86CPUArchitecture     = "x86_64"
+	ARM64CPUArchitecture   = "arm64"
+	AARCH64CPUArchitecture = "aarch64"
 )
 
 // Extract unpacks the iso contents into the working directory
@@ -195,12 +205,14 @@ func Create(outPath string, workDir string, volumeLabel string) error {
 
 // Returns the number of sectors to load for efi boot
 // Load Sectors * 2048 should be the size of efiboot.img rounded up to a multiple of 2048
+// For UEFI boot, the sector size is 512
+// To support iso9660 (2048) and UEFI (512), sectors must be in blocks of 512, but must also be a multiple of 2048
 func efiLoadSectors(workDir string) (uint16, error) {
 	efiStat, err := os.Stat(filepath.Join(workDir, "images/efiboot.img"))
 	if err != nil {
 		return 0, err
 	}
-	return uint16(math.Ceil(float64(efiStat.Size()) / 2048)), nil
+	return uint16(math.Ceil(float64(efiStat.Size())/2048) * 4), nil
 }
 
 func cdbootLoadSectors(workDir string) (result uint16, err error) {
@@ -235,6 +247,7 @@ func cdbootLoadSectors(workDir string) (result uint16, err error) {
 	if sectors > math.MaxUint16 {
 		sectors = math.MaxUint16
 	}
+	// nolint: gosec
 	result = uint16(sectors)
 	return
 }
@@ -341,4 +354,49 @@ func ReadFileFromISO(isoPath, filePath string) ([]byte, error) {
 // Gets directly the ISO 9660 filesystem (equivalent to GetFileSystem(0)).
 func GetISO9660FileSystem(d *disk.Disk) (filesystem.FileSystem, error) {
 	return iso9660.Read(d.File, d.Size, 0, 0)
+}
+
+// fileEntry represents a single file to be added to a CPIO archive
+type fileEntry struct {
+	Content []byte
+	Path    string
+	Mode    cpio.FileMode
+}
+
+func generateCompressedCPIO(files []fileEntry) ([]byte, error) {
+	// Run gzip compression
+	compressedBuffer := new(bytes.Buffer)
+	gzipWriter := gzip.NewWriter(compressedBuffer)
+	// Create CPIO archive
+	cpioWriter := cpio.NewWriter(gzipWriter)
+
+	// Add each file to the archive
+	for _, file := range files {
+		if err := cpioWriter.WriteHeader(&cpio.Header{
+			Name: file.Path,
+			Mode: file.Mode,
+			Size: int64(len(file.Content)),
+		}); err != nil {
+			return nil, errors.Wrap(err, "Failed to write CPIO header")
+		}
+		if _, err := cpioWriter.Write(file.Content); err != nil {
+			return nil, errors.Wrap(err, "Failed to write CPIO archive")
+		}
+	}
+
+	if err := cpioWriter.Close(); err != nil {
+		return nil, errors.Wrap(err, "Failed to close CPIO archive")
+	}
+	if err := gzipWriter.Close(); err != nil {
+		return nil, errors.Wrap(err, "Failed to gzip ignition config")
+	}
+
+	padSize := (4 - (compressedBuffer.Len() % 4)) % 4
+	for i := 0; i < padSize; i++ {
+		if err := compressedBuffer.WriteByte(0); err != nil {
+			return nil, err
+		}
+	}
+
+	return compressedBuffer.Bytes(), nil
 }

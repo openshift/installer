@@ -2,4 +2,6 @@
 github.com/Azure/azure-service-operator/v2/api/synapse/customizations
 ---------------------------------------------------------------------
 WorkspaceExtension: Object (0 properties)
+
 WorkspacesBigDataPoolExtension: Object (0 properties)
+

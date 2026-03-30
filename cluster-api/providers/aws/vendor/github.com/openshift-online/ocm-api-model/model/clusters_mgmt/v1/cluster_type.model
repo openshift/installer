@@ -81,6 +81,10 @@ class Cluster {
 	// Information about the API of the cluster.
 	API ClusterAPI
 
+	// Control plane configuration for the cluster.
+	// This can be set during cluster creation to configure the control plane.
+	link ControlPlane ControlPlane
+
 	// Link to the cloud provider region where the cluster is installed.
 	link Region CloudRegion
 
@@ -221,6 +225,7 @@ class Cluster {
 
 	// Indicates whether the User workload monitoring is enabled or not
 	// It is enabled by default
+	// This field is deprecated for ROSA Hosted Control Plane clusters and will be removed
 	DisableUserWorkloadMonitoring Boolean
 
     // Contains information about Managed Service

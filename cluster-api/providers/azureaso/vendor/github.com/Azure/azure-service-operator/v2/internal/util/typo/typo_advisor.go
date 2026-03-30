@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/hbollon/go-edlib"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 )
@@ -59,7 +59,7 @@ func (advisor *Advisor) Errorf(typo string, format string, args ...interface{}) 
 
 	if !advisor.HasTerms() || advisor.terms.Contains(typo) {
 		// Can't make any suggestions,
-		return errors.Errorf(format, args...)
+		return eris.Errorf(format, args...)
 	}
 
 	msg := fmt.Sprintf(format, args...)
@@ -70,13 +70,13 @@ func (advisor *Advisor) Errorf(typo string, format string, args ...interface{}) 
 		edlib.Levenshtein)
 	if err != nil {
 		// Can't offer a suggestion
-		return errors.Errorf(
+		return eris.Errorf(
 			"%s (unable to provide suggestion: %s)",
 			msg,
 			err)
 	}
 
-	return errors.Errorf(
+	return eris.Errorf(
 		"%s (did you mean %s?)",
 		msg,
 		suggestion)
@@ -100,14 +100,14 @@ func (advisor *Advisor) Wrapf(originalError error, typo string, format string, a
 		edlib.Levenshtein)
 	if err != nil {
 		// Can't offer a suggestion
-		return errors.Wrapf(
+		return eris.Wrapf(
 			originalError,
 			"%s (unable to provide suggestion: %s)",
 			msg,
 			err)
 	}
 
-	return errors.Wrapf(
+	return eris.Wrapf(
 		originalError,
 		"%s (did you mean %s?)",
 		msg,

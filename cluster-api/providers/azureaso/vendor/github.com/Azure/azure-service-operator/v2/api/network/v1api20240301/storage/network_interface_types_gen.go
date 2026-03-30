@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (networkInterface *NetworkInterface) NewEmptyStatus() genruntime.Convertibl
 
 // Owner returns the ResourceReference of the owner
 func (networkInterface *NetworkInterface) Owner() *genruntime.ResourceReference {
+	if networkInterface.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(networkInterface.Spec)
 	return networkInterface.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (networkInterface *NetworkInterface) SetStatus(status genruntime.Convertibl
 	var st NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	networkInterface.Status = st
@@ -197,7 +201,7 @@ var _ genruntime.ConvertibleSpec = &NetworkInterface_Spec{}
 // ConvertSpecFrom populates our NetworkInterface_Spec from the provided source
 func (networkInterface *NetworkInterface_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == networkInterface {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(networkInterface)
@@ -206,7 +210,7 @@ func (networkInterface *NetworkInterface_Spec) ConvertSpecFrom(source genruntime
 // ConvertSpecTo populates the provided destination from our NetworkInterface_Spec
 func (networkInterface *NetworkInterface_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == networkInterface {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(networkInterface)
@@ -253,7 +257,7 @@ var _ genruntime.ConvertibleStatus = &NetworkInterface_STATUS_NetworkInterface_S
 // ConvertStatusFrom populates our NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded from the provided source
 func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == embedded {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(embedded)
@@ -262,7 +266,7 @@ func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) Co
 // ConvertStatusTo populates the provided destination from our NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
 func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == embedded {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(embedded)

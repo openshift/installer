@@ -11,8 +11,9 @@ import (
 )
 
 // Removes the specified tags from the IAM virtual multi-factor authentication
-// (MFA) device. For more information about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
-// in the IAM User Guide.
+// (MFA) device. For more information about tagging, see [Tagging IAM resources]in the IAM User Guide.
+//
+// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
 func (c *Client) UntagMFADevice(ctx context.Context, params *UntagMFADeviceInput, optFns ...func(*Options)) (*UntagMFADeviceOutput, error) {
 	if params == nil {
 		params = &UntagMFADeviceInput{}
@@ -32,10 +33,12 @@ type UntagMFADeviceInput struct {
 
 	// The unique identifier for the IAM virtual MFA device from which you want to
 	// remove tags. For virtual MFA devices, the serial number is the same as the ARN.
-	// This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
-	// ) a string of characters consisting of upper and lowercase alphanumeric
-	// characters with no spaces. You can also include any of the following characters:
-	// _+=,.@-
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	SerialNumber *string
@@ -99,6 +102,9 @@ func (c *Client) addOperationUntagMFADeviceMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +115,15 @@ func (c *Client) addOperationUntagMFADeviceMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUntagMFADeviceValidationMiddleware(stack); err != nil {
@@ -130,6 +145,15 @@ func (c *Client) addOperationUntagMFADeviceMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

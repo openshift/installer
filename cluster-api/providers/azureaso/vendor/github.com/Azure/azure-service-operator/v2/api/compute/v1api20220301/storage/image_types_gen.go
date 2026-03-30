@@ -10,7 +10,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -116,6 +116,10 @@ func (image *Image) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (image *Image) Owner() *genruntime.ResourceReference {
+	if image.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(image.Spec)
 	return image.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (image *Image) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Image_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	image.Status = st
@@ -195,7 +199,7 @@ var _ genruntime.ConvertibleSpec = &Image_Spec{}
 // ConvertSpecFrom populates our Image_Spec from the provided source
 func (image *Image_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == image {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(image)
@@ -204,7 +208,7 @@ func (image *Image_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) erro
 // ConvertSpecTo populates the provided destination from our Image_Spec
 func (image *Image_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == image {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(image)
@@ -233,7 +237,7 @@ var _ genruntime.ConvertibleStatus = &Image_STATUS{}
 // ConvertStatusFrom populates our Image_STATUS from the provided source
 func (image *Image_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == image {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(image)
@@ -242,7 +246,7 @@ func (image *Image_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus
 // ConvertStatusTo populates the provided destination from our Image_STATUS
 func (image *Image_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == image {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(image)
@@ -279,7 +283,7 @@ func (location *ExtendedLocation) AssignProperties_From_ExtendedLocation(source 
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation); ok {
 		err := augmentedLocation.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -310,7 +314,7 @@ func (location *ExtendedLocation) AssignProperties_To_ExtendedLocation(destinati
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation); ok {
 		err := augmentedLocation.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -349,7 +353,7 @@ func (location *ExtendedLocation_STATUS) AssignProperties_From_ExtendedLocation_
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation_STATUS); ok {
 		err := augmentedLocation.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -380,7 +384,7 @@ func (location *ExtendedLocation_STATUS) AssignProperties_To_ExtendedLocation_ST
 	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation_STATUS); ok {
 		err := augmentedLocation.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

@@ -29,6 +29,11 @@ const (
 	// // alpha: v1.X
 	// MyFeature featuregate.Feature = "MyFeature".
 
+	// MultiNetworks is a feature gate for the MultiNetworks functionality for supervisor.
+	//
+	// alpha: v1.14
+	MultiNetworks featuregate.Feature = "MultiNetworks"
+
 	// NodeAntiAffinity is a feature gate for the NodeAntiAffinity functionality.
 	//
 	// alpha: v1.4
@@ -57,4 +62,5 @@ var defaultCAPVFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	NodeAntiAffinity:     {Default: false, PreRelease: featuregate.Alpha},
 	NamespaceScopedZones: {Default: false, PreRelease: featuregate.Alpha},
 	PriorityQueue:        {Default: false, PreRelease: featuregate.Alpha},
+	MultiNetworks:        {Default: false, PreRelease: featuregate.Alpha},
 }

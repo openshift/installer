@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -39,7 +39,7 @@ type KnownResourceReference struct {
 }
 
 // AsResourceReference transforms this KnownResourceReference into a ResourceReference
-func (ref KnownResourceReference) AsResourceReference(group string, kind string) *ResourceReference {
+func (ref *KnownResourceReference) AsResourceReference(group string, kind string) *ResourceReference {
 	if ref.Name == "" {
 		group = ""
 		kind = ""
@@ -63,7 +63,7 @@ type KubernetesOwnerReference struct {
 }
 
 // AsResourceReference transforms this KnownResourceReference into a ResourceReference
-func (ref KubernetesOwnerReference) AsResourceReference(group string, kind string) *ResourceReference {
+func (ref *KubernetesOwnerReference) AsResourceReference(group string, kind string) *ResourceReference {
 	return &ResourceReference{
 		Group: group,
 		Kind:  kind,
@@ -90,7 +90,7 @@ type ArbitraryOwnerReference struct {
 }
 
 // AsResourceReference transforms this ArbitraryOwnerReference into a ResourceReference
-func (ref ArbitraryOwnerReference) AsResourceReference() *ResourceReference {
+func (ref *ArbitraryOwnerReference) AsResourceReference() *ResourceReference {
 	return &ResourceReference{
 		Group: ref.Group,
 		Kind:  ref.Kind,
@@ -103,6 +103,8 @@ var _ fmt.Stringer = ResourceReference{}
 
 // ResourceReference represents a resource reference, either to a Kubernetes resource or directly to an Azure resource via ARMID
 // +kubebuilder:object:generate=true
+//
+//nolint:recvcheck
 type ResourceReference struct {
 	// Group is the Kubernetes group of the resource.
 	Group string `json:"group,omitempty"`
@@ -131,12 +133,12 @@ func CreateResourceReferenceFromARMID(armID string) ResourceReference {
 }
 
 // IsDirectARMReference returns true if this ResourceReference is referring to an ARMID directly.
-func (ref ResourceReference) IsDirectARMReference() bool {
+func (ref *ResourceReference) IsDirectARMReference() bool {
 	return ref.ARMID != "" && ref.Name == "" && ref.Group == "" && ref.Kind == ""
 }
 
 // IsKubernetesReference returns true if this ResourceReference is referring to a Kubernetes resource.
-func (ref ResourceReference) IsKubernetesReference() bool {
+func (ref *ResourceReference) IsKubernetesReference() bool {
 	return ref.ARMID == "" && ref.Name != "" && ref.Group != "" && ref.Kind != ""
 }
 
@@ -155,39 +157,71 @@ func (ref ResourceReference) String() string {
 
 // TODO: We wouldn't need this if controller-gen supported DUs or OneOf better, see: https://github.com/kubernetes-sigs/controller-tools/issues/461
 // Validate validates the ResourceReference to ensure that it is structurally valid.
-func (ref ResourceReference) Validate() (admission.Warnings, error) {
+func (ref *ResourceReference) Validate() (admission.Warnings, error) {
 	if ref.ARMID == "" && ref.Name == "" && ref.Group == "" && ref.Kind == "" {
-		return nil, errors.Errorf("at least one of ['ARMID'] or ['Group', 'Kind', 'Namespace', 'Name'] must be set for ResourceReference")
+		return nil, eris.Errorf("at least one of ['ARMID'] or ['Group', 'Kind', 'Namespace', 'Name'] must be set for ResourceReference")
 	}
 
 	if ref.ARMID != "" && !ref.IsDirectARMReference() {
-		return nil, errors.Errorf("the 'ARMID' field is mutually exclusive with 'Group', 'Kind', 'Namespace', and 'Name' for ResourceReference: %s", ref.String())
+		return nil, eris.Errorf("the 'ARMID' field is mutually exclusive with 'Group', 'Kind', 'Namespace', and 'Name' for ResourceReference: %s", ref.String())
 	}
 
 	if ref.ARMID == "" && !ref.IsKubernetesReference() {
-		return nil, errors.Errorf("when referencing a Kubernetes resource, 'Group', 'Kind', 'Namespace', and 'Name' must all be specified for ResourceReference: %s", ref.String())
+		return nil, eris.Errorf("when referencing a Kubernetes resource, 'Group', 'Kind', 'Namespace', and 'Name' must all be specified for ResourceReference: %s", ref.String())
 	}
 
 	return nil, nil
 }
 
 // AsNamespacedRef creates a NamespacedResourceReference from this reference.
-func (ref ResourceReference) AsNamespacedRef(namespace string) NamespacedResourceReference {
+func (ref *ResourceReference) AsNamespacedRef(namespace string) NamespacedResourceReference {
 	// If this is a direct ARM reference, don't append a namespace as it reads weird
 	if ref.IsDirectARMReference() {
 		return NamespacedResourceReference{
-			ResourceReference: ref,
+			ResourceReference: *ref,
 		}
 	}
 
 	return NamespacedResourceReference{
-		ResourceReference: ref,
+		ResourceReference: *ref,
 		Namespace:         namespace,
 	}
 }
 
+// AsArbitraryOwnerReference creates an ArbitraryOwnerReference from this reference.
+func (ref *ResourceReference) AsArbitraryOwnerReference() ArbitraryOwnerReference {
+	// If this is a direct ARM reference, return just the ARM  ID
+	if ref.IsDirectARMReference() {
+		return ArbitraryOwnerReference{
+			ARMID: ref.ARMID,
+		}
+	}
+
+	// Otherwise return GVK
+	return ArbitraryOwnerReference{
+		Group: ref.Group,
+		Kind:  ref.Kind,
+		Name:  ref.Name,
+	}
+}
+
+// AsKnownResourceReference creates a KnownResourceReference from this reference.
+func (ref *ResourceReference) AsKnownResourceReference() KnownResourceReference {
+	// If this is a direct ARM reference, return just the ARM  ID
+	if ref.IsDirectARMReference() {
+		return KnownResourceReference{
+			ARMID: ref.ARMID,
+		}
+	}
+
+	// Otherwise return just the name
+	return KnownResourceReference{
+		Name: ref.Name,
+	}
+}
+
 // GroupKind returns the GroupKind of the resource reference
-func (ref ResourceReference) GroupKind() schema.GroupKind {
+func (ref *ResourceReference) GroupKind() schema.GroupKind {
 	return schema.GroupKind{
 		Group: ref.Group,
 		Kind:  ref.Kind,
@@ -214,13 +248,13 @@ func LookupOwnerGroupKind(v interface{}) (string, string) {
 }
 
 // Copy makes an independent copy of the KnownResourceReference
-func (ref KnownResourceReference) Copy() KnownResourceReference {
-	return ref
+func (ref *KnownResourceReference) Copy() KnownResourceReference {
+	return *ref
 }
 
 // Copy makes an independent copy of the ArbitraryOwnerReference
-func (ref ArbitraryOwnerReference) Copy() ArbitraryOwnerReference {
-	return ref
+func (ref *ArbitraryOwnerReference) Copy() ArbitraryOwnerReference {
+	return *ref
 }
 
 // Copy makes an independent copy of the ResourceReference
@@ -229,8 +263,8 @@ func (ref ResourceReference) Copy() ResourceReference {
 }
 
 // Copy makes an independent copy of the KubernetesOwnerReference
-func (ref KubernetesOwnerReference) Copy() KubernetesOwnerReference {
-	return ref
+func (ref *KubernetesOwnerReference) Copy() KubernetesOwnerReference {
+	return *ref
 }
 
 // ValidateResourceReferences calls Validate on each ResourceReference
@@ -273,14 +307,14 @@ func VerifyResourceOwnerARMID(resource ARMMetaObject) error {
 	// Ensure that the ARM ID actually has a suffix containing the resource types we expect
 	if len(expectedResourceTypesIncludedInARMID) > 0 {
 		if !strings.EqualFold(armID.ResourceType.Namespace, provider) {
-			return errors.Errorf(
+			return eris.Errorf(
 				"expected owner ARM ID to be from provider %q, but was %q",
 				provider,
 				armID.ResourceType.Namespace)
 		}
 		expectedARMIDType := strings.Join(expectedResourceTypesIncludedInARMID, "/")
 		if !strings.EqualFold(armID.ResourceType.Type, expectedARMIDType) {
-			return errors.Errorf(
+			return eris.Errorf(
 				"expected owner ARM ID to be of type %q, but was %q",
 				fmt.Sprintf("%s/%s", provider, expectedARMIDType),
 				armID.ResourceType.String())
@@ -288,7 +322,7 @@ func VerifyResourceOwnerARMID(resource ARMMetaObject) error {
 	} else if len(expectedResourceTypesIncludedInARMID) == 0 {
 		scope := resource.GetResourceScope()
 		if scope == ResourceScopeResourceGroup && armID.ResourceType.String() != "Microsoft.Resources/resourceGroups" {
-			return errors.Errorf(
+			return eris.Errorf(
 				"expected owner ARM ID to be for a resource group, but was %q",
 				armID.ResourceType.String())
 		}

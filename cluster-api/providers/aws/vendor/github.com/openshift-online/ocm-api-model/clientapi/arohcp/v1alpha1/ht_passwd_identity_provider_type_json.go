@@ -23,7 +23,6 @@ import (
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -69,7 +68,7 @@ func WriteHTPasswdIdentityProvider(object *HTPasswdIdentityProvider, stream *jso
 		stream.WriteObjectField("users")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		v1.WriteHTPasswdUserList(object.users.Items(), stream)
+		WriteHTPasswdUserList(object.users.Items(), stream)
 		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
@@ -107,7 +106,7 @@ func ReadHTPasswdIdentityProvider(iterator *jsoniter.Iterator) *HTPasswdIdentity
 			object.username = value
 			object.fieldSet_[1] = true
 		case "users":
-			value := &v1.HTPasswdUserList{}
+			value := &HTPasswdUserList{}
 			for {
 				field := iterator.ReadObject()
 				if field == "" {
@@ -116,11 +115,11 @@ func ReadHTPasswdIdentityProvider(iterator *jsoniter.Iterator) *HTPasswdIdentity
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == v1.HTPasswdUserListLinkKind)
+					value.SetLink(text == HTPasswdUserListLinkKind)
 				case "href":
 					value.SetHREF(iterator.ReadString())
 				case "items":
-					value.SetItems(v1.ReadHTPasswdUserList(iterator))
+					value.SetItems(ReadHTPasswdUserList(iterator))
 				default:
 					iterator.ReadAny()
 				}

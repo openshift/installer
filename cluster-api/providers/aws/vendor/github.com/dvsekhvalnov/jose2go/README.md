@@ -15,6 +15,8 @@ Extensively unit tested and cross tested (100+ tests) for compatibility with [jo
 Used in production. GA ready. Current version is 1.6.
 
 ## Important
+v1.7 introduced deflate decompression memory limits to avoid denial-of-service attacks aka 'deflate-bomb'. See [Customizing compression](#customizing-compression) section for details.
+
 v1.6 security tuning options
 
 v1.5 bug fix release
@@ -997,7 +999,21 @@ test, headers, err := Decode(token, func(headers map[string]interface{}, payload
 })
 ```
 
+### Customizing compression
+There were denial-of-service attacks reported on JWT libraries that supports deflate compression by constructing malicious payload that explodes in terms of RAM on decompression. See for details: [#33](https://github.com/dvsekhvalnov/jose2go/issues/33)
+
+As of v1.7.0 `jose2go` limits decompression buffer to 250Kb to limit memory consumption and additionaly provides a way to adjust the limit according to specific scenarios:
+
+```Go
+    // Override compression alg with new limits (10Kb example)
+    jose.RegisterJwc(RegisterJwc(NewDeflate(10240)))
+```
+
 ## Changelog
+### 1.7
+- 250Kb limit on decompression buffer
+- ability to register deflate compressor with custom limits
+
 ### 1.6
 - ability to deregister specific algorithms
 - configurable min/max restrictions for PBES2-HS256+A128KW, PBES2-HS384+A192KW, PBES2-HS512+A256KW

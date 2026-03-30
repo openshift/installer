@@ -7,14 +7,16 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
+	"strings"
 
-	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -39,6 +41,12 @@ var computeReq = resourceRequirements{
 	minimumVCpus:  2,
 	minimumMemory: 8192,
 }
+
+const (
+	subnetTypePrivate = "private"
+	subnetTypePublic  = "public"
+	subnetTypeEdge    = "edge"
+)
 
 // Validate executes platform-specific validation.
 func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) error {
@@ -114,6 +122,12 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		allErrs = append(allErrs, validateSharedVPC(ctx, meta, fldPath.Child("vpc").Child("subnets"))...)
 	}
 	if platform.DefaultMachinePlatform != nil {
+		// Dedicated hosts cannot be configured in defaultMachinePlatform
+		if platform.DefaultMachinePlatform.HostPlacement != nil {
+			defaultPath := fldPath.Child("defaultMachinePlatform").Child("hostPlacement")
+			errMsg := "dedicated hosts cannot be configured in defaultMachinePlatform, they must be specified per machine pool"
+			allErrs = append(allErrs, field.Invalid(defaultPath, platform.DefaultMachinePlatform.HostPlacement, errMsg))
+		}
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "", "")...)
 	}
 	return allErrs
@@ -121,7 +135,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 
 func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfig) field.ErrorList {
 	// accept AMI from the rhcos stream metadata
-	if rhcos.AMIRegions(config.ControlPlane.Architecture).Has(config.Platform.AWS.Region) {
+	if rhcos.AMIRegions(config.ControlPlane.Architecture, config.OSImageStream).Has(config.Platform.AWS.Region) {
 		return nil
 	}
 
@@ -163,11 +177,11 @@ func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfi
 		return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to get list of regions: %w", err))}
 	}
 	if sets.New(regions...).Has(config.Platform.AWS.Region) {
-		defaultEndpoint, err := GetDefaultServiceEndpoint(ctx, ec2v2.ServiceID, EndpointOptions{Region: config.Platform.AWS.Region, UseFIPS: false})
+		defaultEndpoint, err := GetDefaultServiceEndpoint(ctx, ec2.ServiceID, EndpointOptions{Region: config.Platform.AWS.Region, UseFIPS: false})
 		if err != nil {
 			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint"))}
 		}
-		if defaultEndpoint.PartitionID == endpoints.AwsPartitionID {
+		if defaultEndpoint.PartitionID == awstypes.AwsPartitionID {
 			return nil
 		}
 	}
@@ -199,17 +213,17 @@ func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.
 	}
 	totalPublicIPRequired := int64(1 + (len(allzones) * 3))
 
-	sess, err := meta.Session(ctx)
+	client, err := meta.EC2Client(ctx)
 	if err != nil {
-		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve ec2 client: %w", err)))
 	}
 
-	publicIpv4Pool, err := DescribePublicIpv4Pool(ctx, sess, config.Platform.AWS.Region, poolID)
+	publicIpv4Pool, err := DescribePublicIpv4Pool(ctx, client, poolID)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, poolID, err.Error()))
 	}
 
-	got := aws.Int64Value(publicIpv4Pool.TotalAvailableAddressCount)
+	got := int64(aws.ToInt32(publicIpv4Pool.TotalAvailableAddressCount))
 	if got < totalPublicIPRequired {
 		err = fmt.Errorf("required a minimum of %d Public IPv4 IPs available in the pool %s, got %d", totalPublicIPRequired, poolID, got)
 		return append(allErrs, field.InternalError(fldPath, err))
@@ -298,7 +312,6 @@ func (sdg *subnetDataGroups) From(ctx context.Context, meta *Metadata, providedS
 // validateSubnets ensures BYO subnets are valid.
 func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	networking := config.Networking
 	providedSubnets := config.AWS.VPC.Subnets
 	publish := config.Publish
 
@@ -329,16 +342,16 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, c
 	}
 
 	allErrs = append(allErrs, validateSharedSubnets(ctx, meta, fldPath)...)
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Private, networking.MachineNetwork)...)
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Public, networking.MachineNetwork)...)
+	allErrs = append(allErrs, validateSubnetCIDRs(fldPath, subnetDataGroups.Private, config)...)
+	allErrs = append(allErrs, validateSubnetCIDRs(fldPath, subnetDataGroups.Public, config)...)
 
 	if len(subnetsWithRole) > 0 {
 		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, config)...)
 	} else {
 		allErrs = append(allErrs, validateUntaggedSubnets(ctx, fldPath, meta, subnetDataGroups)...)
-		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, "private")...)
-		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, "public")...)
-		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, subnetTypePrivate)...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, subnetTypePublic)...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, subnetTypeEdge)...)
 	}
 
 	privateZones := sets.New[string]()
@@ -365,17 +378,32 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	// Edge Compute Pool / AWS Local Zones:
 	// - is valid when installing in existing VPC; or
 	// - is valid in new VPC when Local Zone name is defined
+	// - in dualstack networking: is valid when using local zones and installing in existing VPC
 	if poolName == types.MachinePoolEdgeRoleName {
 		if len(platform.VPC.Subnets) > 0 {
+			subnetFp := field.NewPath("platform", "aws", "vpc", "subnets")
+
 			edgeSubnets, err := meta.EdgeSubnets(ctx)
 			if err != nil {
 				errMsg := fmt.Sprintf("%s pool. %v", poolName, err.Error())
-				return append(allErrs, field.Invalid(field.NewPath("platform", "aws", "vpc", "subnets"), platform.VPC.Subnets, errMsg))
+				return append(allErrs, field.Invalid(subnetFp, platform.VPC.Subnets, errMsg))
 			}
 			if len(edgeSubnets) == 0 {
 				return append(allErrs, field.Required(fldPath, "the provided subnets must include valid subnets for the specified edge zones"))
 			}
+
+			if platform.IPFamily.DualStackEnabled() {
+				for _, sn := range edgeSubnets {
+					if sn.Zone.Type == awstypes.WavelengthZoneType {
+						allErrs = append(allErrs, field.Invalid(subnetFp, platform.VPC.Subnets, fmt.Sprintf("ipFamily %s is not supported for subnets in wavelength zones", platform.IPFamily)))
+					}
+				}
+			}
 		} else {
+			if platform.IPFamily.DualStackEnabled() {
+				return append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("ipFamily %s is only supported with user-provided subnets for edge machine pools", string(platform.IPFamily))))
+			}
+
 			if pool.Zones == nil || len(pool.Zones) == 0 {
 				return append(allErrs, field.Required(fldPath, "zone is required when using edge machine pools"))
 			}
@@ -447,10 +475,28 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 				errMsg := fmt.Sprintf("instance type supported architectures %s do not match specified architecture %s", sets.List(instanceArches), arch)
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 			}
+
+			if platform.IPFamily.DualStackEnabled() {
+				// The instance type must support IPv6 networking
+				if !typeMeta.Networking.IPv6Supported {
+					errMsg := fmt.Sprintf("instance type %s does not support IPv6 networking", pool.InstanceType)
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+				}
+
+				// The instance type must be Nitro-based to enable IPv6 IMDS endpoint
+				if typeMeta.Hypervisor != string(ec2types.InstanceTypeHypervisorNitro) {
+					errMsg := fmt.Sprintf("instance type %s is not Nitro-based", pool.InstanceType)
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+				}
+			}
 		} else {
 			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
+	}
+
+	if pool.CPUOptions != nil {
+		allErrs = append(allErrs, validateCPUOptions(ctx, meta, fldPath, pool)...)
 	}
 
 	if len(pool.AdditionalSecurityGroupIDs) > 0 {
@@ -466,6 +512,8 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		}
 	}
 
+	allErrs = append(allErrs, validateHostPlacement(ctx, meta, fldPath, pool, poolName)...)
+
 	return allErrs
 }
 
@@ -473,15 +521,112 @@ func translateEC2Arches(arches []string) sets.Set[string] {
 	res := sets.New[string]()
 	for _, arch := range arches {
 		switch arch {
-		case ec2.ArchitectureTypeX8664:
+		case string(ec2types.ArchitectureTypeX8664):
 			res.Insert(types.ArchitectureAMD64)
-		case ec2.ArchitectureTypeArm64:
+		case string(ec2types.ArchitectureTypeArm64):
 			res.Insert(types.ArchitectureARM64)
 		default:
 			continue
 		}
 	}
 	return res
+}
+
+// validateHostPlacement validates the HostPlacement for all instances.
+// HostPlacement must not have any duplicate dedicated hosts.
+// Dedicated Host must belong to a region and zone that this cluster is being installed into.
+// Dedicated Host must be only host in the region and zone for this install-config.
+// Dedicated Host must not have tags:
+// - "kubernetes.io/cluster/<another-cluster-id>: owned"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<another-cluster-id>: owned".
+func validateHostPlacement(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool, poolName string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if pool.HostPlacement == nil {
+		return allErrs
+	}
+
+	if pool.HostPlacement.Affinity != nil && *pool.HostPlacement.Affinity == awstypes.HostAffinityDedicatedHost {
+		placementPath := fldPath.Child("hostPlacement")
+		if pool.HostPlacement.DedicatedHost != nil {
+			configuredHosts := pool.HostPlacement.DedicatedHost
+
+			// Check for duplicate host IDs in the configuration
+			{
+				seenHostIDs := make(map[string]int)
+				for idx, host := range configuredHosts {
+					if firstIdx, exists := seenHostIDs[host.ID]; exists {
+						dhPath := placementPath.Child("dedicatedHost").Index(idx)
+						errMsg := fmt.Sprintf("duplicate dedicated host %s (first seen at index %d)", host.ID, firstIdx)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					} else {
+						seenHostIDs[host.ID] = idx
+					}
+				}
+			}
+
+			// Check to see if all configured hosts exist
+			foundHosts, err := meta.DedicatedHosts(ctx, configuredHosts)
+			if err != nil {
+				allErrs = append(allErrs, field.InternalError(placementPath.Child("dedicatedHost"), err))
+			} else {
+				// Track hosts by zone to ensure only one host per zone
+				seenZones := make(map[string]int)
+
+				// Check the returned configured hosts to see if the dedicated hosts defined in install-config exists.
+				for idx, host := range configuredHosts {
+					dhPath := placementPath.Child("dedicatedHost").Index(idx)
+
+					// Is host in AWS?
+					foundHost, ok := foundHosts[host.ID]
+					if !ok {
+						errMsg := fmt.Sprintf("dedicated host %s not found", host.ID)
+						allErrs = append(allErrs, field.Invalid(dhPath.Child("id"), host, errMsg))
+						continue
+					}
+
+					// Verify host is in the correct region
+					if !strings.HasPrefix(foundHost.Zone, meta.Region) {
+						errMsg := fmt.Sprintf("dedicated host %s is in zone %s which is not in the cluster's region %s", host.ID, foundHost.Zone, meta.Region)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+						continue
+					}
+
+					// Is host valid for pools region and zone config?
+					// Only check if zones are explicitly configured; if pool.Zones is empty, all zones are allowed
+					zones := pool.Zones
+					if len(zones) == 0 {
+						zones, err = meta.AvailabilityZones(ctx)
+						if err != nil {
+							allErrs = append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve availability zones: %w", err)))
+						}
+					}
+					if !slices.Contains(zones, foundHost.Zone) {
+						errMsg := fmt.Sprintf("machine pool specifies zones %v but dedicated host %s is in zone %s", pool.Zones, host.ID, foundHost.Zone)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					}
+
+					// Check for multiple hosts in the same zone
+					if firstIdx, exists := seenZones[foundHost.Zone]; exists {
+						errMsg := fmt.Sprintf("multiple dedicated hosts configured for zone %s (host %s at index %d, host %s at index %d)",
+							foundHost.Zone, configuredHosts[firstIdx].ID, firstIdx, host.ID, idx)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					} else {
+						seenZones[foundHost.Zone] = idx
+					}
+
+					// Check to make sure dedicated host is not owned by another cluster
+					clusterIDs := foundHost.Tags.GetClusterIDs(TagValueOwned)
+					if len(clusterIDs) > 0 {
+						allErrs = append(allErrs, field.Forbidden(dhPath,
+							fmt.Sprintf("Dedicated host %s is owned by other cluster %v and cannot be used for new installations, another Dedicated Host must be created separately", foundHost.ID, clusterIDs)))
+					}
+				}
+			}
+		}
+	}
+
+	return allErrs
 }
 
 func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
@@ -493,12 +638,12 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
 	}
 
-	session, err := meta.Session(ctx)
+	client, err := meta.EC2Client(ctx)
 	if err != nil {
-		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve ec2 client: %w", err)))
 	}
 
-	securityGroups, err := DescribeSecurityGroups(ctx, session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	securityGroups, err := DescribeSecurityGroups(ctx, client, pool.AdditionalSecurityGroupIDs)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
 	}
@@ -514,27 +659,47 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 	return allErrs
 }
 
-func validateSubnetCIDR(fldPath *field.Path, subnetDataGroup map[string]subnetData, networks []types.MachineNetworkEntry) field.ErrorList {
+func validateSubnetCIDRs(fldPath *field.Path, subnetDataGroup map[string]subnetData, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	for id, subnetData := range subnetDataGroup {
 		fp := fldPath.Index(subnetData.Idx)
-		cidr, _, err := net.ParseCIDR(subnetData.CIDR)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fp, id, err.Error()))
-			continue
+
+		// Validate subnetIPv4 CIDR
+		if len(subnetData.CIDR) == 0 {
+			allErrs = append(allErrs, field.Required(fp, "subnet does not have an associated IPv4 CIDR block"))
+		} else {
+			allErrs = append(allErrs, validateMachineNetworksContainSubnetCIDR(fp, ic.MachineNetwork, id, subnetData.CIDR)...)
 		}
-		allErrs = append(allErrs, validateMachineNetworksContainIP(fp, networks, id, cidr)...)
+
+		// If dualstack is enabled, the subnet must also have an IPv6 CIDR
+		if ic.AWS.IPFamily.DualStackEnabled() {
+			if len(subnetData.IPv6CIDR) == 0 {
+				allErrs = append(allErrs, field.Required(fp, "subnet does not have an associated IPv6 CIDR block"))
+			} else {
+				allErrs = append(allErrs, validateMachineNetworksContainSubnetCIDR(fp, ic.MachineNetwork, id, subnetData.IPv6CIDR)...)
+			}
+		}
 	}
+
 	return allErrs
 }
 
-func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.MachineNetworkEntry, subnetName string, ip net.IP) field.ErrorList {
+func validateMachineNetworksContainSubnetCIDR(fldPath *field.Path, networks []types.MachineNetworkEntry, subnetName string, cidr string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	cidrIP, _, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, subnetName, err.Error()))
+	}
+
 	for _, network := range networks {
-		if network.CIDR.Contains(ip) {
+		if network.CIDR.Contains(cidrIP) {
 			return nil
 		}
 	}
-	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet's CIDR range start %s is outside of the specified machine networks", ip))}
+
+	return append(allErrs, field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet's CIDR range start %s is outside of the specified machine networks", cidrIP)))
 }
 
 func validateDuplicateSubnetZones(fldPath *field.Path, subnetDataGroup map[string]subnetData, typ string) field.ErrorList {
@@ -646,9 +811,9 @@ func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.Subne
 		}
 
 		if ingressSubnet.Public != config.PublicIngress() {
-			subnetType := "private"
+			subnetType := subnetTypePrivate
 			if ingressSubnet.Public {
-				subnetType = "public"
+				subnetType = subnetTypePublic
 			}
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(ingressSubnet.Idx), ingressSubnet.ID,
 				fmt.Sprintf("subnet %s has role %s and is %s, which is not allowed when publish is set to %s", ingressSubnet.ID, awstypes.IngressControllerLBSubnetRole, subnetType, config.Publish)))
@@ -721,7 +886,9 @@ func validateUntaggedSubnets(ctx context.Context, fldPath *field.Path, meta *Met
 }
 
 // validateSharedVPC ensures the BYO VPC can be shared to install the new cluster.
-// That is the VPC must not have have tag: kubernetes.io/cluster/<another-cluster-id>: owned.
+// That is the VPC must not have tags:
+// - "kubernetes.io/cluster/<another-cluster-id>: owned"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<another-cluster-id>: owned".
 func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -730,8 +897,8 @@ func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path)
 		return append(allErrs, field.Invalid(fldPath, meta.ProvidedSubnets, err.Error()))
 	}
 
-	if vpc.Tags.HasClusterOwnedTag() {
-		clusterIDs := vpc.Tags.GetOwnedClusterIDs()
+	clusterIDs := vpc.Tags.GetClusterIDs(TagValueOwned)
+	if len(clusterIDs) > 0 {
 		allErrs = append(allErrs, field.Forbidden(fldPath,
 			fmt.Sprintf("VPC of subnets is owned by other clusters %v and cannot be used for new installations, another VPC must be created separately", clusterIDs)))
 	}
@@ -740,7 +907,9 @@ func validateSharedVPC(ctx context.Context, meta *Metadata, fldPath *field.Path)
 }
 
 // validateSharedSubnets ensures the BYO subnets can be shared to install the new cluster.
-// That is the subnets must not have have tag: kubernetes.io/cluster/<another-cluster-id>: owned.
+// That is the subnets must not have tags:
+// - "kubernetes.io/cluster/<another-cluster-id>: owned"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<another-cluster-id>: owned".
 func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -750,8 +919,8 @@ func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.P
 	}
 
 	for id, subnet := range mergeSubnets(subnets.Private, subnets.Public, subnets.Edge) {
-		if subnet.Tags.HasClusterOwnedTag() {
-			clusterIDs := subnet.Tags.GetOwnedClusterIDs()
+		clusterIDs := subnet.Tags.GetClusterIDs(TagValueOwned)
+		if len(clusterIDs) > 0 {
 			allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("subnet %s is owned by other clusters %v and cannot be used for new installations, another subnet must be created separately", id, clusterIDs)))
 		}
 	}
@@ -815,24 +984,24 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 }
 
 func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path, zoneName string) *field.Error {
-	sess, err := meta.Session(ctx)
+	client, err := meta.EC2Client(ctx)
 	if err != nil {
-		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to retrieve aws session: %s", err.Error()))
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to retrieve ec2 client: %s", err.Error()))
 	}
-	zones, err := describeFilteredZones(ctx, sess, meta.Region, []string{zoneName})
+	zones, err := describeFilteredZones(ctx, client, meta.Region, []string{zoneName})
 	if err != nil {
 		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to get describe zone: %s", err.Error()))
 	}
 	validZone := false
 	for _, zone := range zones {
-		if aws.StringValue(zone.ZoneName) == zoneName {
-			switch aws.StringValue(zone.ZoneType) {
+		if aws.ToString(zone.ZoneName) == zoneName {
+			switch aws.ToString(zone.ZoneType) {
 			case awstypes.LocalZoneType, awstypes.WavelengthZoneType:
 			default:
-				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone or wavelength-zone are valid in the edge machine pool: %s", aws.StringValue(zone.ZoneType)))
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone or wavelength-zone are valid in the edge machine pool: %s", aws.ToString(zone.ZoneType)))
 			}
-			if aws.StringValue(zone.OptInStatus) != awstypes.ZoneOptInStatusOptedIn {
-				return field.Invalid(fldPath, zoneName, fmt.Sprintf("zone group is not opted-in: %s", aws.StringValue(zone.GroupName)))
+			if string(zone.OptInStatus) != awstypes.ZoneOptInStatusOptedIn {
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("zone group is not opted-in: %s", aws.ToString(zone.GroupName)))
 			}
 			validZone = true
 		}
@@ -864,7 +1033,7 @@ var requiredServices = []string{
 }
 
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
-func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Metadata) error {
+func ValidateForProvisioning(ctx context.Context, privHzClient Route53API, publicHzClient Route53API, ic *types.InstallConfig, metadata *Metadata) error {
 	if ic.Publish == types.InternalPublishingStrategy && ic.AWS.HostedZone == "" {
 		return nil
 	}
@@ -876,52 +1045,49 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 
 	var zoneName string
 	var zonePath *field.Path
-	var zone *route53.HostedZone
+	var zone *route53types.HostedZone
+	var client Route53API
 
 	allErrs := field.ErrorList{}
-	r53cfg := GetR53ClientCfg(metadata.session, ic.AWS.HostedZoneRole)
 
 	if ic.AWS.HostedZone != "" {
 		zoneName = ic.AWS.HostedZone
 		zonePath = field.NewPath("aws", "hostedZone")
-		zoneOutput, err := client.GetHostedZone(zoneName, r53cfg)
+		zoneOutput, err := privHzClient.GetHostedZone(ctx, zoneName)
 		if err != nil {
-			errMsg := fmt.Errorf("unable to retrieve hosted zone: %w", err).Error()
-			return field.ErrorList{
-				field.Invalid(zonePath, zoneName, errMsg),
-			}.ToAggregate()
+			return field.ErrorList{field.Invalid(zonePath, zoneName, fmt.Sprintf("unable to retrieve hosted zone: %v", err))}.ToAggregate()
 		}
 
-		if errs := validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errs) > 0 {
+		if errs := validateHostedZone(ctx, zoneOutput, zonePath, zoneName, metadata); len(errs) > 0 {
 			allErrs = append(allErrs, errs...)
 		}
 
 		zone = zoneOutput.HostedZone
+		client = privHzClient
 	} else {
 		zoneName = ic.BaseDomain
 		zonePath = field.NewPath("baseDomain")
-		baseDomainOutput, err := client.GetBaseDomain(zoneName)
+		baseDomainOutput, err := publicHzClient.GetBaseDomain(ctx, zoneName)
 		if err != nil {
-			return field.ErrorList{
-				field.Invalid(zonePath, zoneName, "cannot find base domain"),
-			}.ToAggregate()
+			return field.ErrorList{field.Invalid(zonePath, zoneName, fmt.Sprintf("cannot find base domain %s: %v", zoneName, err))}.ToAggregate()
 		}
 
 		zone = baseDomainOutput
+		client = publicHzClient
 	}
 
-	if errs := client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errs) > 0 {
+	if errs := client.ValidateZoneRecords(ctx, zone, zoneName, zonePath, ic); len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 	}
 
 	return allErrs.ToAggregate()
 }
 
-func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
+func validateHostedZone(ctx context.Context, hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// validate that the hosted zone is associated with the VPC containing the existing subnets for the cluster
-	vpcID, err := metadata.VPCID(context.TODO())
+	vpcID, err := metadata.VPCID(ctx)
 	if err == nil {
 		if !isHostedZoneAssociatedWithVPC(hostedZoneOutput, vpcID) {
 			allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "hosted zone is not associated with the VPC"))
@@ -938,7 +1104,7 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		return false
 	}
 	for _, vpc := range hostedZone.VPCs {
-		if aws.StringValue(vpc.VPCId) == vpcID {
+		if aws.ToString(vpc.VPCId) == vpcID {
 			return true
 		}
 	}
@@ -946,21 +1112,98 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 }
 
 func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) *field.Error {
-	session, err := meta.Session(ctx)
+	client, err := NewIAMClient(ctx, EndpointOptions{
+		Region:    meta.Region,
+		Endpoints: meta.Services,
+	})
 	if err != nil {
-		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err))
+		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve iam client: %w", err))
 	}
-	client := iam.New(session)
-	res, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
+
+	res, err := client.GetInstanceProfile(ctx, &iam.GetInstanceProfileInput{
 		InstanceProfileName: aws.String(pool.IAMProfile),
 	})
 	if err != nil {
 		msg := fmt.Errorf("unable to retrieve instance profile: %w", err).Error()
 		return field.Invalid(fldPath, pool.IAMProfile, msg)
 	}
-	if len(res.InstanceProfile.Roles) == 0 || res.InstanceProfile.Roles[0] == nil {
+	if len(res.InstanceProfile.Roles) == 0 {
 		return field.Invalid(fldPath, pool.IAMProfile, "no role attached to instance profile")
 	}
 
 	return nil
+}
+
+func validateCPUOptions(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	cpuOpts := pool.CPUOptions
+
+	// Early return if no CPU options specified
+	if cpuOpts == nil {
+		return allErrs
+	}
+
+	// See sev-snp support requirements: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html#snp-requirements
+	if cpuOpts.ConfidentialCompute != nil && *cpuOpts.ConfidentialCompute == awstypes.ConfidentialComputePolicySEVSNP {
+		// Validate AMI boot mode for SEV-SNP
+		allErrs = append(allErrs, validateAMIBootMode(ctx, meta, fldPath, pool)...)
+
+		// Validate instance type for SEV-SNP
+		allErrs = append(allErrs, validateInstanceTypeForSEVSNP(ctx, meta, fldPath, pool)...)
+	}
+
+	return allErrs
+}
+
+func validateInstanceTypeForSEVSNP(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Warn if using default instance type
+	if pool.InstanceType == "" {
+		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for %s but no instance type is specified. The default instance type may not support amd-sev-snp", fldPath)
+		return allErrs
+	}
+
+	// Fetch instance types metadata
+	instanceTypes, err := meta.InstanceTypes(ctx)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Validate the specified instance type supports SEV-SNP
+	// If the instance type is not found, it's already caught in validateMachinePool
+	typeMeta, ok := instanceTypes[pool.InstanceType]
+	if !ok {
+		return allErrs
+	}
+
+	if !slices.Contains(typeMeta.Features, string(ec2types.SupportedAdditionalProcessorFeatureAmdSevSnp)) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, "specified instance type in the specified region doesn't support amd-sev-snp"))
+	}
+
+	return allErrs
+}
+
+func validateAMIBootMode(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	amiID := pool.AMIID
+	if amiID == "" {
+		// Warn when using default AMI with SEV-SNP
+		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for %s but no custom AMI is specified. The default RHCOS AMI may not have UEFI boot mode enabled", fldPath)
+		return allErrs
+	}
+
+	// Get image metadata
+	imageInfo, err := meta.Images(ctx, amiID)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath.Child("amiID"), fmt.Errorf("unable to retrieve AMI metadata: %w", err)))
+	}
+
+	// Check if boot mode supports UEFI
+	if imageInfo.BootMode != string(ec2types.BootModeValuesUefi) && imageInfo.BootMode != string(ec2types.BootModeValuesUefiPreferred) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("amiID"), amiID, fmt.Sprintf("AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got '%s'", imageInfo.BootMode)))
+	}
+
+	return allErrs
 }

@@ -24,12 +24,13 @@ type AWSCapacityReservationBuilder struct {
 	fieldSet_  []bool
 	id         string
 	marketType MarketType
+	preference CapacityReservationPreference
 }
 
 // NewAWSCapacityReservation creates a new builder of 'AWS_capacity_reservation' objects.
 func NewAWSCapacityReservation() *AWSCapacityReservationBuilder {
 	return &AWSCapacityReservationBuilder{
-		fieldSet_: make([]bool, 2),
+		fieldSet_: make([]bool, 3),
 	}
 }
 
@@ -49,7 +50,7 @@ func (b *AWSCapacityReservationBuilder) Empty() bool {
 // Id sets the value of the 'id' attribute to the given value.
 func (b *AWSCapacityReservationBuilder) Id(value string) *AWSCapacityReservationBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 2)
+		b.fieldSet_ = make([]bool, 3)
 	}
 	b.id = value
 	b.fieldSet_[0] = true
@@ -61,10 +62,22 @@ func (b *AWSCapacityReservationBuilder) Id(value string) *AWSCapacityReservation
 // Market type for AWS Capacity Reservations.
 func (b *AWSCapacityReservationBuilder) MarketType(value MarketType) *AWSCapacityReservationBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 2)
+		b.fieldSet_ = make([]bool, 3)
 	}
 	b.marketType = value
 	b.fieldSet_[1] = true
+	return b
+}
+
+// Preference sets the value of the 'preference' attribute to the given value.
+//
+// Market type for AWS Capacity Reservations.
+func (b *AWSCapacityReservationBuilder) Preference(value CapacityReservationPreference) *AWSCapacityReservationBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 3)
+	}
+	b.preference = value
+	b.fieldSet_[2] = true
 	return b
 }
 
@@ -79,6 +92,7 @@ func (b *AWSCapacityReservationBuilder) Copy(object *AWSCapacityReservation) *AW
 	}
 	b.id = object.id
 	b.marketType = object.marketType
+	b.preference = object.preference
 	return b
 }
 
@@ -91,5 +105,6 @@ func (b *AWSCapacityReservationBuilder) Build() (object *AWSCapacityReservation,
 	}
 	object.id = b.id
 	object.marketType = b.marketType
+	object.preference = b.preference
 	return
 }

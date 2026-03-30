@@ -55,7 +55,8 @@ type MetricAlertProperties_STATUS struct {
 	// LastUpdatedTime: Last time the rule was updated in ISO8601 format.
 	LastUpdatedTime *string `json:"lastUpdatedTime,omitempty"`
 
-	// Scopes: the list of resource id's that this metric alert is scoped to.
+	// Scopes: the list of resource id's that this metric alert is scoped to. You cannot change the scope of a metric rule
+	// based on logs.
 	Scopes []string `json:"scopes,omitempty"`
 
 	// Severity: Alert severity {0, 1, 2, 3, 4}
@@ -100,12 +101,15 @@ func (criteria MetricAlertCriteria_STATUS) MarshalJSON() ([]byte, error) {
 	if criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric != nil {
 		return json.Marshal(criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric)
 	}
+
 	if criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric != nil {
 		return json.Marshal(criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric)
 	}
+
 	if criteria.MicrosoftAzureMonitorWebtestLocationAvailability != nil {
 		return json.Marshal(criteria.MicrosoftAzureMonitorWebtestLocationAvailability)
 	}
+
 	return nil, nil
 }
 
@@ -233,9 +237,11 @@ func (criteria MultiMetricCriteria_STATUS) MarshalJSON() ([]byte, error) {
 	if criteria.Dynamic != nil {
 		return json.Marshal(criteria.Dynamic)
 	}
+
 	if criteria.Static != nil {
 		return json.Marshal(criteria.Static)
 	}
+
 	return nil, nil
 }
 

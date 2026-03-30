@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/route53"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -22,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var (
@@ -74,6 +77,8 @@ func TestValidate(t *testing.T) {
 		subnetsInVPC  *SubnetGroups
 		vpcTags       Tags
 		instanceTypes map[string]InstanceType
+		images        map[string]ImageInfo
+		hosts         map[string]Host
 		proxy         string
 		publicOnly    bool
 		expectErr     string
@@ -156,6 +161,303 @@ func TestValidate(t *testing.T) {
 			expectErr: `^compute\[1\].architecture: Invalid value: "arm64": all compute machine pools must be of the same architecture$`,
 		},
 		{
+			name: "valid instance type and UEFI AMI with enabling SEV-SNP on default platform",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withDefaultMachinePlatformCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withDefaultMachinePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+		},
+		{
+			name: "valid instance type and UEFI AMI with enabling SEV-SNP on control plane",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+		},
+		{
+			name: "valid instance type and UEFI-preferred AMI with enabling SEV-SNP on compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m6a.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}, 0),
+				icBuild.withComputePlatformAMI("ami-uefi-preferred", 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi-preferred": {BootMode: "uefi-preferred"},
+			},
+		},
+		{
+			name: "invalid instance type with enabling SEV-SNP on default platform",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withDefaultMachinePlatformCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withDefaultMachinePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+			expectErr: `^\Qplatform.aws.defaultMachinePlatform.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support amd-sev-snp\E$`,
+		},
+		{
+			name: "invalid instance type with enabling SEV-SNP on control plane",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m5.xlarge", "m6a.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+			expectErr: `^\QcontrolPlane.platform.aws.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support amd-sev-snp\E$`,
+		},
+		{
+			name: "invalid instance type with enabling SEV-SNP on compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m5.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}, 0),
+				icBuild.withComputePlatformAMI("ami-uefi", 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+			expectErr: `^\Qcompute[0].platform.aws.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support amd-sev-snp\E$`,
+		},
+		{
+			name: "invalid legacy-bios AMI with enabling SEV-SNP on default platform",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withDefaultMachinePlatformCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withDefaultMachinePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+			expectErr: `^\[platform\.aws\.defaultMachinePlatform\.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios', controlPlane\.platform\.aws\.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios', compute\[0\]\.platform\.aws\.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios'\]$`,
+		},
+		{
+			name: "invalid legacy-bios AMI with enabling SEV-SNP on control plane",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+			expectErr: `^\QcontrolPlane.platform.aws.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios'\E$`,
+		},
+		{
+			name: "invalid legacy-bios AMI with enabling SEV-SNP on compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}, 0),
+				icBuild.withComputePlatformAMI("ami-legacy", 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+			expectErr: `^\Qcompute[0].platform.aws.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios'\E$`,
+		},
+		{
+			name: "valid legacy-bios AMI with disabling confidential compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicyDisabled),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+		},
+		{
+			name: "valid legacy-bios AMI with no confidential compute settings",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withControlPlanePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+		},
+		{
+			name: "valid instance type with disabling confidential compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicyDisabled),
+				}),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "valid instance type with no confidential compute settings",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name:          "valid dual-stack with IPv6 supporting instance types",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name:          "invalid dual-stack control plane instance type does not support IPv6",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m1.xlarge", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `controlPlane\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking`,
+		},
+		{
+			name:          "invalid dual-stack compute instance type does not support IPv6",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m1.xlarge"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `compute\[0\]\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking`,
+		},
+		{
+			name:          "invalid dual-stack default machine platform instance types do not support IPv6",
+			installConfig: icBuild.build(icBuild.withInstanceType("m1.xlarge", "", ""), icBuild.withIPFamily(network.DualStackIPv6Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `controlPlane\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking.*compute\[0\]\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking`,
+		},
+		{
+			name:          "invalid dual-stack control plane instance type is not Nitro-based",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "t2.small", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `controlPlane\.platform\.aws\.type: Invalid value: "t2\.small": instance type t2\.small is not Nitro-based`,
+		},
+		{
+			name:          "invalid dual-stack compute instance type is not Nitro-based",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "t2.small"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `compute\[0\]\.platform\.aws\.type: Invalid value: "t2\.small": instance type t2\.small is not Nitro-based`,
+		},
+		{
+			name:          "invalid dual-stack default machine platform instance type is not Nitro-based",
+			installConfig: icBuild.build(icBuild.withInstanceType("t2.small", "", ""), icBuild.withIPFamily(network.DualStackIPv6Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `controlPlane\.platform\.aws\.type: Invalid value: "t2\.small": instance type t2\.small is not Nitro-based.*compute\[0\]\.platform\.aws\.type: Invalid value: "t2\.small": instance type t2\.small is not Nitro-based`,
+		},
+		{
+			name: "valid dual-stack byo subnets with IPv6 CIDRs",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withIPFamily(network.DualStackIPv4Primary),
+				icBuild.withDualStackMachineNetworks(network.DualStackIPv4Primary),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			subnets: SubnetGroups{
+				Private: validDualstackSubnets("private"),
+				Public:  validDualstackSubnets("public"),
+				VpcID:   validVPCID,
+			},
+		},
+		{
+			name: "invalid dual-stack byo subnets, some subnets missing IPv6 CIDR",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnetIDs([]string{"invalid-private-cidr-subnet", "invalid-public-cidr-subnet"}, false),
+				icBuild.withIPFamily(network.DualStackIPv4Primary),
+				icBuild.withDualStackMachineNetworks(network.DualStackIPv4Primary),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    append(validAvailZones(), "zone-for-invalid-cidr-subnet"),
+			instanceTypes: validInstanceTypes(),
+			subnets: SubnetGroups{
+				Private: mergeSubnets(validDualstackSubnets("private"), Subnets{"invalid-private-cidr-subnet": Subnet{
+					ID:   "invalid-private-cidr-subnet",
+					Zone: &Zone{Name: "zone-for-invalid-cidr-subnet"},
+					CIDR: "10.0.7.0/24",
+				}}),
+				Public: mergeSubnets(validDualstackSubnets("public"), Subnets{"invalid-public-cidr-subnet": Subnet{
+					ID:   "invalid-public-cidr-subnet",
+					Zone: &Zone{Name: "zone-for-invalid-cidr-subnet"},
+					CIDR: "10.0.8.0/24",
+				}}),
+				VpcID: validVPCID,
+			},
+			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Required value: subnet does not have an associated IPv6 CIDR block, platform.aws.vpc.subnets[7]: Required value: subnet does not have an associated IPv6 CIDR block]\E$`,
+		},
+		{
 			name: "invalid edge pool, missing zones",
 			installConfig: icBuild.build(
 				icBuild.withComputeMachinePool([]types.MachinePool{{
@@ -195,6 +497,63 @@ func TestValidate(t *testing.T) {
 			),
 			availRegions: validAvailRegions(),
 			expectErr:    `^\[compute\[0\]\.platform\.aws: Required value: edge compute pools are only supported on the AWS platform, compute\[0\].platform.aws: Required value: zone is required when using edge machine pools\]$`,
+		},
+		{
+			name: "valid edge pool with dual-stack and local zone byo subnets",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withIPFamily(network.DualStackIPv4Primary),
+				icBuild.withDualStackMachineNetworks(network.DualStackIPv4Primary),
+				icBuild.withVPCEdgeSubnetIDs(validDualstackSubnets("edge-local").IDs(), false),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			subnets: SubnetGroups{
+				Private: validDualstackSubnets("private"),
+				Public:  validDualstackSubnets("public"),
+				Edge:    validDualstackSubnets("edge-local"),
+				VpcID:   validVPCID,
+			},
+		},
+		{
+			name: "invalid edge pool with dual-stack and wavelength zone byo subnets",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withIPFamily(network.DualStackIPv4Primary),
+				icBuild.withDualStackMachineNetworks(network.DualStackIPv4Primary),
+				icBuild.withVPCEdgeSubnetIDs(validDualstackSubnets("edge-wavelength").IDs(), false),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			subnets: SubnetGroups{
+				Private: validDualstackSubnets("private"),
+				Public:  validDualstackSubnets("public"),
+				Edge:    validDualstackSubnets("edge-wavelength"),
+				VpcID:   validVPCID,
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Invalid value: [{"id":"subnet-valid-private-a"},{"id":"subnet-valid-private-b"},{"id":"subnet-valid-private-c"},{"id":"subnet-valid-public-a"},{"id":"subnet-valid-public-b"},{"id":"subnet-valid-public-c"},{"id":"subnet-valid-edge-wavelength-a"}]: ipFamily DualStackIPv4Primary is not supported for subnets in wavelength zones\E`,
+		},
+		{
+			name: "invalid edge pool with dual-stack without byo subnets",
+			installConfig: icBuild.build(
+				icBuild.withIPFamily(network.DualStackIPv6Primary),
+				icBuild.withComputeMachinePool([]types.MachinePool{{
+					Name:     types.MachinePoolEdgeRoleName,
+					Replicas: ptr.To[int64](1),
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							InstanceType: "m5.xlarge",
+							Zones:        []string{"nyc-1a"},
+						},
+					},
+				}}, true),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `^\Qcompute[0].platform.aws: Forbidden: ipFamily DualStackIPv6Primary is only supported with user-provided subnets for edge machine pools\E`,
 		},
 		{
 			name: "valid service endpoints, custom region and no endpoints provided",
@@ -1173,6 +1532,22 @@ func TestValidate(t *testing.T) {
 			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [another-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
 		},
 		{
+			name: "invalid byo subnets, vpc has CAPI cluster-owned tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public:  validSubnets("public"),
+				VpcID:   validVPCID,
+			},
+			vpcTags: Tags{
+				"sigs.k8s.io/cluster-api-provider-aws/cluster/another-cluster": "owned",
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [another-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
+		},
+		{
 			name: "invalid byo subnets, subnets have cluster-owned tags",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
@@ -1186,7 +1561,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public: mergeSubnets(validSubnets("public"), Subnets{
-					"subnet-valid-public-a1": {
+					"subnet-valid-public-d": {
 						ID:     "subnet-valid-public-d",
 						Zone:   &Zone{Name: "d"},
 						CIDR:   "10.0.6.0/24",
@@ -1198,7 +1573,201 @@ func TestValidate(t *testing.T) {
 				}),
 				VpcID: validVPCID,
 			},
-			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-a1 is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-d is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, subnets have CAPI cluster-owned tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID: "subnet-valid-public-d",
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-d": {
+						ID:     "subnet-valid-public-d",
+						Zone:   &Zone{Name: "d"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+						Tags: Tags{
+							"sigs.k8s.io/cluster-api-provider-aws/cluster/another-cluster": "owned",
+						},
+					},
+				}),
+				VpcID: validVPCID,
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-d is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, vpc has both owned kubernetes and CAPI tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public:  validSubnets("public"),
+				VpcID:   validVPCID,
+			},
+			vpcTags: Tags{
+				"kubernetes.io/cluster/my-cluster":                        "owned",
+				"sigs.k8s.io/cluster-api-provider-aws/cluster/my-cluster": "owned",
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [my-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, subnet has both owned kubernetes and CAPI tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID: "subnet-valid-public-d",
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-d": {
+						ID:     "subnet-valid-public-d",
+						Zone:   &Zone{Name: "d"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+						Tags: Tags{
+							"kubernetes.io/cluster/my-cluster":                        "owned",
+							"sigs.k8s.io/cluster-api-provider-aws/cluster/my-cluster": "owned",
+						},
+					},
+				}),
+				VpcID: validVPCID,
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-d is owned by other clusters [my-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+		},
+		{
+			name: "valid dedicated host placement on compute",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"us-east-1a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-1234567890abcdef0"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   []string{"us-east-1a", "us-east-1b", "us-east-1c"},
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+			},
+		},
+		{
+			name: "valid dedicated host placement on compute with no zones specified",
+			installConfig: icBuild.build(
+				icBuild.withComputeHostPlacement([]string{"h-1234567890abcdef0"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   []string{"us-east-1a", "us-east-1b", "us-east-1c"},
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+			},
+		},
+		{
+			name: "invalid dedicated host not found",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"us-east-1a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-aaaaaaaaaaaaaaaaa"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+			},
+			expectErr: "dedicated host h-aaaaaaaaaaaaaaaaa not found",
+		},
+		{
+			name: "invalid dedicated host in wrong region",
+			installConfig: icBuild.build(
+				icBuild.withComputeHostPlacement([]string{"h-1234567890abcdef0"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-west-2a"},
+			},
+			expectErr: "dedicated host h-1234567890abcdef0 is in zone us-west-2a which is not in the cluster's region us-east-1",
+		},
+		{
+			name: "invalid dedicated host zone not in pool zones",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"us-east-1a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-bbbbbbbbbbbbbbbbb"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-bbbbbbbbbbbbbbbbb": {ID: "h-bbbbbbbbbbbbbbbbb", Zone: "us-east-1b"},
+			},
+			expectErr: "machine pool specifies zones.*but dedicated host h-bbbbbbbbbbbbbbbbb is in zone us-east-1b",
+		},
+		{
+			name: "dedicated host placement on compute but for a zone that pool is not using",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"us-east-1b"}, true, 0),
+				icBuild.withComputeHostPlacementAndZone([]string{"h-1234567890abcdef0"}, "us-east-1b", 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   []string{"us-east-1a", "us-east-1b", "us-east-1c"},
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+			},
+			expectErr: "machine pool specifies zones.*but dedicated host h-1234567890abcdef0 is in zone us-east-1a",
+		},
+		{
+			name: "duplicate dedicated host IDs in configuration",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"us-east-1a"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-1234567890abcdef0", "h-1234567890abcdef0"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+			},
+			expectErr: "duplicate dedicated host h-1234567890abcdef0",
+		},
+		{
+			name: "multiple dedicated hosts in same zone",
+			installConfig: icBuild.build(
+				icBuild.withComputePlatformZones([]string{"us-east-1a", "us-east-1b"}, true, 0),
+				icBuild.withComputeHostPlacement([]string{"h-1234567890abcdef0", "h-abcdef1234567890a"}, 0),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+				"h-abcdef1234567890a": {ID: "h-abcdef1234567890a", Zone: "us-east-1a"},
+			},
+			expectErr: "multiple dedicated hosts configured for zone us-east-1a",
+		},
+		{
+			name: "dedicated hosts in defaultMachinePlatform not allowed",
+			installConfig: icBuild.build(
+				icBuild.withDefaultPlatformMachine(aws.MachinePool{
+					HostPlacement: &aws.HostPlacement{
+						Affinity: func() *aws.HostAffinity { a := aws.HostAffinityDedicatedHost; return &a }(),
+						DedicatedHost: []aws.DedicatedHost{
+							{ID: "h-1234567890abcdef0"},
+						},
+					},
+				}),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			hosts: map[string]Host{
+				"h-1234567890abcdef0": {ID: "h-1234567890abcdef0", Zone: "us-east-1a"},
+			},
+			expectErr: "dedicated hosts cannot be configured in defaultMachinePlatform",
 		},
 	}
 
@@ -1232,6 +1801,9 @@ func TestValidate(t *testing.T) {
 					Tags: test.vpcTags,
 				},
 				instanceTypes:   test.instanceTypes,
+				images:          test.images,
+				Hosts:           test.hosts,
+				Region:          test.installConfig.Platform.AWS.Region,
 				ProvidedSubnets: test.installConfig.Platform.AWS.VPC.Subnets,
 			}
 
@@ -1252,10 +1824,8 @@ func TestValidate(t *testing.T) {
 			err := Validate(context.TODO(), meta, test.installConfig)
 			if test.expectErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectErr, err.Error())
 			}
 		})
 	}
@@ -1300,7 +1870,7 @@ func TestIsHostedZoneDomainParentOfClusterDomain(t *testing.T) {
 	}}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			zone := &route53.HostedZone{Name: &tc.hostedZoneDomain}
+			zone := &route53types.HostedZone{Name: &tc.hostedZoneDomain}
 			actual := isHostedZoneDomainParentOfClusterDomain(zone, tc.clusterDomain)
 			assert.Equal(t, tc.expected, actual)
 		})
@@ -1345,21 +1915,21 @@ func TestValidateForProvisioning(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	route53Client := mock.NewMockAPI(mockCtrl)
+	route53Client := mock.NewMockRoute53API(mockCtrl)
 
 	validHostedZoneOutput := createValidHostedZoneOutput()
 	validDomainOutput := createBaseDomainHostedZoneOutput()
 
-	route53Client.EXPECT().GetBaseDomain(validDomainName).Return(&validDomainOutput, nil).AnyTimes()
-	route53Client.EXPECT().GetBaseDomain("").Return(nil, fmt.Errorf("invalid value: \"\": cannot find base domain")).AnyTimes()
-	route53Client.EXPECT().GetBaseDomain(invalidBaseDomain).Return(nil, fmt.Errorf("invalid value: \"%s\": cannot find base domain", invalidBaseDomain)).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(t.Context(), validDomainName).Return(&validDomainOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(t.Context(), "").Return(nil, fmt.Errorf("invalid value: \"\": cannot find base domain")).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(t.Context(), invalidBaseDomain).Return(nil, fmt.Errorf("invalid value: \"%s\": cannot find base domain", invalidBaseDomain)).AnyTimes()
 
-	route53Client.EXPECT().ValidateZoneRecords(&validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
-	route53Client.EXPECT().ValidateZoneRecords(gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(t.Context(), &validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(t.Context(), gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
 
 	// An invalid hosted zone should provide an error
-	route53Client.EXPECT().GetHostedZone(validHostedZoneName, gomock.Any()).Return(&validHostedZoneOutput, nil).AnyTimes()
-	route53Client.EXPECT().GetHostedZone(gomock.Not(validHostedZoneName), gomock.Any()).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(t.Context(), validHostedZoneName).Return(&validHostedZoneOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(t.Context(), gomock.Not(validHostedZoneName)).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -1380,13 +1950,11 @@ func TestValidateForProvisioning(t *testing.T) {
 				ProvidedSubnets: ic.Platform.AWS.VPC.Subnets,
 			}
 
-			err := ValidateForProvisioning(route53Client, ic, meta)
+			err := ValidateForProvisioning(t.Context(), route53Client, route53Client, ic, meta)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectedErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectedErr, err.Error())
 			}
 		})
 	}
@@ -1423,15 +1991,14 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	route53Client := mock.NewMockAPI(mockCtrl)
+	route53Client := mock.NewMockRoute53API(mockCtrl)
 
 	for _, test := range cases {
-
 		t.Run(test.name, func(t *testing.T) {
 			ic := icBuild.build(icBuild.withBaseDomain(test.baseDomain))
 			if test.expectedErr != "" {
 				if test.problematicRecords == nil {
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic).Return(nil, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
 				} else {
 					// mimic the results of what should happen in the internal function passed to
 					// ListResourceRecordSetsPages by GetSubDomainDNSRecords. Skip certain problematicRecords
@@ -1442,19 +2009,17 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 							returnedProblems = append(returnedProblems, pr)
 						}
 					}
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic).Return(returnedProblems, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
 				}
 			} else {
-				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, nil).AnyTimes()
+				route53Client.EXPECT().GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic).Return(nil, nil).AnyTimes()
 			}
 
-			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic, nil)
+			_, err := route53Client.GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectedErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectedErr, err.Error())
 			}
 		})
 	}
@@ -1572,6 +2137,81 @@ func validSubnets(subnetType string) Subnets {
 				Zone:   &Zone{Name: "c"},
 				CIDR:   "10.0.3.0/24",
 				Public: false,
+			},
+		}
+	}
+	return nil
+}
+
+// validDualstackSubnets returns subnets with both IPv4 and IPv6 CIDRs for dual-stack testing.
+func validDualstackSubnets(subnetType string) Subnets {
+	switch subnetType {
+	case "public":
+		return Subnets{
+			"subnet-valid-public-a": {
+				ID:       "subnet-valid-public-a",
+				Zone:     &Zone{Name: "a"},
+				CIDR:     "10.0.4.0/24",
+				IPv6CIDR: "2600:1f13:fe4:3::/64",
+				Public:   true,
+			},
+			"subnet-valid-public-b": {
+				ID:       "subnet-valid-public-b",
+				Zone:     &Zone{Name: "b"},
+				CIDR:     "10.0.5.0/24",
+				IPv6CIDR: "2600:1f13:fe4:4::/64",
+				Public:   true,
+			},
+			"subnet-valid-public-c": {
+				ID:       "subnet-valid-public-c",
+				Zone:     &Zone{Name: "c"},
+				CIDR:     "10.0.6.0/24",
+				IPv6CIDR: "2600:1f13:fe4:5::/64",
+				Public:   true,
+			},
+		}
+	case "private":
+		return Subnets{
+			"subnet-valid-private-a": {
+				ID:       "subnet-valid-private-a",
+				Zone:     &Zone{Name: "a"},
+				CIDR:     "10.0.1.0/24",
+				IPv6CIDR: "2600:1f13:fe4:0::/64",
+				Public:   false,
+			},
+			"subnet-valid-private-b": {
+				ID:       "subnet-valid-private-b",
+				Zone:     &Zone{Name: "b"},
+				CIDR:     "10.0.2.0/24",
+				IPv6CIDR: "2600:1f13:fe4:1::/64",
+				Public:   false,
+			},
+			"subnet-valid-private-c": {
+				ID:       "subnet-valid-private-c",
+				Zone:     &Zone{Name: "c"},
+				CIDR:     "10.0.3.0/24",
+				IPv6CIDR: "2600:1f13:fe4:2::/64",
+				Public:   false,
+			},
+		}
+	case "edge-local":
+		return Subnets{
+			"subnet-valid-edge-local-a": {
+				ID:       "subnet-valid-edge-local-a",
+				Zone:     &Zone{Name: "nyc-1a", Type: aws.LocalZoneType},
+				CIDR:     "10.0.128.0/24",
+				IPv6CIDR: "2600:1f13:fe4:10::/64",
+				Public:   true,
+			},
+		}
+	case "edge-wavelength":
+		return Subnets{
+			"subnet-valid-edge-wavelength-a": {
+				ID:       "subnet-valid-edge-wavelength-a",
+				Zone:     &Zone{Name: "wlz-1", Type: aws.WavelengthZoneType},
+				CIDR:     "10.0.129.0/24",
+				IPv6CIDR: "",
+				Public:   true,
 			},
 		}
 	}
@@ -1760,28 +2400,60 @@ func validInstanceTypes() map[string]InstanceType {
 		"t2.small": {
 			DefaultVCpus: 1,
 			MemInMiB:     2048,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorXen),
+			Networking: Networking{
+				IPv6Supported: true,
+			},
 		},
 		"m5.large": {
 			DefaultVCpus: 2,
 			MemInMiB:     8192,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
+			Networking: Networking{
+				IPv6Supported: true,
+			},
 		},
 		"m5.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
+			Networking: Networking{
+				IPv6Supported: true,
+			},
 		},
 		"m6g.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
-			Arches:       []string{ec2.ArchitectureTypeArm64},
+			Arches:       []string{string(ec2types.ArchitectureTypeArm64)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
+			Networking: Networking{
+				IPv6Supported: true,
+			},
+		},
+		"m1.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     15360,
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorXen),
+			Networking: Networking{
+				IPv6Supported: false,
+			},
+		},
+		"m6a.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     16384,
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
+			Features:     []string{"amd-sev-snp"},
 		},
 	}
 }
 
-func createBaseDomainHostedZoneOutput() route53.HostedZone {
-	return route53.HostedZone{
+func createBaseDomainHostedZoneOutput() route53types.HostedZone {
+	return route53types.HostedZone{
 		CallerReference: &validCallerRef,
 		Id:              &validDSId,
 		Name:            &validDomainName,
@@ -1789,14 +2461,9 @@ func createBaseDomainHostedZoneOutput() route53.HostedZone {
 }
 
 func createValidHostedZoneOutput() route53.GetHostedZoneOutput {
-	ptrValidNameServers := []*string{}
-	for i := range validNameServers {
-		ptrValidNameServers = append(ptrValidNameServers, &validNameServers[i])
-	}
-
-	validDelegationSet := route53.DelegationSet{CallerReference: &validCallerRef, Id: &validDSId, NameServers: ptrValidNameServers}
-	validHostedZone := route53.HostedZone{CallerReference: &validCallerRef, Id: &validDSId, Name: &validHostedZoneName}
-	validVPCs := []*route53.VPC{{VPCId: &validVPCID, VPCRegion: &validAvailRegions()[0]}}
+	validDelegationSet := route53types.DelegationSet{CallerReference: &validCallerRef, Id: &validDSId, NameServers: validNameServers}
+	validHostedZone := route53types.HostedZone{CallerReference: &validCallerRef, Id: &validDSId, Name: &validHostedZoneName}
+	validVPCs := []route53types.VPC{{VPCId: &validVPCID, VPCRegion: route53types.VPCRegion(validAvailRegions()[0])}}
 
 	return route53.GetHostedZoneOutput{
 		DelegationSet: &validDelegationSet,
@@ -1952,6 +2619,34 @@ func (icBuild icBuildForAWS) withComputePlatformZones(zones []string, overwrite 
 	}
 }
 
+func (icBuild icBuildForAWS) withComputeHostPlacement(hostIDs []string, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		aff := aws.HostAffinityDedicatedHost
+		dhs := make([]aws.DedicatedHost, 0, len(hostIDs))
+		for _, id := range hostIDs {
+			dhs = append(dhs, aws.DedicatedHost{ID: id})
+		}
+		ic.Compute[index].Platform.AWS.HostPlacement = &aws.HostPlacement{
+			Affinity:      &aff,
+			DedicatedHost: dhs,
+		}
+	}
+}
+
+func (icBuild icBuildForAWS) withComputeHostPlacementAndZone(hostIDs []string, zone string, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		aff := aws.HostAffinityDedicatedHost
+		dhs := make([]aws.DedicatedHost, 0, len(hostIDs))
+		for _, id := range hostIDs {
+			dhs = append(dhs, aws.DedicatedHost{ID: id})
+		}
+		ic.Compute[index].Platform.AWS.HostPlacement = &aws.HostPlacement{
+			Affinity:      &aff,
+			DedicatedHost: dhs,
+		}
+	}
+}
+
 func (icBuild icBuildForAWS) withControlPlanePlatformAMI(amiID string) icOption {
 	return func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.AWS.AMIID = amiID
@@ -2023,5 +2718,54 @@ func (icBuild icBuildForAWS) withDefaultPlatformMachine(awsMachine aws.MachinePo
 func (icBuild icBuildForAWS) withPublicIPv4Pool(publicIPv4Pool string) icOption {
 	return func(ic *types.InstallConfig) {
 		ic.Platform.AWS.PublicIpv4Pool = publicIPv4Pool
+	}
+}
+
+func (icBuild icBuildForAWS) withIPFamily(ipFamily network.IPFamily) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Platform.AWS.IPFamily = ipFamily
+	}
+}
+
+func (icBuild icBuildForAWS) withDefaultMachinePlatformCPUOptions(cpuOptions *aws.CPUOptions) icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.AWS.DefaultMachinePlatform == nil {
+			icBuild.withDefaultPlatformMachine(aws.MachinePool{})(ic)
+		}
+		ic.Platform.AWS.DefaultMachinePlatform.CPUOptions = cpuOptions
+	}
+}
+
+func (icBuild icBuildForAWS) withDefaultMachinePlatformAMI(amiID string) icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.AWS.DefaultMachinePlatform == nil {
+			icBuild.withDefaultPlatformMachine(aws.MachinePool{})(ic)
+		}
+		ic.Platform.AWS.DefaultMachinePlatform.AMIID = amiID
+	}
+}
+
+func (icBuild icBuildForAWS) withControlPlaneCPUOptions(cpuOptions *aws.CPUOptions) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.AWS.CPUOptions = cpuOptions
+	}
+}
+
+func (icBuild icBuildForAWS) withComputeCPUOptions(cpuOptions *aws.CPUOptions, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Compute[index].Platform.AWS.CPUOptions = cpuOptions
+	}
+}
+
+func (icBuild icBuildForAWS) withDualStackMachineNetworks(ipFamily network.IPFamily) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Networking.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: *ipnet.MustParseCIDR(validCIDR)},            // IPv4: 10.0.0.0/16
+			{CIDR: *ipnet.MustParseCIDR("2600:1f13:fe4::/56")}, // IPv6
+		}
+
+		if ipFamily == network.DualStackIPv6Primary {
+			slices.Reverse(ic.Networking.MachineNetwork)
+		}
 	}
 }

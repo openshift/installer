@@ -5,10 +5,7 @@ set -euo pipefail
 . /usr/local/bin/release-image.sh
 
 # yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
-coreos_img=rhel-coreos
-{{ if .IsOKD }}
-coreos_img=stream-coreos
-{{ end }}
+coreos_img={{.StreamTag}}
 until COREOS_IMAGE=$(image_for ${coreos_img}); do
     echo 'Failed to query release image; retrying...'
     sleep 10
@@ -29,8 +26,8 @@ ostree_checkout="${ostree_repo}/tmp/node-image"
 hardlink='-H'
 # this is the CoreOS API for "are we in a live environment", i.e. PXE or ISO
 if test -f /run/ostree-live; then
-    ostree_repo=/var/ostree-container/repo
-    ostree_checkout=/var/ostree-container/checkout
+    ostree_repo=/var/ostreecontainer/repo
+    ostree_checkout=/var/ostreecontainer/checkout
     mkdir -p "${ostree_repo}"
     echo "In live environment; creating temporary repo to pull node image"
     ostree init --mode=bare --repo="${ostree_repo}"
@@ -39,6 +36,7 @@ if test -f /run/ostree-live; then
     if [ -d /ostree/repo/refs/heads/ostree/container ]; then
         echo "Importing base content from system repo for deduplication"
         ostree pull-local --repo="${ostree_repo}" /ostree/repo
+        df -h "${ostree_repo}"
     fi
     # but we won't be able to force hardlinks cross-device
     hardlink=''
@@ -56,6 +54,7 @@ while ! ostree container image pull --authfile "/root/.docker/config.json" \
     echo 'Failed to fetch release image; retrying...'
     sleep 10
 done
+df -h "${ostree_repo}"
 
 # ideally, `ostree container image pull` would support `--write-ref` or a
 # command to escape a pullspec, but for now it's pretty easy to tell which ref
@@ -85,6 +84,8 @@ ostree checkout --repo "${ostree_repo}" ${hardlink} coreos/node-image "${ostree_
 
 # in the assisted-installer case, nuke the temporary repo to save RAM
 if grep -q coreos.liveiso= /proc/cmdline; then
+    df -h "${ostree_repo}"
     echo "Deleting temporary repo"
     rm -rf "${ostree_repo}"
+    df -h "${ostree_checkout}"
 fi

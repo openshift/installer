@@ -52,7 +52,7 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 				},
 			}
 
-			if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereHostVMGroupZonal) {
+			if ic.Config.Enabled(features.FeatureGateVSphereHostVMGroupZonal) {
 				logrus.Debug("Host VM Group based zonal feature gate enabled")
 
 				if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
@@ -86,7 +86,7 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 		}
 	}
 
-	if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiNetworks) {
+	if ic.Config.Enabled(features.FeatureGateVSphereMultiNetworks) {
 		logrus.Debug("Multi-networks feature gate enabled")
 		if icPlatformSpec.NodeNetworking != nil {
 			logrus.Debug("Multi-networks: node networking defined, copying to infrastructure spec")

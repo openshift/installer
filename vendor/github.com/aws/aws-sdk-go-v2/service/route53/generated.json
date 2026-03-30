@@ -76,6 +76,7 @@
         "api_op_TestDNSAnswer.go",
         "api_op_UpdateHealthCheck.go",
         "api_op_UpdateHostedZoneComment.go",
+        "api_op_UpdateHostedZoneFeatures.go",
         "api_op_UpdateTrafficPolicyComment.go",
         "api_op_UpdateTrafficPolicyInstance.go",
         "auth.go",
@@ -91,12 +92,13 @@
         "protocol_test.go",
         "serializers.go",
         "snapshot_test.go",
+        "sra_operation_order_test.go",
         "types/enums.go",
         "types/errors.go",
         "types/types.go",
         "validators.go"
     ],
-    "go": "1.15",
+    "go": "1.23",
     "module": "github.com/aws/aws-sdk-go-v2/service/route53",
     "unstable": false
 }

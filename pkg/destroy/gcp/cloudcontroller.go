@@ -127,33 +127,14 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	}
 	o.insertPendingItems(regionalAddressResource, found)
 
-	// Discover associated firewall rules: loadBalancerName
-	found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", loadBalancerFilterFunc)
-	if err != nil {
-		return err
-	}
-	o.insertPendingItems(firewallResourceName, found)
-
-	// Discover associated firewall rules: loadBalancerName-hc
-	found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", o.createLoadBalancerFilterFunc(fmt.Sprintf("%s-hc", loadBalancerName)))
-	if err != nil {
-		return err
-	}
-	o.insertPendingItems(firewallResourceName, found)
-
-	// Discover associated firewall rules: k8s-fw-loadBalancerName
-	found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken",
-		o.createLoadBalancerFilterFunc(fmt.Sprintf("k8s-fw-%s", loadBalancerName)),
-	)
-	if err != nil {
-		return err
-	}
-	o.insertPendingItems(firewallResourceName, found)
-
-	// Discover associated firewall rules: k8s-loadBalancerName-http-hc
-	found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken",
-		o.createLoadBalancerFilterFunc(fmt.Sprintf("k8s-%s-http-hc", loadBalancerName)),
-	)
+	// Discover associated firewall rules:
+	// 1. loadBalancerName
+	// 2. loadBalancerName-hc
+	// 3. k8s-fw-loadBalancerName
+	// 4. k8s-loadBalancerName-http-hc
+	// 5. k8s-%s-node-hc
+	// 6. k8s-%s-node-http-hc
+	found, err = o.listFirewallsWithFilter(ctx, "items(name,targetTags),nextPageToken", o.firewallFilterFunc)
 	if err != nil {
 		return err
 	}
@@ -271,23 +252,6 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 			return err
 		}
 		o.insertPendingItems(httpHealthCheckResourceName, found)
-
-		// Discover Cloud Controller firewall rules: k8s-cloudControllerUID-node-hc, k8s-cloudControllerUID-node-http-hc
-		found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken",
-			o.createLoadBalancerFilterFunc(fmt.Sprintf("k8s-%s-node-hc", o.cloudControllerUID)),
-		)
-		if err != nil {
-			return err
-		}
-		o.insertPendingItems(firewallResourceName, found)
-
-		found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken",
-			o.createLoadBalancerFilterFunc(fmt.Sprintf("k8s-%s-node-http-hc", o.cloudControllerUID)),
-		)
-		if err != nil {
-			return err
-		}
-		o.insertPendingItems(firewallResourceName, found)
 	}
 
 	return aggregateError(errs, 0)

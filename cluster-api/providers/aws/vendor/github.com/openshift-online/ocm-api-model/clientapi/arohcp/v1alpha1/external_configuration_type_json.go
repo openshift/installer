@@ -23,7 +23,6 @@ import (
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -51,7 +50,7 @@ func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.
 		stream.WriteObjectField("labels")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		v1.WriteLabelList(object.labels.Items(), stream)
+		WriteLabelList(object.labels.Items(), stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -63,7 +62,7 @@ func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.
 		stream.WriteObjectField("manifests")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		v1.WriteManifestList(object.manifests.Items(), stream)
+		WriteManifestList(object.manifests.Items(), stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -75,7 +74,7 @@ func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.
 		stream.WriteObjectField("syncsets")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		v1.WriteSyncsetList(object.syncsets.Items(), stream)
+		WriteSyncsetList(object.syncsets.Items(), stream)
 		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
@@ -105,7 +104,7 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 		}
 		switch field {
 		case "labels":
-			value := &v1.LabelList{}
+			value := &LabelList{}
 			for {
 				field := iterator.ReadObject()
 				if field == "" {
@@ -114,11 +113,11 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == v1.LabelListLinkKind)
+					value.SetLink(text == LabelListLinkKind)
 				case "href":
 					value.SetHREF(iterator.ReadString())
 				case "items":
-					value.SetItems(v1.ReadLabelList(iterator))
+					value.SetItems(ReadLabelList(iterator))
 				default:
 					iterator.ReadAny()
 				}
@@ -126,7 +125,7 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 			object.labels = value
 			object.fieldSet_[0] = true
 		case "manifests":
-			value := &v1.ManifestList{}
+			value := &ManifestList{}
 			for {
 				field := iterator.ReadObject()
 				if field == "" {
@@ -135,11 +134,11 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == v1.ManifestListLinkKind)
+					value.SetLink(text == ManifestListLinkKind)
 				case "href":
 					value.SetHREF(iterator.ReadString())
 				case "items":
-					value.SetItems(v1.ReadManifestList(iterator))
+					value.SetItems(ReadManifestList(iterator))
 				default:
 					iterator.ReadAny()
 				}
@@ -147,7 +146,7 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 			object.manifests = value
 			object.fieldSet_[1] = true
 		case "syncsets":
-			value := &v1.SyncsetList{}
+			value := &SyncsetList{}
 			for {
 				field := iterator.ReadObject()
 				if field == "" {
@@ -156,11 +155,11 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == v1.SyncsetListLinkKind)
+					value.SetLink(text == SyncsetListLinkKind)
 				case "href":
 					value.SetHREF(iterator.ReadString())
 				case "items":
-					value.SetItems(v1.ReadSyncsetList(iterator))
+					value.SetItems(ReadSyncsetList(iterator))
 				default:
 					iterator.ReadAny()
 				}

@@ -2,3 +2,4 @@
 github.com/Azure/azure-service-operator/v2/api/containerinstance/customizations
 -------------------------------------------------------------------------------
 ContainerGroupExtension: Object (0 properties)
+

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20220131prev
 -------------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-01-31-preview"
+
 FederatedIdentityCredential: Resource
 ├── Owner: managedidentity/v1api20220131preview.UserAssignedIdentity
 ├── Spec: Object (10 properties)
@@ -28,7 +29,12 @@ FederatedIdentityCredential: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── Subject: *string
     └── Type: *string
+
 augmentConversionForFederatedIdentityCredential: Interface
+
 augmentConversionForFederatedIdentityCredentialOperatorSpec: Interface
+
 augmentConversionForFederatedIdentityCredential_STATUS: Interface
+
 augmentConversionForFederatedIdentityCredential_Spec: Interface
+

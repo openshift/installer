@@ -75,6 +75,7 @@ func (d *machineDrainController) Reconcile(ctx context.Context, request reconcil
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	machineCopy := m.DeepCopy()
 
 	existingDrainedCondition := conditions.Get(m, machinev1.MachineDrained)
 	alreadyDrained := existingDrainedCondition != nil && existingDrainedCondition.Status == corev1.ConditionTrue
@@ -110,9 +111,9 @@ func (d *machineDrainController) Reconcile(ctx context.Context, request reconcil
 		}
 
 		conditions.Set(m, drainFinishedCondition)
-		// requeue request in case of failed update
-		if err := d.Client.Status().Update(ctx, m); err != nil {
-			return reconcile.Result{}, fmt.Errorf("could not update machine status: %w", err)
+		// requeue request in case of failed patch
+		if err := d.Client.Status().Patch(ctx, m, client.MergeFrom(machineCopy)); err != nil {
+			return reconcile.Result{}, fmt.Errorf("could not patch machine status: %w", err)
 		}
 		return reconcile.Result{}, nil
 	}

@@ -335,7 +335,7 @@ func Open(device string, opts ...OpenOpt) (*disk.Disk, error) {
 // Create a Disk from a path to a device
 // Should pass a path to a block device e.g. /dev/sda or a path to a file /tmp/foo.img
 // The provided device must not exist at the time you call Create()
-func Create(device string, size int64, format Format, sectorSize SectorSize) (*disk.Disk, error) {
+func Create(device string, size int64, _ Format, sectorSize SectorSize) (*disk.Disk, error) {
 	if device == "" {
 		return nil, errors.New("must pass device name")
 	}
@@ -344,11 +344,11 @@ func Create(device string, size int64, format Format, sectorSize SectorSize) (*d
 	}
 	f, err := os.OpenFile(device, os.O_RDWR|os.O_EXCL|os.O_CREATE, 0o666)
 	if err != nil {
-		return nil, fmt.Errorf("could not create device %s: %v", device, errors.Unwrap(err))
+		return nil, fmt.Errorf("could not create device %s: %w", device, err)
 	}
 	err = os.Truncate(device, size)
 	if err != nil {
-		return nil, fmt.Errorf("could not expand device %s to size %d: %v", device, size, errors.Unwrap(err))
+		return nil, fmt.Errorf("could not expand device %s to size %d: %w", device, size, err)
 	}
 	// return our disk
 	return initDisk(f, ReadWriteExclusive, sectorSize)

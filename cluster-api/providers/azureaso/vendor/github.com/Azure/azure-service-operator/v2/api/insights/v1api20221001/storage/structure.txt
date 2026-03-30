@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage
 -----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-10-01"
+
 AutoscaleSetting: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -168,3 +169,4 @@ AutoscaleSetting: Resource
     ├── TargetResourceLocation: *string
     ├── TargetResourceUri: *string
     └── Type: *string
+

@@ -11,6 +11,7 @@ reviewers:
   - cluster-api-aws-reviewers
 
 emeritus_approvers:
+  - Ankitasw
   - AverageMarcus
   - chuckha
   - detiber

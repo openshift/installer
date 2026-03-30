@@ -29,6 +29,8 @@ type RoleBindingBuilder struct {
 	href           string
 	account        *AccountBuilder
 	accountID      string
+	accountGroup   *AccountGroupBuilder
+	accountGroupID string
 	createdAt      time.Time
 	managedBy      string
 	organization   *OrganizationBuilder
@@ -45,14 +47,14 @@ type RoleBindingBuilder struct {
 // NewRoleBinding creates a new builder of 'role_binding' objects.
 func NewRoleBinding() *RoleBindingBuilder {
 	return &RoleBindingBuilder{
-		fieldSet_: make([]bool, 16),
+		fieldSet_: make([]bool, 18),
 	}
 }
 
 // Link sets the flag that indicates if this is a link.
 func (b *RoleBindingBuilder) Link(value bool) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.fieldSet_[0] = true
 	return b
@@ -61,7 +63,7 @@ func (b *RoleBindingBuilder) Link(value bool) *RoleBindingBuilder {
 // ID sets the identifier of the object.
 func (b *RoleBindingBuilder) ID(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.id = value
 	b.fieldSet_[1] = true
@@ -71,7 +73,7 @@ func (b *RoleBindingBuilder) ID(value string) *RoleBindingBuilder {
 // HREF sets the link to the object.
 func (b *RoleBindingBuilder) HREF(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.href = value
 	b.fieldSet_[2] = true
@@ -95,7 +97,7 @@ func (b *RoleBindingBuilder) Empty() bool {
 // Account sets the value of the 'account' attribute to the given value.
 func (b *RoleBindingBuilder) Account(value *AccountBuilder) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.account = value
 	if value != nil {
@@ -109,73 +111,73 @@ func (b *RoleBindingBuilder) Account(value *AccountBuilder) *RoleBindingBuilder 
 // AccountID sets the value of the 'account_ID' attribute to the given value.
 func (b *RoleBindingBuilder) AccountID(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.accountID = value
 	b.fieldSet_[4] = true
 	return b
 }
 
+// AccountGroup sets the value of the 'account_group' attribute to the given value.
+func (b *RoleBindingBuilder) AccountGroup(value *AccountGroupBuilder) *RoleBindingBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 18)
+	}
+	b.accountGroup = value
+	if value != nil {
+		b.fieldSet_[5] = true
+	} else {
+		b.fieldSet_[5] = false
+	}
+	return b
+}
+
+// AccountGroupID sets the value of the 'account_group_ID' attribute to the given value.
+func (b *RoleBindingBuilder) AccountGroupID(value string) *RoleBindingBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 18)
+	}
+	b.accountGroupID = value
+	b.fieldSet_[6] = true
+	return b
+}
+
 // ConfigManaged sets the value of the 'config_managed' attribute to the given value.
 func (b *RoleBindingBuilder) ConfigManaged(value bool) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.configManaged = value
-	b.fieldSet_[5] = true
+	b.fieldSet_[7] = true
 	return b
 }
 
 // CreatedAt sets the value of the 'created_at' attribute to the given value.
 func (b *RoleBindingBuilder) CreatedAt(value time.Time) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.createdAt = value
-	b.fieldSet_[6] = true
+	b.fieldSet_[8] = true
 	return b
 }
 
 // ManagedBy sets the value of the 'managed_by' attribute to the given value.
 func (b *RoleBindingBuilder) ManagedBy(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.managedBy = value
-	b.fieldSet_[7] = true
+	b.fieldSet_[9] = true
 	return b
 }
 
 // Organization sets the value of the 'organization' attribute to the given value.
 func (b *RoleBindingBuilder) Organization(value *OrganizationBuilder) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.organization = value
-	if value != nil {
-		b.fieldSet_[8] = true
-	} else {
-		b.fieldSet_[8] = false
-	}
-	return b
-}
-
-// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
-func (b *RoleBindingBuilder) OrganizationID(value string) *RoleBindingBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
-	}
-	b.organizationID = value
-	b.fieldSet_[9] = true
-	return b
-}
-
-// Role sets the value of the 'role' attribute to the given value.
-func (b *RoleBindingBuilder) Role(value *RoleBuilder) *RoleBindingBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
-	}
-	b.role = value
 	if value != nil {
 		b.fieldSet_[10] = true
 	} else {
@@ -184,22 +186,22 @@ func (b *RoleBindingBuilder) Role(value *RoleBuilder) *RoleBindingBuilder {
 	return b
 }
 
-// RoleID sets the value of the 'role_ID' attribute to the given value.
-func (b *RoleBindingBuilder) RoleID(value string) *RoleBindingBuilder {
+// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
+func (b *RoleBindingBuilder) OrganizationID(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
-	b.roleID = value
+	b.organizationID = value
 	b.fieldSet_[11] = true
 	return b
 }
 
-// Subscription sets the value of the 'subscription' attribute to the given value.
-func (b *RoleBindingBuilder) Subscription(value *SubscriptionBuilder) *RoleBindingBuilder {
+// Role sets the value of the 'role' attribute to the given value.
+func (b *RoleBindingBuilder) Role(value *RoleBuilder) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
-	b.subscription = value
+	b.role = value
 	if value != nil {
 		b.fieldSet_[12] = true
 	} else {
@@ -208,33 +210,57 @@ func (b *RoleBindingBuilder) Subscription(value *SubscriptionBuilder) *RoleBindi
 	return b
 }
 
+// RoleID sets the value of the 'role_ID' attribute to the given value.
+func (b *RoleBindingBuilder) RoleID(value string) *RoleBindingBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 18)
+	}
+	b.roleID = value
+	b.fieldSet_[13] = true
+	return b
+}
+
+// Subscription sets the value of the 'subscription' attribute to the given value.
+func (b *RoleBindingBuilder) Subscription(value *SubscriptionBuilder) *RoleBindingBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 18)
+	}
+	b.subscription = value
+	if value != nil {
+		b.fieldSet_[14] = true
+	} else {
+		b.fieldSet_[14] = false
+	}
+	return b
+}
+
 // SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 func (b *RoleBindingBuilder) SubscriptionID(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.subscriptionID = value
-	b.fieldSet_[13] = true
+	b.fieldSet_[15] = true
 	return b
 }
 
 // Type sets the value of the 'type' attribute to the given value.
 func (b *RoleBindingBuilder) Type(value string) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.type_ = value
-	b.fieldSet_[14] = true
+	b.fieldSet_[16] = true
 	return b
 }
 
 // UpdatedAt sets the value of the 'updated_at' attribute to the given value.
 func (b *RoleBindingBuilder) UpdatedAt(value time.Time) *RoleBindingBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 16)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.updatedAt = value
-	b.fieldSet_[15] = true
+	b.fieldSet_[17] = true
 	return b
 }
 
@@ -255,6 +281,12 @@ func (b *RoleBindingBuilder) Copy(object *RoleBinding) *RoleBindingBuilder {
 		b.account = nil
 	}
 	b.accountID = object.accountID
+	if object.accountGroup != nil {
+		b.accountGroup = NewAccountGroup().Copy(object.accountGroup)
+	} else {
+		b.accountGroup = nil
+	}
+	b.accountGroupID = object.accountGroupID
 	b.configManaged = object.configManaged
 	b.createdAt = object.createdAt
 	b.managedBy = object.managedBy
@@ -297,6 +329,13 @@ func (b *RoleBindingBuilder) Build() (object *RoleBinding, err error) {
 		}
 	}
 	object.accountID = b.accountID
+	if b.accountGroup != nil {
+		object.accountGroup, err = b.accountGroup.Build()
+		if err != nil {
+			return
+		}
+	}
+	object.accountGroupID = b.accountGroupID
 	object.configManaged = b.configManaged
 	object.createdAt = b.createdAt
 	object.managedBy = b.managedBy

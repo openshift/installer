@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (productApi *ProductApi) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (productApi *ProductApi) Owner() *genruntime.ResourceReference {
+	if productApi.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(productApi.Spec)
 	return productApi.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (productApi *ProductApi) SetStatus(status genruntime.ConvertibleStatus) err
 	var st ProductApi_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	productApi.Status = st
@@ -182,7 +186,7 @@ var _ genruntime.ConvertibleSpec = &ProductApi_Spec{}
 // ConvertSpecFrom populates our ProductApi_Spec from the provided source
 func (productApi *ProductApi_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == productApi {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(productApi)
@@ -191,7 +195,7 @@ func (productApi *ProductApi_Spec) ConvertSpecFrom(source genruntime.Convertible
 // ConvertSpecTo populates the provided destination from our ProductApi_Spec
 func (productApi *ProductApi_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == productApi {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(productApi)
@@ -208,7 +212,7 @@ var _ genruntime.ConvertibleStatus = &ProductApi_STATUS{}
 // ConvertStatusFrom populates our ProductApi_STATUS from the provided source
 func (productApi *ProductApi_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == productApi {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(productApi)
@@ -217,7 +221,7 @@ func (productApi *ProductApi_STATUS) ConvertStatusFrom(source genruntime.Convert
 // ConvertStatusTo populates the provided destination from our ProductApi_STATUS
 func (productApi *ProductApi_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == productApi {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(productApi)

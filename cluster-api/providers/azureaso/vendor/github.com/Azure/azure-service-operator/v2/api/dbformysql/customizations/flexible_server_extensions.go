@@ -8,14 +8,15 @@ package customizations
 import (
 	"context"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	mysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
+	mysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -35,7 +36,7 @@ func (ext *FlexibleServerExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*mysql.FlexibleServer)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *mysql.FlexibleServer", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *mysql.FlexibleServer", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if

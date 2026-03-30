@@ -12,18 +12,27 @@ import (
 
 // Deletes the specified role. Unlike the Amazon Web Services Management Console,
 // when you delete a role programmatically, you must delete the items attached to
-// the role manually, or the deletion fails. For more information, see Deleting an
-// IAM role (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_delete.html#roles-managingrole-deleting-cli)
-// . Before attempting to delete a role, remove the following attached items:
-//   - Inline policies ( DeleteRolePolicy )
-//   - Attached managed policies ( DetachRolePolicy )
-//   - Instance profile ( RemoveRoleFromInstanceProfile )
+// the role manually, or the deletion fails. For more information, see [Deleting an IAM role]. Before
+// attempting to delete a role, remove the following attached items:
+//
+//   - Inline policies ([DeleteRolePolicy] )
+//
+//   - Attached managed policies ([DetachRolePolicy] )
+//
+//   - Instance profile ([RemoveRoleFromInstanceProfile] )
+//
 //   - Optional – Delete instance profile after detaching from role for resource
-//     clean up ( DeleteInstanceProfile )
+//     clean up ([DeleteInstanceProfile] )
 //
 // Make sure that you do not have any Amazon EC2 instances running with the role
 // you are about to delete. Deleting a role or instance profile that is associated
 // with a running instance will break any applications running on the instance.
+//
+// [DetachRolePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DetachRolePolicy.html
+// [RemoveRoleFromInstanceProfile]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_RemoveRoleFromInstanceProfile.html
+// [DeleteRolePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeleteRolePolicy.html
+// [DeleteInstanceProfile]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeleteInstanceProfile.html
+// [Deleting an IAM role]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_delete.html#roles-managingrole-deleting-cli
 func (c *Client) DeleteRole(ctx context.Context, params *DeleteRoleInput, optFns ...func(*Options)) (*DeleteRoleOutput, error) {
 	if params == nil {
 		params = &DeleteRoleInput{}
@@ -41,10 +50,13 @@ func (c *Client) DeleteRole(ctx context.Context, params *DeleteRoleInput, optFns
 
 type DeleteRoleInput struct {
 
-	// The name of the role to delete. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
-	// ) a string of characters consisting of upper and lowercase alphanumeric
-	// characters with no spaces. You can also include any of the following characters:
-	// _+=,.@-
+	// The name of the role to delete.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	RoleName *string
@@ -102,6 +114,9 @@ func (c *Client) addOperationDeleteRoleMiddlewares(stack *middleware.Stack, opti
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +127,15 @@ func (c *Client) addOperationDeleteRoleMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteRoleValidationMiddleware(stack); err != nil {
@@ -133,6 +157,15 @@ func (c *Client) addOperationDeleteRoleMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

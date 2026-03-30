@@ -11,7 +11,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	azcoreruntime "github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 type PollerResponse[T any] struct {
@@ -36,11 +36,11 @@ func (l *PollerResponse[T]) Resume(ctx context.Context, client *GenericClient, t
 	}
 	// The linter doesn't realize that we don't need to close the resp body because it's already done by the poller.
 	// Suppressing it as it is a false positive.
-	// nolint:bodyclose
+	//nolint:bodyclose
 	resp, err := poller.Poll(ctx)
 	if err != nil {
 		var typedError *azcore.ResponseError
-		if errors.As(err, &typedError) {
+		if eris.As(err, &typedError) {
 			if typedError.RawResponse != nil {
 				return l.ErrorHandler(typedError.RawResponse)
 			}
@@ -55,7 +55,7 @@ func (l *PollerResponse[T]) Resume(ctx context.Context, client *GenericClient, t
 		_, err = poller.Result(ctx)
 		if err != nil {
 			var typedError *azcore.ResponseError
-			if errors.As(err, &typedError) {
+			if eris.As(err, &typedError) {
 				if typedError.RawResponse != nil {
 					return l.ErrorHandler(typedError.RawResponse)
 				}

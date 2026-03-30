@@ -24,7 +24,6 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -109,7 +108,7 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider")
-		v1.WriteCloudProvider(object.cloudProvider, stream)
+		WriteCloudProvider(object.cloudProvider, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
@@ -163,7 +162,7 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("region")
-		v1.WriteCloudRegion(object.region, stream)
+		WriteCloudRegion(object.region, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
@@ -228,7 +227,7 @@ func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 			object.gcpProjectOperator = value
 			object.fieldSet_[6] = true
 		case "cloud_provider":
-			value := v1.ReadCloudProvider(iterator)
+			value := ReadCloudProvider(iterator)
 			object.cloudProvider = value
 			object.fieldSet_[7] = true
 		case "creation_timestamp":
@@ -260,7 +259,7 @@ func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 			object.managementCluster = value
 			object.fieldSet_[12] = true
 		case "region":
-			value := v1.ReadCloudRegion(iterator)
+			value := ReadCloudRegion(iterator)
 			object.region = value
 			object.fieldSet_[13] = true
 		case "status":

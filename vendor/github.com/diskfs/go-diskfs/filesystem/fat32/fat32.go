@@ -375,7 +375,7 @@ func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 	_, _ = file.ReadAt(b, int64(fatSecondaryStart)+start)
 	fat2 := tableFromBytes(b)
 	if !fat.equal(fat2) {
-		return nil, errors.New("fat tables did not much")
+		return nil, errors.New("fat tables did not match")
 	}
 	dataStart := uint32(fatSecondaryStart) + fat.size
 
@@ -493,9 +493,12 @@ func (fs *FileSystem) ReadDir(p string) ([]os.FileInfo, error) {
 	}
 	// once we have made it here, looping is done. We have found the final entry
 	// we need to return all of the file info
-	count := len(entries)
-	ret := make([]os.FileInfo, count)
-	for i, e := range entries {
+	//nolint:prealloc // because the following loop may omit some entry
+	var ret []os.FileInfo
+	for _, e := range entries {
+		if e.isVolumeLabel {
+			continue
+		}
 		shortName := e.filenameShort
 		if e.lowercaseShortname {
 			shortName = strings.ToLower(shortName)
@@ -507,13 +510,13 @@ func (fs *FileSystem) ReadDir(p string) ([]os.FileInfo, error) {
 		if fileExtension != "" {
 			shortName = fmt.Sprintf("%s.%s", shortName, fileExtension)
 		}
-		ret[i] = FileInfo{
+		ret = append(ret, FileInfo{
 			modTime:   e.modifyTime,
 			name:      e.filenameLong,
 			shortName: shortName,
 			size:      int64(e.fileSize),
 			isDir:     e.isSubdirectory,
-		}
+		})
 	}
 	return ret, nil
 }
@@ -850,6 +853,7 @@ func (fs *FileSystem) readDirWithMkdir(p string, doMake bool) (*Directory, []*di
 				if err != nil {
 					return nil, nil, fmt.Errorf("failed to create subdirectory %s", "/"+strings.Join(paths[0:i+1], "/"))
 				}
+				currentDir.modifyTime = subdirEntry.createTime
 				// make a basic entry for the new subdir
 				parentDirectoryCluster := currentDir.clusterLocation
 				if parentDirectoryCluster == 2 {
@@ -859,8 +863,22 @@ func (fs *FileSystem) readDirWithMkdir(p string, doMake bool) (*Directory, []*di
 				dir := &Directory{
 					directoryEntry: directoryEntry{clusterLocation: subdirEntry.clusterLocation},
 					entries: []*directoryEntry{
-						{filenameShort: ".", isSubdirectory: true, clusterLocation: subdirEntry.clusterLocation},
-						{filenameShort: "..", isSubdirectory: true, clusterLocation: parentDirectoryCluster},
+						{
+							filenameShort:   ".",
+							isSubdirectory:  true,
+							clusterLocation: subdirEntry.clusterLocation,
+							createTime:      subdirEntry.createTime,
+							modifyTime:      subdirEntry.modifyTime,
+							accessTime:      subdirEntry.accessTime,
+						},
+						{
+							filenameShort:   "..",
+							isSubdirectory:  true,
+							clusterLocation: parentDirectoryCluster,
+							createTime:      currentDir.createTime,
+							modifyTime:      currentDir.modifyTime,
+							accessTime:      currentDir.accessTime,
+						},
 					},
 				}
 				// write the new directory entries to disk

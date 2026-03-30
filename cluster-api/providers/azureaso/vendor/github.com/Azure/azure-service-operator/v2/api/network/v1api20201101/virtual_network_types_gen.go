@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (network *VirtualNetwork) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = network.AssignProperties_From_VirtualNetwork(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to network")
+		return eris.Wrap(err, "converting from source to network")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (network *VirtualNetwork) ConvertTo(hub conversion.Hub) error {
 	var destination storage.VirtualNetwork
 	err := network.AssignProperties_To_VirtualNetwork(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from network")
+		return eris.Wrap(err, "converting to destination from network")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20201101-virtualnetwork,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=virtualnetworks,verbs=create;update,versions=v1api20201101,name=default.v1api20201101.virtualnetworks.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &VirtualNetwork{}
-
-// Default applies defaults to the VirtualNetwork resource
-func (network *VirtualNetwork) Default() {
-	network.defaultImpl()
-	var temp any = network
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (network *VirtualNetwork) defaultAzureName() {
-	if network.Spec.AzureName == "" {
-		network.Spec.AzureName = network.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the VirtualNetwork resource
-func (network *VirtualNetwork) defaultImpl() { network.defaultAzureName() }
 
 var _ configmaps.Exporter = &VirtualNetwork{}
 
@@ -176,6 +150,10 @@ func (network *VirtualNetwork) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (network *VirtualNetwork) Owner() *genruntime.ResourceReference {
+	if network.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(network.Spec)
 	return network.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (network *VirtualNetwork) SetStatus(status genruntime.ConvertibleStatus) er
 	var st VirtualNetwork_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	network.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20201101-virtualnetwork,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=virtualnetworks,verbs=create;update,versions=v1api20201101,name=validate.v1api20201101.virtualnetworks.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &VirtualNetwork{}
-
-// ValidateCreate validates the creation of the resource
-func (network *VirtualNetwork) ValidateCreate() (admission.Warnings, error) {
-	validations := network.createValidations()
-	var temp any = network
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (network *VirtualNetwork) ValidateDelete() (admission.Warnings, error) {
-	validations := network.deleteValidations()
-	var temp any = network
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (network *VirtualNetwork) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := network.updateValidations()
-	var temp any = network
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (network *VirtualNetwork) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){network.validateResourceReferences, network.validateOwnerReference, network.validateSecretDestinations, network.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (network *VirtualNetwork) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (network *VirtualNetwork) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return network.validateResourceReferences()
-		},
-		network.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return network.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return network.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return network.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (network *VirtualNetwork) validateConfigMapDestinations() (admission.Warnings, error) {
-	if network.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(network, nil, network.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (network *VirtualNetwork) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(network)
-}
-
-// validateResourceReferences validates all resource references
-func (network *VirtualNetwork) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&network.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (network *VirtualNetwork) validateSecretDestinations() (admission.Warnings, error) {
-	if network.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(network, nil, network.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (network *VirtualNetwork) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*VirtualNetwork)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, network)
 }
 
 // AssignProperties_From_VirtualNetwork populates our VirtualNetwork from the provided source VirtualNetwork
@@ -312,7 +187,7 @@ func (network *VirtualNetwork) AssignProperties_From_VirtualNetwork(source *stor
 	var spec VirtualNetwork_Spec
 	err := spec.AssignProperties_From_VirtualNetwork_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualNetwork_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetwork_Spec() to populate field Spec")
 	}
 	network.Spec = spec
 
@@ -320,7 +195,7 @@ func (network *VirtualNetwork) AssignProperties_From_VirtualNetwork(source *stor
 	var status VirtualNetwork_STATUS
 	err = status.AssignProperties_From_VirtualNetwork_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualNetwork_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetwork_STATUS() to populate field Status")
 	}
 	network.Status = status
 
@@ -338,7 +213,7 @@ func (network *VirtualNetwork) AssignProperties_To_VirtualNetwork(destination *s
 	var spec storage.VirtualNetwork_Spec
 	err := network.Spec.AssignProperties_To_VirtualNetwork_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualNetwork_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetwork_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (network *VirtualNetwork) AssignProperties_To_VirtualNetwork(destination *s
 	var status storage.VirtualNetwork_STATUS
 	err = network.Status.AssignProperties_To_VirtualNetwork_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualNetwork_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetwork_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -669,13 +544,13 @@ func (network *VirtualNetwork_Spec) ConvertSpecFrom(source genruntime.Convertibl
 	src = &storage.VirtualNetwork_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = network.AssignProperties_From_VirtualNetwork_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -693,13 +568,13 @@ func (network *VirtualNetwork_Spec) ConvertSpecTo(destination genruntime.Convert
 	dst = &storage.VirtualNetwork_Spec{}
 	err := network.AssignProperties_To_VirtualNetwork_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -713,7 +588,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 		var addressSpace AddressSpace
 		err := addressSpace.AssignProperties_From_AddressSpace(source.AddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field AddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field AddressSpace")
 		}
 		network.AddressSpace = &addressSpace
 	} else {
@@ -728,7 +603,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 		var bgpCommunity VirtualNetworkBgpCommunities
 		err := bgpCommunity.AssignProperties_From_VirtualNetworkBgpCommunities(source.BgpCommunities)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities() to populate field BgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities() to populate field BgpCommunities")
 		}
 		network.BgpCommunities = &bgpCommunity
 	} else {
@@ -740,7 +615,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 		var ddosProtectionPlan SubResource
 		err := ddosProtectionPlan.AssignProperties_From_SubResource(source.DdosProtectionPlan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DdosProtectionPlan")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DdosProtectionPlan")
 		}
 		network.DdosProtectionPlan = &ddosProtectionPlan
 	} else {
@@ -752,7 +627,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 		var dhcpOption DhcpOptions
 		err := dhcpOption.AssignProperties_From_DhcpOptions(source.DhcpOptions)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DhcpOptions() to populate field DhcpOptions")
+			return eris.Wrap(err, "calling AssignProperties_From_DhcpOptions() to populate field DhcpOptions")
 		}
 		network.DhcpOptions = &dhcpOption
 	} else {
@@ -780,7 +655,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 		var extendedLocation ExtendedLocation
 		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		network.ExtendedLocation = &extendedLocation
 	} else {
@@ -796,7 +671,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 			var ipAllocation SubResource
 			err := ipAllocation.AssignProperties_From_SubResource(&ipAllocationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field IpAllocations")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field IpAllocations")
 			}
 			ipAllocationList[ipAllocationIndex] = ipAllocation
 		}
@@ -813,7 +688,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 		var operatorSpec VirtualNetworkOperatorSpec
 		err := operatorSpec.AssignProperties_From_VirtualNetworkOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkOperatorSpec() to populate field OperatorSpec")
 		}
 		network.OperatorSpec = &operatorSpec
 	} else {
@@ -845,7 +720,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 		var addressSpace storage.AddressSpace
 		err := network.AddressSpace.AssignProperties_To_AddressSpace(&addressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field AddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field AddressSpace")
 		}
 		destination.AddressSpace = &addressSpace
 	} else {
@@ -860,7 +735,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 		var bgpCommunity storage.VirtualNetworkBgpCommunities
 		err := network.BgpCommunities.AssignProperties_To_VirtualNetworkBgpCommunities(&bgpCommunity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities() to populate field BgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities() to populate field BgpCommunities")
 		}
 		destination.BgpCommunities = &bgpCommunity
 	} else {
@@ -872,7 +747,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 		var ddosProtectionPlan storage.SubResource
 		err := network.DdosProtectionPlan.AssignProperties_To_SubResource(&ddosProtectionPlan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DdosProtectionPlan")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DdosProtectionPlan")
 		}
 		destination.DdosProtectionPlan = &ddosProtectionPlan
 	} else {
@@ -884,7 +759,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 		var dhcpOption storage.DhcpOptions
 		err := network.DhcpOptions.AssignProperties_To_DhcpOptions(&dhcpOption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DhcpOptions() to populate field DhcpOptions")
+			return eris.Wrap(err, "calling AssignProperties_To_DhcpOptions() to populate field DhcpOptions")
 		}
 		destination.DhcpOptions = &dhcpOption
 	} else {
@@ -912,7 +787,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 		var extendedLocation storage.ExtendedLocation
 		err := network.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -928,7 +803,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 			var ipAllocation storage.SubResource
 			err := ipAllocationItem.AssignProperties_To_SubResource(&ipAllocation)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field IpAllocations")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field IpAllocations")
 			}
 			ipAllocationList[ipAllocationIndex] = ipAllocation
 		}
@@ -945,7 +820,7 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 		var operatorSpec storage.VirtualNetworkOperatorSpec
 		err := network.OperatorSpec.AssignProperties_To_VirtualNetworkOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1054,13 +929,13 @@ func (network *VirtualNetwork_STATUS) ConvertStatusFrom(source genruntime.Conver
 	src = &storage.VirtualNetwork_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = network.AssignProperties_From_VirtualNetwork_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1078,13 +953,13 @@ func (network *VirtualNetwork_STATUS) ConvertStatusTo(destination genruntime.Con
 	dst = &storage.VirtualNetwork_STATUS{}
 	err := network.AssignProperties_To_VirtualNetwork_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1274,7 +1149,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 		var addressSpace AddressSpace_STATUS
 		err := addressSpace.AssignProperties_From_AddressSpace_STATUS(source.AddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field AddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field AddressSpace")
 		}
 		network.AddressSpace = &addressSpace
 	} else {
@@ -1286,7 +1161,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 		var bgpCommunity VirtualNetworkBgpCommunities_STATUS
 		err := bgpCommunity.AssignProperties_From_VirtualNetworkBgpCommunities_STATUS(source.BgpCommunities)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities_STATUS() to populate field BgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities_STATUS() to populate field BgpCommunities")
 		}
 		network.BgpCommunities = &bgpCommunity
 	} else {
@@ -1301,7 +1176,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 		var ddosProtectionPlan SubResource_STATUS
 		err := ddosProtectionPlan.AssignProperties_From_SubResource_STATUS(source.DdosProtectionPlan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DdosProtectionPlan")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DdosProtectionPlan")
 		}
 		network.DdosProtectionPlan = &ddosProtectionPlan
 	} else {
@@ -1313,7 +1188,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 		var dhcpOption DhcpOptions_STATUS
 		err := dhcpOption.AssignProperties_From_DhcpOptions_STATUS(source.DhcpOptions)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DhcpOptions_STATUS() to populate field DhcpOptions")
+			return eris.Wrap(err, "calling AssignProperties_From_DhcpOptions_STATUS() to populate field DhcpOptions")
 		}
 		network.DhcpOptions = &dhcpOption
 	} else {
@@ -1344,7 +1219,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 		var extendedLocation ExtendedLocation_STATUS
 		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		network.ExtendedLocation = &extendedLocation
 	} else {
@@ -1363,7 +1238,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 			var ipAllocation SubResource_STATUS
 			err := ipAllocation.AssignProperties_From_SubResource_STATUS(&ipAllocationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field IpAllocations")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field IpAllocations")
 			}
 			ipAllocationList[ipAllocationIndex] = ipAllocation
 		}
@@ -1410,7 +1285,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 		var addressSpace storage.AddressSpace_STATUS
 		err := network.AddressSpace.AssignProperties_To_AddressSpace_STATUS(&addressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field AddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field AddressSpace")
 		}
 		destination.AddressSpace = &addressSpace
 	} else {
@@ -1422,7 +1297,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 		var bgpCommunity storage.VirtualNetworkBgpCommunities_STATUS
 		err := network.BgpCommunities.AssignProperties_To_VirtualNetworkBgpCommunities_STATUS(&bgpCommunity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities_STATUS() to populate field BgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities_STATUS() to populate field BgpCommunities")
 		}
 		destination.BgpCommunities = &bgpCommunity
 	} else {
@@ -1437,7 +1312,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 		var ddosProtectionPlan storage.SubResource_STATUS
 		err := network.DdosProtectionPlan.AssignProperties_To_SubResource_STATUS(&ddosProtectionPlan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DdosProtectionPlan")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DdosProtectionPlan")
 		}
 		destination.DdosProtectionPlan = &ddosProtectionPlan
 	} else {
@@ -1449,7 +1324,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 		var dhcpOption storage.DhcpOptions_STATUS
 		err := network.DhcpOptions.AssignProperties_To_DhcpOptions_STATUS(&dhcpOption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DhcpOptions_STATUS() to populate field DhcpOptions")
+			return eris.Wrap(err, "calling AssignProperties_To_DhcpOptions_STATUS() to populate field DhcpOptions")
 		}
 		destination.DhcpOptions = &dhcpOption
 	} else {
@@ -1480,7 +1355,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 		var extendedLocation storage.ExtendedLocation_STATUS
 		err := network.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -1499,7 +1374,7 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 			var ipAllocation storage.SubResource_STATUS
 			err := ipAllocationItem.AssignProperties_To_SubResource_STATUS(&ipAllocation)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field IpAllocations")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field IpAllocations")
 			}
 			ipAllocationList[ipAllocationIndex] = ipAllocation
 		}

@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20220131preview/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20220131preview/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (credential *FederatedIdentityCredential) ConvertFrom(hub conversion.Hub) e
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = credential.AssignProperties_From_FederatedIdentityCredential(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to credential")
+		return eris.Wrap(err, "converting from source to credential")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (credential *FederatedIdentityCredential) ConvertTo(hub conversion.Hub) err
 	var destination storage.FederatedIdentityCredential
 	err := credential.AssignProperties_To_FederatedIdentityCredential(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from credential")
+		return eris.Wrap(err, "converting to destination from credential")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-managedidentity-azure-com-v1api20220131preview-federatedidentitycredential,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=managedidentity.azure.com,resources=federatedidentitycredentials,verbs=create;update,versions=v1api20220131preview,name=default.v1api20220131preview.federatedidentitycredentials.managedidentity.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &FederatedIdentityCredential{}
-
-// Default applies defaults to the FederatedIdentityCredential resource
-func (credential *FederatedIdentityCredential) Default() {
-	credential.defaultImpl()
-	var temp any = credential
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (credential *FederatedIdentityCredential) defaultAzureName() {
-	if credential.Spec.AzureName == "" {
-		credential.Spec.AzureName = credential.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the FederatedIdentityCredential resource
-func (credential *FederatedIdentityCredential) defaultImpl() { credential.defaultAzureName() }
 
 var _ configmaps.Exporter = &FederatedIdentityCredential{}
 
@@ -176,6 +150,10 @@ func (credential *FederatedIdentityCredential) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (credential *FederatedIdentityCredential) Owner() *genruntime.ResourceReference {
+	if credential.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(credential.Spec)
 	return credential.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,126 +170,11 @@ func (credential *FederatedIdentityCredential) SetStatus(status genruntime.Conve
 	var st FederatedIdentityCredential_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	credential.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-managedidentity-azure-com-v1api20220131preview-federatedidentitycredential,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=managedidentity.azure.com,resources=federatedidentitycredentials,verbs=create;update,versions=v1api20220131preview,name=validate.v1api20220131preview.federatedidentitycredentials.managedidentity.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &FederatedIdentityCredential{}
-
-// ValidateCreate validates the creation of the resource
-func (credential *FederatedIdentityCredential) ValidateCreate() (admission.Warnings, error) {
-	validations := credential.createValidations()
-	var temp any = credential
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (credential *FederatedIdentityCredential) ValidateDelete() (admission.Warnings, error) {
-	validations := credential.deleteValidations()
-	var temp any = credential
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (credential *FederatedIdentityCredential) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := credential.updateValidations()
-	var temp any = credential
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (credential *FederatedIdentityCredential) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){credential.validateResourceReferences, credential.validateOwnerReference, credential.validateSecretDestinations, credential.validateConfigMapDestinations, credential.validateOptionalConfigMapReferences}
-}
-
-// deleteValidations validates the deletion of the resource
-func (credential *FederatedIdentityCredential) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (credential *FederatedIdentityCredential) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return credential.validateResourceReferences()
-		},
-		credential.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return credential.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return credential.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return credential.validateConfigMapDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return credential.validateOptionalConfigMapReferences()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (credential *FederatedIdentityCredential) validateConfigMapDestinations() (admission.Warnings, error) {
-	if credential.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(credential, nil, credential.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
-func (credential *FederatedIdentityCredential) validateOptionalConfigMapReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&credential.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return configmaps.ValidateOptionalReferences(refs)
-}
-
-// validateOwnerReference validates the owner field
-func (credential *FederatedIdentityCredential) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(credential)
-}
-
-// validateResourceReferences validates all resource references
-func (credential *FederatedIdentityCredential) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&credential.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (credential *FederatedIdentityCredential) validateSecretDestinations() (admission.Warnings, error) {
-	if credential.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(credential, nil, credential.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (credential *FederatedIdentityCredential) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*FederatedIdentityCredential)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, credential)
 }
 
 // AssignProperties_From_FederatedIdentityCredential populates our FederatedIdentityCredential from the provided source FederatedIdentityCredential
@@ -324,7 +187,7 @@ func (credential *FederatedIdentityCredential) AssignProperties_From_FederatedId
 	var spec FederatedIdentityCredential_Spec
 	err := spec.AssignProperties_From_FederatedIdentityCredential_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FederatedIdentityCredential_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FederatedIdentityCredential_Spec() to populate field Spec")
 	}
 	credential.Spec = spec
 
@@ -332,7 +195,7 @@ func (credential *FederatedIdentityCredential) AssignProperties_From_FederatedId
 	var status FederatedIdentityCredential_STATUS
 	err = status.AssignProperties_From_FederatedIdentityCredential_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FederatedIdentityCredential_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FederatedIdentityCredential_STATUS() to populate field Status")
 	}
 	credential.Status = status
 
@@ -350,7 +213,7 @@ func (credential *FederatedIdentityCredential) AssignProperties_To_FederatedIden
 	var spec storage.FederatedIdentityCredential_Spec
 	err := credential.Spec.AssignProperties_To_FederatedIdentityCredential_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FederatedIdentityCredential_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FederatedIdentityCredential_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -358,7 +221,7 @@ func (credential *FederatedIdentityCredential) AssignProperties_To_FederatedIden
 	var status storage.FederatedIdentityCredential_STATUS
 	err = credential.Status.AssignProperties_To_FederatedIdentityCredential_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FederatedIdentityCredential_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FederatedIdentityCredential_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -452,7 +315,7 @@ func (credential *FederatedIdentityCredential_Spec) ConvertToARM(resolved genrun
 	if credential.IssuerFromConfig != nil {
 		issuerValue, err := resolved.ResolvedConfigMaps.Lookup(*credential.IssuerFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property Issuer")
+			return nil, eris.Wrap(err, "looking up configmap for property Issuer")
 		}
 		issuer := issuerValue
 		result.Properties.Issuer = &issuer
@@ -464,7 +327,7 @@ func (credential *FederatedIdentityCredential_Spec) ConvertToARM(resolved genrun
 	if credential.SubjectFromConfig != nil {
 		subjectValue, err := resolved.ResolvedConfigMaps.Lookup(*credential.SubjectFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property Subject")
+			return nil, eris.Wrap(err, "looking up configmap for property Subject")
 		}
 		subject := subjectValue
 		result.Properties.Subject = &subject
@@ -543,13 +406,13 @@ func (credential *FederatedIdentityCredential_Spec) ConvertSpecFrom(source genru
 	src = &storage.FederatedIdentityCredential_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = credential.AssignProperties_From_FederatedIdentityCredential_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -567,13 +430,13 @@ func (credential *FederatedIdentityCredential_Spec) ConvertSpecTo(destination ge
 	dst = &storage.FederatedIdentityCredential_Spec{}
 	err := credential.AssignProperties_To_FederatedIdentityCredential_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -604,7 +467,7 @@ func (credential *FederatedIdentityCredential_Spec) AssignProperties_From_Federa
 		var operatorSpec FederatedIdentityCredentialOperatorSpec
 		err := operatorSpec.AssignProperties_From_FederatedIdentityCredentialOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FederatedIdentityCredentialOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FederatedIdentityCredentialOperatorSpec() to populate field OperatorSpec")
 		}
 		credential.OperatorSpec = &operatorSpec
 	} else {
@@ -661,7 +524,7 @@ func (credential *FederatedIdentityCredential_Spec) AssignProperties_To_Federate
 		var operatorSpec storage.FederatedIdentityCredentialOperatorSpec
 		err := credential.OperatorSpec.AssignProperties_To_FederatedIdentityCredentialOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FederatedIdentityCredentialOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FederatedIdentityCredentialOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -749,13 +612,13 @@ func (credential *FederatedIdentityCredential_STATUS) ConvertStatusFrom(source g
 	src = &storage.FederatedIdentityCredential_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = credential.AssignProperties_From_FederatedIdentityCredential_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -773,13 +636,13 @@ func (credential *FederatedIdentityCredential_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.FederatedIdentityCredential_STATUS{}
 	err := credential.AssignProperties_To_FederatedIdentityCredential_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

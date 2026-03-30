@@ -227,8 +227,10 @@ func TestGenerateMachines(t *testing.T) {
 									fmt.Sprintf("%s-subnet-public-%s", stubClusterID, machineZone),
 								}}},
 							},
-							SSHKeyName:           ptr.To(""),
-							RootVolume:           &capa.Volume{Encrypted: ptr.To(true)},
+							SSHKeyName: ptr.To(""),
+							RootVolume: &capa.Volume{
+								Encrypted: ptr.To(true),
+							},
 							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
 								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,

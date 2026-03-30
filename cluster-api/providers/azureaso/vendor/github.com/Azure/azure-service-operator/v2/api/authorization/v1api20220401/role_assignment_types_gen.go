@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (assignment *RoleAssignment) ConvertTo(hub conversion.Hub) error {
 
 	return assignment.AssignProperties_To_RoleAssignment(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-authorization-azure-com-v1api20220401-roleassignment,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=authorization.azure.com,resources=roleassignments,verbs=create;update,versions=v1api20220401,name=default.v1api20220401.roleassignments.authorization.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &RoleAssignment{}
-
-// Default applies defaults to the RoleAssignment resource
-func (assignment *RoleAssignment) Default() {
-	assignment.defaultImpl()
-	var temp any = assignment
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the RoleAssignment resource
-func (assignment *RoleAssignment) defaultImpl() {}
 
 var _ configmaps.Exporter = &RoleAssignment{}
 
@@ -166,6 +147,10 @@ func (assignment *RoleAssignment) NewEmptyStatus() genruntime.ConvertibleStatus 
 
 // Owner returns the ResourceReference of the owner
 func (assignment *RoleAssignment) Owner() *genruntime.ResourceReference {
+	if assignment.Spec.Owner == nil {
+		return nil
+	}
+
 	return assignment.Spec.Owner.AsResourceReference()
 }
 
@@ -181,118 +166,11 @@ func (assignment *RoleAssignment) SetStatus(status genruntime.ConvertibleStatus)
 	var st RoleAssignment_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	assignment.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-authorization-azure-com-v1api20220401-roleassignment,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=authorization.azure.com,resources=roleassignments,verbs=create;update,versions=v1api20220401,name=validate.v1api20220401.roleassignments.authorization.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &RoleAssignment{}
-
-// ValidateCreate validates the creation of the resource
-func (assignment *RoleAssignment) ValidateCreate() (admission.Warnings, error) {
-	validations := assignment.createValidations()
-	var temp any = assignment
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (assignment *RoleAssignment) ValidateDelete() (admission.Warnings, error) {
-	validations := assignment.deleteValidations()
-	var temp any = assignment
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (assignment *RoleAssignment) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := assignment.updateValidations()
-	var temp any = assignment
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (assignment *RoleAssignment) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){assignment.validateResourceReferences, assignment.validateSecretDestinations, assignment.validateConfigMapDestinations, assignment.validateOptionalConfigMapReferences}
-}
-
-// deleteValidations validates the deletion of the resource
-func (assignment *RoleAssignment) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (assignment *RoleAssignment) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return assignment.validateResourceReferences()
-		},
-		assignment.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return assignment.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return assignment.validateConfigMapDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return assignment.validateOptionalConfigMapReferences()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (assignment *RoleAssignment) validateConfigMapDestinations() (admission.Warnings, error) {
-	if assignment.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(assignment, nil, assignment.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
-func (assignment *RoleAssignment) validateOptionalConfigMapReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&assignment.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return configmaps.ValidateOptionalReferences(refs)
-}
-
-// validateResourceReferences validates all resource references
-func (assignment *RoleAssignment) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&assignment.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (assignment *RoleAssignment) validateSecretDestinations() (admission.Warnings, error) {
-	if assignment.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(assignment, nil, assignment.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (assignment *RoleAssignment) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*RoleAssignment)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, assignment)
 }
 
 // AssignProperties_From_RoleAssignment populates our RoleAssignment from the provided source RoleAssignment
@@ -305,7 +183,7 @@ func (assignment *RoleAssignment) AssignProperties_From_RoleAssignment(source *s
 	var spec RoleAssignment_Spec
 	err := spec.AssignProperties_From_RoleAssignment_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RoleAssignment_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_RoleAssignment_Spec() to populate field Spec")
 	}
 	assignment.Spec = spec
 
@@ -313,7 +191,7 @@ func (assignment *RoleAssignment) AssignProperties_From_RoleAssignment(source *s
 	var status RoleAssignment_STATUS
 	err = status.AssignProperties_From_RoleAssignment_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RoleAssignment_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_RoleAssignment_STATUS() to populate field Status")
 	}
 	assignment.Status = status
 
@@ -331,7 +209,7 @@ func (assignment *RoleAssignment) AssignProperties_To_RoleAssignment(destination
 	var spec storage.RoleAssignment_Spec
 	err := assignment.Spec.AssignProperties_To_RoleAssignment_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RoleAssignment_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_RoleAssignment_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -339,7 +217,7 @@ func (assignment *RoleAssignment) AssignProperties_To_RoleAssignment(destination
 	var status storage.RoleAssignment_STATUS
 	err = assignment.Status.AssignProperties_To_RoleAssignment_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RoleAssignment_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_RoleAssignment_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -464,7 +342,7 @@ func (assignment *RoleAssignment_Spec) ConvertToARM(resolved genruntime.ConvertT
 	if assignment.PrincipalIdFromConfig != nil {
 		principalIdValue, err := resolved.ResolvedConfigMaps.Lookup(*assignment.PrincipalIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property PrincipalId")
+			return nil, eris.Wrap(err, "looking up configmap for property PrincipalId")
 		}
 		principalId := principalIdValue
 		result.Properties.PrincipalId = &principalId
@@ -577,13 +455,13 @@ func (assignment *RoleAssignment_Spec) ConvertSpecFrom(source genruntime.Convert
 	src = &storage.RoleAssignment_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = assignment.AssignProperties_From_RoleAssignment_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -601,13 +479,13 @@ func (assignment *RoleAssignment_Spec) ConvertSpecTo(destination genruntime.Conv
 	dst = &storage.RoleAssignment_Spec{}
 	err := assignment.AssignProperties_To_RoleAssignment_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -641,7 +519,7 @@ func (assignment *RoleAssignment_Spec) AssignProperties_From_RoleAssignment_Spec
 		var operatorSpec RoleAssignmentOperatorSpec
 		err := operatorSpec.AssignProperties_From_RoleAssignmentOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RoleAssignmentOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RoleAssignmentOperatorSpec() to populate field OperatorSpec")
 		}
 		assignment.OperatorSpec = &operatorSpec
 	} else {
@@ -718,7 +596,7 @@ func (assignment *RoleAssignment_Spec) AssignProperties_To_RoleAssignment_Spec(d
 		var operatorSpec storage.RoleAssignmentOperatorSpec
 		err := assignment.OperatorSpec.AssignProperties_To_RoleAssignmentOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RoleAssignmentOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RoleAssignmentOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -894,13 +772,13 @@ func (assignment *RoleAssignment_STATUS) ConvertStatusFrom(source genruntime.Con
 	src = &storage.RoleAssignment_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = assignment.AssignProperties_From_RoleAssignment_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -918,13 +796,13 @@ func (assignment *RoleAssignment_STATUS) ConvertStatusTo(destination genruntime.
 	dst = &storage.RoleAssignment_STATUS{}
 	err := assignment.AssignProperties_To_RoleAssignment_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

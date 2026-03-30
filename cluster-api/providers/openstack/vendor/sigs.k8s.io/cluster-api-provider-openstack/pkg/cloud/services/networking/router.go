@@ -157,10 +157,10 @@ func (s *Service) getExternallyManagedRouter(openStackCluster *infrav1.OpenStack
 	if openStackCluster.Status.Router != nil {
 		return s.client.GetRouter(openStackCluster.Status.Router.ID)
 	}
-	return s.getRouterByParam(openStackCluster.Spec.Router)
+	return s.GetRouterByParam(openStackCluster.Spec.Router)
 }
 
-func (s *Service) getRouterByParam(routerParam *infrav1.RouterParam) (*routers.Router, error) {
+func (s *Service) GetRouterByParam(routerParam *infrav1.RouterParam) (*routers.Router, error) {
 	if routerParam.ID != nil {
 		return s.client.GetRouter(*routerParam.ID)
 	}

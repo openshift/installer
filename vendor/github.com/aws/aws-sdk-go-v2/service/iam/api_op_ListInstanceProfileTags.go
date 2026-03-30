@@ -13,8 +13,9 @@ import (
 
 // Lists the tags that are attached to the specified IAM instance profile. The
 // returned list of tags is sorted by tag key. For more information about tagging,
-// see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
-// in the IAM User Guide.
+// see [Tagging IAM resources]in the IAM User Guide.
+//
+// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
 func (c *Client) ListInstanceProfileTags(ctx context.Context, params *ListInstanceProfileTagsInput, optFns ...func(*Options)) (*ListInstanceProfileTagsOutput, error) {
 	if params == nil {
 		params = &ListInstanceProfileTagsInput{}
@@ -32,10 +33,13 @@ func (c *Client) ListInstanceProfileTags(ctx context.Context, params *ListInstan
 
 type ListInstanceProfileTagsInput struct {
 
-	// The name of the IAM instance profile whose tags you want to see. This parameter
-	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
-	// of characters consisting of upper and lowercase alphanumeric characters with no
-	// spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the IAM instance profile whose tags you want to see.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	InstanceProfileName *string
@@ -48,11 +52,13 @@ type ListInstanceProfileTagsInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	MaxItems *int32
 
 	noSmithyDocumentSerde
@@ -128,6 +134,9 @@ func (c *Client) addOperationListInstanceProfileTagsMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -138,6 +147,15 @@ func (c *Client) addOperationListInstanceProfileTagsMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListInstanceProfileTagsValidationMiddleware(stack); err != nil {
@@ -161,27 +179,30 @@ func (c *Client) addOperationListInstanceProfileTagsMiddlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListInstanceProfileTagsAPIClient is a client that implements the
-// ListInstanceProfileTags operation.
-type ListInstanceProfileTagsAPIClient interface {
-	ListInstanceProfileTags(context.Context, *ListInstanceProfileTagsInput, ...func(*Options)) (*ListInstanceProfileTagsOutput, error)
-}
-
-var _ ListInstanceProfileTagsAPIClient = (*Client)(nil)
 
 // ListInstanceProfileTagsPaginatorOptions is the paginator options for
 // ListInstanceProfileTags
 type ListInstanceProfileTagsPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -243,6 +264,9 @@ func (p *ListInstanceProfileTagsPaginator) NextPage(ctx context.Context, optFns 
 	}
 	params.MaxItems = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListInstanceProfileTags(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -261,6 +285,14 @@ func (p *ListInstanceProfileTagsPaginator) NextPage(ctx context.Context, optFns 
 
 	return result, nil
 }
+
+// ListInstanceProfileTagsAPIClient is a client that implements the
+// ListInstanceProfileTags operation.
+type ListInstanceProfileTagsAPIClient interface {
+	ListInstanceProfileTags(context.Context, *ListInstanceProfileTagsInput, ...func(*Options)) (*ListInstanceProfileTagsOutput, error)
+}
+
+var _ ListInstanceProfileTagsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListInstanceProfileTags(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

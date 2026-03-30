@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101
 ------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-01-01"
+
 BatchAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (11 properties)
@@ -93,3 +94,4 @@ BatchAccount: Resource
     │   └── "Enabled"
     ├── Tags: map[string]string
     └── Type: *string
+

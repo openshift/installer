@@ -46,6 +46,7 @@ DiskEncryptionSet_STATUS: Object (7 properties)
 │   └── RotationToLatestKeyVersionEnabled: *bool
 ├── Tags: map[string]string
 └── Type: *string
+
 DiskEncryptionSet_Spec: Object (5 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -68,3 +69,4 @@ DiskEncryptionSet_Spec: Object (5 properties)
 │   ├── FederatedClientId: *string
 │   └── RotationToLatestKeyVersionEnabled: *bool
 └── Tags: map[string]string
+

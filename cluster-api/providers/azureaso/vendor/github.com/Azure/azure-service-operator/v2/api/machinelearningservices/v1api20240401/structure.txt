@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api2024
 ------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-04-01"
+
 Registry: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -32,23 +33,17 @@ Registry: Resource
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PublicNetworkAccess: *string
 │   ├── RegionDetails: Object (3 properties)[]
-│   │   ├── AcrDetails: Object (2 properties)[]
-│   │   │   ├── SystemCreatedAcrAccount: *Object (2 properties)
-│   │   │   │   ├── AcrAccountName: *string
-│   │   │   │   └── AcrAccountSku: *string
-│   │   │   └── UserCreatedAcrAccount: *Object (1 property)
-│   │   │       └── ArmResourceId: *Object (1 property)
-│   │   │           └── ResourceReference: *genruntime.ResourceReference
+│   │   ├── AcrDetails: Object (1 property)[]
+│   │   │   └── SystemCreatedAcrAccount: *Object (2 properties)
+│   │   │       ├── AcrAccountName: *string
+│   │   │       └── AcrAccountSku: *string
 │   │   ├── Location: *string
-│   │   └── StorageAccountDetails: Object (2 properties)[]
-│   │       ├── SystemCreatedStorageAccount: *Object (4 properties)
-│   │       │   ├── AllowBlobPublicAccess: *bool
-│   │       │   ├── StorageAccountHnsEnabled: *bool
-│   │       │   ├── StorageAccountName: *string
-│   │       │   └── StorageAccountType: *string
-│   │       └── UserCreatedStorageAccount: *Object (1 property)
-│   │           └── ArmResourceId: *Object (1 property)
-│   │               └── ResourceReference: *genruntime.ResourceReference
+│   │   └── StorageAccountDetails: Object (1 property)[]
+│   │       └── SystemCreatedStorageAccount: *Object (4 properties)
+│   │           ├── AllowBlobPublicAccess: *bool
+│   │           ├── StorageAccountHnsEnabled: *bool
+│   │           ├── StorageAccountName: *string
+│   │           └── StorageAccountType: *string
 │   ├── RegistryPrivateEndpointConnections: Object (6 properties)[]
 │   │   ├── GroupIds: string[]
 │   │   ├── Location: *string
@@ -99,27 +94,21 @@ Registry: Resource
     ├── Name: *string
     ├── PublicNetworkAccess: *string
     ├── RegionDetails: Object (3 properties)[]
-    │   ├── AcrDetails: Object (2 properties)[]
-    │   │   ├── SystemCreatedAcrAccount: *Object (3 properties)
-    │   │   │   ├── AcrAccountName: *string
-    │   │   │   ├── AcrAccountSku: *string
-    │   │   │   └── ArmResourceId: *Object (1 property)
-    │   │   │       └── ResourceId: *string
-    │   │   └── UserCreatedAcrAccount: *Object (1 property)
+    │   ├── AcrDetails: Object (1 property)[]
+    │   │   └── SystemCreatedAcrAccount: *Object (3 properties)
+    │   │       ├── AcrAccountName: *string
+    │   │       ├── AcrAccountSku: *string
     │   │       └── ArmResourceId: *Object (1 property)
     │   │           └── ResourceId: *string
     │   ├── Location: *string
-    │   └── StorageAccountDetails: Object (2 properties)[]
-    │       ├── SystemCreatedStorageAccount: *Object (5 properties)
-    │       │   ├── AllowBlobPublicAccess: *bool
-    │       │   ├── ArmResourceId: *Object (1 property)
-    │       │   │   └── ResourceId: *string
-    │       │   ├── StorageAccountHnsEnabled: *bool
-    │       │   ├── StorageAccountName: *string
-    │       │   └── StorageAccountType: *string
-    │       └── UserCreatedStorageAccount: *Object (1 property)
-    │           └── ArmResourceId: *Object (1 property)
-    │               └── ResourceId: *string
+    │   └── StorageAccountDetails: Object (1 property)[]
+    │       └── SystemCreatedStorageAccount: *Object (5 properties)
+    │           ├── AllowBlobPublicAccess: *bool
+    │           ├── ArmResourceId: *Object (1 property)
+    │           │   └── ResourceId: *string
+    │           ├── StorageAccountHnsEnabled: *bool
+    │           ├── StorageAccountName: *string
+    │           └── StorageAccountType: *string
     ├── RegistryPrivateEndpointConnections: Object (6 properties)[]
     │   ├── GroupIds: string[]
     │   ├── Id: *string
@@ -163,6 +152,7 @@ Registry: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+
 Workspace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (31 properties)
@@ -491,6 +481,7 @@ Workspace: Resource
     │   ├── AdditionalWorkspaceStorageAccounts: string[]
     │   └── DefaultWorkspaceResourceGroup: *string
     └── WorkspaceId: *string
+
 WorkspacesCompute: Resource
 ├── Owner: Workspace
 ├── Spec: Object (8 properties)
@@ -1559,6 +1550,7 @@ WorkspacesCompute: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+
 WorkspacesConnection: Resource
 ├── Owner: Workspace
 ├── Spec: Object (4 properties)
@@ -4494,3 +4486,4 @@ WorkspacesConnection: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+

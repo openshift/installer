@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage
 -------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-11-15"
+
 DatabaseAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (40 properties)
@@ -292,6 +293,7 @@ DatabaseAccount: Resource
         ├── LocationName: *string
         ├── PropertyBag: genruntime.PropertyBag
         └── ProvisioningState: *string
+
 MongodbDatabase: Resource
 ├── Owner: documentdb/v1api20231115.DatabaseAccount
 ├── Spec: Object (9 properties)
@@ -344,6 +346,7 @@ MongodbDatabase: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 MongodbDatabaseCollection: Resource
 ├── Owner: documentdb/v1api20231115.MongodbDatabase
 ├── Spec: Object (9 properties)
@@ -418,6 +421,7 @@ MongodbDatabaseCollection: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 MongodbDatabaseCollectionThroughputSetting: Resource
 ├── Owner: documentdb/v1api20231115.MongodbDatabaseCollection
 ├── Spec: Object (7 properties)
@@ -470,6 +474,7 @@ MongodbDatabaseCollectionThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 MongodbDatabaseThroughputSetting: Resource
 ├── Owner: documentdb/v1api20231115.MongodbDatabase
 ├── Spec: Object (7 properties)
@@ -522,6 +527,7 @@ MongodbDatabaseThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabase: Resource
 ├── Owner: documentdb/v1api20231115.DatabaseAccount
 ├── Spec: Object (9 properties)
@@ -576,6 +582,7 @@ SqlDatabase: Resource
     │   └── Users: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainer: Resource
 ├── Owner: documentdb/v1api20231115.SqlDatabase
 ├── Spec: Object (9 properties)
@@ -735,6 +742,7 @@ SqlDatabaseContainer: Resource
     │           └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerStoredProcedure: Resource
 ├── Owner: documentdb/v1api20231115.SqlDatabaseContainer
 ├── Spec: Object (9 properties)
@@ -773,6 +781,7 @@ SqlDatabaseContainerStoredProcedure: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerThroughputSetting: Resource
 ├── Owner: documentdb/v1api20231115.SqlDatabaseContainer
 ├── Spec: Object (7 properties)
@@ -825,6 +834,7 @@ SqlDatabaseContainerThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerTrigger: Resource
 ├── Owner: documentdb/v1api20231115.SqlDatabaseContainer
 ├── Spec: Object (9 properties)
@@ -867,6 +877,7 @@ SqlDatabaseContainerTrigger: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerUserDefinedFunction: Resource
 ├── Owner: documentdb/v1api20231115.SqlDatabaseContainer
 ├── Spec: Object (9 properties)
@@ -905,6 +916,7 @@ SqlDatabaseContainerUserDefinedFunction: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseThroughputSetting: Resource
 ├── Owner: documentdb/v1api20231115.SqlDatabase
 ├── Spec: Object (7 properties)
@@ -957,6 +969,7 @@ SqlDatabaseThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlRoleAssignment: Resource
 ├── Owner: documentdb/v1api20231115.DatabaseAccount
 ├── Spec: Object (9 properties)
@@ -981,3 +994,320 @@ SqlRoleAssignment: Resource
     ├── RoleDefinitionId: *string
     ├── Scope: *string
     └── Type: *string
+
+augmentConversionForAccountKeyMetadata_STATUS: Interface
+
+augmentConversionForAnalyticalStorageConfiguration: Interface
+
+augmentConversionForAnalyticalStorageConfiguration_STATUS: Interface
+
+augmentConversionForApiProperties: Interface
+
+augmentConversionForApiProperties_STATUS: Interface
+
+augmentConversionForAutoUpgradePolicyResource: Interface
+
+augmentConversionForAutoUpgradePolicyResource_STATUS: Interface
+
+augmentConversionForAutoscaleSettings: Interface
+
+augmentConversionForAutoscaleSettingsResource: Interface
+
+augmentConversionForAutoscaleSettingsResource_STATUS: Interface
+
+augmentConversionForAutoscaleSettings_STATUS: Interface
+
+augmentConversionForBackupPolicy: Interface
+
+augmentConversionForBackupPolicyMigrationState: Interface
+
+augmentConversionForBackupPolicyMigrationState_STATUS: Interface
+
+augmentConversionForBackupPolicy_STATUS: Interface
+
+augmentConversionForCapability: Interface
+
+augmentConversionForCapability_STATUS: Interface
+
+augmentConversionForCapacity: Interface
+
+augmentConversionForCapacity_STATUS: Interface
+
+augmentConversionForClientEncryptionIncludedPath: Interface
+
+augmentConversionForClientEncryptionIncludedPath_STATUS: Interface
+
+augmentConversionForClientEncryptionPolicy: Interface
+
+augmentConversionForClientEncryptionPolicy_STATUS: Interface
+
+augmentConversionForCompositePath: Interface
+
+augmentConversionForCompositePath_STATUS: Interface
+
+augmentConversionForComputedProperty: Interface
+
+augmentConversionForComputedProperty_STATUS: Interface
+
+augmentConversionForConflictResolutionPolicy: Interface
+
+augmentConversionForConflictResolutionPolicy_STATUS: Interface
+
+augmentConversionForConsistencyPolicy: Interface
+
+augmentConversionForConsistencyPolicy_STATUS: Interface
+
+augmentConversionForContainerPartitionKey: Interface
+
+augmentConversionForContainerPartitionKey_STATUS: Interface
+
+augmentConversionForContinuousModeBackupPolicy: Interface
+
+augmentConversionForContinuousModeBackupPolicy_STATUS: Interface
+
+augmentConversionForContinuousModeProperties: Interface
+
+augmentConversionForContinuousModeProperties_STATUS: Interface
+
+augmentConversionForCorsPolicy: Interface
+
+augmentConversionForCorsPolicy_STATUS: Interface
+
+augmentConversionForCreateUpdateOptions: Interface
+
+augmentConversionForDatabaseAccount: Interface
+
+augmentConversionForDatabaseAccountKeysMetadata_STATUS: Interface
+
+augmentConversionForDatabaseAccountOperatorSecrets: Interface
+
+augmentConversionForDatabaseAccountOperatorSpec: Interface
+
+augmentConversionForDatabaseAccount_STATUS: Interface
+
+augmentConversionForDatabaseAccount_Spec: Interface
+
+augmentConversionForDatabaseRestoreResource: Interface
+
+augmentConversionForDatabaseRestoreResource_STATUS: Interface
+
+augmentConversionForExcludedPath: Interface
+
+augmentConversionForExcludedPath_STATUS: Interface
+
+augmentConversionForFailoverPolicy_STATUS: Interface
+
+augmentConversionForGremlinDatabaseRestoreResource: Interface
+
+augmentConversionForGremlinDatabaseRestoreResource_STATUS: Interface
+
+augmentConversionForIncludedPath: Interface
+
+augmentConversionForIncludedPath_STATUS: Interface
+
+augmentConversionForIndexes: Interface
+
+augmentConversionForIndexes_STATUS: Interface
+
+augmentConversionForIndexingPolicy: Interface
+
+augmentConversionForIndexingPolicy_STATUS: Interface
+
+augmentConversionForIpAddressOrRange: Interface
+
+augmentConversionForIpAddressOrRange_STATUS: Interface
+
+augmentConversionForLocation: Interface
+
+augmentConversionForLocation_STATUS: Interface
+
+augmentConversionForManagedServiceIdentity: Interface
+
+augmentConversionForManagedServiceIdentity_STATUS: Interface
+
+augmentConversionForManagedServiceIdentity_UserAssignedIdentities_STATUS: Interface
+
+augmentConversionForMongoDBCollectionGetProperties_Resource_STATUS: Interface
+
+augmentConversionForMongoDBCollectionResource: Interface
+
+augmentConversionForMongoDBDatabaseGetProperties_Resource_STATUS: Interface
+
+augmentConversionForMongoDBDatabaseResource: Interface
+
+augmentConversionForMongoIndex: Interface
+
+augmentConversionForMongoIndexKeys: Interface
+
+augmentConversionForMongoIndexKeys_STATUS: Interface
+
+augmentConversionForMongoIndexOptions: Interface
+
+augmentConversionForMongoIndexOptions_STATUS: Interface
+
+augmentConversionForMongoIndex_STATUS: Interface
+
+augmentConversionForMongodbDatabase: Interface
+
+augmentConversionForMongodbDatabaseCollection: Interface
+
+augmentConversionForMongodbDatabaseCollectionOperatorSpec: Interface
+
+augmentConversionForMongodbDatabaseCollectionThroughputSetting: Interface
+
+augmentConversionForMongodbDatabaseCollectionThroughputSettingOperatorSpec: Interface
+
+augmentConversionForMongodbDatabaseCollectionThroughputSetting_STATUS: Interface
+
+augmentConversionForMongodbDatabaseCollectionThroughputSetting_Spec: Interface
+
+augmentConversionForMongodbDatabaseCollection_STATUS: Interface
+
+augmentConversionForMongodbDatabaseCollection_Spec: Interface
+
+augmentConversionForMongodbDatabaseOperatorSpec: Interface
+
+augmentConversionForMongodbDatabaseThroughputSetting: Interface
+
+augmentConversionForMongodbDatabaseThroughputSettingOperatorSpec: Interface
+
+augmentConversionForMongodbDatabaseThroughputSetting_STATUS: Interface
+
+augmentConversionForMongodbDatabaseThroughputSetting_Spec: Interface
+
+augmentConversionForMongodbDatabase_STATUS: Interface
+
+augmentConversionForMongodbDatabase_Spec: Interface
+
+augmentConversionForOptionsResource_STATUS: Interface
+
+augmentConversionForPeriodicModeBackupPolicy: Interface
+
+augmentConversionForPeriodicModeBackupPolicy_STATUS: Interface
+
+augmentConversionForPeriodicModeProperties: Interface
+
+augmentConversionForPeriodicModeProperties_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForRestoreParameters: Interface
+
+augmentConversionForRestoreParametersBase: Interface
+
+augmentConversionForRestoreParametersBase_STATUS: Interface
+
+augmentConversionForRestoreParameters_STATUS: Interface
+
+augmentConversionForSpatialSpec: Interface
+
+augmentConversionForSpatialSpec_STATUS: Interface
+
+augmentConversionForSqlContainerGetProperties_Resource_STATUS: Interface
+
+augmentConversionForSqlContainerResource: Interface
+
+augmentConversionForSqlDatabase: Interface
+
+augmentConversionForSqlDatabaseContainer: Interface
+
+augmentConversionForSqlDatabaseContainerOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseContainerStoredProcedure: Interface
+
+augmentConversionForSqlDatabaseContainerStoredProcedureOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseContainerStoredProcedure_STATUS: Interface
+
+augmentConversionForSqlDatabaseContainerStoredProcedure_Spec: Interface
+
+augmentConversionForSqlDatabaseContainerThroughputSetting: Interface
+
+augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS: Interface
+
+augmentConversionForSqlDatabaseContainerThroughputSetting_Spec: Interface
+
+augmentConversionForSqlDatabaseContainerTrigger: Interface
+
+augmentConversionForSqlDatabaseContainerTriggerOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseContainerTrigger_STATUS: Interface
+
+augmentConversionForSqlDatabaseContainerTrigger_Spec: Interface
+
+augmentConversionForSqlDatabaseContainerUserDefinedFunction: Interface
+
+augmentConversionForSqlDatabaseContainerUserDefinedFunctionOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseContainerUserDefinedFunction_STATUS: Interface
+
+augmentConversionForSqlDatabaseContainerUserDefinedFunction_Spec: Interface
+
+augmentConversionForSqlDatabaseContainer_STATUS: Interface
+
+augmentConversionForSqlDatabaseContainer_Spec: Interface
+
+augmentConversionForSqlDatabaseGetProperties_Resource_STATUS: Interface
+
+augmentConversionForSqlDatabaseOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseResource: Interface
+
+augmentConversionForSqlDatabaseThroughputSetting: Interface
+
+augmentConversionForSqlDatabaseThroughputSettingOperatorSpec: Interface
+
+augmentConversionForSqlDatabaseThroughputSetting_STATUS: Interface
+
+augmentConversionForSqlDatabaseThroughputSetting_Spec: Interface
+
+augmentConversionForSqlDatabase_STATUS: Interface
+
+augmentConversionForSqlDatabase_Spec: Interface
+
+augmentConversionForSqlRoleAssignment: Interface
+
+augmentConversionForSqlRoleAssignmentOperatorSpec: Interface
+
+augmentConversionForSqlRoleAssignment_STATUS: Interface
+
+augmentConversionForSqlRoleAssignment_Spec: Interface
+
+augmentConversionForSqlStoredProcedureGetProperties_Resource_STATUS: Interface
+
+augmentConversionForSqlStoredProcedureResource: Interface
+
+augmentConversionForSqlTriggerGetProperties_Resource_STATUS: Interface
+
+augmentConversionForSqlTriggerResource: Interface
+
+augmentConversionForSqlUserDefinedFunctionGetProperties_Resource_STATUS: Interface
+
+augmentConversionForSqlUserDefinedFunctionResource: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForThroughputPolicyResource: Interface
+
+augmentConversionForThroughputPolicyResource_STATUS: Interface
+
+augmentConversionForThroughputSettingsGetProperties_Resource_STATUS: Interface
+
+augmentConversionForThroughputSettingsResource: Interface
+
+augmentConversionForUniqueKey: Interface
+
+augmentConversionForUniqueKeyPolicy: Interface
+
+augmentConversionForUniqueKeyPolicy_STATUS: Interface
+
+augmentConversionForUniqueKey_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForVirtualNetworkRule: Interface
+
+augmentConversionForVirtualNetworkRule_STATUS: Interface
+

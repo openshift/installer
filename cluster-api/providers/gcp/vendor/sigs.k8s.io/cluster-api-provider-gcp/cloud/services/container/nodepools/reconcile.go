@@ -38,8 +38,8 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/shared"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -65,15 +65,15 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 
 	nodePool, err := s.describeNodePool(ctx, &log)
 	if err != nil {
-		conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, "reading node pool: %v", err)
 		return ctrl.Result{}, err
 	}
 	if nodePool == nil {
 		log.Info("Node pool not found, creating", "cluster", s.scope.Cluster.Name)
 		if err = s.createNodePool(ctx, &log); err != nil {
-			conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
-			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
-			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolCreatingCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, "creating node pool: %v", err)
+			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, "creating node pool: %v", err)
+			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolCreatingCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, "creating node pool: %v", err)
 			return ctrl.Result{}, err
 		}
 		log.Info("Node pool provisioning in progress")
@@ -86,7 +86,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 
 	instances, err := s.getInstances(ctx, nodePool)
 	if err != nil {
-		conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ConditionSetter(), clusterv1.ReadyCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, "reading instances: %v", err)
 		return ctrl.Result{}, err
 	}
 	providerIDList := []string{}
@@ -227,7 +227,7 @@ func (s *Service) Delete(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	if err = s.deleteNodePool(ctx); err != nil {
-		conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolDeletingCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolDeletingCondition, infrav1exp.GKEMachinePoolReconciliationFailedReason, clusterv1.ConditionSeverityError, "deleting node pool: %v", err)
 		return ctrl.Result{}, err
 	}
 	log.Info("Node pool deleting in progress")
@@ -370,7 +370,7 @@ func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.
 		}
 	}
 	// Kubernetes taints
-	if !cmp.Equal(desiredNodePool.GetConfig().GetTaints(), existingNodePool.GetConfig().GetTaints()) {
+	if !cmp.Equal(desiredNodePool.GetConfig().GetTaints(), existingNodePool.GetConfig().GetTaints(), cmpopts.IgnoreUnexported(containerpb.NodeTaint{})) {
 		needUpdate = true
 		updateNodePoolRequest.Taints = &containerpb.NodeTaints{
 			Taints: desiredNodePool.GetConfig().GetTaints(),

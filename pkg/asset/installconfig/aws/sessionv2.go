@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,11 +31,21 @@ const (
 	// when gather command is invoked.
 	OpenShiftInstallerGatherUserAgent = "OpenShift/4.x Gather"
 
+	// OpenShiftInstallerDestroyerUserAgent is the User Agent key to add to the AWS API request header
+	// when destroy command is invoked.
+	OpenShiftInstallerDestroyerUserAgent = "OpenShift/4.x Destroyer"
+
 	// RetryMaxAttempts is the total number of times an API request is retried.
 	RetryMaxAttempts = 25
 
 	// RetryBackoffDuration is max duration between retried attempts.
 	RetryBackoffDuration = 300 * time.Second
+
+	// SharedCredsProviderName defines the source name of AWS credentials
+	// from a shared credential file.
+	// Note: The SDK does not expose any constants for this value so
+	// we define one here as a replacement.
+	SharedCredsProviderName = "SharedConfigCredentials" //nolint:gosec
 )
 
 var (
@@ -126,11 +137,21 @@ func getCredentialsV2(ctx context.Context, options ConfigOptions) (aws.Credentia
 	return creds, nil
 }
 
-// IsStaticCredentialsV2 returns whether the credentials value provider are
+// IsStaticCredentials returns whether the credentials value provider are
 // static credentials safe for installer to transfer to cluster for use as-is.
-// TODO: Remove suffix V2 when completing migration aws sdk v2 (i.e. removing session.go).
-func IsStaticCredentialsV2(creds aws.Credentials) bool {
-	if creds.Source == credentials.StaticCredentialsName {
+// Reference: https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specifying-credentials
+func IsStaticCredentials(creds aws.Credentials) bool {
+	switch creds.Source {
+	case
+		credentials.StaticCredentialsName, // Credentials explicitly created via credentials.NewStaticCredentialsProvider()
+		config.CredentialsSourceName:      // Credentials loaded from environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) - "EnvConfigCredentials"
+		return creds.SessionToken == ""
+	}
+
+	// Credentials loaded from ~/.aws/credentials or AWS_SHARED_CREDENTIALS_FILE
+	// When using shared credential file, the AWS SDK defines its credential source as "SharedConfigCredentials: FILENAME"
+	// Reference: https://github.com/aws/aws-sdk-go-v2/blob/de58dc6cdc4c35ac4687d53cff781a6027a0f52f/config/shared_config.go#L1173
+	if strings.HasPrefix(creds.Source, SharedCredsProviderName) {
 		return creds.SessionToken == ""
 	}
 	return false

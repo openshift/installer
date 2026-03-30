@@ -4,7 +4,7 @@ BindsTo=ironic-volume.service
 Requires=build-ironic-env.service
 PartOf=ironic.service
 Wants=network-online.target
-After=network-online.target ironic-volume.service build-ironic-env.service extract-machine-os.service provisioning-interface.service
+After=network-online.target ironic-volume.service build-ironic-env.service provisioning-interface.service
 
 [Container]
 ContainerName=httpd
@@ -21,6 +21,8 @@ Volume=ironic.volume:/shared:z
 Volume=/opt/openshift/tls/ironic/:/certs/vmedia/:z
 {{ end }}
 Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
+Volume=/run/media/iso/images/pxeboot/rootfs.img:/shared/html/images/ironic-python-agent.rootfs:ro
+SecurityLabelDisable=true
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="HTTP_PORT=${HTTP_PORT}"

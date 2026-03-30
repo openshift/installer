@@ -39,7 +39,7 @@ func (extension *SqlDatabaseExtension) ClassifyError(
 	return details, nil
 }
 
-// isRetryableConflict checks the passed error to see if it is a retryable conflict, returning true if it is.
+// isRetryableBadRequest checks the passed error to see if it is a retryable conflict, returning true if it is.
 func isRetryableBadRequest(err *genericarmclient.CloudError) bool {
 	if err == nil {
 		return false

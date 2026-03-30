@@ -180,9 +180,11 @@ func (policy BackupPolicy_STATUS) MarshalJSON() ([]byte, error) {
 	if policy.Continuous != nil {
 		return json.Marshal(policy.Continuous)
 	}
+
 	if policy.Periodic != nil {
 		return json.Marshal(policy.Periodic)
 	}
+
 	return nil, nil
 }
 

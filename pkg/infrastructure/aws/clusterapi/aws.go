@@ -4,17 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -93,7 +92,10 @@ func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInp
 // infrastructure CR. The infrastructure CR is updated and added to the ignition files. CAPA creates a
 // bucket for ignition, and this ignition data will be placed in the bucket.
 func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
-	ignOutput, err := editIgnition(ctx, in)
+	ignOutput, err := clusterapi.ApplyIgnitionEdits(ctx, in,
+		editIgnitionForCustomDNS,
+		editIgnitionForDualStack,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit bootstrap master or worker ignition: %w", err)
 	}
@@ -117,11 +119,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get aws session: %w", err)
-	}
-
 	subnetIDs := make([]string, 0, len(awsCluster.Spec.NetworkSpec.Subnets))
 	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
 		subnetIDs = append(subnetIDs, s.ResourceID)
@@ -130,13 +127,27 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	vpcID := awsCluster.Spec.NetworkSpec.VPC.ID
 	if len(subnetIDs) > 0 && len(vpcID) == 0 {
 		// All subnets belong to the same VPC, so we only need one
-		vpcID, err = getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
+		id, err := getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
 		if err != nil {
 			return err
 		}
+		vpcID = id
 	}
 
-	client := awsconfig.NewClient(awsSession)
+	enableIPv6 := in.InstallConfig.Config.AWS.IPFamily.DualStackEnabled()
+
+	// dualstack: add VPC IPv6 CIDR to node port and SSH ingress rules when the installer provisions the VPC
+	// because the VPC IPv6 CIDR is not known at install time.
+	if enableIPv6 {
+		machineCIDRs := capiutils.MachineCIDRsFromInstallConfig(in.InstallConfig)
+		if len(capiutils.GetIPv6CIDRs(machineCIDRs)) == 0 {
+			if err := updateNodePortIngressRules(ctx, in.Client, in.InstallConfig, in.InfraID); err != nil {
+				return fmt.Errorf("failed to update node port ingress rules with VPC IPv6 CIDR: %w", err)
+			}
+		}
+		// If the machine network entries contain IPv6 CIDRs, the users must have added them manually for BYO subnets.
+		// In this case, those CIDRs are already passed to the security group rules.
+	}
 
 	// The user has selected to provision their own DNS solution. Skip the creation of the
 	// Hosted Zone(s) and the records for those zones.
@@ -145,13 +156,31 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return nil
 	}
 
+	clientset := awsconfig.NewRoute53Clientset(awsconfig.EndpointOptions{
+		Region:    in.InstallConfig.AWS.Region,
+		Endpoints: in.InstallConfig.AWS.Services,
+	})
+
 	logrus.Infoln("Creating Route53 records for control plane load balancer")
+
+	publicHzClient, err := clientset.WithDefault(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create route 53 client: %w", err)
+	}
+
+	privHzClient := publicHzClient
+	if len(in.InstallConfig.Config.AWS.HostedZoneRole) > 0 {
+		privHzClient, err = clientset.WithAssumedRole(ctx, in.InstallConfig.Config.AWS.HostedZoneRole)
+		if err != nil {
+			return fmt.Errorf("failed to create route 53 client: %w", err)
+		}
+	}
 
 	phzID := in.InstallConfig.Config.AWS.HostedZone
 	if len(phzID) == 0 {
 		logrus.Debugln("Creating private Hosted Zone")
 
-		res, err := client.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
+		res, err := privHzClient.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
 			InfraID:  in.InfraID,
 			VpcID:    vpcID,
 			Region:   awsCluster.Spec.Region,
@@ -171,7 +200,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	// Create api record in public zone
 	if in.InstallConfig.Config.PublicAPI() {
-		zone, err := client.GetBaseDomain(in.InstallConfig.Config.BaseDomain)
+		zone, err := publicHzClient.GetBaseDomain(ctx, in.InstallConfig.Config.BaseDomain)
 		if err != nil {
 			return err
 		}
@@ -182,13 +211,13 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
 		}
 
-		if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-			Name:           apiName,
-			Region:         awsCluster.Spec.Region,
-			DNSTarget:      pubLB.DNSName,
-			ZoneID:         *zone.Id,
-			AliasZoneID:    aliasZoneID,
-			HostedZoneRole: "", // we dont want to assume role here
+		if err := publicHzClient.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+			Name:        apiName,
+			Region:      awsCluster.Spec.Region,
+			DNSTarget:   pubLB.DNSName,
+			ZoneID:      *zone.Id,
+			AliasZoneID: aliasZoneID,
+			EnableAAAA:  enableIPv6,
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -201,26 +230,26 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	}
 
 	// Create api record in private zone
-	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-		Name:           apiName,
-		Region:         awsCluster.Spec.Region,
-		DNSTarget:      awsCluster.Spec.ControlPlaneEndpoint.Host,
-		ZoneID:         phzID,
-		AliasZoneID:    aliasZoneID,
-		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+	if err := privHzClient.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+		Name:        apiName,
+		Region:      awsCluster.Spec.Region,
+		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
+		ZoneID:      phzID,
+		AliasZoneID: aliasZoneID,
+		EnableAAAA:  enableIPv6,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
 	logrus.Debugln("Created public API record in private zone")
 
 	// Create api-int record in private zone
-	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-		Name:           apiIntName,
-		Region:         awsCluster.Spec.Region,
-		DNSTarget:      awsCluster.Spec.ControlPlaneEndpoint.Host,
-		ZoneID:         phzID,
-		AliasZoneID:    aliasZoneID,
-		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+	if err := privHzClient.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+		Name:        apiIntName,
+		Region:      awsCluster.Spec.Region,
+		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
+		ZoneID:      phzID,
+		AliasZoneID: aliasZoneID,
+		EnableAAAA:  enableIPv6,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
@@ -232,19 +261,10 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 func getVPCFromSubnets(ctx context.Context, ic *installconfig.InstallConfig, subnetIDs []string) (string, error) {
 	var vpcID string
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.AWS.Region))
+	client, err := ic.AWS.EC2Client(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
+		return "", err
 	}
-
-	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
-		options.Region = ic.Config.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "ec2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
-	})
 
 	paginator := ec2.NewDescribeSubnetsPaginator(client, &ec2.DescribeSubnetsInput{SubnetIds: subnetIDs})
 	for paginator.HasMorePages() {
@@ -280,23 +300,17 @@ func getVPCFromSubnets(ctx context.Context, ic *installconfig.InstallConfig, sub
 
 // getHostedZoneIDForNLB returns the HostedZone ID for a region from a known table or queries it from the LB instead.
 func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig, lbName string) (string, error) {
-	if hzID, ok := awsconfig.HostedZoneIDPerRegionNLBMap[ic.Config.AWS.Region]; ok {
+	if hzID, ok := awstypes.HostedZoneIDPerRegionNLBMap[ic.Config.AWS.Region]; ok {
 		return hzID, nil
 	}
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
-	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
-		options.Region = ic.Config.Platform.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	client, err := awsconfig.NewELBV2Client(ctx, awsconfig.EndpointOptions{
+		Region:    ic.Config.AWS.Region,
+		Endpoints: ic.Config.AWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create elbv2 client: %w", err)
+	}
 
 	// If the HostedZoneID is not known, query from the LoadBalancer
 	input := elbv2.DescribeLoadBalancersInput{
@@ -316,6 +330,137 @@ func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig,
 	}
 
 	return "", errNotFound
+}
+
+// securityGroupUpdateFunc updates the AWSCluster spec to add VPC IPv6 CIDR to a security group rule.
+// Returns true if an update was made.
+type securityGroupUpdateFunc func(*capa.AWSCluster, string) bool
+
+// securityGroupVerifyFunc verifies that a security group rule with IPv6 CIDR exists in AWS.
+type securityGroupVerifyFunc func(context.Context, *ec2.Client, string, string) (bool, error)
+
+// updateSecurityGroupWithVPCIPv6 is a generic function to update security group rules with VPC IPv6 CIDR.
+func updateSecurityGroupWithVPCIPv6(ctx context.Context, cl k8sClient.Client, ic *installconfig.InstallConfig, infraID string, sgRole capa.SecurityGroupRole, ruleName string, updateSpecFn securityGroupUpdateFunc, verifyAWSFn securityGroupVerifyFunc) error {
+	ec2Client, err := ic.AWS.EC2Client(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create ec2 client: %w", err)
+	}
+
+	timeout := 15 * time.Minute
+	startTime := time.Now()
+	untilTime := startTime.Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Debugf("Waiting up to %v (until %v %s) for %s rule to be updated with VPC IPv6 CIDR...", timeout, untilTime.Format(time.Kitchen), timezone, ruleName)
+
+	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		func(ctx context.Context) (bool, error) {
+			key := k8sClient.ObjectKey{
+				Name:      infraID,
+				Namespace: capiutils.Namespace,
+			}
+			awsCluster := &capa.AWSCluster{}
+			if err := cl.Get(ctx, key, awsCluster); err != nil {
+				return false, fmt.Errorf("failed to get AWSCluster: %w", err)
+			}
+
+			vpcSpec := awsCluster.Spec.NetworkSpec.VPC
+			if vpcSpec.IPv6 == nil || vpcSpec.IPv6.CidrBlock == "" {
+				return false, fmt.Errorf("VPC does not have an IPv6 CIDR to update %s rule", ruleName)
+			}
+
+			vpcIPv6CIDR := vpcSpec.IPv6.CidrBlock
+
+			// Get the security group ID
+			sg := awsCluster.Status.Network.SecurityGroups[sgRole]
+			if len(sg.ID) == 0 {
+				return false, fmt.Errorf("%s security group id is not populated in AWSCluster status", sgRole)
+			}
+
+			// Update the spec using the provided function
+			if updateSpecFn(awsCluster, vpcIPv6CIDR) {
+				// Update the AWSCluster resource
+				if err := cl.Update(ctx, awsCluster); err != nil {
+					// If the cluster object has been modified between Get and Update, k8s client will refuse to update it.
+					// In that case, we need to retry.
+					if k8serrors.IsConflict(err) {
+						logrus.Debugf("AWSCluster update conflict during %s rule update: %v", ruleName, err)
+						return false, nil
+					}
+					return false, fmt.Errorf("failed to update AWSCluster with VPC IPv6 CIDR: %w", err)
+				}
+				logrus.Infof("Updated AWSCluster %s rule with VPC IPv6 CIDR %s", ruleName, vpcIPv6CIDR)
+			}
+
+			// Verify the rule exists in AWS
+			return verifyAWSFn(ctx, ec2Client, sg.ID, vpcIPv6CIDR)
+		},
+	); err != nil {
+		if wait.Interrupted(err) {
+			return fmt.Errorf("%s rule was not updated within %v: %w", ruleName, timeout, err)
+		}
+		return fmt.Errorf("unable to update %s rule: %w", ruleName, err)
+	}
+
+	logrus.Debugf("Completed updating %s rule with VPC IPv6 CIDR after %v", ruleName, time.Since(startTime))
+	return nil
+}
+
+// updateNodePortIngressRules updates the NodePortIngressRuleCidrBlocks to include the VPC IPv6 CIDR if any.
+// This is necessary because the VPC IPv6 CIDR is not known at install time when the installer provisions the VPC.
+func updateNodePortIngressRules(ctx context.Context, cl k8sClient.Client, ic *installconfig.InstallConfig, infraID string) error {
+	return updateSecurityGroupWithVPCIPv6(
+		ctx, cl, ic, infraID,
+		capa.SecurityGroupNode,
+		"Node Port ingress",
+		func(awsCluster *capa.AWSCluster, vpcIPv6CIDR string) bool {
+			if slices.Contains(awsCluster.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks, vpcIPv6CIDR) {
+				logrus.Debugf("VPC IPv6 CIDR %s already in node port ingress rules", vpcIPv6CIDR)
+				return false
+			}
+			awsCluster.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks = append(
+				awsCluster.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks,
+				vpcIPv6CIDR,
+			)
+			return true
+		},
+		isNodePortRulePresentWithIPv6CIDR,
+	)
+}
+
+// isNodePortRulePresentWithIPv6CIDR checks that the node port IPv6 ingress rule has been created in the security group.
+func isNodePortRulePresentWithIPv6CIDR(ctx context.Context, client *ec2.Client, sgID string, ipv6CIDR string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, client, []string{sgID})
+	if err != nil {
+		return false, fmt.Errorf("failed to get security group: %w", err)
+	}
+
+	if len(sgs) != 1 {
+		ids := []string{}
+		for _, sg := range sgs {
+			ids = append(ids, *sg.GroupId)
+		}
+		return false, fmt.Errorf("expected exactly one security group with id %s, but got %v", sgID, ids)
+	}
+
+	sg := sgs[0]
+	for _, rule := range sg.IpPermissions {
+		fromPort := ptr.Deref(rule.FromPort, 0)
+		toPort := ptr.Deref(rule.ToPort, 0)
+
+		// Look for node port rules (30000-32767) with the provided IPv6 CIDR
+		// See: https://github.com/kubernetes-sigs/cluster-api-provider-aws/blob/a681199f101756fd608d7148aa504d1def016e21/pkg/cloud/services/securitygroup/securitygroups.go#L656-L677
+		if fromPort == 30000 && toPort == 32767 {
+			for _, ipv6Range := range rule.Ipv6Ranges {
+				if aws.ToString(ipv6Range.CidrIpv6) == ipv6CIDR {
+					logrus.Debugf("Found node port ingress rule with IPv6 CIDR %s", ipv6CIDR)
+					return true, nil
+				}
+			}
+		}
+	}
+
+	logrus.Debugf("Node port ingress rule with IPv6 CIDR %s not found yet. Still waiting for creation...", ipv6CIDR)
+	return false, nil
 }
 
 // DestroyBootstrap removes aws bootstrap resources not handled
@@ -346,13 +491,12 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 		return fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
 	}
 
-	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
-	session, err := awsconfig.GetSessionWithOptions(
-		awsconfig.WithRegion(region),
-		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
-	)
+	ec2Client, err := awsconfig.NewEC2Client(ctx, awsconfig.EndpointOptions{
+		Region:    in.Metadata.ClusterPlatformMetadata.AWS.Region,
+		Endpoints: in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create aws session: %w", err)
+		return fmt.Errorf("failed to create ec2 client: %w", err)
 	}
 
 	timeout := 15 * time.Minute
@@ -371,7 +515,7 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 				}
 				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 			}
-			return isSSHRuleGone(ctx, session, region, sgID)
+			return isSSHRuleGone(ctx, ec2Client, sgID)
 		},
 	); err != nil {
 		if wait.Interrupted(err) {
@@ -418,8 +562,8 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 }
 
 // isSSHRuleGone checks that the Public SSH rule has been removed from the security group.
-func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID string) (bool, error) {
-	sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
+func isSSHRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, client, []string{sgID})
 	if err != nil {
 		return false, fmt.Errorf("error getting security group: %w", err)
 	}
@@ -437,10 +581,19 @@ func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID s
 		if ptr.Deref(rule.ToPort, 0) != 22 {
 			continue
 		}
+		// Check IPv4 rules
 		for _, source := range rule.IpRanges {
 			if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
 				ruleDesc := ptr.Deref(source.Description, "[no description]")
 				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
+				return false, nil
+			}
+		}
+		// Check IPv6 rules
+		for _, source := range rule.Ipv6Ranges {
+			if source.CidrIpv6 != nil && *source.CidrIpv6 == "::/0" {
+				ruleDesc := ptr.Deref(source.Description, "[no description]")
+				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIpv6)
 				return false, nil
 			}
 		}
@@ -465,19 +618,13 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 
 // removeS3Bucket deletes an s3 bucket given its name.
 func removeS3Bucket(ctx context.Context, region string, bucketName string, endpoints []awstypes.ServiceEndpoint) error {
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
-		options.Region = region
-		for _, endpoint := range endpoints {
-			if strings.EqualFold(endpoint.Name, "s3") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	client, err := awsconfig.NewS3Client(ctx, awsconfig.EndpointOptions{
+		Region:    region,
+		Endpoints: endpoints,
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create s3 client: %w", err)
+	}
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
 	for paginator.HasMorePages() {

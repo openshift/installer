@@ -21,8 +21,6 @@ package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v
 
 import (
 	time "time"
-
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 )
 
 // ProvisionShardKind is the name of the type used to represent objects
@@ -48,13 +46,13 @@ type ProvisionShard struct {
 	awsBaseDomain            string
 	gcpBaseDomain            string
 	gcpProjectOperator       *ServerConfig
-	cloudProvider            *v1.CloudProvider
+	cloudProvider            *CloudProvider
 	creationTimestamp        time.Time
 	hiveConfig               *ServerConfig
 	hypershiftConfig         *ServerConfig
 	lastUpdateTimestamp      time.Time
 	managementCluster        string
-	region                   *v1.CloudRegion
+	region                   *CloudRegion
 	status                   string
 }
 
@@ -221,7 +219,7 @@ func (o *ProvisionShard) GetGCPProjectOperator() (value *ServerConfig, ok bool) 
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Contains the cloud provider name.
-func (o *ProvisionShard) CloudProvider() *v1.CloudProvider {
+func (o *ProvisionShard) CloudProvider() *CloudProvider {
 	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.cloudProvider
 	}
@@ -232,7 +230,7 @@ func (o *ProvisionShard) CloudProvider() *v1.CloudProvider {
 // a flag indicating if the attribute has a value.
 //
 // Contains the cloud provider name.
-func (o *ProvisionShard) GetCloudProvider() (value *v1.CloudProvider, ok bool) {
+func (o *ProvisionShard) GetCloudProvider() (value *CloudProvider, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.cloudProvider
@@ -365,7 +363,7 @@ func (o *ProvisionShard) GetManagementCluster() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Contains the cloud-provider region in which the provisioner spins up the cluster.
-func (o *ProvisionShard) Region() *v1.CloudRegion {
+func (o *ProvisionShard) Region() *CloudRegion {
 	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
 		return o.region
 	}
@@ -376,7 +374,7 @@ func (o *ProvisionShard) Region() *v1.CloudRegion {
 // a flag indicating if the attribute has a value.
 //
 // Contains the cloud-provider region in which the provisioner spins up the cluster.
-func (o *ProvisionShard) GetRegion() (value *v1.CloudRegion, ok bool) {
+func (o *ProvisionShard) GetRegion() (value *CloudRegion, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
 	if ok {
 		value = o.region

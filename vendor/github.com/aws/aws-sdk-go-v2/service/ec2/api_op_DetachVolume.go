@@ -96,6 +96,10 @@ type DetachVolumeOutput struct {
 	// parameter returns null .
 	Device *string
 
+	// The index of the EBS card. Some instance types support multiple EBS cards. The
+	// default EBS card index is 0.
+	EbsCardIndex *int32
+
 	// The ID of the instance.
 	//
 	// If the volume is attached to an Amazon Web Services-managed resource, this
@@ -209,16 +213,13 @@ func (c *Client) addOperationDetachVolumeMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

@@ -20,16 +20,17 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1
 
 type WifRoleBuilder struct {
-	fieldSet_   []bool
-	permissions []string
-	roleId      string
-	predefined  bool
+	fieldSet_        []bool
+	permissions      []string
+	resourceBindings []*WifResourceBindingBuilder
+	roleId           string
+	predefined       bool
 }
 
 // NewWifRole creates a new builder of 'wif_role' objects.
 func NewWifRole() *WifRoleBuilder {
 	return &WifRoleBuilder{
-		fieldSet_: make([]bool, 3),
+		fieldSet_: make([]bool, 4),
 	}
 }
 
@@ -49,7 +50,7 @@ func (b *WifRoleBuilder) Empty() bool {
 // Permissions sets the value of the 'permissions' attribute to the given values.
 func (b *WifRoleBuilder) Permissions(values ...string) *WifRoleBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 3)
+		b.fieldSet_ = make([]bool, 4)
 	}
 	b.permissions = make([]string, len(values))
 	copy(b.permissions, values)
@@ -60,20 +61,31 @@ func (b *WifRoleBuilder) Permissions(values ...string) *WifRoleBuilder {
 // Predefined sets the value of the 'predefined' attribute to the given value.
 func (b *WifRoleBuilder) Predefined(value bool) *WifRoleBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 3)
+		b.fieldSet_ = make([]bool, 4)
 	}
 	b.predefined = value
 	b.fieldSet_[1] = true
 	return b
 }
 
+// ResourceBindings sets the value of the 'resource_bindings' attribute to the given values.
+func (b *WifRoleBuilder) ResourceBindings(values ...*WifResourceBindingBuilder) *WifRoleBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 4)
+	}
+	b.resourceBindings = make([]*WifResourceBindingBuilder, len(values))
+	copy(b.resourceBindings, values)
+	b.fieldSet_[2] = true
+	return b
+}
+
 // RoleId sets the value of the 'role_id' attribute to the given value.
 func (b *WifRoleBuilder) RoleId(value string) *WifRoleBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 3)
+		b.fieldSet_ = make([]bool, 4)
 	}
 	b.roleId = value
-	b.fieldSet_[2] = true
+	b.fieldSet_[3] = true
 	return b
 }
 
@@ -93,6 +105,14 @@ func (b *WifRoleBuilder) Copy(object *WifRole) *WifRoleBuilder {
 		b.permissions = nil
 	}
 	b.predefined = object.predefined
+	if object.resourceBindings != nil {
+		b.resourceBindings = make([]*WifResourceBindingBuilder, len(object.resourceBindings))
+		for i, v := range object.resourceBindings {
+			b.resourceBindings[i] = NewWifResourceBinding().Copy(v)
+		}
+	} else {
+		b.resourceBindings = nil
+	}
 	b.roleId = object.roleId
 	return b
 }
@@ -109,6 +129,15 @@ func (b *WifRoleBuilder) Build() (object *WifRole, err error) {
 		copy(object.permissions, b.permissions)
 	}
 	object.predefined = b.predefined
+	if b.resourceBindings != nil {
+		object.resourceBindings = make([]*WifResourceBinding, len(b.resourceBindings))
+		for i, v := range b.resourceBindings {
+			object.resourceBindings[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	object.roleId = b.roleId
 	return
 }

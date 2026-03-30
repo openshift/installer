@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (schedule *RedisPatchSchedule) NewEmptyStatus() genruntime.ConvertibleStatu
 
 // Owner returns the ResourceReference of the owner
 func (schedule *RedisPatchSchedule) Owner() *genruntime.ResourceReference {
+	if schedule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(schedule.Spec)
 	return schedule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (schedule *RedisPatchSchedule) SetStatus(status genruntime.ConvertibleStatu
 	var st RedisPatchSchedule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	schedule.Status = st
@@ -180,7 +184,7 @@ var _ genruntime.ConvertibleSpec = &RedisPatchSchedule_Spec{}
 // ConvertSpecFrom populates our RedisPatchSchedule_Spec from the provided source
 func (schedule *RedisPatchSchedule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == schedule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(schedule)
@@ -189,7 +193,7 @@ func (schedule *RedisPatchSchedule_Spec) ConvertSpecFrom(source genruntime.Conve
 // ConvertSpecTo populates the provided destination from our RedisPatchSchedule_Spec
 func (schedule *RedisPatchSchedule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == schedule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(schedule)
@@ -211,7 +215,7 @@ var _ genruntime.ConvertibleStatus = &RedisPatchSchedule_STATUS{}
 // ConvertStatusFrom populates our RedisPatchSchedule_STATUS from the provided source
 func (schedule *RedisPatchSchedule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == schedule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(schedule)
@@ -220,7 +224,7 @@ func (schedule *RedisPatchSchedule_STATUS) ConvertStatusFrom(source genruntime.C
 // ConvertStatusTo populates the provided destination from our RedisPatchSchedule_STATUS
 func (schedule *RedisPatchSchedule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == schedule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(schedule)

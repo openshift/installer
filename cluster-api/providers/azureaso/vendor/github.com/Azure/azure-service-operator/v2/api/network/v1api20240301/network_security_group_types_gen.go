@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (group *NetworkSecurityGroup) ConvertTo(hub conversion.Hub) error {
 
 	return group.AssignProperties_To_NetworkSecurityGroup(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20240301-networksecuritygroup,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=networksecuritygroups,verbs=create;update,versions=v1api20240301,name=default.v1api20240301.networksecuritygroups.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &NetworkSecurityGroup{}
-
-// Default applies defaults to the NetworkSecurityGroup resource
-func (group *NetworkSecurityGroup) Default() {
-	group.defaultImpl()
-	var temp any = group
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (group *NetworkSecurityGroup) defaultAzureName() {
-	if group.Spec.AzureName == "" {
-		group.Spec.AzureName = group.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the NetworkSecurityGroup resource
-func (group *NetworkSecurityGroup) defaultImpl() { group.defaultAzureName() }
 
 var _ configmaps.Exporter = &NetworkSecurityGroup{}
 
@@ -173,6 +147,10 @@ func (group *NetworkSecurityGroup) NewEmptyStatus() genruntime.ConvertibleStatus
 
 // Owner returns the ResourceReference of the owner
 func (group *NetworkSecurityGroup) Owner() *genruntime.ResourceReference {
+	if group.Spec.Owner == nil {
+		return nil
+	}
+
 	ownerGroup, ownerKind := genruntime.LookupOwnerGroupKind(group.Spec)
 	return group.Spec.Owner.AsResourceReference(ownerGroup, ownerKind)
 }
@@ -189,114 +167,11 @@ func (group *NetworkSecurityGroup) SetStatus(status genruntime.ConvertibleStatus
 	var st NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20240301-networksecuritygroup,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=networksecuritygroups,verbs=create;update,versions=v1api20240301,name=validate.v1api20240301.networksecuritygroups.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &NetworkSecurityGroup{}
-
-// ValidateCreate validates the creation of the resource
-func (group *NetworkSecurityGroup) ValidateCreate() (admission.Warnings, error) {
-	validations := group.createValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (group *NetworkSecurityGroup) ValidateDelete() (admission.Warnings, error) {
-	validations := group.deleteValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (group *NetworkSecurityGroup) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := group.updateValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (group *NetworkSecurityGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (group *NetworkSecurityGroup) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (group *NetworkSecurityGroup) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateResourceReferences()
-		},
-		group.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (group *NetworkSecurityGroup) validateConfigMapDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (group *NetworkSecurityGroup) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(group)
-}
-
-// validateResourceReferences validates all resource references
-func (group *NetworkSecurityGroup) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&group.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (group *NetworkSecurityGroup) validateSecretDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (group *NetworkSecurityGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*NetworkSecurityGroup)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, group)
 }
 
 // AssignProperties_From_NetworkSecurityGroup populates our NetworkSecurityGroup from the provided source NetworkSecurityGroup
@@ -309,7 +184,7 @@ func (group *NetworkSecurityGroup) AssignProperties_From_NetworkSecurityGroup(so
 	var spec NetworkSecurityGroup_Spec
 	err := spec.AssignProperties_From_NetworkSecurityGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
@@ -317,7 +192,7 @@ func (group *NetworkSecurityGroup) AssignProperties_From_NetworkSecurityGroup(so
 	var status NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 	err = status.AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Status")
 	}
 	group.Status = status
 
@@ -335,7 +210,7 @@ func (group *NetworkSecurityGroup) AssignProperties_To_NetworkSecurityGroup(dest
 	var spec storage.NetworkSecurityGroup_Spec
 	err := group.Spec.AssignProperties_To_NetworkSecurityGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (group *NetworkSecurityGroup) AssignProperties_To_NetworkSecurityGroup(dest
 	var status storage.NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 	err = group.Status.AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Status")
 	}
 	destination.Status = status
 
@@ -497,13 +372,13 @@ func (group *NetworkSecurityGroup_Spec) ConvertSpecFrom(source genruntime.Conver
 	src = &storage.NetworkSecurityGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_NetworkSecurityGroup_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -521,13 +396,13 @@ func (group *NetworkSecurityGroup_Spec) ConvertSpecTo(destination genruntime.Con
 	dst = &storage.NetworkSecurityGroup_Spec{}
 	err := group.AssignProperties_To_NetworkSecurityGroup_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -555,7 +430,7 @@ func (group *NetworkSecurityGroup_Spec) AssignProperties_From_NetworkSecurityGro
 		var operatorSpec NetworkSecurityGroupOperatorSpec
 		err := operatorSpec.AssignProperties_From_NetworkSecurityGroupOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		group.OperatorSpec = &operatorSpec
 	} else {
@@ -601,7 +476,7 @@ func (group *NetworkSecurityGroup_Spec) AssignProperties_To_NetworkSecurityGroup
 		var operatorSpec storage.NetworkSecurityGroupOperatorSpec
 		err := group.OperatorSpec.AssignProperties_To_NetworkSecurityGroupOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -719,13 +594,13 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 	src = &storage.NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = embedded.AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -743,13 +618,13 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 	dst = &storage.NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded{}
 	err := embedded.AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -896,7 +771,7 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 			var defaultSecurityRule SecurityRule_STATUS
 			err := defaultSecurityRule.AssignProperties_From_SecurityRule_STATUS(&defaultSecurityRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SecurityRule_STATUS() to populate field DefaultSecurityRules")
+				return eris.Wrap(err, "calling AssignProperties_From_SecurityRule_STATUS() to populate field DefaultSecurityRules")
 			}
 			defaultSecurityRuleList[defaultSecurityRuleIndex] = defaultSecurityRule
 		}
@@ -934,7 +809,7 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 			var networkInterface NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 			err := networkInterface.AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&networkInterfaceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -964,7 +839,7 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 			var subnet Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 			err := subnet.AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&subnetItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -1000,7 +875,7 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 			var defaultSecurityRule storage.SecurityRule_STATUS
 			err := defaultSecurityRuleItem.AssignProperties_To_SecurityRule_STATUS(&defaultSecurityRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SecurityRule_STATUS() to populate field DefaultSecurityRules")
+				return eris.Wrap(err, "calling AssignProperties_To_SecurityRule_STATUS() to populate field DefaultSecurityRules")
 			}
 			defaultSecurityRuleList[defaultSecurityRuleIndex] = defaultSecurityRule
 		}
@@ -1038,7 +913,7 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 			var networkInterface storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&networkInterface)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -1067,7 +942,7 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 			var subnet storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 			err := subnetItem.AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&subnet)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}

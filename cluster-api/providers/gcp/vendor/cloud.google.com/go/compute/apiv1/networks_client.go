@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ type NetworksCallOptions struct {
 	ListPeeringRoutes     []gax.CallOption
 	Patch                 []gax.CallOption
 	RemovePeering         []gax.CallOption
+	RequestRemovePeering  []gax.CallOption
 	SwitchToCustomMode    []gax.CallOption
 	UpdatePeering         []gax.CallOption
 }
@@ -119,6 +120,9 @@ func defaultNetworksRESTCallOptions() *NetworksCallOptions {
 		RemovePeering: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
+		RequestRemovePeering: []gax.CallOption{
+			gax.WithTimeout(600000 * time.Millisecond),
+		},
 		SwitchToCustomMode: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
@@ -142,6 +146,7 @@ type internalNetworksClient interface {
 	ListPeeringRoutes(context.Context, *computepb.ListPeeringRoutesNetworksRequest, ...gax.CallOption) *ExchangedPeeringRouteIterator
 	Patch(context.Context, *computepb.PatchNetworkRequest, ...gax.CallOption) (*Operation, error)
 	RemovePeering(context.Context, *computepb.RemovePeeringNetworkRequest, ...gax.CallOption) (*Operation, error)
+	RequestRemovePeering(context.Context, *computepb.RequestRemovePeeringNetworkRequest, ...gax.CallOption) (*Operation, error)
 	SwitchToCustomMode(context.Context, *computepb.SwitchToCustomModeNetworkRequest, ...gax.CallOption) (*Operation, error)
 	UpdatePeering(context.Context, *computepb.UpdatePeeringNetworkRequest, ...gax.CallOption) (*Operation, error)
 }
@@ -226,6 +231,11 @@ func (c *NetworksClient) RemovePeering(ctx context.Context, req *computepb.Remov
 	return c.internalClient.RemovePeering(ctx, req, opts...)
 }
 
+// RequestRemovePeering requests to remove a peering from the specified network. Applicable only for PeeringConnection with update_strategy=CONSENSUS.
+func (c *NetworksClient) RequestRemovePeering(ctx context.Context, req *computepb.RequestRemovePeeringNetworkRequest, opts ...gax.CallOption) (*Operation, error) {
+	return c.internalClient.RequestRemovePeering(ctx, req, opts...)
+}
+
 // SwitchToCustomMode switches the network mode from auto subnet mode to custom subnet mode.
 func (c *NetworksClient) SwitchToCustomMode(ctx context.Context, req *computepb.SwitchToCustomModeNetworkRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SwitchToCustomMode(ctx, req, opts...)
@@ -305,7 +315,7 @@ func defaultNetworksRESTClientOptions() []option.ClientOption {
 // use by Google-written clients.
 func (c *networksRESTClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
-	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN")
+	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN", "pb", protoVersion)
 	c.xGoogHeaders = []string{
 		"x-goog-api-client", gax.XGoogHeader(kv...),
 	}
@@ -900,6 +910,72 @@ func (c *networksRESTClient) RemovePeering(ctx context.Context, req *computepb.R
 		httpReq.Header = headers
 
 		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "RemovePeering")
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	op := &Operation{
+		&globalOperationsHandle{
+			c:       c.operationClient,
+			proto:   resp,
+			project: req.GetProject(),
+		},
+	}
+	return op, nil
+}
+
+// RequestRemovePeering requests to remove a peering from the specified network. Applicable only for PeeringConnection with update_strategy=CONSENSUS.
+func (c *networksRESTClient) RequestRemovePeering(ctx context.Context, req *computepb.RequestRemovePeeringNetworkRequest, opts ...gax.CallOption) (*Operation, error) {
+	m := protojson.MarshalOptions{AllowPartial: true}
+	body := req.GetNetworksRequestRemovePeeringRequestResource()
+	jsonReq, err := m.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/global/networks/%v/requestRemovePeering", req.GetProject(), req.GetNetwork())
+
+	params := url.Values{}
+	if req != nil && req.RequestId != nil {
+		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "network", url.QueryEscape(req.GetNetwork()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).RequestRemovePeering[0:len((*c.CallOptions).RequestRemovePeering):len((*c.CallOptions).RequestRemovePeering)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &computepb.Operation{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("POST", baseUrl.String(), bytes.NewReader(jsonReq))
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "RequestRemovePeering")
 		if err != nil {
 			return err
 		}

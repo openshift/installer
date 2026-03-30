@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (pool *ServersElasticPool) ConvertTo(hub conversion.Hub) error {
 
 	return pool.AssignProperties_To_ServersElasticPool(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-sql-azure-com-v1api20211101-serverselasticpool,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serverselasticpools,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.serverselasticpools.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ServersElasticPool{}
-
-// Default applies defaults to the ServersElasticPool resource
-func (pool *ServersElasticPool) Default() {
-	pool.defaultImpl()
-	var temp any = pool
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (pool *ServersElasticPool) defaultAzureName() {
-	if pool.Spec.AzureName == "" {
-		pool.Spec.AzureName = pool.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ServersElasticPool resource
-func (pool *ServersElasticPool) defaultImpl() { pool.defaultAzureName() }
 
 var _ configmaps.Exporter = &ServersElasticPool{}
 
@@ -173,6 +147,10 @@ func (pool *ServersElasticPool) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (pool *ServersElasticPool) Owner() *genruntime.ResourceReference {
+	if pool.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(pool.Spec)
 	return pool.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (pool *ServersElasticPool) SetStatus(status genruntime.ConvertibleStatus) e
 	var st ServersElasticPool_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	pool.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-sql-azure-com-v1api20211101-serverselasticpool,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serverselasticpools,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.serverselasticpools.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ServersElasticPool{}
-
-// ValidateCreate validates the creation of the resource
-func (pool *ServersElasticPool) ValidateCreate() (admission.Warnings, error) {
-	validations := pool.createValidations()
-	var temp any = pool
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (pool *ServersElasticPool) ValidateDelete() (admission.Warnings, error) {
-	validations := pool.deleteValidations()
-	var temp any = pool
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (pool *ServersElasticPool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := pool.updateValidations()
-	var temp any = pool
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (pool *ServersElasticPool) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference, pool.validateSecretDestinations, pool.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (pool *ServersElasticPool) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (pool *ServersElasticPool) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return pool.validateResourceReferences()
-		},
-		pool.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return pool.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return pool.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return pool.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (pool *ServersElasticPool) validateConfigMapDestinations() (admission.Warnings, error) {
-	if pool.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(pool, nil, pool.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (pool *ServersElasticPool) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(pool)
-}
-
-// validateResourceReferences validates all resource references
-func (pool *ServersElasticPool) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&pool.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (pool *ServersElasticPool) validateSecretDestinations() (admission.Warnings, error) {
-	if pool.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(pool, nil, pool.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (pool *ServersElasticPool) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ServersElasticPool)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, pool)
 }
 
 // AssignProperties_From_ServersElasticPool populates our ServersElasticPool from the provided source ServersElasticPool
@@ -309,7 +184,7 @@ func (pool *ServersElasticPool) AssignProperties_From_ServersElasticPool(source 
 	var spec ServersElasticPool_Spec
 	err := spec.AssignProperties_From_ServersElasticPool_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersElasticPool_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersElasticPool_Spec() to populate field Spec")
 	}
 	pool.Spec = spec
 
@@ -317,7 +192,7 @@ func (pool *ServersElasticPool) AssignProperties_From_ServersElasticPool(source 
 	var status ServersElasticPool_STATUS
 	err = status.AssignProperties_From_ServersElasticPool_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersElasticPool_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersElasticPool_STATUS() to populate field Status")
 	}
 	pool.Status = status
 
@@ -335,7 +210,7 @@ func (pool *ServersElasticPool) AssignProperties_To_ServersElasticPool(destinati
 	var spec storage.ServersElasticPool_Spec
 	err := pool.Spec.AssignProperties_To_ServersElasticPool_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersElasticPool_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersElasticPool_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (pool *ServersElasticPool) AssignProperties_To_ServersElasticPool(destinati
 	var status storage.ServersElasticPool_STATUS
 	err = pool.Status.AssignProperties_To_ServersElasticPool_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersElasticPool_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersElasticPool_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -645,13 +520,13 @@ func (pool *ServersElasticPool_Spec) ConvertSpecFrom(source genruntime.Convertib
 	src = &storage.ServersElasticPool_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = pool.AssignProperties_From_ServersElasticPool_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -669,13 +544,13 @@ func (pool *ServersElasticPool_Spec) ConvertSpecTo(destination genruntime.Conver
 	dst = &storage.ServersElasticPool_Spec{}
 	err := pool.AssignProperties_To_ServersElasticPool_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -721,7 +596,7 @@ func (pool *ServersElasticPool_Spec) AssignProperties_From_ServersElasticPool_Sp
 		var operatorSpec ServersElasticPoolOperatorSpec
 		err := operatorSpec.AssignProperties_From_ServersElasticPoolOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServersElasticPoolOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ServersElasticPoolOperatorSpec() to populate field OperatorSpec")
 		}
 		pool.OperatorSpec = &operatorSpec
 	} else {
@@ -741,7 +616,7 @@ func (pool *ServersElasticPool_Spec) AssignProperties_From_ServersElasticPool_Sp
 		var perDatabaseSetting ElasticPoolPerDatabaseSettings
 		err := perDatabaseSetting.AssignProperties_From_ElasticPoolPerDatabaseSettings(source.PerDatabaseSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ElasticPoolPerDatabaseSettings() to populate field PerDatabaseSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ElasticPoolPerDatabaseSettings() to populate field PerDatabaseSettings")
 		}
 		pool.PerDatabaseSettings = &perDatabaseSetting
 	} else {
@@ -753,7 +628,7 @@ func (pool *ServersElasticPool_Spec) AssignProperties_From_ServersElasticPool_Sp
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		pool.Sku = &sku
 	} else {
@@ -816,7 +691,7 @@ func (pool *ServersElasticPool_Spec) AssignProperties_To_ServersElasticPool_Spec
 		var operatorSpec storage.ServersElasticPoolOperatorSpec
 		err := pool.OperatorSpec.AssignProperties_To_ServersElasticPoolOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServersElasticPoolOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ServersElasticPoolOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -839,7 +714,7 @@ func (pool *ServersElasticPool_Spec) AssignProperties_To_ServersElasticPool_Spec
 		var perDatabaseSetting storage.ElasticPoolPerDatabaseSettings
 		err := pool.PerDatabaseSettings.AssignProperties_To_ElasticPoolPerDatabaseSettings(&perDatabaseSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ElasticPoolPerDatabaseSettings() to populate field PerDatabaseSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ElasticPoolPerDatabaseSettings() to populate field PerDatabaseSettings")
 		}
 		destination.PerDatabaseSettings = &perDatabaseSetting
 	} else {
@@ -851,7 +726,7 @@ func (pool *ServersElasticPool_Spec) AssignProperties_To_ServersElasticPool_Spec
 		var sku storage.Sku
 		err := pool.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -916,7 +791,7 @@ func (pool *ServersElasticPool_Spec) Initialize_From_ServersElasticPool_STATUS(s
 		var perDatabaseSetting ElasticPoolPerDatabaseSettings
 		err := perDatabaseSetting.Initialize_From_ElasticPoolPerDatabaseSettings_STATUS(source.PerDatabaseSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ElasticPoolPerDatabaseSettings_STATUS() to populate field PerDatabaseSettings")
+			return eris.Wrap(err, "calling Initialize_From_ElasticPoolPerDatabaseSettings_STATUS() to populate field PerDatabaseSettings")
 		}
 		pool.PerDatabaseSettings = &perDatabaseSetting
 	} else {
@@ -928,7 +803,7 @@ func (pool *ServersElasticPool_Spec) Initialize_From_ServersElasticPool_STATUS(s
 		var sku Sku
 		err := sku.Initialize_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
 		}
 		pool.Sku = &sku
 	} else {
@@ -1034,13 +909,13 @@ func (pool *ServersElasticPool_STATUS) ConvertStatusFrom(source genruntime.Conve
 	src = &storage.ServersElasticPool_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = pool.AssignProperties_From_ServersElasticPool_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1058,13 +933,13 @@ func (pool *ServersElasticPool_STATUS) ConvertStatusTo(destination genruntime.Co
 	dst = &storage.ServersElasticPool_STATUS{}
 	err := pool.AssignProperties_To_ServersElasticPool_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1281,7 +1156,7 @@ func (pool *ServersElasticPool_STATUS) AssignProperties_From_ServersElasticPool_
 		var perDatabaseSetting ElasticPoolPerDatabaseSettings_STATUS
 		err := perDatabaseSetting.AssignProperties_From_ElasticPoolPerDatabaseSettings_STATUS(source.PerDatabaseSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ElasticPoolPerDatabaseSettings_STATUS() to populate field PerDatabaseSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ElasticPoolPerDatabaseSettings_STATUS() to populate field PerDatabaseSettings")
 		}
 		pool.PerDatabaseSettings = &perDatabaseSetting
 	} else {
@@ -1293,7 +1168,7 @@ func (pool *ServersElasticPool_STATUS) AssignProperties_From_ServersElasticPool_
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		pool.Sku = &sku
 	} else {
@@ -1380,7 +1255,7 @@ func (pool *ServersElasticPool_STATUS) AssignProperties_To_ServersElasticPool_ST
 		var perDatabaseSetting storage.ElasticPoolPerDatabaseSettings_STATUS
 		err := pool.PerDatabaseSettings.AssignProperties_To_ElasticPoolPerDatabaseSettings_STATUS(&perDatabaseSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ElasticPoolPerDatabaseSettings_STATUS() to populate field PerDatabaseSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ElasticPoolPerDatabaseSettings_STATUS() to populate field PerDatabaseSettings")
 		}
 		destination.PerDatabaseSettings = &perDatabaseSetting
 	} else {
@@ -1392,7 +1267,7 @@ func (pool *ServersElasticPool_STATUS) AssignProperties_To_ServersElasticPool_ST
 		var sku storage.Sku_STATUS
 		err := pool.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {

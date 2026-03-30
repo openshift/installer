@@ -83,7 +83,7 @@ examples:
 
 .PHONY: test tests
 test tests: ginkgo-install
-ifndef JUNITFILE
+ifndef ARTIFACT_DIR
 	$(GINKGO) run -r $(ginkgo_flags)
 else
 	$(GINKGO) run -r $(ginkgo_flags) --junit-report=junit_golang_tests_junit.xml --output-dir=${ARTIFACT_DIR}
@@ -97,7 +97,8 @@ fmt:
 .PHONY: lint
 lint:
 	golangci-lint --version
-	golangci-lint run
+	golangci-lint custom && \
+	$(LOCAL_BIN_PATH)/ocm-lint run
 
 # set "normal" alias matching kube and ocp
 .PHONY: update

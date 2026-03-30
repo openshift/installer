@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package types
@@ -84,4 +84,43 @@ const (
 
 func init() {
 	types.Add("CnsKubernetesEntityType", reflect.TypeOf((*CnsKubernetesEntityType)(nil)).Elem())
+}
+
+type CnsSyncVolumeMode string
+
+const (
+	CnsSyncVolumeModeSPACE_USAGE = CnsSyncVolumeMode("SPACE_USAGE")
+)
+
+func init() {
+	types.Add("vsan:CnsSyncVolumeMode", reflect.TypeOf((*CnsSyncVolumeMode)(nil)).Elem())
+}
+
+type CnsUnregisterTargetVolumeType string
+
+const (
+	CnsUnregisterTargetVolumeTypeFCD         = CnsUnregisterTargetVolumeType("FCD")
+	CnsUnregisterTargetVolumeTypeLEGACY_DISK = CnsUnregisterTargetVolumeType("LEGACY_DISK")
+)
+
+func init() {
+	types.Add("vsan:CnsUnregisterTargetVolumeType", reflect.TypeOf((*CnsUnregisterTargetVolumeType)(nil)).Elem())
+}
+
+// CnsVolumeBackingType enumerates types of backing for batch attach operations.
+// These values correspond to VirtualDevice.FileBackingInfo subclasses.
+type CnsVolumeBackingType string
+
+const (
+	CnsVolumeBackingTypeFlatVer1BackingInfo           = CnsVolumeBackingType("FlatVer1BackingInfo")
+	CnsVolumeBackingTypeFlatVer2BackingInfo           = CnsVolumeBackingType("FlatVer2BackingInfo")
+	CnsVolumeBackingTypeSparseVer1BackingInfo         = CnsVolumeBackingType("SparseVer1BackingInfo")
+	CnsVolumeBackingTypeSparseVer2BackingInfo         = CnsVolumeBackingType("SparseVer2BackingInfo")
+	CnsVolumeBackingTypeRawDiskMappingVer1BackingInfo = CnsVolumeBackingType("RawDiskMappingVer1BackingInfo")
+	CnsVolumeBackingTypeSeSparseBackingInfo           = CnsVolumeBackingType("SeSparseBackingInfo")
+	CnsVolumeBackingTypeLocalPMemBackingInfo          = CnsVolumeBackingType("LocalPMemBackingInfo")
+)
+
+func init() {
+	types.Add("vsan:CnsVolumeBackingType", reflect.TypeOf((*CnsVolumeBackingType)(nil)).Elem())
 }

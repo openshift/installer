@@ -100,12 +100,46 @@ var (
 	EKSAuthenticationModeAPIAndConfigMap = EKSAuthenticationMode("api_and_config_map")
 )
 
+// AccessEntryType represents the different types of access entries that can be used in an Amazon EKS cluster
+type AccessEntryType string
+
+// APIValue returns the corresponding EKS API value for the access entry type
+func (a AccessEntryType) APIValue() *string {
+	v := strings.ToUpper(string(a))
+	return &v
+}
+
 var (
-	// DefaultEKSControlPlaneRole is the name of the default IAM role to use for the EKS control plane
-	// if no other role is supplied in the spec and if iam role creation is not enabled. The default
-	// can be created using clusterawsadm or created manually.
-	DefaultEKSControlPlaneRole = fmt.Sprintf("eks-controlplane%s", iamv1.DefaultNameSuffix)
+	// AccessEntryTypeStandard represents a standard access entry
+	AccessEntryTypeStandard = AccessEntryType("standard")
+	// AccessEntryTypeEC2Linux represents an EC2 Linux access entry
+	AccessEntryTypeEC2Linux = AccessEntryType("ec2_linux")
+	// AccessEntryTypeEC2Windows represents an EC2 Windows access entry
+	AccessEntryTypeEC2Windows = AccessEntryType("ec2_windows")
+	// AccessEntryTypeFargateLinux represents a Fargate Linux access entry
+	AccessEntryTypeFargateLinux = AccessEntryType("fargate_linux")
+	// AccessEntryTypeEC2 represents a generic EC2 access entry
+	AccessEntryTypeEC2 = AccessEntryType("ec2")
+	// AccessEntryTypeHybridLinux represents a hybrid node access entry
+	AccessEntryTypeHybridLinux = AccessEntryType("hybrid_linux")
+	// AccessEntryTypeHyperpodLinux represents a SageMaker HyperPod access entry
+	AccessEntryTypeHyperpodLinux = AccessEntryType("hyperpod_linux")
 )
+
+// AccessScopeType defines the scope type for an access policy
+type AccessScopeType string
+
+var (
+	// AccessScopeTypeCluster indicates that the access policy applies to the entire cluster
+	AccessScopeTypeCluster = AccessScopeType("cluster")
+	// AccessScopeTypeNamespace indicates that the access policy applies to a specific namespace within the cluster
+	AccessScopeTypeNamespace = AccessScopeType("namespace")
+)
+
+// DefaultEKSControlPlaneRole is the name of the default IAM role to use for the EKS control plane
+// if no other role is supplied in the spec and if iam role creation is not enabled. The default
+// can be created using clusterawsadm or created manually.
+var DefaultEKSControlPlaneRole = fmt.Sprintf("eks-controlplane%s", iamv1.DefaultNameSuffix)
 
 // IAMAuthenticatorConfig represents an aws-iam-authenticator configuration.
 type IAMAuthenticatorConfig struct {

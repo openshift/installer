@@ -51,10 +51,21 @@ func (a *AssetBase) LoadFromFile(f asset.FileFetcher) (found bool, err error) {
 			return false, errors.Wrap(err, asset.InstallConfigError)
 		}
 		err = errors.Wrapf(err, "failed to parse first occurrence of unknown field")
-		logrus.Warnf("%s", err.Error())
-		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
-		if err = yaml.Unmarshal(file.Data, config); err != nil {
-			err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
+
+		// Check if invoked by automation tool (Hive, assisted-service, etc.)
+		// These tools may generate install-config with fields from newer versions
+		// that aren't recognized by older installer versions.
+		invoker := os.Getenv("OPENSHIFT_INSTALL_INVOKER")
+		if invoker != "" {
+			// Legacy behavior for automation tools: warn and continue
+			logrus.Warnf("%s", err.Error())
+			logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
+			if err = yaml.Unmarshal(file.Data, config); err != nil {
+				err = errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
+				return false, errors.Wrap(err, asset.InstallConfigError)
+			}
+		} else {
+			// Strict behavior for direct user invocations: fail on unknown fields
 			return false, errors.Wrap(err, asset.InstallConfigError)
 		}
 	}

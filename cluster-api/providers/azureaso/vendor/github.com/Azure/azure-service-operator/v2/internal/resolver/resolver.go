@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -46,7 +46,7 @@ func (r *Resolver) IndexStorageTypes(scheme *runtime.Scheme, objs []*registratio
 	for _, obj := range objs {
 		gvk, err := apiutil.GVKForObject(obj.Obj, scheme)
 		if err != nil {
-			return errors.Wrapf(err, "creating GVK for obj %T", obj)
+			return eris.Wrapf(err, "creating GVK for obj %T", obj)
 		}
 		groupKind := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 		if existing, ok := r.reconciledResourceLookup[groupKind]; ok {
@@ -54,12 +54,13 @@ func (r *Resolver) IndexStorageTypes(scheme *runtime.Scheme, objs []*registratio
 				continue
 			}
 
-			return errors.Errorf(
+			return eris.Errorf(
 				"group: %q, kind: %q already has registered storage version %q, but found %q as well",
 				gvk.Group,
 				gvk.Kind,
 				existing.Version,
 				gvk.Version)
+
 		}
 		r.reconciledResourceLookup[groupKind] = gvk
 	}
@@ -86,7 +87,7 @@ func (r *Resolver) ResolveReferenceToARMID(ctx context.Context, ref genruntime.N
 	id, ok := genruntime.GetResourceID(obj)
 	if !ok {
 		// Resource doesn't have a resource ID. This probably means it's not done deploying
-		return "", errors.Errorf("ref %s doesn't have an assigned ARM ID", ref)
+		return "", eris.Errorf("ref %s doesn't have an assigned ARM ID", ref)
 	}
 
 	return id, nil
@@ -111,7 +112,7 @@ func (r *Resolver) ResolveReferencesToARMIDs(ctx context.Context, refs map[genru
 func (r *Resolver) ResolveResourceReferences(ctx context.Context, metaObject genruntime.ARMMetaObject) (genruntime.Resolved[genruntime.ResourceReference, string], error) {
 	refs, err := reflecthelpers.FindResourceReferences(metaObject)
 	if err != nil {
-		return genruntime.Resolved[genruntime.ResourceReference, string]{}, errors.Wrapf(err, "finding references on %q", metaObject.GetName())
+		return genruntime.Resolved[genruntime.ResourceReference, string]{}, eris.Wrapf(err, "finding references on %q", metaObject.GetName())
 	}
 
 	// Include the namespace
@@ -123,7 +124,7 @@ func (r *Resolver) ResolveResourceReferences(ctx context.Context, metaObject gen
 	// resolve them
 	resolvedRefs, err := r.ResolveReferencesToARMIDs(ctx, namespacedRefs)
 	if err != nil {
-		return genruntime.Resolved[genruntime.ResourceReference, string]{}, errors.Wrapf(err, "failed resolving ARM IDs for references")
+		return genruntime.Resolved[genruntime.ResourceReference, string]{}, eris.Wrapf(err, "failed resolving ARM IDs for references")
 	}
 
 	return resolvedRefs, nil
@@ -150,7 +151,7 @@ func (r *Resolver) ResolveResourceHierarchy(ctx context.Context, obj genruntime.
 
 	owners, err := r.ResolveResourceHierarchy(ctx, ownerDetails.Owner)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getting owners for %s", ownerDetails.Owner.GetName())
+		return nil, eris.Wrapf(err, "getting owners for %s", ownerDetails.Owner.GetName())
 	}
 
 	return append(owners, obj), nil
@@ -174,18 +175,23 @@ func (r *Resolver) ResolveReference(ctx context.Context, ref genruntime.Namespac
 			// Check if the user has mistakenly put the armID in 'name' field
 			_, err1 := arm.ParseResourceID(ref.Name)
 			if err1 == nil {
-				return nil, errors.Errorf("couldn't resolve reference %s. 'name' looks like it might be an ARM ID; did you mean 'armID: %s'?", refNamespacedName.String(), ref.Name)
+				return nil, eris.Errorf("couldn't resolve reference %s. 'name' looks like it might be an ARM ID; did you mean 'armID: %s'?", refNamespacedName.String(), ref.Name)
 			}
+
 			err := core.NewReferenceNotFoundError(refNamespacedName, err)
-			return nil, errors.WithStack(err)
+			return nil, eris.Wrapf(
+				err,
+				"couldn't resolve reference %s/%s",
+				ref.Namespace,
+				ref.Name)
 		}
 
-		return nil, errors.Wrapf(err, "couldn't resolve reference %s", ref.String())
+		return nil, eris.Wrapf(err, "couldn't resolve reference %s", ref.String())
 	}
 
 	metaObj, ok := refObj.(genruntime.ARMMetaObject)
 	if !ok {
-		return nil, errors.Errorf("reference %s (%s) was not of type genruntime.ARMMetaObject", refNamespacedName, refGVK)
+		return nil, eris.Errorf("reference %s (%s) was not of type genruntime.ARMMetaObject", refNamespacedName, refGVK)
 	}
 
 	return metaObj, nil
@@ -274,13 +280,13 @@ func (r *Resolver) findGVK(ref genruntime.NamespacedResourceReference) (schema.G
 	var ownerGvk schema.GroupVersionKind
 
 	if !ref.IsKubernetesReference() {
-		return ownerGvk, errors.Errorf("reference %s is not pointing to a Kubernetes resource", ref)
+		return ownerGvk, eris.Errorf("reference %s is not pointing to a Kubernetes resource", ref)
 	}
 
 	groupKind := schema.GroupKind{Group: ref.Group, Kind: ref.Kind}
 	gvk, ok := r.reconciledResourceLookup[groupKind]
 	if !ok {
-		return ownerGvk, errors.Errorf("group: %q, kind: %q was not in reconciledResourceLookup", ref.Group, ref.Kind)
+		return ownerGvk, eris.Errorf("group: %q, kind: %q was not in reconciledResourceLookup", ref.Group, ref.Kind)
 	}
 
 	return gvk, nil
@@ -298,7 +304,7 @@ func (r *Resolver) ResolveSecretReferences(
 func (r *Resolver) ResolveResourceSecretReferences(ctx context.Context, metaObject genruntime.MetaObject) (genruntime.Resolved[genruntime.SecretReference, string], error) {
 	refs, err := reflecthelpers.FindSecretReferences(metaObject)
 	if err != nil {
-		return genruntime.Resolved[genruntime.SecretReference, string]{}, errors.Wrapf(err, "finding secrets on %q", metaObject.GetName())
+		return genruntime.Resolved[genruntime.SecretReference, string]{}, eris.Wrapf(err, "finding secrets on %q", metaObject.GetName())
 	}
 
 	// Include the namespace
@@ -310,7 +316,7 @@ func (r *Resolver) ResolveResourceSecretReferences(ctx context.Context, metaObje
 	// resolve them
 	resolvedSecrets, err := r.ResolveSecretReferences(ctx, namespacedSecretRefs)
 	if err != nil {
-		return genruntime.Resolved[genruntime.SecretReference, string]{}, errors.Wrapf(err, "failed resolving secret references")
+		return genruntime.Resolved[genruntime.SecretReference, string]{}, eris.Wrapf(err, "failed resolving secret references")
 	}
 
 	return resolvedSecrets, nil
@@ -331,7 +337,7 @@ func (r *Resolver) ResolveResourceSecretMapReferences(
 ) (genruntime.Resolved[genruntime.SecretMapReference, map[string]string], error) {
 	refs, err := reflecthelpers.FindSecretMaps(metaObject)
 	if err != nil {
-		return genruntime.Resolved[genruntime.SecretMapReference, map[string]string]{}, errors.Wrapf(err, "finding secrets on %q", metaObject.GetName())
+		return genruntime.Resolved[genruntime.SecretMapReference, map[string]string]{}, eris.Wrapf(err, "finding secrets on %q", metaObject.GetName())
 	}
 
 	// Include the namespace
@@ -343,7 +349,7 @@ func (r *Resolver) ResolveResourceSecretMapReferences(
 	// resolve them
 	resolvedSecrets, err := r.ResolveSecretMapReferences(ctx, namespacedSecretRefs)
 	if err != nil {
-		return genruntime.Resolved[genruntime.SecretMapReference, map[string]string]{}, errors.Wrapf(err, "failed resolving secret references")
+		return genruntime.Resolved[genruntime.SecretMapReference, map[string]string]{}, eris.Wrapf(err, "failed resolving secret references")
 	}
 
 	return resolvedSecrets, nil
@@ -361,7 +367,7 @@ func (r *Resolver) ResolveConfigMapReferences(
 func (r *Resolver) ResolveResourceConfigMapReferences(ctx context.Context, metaObject genruntime.MetaObject) (genruntime.Resolved[genruntime.ConfigMapReference, string], error) {
 	refs, err := reflecthelpers.FindConfigMapReferences(metaObject)
 	if err != nil {
-		return genruntime.Resolved[genruntime.ConfigMapReference, string]{}, errors.Wrapf(err, "finding config maps on %q", metaObject.GetName())
+		return genruntime.Resolved[genruntime.ConfigMapReference, string]{}, eris.Wrapf(err, "finding config maps on %q", metaObject.GetName())
 	}
 
 	// Include the namespace
@@ -373,7 +379,7 @@ func (r *Resolver) ResolveResourceConfigMapReferences(ctx context.Context, metaO
 	// resolve them
 	resolvedConfigMaps, err := r.ResolveConfigMapReferences(ctx, namespacedConfigMapReferences)
 	if err != nil {
-		return genruntime.Resolved[genruntime.ConfigMapReference, string]{}, errors.Wrapf(err, "failed resolving config map references")
+		return genruntime.Resolved[genruntime.ConfigMapReference, string]{}, eris.Wrapf(err, "failed resolving config map references")
 	}
 
 	return resolvedConfigMaps, nil

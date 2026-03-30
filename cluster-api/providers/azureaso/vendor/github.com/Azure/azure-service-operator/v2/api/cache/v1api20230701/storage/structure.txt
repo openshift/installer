@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cache/v1api20230701/storage
 --------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-07-01"
+
 RedisEnterprise: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (10 properties)
@@ -43,6 +44,7 @@ RedisEnterprise: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 RedisEnterpriseDatabase: Resource
 ├── Owner: cache/v1api20230701.RedisEnterprise
 ├── Spec: Object (12 properties)
@@ -104,6 +106,10 @@ RedisEnterpriseDatabase: Resource
     ├── ProvisioningState: *string
     ├── ResourceState: *string
     └── Type: *string
+
 augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
 augmentConversionForSku: Interface
+
 augmentConversionForSku_STATUS: Interface
+

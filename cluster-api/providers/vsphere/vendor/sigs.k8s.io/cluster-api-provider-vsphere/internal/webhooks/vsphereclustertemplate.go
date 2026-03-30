@@ -33,12 +33,12 @@ import (
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vsphereclustertemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vsphereclustertemplates,versions=v1beta1,name=validation.vsphereclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-// VSphereClusterTemplateWebhook implements a validation and defaulting webhook for VSphereClusterTemplate.
-type VSphereClusterTemplateWebhook struct{}
+// VSphereClusterTemplate implements a validation webhook for VSphereClusterTemplate.
+type VSphereClusterTemplate struct{}
 
-var _ webhook.CustomValidator = &VSphereClusterTemplateWebhook{}
+var _ webhook.CustomValidator = &VSphereClusterTemplate{}
 
-func (webhook *VSphereClusterTemplateWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (webhook *VSphereClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereClusterTemplate{}).
 		WithValidator(webhook).
@@ -46,12 +46,12 @@ func (webhook *VSphereClusterTemplateWebhook) SetupWebhookWithManager(mgr ctrl.M
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereClusterTemplateWebhook) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereClusterTemplate) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereClusterTemplateWebhook) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereClusterTemplate) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
 	oldTyped, ok := oldRaw.(*infrav1.VSphereClusterTemplate)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereClusterTemplate but got a %T", oldRaw))
@@ -67,6 +67,6 @@ func (webhook *VSphereClusterTemplateWebhook) ValidateUpdate(_ context.Context, 
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereClusterTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereClusterTemplate) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

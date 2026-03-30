@@ -24,7 +24,7 @@ var (
 type IPAddressAllocation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	
+
 	Spec   IPAddressAllocationSpec   `json:"spec"`
 	Status IPAddressAllocationStatus `json:"status,omitempty"`
 }

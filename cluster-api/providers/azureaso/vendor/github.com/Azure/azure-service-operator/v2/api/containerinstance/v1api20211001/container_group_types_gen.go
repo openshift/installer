@@ -7,19 +7,16 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -71,29 +68,6 @@ func (group *ContainerGroup) ConvertTo(hub conversion.Hub) error {
 
 	return group.AssignProperties_To_ContainerGroup(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-containerinstance-azure-com-v1api20211001-containergroup,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerinstance.azure.com,resources=containergroups,verbs=create;update,versions=v1api20211001,name=default.v1api20211001.containergroups.containerinstance.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ContainerGroup{}
-
-// Default applies defaults to the ContainerGroup resource
-func (group *ContainerGroup) Default() {
-	group.defaultImpl()
-	var temp any = group
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (group *ContainerGroup) defaultAzureName() {
-	if group.Spec.AzureName == "" {
-		group.Spec.AzureName = group.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ContainerGroup resource
-func (group *ContainerGroup) defaultImpl() { group.defaultAzureName() }
 
 var _ configmaps.Exporter = &ContainerGroup{}
 
@@ -174,6 +148,10 @@ func (group *ContainerGroup) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (group *ContainerGroup) Owner() *genruntime.ResourceReference {
+	if group.Spec.Owner == nil {
+		return nil
+	}
+
 	ownerGroup, ownerKind := genruntime.LookupOwnerGroupKind(group.Spec)
 	return group.Spec.Owner.AsResourceReference(ownerGroup, ownerKind)
 }
@@ -190,114 +168,11 @@ func (group *ContainerGroup) SetStatus(status genruntime.ConvertibleStatus) erro
 	var st ContainerGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-containerinstance-azure-com-v1api20211001-containergroup,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerinstance.azure.com,resources=containergroups,verbs=create;update,versions=v1api20211001,name=validate.v1api20211001.containergroups.containerinstance.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ContainerGroup{}
-
-// ValidateCreate validates the creation of the resource
-func (group *ContainerGroup) ValidateCreate() (admission.Warnings, error) {
-	validations := group.createValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (group *ContainerGroup) ValidateDelete() (admission.Warnings, error) {
-	validations := group.deleteValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (group *ContainerGroup) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := group.updateValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (group *ContainerGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (group *ContainerGroup) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (group *ContainerGroup) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateResourceReferences()
-		},
-		group.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (group *ContainerGroup) validateConfigMapDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (group *ContainerGroup) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(group)
-}
-
-// validateResourceReferences validates all resource references
-func (group *ContainerGroup) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&group.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (group *ContainerGroup) validateSecretDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (group *ContainerGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ContainerGroup)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, group)
 }
 
 // AssignProperties_From_ContainerGroup populates our ContainerGroup from the provided source ContainerGroup
@@ -310,7 +185,7 @@ func (group *ContainerGroup) AssignProperties_From_ContainerGroup(source *storag
 	var spec ContainerGroup_Spec
 	err := spec.AssignProperties_From_ContainerGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ContainerGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ContainerGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
@@ -318,7 +193,7 @@ func (group *ContainerGroup) AssignProperties_From_ContainerGroup(source *storag
 	var status ContainerGroup_STATUS
 	err = status.AssignProperties_From_ContainerGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ContainerGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ContainerGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -336,7 +211,7 @@ func (group *ContainerGroup) AssignProperties_To_ContainerGroup(destination *sto
 	var spec storage.ContainerGroup_Spec
 	err := group.Spec.AssignProperties_To_ContainerGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ContainerGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ContainerGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (group *ContainerGroup) AssignProperties_To_ContainerGroup(destination *sto
 	var status storage.ContainerGroup_STATUS
 	err = group.Status.AssignProperties_To_ContainerGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ContainerGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ContainerGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -814,13 +689,13 @@ func (group *ContainerGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleS
 	src = &storage.ContainerGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_ContainerGroup_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -838,13 +713,13 @@ func (group *ContainerGroup_Spec) ConvertSpecTo(destination genruntime.Convertib
 	dst = &storage.ContainerGroup_Spec{}
 	err := group.AssignProperties_To_ContainerGroup_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -865,7 +740,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 			var container Container
 			err := container.AssignProperties_From_Container(&containerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Container() to populate field Containers")
+				return eris.Wrap(err, "calling AssignProperties_From_Container() to populate field Containers")
 			}
 			containerList[containerIndex] = container
 		}
@@ -879,7 +754,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 		var diagnostic ContainerGroupDiagnostics
 		err := diagnostic.AssignProperties_From_ContainerGroupDiagnostics(source.Diagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupDiagnostics() to populate field Diagnostics")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupDiagnostics() to populate field Diagnostics")
 		}
 		group.Diagnostics = &diagnostic
 	} else {
@@ -891,7 +766,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 		var dnsConfig DnsConfiguration
 		err := dnsConfig.AssignProperties_From_DnsConfiguration(source.DnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsConfiguration() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_DnsConfiguration() to populate field DnsConfig")
 		}
 		group.DnsConfig = &dnsConfig
 	} else {
@@ -903,7 +778,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 		var encryptionProperty EncryptionProperties
 		err := encryptionProperty.AssignProperties_From_EncryptionProperties(source.EncryptionProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionProperties() to populate field EncryptionProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionProperties() to populate field EncryptionProperties")
 		}
 		group.EncryptionProperties = &encryptionProperty
 	} else {
@@ -915,7 +790,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 		var identity ContainerGroupIdentity
 		err := identity.AssignProperties_From_ContainerGroupIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupIdentity() to populate field Identity")
 		}
 		group.Identity = &identity
 	} else {
@@ -931,7 +806,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 			var imageRegistryCredential ImageRegistryCredential
 			err := imageRegistryCredential.AssignProperties_From_ImageRegistryCredential(&imageRegistryCredentialItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ImageRegistryCredential() to populate field ImageRegistryCredentials")
+				return eris.Wrap(err, "calling AssignProperties_From_ImageRegistryCredential() to populate field ImageRegistryCredentials")
 			}
 			imageRegistryCredentialList[imageRegistryCredentialIndex] = imageRegistryCredential
 		}
@@ -949,7 +824,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 			var initContainer InitContainerDefinition
 			err := initContainer.AssignProperties_From_InitContainerDefinition(&initContainerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InitContainerDefinition() to populate field InitContainers")
+				return eris.Wrap(err, "calling AssignProperties_From_InitContainerDefinition() to populate field InitContainers")
 			}
 			initContainerList[initContainerIndex] = initContainer
 		}
@@ -963,7 +838,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 		var ipAddress IpAddress
 		err := ipAddress.AssignProperties_From_IpAddress(source.IpAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IpAddress() to populate field IpAddress")
+			return eris.Wrap(err, "calling AssignProperties_From_IpAddress() to populate field IpAddress")
 		}
 		group.IpAddress = &ipAddress
 	} else {
@@ -978,7 +853,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 		var operatorSpec ContainerGroupOperatorSpec
 		err := operatorSpec.AssignProperties_From_ContainerGroupOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		group.OperatorSpec = &operatorSpec
 	} else {
@@ -1029,7 +904,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 			var subnetId ContainerGroupSubnetId
 			err := subnetId.AssignProperties_From_ContainerGroupSubnetId(&subnetIdItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupSubnetId() to populate field SubnetIds")
+				return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupSubnetId() to populate field SubnetIds")
 			}
 			subnetIdList[subnetIdIndex] = subnetId
 		}
@@ -1050,7 +925,7 @@ func (group *ContainerGroup_Spec) AssignProperties_From_ContainerGroup_Spec(sour
 			var volume Volume
 			err := volume.AssignProperties_From_Volume(&volumeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Volume() to populate field Volumes")
+				return eris.Wrap(err, "calling AssignProperties_From_Volume() to populate field Volumes")
 			}
 			volumeList[volumeIndex] = volume
 		}
@@ -1083,7 +958,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 			var container storage.Container
 			err := containerItem.AssignProperties_To_Container(&container)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Container() to populate field Containers")
+				return eris.Wrap(err, "calling AssignProperties_To_Container() to populate field Containers")
 			}
 			containerList[containerIndex] = container
 		}
@@ -1097,7 +972,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 		var diagnostic storage.ContainerGroupDiagnostics
 		err := group.Diagnostics.AssignProperties_To_ContainerGroupDiagnostics(&diagnostic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupDiagnostics() to populate field Diagnostics")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupDiagnostics() to populate field Diagnostics")
 		}
 		destination.Diagnostics = &diagnostic
 	} else {
@@ -1109,7 +984,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 		var dnsConfig storage.DnsConfiguration
 		err := group.DnsConfig.AssignProperties_To_DnsConfiguration(&dnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsConfiguration() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_DnsConfiguration() to populate field DnsConfig")
 		}
 		destination.DnsConfig = &dnsConfig
 	} else {
@@ -1121,7 +996,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 		var encryptionProperty storage.EncryptionProperties
 		err := group.EncryptionProperties.AssignProperties_To_EncryptionProperties(&encryptionProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionProperties() to populate field EncryptionProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionProperties() to populate field EncryptionProperties")
 		}
 		destination.EncryptionProperties = &encryptionProperty
 	} else {
@@ -1133,7 +1008,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 		var identity storage.ContainerGroupIdentity
 		err := group.Identity.AssignProperties_To_ContainerGroupIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1149,7 +1024,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 			var imageRegistryCredential storage.ImageRegistryCredential
 			err := imageRegistryCredentialItem.AssignProperties_To_ImageRegistryCredential(&imageRegistryCredential)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ImageRegistryCredential() to populate field ImageRegistryCredentials")
+				return eris.Wrap(err, "calling AssignProperties_To_ImageRegistryCredential() to populate field ImageRegistryCredentials")
 			}
 			imageRegistryCredentialList[imageRegistryCredentialIndex] = imageRegistryCredential
 		}
@@ -1167,7 +1042,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 			var initContainer storage.InitContainerDefinition
 			err := initContainerItem.AssignProperties_To_InitContainerDefinition(&initContainer)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InitContainerDefinition() to populate field InitContainers")
+				return eris.Wrap(err, "calling AssignProperties_To_InitContainerDefinition() to populate field InitContainers")
 			}
 			initContainerList[initContainerIndex] = initContainer
 		}
@@ -1181,7 +1056,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 		var ipAddress storage.IpAddress
 		err := group.IpAddress.AssignProperties_To_IpAddress(&ipAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IpAddress() to populate field IpAddress")
+			return eris.Wrap(err, "calling AssignProperties_To_IpAddress() to populate field IpAddress")
 		}
 		destination.IpAddress = &ipAddress
 	} else {
@@ -1196,7 +1071,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 		var operatorSpec storage.ContainerGroupOperatorSpec
 		err := group.OperatorSpec.AssignProperties_To_ContainerGroupOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1247,7 +1122,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 			var subnetId storage.ContainerGroupSubnetId
 			err := subnetIdItem.AssignProperties_To_ContainerGroupSubnetId(&subnetId)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupSubnetId() to populate field SubnetIds")
+				return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupSubnetId() to populate field SubnetIds")
 			}
 			subnetIdList[subnetIdIndex] = subnetId
 		}
@@ -1268,7 +1143,7 @@ func (group *ContainerGroup_Spec) AssignProperties_To_ContainerGroup_Spec(destin
 			var volume storage.Volume
 			err := volumeItem.AssignProperties_To_Volume(&volume)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Volume() to populate field Volumes")
+				return eris.Wrap(err, "calling AssignProperties_To_Volume() to populate field Volumes")
 			}
 			volumeList[volumeIndex] = volume
 		}
@@ -1303,7 +1178,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 			var container Container
 			err := container.Initialize_From_Container_STATUS(&containerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_Container_STATUS() to populate field Containers")
+				return eris.Wrap(err, "calling Initialize_From_Container_STATUS() to populate field Containers")
 			}
 			containerList[containerIndex] = container
 		}
@@ -1317,7 +1192,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 		var diagnostic ContainerGroupDiagnostics
 		err := diagnostic.Initialize_From_ContainerGroupDiagnostics_STATUS(source.Diagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerGroupDiagnostics_STATUS() to populate field Diagnostics")
+			return eris.Wrap(err, "calling Initialize_From_ContainerGroupDiagnostics_STATUS() to populate field Diagnostics")
 		}
 		group.Diagnostics = &diagnostic
 	} else {
@@ -1329,7 +1204,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 		var dnsConfig DnsConfiguration
 		err := dnsConfig.Initialize_From_DnsConfiguration_STATUS(source.DnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DnsConfiguration_STATUS() to populate field DnsConfig")
+			return eris.Wrap(err, "calling Initialize_From_DnsConfiguration_STATUS() to populate field DnsConfig")
 		}
 		group.DnsConfig = &dnsConfig
 	} else {
@@ -1341,7 +1216,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 		var encryptionProperty EncryptionProperties
 		err := encryptionProperty.Initialize_From_EncryptionProperties_STATUS(source.EncryptionProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EncryptionProperties_STATUS() to populate field EncryptionProperties")
+			return eris.Wrap(err, "calling Initialize_From_EncryptionProperties_STATUS() to populate field EncryptionProperties")
 		}
 		group.EncryptionProperties = &encryptionProperty
 	} else {
@@ -1353,7 +1228,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 		var identity ContainerGroupIdentity
 		err := identity.Initialize_From_ContainerGroupIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerGroupIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_ContainerGroupIdentity_STATUS() to populate field Identity")
 		}
 		group.Identity = &identity
 	} else {
@@ -1369,7 +1244,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 			var imageRegistryCredential ImageRegistryCredential
 			err := imageRegistryCredential.Initialize_From_ImageRegistryCredential_STATUS(&imageRegistryCredentialItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ImageRegistryCredential_STATUS() to populate field ImageRegistryCredentials")
+				return eris.Wrap(err, "calling Initialize_From_ImageRegistryCredential_STATUS() to populate field ImageRegistryCredentials")
 			}
 			imageRegistryCredentialList[imageRegistryCredentialIndex] = imageRegistryCredential
 		}
@@ -1387,7 +1262,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 			var initContainer InitContainerDefinition
 			err := initContainer.Initialize_From_InitContainerDefinition_STATUS(&initContainerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_InitContainerDefinition_STATUS() to populate field InitContainers")
+				return eris.Wrap(err, "calling Initialize_From_InitContainerDefinition_STATUS() to populate field InitContainers")
 			}
 			initContainerList[initContainerIndex] = initContainer
 		}
@@ -1401,7 +1276,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 		var ipAddress IpAddress
 		err := ipAddress.Initialize_From_IpAddress_STATUS(source.IpAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_IpAddress_STATUS() to populate field IpAddress")
+			return eris.Wrap(err, "calling Initialize_From_IpAddress_STATUS() to populate field IpAddress")
 		}
 		group.IpAddress = &ipAddress
 	} else {
@@ -1444,7 +1319,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 			var subnetId ContainerGroupSubnetId
 			err := subnetId.Initialize_From_ContainerGroupSubnetId_STATUS(&subnetIdItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ContainerGroupSubnetId_STATUS() to populate field SubnetIds")
+				return eris.Wrap(err, "calling Initialize_From_ContainerGroupSubnetId_STATUS() to populate field SubnetIds")
 			}
 			subnetIdList[subnetIdIndex] = subnetId
 		}
@@ -1465,7 +1340,7 @@ func (group *ContainerGroup_Spec) Initialize_From_ContainerGroup_STATUS(source *
 			var volume Volume
 			err := volume.Initialize_From_Volume_STATUS(&volumeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_Volume_STATUS() to populate field Volumes")
+				return eris.Wrap(err, "calling Initialize_From_Volume_STATUS() to populate field Volumes")
 			}
 			volumeList[volumeIndex] = volume
 		}
@@ -1575,13 +1450,13 @@ func (group *ContainerGroup_STATUS) ConvertStatusFrom(source genruntime.Converti
 	src = &storage.ContainerGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_ContainerGroup_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1599,13 +1474,13 @@ func (group *ContainerGroup_STATUS) ConvertStatusTo(destination genruntime.Conve
 	dst = &storage.ContainerGroup_STATUS{}
 	err := group.AssignProperties_To_ContainerGroup_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1871,7 +1746,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 			var container Container_STATUS
 			err := container.AssignProperties_From_Container_STATUS(&containerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Container_STATUS() to populate field Containers")
+				return eris.Wrap(err, "calling AssignProperties_From_Container_STATUS() to populate field Containers")
 			}
 			containerList[containerIndex] = container
 		}
@@ -1885,7 +1760,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 		var diagnostic ContainerGroupDiagnostics_STATUS
 		err := diagnostic.AssignProperties_From_ContainerGroupDiagnostics_STATUS(source.Diagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupDiagnostics_STATUS() to populate field Diagnostics")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupDiagnostics_STATUS() to populate field Diagnostics")
 		}
 		group.Diagnostics = &diagnostic
 	} else {
@@ -1897,7 +1772,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 		var dnsConfig DnsConfiguration_STATUS
 		err := dnsConfig.AssignProperties_From_DnsConfiguration_STATUS(source.DnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsConfiguration_STATUS() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_DnsConfiguration_STATUS() to populate field DnsConfig")
 		}
 		group.DnsConfig = &dnsConfig
 	} else {
@@ -1909,7 +1784,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 		var encryptionProperty EncryptionProperties_STATUS
 		err := encryptionProperty.AssignProperties_From_EncryptionProperties_STATUS(source.EncryptionProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionProperties_STATUS() to populate field EncryptionProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionProperties_STATUS() to populate field EncryptionProperties")
 		}
 		group.EncryptionProperties = &encryptionProperty
 	} else {
@@ -1924,7 +1799,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 		var identity ContainerGroupIdentity_STATUS
 		err := identity.AssignProperties_From_ContainerGroupIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupIdentity_STATUS() to populate field Identity")
 		}
 		group.Identity = &identity
 	} else {
@@ -1940,7 +1815,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 			var imageRegistryCredential ImageRegistryCredential_STATUS
 			err := imageRegistryCredential.AssignProperties_From_ImageRegistryCredential_STATUS(&imageRegistryCredentialItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ImageRegistryCredential_STATUS() to populate field ImageRegistryCredentials")
+				return eris.Wrap(err, "calling AssignProperties_From_ImageRegistryCredential_STATUS() to populate field ImageRegistryCredentials")
 			}
 			imageRegistryCredentialList[imageRegistryCredentialIndex] = imageRegistryCredential
 		}
@@ -1958,7 +1833,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 			var initContainer InitContainerDefinition_STATUS
 			err := initContainer.AssignProperties_From_InitContainerDefinition_STATUS(&initContainerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InitContainerDefinition_STATUS() to populate field InitContainers")
+				return eris.Wrap(err, "calling AssignProperties_From_InitContainerDefinition_STATUS() to populate field InitContainers")
 			}
 			initContainerList[initContainerIndex] = initContainer
 		}
@@ -1972,7 +1847,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 		var instanceView ContainerGroup_Properties_InstanceView_STATUS
 		err := instanceView.AssignProperties_From_ContainerGroup_Properties_InstanceView_STATUS(source.InstanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerGroup_Properties_InstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerGroup_Properties_InstanceView_STATUS() to populate field InstanceView")
 		}
 		group.InstanceView = &instanceView
 	} else {
@@ -1984,7 +1859,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 		var ipAddress IpAddress_STATUS
 		err := ipAddress.AssignProperties_From_IpAddress_STATUS(source.IpAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IpAddress_STATUS() to populate field IpAddress")
+			return eris.Wrap(err, "calling AssignProperties_From_IpAddress_STATUS() to populate field IpAddress")
 		}
 		group.IpAddress = &ipAddress
 	} else {
@@ -2036,7 +1911,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 			var subnetId ContainerGroupSubnetId_STATUS
 			err := subnetId.AssignProperties_From_ContainerGroupSubnetId_STATUS(&subnetIdItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ContainerGroupSubnetId_STATUS() to populate field SubnetIds")
+				return eris.Wrap(err, "calling AssignProperties_From_ContainerGroupSubnetId_STATUS() to populate field SubnetIds")
 			}
 			subnetIdList[subnetIdIndex] = subnetId
 		}
@@ -2060,7 +1935,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_From_ContainerGroup_STATUS(
 			var volume Volume_STATUS
 			err := volume.AssignProperties_From_Volume_STATUS(&volumeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Volume_STATUS() to populate field Volumes")
+				return eris.Wrap(err, "calling AssignProperties_From_Volume_STATUS() to populate field Volumes")
 			}
 			volumeList[volumeIndex] = volume
 		}
@@ -2093,7 +1968,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 			var container storage.Container_STATUS
 			err := containerItem.AssignProperties_To_Container_STATUS(&container)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Container_STATUS() to populate field Containers")
+				return eris.Wrap(err, "calling AssignProperties_To_Container_STATUS() to populate field Containers")
 			}
 			containerList[containerIndex] = container
 		}
@@ -2107,7 +1982,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 		var diagnostic storage.ContainerGroupDiagnostics_STATUS
 		err := group.Diagnostics.AssignProperties_To_ContainerGroupDiagnostics_STATUS(&diagnostic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupDiagnostics_STATUS() to populate field Diagnostics")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupDiagnostics_STATUS() to populate field Diagnostics")
 		}
 		destination.Diagnostics = &diagnostic
 	} else {
@@ -2119,7 +1994,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 		var dnsConfig storage.DnsConfiguration_STATUS
 		err := group.DnsConfig.AssignProperties_To_DnsConfiguration_STATUS(&dnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsConfiguration_STATUS() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_DnsConfiguration_STATUS() to populate field DnsConfig")
 		}
 		destination.DnsConfig = &dnsConfig
 	} else {
@@ -2131,7 +2006,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 		var encryptionProperty storage.EncryptionProperties_STATUS
 		err := group.EncryptionProperties.AssignProperties_To_EncryptionProperties_STATUS(&encryptionProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionProperties_STATUS() to populate field EncryptionProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionProperties_STATUS() to populate field EncryptionProperties")
 		}
 		destination.EncryptionProperties = &encryptionProperty
 	} else {
@@ -2146,7 +2021,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 		var identity storage.ContainerGroupIdentity_STATUS
 		err := group.Identity.AssignProperties_To_ContainerGroupIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2162,7 +2037,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 			var imageRegistryCredential storage.ImageRegistryCredential_STATUS
 			err := imageRegistryCredentialItem.AssignProperties_To_ImageRegistryCredential_STATUS(&imageRegistryCredential)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ImageRegistryCredential_STATUS() to populate field ImageRegistryCredentials")
+				return eris.Wrap(err, "calling AssignProperties_To_ImageRegistryCredential_STATUS() to populate field ImageRegistryCredentials")
 			}
 			imageRegistryCredentialList[imageRegistryCredentialIndex] = imageRegistryCredential
 		}
@@ -2180,7 +2055,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 			var initContainer storage.InitContainerDefinition_STATUS
 			err := initContainerItem.AssignProperties_To_InitContainerDefinition_STATUS(&initContainer)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InitContainerDefinition_STATUS() to populate field InitContainers")
+				return eris.Wrap(err, "calling AssignProperties_To_InitContainerDefinition_STATUS() to populate field InitContainers")
 			}
 			initContainerList[initContainerIndex] = initContainer
 		}
@@ -2194,7 +2069,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 		var instanceView storage.ContainerGroup_Properties_InstanceView_STATUS
 		err := group.InstanceView.AssignProperties_To_ContainerGroup_Properties_InstanceView_STATUS(&instanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerGroup_Properties_InstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerGroup_Properties_InstanceView_STATUS() to populate field InstanceView")
 		}
 		destination.InstanceView = &instanceView
 	} else {
@@ -2206,7 +2081,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 		var ipAddress storage.IpAddress_STATUS
 		err := group.IpAddress.AssignProperties_To_IpAddress_STATUS(&ipAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IpAddress_STATUS() to populate field IpAddress")
+			return eris.Wrap(err, "calling AssignProperties_To_IpAddress_STATUS() to populate field IpAddress")
 		}
 		destination.IpAddress = &ipAddress
 	} else {
@@ -2255,7 +2130,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 			var subnetId storage.ContainerGroupSubnetId_STATUS
 			err := subnetIdItem.AssignProperties_To_ContainerGroupSubnetId_STATUS(&subnetId)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ContainerGroupSubnetId_STATUS() to populate field SubnetIds")
+				return eris.Wrap(err, "calling AssignProperties_To_ContainerGroupSubnetId_STATUS() to populate field SubnetIds")
 			}
 			subnetIdList[subnetIdIndex] = subnetId
 		}
@@ -2279,7 +2154,7 @@ func (group *ContainerGroup_STATUS) AssignProperties_To_ContainerGroup_STATUS(de
 			var volume storage.Volume_STATUS
 			err := volumeItem.AssignProperties_To_Volume_STATUS(&volume)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Volume_STATUS() to populate field Volumes")
+				return eris.Wrap(err, "calling AssignProperties_To_Volume_STATUS() to populate field Volumes")
 			}
 			volumeList[volumeIndex] = volume
 		}
@@ -2551,7 +2426,7 @@ func (container *Container) AssignProperties_From_Container(source *storage.Cont
 			var environmentVariable EnvironmentVariable
 			err := environmentVariable.AssignProperties_From_EnvironmentVariable(&environmentVariableItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_EnvironmentVariable() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_From_EnvironmentVariable() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -2568,7 +2443,7 @@ func (container *Container) AssignProperties_From_Container(source *storage.Cont
 		var livenessProbe ContainerProbe
 		err := livenessProbe.AssignProperties_From_ContainerProbe(source.LivenessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerProbe() to populate field LivenessProbe")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerProbe() to populate field LivenessProbe")
 		}
 		container.LivenessProbe = &livenessProbe
 	} else {
@@ -2587,7 +2462,7 @@ func (container *Container) AssignProperties_From_Container(source *storage.Cont
 			var port ContainerPort
 			err := port.AssignProperties_From_ContainerPort(&portItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ContainerPort() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_From_ContainerPort() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -2601,7 +2476,7 @@ func (container *Container) AssignProperties_From_Container(source *storage.Cont
 		var readinessProbe ContainerProbe
 		err := readinessProbe.AssignProperties_From_ContainerProbe(source.ReadinessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerProbe() to populate field ReadinessProbe")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerProbe() to populate field ReadinessProbe")
 		}
 		container.ReadinessProbe = &readinessProbe
 	} else {
@@ -2613,7 +2488,7 @@ func (container *Container) AssignProperties_From_Container(source *storage.Cont
 		var resource ResourceRequirements
 		err := resource.AssignProperties_From_ResourceRequirements(source.Resources)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceRequirements() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceRequirements() to populate field Resources")
 		}
 		container.Resources = &resource
 	} else {
@@ -2629,7 +2504,7 @@ func (container *Container) AssignProperties_From_Container(source *storage.Cont
 			var volumeMount VolumeMount
 			err := volumeMount.AssignProperties_From_VolumeMount(&volumeMountItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VolumeMount() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_From_VolumeMount() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -2659,7 +2534,7 @@ func (container *Container) AssignProperties_To_Container(destination *storage.C
 			var environmentVariable storage.EnvironmentVariable
 			err := environmentVariableItem.AssignProperties_To_EnvironmentVariable(&environmentVariable)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_EnvironmentVariable() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_To_EnvironmentVariable() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -2676,7 +2551,7 @@ func (container *Container) AssignProperties_To_Container(destination *storage.C
 		var livenessProbe storage.ContainerProbe
 		err := container.LivenessProbe.AssignProperties_To_ContainerProbe(&livenessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerProbe() to populate field LivenessProbe")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerProbe() to populate field LivenessProbe")
 		}
 		destination.LivenessProbe = &livenessProbe
 	} else {
@@ -2695,7 +2570,7 @@ func (container *Container) AssignProperties_To_Container(destination *storage.C
 			var port storage.ContainerPort
 			err := portItem.AssignProperties_To_ContainerPort(&port)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ContainerPort() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_To_ContainerPort() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -2709,7 +2584,7 @@ func (container *Container) AssignProperties_To_Container(destination *storage.C
 		var readinessProbe storage.ContainerProbe
 		err := container.ReadinessProbe.AssignProperties_To_ContainerProbe(&readinessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerProbe() to populate field ReadinessProbe")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerProbe() to populate field ReadinessProbe")
 		}
 		destination.ReadinessProbe = &readinessProbe
 	} else {
@@ -2721,7 +2596,7 @@ func (container *Container) AssignProperties_To_Container(destination *storage.C
 		var resource storage.ResourceRequirements
 		err := container.Resources.AssignProperties_To_ResourceRequirements(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceRequirements() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceRequirements() to populate field Resources")
 		}
 		destination.Resources = &resource
 	} else {
@@ -2737,7 +2612,7 @@ func (container *Container) AssignProperties_To_Container(destination *storage.C
 			var volumeMount storage.VolumeMount
 			err := volumeMountItem.AssignProperties_To_VolumeMount(&volumeMount)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VolumeMount() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_To_VolumeMount() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -2772,7 +2647,7 @@ func (container *Container) Initialize_From_Container_STATUS(source *Container_S
 			var environmentVariable EnvironmentVariable
 			err := environmentVariable.Initialize_From_EnvironmentVariable_STATUS(&environmentVariableItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling Initialize_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -2789,7 +2664,7 @@ func (container *Container) Initialize_From_Container_STATUS(source *Container_S
 		var livenessProbe ContainerProbe
 		err := livenessProbe.Initialize_From_ContainerProbe_STATUS(source.LivenessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerProbe_STATUS() to populate field LivenessProbe")
+			return eris.Wrap(err, "calling Initialize_From_ContainerProbe_STATUS() to populate field LivenessProbe")
 		}
 		container.LivenessProbe = &livenessProbe
 	} else {
@@ -2808,7 +2683,7 @@ func (container *Container) Initialize_From_Container_STATUS(source *Container_S
 			var port ContainerPort
 			err := port.Initialize_From_ContainerPort_STATUS(&portItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ContainerPort_STATUS() to populate field Ports")
+				return eris.Wrap(err, "calling Initialize_From_ContainerPort_STATUS() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -2822,7 +2697,7 @@ func (container *Container) Initialize_From_Container_STATUS(source *Container_S
 		var readinessProbe ContainerProbe
 		err := readinessProbe.Initialize_From_ContainerProbe_STATUS(source.ReadinessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerProbe_STATUS() to populate field ReadinessProbe")
+			return eris.Wrap(err, "calling Initialize_From_ContainerProbe_STATUS() to populate field ReadinessProbe")
 		}
 		container.ReadinessProbe = &readinessProbe
 	} else {
@@ -2834,7 +2709,7 @@ func (container *Container) Initialize_From_Container_STATUS(source *Container_S
 		var resource ResourceRequirements
 		err := resource.Initialize_From_ResourceRequirements_STATUS(source.Resources)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceRequirements_STATUS() to populate field Resources")
+			return eris.Wrap(err, "calling Initialize_From_ResourceRequirements_STATUS() to populate field Resources")
 		}
 		container.Resources = &resource
 	} else {
@@ -2850,7 +2725,7 @@ func (container *Container) Initialize_From_Container_STATUS(source *Container_S
 			var volumeMount VolumeMount
 			err := volumeMount.Initialize_From_VolumeMount_STATUS(&volumeMountItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VolumeMount_STATUS() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling Initialize_From_VolumeMount_STATUS() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -3047,7 +2922,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 			var environmentVariable EnvironmentVariable_STATUS
 			err := environmentVariable.AssignProperties_From_EnvironmentVariable_STATUS(&environmentVariableItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -3064,7 +2939,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 		var instanceView ContainerProperties_InstanceView_STATUS
 		err := instanceView.AssignProperties_From_ContainerProperties_InstanceView_STATUS(source.InstanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerProperties_InstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerProperties_InstanceView_STATUS() to populate field InstanceView")
 		}
 		container.InstanceView = &instanceView
 	} else {
@@ -3076,7 +2951,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 		var livenessProbe ContainerProbe_STATUS
 		err := livenessProbe.AssignProperties_From_ContainerProbe_STATUS(source.LivenessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerProbe_STATUS() to populate field LivenessProbe")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerProbe_STATUS() to populate field LivenessProbe")
 		}
 		container.LivenessProbe = &livenessProbe
 	} else {
@@ -3095,7 +2970,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 			var port ContainerPort_STATUS
 			err := port.AssignProperties_From_ContainerPort_STATUS(&portItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ContainerPort_STATUS() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_From_ContainerPort_STATUS() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -3109,7 +2984,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 		var readinessProbe ContainerProbe_STATUS
 		err := readinessProbe.AssignProperties_From_ContainerProbe_STATUS(source.ReadinessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerProbe_STATUS() to populate field ReadinessProbe")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerProbe_STATUS() to populate field ReadinessProbe")
 		}
 		container.ReadinessProbe = &readinessProbe
 	} else {
@@ -3121,7 +2996,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 		var resource ResourceRequirements_STATUS
 		err := resource.AssignProperties_From_ResourceRequirements_STATUS(source.Resources)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceRequirements_STATUS() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceRequirements_STATUS() to populate field Resources")
 		}
 		container.Resources = &resource
 	} else {
@@ -3137,7 +3012,7 @@ func (container *Container_STATUS) AssignProperties_From_Container_STATUS(source
 			var volumeMount VolumeMount_STATUS
 			err := volumeMount.AssignProperties_From_VolumeMount_STATUS(&volumeMountItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VolumeMount_STATUS() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_From_VolumeMount_STATUS() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -3167,7 +3042,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 			var environmentVariable storage.EnvironmentVariable_STATUS
 			err := environmentVariableItem.AssignProperties_To_EnvironmentVariable_STATUS(&environmentVariable)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_To_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -3184,7 +3059,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 		var instanceView storage.ContainerProperties_InstanceView_STATUS
 		err := container.InstanceView.AssignProperties_To_ContainerProperties_InstanceView_STATUS(&instanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerProperties_InstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerProperties_InstanceView_STATUS() to populate field InstanceView")
 		}
 		destination.InstanceView = &instanceView
 	} else {
@@ -3196,7 +3071,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 		var livenessProbe storage.ContainerProbe_STATUS
 		err := container.LivenessProbe.AssignProperties_To_ContainerProbe_STATUS(&livenessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerProbe_STATUS() to populate field LivenessProbe")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerProbe_STATUS() to populate field LivenessProbe")
 		}
 		destination.LivenessProbe = &livenessProbe
 	} else {
@@ -3215,7 +3090,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 			var port storage.ContainerPort_STATUS
 			err := portItem.AssignProperties_To_ContainerPort_STATUS(&port)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ContainerPort_STATUS() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_To_ContainerPort_STATUS() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -3229,7 +3104,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 		var readinessProbe storage.ContainerProbe_STATUS
 		err := container.ReadinessProbe.AssignProperties_To_ContainerProbe_STATUS(&readinessProbe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerProbe_STATUS() to populate field ReadinessProbe")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerProbe_STATUS() to populate field ReadinessProbe")
 		}
 		destination.ReadinessProbe = &readinessProbe
 	} else {
@@ -3241,7 +3116,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 		var resource storage.ResourceRequirements_STATUS
 		err := container.Resources.AssignProperties_To_ResourceRequirements_STATUS(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceRequirements_STATUS() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceRequirements_STATUS() to populate field Resources")
 		}
 		destination.Resources = &resource
 	} else {
@@ -3257,7 +3132,7 @@ func (container *Container_STATUS) AssignProperties_To_Container_STATUS(destinat
 			var volumeMount storage.VolumeMount_STATUS
 			err := volumeMountItem.AssignProperties_To_VolumeMount_STATUS(&volumeMount)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VolumeMount_STATUS() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_To_VolumeMount_STATUS() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -3331,7 +3206,7 @@ func (view *ContainerGroup_Properties_InstanceView_STATUS) AssignProperties_From
 			var event Event_STATUS
 			err := event.AssignProperties_From_Event_STATUS(&eventItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Event_STATUS() to populate field Events")
+				return eris.Wrap(err, "calling AssignProperties_From_Event_STATUS() to populate field Events")
 			}
 			eventList[eventIndex] = event
 		}
@@ -3361,7 +3236,7 @@ func (view *ContainerGroup_Properties_InstanceView_STATUS) AssignProperties_To_C
 			var event storage.Event_STATUS
 			err := eventItem.AssignProperties_To_Event_STATUS(&event)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Event_STATUS() to populate field Events")
+				return eris.Wrap(err, "calling AssignProperties_To_Event_STATUS() to populate field Events")
 			}
 			eventList[eventIndex] = event
 		}
@@ -3504,7 +3379,7 @@ func (diagnostics *ContainerGroupDiagnostics) AssignProperties_From_ContainerGro
 		var logAnalytic LogAnalytics
 		err := logAnalytic.AssignProperties_From_LogAnalytics(source.LogAnalytics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LogAnalytics() to populate field LogAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_From_LogAnalytics() to populate field LogAnalytics")
 		}
 		diagnostics.LogAnalytics = &logAnalytic
 	} else {
@@ -3525,7 +3400,7 @@ func (diagnostics *ContainerGroupDiagnostics) AssignProperties_To_ContainerGroup
 		var logAnalytic storage.LogAnalytics
 		err := diagnostics.LogAnalytics.AssignProperties_To_LogAnalytics(&logAnalytic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LogAnalytics() to populate field LogAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_To_LogAnalytics() to populate field LogAnalytics")
 		}
 		destination.LogAnalytics = &logAnalytic
 	} else {
@@ -3551,7 +3426,7 @@ func (diagnostics *ContainerGroupDiagnostics) Initialize_From_ContainerGroupDiag
 		var logAnalytic LogAnalytics
 		err := logAnalytic.Initialize_From_LogAnalytics_STATUS(source.LogAnalytics)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_LogAnalytics_STATUS() to populate field LogAnalytics")
+			return eris.Wrap(err, "calling Initialize_From_LogAnalytics_STATUS() to populate field LogAnalytics")
 		}
 		diagnostics.LogAnalytics = &logAnalytic
 	} else {
@@ -3605,7 +3480,7 @@ func (diagnostics *ContainerGroupDiagnostics_STATUS) AssignProperties_From_Conta
 		var logAnalytic LogAnalytics_STATUS
 		err := logAnalytic.AssignProperties_From_LogAnalytics_STATUS(source.LogAnalytics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LogAnalytics_STATUS() to populate field LogAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_From_LogAnalytics_STATUS() to populate field LogAnalytics")
 		}
 		diagnostics.LogAnalytics = &logAnalytic
 	} else {
@@ -3626,7 +3501,7 @@ func (diagnostics *ContainerGroupDiagnostics_STATUS) AssignProperties_To_Contain
 		var logAnalytic storage.LogAnalytics_STATUS
 		err := diagnostics.LogAnalytics.AssignProperties_To_LogAnalytics_STATUS(&logAnalytic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LogAnalytics_STATUS() to populate field LogAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_To_LogAnalytics_STATUS() to populate field LogAnalytics")
 		}
 		destination.LogAnalytics = &logAnalytic
 	} else {
@@ -3732,7 +3607,7 @@ func (identity *ContainerGroupIdentity) AssignProperties_From_ContainerGroupIden
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -3767,7 +3642,7 @@ func (identity *ContainerGroupIdentity) AssignProperties_To_ContainerGroupIdenti
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -3911,7 +3786,7 @@ func (identity *ContainerGroupIdentity_STATUS) AssignProperties_From_ContainerGr
 			var userAssignedIdentity UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -3952,7 +3827,7 @@ func (identity *ContainerGroupIdentity_STATUS) AssignProperties_To_ContainerGrou
 			var userAssignedIdentity storage.UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -4790,7 +4665,7 @@ func (credential *ImageRegistryCredential) ConvertToARM(resolved genruntime.Conv
 	if credential.Password != nil {
 		passwordSecret, err := resolved.ResolvedSecrets.Lookup(*credential.Password)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property Password")
+			return nil, eris.Wrap(err, "looking up secret for property Password")
 		}
 		password := passwordSecret
 		result.Password = &password
@@ -5183,7 +5058,7 @@ func (definition *InitContainerDefinition) AssignProperties_From_InitContainerDe
 			var environmentVariable EnvironmentVariable
 			err := environmentVariable.AssignProperties_From_EnvironmentVariable(&environmentVariableItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_EnvironmentVariable() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_From_EnvironmentVariable() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -5207,7 +5082,7 @@ func (definition *InitContainerDefinition) AssignProperties_From_InitContainerDe
 			var volumeMount VolumeMount
 			err := volumeMount.AssignProperties_From_VolumeMount(&volumeMountItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VolumeMount() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_From_VolumeMount() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -5237,7 +5112,7 @@ func (definition *InitContainerDefinition) AssignProperties_To_InitContainerDefi
 			var environmentVariable storage.EnvironmentVariable
 			err := environmentVariableItem.AssignProperties_To_EnvironmentVariable(&environmentVariable)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_EnvironmentVariable() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_To_EnvironmentVariable() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -5261,7 +5136,7 @@ func (definition *InitContainerDefinition) AssignProperties_To_InitContainerDefi
 			var volumeMount storage.VolumeMount
 			err := volumeMountItem.AssignProperties_To_VolumeMount(&volumeMount)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VolumeMount() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_To_VolumeMount() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -5296,7 +5171,7 @@ func (definition *InitContainerDefinition) Initialize_From_InitContainerDefiniti
 			var environmentVariable EnvironmentVariable
 			err := environmentVariable.Initialize_From_EnvironmentVariable_STATUS(&environmentVariableItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling Initialize_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -5320,7 +5195,7 @@ func (definition *InitContainerDefinition) Initialize_From_InitContainerDefiniti
 			var volumeMount VolumeMount
 			err := volumeMount.Initialize_From_VolumeMount_STATUS(&volumeMountItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VolumeMount_STATUS() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling Initialize_From_VolumeMount_STATUS() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -5450,7 +5325,7 @@ func (definition *InitContainerDefinition_STATUS) AssignProperties_From_InitCont
 			var environmentVariable EnvironmentVariable_STATUS
 			err := environmentVariable.AssignProperties_From_EnvironmentVariable_STATUS(&environmentVariableItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_From_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -5467,7 +5342,7 @@ func (definition *InitContainerDefinition_STATUS) AssignProperties_From_InitCont
 		var instanceView InitContainerPropertiesDefinition_InstanceView_STATUS
 		err := instanceView.AssignProperties_From_InitContainerPropertiesDefinition_InstanceView_STATUS(source.InstanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InitContainerPropertiesDefinition_InstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_From_InitContainerPropertiesDefinition_InstanceView_STATUS() to populate field InstanceView")
 		}
 		definition.InstanceView = &instanceView
 	} else {
@@ -5486,7 +5361,7 @@ func (definition *InitContainerDefinition_STATUS) AssignProperties_From_InitCont
 			var volumeMount VolumeMount_STATUS
 			err := volumeMount.AssignProperties_From_VolumeMount_STATUS(&volumeMountItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VolumeMount_STATUS() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_From_VolumeMount_STATUS() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -5516,7 +5391,7 @@ func (definition *InitContainerDefinition_STATUS) AssignProperties_To_InitContai
 			var environmentVariable storage.EnvironmentVariable_STATUS
 			err := environmentVariableItem.AssignProperties_To_EnvironmentVariable_STATUS(&environmentVariable)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
+				return eris.Wrap(err, "calling AssignProperties_To_EnvironmentVariable_STATUS() to populate field EnvironmentVariables")
 			}
 			environmentVariableList[environmentVariableIndex] = environmentVariable
 		}
@@ -5533,7 +5408,7 @@ func (definition *InitContainerDefinition_STATUS) AssignProperties_To_InitContai
 		var instanceView storage.InitContainerPropertiesDefinition_InstanceView_STATUS
 		err := definition.InstanceView.AssignProperties_To_InitContainerPropertiesDefinition_InstanceView_STATUS(&instanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InitContainerPropertiesDefinition_InstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_To_InitContainerPropertiesDefinition_InstanceView_STATUS() to populate field InstanceView")
 		}
 		destination.InstanceView = &instanceView
 	} else {
@@ -5552,7 +5427,7 @@ func (definition *InitContainerDefinition_STATUS) AssignProperties_To_InitContai
 			var volumeMount storage.VolumeMount_STATUS
 			err := volumeMountItem.AssignProperties_To_VolumeMount_STATUS(&volumeMount)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VolumeMount_STATUS() to populate field VolumeMounts")
+				return eris.Wrap(err, "calling AssignProperties_To_VolumeMount_STATUS() to populate field VolumeMounts")
 			}
 			volumeMountList[volumeMountIndex] = volumeMount
 		}
@@ -5727,7 +5602,7 @@ func (address *IpAddress) AssignProperties_From_IpAddress(source *storage.IpAddr
 			var port Port
 			err := port.AssignProperties_From_Port(&portItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Port() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_From_Port() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -5777,7 +5652,7 @@ func (address *IpAddress) AssignProperties_To_IpAddress(destination *storage.IpA
 			var port storage.Port
 			err := portItem.AssignProperties_To_Port(&port)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Port() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_To_Port() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -5831,7 +5706,7 @@ func (address *IpAddress) Initialize_From_IpAddress_STATUS(source *IpAddress_STA
 			var port Port
 			err := port.Initialize_From_Port_STATUS(&portItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_Port_STATUS() to populate field Ports")
+				return eris.Wrap(err, "calling Initialize_From_Port_STATUS() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -5971,7 +5846,7 @@ func (address *IpAddress_STATUS) AssignProperties_From_IpAddress_STATUS(source *
 			var port Port_STATUS
 			err := port.AssignProperties_From_Port_STATUS(&portItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Port_STATUS() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_From_Port_STATUS() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -6024,7 +5899,7 @@ func (address *IpAddress_STATUS) AssignProperties_To_IpAddress_STATUS(destinatio
 			var port storage.Port_STATUS
 			err := portItem.AssignProperties_To_Port_STATUS(&port)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Port_STATUS() to populate field Ports")
+				return eris.Wrap(err, "calling AssignProperties_To_Port_STATUS() to populate field Ports")
 			}
 			portList[portIndex] = port
 		}
@@ -6192,7 +6067,7 @@ func (volume *Volume) AssignProperties_From_Volume(source *storage.Volume) error
 		var azureFile AzureFileVolume
 		err := azureFile.AssignProperties_From_AzureFileVolume(source.AzureFile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureFileVolume() to populate field AzureFile")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureFileVolume() to populate field AzureFile")
 		}
 		volume.AzureFile = &azureFile
 	} else {
@@ -6217,7 +6092,7 @@ func (volume *Volume) AssignProperties_From_Volume(source *storage.Volume) error
 		var gitRepo GitRepoVolume
 		err := gitRepo.AssignProperties_From_GitRepoVolume(source.GitRepo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GitRepoVolume() to populate field GitRepo")
+			return eris.Wrap(err, "calling AssignProperties_From_GitRepoVolume() to populate field GitRepo")
 		}
 		volume.GitRepo = &gitRepo
 	} else {
@@ -6244,7 +6119,7 @@ func (volume *Volume) AssignProperties_To_Volume(destination *storage.Volume) er
 		var azureFile storage.AzureFileVolume
 		err := volume.AzureFile.AssignProperties_To_AzureFileVolume(&azureFile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureFileVolume() to populate field AzureFile")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureFileVolume() to populate field AzureFile")
 		}
 		destination.AzureFile = &azureFile
 	} else {
@@ -6269,7 +6144,7 @@ func (volume *Volume) AssignProperties_To_Volume(destination *storage.Volume) er
 		var gitRepo storage.GitRepoVolume
 		err := volume.GitRepo.AssignProperties_To_GitRepoVolume(&gitRepo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GitRepoVolume() to populate field GitRepo")
+			return eris.Wrap(err, "calling AssignProperties_To_GitRepoVolume() to populate field GitRepo")
 		}
 		destination.GitRepo = &gitRepo
 	} else {
@@ -6301,7 +6176,7 @@ func (volume *Volume) Initialize_From_Volume_STATUS(source *Volume_STATUS) error
 		var azureFile AzureFileVolume
 		err := azureFile.Initialize_From_AzureFileVolume_STATUS(source.AzureFile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AzureFileVolume_STATUS() to populate field AzureFile")
+			return eris.Wrap(err, "calling Initialize_From_AzureFileVolume_STATUS() to populate field AzureFile")
 		}
 		volume.AzureFile = &azureFile
 	} else {
@@ -6326,7 +6201,7 @@ func (volume *Volume) Initialize_From_Volume_STATUS(source *Volume_STATUS) error
 		var gitRepo GitRepoVolume
 		err := gitRepo.Initialize_From_GitRepoVolume_STATUS(source.GitRepo)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_GitRepoVolume_STATUS() to populate field GitRepo")
+			return eris.Wrap(err, "calling Initialize_From_GitRepoVolume_STATUS() to populate field GitRepo")
 		}
 		volume.GitRepo = &gitRepo
 	} else {
@@ -6431,7 +6306,7 @@ func (volume *Volume_STATUS) AssignProperties_From_Volume_STATUS(source *storage
 		var azureFile AzureFileVolume_STATUS
 		err := azureFile.AssignProperties_From_AzureFileVolume_STATUS(source.AzureFile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureFileVolume_STATUS() to populate field AzureFile")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureFileVolume_STATUS() to populate field AzureFile")
 		}
 		volume.AzureFile = &azureFile
 	} else {
@@ -6456,7 +6331,7 @@ func (volume *Volume_STATUS) AssignProperties_From_Volume_STATUS(source *storage
 		var gitRepo GitRepoVolume_STATUS
 		err := gitRepo.AssignProperties_From_GitRepoVolume_STATUS(source.GitRepo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GitRepoVolume_STATUS() to populate field GitRepo")
+			return eris.Wrap(err, "calling AssignProperties_From_GitRepoVolume_STATUS() to populate field GitRepo")
 		}
 		volume.GitRepo = &gitRepo
 	} else {
@@ -6483,7 +6358,7 @@ func (volume *Volume_STATUS) AssignProperties_To_Volume_STATUS(destination *stor
 		var azureFile storage.AzureFileVolume_STATUS
 		err := volume.AzureFile.AssignProperties_To_AzureFileVolume_STATUS(&azureFile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureFileVolume_STATUS() to populate field AzureFile")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureFileVolume_STATUS() to populate field AzureFile")
 		}
 		destination.AzureFile = &azureFile
 	} else {
@@ -6508,7 +6383,7 @@ func (volume *Volume_STATUS) AssignProperties_To_Volume_STATUS(destination *stor
 		var gitRepo storage.GitRepoVolume_STATUS
 		err := volume.GitRepo.AssignProperties_To_GitRepoVolume_STATUS(&gitRepo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GitRepoVolume_STATUS() to populate field GitRepo")
+			return eris.Wrap(err, "calling AssignProperties_To_GitRepoVolume_STATUS() to populate field GitRepo")
 		}
 		destination.GitRepo = &gitRepo
 	} else {
@@ -7231,7 +7106,7 @@ func (probe *ContainerProbe) AssignProperties_From_ContainerProbe(source *storag
 		var exec ContainerExec
 		err := exec.AssignProperties_From_ContainerExec(source.Exec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerExec() to populate field Exec")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerExec() to populate field Exec")
 		}
 		probe.Exec = &exec
 	} else {
@@ -7246,7 +7121,7 @@ func (probe *ContainerProbe) AssignProperties_From_ContainerProbe(source *storag
 		var httpGet ContainerHttpGet
 		err := httpGet.AssignProperties_From_ContainerHttpGet(source.HttpGet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerHttpGet() to populate field HttpGet")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerHttpGet() to populate field HttpGet")
 		}
 		probe.HttpGet = &httpGet
 	} else {
@@ -7279,7 +7154,7 @@ func (probe *ContainerProbe) AssignProperties_To_ContainerProbe(destination *sto
 		var exec storage.ContainerExec
 		err := probe.Exec.AssignProperties_To_ContainerExec(&exec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerExec() to populate field Exec")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerExec() to populate field Exec")
 		}
 		destination.Exec = &exec
 	} else {
@@ -7294,7 +7169,7 @@ func (probe *ContainerProbe) AssignProperties_To_ContainerProbe(destination *sto
 		var httpGet storage.ContainerHttpGet
 		err := probe.HttpGet.AssignProperties_To_ContainerHttpGet(&httpGet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerHttpGet() to populate field HttpGet")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerHttpGet() to populate field HttpGet")
 		}
 		destination.HttpGet = &httpGet
 	} else {
@@ -7332,7 +7207,7 @@ func (probe *ContainerProbe) Initialize_From_ContainerProbe_STATUS(source *Conta
 		var exec ContainerExec
 		err := exec.Initialize_From_ContainerExec_STATUS(source.Exec)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerExec_STATUS() to populate field Exec")
+			return eris.Wrap(err, "calling Initialize_From_ContainerExec_STATUS() to populate field Exec")
 		}
 		probe.Exec = &exec
 	} else {
@@ -7347,7 +7222,7 @@ func (probe *ContainerProbe) Initialize_From_ContainerProbe_STATUS(source *Conta
 		var httpGet ContainerHttpGet
 		err := httpGet.Initialize_From_ContainerHttpGet_STATUS(source.HttpGet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerHttpGet_STATUS() to populate field HttpGet")
+			return eris.Wrap(err, "calling Initialize_From_ContainerHttpGet_STATUS() to populate field HttpGet")
 		}
 		probe.HttpGet = &httpGet
 	} else {
@@ -7472,7 +7347,7 @@ func (probe *ContainerProbe_STATUS) AssignProperties_From_ContainerProbe_STATUS(
 		var exec ContainerExec_STATUS
 		err := exec.AssignProperties_From_ContainerExec_STATUS(source.Exec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerExec_STATUS() to populate field Exec")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerExec_STATUS() to populate field Exec")
 		}
 		probe.Exec = &exec
 	} else {
@@ -7487,7 +7362,7 @@ func (probe *ContainerProbe_STATUS) AssignProperties_From_ContainerProbe_STATUS(
 		var httpGet ContainerHttpGet_STATUS
 		err := httpGet.AssignProperties_From_ContainerHttpGet_STATUS(source.HttpGet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerHttpGet_STATUS() to populate field HttpGet")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerHttpGet_STATUS() to populate field HttpGet")
 		}
 		probe.HttpGet = &httpGet
 	} else {
@@ -7520,7 +7395,7 @@ func (probe *ContainerProbe_STATUS) AssignProperties_To_ContainerProbe_STATUS(de
 		var exec storage.ContainerExec_STATUS
 		err := probe.Exec.AssignProperties_To_ContainerExec_STATUS(&exec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerExec_STATUS() to populate field Exec")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerExec_STATUS() to populate field Exec")
 		}
 		destination.Exec = &exec
 	} else {
@@ -7535,7 +7410,7 @@ func (probe *ContainerProbe_STATUS) AssignProperties_To_ContainerProbe_STATUS(de
 		var httpGet storage.ContainerHttpGet_STATUS
 		err := probe.HttpGet.AssignProperties_To_ContainerHttpGet_STATUS(&httpGet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerHttpGet_STATUS() to populate field HttpGet")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerHttpGet_STATUS() to populate field HttpGet")
 		}
 		destination.HttpGet = &httpGet
 	} else {
@@ -7643,7 +7518,7 @@ func (view *ContainerProperties_InstanceView_STATUS) AssignProperties_From_Conta
 		var currentState ContainerState_STATUS
 		err := currentState.AssignProperties_From_ContainerState_STATUS(source.CurrentState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field CurrentState")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field CurrentState")
 		}
 		view.CurrentState = &currentState
 	} else {
@@ -7659,7 +7534,7 @@ func (view *ContainerProperties_InstanceView_STATUS) AssignProperties_From_Conta
 			var event Event_STATUS
 			err := event.AssignProperties_From_Event_STATUS(&eventItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Event_STATUS() to populate field Events")
+				return eris.Wrap(err, "calling AssignProperties_From_Event_STATUS() to populate field Events")
 			}
 			eventList[eventIndex] = event
 		}
@@ -7673,7 +7548,7 @@ func (view *ContainerProperties_InstanceView_STATUS) AssignProperties_From_Conta
 		var previousState ContainerState_STATUS
 		err := previousState.AssignProperties_From_ContainerState_STATUS(source.PreviousState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field PreviousState")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field PreviousState")
 		}
 		view.PreviousState = &previousState
 	} else {
@@ -7697,7 +7572,7 @@ func (view *ContainerProperties_InstanceView_STATUS) AssignProperties_To_Contain
 		var currentState storage.ContainerState_STATUS
 		err := view.CurrentState.AssignProperties_To_ContainerState_STATUS(&currentState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field CurrentState")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field CurrentState")
 		}
 		destination.CurrentState = &currentState
 	} else {
@@ -7713,7 +7588,7 @@ func (view *ContainerProperties_InstanceView_STATUS) AssignProperties_To_Contain
 			var event storage.Event_STATUS
 			err := eventItem.AssignProperties_To_Event_STATUS(&event)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Event_STATUS() to populate field Events")
+				return eris.Wrap(err, "calling AssignProperties_To_Event_STATUS() to populate field Events")
 			}
 			eventList[eventIndex] = event
 		}
@@ -7727,7 +7602,7 @@ func (view *ContainerProperties_InstanceView_STATUS) AssignProperties_To_Contain
 		var previousState storage.ContainerState_STATUS
 		err := view.PreviousState.AssignProperties_To_ContainerState_STATUS(&previousState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field PreviousState")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field PreviousState")
 		}
 		destination.PreviousState = &previousState
 	} else {
@@ -7780,7 +7655,7 @@ func (variable *EnvironmentVariable) ConvertToARM(resolved genruntime.ConvertToA
 	if variable.SecureValue != nil {
 		secureValueSecret, err := resolved.ResolvedSecrets.Lookup(*variable.SecureValue)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property SecureValue")
+			return nil, eris.Wrap(err, "looking up secret for property SecureValue")
 		}
 		secureValue := secureValueSecret
 		result.SecureValue = &secureValue
@@ -8400,7 +8275,7 @@ func (view *InitContainerPropertiesDefinition_InstanceView_STATUS) AssignPropert
 		var currentState ContainerState_STATUS
 		err := currentState.AssignProperties_From_ContainerState_STATUS(source.CurrentState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field CurrentState")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field CurrentState")
 		}
 		view.CurrentState = &currentState
 	} else {
@@ -8416,7 +8291,7 @@ func (view *InitContainerPropertiesDefinition_InstanceView_STATUS) AssignPropert
 			var event Event_STATUS
 			err := event.AssignProperties_From_Event_STATUS(&eventItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Event_STATUS() to populate field Events")
+				return eris.Wrap(err, "calling AssignProperties_From_Event_STATUS() to populate field Events")
 			}
 			eventList[eventIndex] = event
 		}
@@ -8430,7 +8305,7 @@ func (view *InitContainerPropertiesDefinition_InstanceView_STATUS) AssignPropert
 		var previousState ContainerState_STATUS
 		err := previousState.AssignProperties_From_ContainerState_STATUS(source.PreviousState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field PreviousState")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerState_STATUS() to populate field PreviousState")
 		}
 		view.PreviousState = &previousState
 	} else {
@@ -8454,7 +8329,7 @@ func (view *InitContainerPropertiesDefinition_InstanceView_STATUS) AssignPropert
 		var currentState storage.ContainerState_STATUS
 		err := view.CurrentState.AssignProperties_To_ContainerState_STATUS(&currentState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field CurrentState")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field CurrentState")
 		}
 		destination.CurrentState = &currentState
 	} else {
@@ -8470,7 +8345,7 @@ func (view *InitContainerPropertiesDefinition_InstanceView_STATUS) AssignPropert
 			var event storage.Event_STATUS
 			err := eventItem.AssignProperties_To_Event_STATUS(&event)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Event_STATUS() to populate field Events")
+				return eris.Wrap(err, "calling AssignProperties_To_Event_STATUS() to populate field Events")
 			}
 			eventList[eventIndex] = event
 		}
@@ -8484,7 +8359,7 @@ func (view *InitContainerPropertiesDefinition_InstanceView_STATUS) AssignPropert
 		var previousState storage.ContainerState_STATUS
 		err := view.PreviousState.AssignProperties_To_ContainerState_STATUS(&previousState)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field PreviousState")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerState_STATUS() to populate field PreviousState")
 		}
 		destination.PreviousState = &previousState
 	} else {
@@ -8626,7 +8501,7 @@ func (analytics *LogAnalytics) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if analytics.WorkspaceKey != nil {
 		workspaceKeySecret, err := resolved.ResolvedSecrets.Lookup(*analytics.WorkspaceKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property WorkspaceKey")
+			return nil, eris.Wrap(err, "looking up secret for property WorkspaceKey")
 		}
 		workspaceKey := workspaceKeySecret
 		result.WorkspaceKey = &workspaceKey
@@ -9198,7 +9073,7 @@ func (requirements *ResourceRequirements) AssignProperties_From_ResourceRequirem
 		var limit ResourceLimits
 		err := limit.AssignProperties_From_ResourceLimits(source.Limits)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceLimits() to populate field Limits")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceLimits() to populate field Limits")
 		}
 		requirements.Limits = &limit
 	} else {
@@ -9210,7 +9085,7 @@ func (requirements *ResourceRequirements) AssignProperties_From_ResourceRequirem
 		var request ResourceRequests
 		err := request.AssignProperties_From_ResourceRequests(source.Requests)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceRequests() to populate field Requests")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceRequests() to populate field Requests")
 		}
 		requirements.Requests = &request
 	} else {
@@ -9231,7 +9106,7 @@ func (requirements *ResourceRequirements) AssignProperties_To_ResourceRequiremen
 		var limit storage.ResourceLimits
 		err := requirements.Limits.AssignProperties_To_ResourceLimits(&limit)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceLimits() to populate field Limits")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceLimits() to populate field Limits")
 		}
 		destination.Limits = &limit
 	} else {
@@ -9243,7 +9118,7 @@ func (requirements *ResourceRequirements) AssignProperties_To_ResourceRequiremen
 		var request storage.ResourceRequests
 		err := requirements.Requests.AssignProperties_To_ResourceRequests(&request)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceRequests() to populate field Requests")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceRequests() to populate field Requests")
 		}
 		destination.Requests = &request
 	} else {
@@ -9269,7 +9144,7 @@ func (requirements *ResourceRequirements) Initialize_From_ResourceRequirements_S
 		var limit ResourceLimits
 		err := limit.Initialize_From_ResourceLimits_STATUS(source.Limits)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceLimits_STATUS() to populate field Limits")
+			return eris.Wrap(err, "calling Initialize_From_ResourceLimits_STATUS() to populate field Limits")
 		}
 		requirements.Limits = &limit
 	} else {
@@ -9281,7 +9156,7 @@ func (requirements *ResourceRequirements) Initialize_From_ResourceRequirements_S
 		var request ResourceRequests
 		err := request.Initialize_From_ResourceRequests_STATUS(source.Requests)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceRequests_STATUS() to populate field Requests")
+			return eris.Wrap(err, "calling Initialize_From_ResourceRequests_STATUS() to populate field Requests")
 		}
 		requirements.Requests = &request
 	} else {
@@ -9349,7 +9224,7 @@ func (requirements *ResourceRequirements_STATUS) AssignProperties_From_ResourceR
 		var limit ResourceLimits_STATUS
 		err := limit.AssignProperties_From_ResourceLimits_STATUS(source.Limits)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceLimits_STATUS() to populate field Limits")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceLimits_STATUS() to populate field Limits")
 		}
 		requirements.Limits = &limit
 	} else {
@@ -9361,7 +9236,7 @@ func (requirements *ResourceRequirements_STATUS) AssignProperties_From_ResourceR
 		var request ResourceRequests_STATUS
 		err := request.AssignProperties_From_ResourceRequests_STATUS(source.Requests)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceRequests_STATUS() to populate field Requests")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceRequests_STATUS() to populate field Requests")
 		}
 		requirements.Requests = &request
 	} else {
@@ -9382,7 +9257,7 @@ func (requirements *ResourceRequirements_STATUS) AssignProperties_To_ResourceReq
 		var limit storage.ResourceLimits_STATUS
 		err := requirements.Limits.AssignProperties_To_ResourceLimits_STATUS(&limit)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceLimits_STATUS() to populate field Limits")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceLimits_STATUS() to populate field Limits")
 		}
 		destination.Limits = &limit
 	} else {
@@ -9394,7 +9269,7 @@ func (requirements *ResourceRequirements_STATUS) AssignProperties_To_ResourceReq
 		var request storage.ResourceRequests_STATUS
 		err := requirements.Requests.AssignProperties_To_ResourceRequests_STATUS(&request)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceRequests_STATUS() to populate field Requests")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceRequests_STATUS() to populate field Requests")
 		}
 		destination.Requests = &request
 	} else {
@@ -10024,7 +9899,7 @@ func (httpGet *ContainerHttpGet) AssignProperties_From_ContainerHttpGet(source *
 			var httpHeader HttpHeader
 			err := httpHeader.AssignProperties_From_HttpHeader(&httpHeaderItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_HttpHeader() to populate field HttpHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_HttpHeader() to populate field HttpHeaders")
 			}
 			httpHeaderList[httpHeaderIndex] = httpHeader
 		}
@@ -10066,7 +9941,7 @@ func (httpGet *ContainerHttpGet) AssignProperties_To_ContainerHttpGet(destinatio
 			var httpHeader storage.HttpHeader
 			err := httpHeaderItem.AssignProperties_To_HttpHeader(&httpHeader)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_HttpHeader() to populate field HttpHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_HttpHeader() to populate field HttpHeaders")
 			}
 			httpHeaderList[httpHeaderIndex] = httpHeader
 		}
@@ -10112,7 +9987,7 @@ func (httpGet *ContainerHttpGet) Initialize_From_ContainerHttpGet_STATUS(source 
 			var httpHeader HttpHeader
 			err := httpHeader.Initialize_From_HttpHeader_STATUS(&httpHeaderItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_HttpHeader_STATUS() to populate field HttpHeaders")
+				return eris.Wrap(err, "calling Initialize_From_HttpHeader_STATUS() to populate field HttpHeaders")
 			}
 			httpHeaderList[httpHeaderIndex] = httpHeader
 		}
@@ -10214,7 +10089,7 @@ func (httpGet *ContainerHttpGet_STATUS) AssignProperties_From_ContainerHttpGet_S
 			var httpHeader HttpHeader_STATUS
 			err := httpHeader.AssignProperties_From_HttpHeader_STATUS(&httpHeaderItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_HttpHeader_STATUS() to populate field HttpHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_HttpHeader_STATUS() to populate field HttpHeaders")
 			}
 			httpHeaderList[httpHeaderIndex] = httpHeader
 		}
@@ -10256,7 +10131,7 @@ func (httpGet *ContainerHttpGet_STATUS) AssignProperties_To_ContainerHttpGet_STA
 			var httpHeader storage.HttpHeader_STATUS
 			err := httpHeaderItem.AssignProperties_To_HttpHeader_STATUS(&httpHeader)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_HttpHeader_STATUS() to populate field HttpHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_HttpHeader_STATUS() to populate field HttpHeaders")
 			}
 			httpHeaderList[httpHeaderIndex] = httpHeader
 		}
@@ -10590,7 +10465,7 @@ func (limits *ResourceLimits) AssignProperties_From_ResourceLimits(source *stora
 		var gpu GpuResource
 		err := gpu.AssignProperties_From_GpuResource(source.Gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GpuResource() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_From_GpuResource() to populate field Gpu")
 		}
 		limits.Gpu = &gpu
 	} else {
@@ -10627,7 +10502,7 @@ func (limits *ResourceLimits) AssignProperties_To_ResourceLimits(destination *st
 		var gpu storage.GpuResource
 		err := limits.Gpu.AssignProperties_To_GpuResource(&gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GpuResource() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_To_GpuResource() to populate field Gpu")
 		}
 		destination.Gpu = &gpu
 	} else {
@@ -10669,7 +10544,7 @@ func (limits *ResourceLimits) Initialize_From_ResourceLimits_STATUS(source *Reso
 		var gpu GpuResource
 		err := gpu.Initialize_From_GpuResource_STATUS(source.Gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_GpuResource_STATUS() to populate field Gpu")
+			return eris.Wrap(err, "calling Initialize_From_GpuResource_STATUS() to populate field Gpu")
 		}
 		limits.Gpu = &gpu
 	} else {
@@ -10757,7 +10632,7 @@ func (limits *ResourceLimits_STATUS) AssignProperties_From_ResourceLimits_STATUS
 		var gpu GpuResource_STATUS
 		err := gpu.AssignProperties_From_GpuResource_STATUS(source.Gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GpuResource_STATUS() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_From_GpuResource_STATUS() to populate field Gpu")
 		}
 		limits.Gpu = &gpu
 	} else {
@@ -10794,7 +10669,7 @@ func (limits *ResourceLimits_STATUS) AssignProperties_To_ResourceLimits_STATUS(d
 		var gpu storage.GpuResource_STATUS
 		err := limits.Gpu.AssignProperties_To_GpuResource_STATUS(&gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GpuResource_STATUS() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_To_GpuResource_STATUS() to populate field Gpu")
 		}
 		destination.Gpu = &gpu
 	} else {
@@ -10922,7 +10797,7 @@ func (requests *ResourceRequests) AssignProperties_From_ResourceRequests(source 
 		var gpu GpuResource
 		err := gpu.AssignProperties_From_GpuResource(source.Gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GpuResource() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_From_GpuResource() to populate field Gpu")
 		}
 		requests.Gpu = &gpu
 	} else {
@@ -10959,7 +10834,7 @@ func (requests *ResourceRequests) AssignProperties_To_ResourceRequests(destinati
 		var gpu storage.GpuResource
 		err := requests.Gpu.AssignProperties_To_GpuResource(&gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GpuResource() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_To_GpuResource() to populate field Gpu")
 		}
 		destination.Gpu = &gpu
 	} else {
@@ -11001,7 +10876,7 @@ func (requests *ResourceRequests) Initialize_From_ResourceRequests_STATUS(source
 		var gpu GpuResource
 		err := gpu.Initialize_From_GpuResource_STATUS(source.Gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_GpuResource_STATUS() to populate field Gpu")
+			return eris.Wrap(err, "calling Initialize_From_GpuResource_STATUS() to populate field Gpu")
 		}
 		requests.Gpu = &gpu
 	} else {
@@ -11089,7 +10964,7 @@ func (requests *ResourceRequests_STATUS) AssignProperties_From_ResourceRequests_
 		var gpu GpuResource_STATUS
 		err := gpu.AssignProperties_From_GpuResource_STATUS(source.Gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GpuResource_STATUS() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_From_GpuResource_STATUS() to populate field Gpu")
 		}
 		requests.Gpu = &gpu
 	} else {
@@ -11126,7 +11001,7 @@ func (requests *ResourceRequests_STATUS) AssignProperties_To_ResourceRequests_ST
 		var gpu storage.GpuResource_STATUS
 		err := requests.Gpu.AssignProperties_To_GpuResource_STATUS(&gpu)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GpuResource_STATUS() to populate field Gpu")
+			return eris.Wrap(err, "calling AssignProperties_To_GpuResource_STATUS() to populate field Gpu")
 		}
 		destination.Gpu = &gpu
 	} else {

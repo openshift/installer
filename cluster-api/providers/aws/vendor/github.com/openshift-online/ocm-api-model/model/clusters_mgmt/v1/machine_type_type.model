@@ -45,4 +45,7 @@ class MachineType {
 
 	// The architecture of the machine type.
 	Architecture ProcessorType
+
+	// Features available to the particular MachineType
+	Features MachineTypeFeatures
 }

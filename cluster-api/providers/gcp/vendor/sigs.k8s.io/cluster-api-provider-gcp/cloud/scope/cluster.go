@@ -27,7 +27,7 @@ import (
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -50,13 +50,13 @@ func NewClusterScope(ctx context.Context, params ClusterScopeParams) (*ClusterSc
 		return nil, errors.New("failed to generate new scope from nil GCPCluster")
 	}
 
-	if params.GCPServices.Compute == nil {
+	if params.Compute == nil {
 		computeSvc, err := newComputeService(ctx, params.GCPCluster.Spec.CredentialsRef, params.Client, params.GCPCluster.Spec.ServiceEndpoints)
 		if err != nil {
 			return nil, errors.Errorf("failed to create gcp compute client: %v", err)
 		}
 
-		params.GCPServices.Compute = computeSvc
+		params.Compute = computeSvc
 	}
 
 	helper, err := patch.NewHelper(params.GCPCluster, params.Client)
@@ -104,6 +104,14 @@ func (s *ClusterScope) Project() string {
 // The network project defaults to the Project when one is not supplied.
 func (s *ClusterScope) NetworkProject() string {
 	return ptr.Deref(s.GCPCluster.Spec.Network.HostProject, s.Project())
+}
+
+// SkipFirewallRuleCreation returns whether the spec indicates that firewall rules
+// should be created or not. If the RulesManagement for the default firewall rules is
+// set to unmanaged or when the cluster will include a shared VPC, the default firewall
+// rule creation will be skipped.
+func (s *ClusterScope) SkipFirewallRuleCreation() bool {
+	return (s.GCPCluster.Spec.Network.Firewall.DefaultRulesManagement == infrav1.RulesManagementUnmanaged) || s.IsSharedVpc()
 }
 
 // IsSharedVpc returns true If sharedVPC used else , returns false.
@@ -237,6 +245,7 @@ func (s *ClusterScope) NatRouterSpec() *compute.Router {
 				Name:                          fmt.Sprintf("%s-%s", networkSpec.Name, "nat"),
 				NatIpAllocateOption:           "AUTO_ONLY",
 				SourceSubnetworkIpRangesToNat: "ALL_SUBNETWORKS_ALL_IP_RANGES",
+				MinPortsPerVm:                 s.GCPCluster.Spec.Network.MinPortsPerVM,
 			},
 		},
 	}

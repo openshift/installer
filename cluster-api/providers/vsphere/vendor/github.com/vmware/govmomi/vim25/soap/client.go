@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2014-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package soap
 
@@ -214,14 +202,29 @@ func (c *Client) NewServiceClient(path string, namespace string) *Client {
 	return c.newServiceClientWithTransport(path, namespace, c.t)
 }
 
-// SessionCookie returns a SessionCookie with value of the vmware_soap_session http.Cookie.
-func (c *Client) SessionCookie() *HeaderElement {
-	for _, cookie := range c.Jar.Cookies(c.URL()) {
+func sessionCookie(jar http.CookieJar, u *url.URL) *HeaderElement {
+	for _, cookie := range jar.Cookies(u) {
 		if cookie.Name == SessionCookieName {
 			return &HeaderElement{Value: cookie.Value}
 		}
 	}
 	return nil
+}
+
+// SessionCookie returns a SessionCookie with value of the vmware_soap_session http.Cookie.
+func (c *Client) SessionCookie() *HeaderElement {
+	u := c.URL()
+
+	if cookie := sessionCookie(c.Jar, u); cookie != nil {
+		return cookie
+	}
+
+	// Default "/sdk" Path would match above,
+	// but saw a case of Path == "sdk", where above returns nil.
+	// The jar entry Path is normally "/", so fallback to that.
+	u.Path = "/"
+
+	return sessionCookie(c.Jar, u)
 }
 
 func (c *Client) newServiceClientWithTransport(path string, namespace string, t *http.Transport) *Client {
@@ -394,10 +397,16 @@ func (c *Client) loadThumbprints(name string) error {
 	return scanner.Err()
 }
 
+var fips140 = strings.Contains(os.Getenv("GODEBUG"), "fips140=only")
+
 // ThumbprintSHA1 returns the thumbprint of the given cert in the same format used by the SDK and Client.SetThumbprint.
 //
 // See: SSLVerifyFault.Thumbprint, SessionManagerGenericServiceTicket.Thumbprint, HostConnectSpec.SslThumbprint
+// When GODEBUG contains "fips140=only", this function returns an empty string.
 func ThumbprintSHA1(cert *x509.Certificate) string {
+	if fips140 {
+		return ""
+	}
 	sum := sha1.Sum(cert.Raw)
 	hex := make([]string, len(sum))
 	for i, b := range sum {

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/st
 -------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-09-01"
+
 MaintenanceConfiguration: Resource
 ├── Owner: containerservice/v1api20240901.ManagedCluster
 ├── Spec: Object (8 properties)
@@ -100,6 +101,7 @@ MaintenanceConfiguration: Resource
     │   ├── HourSlots: int[]
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ManagedCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (44 properties)
@@ -991,6 +993,7 @@ ManagedCluster: Resource
         └── VerticalPodAutoscaler: *Object (2 properties)
             ├── Enabled: *bool
             └── PropertyBag: genruntime.PropertyBag
+
 ManagedClustersAgentPool: Resource
 ├── Owner: containerservice/v1api20240901.ManagedCluster
 ├── Spec: Object (47 properties)
@@ -1236,6 +1239,7 @@ ManagedClustersAgentPool: Resource
     │   ├── DisableOutboundNat: *bool
     │   └── PropertyBag: genruntime.PropertyBag
     └── WorkloadRuntime: *string
+
 TrustedAccessRoleBinding: Resource
 ├── Owner: containerservice/v1api20240901.ManagedCluster
 ├── Spec: Object (7 properties)
@@ -1266,3 +1270,4 @@ TrustedAccessRoleBinding: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+

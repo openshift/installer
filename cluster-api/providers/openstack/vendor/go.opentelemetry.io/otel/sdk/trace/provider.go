@@ -1,29 +1,24 @@
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package trace // import "go.opentelemetry.io/otel/sdk/trace"
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/internal/global"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/sdk"
 	"go.opentelemetry.io/otel/sdk/instrumentation"
 	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace/internal/x"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/semconv/v1.37.0/otelconv"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/embedded"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -31,6 +26,7 @@ import (
 
 const (
 	defaultTracerName = "go.opentelemetry.io/otel/sdk/tracer"
+	selfObsScopeName  = "go.opentelemetry.io/otel/sdk/trace"
 )
 
 // tracerProviderConfig.
@@ -55,8 +51,8 @@ type tracerProviderConfig struct {
 	resource *resource.Resource
 }
 
-// MarshalLog is the marshaling function used by the logging system to represent this exporter.
-func (cfg tracerProviderConfig) MarshalLog() interface{} {
+// MarshalLog is the marshaling function used by the logging system to represent this Provider.
+func (cfg tracerProviderConfig) MarshalLog() any {
 	return struct {
 		SpanProcessors  []SpanProcessor
 		SamplerType     string
@@ -150,9 +146,10 @@ func (p *TracerProvider) Tracer(name string, opts ...trace.TracerOption) trace.T
 		name = defaultTracerName
 	}
 	is := instrumentation.Scope{
-		Name:      name,
-		Version:   c.InstrumentationVersion(),
-		SchemaURL: c.SchemaURL(),
+		Name:       name,
+		Version:    c.InstrumentationVersion(),
+		SchemaURL:  c.SchemaURL(),
+		Attributes: c.InstrumentationAttributes(),
 	}
 
 	t, ok := func() (trace.Tracer, bool) {
@@ -166,8 +163,18 @@ func (p *TracerProvider) Tracer(name string, opts ...trace.TracerOption) trace.T
 		t, ok := p.namedTracer[is]
 		if !ok {
 			t = &tracer{
-				provider:             p,
-				instrumentationScope: is,
+				provider:                 p,
+				instrumentationScope:     is,
+				selfObservabilityEnabled: x.SelfObservability.Enabled(),
+			}
+			if t.selfObservabilityEnabled {
+				var err error
+				t.spanLiveMetric, t.spanStartedMetric, err = newInst()
+				if err != nil {
+					msg := "failed to create self-observability metrics for tracer: %w"
+					err := fmt.Errorf(msg, err)
+					otel.Handle(err)
+				}
 			}
 			p.namedTracer[is] = t
 		}
@@ -179,9 +186,36 @@ func (p *TracerProvider) Tracer(name string, opts ...trace.TracerOption) trace.T
 		//   slowing down all tracing consumers.
 		// - Logging code may be instrumented with tracing and deadlock because it could try
 		//   acquiring the same non-reentrant mutex.
-		global.Info("Tracer created", "name", name, "version", is.Version, "schemaURL", is.SchemaURL)
+		global.Info(
+			"Tracer created",
+			"name",
+			name,
+			"version",
+			is.Version,
+			"schemaURL",
+			is.SchemaURL,
+			"attributes",
+			is.Attributes,
+		)
 	}
 	return t
+}
+
+func newInst() (otelconv.SDKSpanLive, otelconv.SDKSpanStarted, error) {
+	m := otel.GetMeterProvider().Meter(
+		selfObsScopeName,
+		metric.WithInstrumentationVersion(sdk.Version()),
+		metric.WithSchemaURL(semconv.SchemaURL),
+	)
+
+	var err error
+	spanLiveMetric, e := otelconv.NewSDKSpanLive(m)
+	err = errors.Join(err, e)
+
+	spanStartedMetric, e := otelconv.NewSDKSpanStarted(m)
+	err = errors.Join(err, e)
+
+	return spanLiveMetric, spanStartedMetric, err
 }
 
 // RegisterSpanProcessor adds the given SpanProcessor to the list of SpanProcessors.
@@ -302,7 +336,7 @@ func (p *TracerProvider) Shutdown(ctx context.Context) error {
 				retErr = err
 			} else {
 				// Poor man's list of errors
-				retErr = fmt.Errorf("%v; %v", retErr, err)
+				retErr = fmt.Errorf("%w; %w", retErr, err)
 			}
 		}
 	}

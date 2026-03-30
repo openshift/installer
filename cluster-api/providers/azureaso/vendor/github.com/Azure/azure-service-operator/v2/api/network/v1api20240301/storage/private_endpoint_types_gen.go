@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (endpoint *PrivateEndpoint) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (endpoint *PrivateEndpoint) Owner() *genruntime.ResourceReference {
+	if endpoint.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(endpoint.Spec)
 	return endpoint.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (endpoint *PrivateEndpoint) SetStatus(status genruntime.ConvertibleStatus) 
 	var st PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	endpoint.Status = st
@@ -192,7 +196,7 @@ var _ genruntime.ConvertibleSpec = &PrivateEndpoint_Spec{}
 // ConvertSpecFrom populates our PrivateEndpoint_Spec from the provided source
 func (endpoint *PrivateEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == endpoint {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(endpoint)
@@ -201,7 +205,7 @@ func (endpoint *PrivateEndpoint_Spec) ConvertSpecFrom(source genruntime.Converti
 // ConvertSpecTo populates the provided destination from our PrivateEndpoint_Spec
 func (endpoint *PrivateEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == endpoint {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(endpoint)
@@ -235,7 +239,7 @@ var _ genruntime.ConvertibleStatus = &PrivateEndpoint_STATUS_PrivateEndpoint_Sub
 // ConvertStatusFrom populates our PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded from the provided source
 func (embedded *PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == embedded {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(embedded)
@@ -244,7 +248,7 @@ func (embedded *PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded) Conv
 // ConvertStatusTo populates the provided destination from our PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded
 func (embedded *PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == embedded {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(embedded)

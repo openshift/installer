@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -9,14 +10,15 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
 )
 
 // Platform collects AWS-specific configuration.
-func Platform() (*aws.Platform, error) {
+func Platform(ctx context.Context) (*aws.Platform, error) {
 	architecture := version.DefaultArch()
-	regions, err := knownPublicRegions(architecture)
+	regions, err := knownPublicRegions(architecture, rhcos.DefaultOSImageStream)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AWS public regions: %w", err)
 	}
@@ -42,25 +44,24 @@ func Platform() (*aws.Platform, error) {
 	}
 
 	defaultRegion := "us-east-1"
-	if found, err := IsKnownPublicRegion(defaultRegion, architecture); !found || err != nil {
+	if found, err := IsKnownPublicRegion(defaultRegion, architecture, rhcos.DefaultOSImageStream); !found || err != nil {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
-	ssn, err := GetSession()
+	config, err := GetConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defaultRegionPointer := ssn.Config.Region
-	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
-		found, err := IsKnownPublicRegion(*defaultRegionPointer, architecture)
+	if config.Region != "" {
+		found, err := IsKnownPublicRegion(config.Region, architecture, rhcos.DefaultOSImageStream)
 		if err != nil {
 			return nil, fmt.Errorf("failed to determine if region is public: %w", err)
 		}
 		if found {
-			defaultRegion = *defaultRegionPointer
+			defaultRegion = config.Region
 		} else {
-			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", *defaultRegionPointer, defaultRegion)
+			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", config.Region, defaultRegion)
 		}
 	}
 

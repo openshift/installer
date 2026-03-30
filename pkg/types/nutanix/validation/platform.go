@@ -85,6 +85,10 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		}
 	}
 
+	if c.Nutanix.DNSRecordsType == configv1.DNSRecordsTypeExternal && (c.Nutanix.LoadBalancer == nil || c.Nutanix.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsRecordsType"), c.Nutanix.DNSRecordsType, "external DNS records can only be configured with user-managed loadbalancers"))
+	}
+
 	// validate prismAPICallTimeout if configured
 	if p.PrismAPICallTimeout != nil {
 		if *p.PrismAPICallTimeout <= 0 {

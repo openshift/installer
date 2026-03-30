@@ -2,4 +2,6 @@
 github.com/Azure/azure-service-operator/v2/api/authorization/customizations
 ---------------------------------------------------------------------------
 RoleAssignmentExtension: Object (0 properties)
+
 RoleDefinitionExtension: Object (0 properties)
+

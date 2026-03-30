@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // OperatorMode determines whether we'll run watchers and/or webhooks.
@@ -57,6 +57,6 @@ func ParseOperatorMode(value string) (OperatorMode, error) {
 	case "watchers-and-webhooks":
 		return OperatorModeBoth, nil
 	default:
-		return OperatorMode(0), errors.Errorf(`operator mode value must be one of "watchers-and-webhooks", "webhooks" or "watchers" but was %q`, value)
+		return OperatorMode(0), eris.Errorf(`operator mode value must be one of "watchers-and-webhooks", "webhooks" or "watchers" but was %q`, value)
 	}
 }

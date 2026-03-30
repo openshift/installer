@@ -1076,8 +1076,7 @@ type RampUpRule_STATUS struct {
 	ActionHostName *string `json:"actionHostName,omitempty"`
 
 	// ChangeDecisionCallbackUrl: Custom decision algorithm can be provided in TiPCallback site extension which URL can be
-	// specified. See TiPCallback site extension for the scaffold and contracts.
-	// https://www.siteextensions.net/packages/TiPCallback/
+	// specified.
 	ChangeDecisionCallbackUrl *string `json:"changeDecisionCallbackUrl,omitempty"`
 
 	// ChangeIntervalInMinutes: Specifies interval in minutes to reevaluate ReroutePercentage.

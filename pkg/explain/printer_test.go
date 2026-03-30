@@ -135,6 +135,10 @@ the cluster.
     operatorPublishingStrategy <object>
       OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
 
+    osImageStream <string>
+      Valid Values: "rhel-9","rhel-10"
+      OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
+
     platform <object> -required-
       Platform is the configuration for the specific platform upon which to
 perform the installation.
@@ -234,7 +238,17 @@ in a shared VPC scenario when the private hosted zone belongs to a
 different account than the rest of the cluster resources.
 If HostedZoneRole is set, HostedZone must also be set.
 
+    ipFamily <string>
+      Default: "IPv4"
+      Valid Values: "IPv4","DualStackIPv4Primary","DualStackIPv6Primary"
+      IPFamily specifies the IP address family for the cluster network.
+Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+networking with IPv6 as the primary address family. When using dual-stack, the VPC
+and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+
     lbType <string>
+      Valid Values: "Classic","NLB"
       LBType is an optional field to specify a load balancer type.
 When this field is specified, all ingresscontrollers (including the
 default ingresscontroller) will be created using the specified load-balancer
@@ -251,8 +265,10 @@ https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.
 transport layer (TCP/SSL). See the following for additional details:
 https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
 
-If this field is not set explicitly, it defaults to "Classic".  This
-default is subject to change over time.
+If this field is not set explicitly, the default value depends on the ipFamily field:
+* "Classic" when ipFamily is not set or set to "IPv4"
+* "NLB" when ipFamily is set to "DualStackIPv4Primary" or "DualStackIPv6Primary"
+This default is subject to change over time.
 
     preserveBootstrapIgnition <boolean>
       PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
@@ -299,6 +315,11 @@ cluster itself may not include these tags.
 	}, {
 		path: []string{"platform", "azure"},
 		desc: `FIELDS:
+    allowSharedKeyAccess <boolean>
+      AllowSharedKeyAccess specifies if shared access key should be enabled for the storage account.
+Default value is true.
+Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+
     armEndpoint <string>
       ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
 
@@ -317,8 +338,12 @@ If empty, the value is equal to "AzurePublicCloud".
     computeSubnet <string>
       ComputeSubnet specifies an existing subnet for use by compute nodes
 
+Deprecated: use platform.Azure.Subnets section
+
     controlPlaneSubnet <string>
       ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+
+Deprecated: use platform.Azure.Subnets section
 
     customerManagedKey <object>
       CustomerManagedKey has the keys needed to encrypt the storage account.
@@ -328,12 +353,21 @@ If empty, the value is equal to "AzurePublicCloud".
 installing on Azure for machine pools which do not define their own
 platform configuration.
 
+    ipFamily <string>
+      Default: "IPv4"
+      Valid Values: "IPv4","DualStackIPv4Primary","DualStackIPv6Primary"
+      IPFamily specifies the IP address family for the cluster network.
+Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+networking with IPv6 as the primary address family. When using dual-stack, the VNet
+and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 
     outboundType <string>
       Default: "Loadbalancer"
-      Valid Values: "","Loadbalancer","NATGatewaySingleZone","UserDefinedRouting"
+      Valid Values: "","Loadbalancer","NATGatewaySingleZone","NATGatewayMultiZone","UserDefinedRouting"
       OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
 
     region <string> -required-
@@ -346,6 +380,10 @@ ownership of all resources in the resource group. Destroying the cluster using i
 resource group.
 This resource group must be empty with no other resources when trying to use it for creating a cluster.
 If empty, a new resource group will created for the cluster.
+
+    subnets <[]object>
+      Subnets is the list of subnets the user can bring into the cluster to be used.
+      SubnetSpec specifies the properties the subnet needs to be used in the cluster.
 
     userProvisionedDNS <string>
       Default: "Disabled"

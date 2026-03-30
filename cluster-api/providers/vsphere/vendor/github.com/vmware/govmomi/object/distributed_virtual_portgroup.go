@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2015 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package object
 
@@ -50,7 +38,7 @@ func (p DistributedVirtualPortgroup) EthernetCardBackingInfo(ctx context.Context
 		return nil, err
 	}
 
-	// From the docs at https://code.vmware.com/apis/196/vsphere/doc/vim.dvs.DistributedVirtualPortgroup.ConfigInfo.html:
+	// From the docs at https://developer.broadcom.com/xapis/vsphere-web-services-api/latest/vim.dvs.DistributedVirtualPortgroup.ConfigInfo.html:
 	// "This property should always be set unless the user's setting does not have System.Read privilege on the object referred to by this property."
 	// Note that "the object" refers to the Switch, not the PortGroup.
 	if dvp.Config.DistributedVirtualSwitch == nil {

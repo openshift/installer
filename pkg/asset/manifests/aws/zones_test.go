@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var stubDefaultCIDR = "10.0.0.0/16"
@@ -342,6 +343,9 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 									},
 								},
 							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{},
+							},
 						}
 						return ic
 					}(),
@@ -418,6 +422,9 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 									},
 								},
 							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{},
+							},
 						}
 						return ic
 					}(),
@@ -474,6 +481,77 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 						AvailabilityZone: "edge-a",
 						IsPublic:         true,
 						CidrBlock:        "10.0.136.0/21",
+					},
+				},
+			},
+		},
+		{
+			name: "dualstack enabled",
+			args: args{
+				in: &networkInput{
+					ClusterID: stubClusterID(),
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = &types.InstallConfig{
+							Publish: types.ExternalPublishingStrategy,
+							Networking: &types.Networking{
+								MachineNetwork: []types.MachineNetworkEntry{
+									{
+										CIDR: *ipnet.MustParseCIDR(stubDefaultCIDR),
+									},
+								},
+							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{
+									IPFamily: "DualStackIPv4Primary",
+								},
+							},
+						}
+						return ic
+					}(),
+					Cluster: &capa.AWSCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "infraId",
+							Namespace: capiutils.Namespace,
+						},
+						Spec: capa.AWSClusterSpec{},
+					},
+					ZonesInRegion: []string{"a", "b"},
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{
+					CidrBlock: stubDefaultCIDR,
+					IPv6:      &capa.IPv6{},
+				},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "infra-id-subnet-private-a",
+						AvailabilityZone: "a",
+						IsPublic:         false,
+						CidrBlock:        "10.0.0.0/18",
+						IsIPv6:           true,
+					},
+					{
+						ID:               "infra-id-subnet-private-b",
+						AvailabilityZone: "b",
+						IsPublic:         false,
+						CidrBlock:        "10.0.64.0/18",
+						IsIPv6:           true,
+					},
+					{
+						ID:               "infra-id-subnet-public-a",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.128.0/19",
+						IsIPv6:           true,
+					},
+					{
+						ID:               "infra-id-subnet-public-b",
+						AvailabilityZone: "b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.160.0/19",
+						IsIPv6:           true,
 					},
 				},
 			},
@@ -604,10 +682,123 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 							},
 						},
 					},
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = stubInstallConfigType()
+						ic.Config.AWS = &awstypes.Platform{}
+						return ic
+					}(),
 				},
 			},
 			want: capa.NetworkSpec{
 				VPC: capa.VPCSpec{ID: "vpc-id"},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "subnetId-a-private",
+						AvailabilityZone: "a",
+						IsPublic:         false,
+						CidrBlock:        "10.0.1.0/24",
+					}, {
+						ID:               "subnetId-a-public",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.4.0/24",
+					}, {
+						ID:               "subnetId-b-private",
+						AvailabilityZone: "b",
+						IsPublic:         false,
+						CidrBlock:        "10.0.2.0/24",
+					}, {
+						ID:               "subnetId-b-public",
+						AvailabilityZone: "b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.5.0/24",
+					}, {
+						ID:               "subnetId-c-private",
+						AvailabilityZone: "c",
+						IsPublic:         false,
+						CidrBlock:        "10.0.3.0/24",
+					}, {
+						ID:               "subnetId-c-public",
+						AvailabilityZone: "c",
+						IsPublic:         true,
+						CidrBlock:        "10.0.6.0/24",
+					},
+				},
+			},
+		},
+		{
+			name: "default byo dualstack vpc",
+			args: args{
+				in: &networkInput{
+					Cluster: &capa.AWSCluster{},
+					Subnets: &subnetsInput{
+						vpc: "vpc-id",
+						privateSubnets: aws.Subnets{
+							"subnetId-a-private": aws.Subnet{
+								ID:   "subnetId-a-private",
+								CIDR: "10.0.1.0/24",
+								Zone: &aws.Zone{
+									Name: "a",
+								},
+								Public: false,
+							},
+							"subnetId-b-private": aws.Subnet{
+								ID:   "subnetId-b-private",
+								CIDR: "10.0.2.0/24",
+								Zone: &aws.Zone{
+									Name: "b",
+								},
+								Public: false,
+							},
+							"subnetId-c-private": aws.Subnet{
+								ID:   "subnetId-c-private",
+								CIDR: "10.0.3.0/24",
+								Zone: &aws.Zone{
+									Name: "c",
+								},
+								Public: false,
+							},
+						},
+						publicSubnets: aws.Subnets{
+							"subnetId-a-public": aws.Subnet{
+								ID:   "subnetId-a-public",
+								CIDR: "10.0.4.0/24",
+								Zone: &aws.Zone{
+									Name: "a",
+								},
+								Public: true,
+							},
+							"subnetId-b-public": aws.Subnet{
+								ID:   "subnetId-b-public",
+								CIDR: "10.0.5.0/24",
+								Zone: &aws.Zone{
+									Name: "b",
+								},
+								Public: true,
+							},
+							"subnetId-c-public": aws.Subnet{
+								ID:   "subnetId-c-public",
+								CIDR: "10.0.6.0/24",
+								Zone: &aws.Zone{
+									Name: "c",
+								},
+								Public: true,
+							},
+						},
+					},
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = stubInstallConfigType()
+						ic.Config.AWS = &awstypes.Platform{
+							IPFamily: network.DualStackIPv4Primary,
+						}
+						return ic
+					}(),
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{ID: "vpc-id", IPv6: &capa.IPv6{}},
 				Subnets: []capa.SubnetSpec{
 					{
 						ID:               "subnetId-a-private",
@@ -677,6 +868,12 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 							},
 						},
 					},
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = stubInstallConfigType()
+						ic.Config.AWS = &awstypes.Platform{}
+						return ic
+					}(),
 				},
 			},
 			want: capa.NetworkSpec{
@@ -783,6 +980,12 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 							},
 						},
 					},
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = stubInstallConfigType()
+						ic.Config.AWS = &awstypes.Platform{}
+						return ic
+					}(),
 				},
 			},
 			want: capa.NetworkSpec{

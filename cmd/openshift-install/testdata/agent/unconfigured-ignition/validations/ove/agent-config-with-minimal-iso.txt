@@ -1,0 +1,82 @@
+# Agent-config.yaml with minimalISO field should be rejected
+# for unconfigured-ignition workflow.
+
+expandFile cluster-manifests/cluster-image-set.yaml
+
+! exec openshift-install agent create unconfigured-ignition --dir $WORK
+
+stderr 'agent-config.yaml for unconfigured-ignition workflow must not set minimalISO. Only rendezvousIP is allowed'
+
+! exists $WORK/unconfigured-agent.ign
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+
+-- agent-config.yaml --
+apiVersion: v1alpha1
+kind: AgentConfig
+metadata:
+  name: ostest
+  namespace: cluster0
+rendezvousIP: 192.168.111.20
+minimalISO: true
+
+-- cluster-manifests/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+
+-- cluster-manifests/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }
+
+-- cluster-manifests/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: $RELEASE_IMAGE
+
+-- cluster-manifests/nmstateconfig.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: ostest
+  namespace: cluster0
+  labels:
+    agent-install.openshift.io/infraenv-id: test-infra-env-id
+spec:
+  config:
+    interfaces:
+    - name: eth0
+      type: ethernet
+      state: up
+      ipv4:
+        enabled: true
+        address:
+        - ip: 192.168.1.10
+          prefix-length: 24
+        dhcp: false
+  interfaces:
+  - name: eth0
+    macAddress: 52:54:00:aa:bb:cc

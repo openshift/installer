@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // NOTE: We don't use arm.ResourceID here because it's only supposed to be created via arm.ParseResourceID,
@@ -20,10 +20,10 @@ import (
 // /providers/<provider>/<resourceType>/<resourceName>/...
 func MakeTenantScopeARMID(provider string, params ...string) (string, error) {
 	if len(params) == 0 {
-		return "", errors.New("At least 2 params must be specified")
+		return "", eris.New("At least 2 params must be specified")
 	}
 	if len(params)%2 != 0 {
-		return "", errors.New("ARM Id params must come in resourceKind/name pairs")
+		return "", eris.New("ARM Id params must come in resourceKind/name pairs")
 	}
 
 	suffix := strings.Join(params, "/")
@@ -35,11 +35,11 @@ func MakeTenantScopeARMID(provider string, params ...string) (string, error) {
 // /subscriptions/00000000-0000-0000-0000-000000000000/providers/<provider>/<resourceType>/<resourceName>/...
 func MakeSubscriptionScopeARMID(subscription string, provider string, params ...string) (string, error) {
 	if len(params) == 0 {
-		return "", errors.New("At least 2 params must be specified")
+		return "", eris.New("At least 2 params must be specified")
 	}
 
 	if len(params)%2 != 0 {
-		return "", errors.New("ARM Id params must come in resourceKind/name pairs")
+		return "", eris.New("ARM Id params must come in resourceKind/name pairs")
 	}
 
 	suffix := strings.Join(params, "/")
@@ -51,10 +51,10 @@ func MakeSubscriptionScopeARMID(subscription string, provider string, params ...
 // /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/<rgName>/providers/<provider>/<resourceType>/<resourceName>/...
 func MakeResourceGroupScopeARMID(subscription string, resourceGroup string, provider string, params ...string) (string, error) {
 	if len(params) == 0 {
-		return "", errors.New("At least 2 params must be specified")
+		return "", eris.New("At least 2 params must be specified")
 	}
 	if len(params)%2 != 0 {
-		return "", errors.New("ARM Id params must come in resourceKind/name pairs")
+		return "", eris.New("ARM Id params must come in resourceKind/name pairs")
 	}
 
 	suffix := strings.Join(params, "/")

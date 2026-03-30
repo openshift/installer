@@ -6,7 +6,7 @@ Get started with the Microsoft Graph Core SDK for Go by integrating the [Microso
 
 > **Note:** Although you can use this library directly, we recommend you use the [v1](https://github.com/microsoftgraph/msgraph-sdk-go) or [beta](https://github.com/microsoftgraph/msgraph-beta-sdk-go) library which rely on this library and additionally provide a fluent style Go API and models.
 >
-> **Note:** the Microsoft Graph Go SDK is currently in Community Preview. During this period we're expecting breaking changes to happen to the SDK based on community's feedback. Checkout the [known limitations](https://github.com/microsoftgraph/msgraph-sdk-go-core/issues/1).
+> **Note:** The Microsoft Graph Go SDK is currently in Release Candidate (RC) version starting from version 0.34.1. The SDK is still undergoing testing but minimum breaking changes should be expected. Checkout the [known limitations](https://github.com/microsoftgraph/msgraph-sdk-go-core/issues/1).
 
 ## Samples and usage guide
 

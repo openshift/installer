@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage
 ------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-06-01"
+
 Domain: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (11 properties)
@@ -102,6 +103,7 @@ Domain: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 DomainsTopic: Resource
 ├── Owner: eventgrid/v1api20200601.Domain
 ├── Spec: Object (5 properties)
@@ -128,6 +130,7 @@ DomainsTopic: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 EventSubscription: Resource
 ├── Spec: Object (12 properties)
 │   ├── AzureName: string
@@ -392,6 +395,7 @@ EventSubscription: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Topic: *string
     └── Type: *string
+
 Topic: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (11 properties)
@@ -498,3 +502,4 @@ Topic: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+

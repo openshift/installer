@@ -35,7 +35,6 @@ var map_AWSMachineProviderConfig = map[string]string{
 	"placementGroupPartition": "placementGroupPartition is the partition number within the placement group in which to launch the instance. This must be an integer value between 1 and 7. It is only valid if the placement group, referred in `PlacementGroupName` was created with strategy set to partition.",
 	"capacityReservationId":   "capacityReservationId specifies the target Capacity Reservation into which the instance should be launched. The field size should be greater than 0 and the field input must start with cr-***",
 	"marketType":              "marketType specifies the type of market for the EC2 instance. Valid values are OnDemand, Spot, CapacityBlock and omitted.\n\nDefaults to OnDemand. When SpotMarketOptions is provided, the marketType defaults to \"Spot\".\n\nWhen set to OnDemand the instance runs as a standard OnDemand instance. When set to Spot the instance runs as a Spot instance. When set to CapacityBlock the instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations. If this value is selected, capacityReservationID must be specified to identify the target reservation.",
-	"hostPlacement":           "hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL), and to gain visibility and control over instance placement on a physical server. When omitted, the instance is not constrained to a dedicated host.",
 }
 
 func (AWSMachineProviderConfig) SwaggerDoc() map[string]string {
@@ -55,6 +54,7 @@ var map_AWSMachineProviderStatus = map[string]string{
 	"instanceId":    "instanceId is the instance ID of the machine created in AWS",
 	"instanceState": "instanceState is the state of the AWS instance for this machine",
 	"conditions":    "conditions is a set of conditions associated with the Machine to indicate errors or other status",
+	"dedicatedHost": "dedicatedHost tracks the dynamically allocated dedicated host. This field is populated when allocationStrategy is Dynamic (with or without DynamicHostAllocation). When omitted, this indicates that the dedicated host has not yet been allocated, or allocation is in progress.",
 }
 
 func (AWSMachineProviderStatus) SwaggerDoc() map[string]string {
@@ -94,12 +94,32 @@ func (CPUOptions) SwaggerDoc() map[string]string {
 }
 
 var map_DedicatedHost = map[string]string{
-	"":   "DedicatedHost represents the configuration for the usage of dedicated host.",
-	"id": "id identifies the AWS Dedicated Host on which the instance must run. The value must start with \"h-\" followed by 17 lowercase hexadecimal characters (0-9 and a-f). Must be exactly 19 characters in length.",
+	"":                      "DedicatedHost represents the configuration for the usage of dedicated host.",
+	"allocationStrategy":    "allocationStrategy specifies if the dedicated host will be provided by the admin through the id field or if the host will be dynamically allocated. Valid values are UserProvided and Dynamic. When omitted, the value defaults to \"UserProvided\", which requires the id field to be set. When allocationStrategy is set to UserProvided, an ID of the dedicated host to assign must be provided. When allocationStrategy is set to Dynamic, a dedicated host will be allocated and used to assign instances. When allocationStrategy is set to Dynamic, and dynamicHostAllocation is configured, a dedicated host will be allocated and the tags in dynamicHostAllocation will be assigned to that host.",
+	"id":                    "id identifies the AWS Dedicated Host on which the instance must run. The value must start with \"h-\" followed by either 8 or 17 lowercase hexadecimal characters (0-9 and a-f). The use of 8 lowercase hexadecimal characters is for older legacy hosts that may not have been migrated to newer format. Must be either 10 or 19 characters in length. This field is required when allocationStrategy is UserProvided, and forbidden otherwise. When omitted with allocationStrategy set to Dynamic, the platform will dynamically allocate a dedicated host.",
+	"dynamicHostAllocation": "dynamicHostAllocation specifies tags to apply to a dynamically allocated dedicated host. This field is only allowed when allocationStrategy is Dynamic, and is mutually exclusive with id. When specified, a dedicated host will be allocated with the provided tags applied. When omitted (and allocationStrategy is Dynamic), a dedicated host will be allocated without any additional tags.",
 }
 
 func (DedicatedHost) SwaggerDoc() map[string]string {
 	return map_DedicatedHost
+}
+
+var map_DedicatedHostStatus = map[string]string{
+	"":   "DedicatedHostStatus defines the observed state of a dynamically allocated dedicated host associated with an AWSMachine. This struct is used to track the ID of the dedicated host.",
+	"id": "id tracks the dynamically allocated dedicated host ID. This field is populated when allocationStrategy is Dynamic (with or without DynamicHostAllocation). The value must start with \"h-\" followed by either 8 or 17 lowercase hexadecimal characters (0-9 and a-f). The use of 8 lowercase hexadecimal characters is for older legacy hosts that may not have been migrated to newer format. Must be either 10 or 19 characters in length.",
+}
+
+func (DedicatedHostStatus) SwaggerDoc() map[string]string {
+	return map_DedicatedHostStatus
+}
+
+var map_DynamicHostAllocationSpec = map[string]string{
+	"":     "DynamicHostAllocationSpec defines the configuration for dynamic dedicated host allocation. This specification always allocates exactly one dedicated host per machine. At least one property must be specified when this struct is used. Currently only Tags are available for configuring, but in the future more configs may become available.",
+	"tags": "tags specifies a set of key-value pairs to apply to the allocated dedicated host. When omitted, no additional user-defined tags will be applied to the allocated host. A maximum of 50 tags can be specified.",
+}
+
+func (DynamicHostAllocationSpec) SwaggerDoc() map[string]string {
+	return map_DynamicHostAllocationSpec
 }
 
 var map_EBSBlockDeviceSpec = map[string]string{
@@ -108,8 +128,9 @@ var map_EBSBlockDeviceSpec = map[string]string{
 	"encrypted":           "Indicates whether the EBS volume is encrypted. Encrypted Amazon EBS volumes may only be attached to machines that support Amazon EBS encryption.",
 	"kmsKey":              "Indicates the KMS key that should be used to encrypt the Amazon EBS volume.",
 	"iops":                "The number of I/O operations per second (IOPS) that the volume supports. For io1, this represents the number of IOPS that are provisioned for the volume. For gp2, this represents the baseline performance of the volume and the rate at which the volume accumulates I/O credits for bursting. For more information about General Purpose SSD baseline performance, I/O credits, and bursting, see Amazon EBS Volume Types (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html) in the Amazon Elastic Compute Cloud User Guide.\n\nMinimal and maximal IOPS for io1 and gp2 are constrained. Please, check https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html for precise boundaries for individual volumes.\n\nCondition: This parameter is required for requests to create io1 volumes; it is not used in requests to create gp2, st1, sc1, or standard volumes.",
+	"throughputMib":       "throughputMib to provision in MiB/s supported for the volume type. Not applicable to all types.\n\nThis parameter is valid only for gp3 volumes. Valid Range: Minimum value of 125. Maximum value of 2000.\n\nWhen omitted, this means no opinion, and the platform is left to choose a reasonable default, which is subject to change over time. The current default is 125.",
 	"volumeSize":          "The size of the volume, in GiB.\n\nConstraints: 1-16384 for General Purpose SSD (gp2), 4-16384 for Provisioned IOPS SSD (io1), 500-16384 for Throughput Optimized HDD (st1), 500-16384 for Cold HDD (sc1), and 1-1024 for Magnetic (standard) volumes. If you specify a snapshot, the volume size must be equal to or larger than the snapshot size.\n\nDefault: If you're creating the volume from a snapshot and don't specify a volume size, the default is the snapshot size.",
-	"volumeType":          "The volume type: gp2, io1, st1, sc1, or standard. Default: standard",
+	"volumeType":          "volumeType can be of type gp2, gp3, io1, st1, sc1, or standard. Default: standard",
 }
 
 func (EBSBlockDeviceSpec) SwaggerDoc() map[string]string {
@@ -128,8 +149,8 @@ func (Filter) SwaggerDoc() map[string]string {
 
 var map_HostPlacement = map[string]string{
 	"":              "HostPlacement is the type that will be used to configure the placement of AWS instances.",
-	"affinity":      "affinity specifies the affinity setting for the instance. Allowed values are AnyAvailable and DedicatedHost. When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set. When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.",
-	"dedicatedHost": "dedicatedHost specifies the exact host that an instance should be restarted on if stopped. dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.",
+	"affinity":      "affinity specifies the affinity setting for the instance. Allowed values are AnyAvailable and DedicatedHost. When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set. When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host. When Affinity is set to AnyAvailable and the `dedicatedHost` field is defined, it runs on specified Dedicated Host, but may move if stopped.",
+	"dedicatedHost": "dedicatedHost specifies the exact host that an instance should be restarted on if stopped. dedicatedHost is required when 'affinity' is set to DedicatedHost, and optional otherwise.",
 }
 
 func (HostPlacement) SwaggerDoc() map[string]string {
@@ -157,7 +178,8 @@ var map_Placement = map[string]string{
 	"":                 "Placement indicates where to create the instance in AWS",
 	"region":           "region is the region to use to create the instance",
 	"availabilityZone": "availabilityZone is the availability zone of the instance",
-	"tenancy":          "tenancy indicates if instance should run on shared or single-tenant hardware. There are supported 3 options: default, dedicated and host.",
+	"tenancy":          "tenancy indicates if instance should run on shared or single-tenant hardware. There are supported 3 options: default, dedicated and host. When set to default Runs on shared multi-tenant hardware. When dedicated Runs on single-tenant hardware (any dedicated instance hardware). When host and the host object is not provided: Runs on Dedicated Host; best-effort restart on same host. When `host` and `host` object is provided with affinity `dedicatedHost` defined: Runs on specified Dedicated Host.",
+	"host":             "host configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL), and to gain visibility and control over instance placement on a physical server. When omitted, the instance is not constrained to a dedicated host.",
 }
 
 func (Placement) SwaggerDoc() map[string]string {
@@ -175,8 +197,8 @@ func (SpotMarketOptions) SwaggerDoc() map[string]string {
 
 var map_TagSpecification = map[string]string{
 	"":      "TagSpecification is the name/value pair for a tag",
-	"name":  "name of the tag",
-	"value": "value of the tag",
+	"name":  "name of the tag. This field is required and must be a non-empty string. Must be between 1 and 128 characters in length.",
+	"value": "value of the tag. When omitted, this creates a tag with an empty string as the value.",
 }
 
 func (TagSpecification) SwaggerDoc() map[string]string {
@@ -625,6 +647,7 @@ var map_MachineStatus = map[string]string{
 	"phase":                  "phase represents the current phase of machine actuation. One of: Failed, Provisioning, Provisioned, Running, Deleting",
 	"conditions":             "conditions defines the current state of the Machine",
 	"authoritativeAPI":       "authoritativeAPI is the API that is authoritative for this resource. Valid values are MachineAPI, ClusterAPI and Migrating. This value is updated by the migration controller to reflect the authoritative API. Machine API and Cluster API controllers use this value to determine whether or not to reconcile the resource. When set to Migrating, the migration controller is currently performing the handover of authority from one API to the other.",
+	"synchronizedAPI":        "synchronizedAPI holds the last stable value of authoritativeAPI. It is used to detect migration cancellation requests and to restore the resource to its previous state. Valid values are \"MachineAPI\" and \"ClusterAPI\". When omitted, the resource has not yet been reconciled by the migration controller.",
 	"synchronizedGeneration": "synchronizedGeneration is the generation of the authoritative resource that the non-authoritative resource is synchronised with. This field is set when the authoritative resource is updated and the sync controller has updated the non-authoritative resource to match.",
 }
 
@@ -728,6 +751,7 @@ var map_MachineSetStatus = map[string]string{
 	"errorReason":            "In the event that there is a terminal problem reconciling the replicas, both ErrorReason and ErrorMessage will be set. ErrorReason will be populated with a succinct value suitable for machine interpretation, while ErrorMessage will contain a more verbose string suitable for logging and human consumption.\n\nThese fields should not be set for transitive errors that a controller faces that are expected to be fixed automatically over time (like service outages), but instead indicate that something is fundamentally wrong with the MachineTemplate's spec or the configuration of the machine controller, and that manual intervention is required. Examples of terminal errors would be invalid combinations of settings in the spec, values that are unsupported by the machine controller, or the responsible machine controller itself being critically misconfigured.\n\nAny transient errors that occur during the reconciliation of Machines can be added as events to the MachineSet object and/or logged in the controller's output.",
 	"conditions":             "conditions defines the current state of the MachineSet",
 	"authoritativeAPI":       "authoritativeAPI is the API that is authoritative for this resource. Valid values are MachineAPI, ClusterAPI and Migrating. This value is updated by the migration controller to reflect the authoritative API. Machine API and Cluster API controllers use this value to determine whether or not to reconcile the resource. When set to Migrating, the migration controller is currently performing the handover of authority from one API to the other.",
+	"synchronizedAPI":        "synchronizedAPI holds the last stable value of authoritativeAPI. It is used to detect migration cancellation requests and to restore the resource to its previous state. Valid values are \"MachineAPI\" and \"ClusterAPI\". When omitted, the resource has not yet been reconciled by the migration controller.",
 	"synchronizedGeneration": "synchronizedGeneration is the generation of the authoritative resource that the non-authoritative resource is synchronised with. This field is set when the authoritative resource is updated and the sync controller has updated the non-authoritative resource to match.",
 }
 

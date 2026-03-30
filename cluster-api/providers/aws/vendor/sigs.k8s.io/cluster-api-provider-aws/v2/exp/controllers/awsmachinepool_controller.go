@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -53,11 +54,11 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ec2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/s3"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -183,12 +184,12 @@ func (r *AWSMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// Always close the scope when exiting this function so we can persist any AWSMachine changes.
 	defer func() {
 		// set Ready condition before AWSMachinePool is patched
-		conditions.SetSummary(machinePoolScope.AWSMachinePool,
-			conditions.WithConditions(
+		v1beta1conditions.SetSummary(machinePoolScope.AWSMachinePool,
+			v1beta1conditions.WithConditions(
 				expinfrav1.ASGReadyCondition,
 				expinfrav1.LaunchTemplateReadyCondition,
 			),
-			conditions.WithStepCounterIfOnly(
+			v1beta1conditions.WithStepCounterIfOnly(
 				expinfrav1.ASGReadyCondition,
 				expinfrav1.LaunchTemplateReadyCondition,
 			),
@@ -230,7 +231,7 @@ func (r *AWSMachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctr
 		WithOptions(options).
 		For(&expinfrav1.AWSMachinePool{}).
 		Watches(
-			&expclusterv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(expinfrav1.GroupVersion.WithKind("AWSMachinePool"))),
 		).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), logger.FromContext(ctx).GetLogger(), r.WatchFilterValue)).
@@ -279,16 +280,16 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 		}
 	}
 
-	if !machinePoolScope.Cluster.Status.InfrastructureReady {
+	if !ptr.Deref(machinePoolScope.Cluster.Status.Initialization.InfrastructureProvisioned, false) {
 		machinePoolScope.Info("Cluster infrastructure is not ready yet")
-		conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, infrav1.WaitingForClusterInfrastructureReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, infrav1.WaitingForClusterInfrastructureReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return ctrl.Result{}, nil
 	}
 
 	// Make sure bootstrap data is available and populated
 	if machinePoolScope.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
 		machinePoolScope.Info("Bootstrap data secret reference is not yet available")
-		conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, infrav1.WaitingForBootstrapDataReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, infrav1.WaitingForBootstrapDataReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return ctrl.Result{}, nil
 	}
 
@@ -300,7 +301,7 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	// Find existing ASG
 	asg, err := r.findASG(machinePoolScope, asgsvc)
 	if err != nil {
-		conditions.MarkUnknown(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGNotFoundReason, "%s", err.Error())
+		v1beta1conditions.MarkUnknown(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGNotFoundReason, "%s", err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -353,12 +354,12 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	}
 
 	// set the LaunchTemplateReady condition
-	conditions.MarkTrue(machinePoolScope.AWSMachinePool, expinfrav1.LaunchTemplateReadyCondition)
+	v1beta1conditions.MarkTrue(machinePoolScope.AWSMachinePool, expinfrav1.LaunchTemplateReadyCondition)
 
 	if asg == nil {
 		// Create new ASG
 		if err := r.createPool(machinePoolScope, clusterScope); err != nil {
-			conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGProvisionFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+			v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGProvisionFailedReason, clusterv1beta1.ConditionSeverityError, "%s", err.Error())
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{
@@ -374,13 +375,13 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 
 		if err := createAWSMachinesIfNotExists(ctx, awsMachineList, machinePoolScope.MachinePool, &machinePoolScope.AWSMachinePool.ObjectMeta, &machinePoolScope.AWSMachinePool.TypeMeta, asg, machinePoolScope.GetLogger(), r.Client, ec2Svc); err != nil {
 			machinePoolScope.SetNotReady()
-			conditions.MarkFalse(machinePoolScope.AWSMachinePool, clusterv1.ReadyCondition, expinfrav1.AWSMachineCreationFailed, clusterv1.ConditionSeverityWarning, "%s", err.Error())
+			v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, clusterv1beta1.ReadyCondition, expinfrav1.AWSMachineCreationFailed, clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())
 			return ctrl.Result{}, fmt.Errorf("failed to create awsmachines: %w", err)
 		}
 
 		if err := deleteOrphanedAWSMachines(ctx, awsMachineList, asg, machinePoolScope.GetLogger(), r.Client); err != nil {
 			machinePoolScope.SetNotReady()
-			conditions.MarkFalse(machinePoolScope.AWSMachinePool, clusterv1.ReadyCondition, expinfrav1.AWSMachineDeletionFailed, clusterv1.ConditionSeverityWarning, "%s", err.Error())
+			v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, clusterv1beta1.ReadyCondition, expinfrav1.AWSMachineDeletionFailed, clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())
 			return ctrl.Result{}, fmt.Errorf("failed to clean up awsmachines: %w", err)
 		}
 	}
@@ -438,7 +439,7 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	machinePoolScope.AWSMachinePool.Spec.ProviderIDList = providerIDList
 	machinePoolScope.AWSMachinePool.Status.Replicas = int32(len(providerIDList)) //#nosec G115
 	machinePoolScope.AWSMachinePool.Status.Ready = true
-	conditions.MarkTrue(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition)
+	v1beta1conditions.MarkTrue(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition)
 
 	err = machinePoolScope.UpdateInstanceStatuses(ctx, asg.Instances)
 	if err != nil {
@@ -484,7 +485,7 @@ func (r *AWSMachinePoolReconciler) reconcileDelete(ctx context.Context, machineP
 		case expinfrav1.ASGStatusDeleteInProgress:
 			// ASG is already deleting
 			machinePoolScope.SetNotReady()
-			conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGDeletionInProgress, clusterv1.ConditionSeverityWarning, "")
+			v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.ASGReadyCondition, expinfrav1.ASGDeletionInProgress, clusterv1beta1.ConditionSeverityWarning, "")
 			r.Recorder.Eventf(machinePoolScope.AWSMachinePool, corev1.EventTypeWarning, "DeletionInProgress", "ASG deletion in progress: %q", asg.Name)
 			machinePoolScope.Info("ASG is already deleting", "name", asg.Name)
 		default:
@@ -664,7 +665,7 @@ func diffASG(machinePoolScope *scope.MachinePoolScope, existingASG *expinfrav1.A
 }
 
 // getOwnerMachinePool returns the MachinePool object owning the current resource.
-func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*expclusterv1.MachinePool, error) {
+func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
 	for _, ref := range obj.OwnerReferences {
 		if ref.Kind != "MachinePool" {
 			continue
@@ -673,7 +674,7 @@ func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.Object
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		if gv.Group == expclusterv1.GroupVersion.Group {
+		if gv.Group == clusterv1.GroupVersion.Group {
 			return getMachinePoolByName(ctx, c, obj.Namespace, ref.Name)
 		}
 	}
@@ -681,8 +682,8 @@ func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.Object
 }
 
 // getMachinePoolByName finds and return a Machine object using the specified params.
-func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*expclusterv1.MachinePool, error) {
-	m := &expclusterv1.MachinePool{}
+func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*clusterv1.MachinePool, error) {
+	m := &clusterv1.MachinePool{}
 	key := client.ObjectKey{Name: name, Namespace: namespace}
 	if err := c.Get(ctx, key, m); err != nil {
 		return nil, err
@@ -692,14 +693,14 @@ func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name 
 
 func machinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
-		m, ok := o.(*expclusterv1.MachinePool)
+		m, ok := o.(*clusterv1.MachinePool)
 		if !ok {
 			klog.Errorf("Expected a MachinePool but got a %T", o)
 		}
 
 		gk := gvk.GroupKind()
 		// Return early if the GroupKind doesn't match what we expect
-		infraGK := m.Spec.Template.Spec.InfrastructureRef.GroupVersionKind().GroupKind()
+		infraGK := m.Spec.Template.Spec.InfrastructureRef.GroupKind()
 		if gk != infraGK {
 			return nil
 		}
@@ -727,7 +728,7 @@ func (r *AWSMachinePoolReconciler) getInfraCluster(ctx context.Context, log *log
 	var managedControlPlaneScope *scope.ManagedControlPlaneScope
 	var err error
 
-	if cluster.Spec.ControlPlaneRef != nil && cluster.Spec.ControlPlaneRef.Kind == controllers.AWSManagedControlPlaneRefKind {
+	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == controllers.AWSManagedControlPlaneRefKind {
 		controlPlane := &ekscontrolplanev1.AWSManagedControlPlane{}
 		controlPlaneName := client.ObjectKey{
 			Namespace: awsMachinePool.Namespace,

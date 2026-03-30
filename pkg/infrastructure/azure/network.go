@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
-	"k8s.io/utils/ptr"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 )
 
 type lbInput struct {
@@ -47,7 +53,6 @@ type securityGroupInput struct {
 	securityGroupName    string
 	securityRuleName     string
 	securityRulePort     string
-	securityRulePriority int32
 	networkClientFactory *armnetwork.ClientFactory
 }
 
@@ -130,7 +135,7 @@ func createAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress,
 							Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
 							Port:              to.Ptr[int32](6443),
 							IntervalInSeconds: to.Ptr[int32](5),
-							NumberOfProbes:    to.Ptr[int32](2),
+							ProbeThreshold:    to.Ptr[int32](2),
 							RequestPath:       to.Ptr("/readyz"),
 						},
 					},
@@ -218,7 +223,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 							Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
 							Port:              to.Ptr[int32](6443),
 							IntervalInSeconds: to.Ptr[int32](5),
-							NumberOfProbes:    to.Ptr[int32](2),
+							ProbeThreshold:    to.Ptr[int32](2),
 							RequestPath:       to.Ptr("/readyz"),
 						},
 					},
@@ -277,7 +282,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 			Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
 			Port:              to.Ptr[int32](22623),
 			IntervalInSeconds: to.Ptr[int32](5),
-			NumberOfProbes:    to.Ptr[int32](2),
+			ProbeThreshold:    to.Ptr[int32](2),
 			RequestPath:       to.Ptr("/healthz"),
 		},
 	}
@@ -358,40 +363,6 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			return fmt.Errorf("vm %s does not have a single nic: %w", vmName, err)
 		}
 	}
-	return nil
-}
-
-func addSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
-	securityRulesClient := in.networkClientFactory.NewSecurityRulesClient()
-
-	// Assume inbound tcp connections from any port to destination port for now
-	securityRuleResp, err := securityRulesClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroupName,
-		in.securityGroupName,
-		in.securityRuleName,
-		armnetwork.SecurityRule{
-			Name: ptr.To(in.securityRuleName),
-			Properties: &armnetwork.SecurityRulePropertiesFormat{
-				Access:                   ptr.To(armnetwork.SecurityRuleAccessAllow),
-				Direction:                ptr.To(armnetwork.SecurityRuleDirectionInbound),
-				Protocol:                 ptr.To(armnetwork.SecurityRuleProtocolTCP),
-				DestinationAddressPrefix: ptr.To("*"),
-				DestinationPortRange:     ptr.To(in.securityRulePort),
-				Priority:                 ptr.To[int32](in.securityRulePriority),
-				SourceAddressPrefix:      ptr.To("*"),
-				SourcePortRange:          ptr.To("*"),
-			},
-		},
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to add security rule: %w", err)
-	}
-	_, err = securityRuleResp.PollUntilDone(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to add security rule: %w", err)
-	}
-
 	return nil
 }
 
@@ -501,4 +472,78 @@ func associateInboundNatRuleToInterface(ctx context.Context, in *inboundNatRuleI
 		return nil, fmt.Errorf("failed to add inbound nat rule to interface: %w", err)
 	}
 	return &interfacesResp.Interface, nil
+}
+
+type natGatewayInput struct {
+	infraID        string
+	cl             client.Client
+	subscriptionID string
+	creds          azcore.TokenCredential
+	cloudConfig    cloud.Configuration
+}
+
+func associateNatGatewayToSubnet(ctx context.Context, in natGatewayInput) error {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: in.cloudConfig,
+		},
+	}
+	subnetsClient, err := armnetwork.NewSubnetsClient(in.subscriptionID, in.creds, clientOpts)
+	if err != nil {
+		return fmt.Errorf("failed to get subnet client: %w", err)
+	}
+
+	azureCluster := &capz.AzureCluster{}
+	key := client.ObjectKey{
+		Name:      in.infraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := in.cl.Get(context.Background(), key, azureCluster); err != nil {
+		return fmt.Errorf("failed to get AzureCluster: %w", err)
+	}
+
+	subnets := azureCluster.Spec.NetworkSpec.Subnets
+	for _, existingSubnet := range subnets {
+		if existingSubnet.Role == capz.SubnetControlPlane {
+			continue
+		}
+		if existingSubnet.NatGateway.Name == "" {
+			continue
+		}
+		natGatewayID := fmt.Sprintf(
+			"/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/natGateways/%s",
+			in.subscriptionID,
+			azureCluster.Spec.ResourceGroup,
+			existingSubnet.NatGateway.Name,
+		)
+
+		subnet, err := subnetsClient.Get(ctx,
+			azureCluster.Spec.NetworkSpec.Vnet.ResourceGroup,
+			azureCluster.Spec.NetworkSpec.Vnet.Name,
+			existingSubnet.Name,
+			nil)
+		if err != nil {
+			return fmt.Errorf("failed to get subnet: %w", err)
+		}
+
+		subnet.Properties.NatGateway = &armnetwork.SubResource{
+			ID: &natGatewayID,
+		}
+
+		poller, err := subnetsClient.BeginCreateOrUpdate(ctx,
+			azureCluster.Spec.NetworkSpec.Vnet.ResourceGroup,
+			azureCluster.Spec.NetworkSpec.Vnet.Name,
+			*subnet.Name,
+			subnet.Subnet,
+			nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin subnet update: %w", err)
+		}
+
+		_, err = poller.PollUntilDone(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update subnet: %w", err)
+		}
+	}
+	return nil
 }

@@ -16,24 +16,24 @@ limitations under the License.
 
 // Manages a specific nodepool.
 resource NodePool {
-	// Retrieves the details of the node pool.
-	method Get {
-		out Body NodePool
-	}
+		// Retrieves the details of the node pool.
+		method Get {
+				out Body NodePool
+		}
 
-	// Updates the node pool.
-	@go(name="Update")
-	method AsyncUpdate {
-		in out Body NodePool
-	}
+		// Updates the node pool.
+		@go(name="Update")
+		method AsyncUpdate {
+				in out Body NodePool
+		}
 
-	// Deletes the node pool.
-	@go(name="Delete")
-	method AsyncDelete {
-	}
+		// Deletes the node pool.
+		@go(name="Delete")
+		method AsyncDelete {
+		}
 
-	locator Status {
-		target NodePoolStatus
-	}
+		locator Status {
+			target NodePoolStatus
+		}
 
 }

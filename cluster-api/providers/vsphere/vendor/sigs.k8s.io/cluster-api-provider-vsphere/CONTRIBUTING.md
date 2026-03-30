@@ -59,7 +59,7 @@ releases to fix CVEs and critical bugs if needed.
 
 ## Dependency Licence Management
 
-Cluster API provider vSphere follows the [license policy of the CNCF](https://github.com/cncf/foundation/blob/main/allowed-third-party-license-policy.md). This sets limits on which
+Cluster API provider vSphere follows the [license policy of the CNCF](https://github.com/cncf/foundation/blob/main/policies-guidance/allowed-third-party-license-policy.md). This sets limits on which
 licenses dependencies and other artifacts use. For go dependencies only dependencies listed in the `go.mod` are considered dependencies. This is in line with [how dependencies are reviewed in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/vendor.md#reviewing-and-approving-dependency-changes).
 
 ### Contributor Ladder

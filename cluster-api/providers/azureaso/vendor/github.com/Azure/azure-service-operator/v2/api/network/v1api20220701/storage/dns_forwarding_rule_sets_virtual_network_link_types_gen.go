@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (link *DnsForwardingRuleSetsVirtualNetworkLink) NewEmptyStatus() genruntime
 
 // Owner returns the ResourceReference of the owner
 func (link *DnsForwardingRuleSetsVirtualNetworkLink) Owner() *genruntime.ResourceReference {
+	if link.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(link.Spec)
 	return link.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (link *DnsForwardingRuleSetsVirtualNetworkLink) SetStatus(status genruntime
 	var st DnsForwardingRuleSetsVirtualNetworkLink_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	link.Status = st
@@ -184,7 +188,7 @@ var _ genruntime.ConvertibleSpec = &DnsForwardingRuleSetsVirtualNetworkLink_Spec
 // ConvertSpecFrom populates our DnsForwardingRuleSetsVirtualNetworkLink_Spec from the provided source
 func (link *DnsForwardingRuleSetsVirtualNetworkLink_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(link)
@@ -193,7 +197,7 @@ func (link *DnsForwardingRuleSetsVirtualNetworkLink_Spec) ConvertSpecFrom(source
 // ConvertSpecTo populates the provided destination from our DnsForwardingRuleSetsVirtualNetworkLink_Spec
 func (link *DnsForwardingRuleSetsVirtualNetworkLink_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(link)
@@ -218,7 +222,7 @@ var _ genruntime.ConvertibleStatus = &DnsForwardingRuleSetsVirtualNetworkLink_ST
 // ConvertStatusFrom populates our DnsForwardingRuleSetsVirtualNetworkLink_STATUS from the provided source
 func (link *DnsForwardingRuleSetsVirtualNetworkLink_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(link)
@@ -227,7 +231,7 @@ func (link *DnsForwardingRuleSetsVirtualNetworkLink_STATUS) ConvertStatusFrom(so
 // ConvertStatusTo populates the provided destination from our DnsForwardingRuleSetsVirtualNetworkLink_STATUS
 func (link *DnsForwardingRuleSetsVirtualNetworkLink_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(link)

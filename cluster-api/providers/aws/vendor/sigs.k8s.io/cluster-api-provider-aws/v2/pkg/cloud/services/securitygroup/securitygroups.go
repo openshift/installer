@@ -38,8 +38,8 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/tags"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 const (
@@ -53,7 +53,7 @@ const (
 	IPProtocolICMP = "icmp"
 
 	// IPProtocolICMPv6 is how EC2 represents the ICMPv6 protocol in ingress rules.
-	IPProtocolICMPv6 = "58"
+	IPProtocolICMPv6 = "icmpv6"
 )
 
 // ReconcileSecurityGroups will reconcile security groups against the Service object.
@@ -197,7 +197,7 @@ func (s *Service) ReconcileSecurityGroups() error {
 			s.scope.Debug("Authorized ingress rules in security group", "authorized-ingress-rules", toAuthorize, "security-group-id", sg.ID)
 		}
 	}
-	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition)
+	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition)
 	return nil
 }
 
@@ -308,7 +308,7 @@ func (s *Service) ec2SecurityGroupToSecurityGroup(ec2SecurityGroup types.Securit
 func (s *Service) DeleteSecurityGroups() error {
 	if s.scope.VPC().ID == "" {
 		s.scope.Debug("Skipping security group deletion, vpc-id is nil", "vpc-id", s.scope.VPC().ID)
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return nil
 	}
 
@@ -322,7 +322,7 @@ func (s *Service) DeleteSecurityGroups() error {
 		return nil
 	}
 
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, clusterv1beta1.DeletingReason, clusterv1beta1.ConditionSeverityInfo, "")
 	if err := s.scope.PatchObject(); err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func (s *Service) DeleteSecurityGroups() error {
 		sg := clusterGroups[i]
 		current := sg.IngressRules
 		if err := s.revokeAllSecurityGroupIngressRules(sg.ID); awserrors.IsIgnorableSecurityGroupError(err) != nil { //nolint:gocritic
-			conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
+			v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, "DeletingFailed", clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())
 			return err
 		}
 
@@ -343,10 +343,10 @@ func (s *Service) DeleteSecurityGroups() error {
 	}
 
 	if err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
+		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, "DeletingFailed", clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 
 	return nil
 }
@@ -596,13 +596,19 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 	}
 	switch role {
 	case infrav1.SecurityGroupBastion:
+		ipv4CidrBlocks := s.scope.Bastion().AllowedCIDRBlocks.IPv4CidrBlocks()
+		var ipv6CidrBlocks []string
+		if s.scope.VPC().IsIPv6Enabled() {
+			ipv6CidrBlocks = s.scope.Bastion().AllowedCIDRBlocks.IPv6CidrBlocks()
+		}
 		return infrav1.IngressRules{
 			{
-				Description: "SSH",
-				Protocol:    infrav1.SecurityGroupProtocolTCP,
-				FromPort:    22,
-				ToPort:      22,
-				CidrBlocks:  s.scope.Bastion().AllowedCIDRBlocks,
+				Description:    "SSH",
+				Protocol:       infrav1.SecurityGroupProtocolTCP,
+				FromPort:       22,
+				ToPort:         22,
+				CidrBlocks:     ipv4CidrBlocks,
+				IPv6CidrBlocks: ipv6CidrBlocks,
 			},
 		}, nil
 	case infrav1.SecurityGroupControlPlane:
@@ -647,17 +653,27 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		return append(cniRules, rules...), nil
 
 	case infrav1.SecurityGroupNode:
-		cidrBlocks := []string{services.AnyIPv4CidrBlock}
-		if scopeCidrBlocks := s.scope.NodePortIngressRuleCidrBlocks(); len(scopeCidrBlocks) > 0 {
-			cidrBlocks = scopeCidrBlocks
+		ipv4CidrBlocks := []string{services.AnyIPv4CidrBlock}
+		if scopeCidrBlocks := s.scope.NodePortIngressRuleCidrBlocks().IPv4CidrBlocks(); len(scopeCidrBlocks) > 0 {
+			ipv4CidrBlocks = scopeCidrBlocks
 		}
+
+		var ipv6CidrBlocks []string
+		if s.scope.VPC().IsIPv6Enabled() {
+			ipv6CidrBlocks = []string{services.AnyIPv6CidrBlock}
+			if scopeCidrBlocks := s.scope.NodePortIngressRuleCidrBlocks().IPv6CidrBlocks(); len(scopeCidrBlocks) > 0 {
+				ipv6CidrBlocks = scopeCidrBlocks
+			}
+		}
+
 		rules := infrav1.IngressRules{
 			{
-				Description: "Node Port Services",
-				Protocol:    infrav1.SecurityGroupProtocolTCP,
-				FromPort:    30000,
-				ToPort:      32767,
-				CidrBlocks:  cidrBlocks,
+				Description:    "Node Port Services",
+				Protocol:       infrav1.SecurityGroupProtocolTCP,
+				FromPort:       30000,
+				ToPort:         32767,
+				CidrBlocks:     ipv4CidrBlocks,
+				IPv6CidrBlocks: ipv6CidrBlocks,
 			},
 			{
 				Description: "Kubelet API",
@@ -671,17 +687,9 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 				},
 			},
 		}
+
 		if s.scope.Bastion().Enabled {
 			rules = append(rules, s.defaultSSHIngressRule(s.scope.SecurityGroups()[infrav1.SecurityGroupBastion].ID))
-		}
-		if s.scope.VPC().IsIPv6Enabled() {
-			rules = append(rules, infrav1.IngressRule{
-				Description:    "Node Port Services IPv6",
-				Protocol:       infrav1.SecurityGroupProtocolTCP,
-				FromPort:       30000,
-				ToPort:         32767,
-				IPv6CidrBlocks: []string{services.AnyIPv6CidrBlock},
-			})
 		}
 
 		additionalIngressRules, err := s.processIngressRulesSGs(s.scope.AdditionalNodeIngressRules())
@@ -921,8 +929,14 @@ func ingressRuleFromSDKProtocol(v types.IpPermission) infrav1.IngressRule {
 		IPProtocolUDP,
 		IPProtocolICMP,
 		IPProtocolICMPv6:
+		// The API returns IpProtocol values as protocol names.
+		// But icmpv6 is handled as its protocol number in CAPA.
+		protocol := *v.IpProtocol
+		if protocol == IPProtocolICMPv6 {
+			protocol = string(infrav1.SecurityGroupProtocolICMPv6)
+		}
 		return infrav1.IngressRule{
-			Protocol: infrav1.SecurityGroupProtocol(*v.IpProtocol),
+			Protocol: infrav1.SecurityGroupProtocol(protocol),
 			FromPort: utils.ToInt64Value(v.FromPort),
 			ToPort:   utils.ToInt64Value(v.ToPort),
 		}
@@ -980,19 +994,7 @@ func (s *Service) getControlPlaneLBIngressRules() infrav1.IngressRules {
 }
 
 func (s *Service) getIngressRuleToAllowAnyIPInTheAPIServer() infrav1.IngressRules {
-	if s.scope.VPC().IsIPv6Enabled() {
-		return infrav1.IngressRules{
-			{
-				Description:    "Kubernetes API IPv6",
-				Protocol:       infrav1.SecurityGroupProtocolTCP,
-				FromPort:       int64(s.scope.APIServerPort()),
-				ToPort:         int64(s.scope.APIServerPort()),
-				IPv6CidrBlocks: []string{services.AnyIPv6CidrBlock},
-			},
-		}
-	}
-
-	return infrav1.IngressRules{
+	rules := infrav1.IngressRules{
 		{
 			Description: "Kubernetes API",
 			Protocol:    infrav1.SecurityGroupProtocolTCP,
@@ -1001,22 +1003,20 @@ func (s *Service) getIngressRuleToAllowAnyIPInTheAPIServer() infrav1.IngressRule
 			CidrBlocks:  []string{services.AnyIPv4CidrBlock},
 		},
 	}
+	if s.scope.VPC().IsIPv6Enabled() {
+		rules = append(rules, infrav1.IngressRule{
+			Description:    "Kubernetes API IPv6",
+			Protocol:       infrav1.SecurityGroupProtocolTCP,
+			FromPort:       int64(s.scope.APIServerPort()),
+			ToPort:         int64(s.scope.APIServerPort()),
+			IPv6CidrBlocks: []string{services.AnyIPv6CidrBlock},
+		})
+	}
+	return rules
 }
 
 func (s *Service) getIngressRuleToAllowVPCCidrInTheAPIServer() infrav1.IngressRules {
-	if s.scope.VPC().IsIPv6Enabled() {
-		return infrav1.IngressRules{
-			{
-				Description:    "Kubernetes API IPv6",
-				Protocol:       infrav1.SecurityGroupProtocolTCP,
-				FromPort:       int64(s.scope.APIServerPort()),
-				ToPort:         int64(s.scope.APIServerPort()),
-				IPv6CidrBlocks: []string{s.scope.VPC().IPv6.CidrBlock},
-			},
-		}
-	}
-
-	return infrav1.IngressRules{
+	rules := infrav1.IngressRules{
 		{
 			Description: "Kubernetes API",
 			Protocol:    infrav1.SecurityGroupProtocolTCP,
@@ -1025,6 +1025,16 @@ func (s *Service) getIngressRuleToAllowVPCCidrInTheAPIServer() infrav1.IngressRu
 			CidrBlocks:  []string{s.scope.VPC().CidrBlock},
 		},
 	}
+	if s.scope.VPC().IsIPv6Enabled() {
+		rules = append(rules, infrav1.IngressRule{
+			Description:    "Kubernetes API IPv6",
+			Protocol:       infrav1.SecurityGroupProtocolTCP,
+			FromPort:       int64(s.scope.APIServerPort()),
+			ToPort:         int64(s.scope.APIServerPort()),
+			IPv6CidrBlocks: []string{s.scope.VPC().IPv6.CidrBlock},
+		})
+	}
+	return rules
 }
 
 func (s *Service) processIngressRulesSGs(ingressRules []infrav1.IngressRule) (infrav1.IngressRules, error) {

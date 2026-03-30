@@ -147,6 +147,10 @@ func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.RolePath = restored.Spec.RolePath
 	dst.Spec.RolePermissionsBoundary = restored.Spec.RolePermissionsBoundary
 
+	if restored.Spec.NodeRepairConfig != nil {
+		dst.Spec.NodeRepairConfig = restored.Spec.NodeRepairConfig
+	}
+
 	return nil
 }
 

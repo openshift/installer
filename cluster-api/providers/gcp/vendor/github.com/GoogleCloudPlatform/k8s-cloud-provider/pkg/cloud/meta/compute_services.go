@@ -994,6 +994,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Global,
 		serviceType: reflect.TypeOf(&alpha.TargetHttpsProxiesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetCertificateMap",
 			"SetSslCertificates",
 			"SetSslPolicy",
@@ -1008,6 +1009,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Global,
 		serviceType: reflect.TypeOf(&beta.TargetHttpsProxiesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetCertificateMap",
 			"SetSslCertificates",
 			"SetSslPolicy",
@@ -1096,6 +1098,33 @@ var ComputeServices = []*ServiceInfo{
 		additionalMethods: []string{
 			"SetBackendService",
 		},
+	},
+	{
+		Object:            "TargetTcpProxy",
+		Service:           "RegionTargetTcpProxies",
+		Resource:          "targetTcpProxies",
+		version:           VersionAlpha,
+		keyType:           Regional,
+		serviceType:       reflect.TypeOf(&alpha.RegionTargetTcpProxiesService{}),
+		additionalMethods: []string{},
+	},
+	{
+		Object:            "TargetTcpProxy",
+		Service:           "RegionTargetTcpProxies",
+		Resource:          "targetTcpProxies",
+		version:           VersionBeta,
+		keyType:           Regional,
+		serviceType:       reflect.TypeOf(&beta.RegionTargetTcpProxiesService{}),
+		additionalMethods: []string{},
+	},
+	{
+		Object:            "TargetTcpProxy",
+		Service:           "RegionTargetTcpProxies",
+		Resource:          "targetTcpProxies",
+		version:           VersionGA,
+		keyType:           Regional,
+		serviceType:       reflect.TypeOf(&ga.RegionTargetTcpProxiesService{}),
+		additionalMethods: []string{},
 	},
 	{
 		Object:      "UrlMap",

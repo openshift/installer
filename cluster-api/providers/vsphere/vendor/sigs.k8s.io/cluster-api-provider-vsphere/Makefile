@@ -23,8 +23,8 @@ SHELL:=/usr/bin/env bash
 #
 # Go.
 #
-GO_VERSION ?= 1.23.5
-GO_DIRECTIVE_VERSION ?= 1.23.5
+GO_VERSION ?= 1.24.6
+GO_DIRECTIVE_VERSION ?= 1.24.0
 GO_CONTAINER_IMAGE ?= docker.io/library/golang:$(GO_VERSION)
 
 # Ensure correct toolchain is used
@@ -44,7 +44,7 @@ export GO111MODULE=on
 #
 # Kubebuilder.
 #
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.32.0
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.34.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -79,8 +79,12 @@ export PATH := $(abspath $(TOOLS_BIN_DIR)):$(PATH)
 #
 GINKGO_FOCUS ?=
 GINKGO_SKIP ?=
+GINKGO_LABEL_FILTER ?=
 GINKGO_NODES ?= 1
 GINKGO_TIMEOUT ?= 3h
+GINKGO_ARGS ?=
+GINKGO_POLL_PROGRESS_AFTER ?= 60m
+GINKGO_POLL_PROGRESS_INTERVAL ?= 5m
 E2E_CONF_FILE ?= $(abspath test/e2e/config/vsphere.yaml)
 E2E_CONF_OVERRIDE_FILE ?= $(abspath test/e2e/config/config-overrides.yaml)
 E2E_VSPHERE_IP_POOL ?=
@@ -109,12 +113,12 @@ KUSTOMIZE_BIN := kustomize
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
 KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v4
 
-SETUP_ENVTEST_VER := release-0.20
+SETUP_ENVTEST_VER := release-0.21
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-CONTROLLER_GEN_VER := v0.17.0
+CONTROLLER_GEN_VER := v0.18.0
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER))
 CONTROLLER_GEN_PKG := sigs.k8s.io/controller-tools/cmd/controller-gen
@@ -124,7 +128,7 @@ GOTESTSUM_BIN := gotestsum
 GOTESTSUM := $(abspath $(TOOLS_BIN_DIR)/$(GOTESTSUM_BIN)-$(GOTESTSUM_VER))
 GOTESTSUM_PKG := gotest.tools/gotestsum
 
-CONVERSION_GEN_VER := v0.32.0
+CONVERSION_GEN_VER := v0.33.0
 CONVERSION_GEN_BIN := conversion-gen
 # We are intentionally using the binary without version suffix, to avoid the version
 # in generated files.
@@ -164,7 +168,11 @@ GINKGO_PKG := github.com/onsi/ginkgo/v2/ginkgo
 GOLANGCI_LINT_BIN := golangci-lint
 GOLANGCI_LINT_VER := $(shell cat .github/workflows/pr-golangci-lint.yaml | grep [[:space:]]version: | sed 's/.*version: //')
 GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER))
-GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint
+GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+
+GOLANGCI_LINT_KAL_BIN := golangci-lint-kube-api-linter
+GOLANGCI_LINT_KAL_VER := $(shell cat ./hack/tools/.custom-gcl.yaml | grep version: | sed 's/version: //')
+GOLANGCI_LINT_KAL := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_KAL_BIN))
 
 GOVULNCHECK_BIN := govulncheck
 GOVULNCHECK_VER := v1.1.4
@@ -186,7 +194,7 @@ IMPORT_BOSS_VER := v0.28.1
 IMPORT_BOSS := $(abspath $(TOOLS_BIN_DIR)/$(IMPORT_BOSS_BIN))
 IMPORT_BOSS_PKG := k8s.io/code-generator/cmd/import-boss
 
-CAPI_HACK_TOOLS_VER := b04c79ca02d3bed23c84115e5c42fa3de1a163dc # Note: this is the commit ID of CAPI v1.9.1
+CAPI_HACK_TOOLS_VER := dc0fb87601071371044f60c59096ecad1b84397f # Note: this the commit ID of CAPI v1.11.1.
 
 BOSKOSCTL_BIN := boskosctl
 BOSKOSCTL := $(abspath $(TOOLS_BIN_DIR)/$(BOSKOSCTL_BIN))
@@ -280,6 +288,7 @@ NETOP_RBAC_ROOT ?= $(NETOP_DIR)/config/rbac
 TEST_EXTENSION_RBAC_ROOT ?= $(TEST_EXTENSION_DIR)/config/rbac
 
 JANITOR_DIR ?= ./$(TOOLS_DIR)/janitor
+JANITOR_ARGS ?= --resource-type=gcve-vsphere-project
 
 help:  # Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9A-Za-z_-]+:.*?##/ { printf "  \033[36m%-50s\033[0m %s\n", $$1, $$2 } /^\$$\([0-9A-Za-z_-]+\):.*?##/ { gsub("_","-", $$1); printf "  \033[36m%-50s\033[0m %s\n", tolower(substr($$1, 3, length($$1)-7)), $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -371,7 +380,7 @@ generate-doctoc:
 	TRACE=$(TRACE) ./hack/generate-doctoc.sh
 
 .PHONY: generate-e2e-templates
-generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.10 v1.11 v1.12 main) ## Generate test templates for all branches
+generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.11 v1.12 v1.13 main) ## Generate test templates for all branches
 
 .PHONY: generate-e2e-templates-main
 generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the main branch
@@ -417,6 +426,14 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/fast-rollout" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-fast-rollout-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/ownerrefs-finalizers" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-ownerrefs-finalizers-supervisor.yaml"
 
+.PHONY: generate-e2e-templates-v1.13
+generate-e2e-templates-v1.13: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/cluster-template-workload.yaml"
+
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/clusterclass-quick-start-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/cluster-template-workload-supervisor.yaml"
+
 .PHONY: generate-e2e-templates-v1.12
 generate-e2e-templates-v1.12: $(KUSTOMIZE)
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.12/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.12/clusterclass-quick-start.yaml"
@@ -433,29 +450,19 @@ generate-e2e-templates-v1.11: $(KUSTOMIZE)
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass-quick-start-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/cluster-template-workload-supervisor.yaml"
 
-.PHONY: generate-e2e-templates-v1.10
-generate-e2e-templates-v1.10: $(KUSTOMIZE)
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.10/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.10/clusterclass-quick-start.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.10/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.10/cluster-template-workload.yaml"
-
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.10/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.10/clusterclass-quick-start-supervisor.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.10/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.10/cluster-template-workload-supervisor.yaml"
-
 .PHONY: generate-test-infra-prowjobs
 generate-test-infra-prowjobs: $(PROWJOB_GEN) ## Generates the prowjob configurations in test-infra
 	@if [ -z "${TEST_INFRA_DIR}" ]; then echo "TEST_INFRA_DIR is not set"; exit 1; fi
-	mkdir -p "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/downstream"
 	$(PROWJOB_GEN) \
 		-config "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-prowjob-gen.yaml" \
 		-templates-dir "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/templates" \
-		-output-dir "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/downstream"
-	@for f in "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/downstream/"*periodics*; do \
-		cat "$${f}" | yq '.periodics |= map(select(.cluster != null))' > "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/$$(basename $${f})"; \
-		cat "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/$$(basename $${f})" | grep -q 'periodics: \[\]' && rm "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/$$(basename $${f})" || true; \
-	done
-	@for f in "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/downstream/"*presubmits*; do \
-		cat "$${f}" | yq '.presubmits."kubernetes-sigs/cluster-api-provider-vsphere" |= map(select(.cluster != null))' > "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/$$(basename $${f})";\
-	done
+		-output-dir "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere"; \
+		sed -i'' -e 's#0 19 \* \* \*#0 23 * * *#g' "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-main-periodics-upgrades.yaml" "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-main-periodics.yaml"; \
+		sed -i'' -e 's#0 21 \* \* \*#0 1 * * *#g' "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-main-periodics-upgrades.yaml" "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-main-periodics.yaml"; \
+		LATEST_RELEASE="$$(cat "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-prowjob-gen.yaml" | yq '.prow_ignored.branches | keys | .[1]' | tr '.' '-')"; \
+		sed -i'' -e 's#0 19 \* \* \*#0 3 * * *#g' "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-$${LATEST_RELEASE}-periodics-upgrades.yaml" "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-$${LATEST_RELEASE}-periodics.yaml"; \
+		sed -i'' -e 's#0 21 \* \* \*#0 5 * * *#g' "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-$${LATEST_RELEASE}-periodics-upgrades.yaml" "$(TEST_INFRA_DIR)/config/jobs/kubernetes-sigs/cluster-api-provider-vsphere/cluster-api-provider-vsphere-$${LATEST_RELEASE}-periodics.yaml"
+
 ## --------------------------------------
 ## Lint / Verify
 ## --------------------------------------
@@ -471,6 +478,14 @@ lint: $(GOLANGCI_LINT) ## Lint the codebase
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
 	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
+
+.PHONY: lint-api
+lint-api: $(GOLANGCI_LINT_KAL)
+	$(GOLANGCI_LINT_KAL) run -v --config $(ROOT_DIR)/.golangci-kal.yml $(GOLANGCI_LINT_EXTRA_ARGS)
+
+.PHONY: lint-api-fix
+lint-api-fix: $(GOLANGCI_LINT_KAL)
+	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint-api
 
 APIDIFF_OLD_COMMIT ?= $(shell git rev-parse origin/main)
 
@@ -507,7 +522,8 @@ verify-gen: generate  ## Verify go generated files are up to date
 
 .PHONY: verify-conversions
 verify-conversions: $(CONVERSION_VERIFIER)  ## Verifies expected API conversion are in place
-	$(CONVERSION_VERIFIER)
+	$(CONVERSION_VERIFIER) \
+		./apis/...
 
 .PHONY: verify-doctoc
 verify-doctoc: generate-doctoc
@@ -698,11 +714,16 @@ e2e: $(GINKGO) $(KUSTOMIZE) $(KIND) $(GOVC) ## Run e2e tests
 	@echo Contents of $(TOOLS_BIN_DIR):
 	@ls $(TOOLS_BIN_DIR)
 	@echo
-	time $(GINKGO) -v --trace -focus="$(GINKGO_FOCUS)" $(_SKIP_ARGS) --nodes=$(GINKGO_NODES) -timeout=$(GINKGO_TIMEOUT) \
-		--output-dir="$(ARTIFACTS)" --junit-report="junit.e2e_suite.1.xml" ./test/e2e -- \
+	time $(GINKGO) -v --trace \
+		--nodes=$(GINKGO_NODES) --timeout=$(GINKGO_TIMEOUT) \
+		--label-filter="$(GINKGO_LABEL_FILTER)" --focus="$(GINKGO_FOCUS)" $(_SKIP_ARGS) \
+		--poll-progress-after=$(GINKGO_POLL_PROGRESS_AFTER) --poll-progress-interval=$(GINKGO_POLL_PROGRESS_INTERVAL) \
+		--fail-on-pending --fail-on-empty \
+		--no-color=$(GINKGO_NOCOLOR) --output-dir="$(ARTIFACTS)" --junit-report="junit.e2e_suite.1.xml" \
+		$(GINKGO_ARGS) ./test/e2e -- \
+		--e2e.artifacts-folder="$(ARTIFACTS)" \
 		--e2e.config="$(E2E_CONF_FILE)" \
 		--e2e.config-overrides="$(E2E_CONF_OVERRIDE_FILE)" \
-		--e2e.artifacts-folder="$(ARTIFACTS)" \
 		--e2e.skip-resource-cleanup=$(SKIP_RESOURCE_CLEANUP) \
 		--e2e.use-existing-cluster="$(USE_EXISTING_CLUSTER)" \
 		--e2e.ip-pool='$(E2E_VSPHERE_IP_POOL)'
@@ -915,7 +936,7 @@ docker-vm-operator-build-%:
 docker-build-vm-operator: checkout-vm-operator
 	@if [ -z "${VM_OPERATOR_VERSION}" ]; then echo "VM_OPERATOR_VERSION is not set"; exit 1; fi
 	cd $(VM_OPERATOR_TMP_DIR) && \
-	$(MAKE) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-$(ARCH) IMAGE_TAG=$(VM_OPERATOR_VERSION) GOARCH=$(ARCH) docker-build
+	$(MAKE) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-$(ARCH) IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) GOARCH=$(ARCH) docker-build
 
 .PHONY: docker-push-all-vm-operator
 docker-push-all-vm-operator: $(addprefix docker-vm-operator-push-,$(VM_OPERATOR_ALL_ARCH))  ## Push the docker images to be included in the release for all architectures + related multiarch manifests
@@ -970,7 +991,7 @@ clean-ci: ## Cleanup orphaned objects in CI
 	@if [ -z "${GOVC_URL}" ]; then echo "GOVC_URL is not set"; exit 1; fi
 	@if [ -z "${VSPHERE_TLS_THUMBPRINT}" ]; then echo "VSPHERE_TLS_THUMBPRINT is not set"; exit 1; fi
 	@if [ -z "${BOSKOS_HOST}" ]; then echo "BOSKOS_HOST is not set"; exit 1; fi
-	go run $(JANITOR_DIR) --dry-run=false
+	go run $(JANITOR_DIR) --dry-run=false $(JANITOR_ARGS)
 
 .PHONY: clean-temporary
 clean-temporary: ## Remove all temporary files and folders
@@ -1049,6 +1070,9 @@ $(GINKGO_BIN): $(GINKGO) ## Build a local copy of ginkgo.
 
 .PHONY: $(GOLANGCI_LINT_BIN)
 $(GOLANGCI_LINT_BIN): $(GOLANGCI_LINT) ## Build a local copy of golangci-lint.
+
+$(GOLANGCI_LINT_KAL): $(GOLANGCI_LINT) # Build golangci-lint-kal from custom configuration.
+	cd $(TOOLS_DIR); $(GOLANGCI_LINT) custom
 
 .PHONY: $(GOVULNCHECK_BIN)
 $(GOVULNCHECK_BIN): $(GOVULNCHECK) ## Build a local copy of govulncheck.

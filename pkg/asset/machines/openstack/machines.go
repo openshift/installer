@@ -244,7 +244,7 @@ func generateProviderSpec(ctx context.Context, clusterID string, config *types.I
 	// For the workers, we still use the AZ name as part of the server group name
 	// so the user can control the scheduling policy per AZ and change the MachineSets
 	// if needed on a day 2 operation.
-	if role == "worker" && failureDomain.AvailabilityZone != "" {
+	if role == workerRole && failureDomain.AvailabilityZone != "" {
 		serverGroupName += "-" + failureDomain.AvailabilityZone
 	}
 

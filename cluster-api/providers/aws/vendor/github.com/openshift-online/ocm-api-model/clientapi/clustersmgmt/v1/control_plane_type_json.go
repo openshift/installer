@@ -49,6 +49,18 @@ func WriteControlPlane(object *ControlPlane, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("backup")
 		WriteBackup(object.backup, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 1 && object.fieldSet_[1] && object.logForwarders != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("log_forwarders")
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		WriteLogForwarderList(object.logForwarders.Items(), stream)
+		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
 }
@@ -68,7 +80,7 @@ func UnmarshalControlPlane(source interface{}) (object *ControlPlane, err error)
 // ReadControlPlane reads a value of the 'control_plane' type from the given iterator.
 func ReadControlPlane(iterator *jsoniter.Iterator) *ControlPlane {
 	object := &ControlPlane{
-		fieldSet_: make([]bool, 1),
+		fieldSet_: make([]bool, 2),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -80,6 +92,27 @@ func ReadControlPlane(iterator *jsoniter.Iterator) *ControlPlane {
 			value := ReadBackup(iterator)
 			object.backup = value
 			object.fieldSet_[0] = true
+		case "log_forwarders":
+			value := &LogForwarderList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.SetLink(text == LogForwarderListLinkKind)
+				case "href":
+					value.SetHREF(iterator.ReadString())
+				case "items":
+					value.SetItems(ReadLogForwarderList(iterator))
+				default:
+					iterator.ReadAny()
+				}
+			}
+			object.logForwarders = value
+			object.fieldSet_[1] = true
 		default:
 			iterator.ReadAny()
 		}

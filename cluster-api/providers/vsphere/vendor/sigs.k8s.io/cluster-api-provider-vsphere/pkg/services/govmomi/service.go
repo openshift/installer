@@ -32,10 +32,12 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -88,7 +90,13 @@ func (vms *VMService) ReconcileVM(ctx context.Context, vmCtx *capvcontext.VMCont
 		// but sometimes this error is transient, for instance, if the storage was temporarily disconnected but
 		// later recovered, the machine will recover from this error.
 		if wasNotFoundByBIOSUUID(err) {
-			conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.NotFoundByBIOSUUIDReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.NotFoundByBIOSUUIDReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
+			v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+				Type:    infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  infrav1.VSphereVMVirtualMachineNotFoundByBIOSUUIDV1Beta2Reason,
+				Message: err.Error(),
+			})
 			vm.State = infrav1.VirtualMachineStateNotFound
 			return vm, err
 		}
@@ -96,21 +104,38 @@ func (vms *VMService) ReconcileVM(ctx context.Context, vmCtx *capvcontext.VMCont
 		// Otherwise, this is a new machine and the VM should be created.
 		// NOTE: We are setting this condition only in case it does not exist, so we avoid to get flickering LastConditionTime
 		// in case of cloning errors or powering on errors.
-		if !conditions.Has(vmCtx.VSphereVM, infrav1.VMProvisionedCondition) {
-			conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.CloningReason, clusterv1.ConditionSeverityInfo, "")
+		if !v1beta1conditions.Has(vmCtx.VSphereVM, infrav1.VMProvisionedCondition) {
+			v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.CloningReason, clusterv1beta1.ConditionSeverityInfo, "")
+			v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+				Type:   infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+				Status: metav1.ConditionFalse,
+				Reason: infrav1.VSphereVMVirtualMachineWaitingForCloneV1Beta2Reason,
+			})
 		}
 
 		// Get the bootstrap data.
 		bootstrapData, format, err := vms.getBootstrapData(ctx, vmCtx)
 		if err != nil {
-			conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.CloningFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.CloningFailedReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
+			v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+				Type:    infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  infrav1.VSphereVMVirtualMachineNotProvisionedV1Beta2Reason,
+				Message: err.Error(),
+			})
 			return vm, err
 		}
 
 		// Create the VM.
 		err = createVM(ctx, vmCtx, bootstrapData, format)
 		if err != nil {
-			conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.CloningFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.CloningFailedReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
+			v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+				Type:    infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  infrav1.VSphereVMVirtualMachineNotProvisionedV1Beta2Reason,
+				Message: err.Error(),
+			})
 			return vm, err
 		}
 		return vm, nil
@@ -172,7 +197,13 @@ func (vms *VMService) ReconcileVM(ctx context.Context, vmCtx *capvcontext.VMCont
 	}
 
 	if err := vms.reconcileTags(ctx, virtualMachineCtx); err != nil {
-		conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.TagsAttachmentFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.TagsAttachmentFailedReason, clusterv1beta1.ConditionSeverityError, "%v", err)
+		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMVirtualMachineNotProvisionedV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return vm, err
 	}
 
@@ -259,8 +290,13 @@ func (vms *VMService) DestroyVM(ctx context.Context, vmCtx *capvcontext.VMContex
 	}
 
 	// Only set the GuestPowerOffCondition to true when the guest shutdown has been initiated.
-	if conditions.Has(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition) {
-		conditions.MarkTrue(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition)
+	if v1beta1conditions.Has(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition) {
+		v1beta1conditions.MarkTrue(virtualMachineCtx.VSphereVM, infrav1.GuestSoftPowerOffSucceededCondition)
+		v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+			Type:   infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Condition,
+			Status: metav1.ConditionTrue,
+			Reason: infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Reason,
+		})
 	}
 
 	log.Info("VM is powered off")
@@ -307,7 +343,13 @@ func (vms *VMService) reconcileIPAddresses(ctx context.Context, virtualMachineCt
 		return false, err
 	}
 	if errors.Is(err, ipam.ErrWaitingForIPAddr) {
-		conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.WaitingForIPAddressReason, clusterv1.ConditionSeverityInfo, err.Error())
+		v1beta1conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.WaitingForIPAddressReason, clusterv1beta1.ConditionSeverityInfo, "%v", err)
+		v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.VSphereVMVirtualMachineWaitingForIPAddressV1Beta2Reason,
+			Message: err.Error(),
+		})
 		return false, nil
 	}
 	virtualMachineCtx.IPAMState = ipamState
@@ -355,10 +397,21 @@ func (vms *VMService) reconcilePowerState(ctx context.Context, virtualMachineCtx
 		log.Info("Powering on VM")
 		task, err := virtualMachineCtx.Obj.PowerOn(ctx)
 		if err != nil {
-			conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.PoweringOnFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+			v1beta1conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.PoweringOnFailedReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
+			v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+				Type:    infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  infrav1.VSphereVMVirtualMachineNotProvisionedV1Beta2Reason,
+				Message: err.Error(),
+			})
 			return false, errors.Wrapf(err, "failed to trigger power on op for vm %s", virtualMachineCtx)
 		}
-		conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.PoweringOnReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.PoweringOnReason, clusterv1beta1.ConditionSeverityInfo, "")
+		v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+			Type:   infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+			Status: metav1.ConditionFalse,
+			Reason: infrav1.VSphereVMVirtualMachinePoweringOnV1Beta2Reason,
+		})
 
 		// Update the VSphereVM.Status.TaskRef to track the power-on task.
 		virtualMachineCtx.VSphereVM.Status.TaskRef = task.Reference().Value
@@ -511,8 +564,10 @@ func (vms *VMService) reconcilePCIDevices(ctx context.Context, virtualMachineCtx
 		}
 
 		if len(specsToBeAdded) == 0 {
-			if conditions.Has(virtualMachineCtx.VSphereVM, infrav1.PCIDevicesDetachedCondition) {
-				conditions.Delete(virtualMachineCtx.VSphereVM, infrav1.PCIDevicesDetachedCondition)
+			if v1beta1conditions.Has(virtualMachineCtx.VSphereVM, infrav1.PCIDevicesDetachedCondition) {
+				v1beta1conditions.Delete(virtualMachineCtx.VSphereVM, infrav1.PCIDevicesDetachedCondition)
+
+				v1beta2conditions.Delete(virtualMachineCtx.VSphereVM, infrav1.VSphereVMPCIDevicesDetachedV1Beta2Condition)
 			}
 			log.V(5).Info("No new PCI devices to be added")
 			return nil
@@ -526,11 +581,18 @@ func (vms *VMService) reconcilePCIDevices(ctx context.Context, virtualMachineCtx
 			// This would arise only when the PCI device is manually removed from
 			// the VM post creation.
 			log.Info("PCI device cannot be attached in powered on state")
-			conditions.MarkFalse(virtualMachineCtx.VSphereVM,
+			v1beta1conditions.MarkFalse(virtualMachineCtx.VSphereVM,
 				infrav1.PCIDevicesDetachedCondition,
 				infrav1.NotFoundReason,
-				clusterv1.ConditionSeverityWarning,
+				clusterv1beta1.ConditionSeverityWarning,
 				"PCI devices removed after VM was powered on")
+
+			v1beta2conditions.Set(virtualMachineCtx.VSphereVM, metav1.Condition{
+				Type:    infrav1.VSphereVMPCIDevicesDetachedV1Beta2Condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  infrav1.VSphereVMPCIDevicesDetachedNotFoundV1Beta2Reason,
+				Message: "PCI devices removed after VM was powered on",
+			})
 			return errors.Errorf("missing PCI devices")
 		}
 		log.Info("PCI devices to be added", "number", len(specsToBeAdded))

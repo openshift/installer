@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101
 ---------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-11-01"
+
 Namespace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -125,6 +126,7 @@ Namespace: Resource
     ├── Type: *string
     ├── UpdatedAt: *string
     └── ZoneRedundant: *bool
+
 NamespacesAuthorizationRule: Resource
 ├── Owner: Namespace
 ├── Spec: Object (4 properties)
@@ -168,6 +170,7 @@ NamespacesAuthorizationRule: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 NamespacesEventhub: Resource
 ├── Owner: Namespace
 ├── Spec: Object (6 properties)
@@ -251,6 +254,7 @@ NamespacesEventhub: Resource
     │       └── "User"
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesEventhubsAuthorizationRule: Resource
 ├── Owner: NamespacesEventhub
 ├── Spec: Object (4 properties)
@@ -294,6 +298,7 @@ NamespacesEventhubsAuthorizationRule: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 NamespacesEventhubsConsumerGroup: Resource
 ├── Owner: NamespacesEventhub
 ├── Spec: Object (4 properties)
@@ -329,3 +334,4 @@ NamespacesEventhubsConsumerGroup: Resource
     ├── Type: *string
     ├── UpdatedAt: *string
     └── UserMetadata: *string
+

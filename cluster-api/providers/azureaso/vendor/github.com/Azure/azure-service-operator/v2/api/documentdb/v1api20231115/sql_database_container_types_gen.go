@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &SqlDatabaseContainer{}
 
 // ConvertFrom populates our SqlDatabaseContainer from the provided hub SqlDatabaseContainer
 func (container *SqlDatabaseContainer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SqlDatabaseContainer)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainer but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SqlDatabaseContainer
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return container.AssignProperties_From_SqlDatabaseContainer(source)
+	err = container.AssignProperties_From_SqlDatabaseContainer(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to container")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SqlDatabaseContainer from our SqlDatabaseContainer
 func (container *SqlDatabaseContainer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SqlDatabaseContainer)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainer but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SqlDatabaseContainer
+	err := container.AssignProperties_To_SqlDatabaseContainer(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from container")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return container.AssignProperties_To_SqlDatabaseContainer(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-documentdb-azure-com-v1api20231115-sqldatabasecontainer,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=documentdb.azure.com,resources=sqldatabasecontainers,verbs=create;update,versions=v1api20231115,name=default.v1api20231115.sqldatabasecontainers.documentdb.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &SqlDatabaseContainer{}
-
-// Default applies defaults to the SqlDatabaseContainer resource
-func (container *SqlDatabaseContainer) Default() {
-	container.defaultImpl()
-	var temp any = container
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (container *SqlDatabaseContainer) defaultAzureName() {
-	if container.Spec.AzureName == "" {
-		container.Spec.AzureName = container.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the SqlDatabaseContainer resource
-func (container *SqlDatabaseContainer) defaultImpl() { container.defaultAzureName() }
 
 var _ configmaps.Exporter = &SqlDatabaseContainer{}
 
@@ -112,17 +100,6 @@ func (container *SqlDatabaseContainer) SecretDestinationExpressions() []*core.De
 		return nil
 	}
 	return container.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &SqlDatabaseContainer{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (container *SqlDatabaseContainer) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*SqlDatabaseContainer_STATUS); ok {
-		return container.Spec.Initialize_From_SqlDatabaseContainer_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type SqlDatabaseContainer_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &SqlDatabaseContainer{}
@@ -173,6 +150,10 @@ func (container *SqlDatabaseContainer) NewEmptyStatus() genruntime.ConvertibleSt
 
 // Owner returns the ResourceReference of the owner
 func (container *SqlDatabaseContainer) Owner() *genruntime.ResourceReference {
+	if container.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(container.Spec)
 	return container.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +170,11 @@ func (container *SqlDatabaseContainer) SetStatus(status genruntime.ConvertibleSt
 	var st SqlDatabaseContainer_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	container.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-documentdb-azure-com-v1api20231115-sqldatabasecontainer,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=documentdb.azure.com,resources=sqldatabasecontainers,verbs=create;update,versions=v1api20231115,name=validate.v1api20231115.sqldatabasecontainers.documentdb.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &SqlDatabaseContainer{}
-
-// ValidateCreate validates the creation of the resource
-func (container *SqlDatabaseContainer) ValidateCreate() (admission.Warnings, error) {
-	validations := container.createValidations()
-	var temp any = container
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (container *SqlDatabaseContainer) ValidateDelete() (admission.Warnings, error) {
-	validations := container.deleteValidations()
-	var temp any = container
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (container *SqlDatabaseContainer) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := container.updateValidations()
-	var temp any = container
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (container *SqlDatabaseContainer) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){container.validateResourceReferences, container.validateOwnerReference, container.validateSecretDestinations, container.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (container *SqlDatabaseContainer) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (container *SqlDatabaseContainer) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return container.validateResourceReferences()
-		},
-		container.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return container.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return container.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return container.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (container *SqlDatabaseContainer) validateConfigMapDestinations() (admission.Warnings, error) {
-	if container.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(container, nil, container.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (container *SqlDatabaseContainer) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(container)
-}
-
-// validateResourceReferences validates all resource references
-func (container *SqlDatabaseContainer) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&container.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (container *SqlDatabaseContainer) validateSecretDestinations() (admission.Warnings, error) {
-	if container.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(container, nil, container.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (container *SqlDatabaseContainer) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*SqlDatabaseContainer)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, container)
 }
 
 // AssignProperties_From_SqlDatabaseContainer populates our SqlDatabaseContainer from the provided source SqlDatabaseContainer
@@ -309,7 +187,7 @@ func (container *SqlDatabaseContainer) AssignProperties_From_SqlDatabaseContaine
 	var spec SqlDatabaseContainer_Spec
 	err := spec.AssignProperties_From_SqlDatabaseContainer_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_Spec() to populate field Spec")
 	}
 	container.Spec = spec
 
@@ -317,7 +195,7 @@ func (container *SqlDatabaseContainer) AssignProperties_From_SqlDatabaseContaine
 	var status SqlDatabaseContainer_STATUS
 	err = status.AssignProperties_From_SqlDatabaseContainer_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_STATUS() to populate field Status")
 	}
 	container.Status = status
 
@@ -335,7 +213,7 @@ func (container *SqlDatabaseContainer) AssignProperties_To_SqlDatabaseContainer(
 	var spec storage.SqlDatabaseContainer_Spec
 	err := container.Spec.AssignProperties_To_SqlDatabaseContainer_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +221,7 @@ func (container *SqlDatabaseContainer) AssignProperties_To_SqlDatabaseContainer(
 	var status storage.SqlDatabaseContainer_STATUS
 	err = container.Status.AssignProperties_To_SqlDatabaseContainer_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -530,13 +408,13 @@ func (container *SqlDatabaseContainer_Spec) ConvertSpecFrom(source genruntime.Co
 	src = &storage.SqlDatabaseContainer_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = container.AssignProperties_From_SqlDatabaseContainer_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -554,13 +432,13 @@ func (container *SqlDatabaseContainer_Spec) ConvertSpecTo(destination genruntime
 	dst = &storage.SqlDatabaseContainer_Spec{}
 	err := container.AssignProperties_To_SqlDatabaseContainer_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -580,7 +458,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 		var operatorSpec SqlDatabaseContainerOperatorSpec
 		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
 		}
 		container.OperatorSpec = &operatorSpec
 	} else {
@@ -592,7 +470,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 		var option CreateUpdateOptions
 		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
 		}
 		container.Options = &option
 	} else {
@@ -612,7 +490,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 		var resource SqlContainerResource
 		err := resource.AssignProperties_From_SqlContainerResource(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlContainerResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlContainerResource() to populate field Resource")
 		}
 		container.Resource = &resource
 	} else {
@@ -642,7 +520,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 		var operatorSpec storage.SqlDatabaseContainerOperatorSpec
 		err := container.OperatorSpec.AssignProperties_To_SqlDatabaseContainerOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -654,7 +532,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 		var option storage.CreateUpdateOptions
 		err := container.Options.AssignProperties_To_CreateUpdateOptions(&option)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
 		}
 		destination.Options = &option
 	} else {
@@ -677,7 +555,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 		var resource storage.SqlContainerResource
 		err := container.Resource.AssignProperties_To_SqlContainerResource(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlContainerResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlContainerResource() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -693,43 +571,6 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SqlDatabaseContainer_STATUS populates our SqlDatabaseContainer_Spec from the provided source SqlDatabaseContainer_STATUS
-func (container *SqlDatabaseContainer_Spec) Initialize_From_SqlDatabaseContainer_STATUS(source *SqlDatabaseContainer_STATUS) error {
-
-	// Location
-	container.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Options
-	if source.Options != nil {
-		var option CreateUpdateOptions
-		err := option.Initialize_From_OptionsResource_STATUS(source.Options)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_OptionsResource_STATUS() to populate field Options")
-		}
-		container.Options = &option
-	} else {
-		container.Options = nil
-	}
-
-	// Resource
-	if source.Resource != nil {
-		var resource SqlContainerResource
-		err := resource.Initialize_From_SqlContainerGetProperties_Resource_STATUS(source.Resource)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
-		}
-		container.Resource = &resource
-	} else {
-		container.Resource = nil
-	}
-
-	// Tags
-	container.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -781,13 +622,13 @@ func (container *SqlDatabaseContainer_STATUS) ConvertStatusFrom(source genruntim
 	src = &storage.SqlDatabaseContainer_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = container.AssignProperties_From_SqlDatabaseContainer_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -805,13 +646,13 @@ func (container *SqlDatabaseContainer_STATUS) ConvertStatusTo(destination genrun
 	dst = &storage.SqlDatabaseContainer_STATUS{}
 	err := container.AssignProperties_To_SqlDatabaseContainer_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -917,7 +758,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_From_SqlDatabaseC
 		var option OptionsResource_STATUS
 		err := option.AssignProperties_From_OptionsResource_STATUS(source.Options)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_OptionsResource_STATUS() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_From_OptionsResource_STATUS() to populate field Options")
 		}
 		container.Options = &option
 	} else {
@@ -929,7 +770,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_From_SqlDatabaseC
 		var resource SqlContainerGetProperties_Resource_STATUS
 		err := resource.AssignProperties_From_SqlContainerGetProperties_Resource_STATUS(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		container.Resource = &resource
 	} else {
@@ -968,7 +809,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_To_SqlDatabaseCon
 		var option storage.OptionsResource_STATUS
 		err := container.Options.AssignProperties_To_OptionsResource_STATUS(&option)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_OptionsResource_STATUS() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_To_OptionsResource_STATUS() to populate field Options")
 		}
 		destination.Options = &option
 	} else {
@@ -980,7 +821,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_To_SqlDatabaseCon
 		var resource storage.SqlContainerGetProperties_Resource_STATUS
 		err := container.Resource.AssignProperties_To_SqlContainerGetProperties_Resource_STATUS(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -1199,7 +1040,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var clientEncryptionPolicy ClientEncryptionPolicy_STATUS
 		err := clientEncryptionPolicy.AssignProperties_From_ClientEncryptionPolicy_STATUS(source.ClientEncryptionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ClientEncryptionPolicy_STATUS() to populate field ClientEncryptionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ClientEncryptionPolicy_STATUS() to populate field ClientEncryptionPolicy")
 		}
 		resource.ClientEncryptionPolicy = &clientEncryptionPolicy
 	} else {
@@ -1215,7 +1056,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 			var computedProperty ComputedProperty_STATUS
 			err := computedProperty.AssignProperties_From_ComputedProperty_STATUS(&computedPropertyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ComputedProperty_STATUS() to populate field ComputedProperties")
+				return eris.Wrap(err, "calling AssignProperties_From_ComputedProperty_STATUS() to populate field ComputedProperties")
 			}
 			computedPropertyList[computedPropertyIndex] = computedProperty
 		}
@@ -1229,7 +1070,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var conflictResolutionPolicy ConflictResolutionPolicy_STATUS
 		err := conflictResolutionPolicy.AssignProperties_From_ConflictResolutionPolicy_STATUS(source.ConflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
 		}
 		resource.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -1259,7 +1100,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var indexingPolicy IndexingPolicy_STATUS
 		err := indexingPolicy.AssignProperties_From_IndexingPolicy_STATUS(source.IndexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IndexingPolicy_STATUS() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_IndexingPolicy_STATUS() to populate field IndexingPolicy")
 		}
 		resource.IndexingPolicy = &indexingPolicy
 	} else {
@@ -1271,7 +1112,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var partitionKey ContainerPartitionKey_STATUS
 		err := partitionKey.AssignProperties_From_ContainerPartitionKey_STATUS(source.PartitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey_STATUS() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey_STATUS() to populate field PartitionKey")
 		}
 		resource.PartitionKey = &partitionKey
 	} else {
@@ -1283,7 +1124,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var restoreParameter RestoreParametersBase_STATUS
 		err := restoreParameter.AssignProperties_From_RestoreParametersBase_STATUS(source.RestoreParameters)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RestoreParametersBase_STATUS() to populate field RestoreParameters")
+			return eris.Wrap(err, "calling AssignProperties_From_RestoreParametersBase_STATUS() to populate field RestoreParameters")
 		}
 		resource.RestoreParameters = &restoreParameter
 	} else {
@@ -1306,7 +1147,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var uniqueKeyPolicy UniqueKeyPolicy_STATUS
 		err := uniqueKeyPolicy.AssignProperties_From_UniqueKeyPolicy_STATUS(source.UniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
 		}
 		resource.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -1330,7 +1171,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var clientEncryptionPolicy storage.ClientEncryptionPolicy_STATUS
 		err := resource.ClientEncryptionPolicy.AssignProperties_To_ClientEncryptionPolicy_STATUS(&clientEncryptionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ClientEncryptionPolicy_STATUS() to populate field ClientEncryptionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ClientEncryptionPolicy_STATUS() to populate field ClientEncryptionPolicy")
 		}
 		destination.ClientEncryptionPolicy = &clientEncryptionPolicy
 	} else {
@@ -1346,7 +1187,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 			var computedProperty storage.ComputedProperty_STATUS
 			err := computedPropertyItem.AssignProperties_To_ComputedProperty_STATUS(&computedProperty)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ComputedProperty_STATUS() to populate field ComputedProperties")
+				return eris.Wrap(err, "calling AssignProperties_To_ComputedProperty_STATUS() to populate field ComputedProperties")
 			}
 			computedPropertyList[computedPropertyIndex] = computedProperty
 		}
@@ -1360,7 +1201,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var conflictResolutionPolicy storage.ConflictResolutionPolicy_STATUS
 		err := resource.ConflictResolutionPolicy.AssignProperties_To_ConflictResolutionPolicy_STATUS(&conflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
 		}
 		destination.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -1389,7 +1230,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var indexingPolicy storage.IndexingPolicy_STATUS
 		err := resource.IndexingPolicy.AssignProperties_To_IndexingPolicy_STATUS(&indexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IndexingPolicy_STATUS() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_IndexingPolicy_STATUS() to populate field IndexingPolicy")
 		}
 		destination.IndexingPolicy = &indexingPolicy
 	} else {
@@ -1401,7 +1242,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var partitionKey storage.ContainerPartitionKey_STATUS
 		err := resource.PartitionKey.AssignProperties_To_ContainerPartitionKey_STATUS(&partitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey_STATUS() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey_STATUS() to populate field PartitionKey")
 		}
 		destination.PartitionKey = &partitionKey
 	} else {
@@ -1413,7 +1254,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var restoreParameter storage.RestoreParametersBase_STATUS
 		err := resource.RestoreParameters.AssignProperties_To_RestoreParametersBase_STATUS(&restoreParameter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RestoreParametersBase_STATUS() to populate field RestoreParameters")
+			return eris.Wrap(err, "calling AssignProperties_To_RestoreParametersBase_STATUS() to populate field RestoreParameters")
 		}
 		destination.RestoreParameters = &restoreParameter
 	} else {
@@ -1436,7 +1277,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var uniqueKeyPolicy storage.UniqueKeyPolicy_STATUS
 		err := resource.UniqueKeyPolicy.AssignProperties_To_UniqueKeyPolicy_STATUS(&uniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
 		}
 		destination.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -1728,7 +1569,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var clientEncryptionPolicy ClientEncryptionPolicy
 		err := clientEncryptionPolicy.AssignProperties_From_ClientEncryptionPolicy(source.ClientEncryptionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ClientEncryptionPolicy() to populate field ClientEncryptionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ClientEncryptionPolicy() to populate field ClientEncryptionPolicy")
 		}
 		resource.ClientEncryptionPolicy = &clientEncryptionPolicy
 	} else {
@@ -1744,7 +1585,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 			var computedProperty ComputedProperty
 			err := computedProperty.AssignProperties_From_ComputedProperty(&computedPropertyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ComputedProperty() to populate field ComputedProperties")
+				return eris.Wrap(err, "calling AssignProperties_From_ComputedProperty() to populate field ComputedProperties")
 			}
 			computedPropertyList[computedPropertyIndex] = computedProperty
 		}
@@ -1758,7 +1599,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var conflictResolutionPolicy ConflictResolutionPolicy
 		err := conflictResolutionPolicy.AssignProperties_From_ConflictResolutionPolicy(source.ConflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
 		}
 		resource.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -1785,7 +1626,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var indexingPolicy IndexingPolicy
 		err := indexingPolicy.AssignProperties_From_IndexingPolicy(source.IndexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IndexingPolicy() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_IndexingPolicy() to populate field IndexingPolicy")
 		}
 		resource.IndexingPolicy = &indexingPolicy
 	} else {
@@ -1797,7 +1638,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var partitionKey ContainerPartitionKey
 		err := partitionKey.AssignProperties_From_ContainerPartitionKey(source.PartitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey() to populate field PartitionKey")
 		}
 		resource.PartitionKey = &partitionKey
 	} else {
@@ -1809,7 +1650,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var restoreParameter RestoreParametersBase
 		err := restoreParameter.AssignProperties_From_RestoreParametersBase(source.RestoreParameters)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RestoreParametersBase() to populate field RestoreParameters")
+			return eris.Wrap(err, "calling AssignProperties_From_RestoreParametersBase() to populate field RestoreParameters")
 		}
 		resource.RestoreParameters = &restoreParameter
 	} else {
@@ -1821,7 +1662,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var uniqueKeyPolicy UniqueKeyPolicy
 		err := uniqueKeyPolicy.AssignProperties_From_UniqueKeyPolicy(source.UniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
 		}
 		resource.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -1845,7 +1686,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var clientEncryptionPolicy storage.ClientEncryptionPolicy
 		err := resource.ClientEncryptionPolicy.AssignProperties_To_ClientEncryptionPolicy(&clientEncryptionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ClientEncryptionPolicy() to populate field ClientEncryptionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ClientEncryptionPolicy() to populate field ClientEncryptionPolicy")
 		}
 		destination.ClientEncryptionPolicy = &clientEncryptionPolicy
 	} else {
@@ -1861,7 +1702,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 			var computedProperty storage.ComputedProperty
 			err := computedPropertyItem.AssignProperties_To_ComputedProperty(&computedProperty)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ComputedProperty() to populate field ComputedProperties")
+				return eris.Wrap(err, "calling AssignProperties_To_ComputedProperty() to populate field ComputedProperties")
 			}
 			computedPropertyList[computedPropertyIndex] = computedProperty
 		}
@@ -1875,7 +1716,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var conflictResolutionPolicy storage.ConflictResolutionPolicy
 		err := resource.ConflictResolutionPolicy.AssignProperties_To_ConflictResolutionPolicy(&conflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
 		}
 		destination.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -1901,7 +1742,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var indexingPolicy storage.IndexingPolicy
 		err := resource.IndexingPolicy.AssignProperties_To_IndexingPolicy(&indexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IndexingPolicy() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_IndexingPolicy() to populate field IndexingPolicy")
 		}
 		destination.IndexingPolicy = &indexingPolicy
 	} else {
@@ -1913,7 +1754,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var partitionKey storage.ContainerPartitionKey
 		err := resource.PartitionKey.AssignProperties_To_ContainerPartitionKey(&partitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey() to populate field PartitionKey")
 		}
 		destination.PartitionKey = &partitionKey
 	} else {
@@ -1925,7 +1766,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var restoreParameter storage.RestoreParametersBase
 		err := resource.RestoreParameters.AssignProperties_To_RestoreParametersBase(&restoreParameter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RestoreParametersBase() to populate field RestoreParameters")
+			return eris.Wrap(err, "calling AssignProperties_To_RestoreParametersBase() to populate field RestoreParameters")
 		}
 		destination.RestoreParameters = &restoreParameter
 	} else {
@@ -1937,7 +1778,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var uniqueKeyPolicy storage.UniqueKeyPolicy
 		err := resource.UniqueKeyPolicy.AssignProperties_To_UniqueKeyPolicy(&uniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
 		}
 		destination.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -1949,120 +1790,6 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SqlContainerGetProperties_Resource_STATUS populates our SqlContainerResource from the provided source SqlContainerGetProperties_Resource_STATUS
-func (resource *SqlContainerResource) Initialize_From_SqlContainerGetProperties_Resource_STATUS(source *SqlContainerGetProperties_Resource_STATUS) error {
-
-	// AnalyticalStorageTtl
-	resource.AnalyticalStorageTtl = genruntime.ClonePointerToInt(source.AnalyticalStorageTtl)
-
-	// ClientEncryptionPolicy
-	if source.ClientEncryptionPolicy != nil {
-		var clientEncryptionPolicy ClientEncryptionPolicy
-		err := clientEncryptionPolicy.Initialize_From_ClientEncryptionPolicy_STATUS(source.ClientEncryptionPolicy)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ClientEncryptionPolicy_STATUS() to populate field ClientEncryptionPolicy")
-		}
-		resource.ClientEncryptionPolicy = &clientEncryptionPolicy
-	} else {
-		resource.ClientEncryptionPolicy = nil
-	}
-
-	// ComputedProperties
-	if source.ComputedProperties != nil {
-		computedPropertyList := make([]ComputedProperty, len(source.ComputedProperties))
-		for computedPropertyIndex, computedPropertyItem := range source.ComputedProperties {
-			// Shadow the loop variable to avoid aliasing
-			computedPropertyItem := computedPropertyItem
-			var computedProperty ComputedProperty
-			err := computedProperty.Initialize_From_ComputedProperty_STATUS(&computedPropertyItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ComputedProperty_STATUS() to populate field ComputedProperties")
-			}
-			computedPropertyList[computedPropertyIndex] = computedProperty
-		}
-		resource.ComputedProperties = computedPropertyList
-	} else {
-		resource.ComputedProperties = nil
-	}
-
-	// ConflictResolutionPolicy
-	if source.ConflictResolutionPolicy != nil {
-		var conflictResolutionPolicy ConflictResolutionPolicy
-		err := conflictResolutionPolicy.Initialize_From_ConflictResolutionPolicy_STATUS(source.ConflictResolutionPolicy)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
-		}
-		resource.ConflictResolutionPolicy = &conflictResolutionPolicy
-	} else {
-		resource.ConflictResolutionPolicy = nil
-	}
-
-	// CreateMode
-	if source.CreateMode != nil {
-		createMode := genruntime.ToEnum(string(*source.CreateMode), createMode_Values)
-		resource.CreateMode = &createMode
-	} else {
-		resource.CreateMode = nil
-	}
-
-	// DefaultTtl
-	resource.DefaultTtl = genruntime.ClonePointerToInt(source.DefaultTtl)
-
-	// Id
-	resource.Id = genruntime.ClonePointerToString(source.Id)
-
-	// IndexingPolicy
-	if source.IndexingPolicy != nil {
-		var indexingPolicy IndexingPolicy
-		err := indexingPolicy.Initialize_From_IndexingPolicy_STATUS(source.IndexingPolicy)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_IndexingPolicy_STATUS() to populate field IndexingPolicy")
-		}
-		resource.IndexingPolicy = &indexingPolicy
-	} else {
-		resource.IndexingPolicy = nil
-	}
-
-	// PartitionKey
-	if source.PartitionKey != nil {
-		var partitionKey ContainerPartitionKey
-		err := partitionKey.Initialize_From_ContainerPartitionKey_STATUS(source.PartitionKey)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ContainerPartitionKey_STATUS() to populate field PartitionKey")
-		}
-		resource.PartitionKey = &partitionKey
-	} else {
-		resource.PartitionKey = nil
-	}
-
-	// RestoreParameters
-	if source.RestoreParameters != nil {
-		var restoreParameter RestoreParametersBase
-		err := restoreParameter.Initialize_From_RestoreParametersBase_STATUS(source.RestoreParameters)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_RestoreParametersBase_STATUS() to populate field RestoreParameters")
-		}
-		resource.RestoreParameters = &restoreParameter
-	} else {
-		resource.RestoreParameters = nil
-	}
-
-	// UniqueKeyPolicy
-	if source.UniqueKeyPolicy != nil {
-		var uniqueKeyPolicy UniqueKeyPolicy
-		err := uniqueKeyPolicy.Initialize_From_UniqueKeyPolicy_STATUS(source.UniqueKeyPolicy)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
-		}
-		resource.UniqueKeyPolicy = &uniqueKeyPolicy
-	} else {
-		resource.UniqueKeyPolicy = nil
 	}
 
 	// No error
@@ -2257,7 +1984,7 @@ func (policy *ClientEncryptionPolicy) AssignProperties_From_ClientEncryptionPoli
 			var includedPath ClientEncryptionIncludedPath
 			err := includedPath.AssignProperties_From_ClientEncryptionIncludedPath(&includedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ClientEncryptionIncludedPath() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_ClientEncryptionIncludedPath() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -2267,12 +1994,7 @@ func (policy *ClientEncryptionPolicy) AssignProperties_From_ClientEncryptionPoli
 	}
 
 	// PolicyFormatVersion
-	if source.PolicyFormatVersion != nil {
-		policyFormatVersion := *source.PolicyFormatVersion
-		policy.PolicyFormatVersion = &policyFormatVersion
-	} else {
-		policy.PolicyFormatVersion = nil
-	}
+	policy.PolicyFormatVersion = genruntime.ClonePointerToInt(source.PolicyFormatVersion)
 
 	// No error
 	return nil
@@ -2292,7 +2014,7 @@ func (policy *ClientEncryptionPolicy) AssignProperties_To_ClientEncryptionPolicy
 			var includedPath storage.ClientEncryptionIncludedPath
 			err := includedPathItem.AssignProperties_To_ClientEncryptionIncludedPath(&includedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ClientEncryptionIncludedPath() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_ClientEncryptionIncludedPath() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -2302,51 +2024,13 @@ func (policy *ClientEncryptionPolicy) AssignProperties_To_ClientEncryptionPolicy
 	}
 
 	// PolicyFormatVersion
-	if policy.PolicyFormatVersion != nil {
-		policyFormatVersion := *policy.PolicyFormatVersion
-		destination.PolicyFormatVersion = &policyFormatVersion
-	} else {
-		destination.PolicyFormatVersion = nil
-	}
+	destination.PolicyFormatVersion = genruntime.ClonePointerToInt(policy.PolicyFormatVersion)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ClientEncryptionPolicy_STATUS populates our ClientEncryptionPolicy from the provided source ClientEncryptionPolicy_STATUS
-func (policy *ClientEncryptionPolicy) Initialize_From_ClientEncryptionPolicy_STATUS(source *ClientEncryptionPolicy_STATUS) error {
-
-	// IncludedPaths
-	if source.IncludedPaths != nil {
-		includedPathList := make([]ClientEncryptionIncludedPath, len(source.IncludedPaths))
-		for includedPathIndex, includedPathItem := range source.IncludedPaths {
-			// Shadow the loop variable to avoid aliasing
-			includedPathItem := includedPathItem
-			var includedPath ClientEncryptionIncludedPath
-			err := includedPath.Initialize_From_ClientEncryptionIncludedPath_STATUS(&includedPathItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ClientEncryptionIncludedPath_STATUS() to populate field IncludedPaths")
-			}
-			includedPathList[includedPathIndex] = includedPath
-		}
-		policy.IncludedPaths = includedPathList
-	} else {
-		policy.IncludedPaths = nil
-	}
-
-	// PolicyFormatVersion
-	if source.PolicyFormatVersion != nil {
-		policyFormatVersion := *source.PolicyFormatVersion
-		policy.PolicyFormatVersion = &policyFormatVersion
-	} else {
-		policy.PolicyFormatVersion = nil
 	}
 
 	// No error
@@ -2409,7 +2093,7 @@ func (policy *ClientEncryptionPolicy_STATUS) AssignProperties_From_ClientEncrypt
 			var includedPath ClientEncryptionIncludedPath_STATUS
 			err := includedPath.AssignProperties_From_ClientEncryptionIncludedPath_STATUS(&includedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ClientEncryptionIncludedPath_STATUS() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_ClientEncryptionIncludedPath_STATUS() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -2439,7 +2123,7 @@ func (policy *ClientEncryptionPolicy_STATUS) AssignProperties_To_ClientEncryptio
 			var includedPath storage.ClientEncryptionIncludedPath_STATUS
 			err := includedPathItem.AssignProperties_To_ClientEncryptionIncludedPath_STATUS(&includedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ClientEncryptionIncludedPath_STATUS() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_ClientEncryptionIncludedPath_STATUS() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -2552,19 +2236,6 @@ func (property *ComputedProperty) AssignProperties_To_ComputedProperty(destinati
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ComputedProperty_STATUS populates our ComputedProperty from the provided source ComputedProperty_STATUS
-func (property *ComputedProperty) Initialize_From_ComputedProperty_STATUS(source *ComputedProperty_STATUS) error {
-
-	// Name
-	property.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Query
-	property.Query = genruntime.ClonePointerToString(source.Query)
 
 	// No error
 	return nil
@@ -2775,27 +2446,6 @@ func (policy *ConflictResolutionPolicy) AssignProperties_To_ConflictResolutionPo
 	return nil
 }
 
-// Initialize_From_ConflictResolutionPolicy_STATUS populates our ConflictResolutionPolicy from the provided source ConflictResolutionPolicy_STATUS
-func (policy *ConflictResolutionPolicy) Initialize_From_ConflictResolutionPolicy_STATUS(source *ConflictResolutionPolicy_STATUS) error {
-
-	// ConflictResolutionPath
-	policy.ConflictResolutionPath = genruntime.ClonePointerToString(source.ConflictResolutionPath)
-
-	// ConflictResolutionProcedure
-	policy.ConflictResolutionProcedure = genruntime.ClonePointerToString(source.ConflictResolutionProcedure)
-
-	// Mode
-	if source.Mode != nil {
-		mode := genruntime.ToEnum(string(*source.Mode), conflictResolutionPolicy_Mode_Values)
-		policy.Mode = &mode
-	} else {
-		policy.Mode = nil
-	}
-
-	// No error
-	return nil
-}
-
 // The conflict resolution policy for the container.
 type ConflictResolutionPolicy_STATUS struct {
 	// ConflictResolutionPath: The conflict resolution path in the case of LastWriterWins mode.
@@ -2994,12 +2644,7 @@ func (partitionKey *ContainerPartitionKey) AssignProperties_From_ContainerPartit
 	partitionKey.Paths = genruntime.CloneSliceOfString(source.Paths)
 
 	// Version
-	if source.Version != nil {
-		version := *source.Version
-		partitionKey.Version = &version
-	} else {
-		partitionKey.Version = nil
-	}
+	partitionKey.Version = genruntime.ClonePointerToInt(source.Version)
 
 	// No error
 	return nil
@@ -3022,44 +2667,13 @@ func (partitionKey *ContainerPartitionKey) AssignProperties_To_ContainerPartitio
 	destination.Paths = genruntime.CloneSliceOfString(partitionKey.Paths)
 
 	// Version
-	if partitionKey.Version != nil {
-		version := *partitionKey.Version
-		destination.Version = &version
-	} else {
-		destination.Version = nil
-	}
+	destination.Version = genruntime.ClonePointerToInt(partitionKey.Version)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ContainerPartitionKey_STATUS populates our ContainerPartitionKey from the provided source ContainerPartitionKey_STATUS
-func (partitionKey *ContainerPartitionKey) Initialize_From_ContainerPartitionKey_STATUS(source *ContainerPartitionKey_STATUS) error {
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), containerPartitionKey_Kind_Values)
-		partitionKey.Kind = &kind
-	} else {
-		partitionKey.Kind = nil
-	}
-
-	// Paths
-	partitionKey.Paths = genruntime.CloneSliceOfString(source.Paths)
-
-	// Version
-	if source.Version != nil {
-		version := *source.Version
-		partitionKey.Version = &version
-	} else {
-		partitionKey.Version = nil
 	}
 
 	// No error
@@ -3378,7 +2992,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 					var compositeIndexLocal CompositePath
 					err := compositeIndexLocal.AssignProperties_From_CompositePath(&compositeIndexItem1)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_From_CompositePath() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_From_CompositePath() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -3401,7 +3015,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 			var excludedPath ExcludedPath
 			err := excludedPath.AssignProperties_From_ExcludedPath(&excludedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ExcludedPath() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_ExcludedPath() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -3419,7 +3033,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 			var includedPath IncludedPath
 			err := includedPath.AssignProperties_From_IncludedPath(&includedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IncludedPath() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_IncludedPath() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -3446,7 +3060,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 			var spatialIndexLocal SpatialSpec
 			err := spatialIndexLocal.AssignProperties_From_SpatialSpec(&spatialIndexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SpatialSpec() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_From_SpatialSpec() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -3486,7 +3100,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 					var compositeIndexLocal storage.CompositePath
 					err := compositeIndexItem1.AssignProperties_To_CompositePath(&compositeIndexLocal)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_To_CompositePath() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_To_CompositePath() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -3509,7 +3123,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 			var excludedPath storage.ExcludedPath
 			err := excludedPathItem.AssignProperties_To_ExcludedPath(&excludedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ExcludedPath() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_ExcludedPath() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -3527,7 +3141,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 			var includedPath storage.IncludedPath
 			err := includedPathItem.AssignProperties_To_IncludedPath(&includedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IncludedPath() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_IncludedPath() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -3553,7 +3167,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 			var spatialIndexLocal storage.SpatialSpec
 			err := spatialIndexItem.AssignProperties_To_SpatialSpec(&spatialIndexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SpatialSpec() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_To_SpatialSpec() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -3567,111 +3181,6 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_IndexingPolicy_STATUS populates our IndexingPolicy from the provided source IndexingPolicy_STATUS
-func (policy *IndexingPolicy) Initialize_From_IndexingPolicy_STATUS(source *IndexingPolicy_STATUS) error {
-
-	// Automatic
-	if source.Automatic != nil {
-		automatic := *source.Automatic
-		policy.Automatic = &automatic
-	} else {
-		policy.Automatic = nil
-	}
-
-	// CompositeIndexes
-	if source.CompositeIndexes != nil {
-		compositeIndexList := make([][]CompositePath, len(source.CompositeIndexes))
-		for compositeIndex, compositeIndexItem := range source.CompositeIndexes {
-			// Shadow the loop variable to avoid aliasing
-			compositeIndexItem := compositeIndexItem
-			if compositeIndexItem != nil {
-				compositeIndexList1 := make([]CompositePath, len(compositeIndexItem))
-				for compositeIndex1, compositeIndexItem1 := range compositeIndexItem {
-					// Shadow the loop variable to avoid aliasing
-					compositeIndexItem1 := compositeIndexItem1
-					var compositeIndexLocal CompositePath
-					err := compositeIndexLocal.Initialize_From_CompositePath_STATUS(&compositeIndexItem1)
-					if err != nil {
-						return errors.Wrap(err, "calling Initialize_From_CompositePath_STATUS() to populate field CompositeIndexes")
-					}
-					compositeIndexList1[compositeIndex1] = compositeIndexLocal
-				}
-				compositeIndexList[compositeIndex] = compositeIndexList1
-			} else {
-				compositeIndexList[compositeIndex] = nil
-			}
-		}
-		policy.CompositeIndexes = compositeIndexList
-	} else {
-		policy.CompositeIndexes = nil
-	}
-
-	// ExcludedPaths
-	if source.ExcludedPaths != nil {
-		excludedPathList := make([]ExcludedPath, len(source.ExcludedPaths))
-		for excludedPathIndex, excludedPathItem := range source.ExcludedPaths {
-			// Shadow the loop variable to avoid aliasing
-			excludedPathItem := excludedPathItem
-			var excludedPath ExcludedPath
-			err := excludedPath.Initialize_From_ExcludedPath_STATUS(&excludedPathItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ExcludedPath_STATUS() to populate field ExcludedPaths")
-			}
-			excludedPathList[excludedPathIndex] = excludedPath
-		}
-		policy.ExcludedPaths = excludedPathList
-	} else {
-		policy.ExcludedPaths = nil
-	}
-
-	// IncludedPaths
-	if source.IncludedPaths != nil {
-		includedPathList := make([]IncludedPath, len(source.IncludedPaths))
-		for includedPathIndex, includedPathItem := range source.IncludedPaths {
-			// Shadow the loop variable to avoid aliasing
-			includedPathItem := includedPathItem
-			var includedPath IncludedPath
-			err := includedPath.Initialize_From_IncludedPath_STATUS(&includedPathItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_IncludedPath_STATUS() to populate field IncludedPaths")
-			}
-			includedPathList[includedPathIndex] = includedPath
-		}
-		policy.IncludedPaths = includedPathList
-	} else {
-		policy.IncludedPaths = nil
-	}
-
-	// IndexingMode
-	if source.IndexingMode != nil {
-		indexingMode := genruntime.ToEnum(string(*source.IndexingMode), indexingPolicy_IndexingMode_Values)
-		policy.IndexingMode = &indexingMode
-	} else {
-		policy.IndexingMode = nil
-	}
-
-	// SpatialIndexes
-	if source.SpatialIndexes != nil {
-		spatialIndexList := make([]SpatialSpec, len(source.SpatialIndexes))
-		for spatialIndex, spatialIndexItem := range source.SpatialIndexes {
-			// Shadow the loop variable to avoid aliasing
-			spatialIndexItem := spatialIndexItem
-			var spatialIndexLocal SpatialSpec
-			err := spatialIndexLocal.Initialize_From_SpatialSpec_STATUS(&spatialIndexItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SpatialSpec_STATUS() to populate field SpatialIndexes")
-			}
-			spatialIndexList[spatialIndex] = spatialIndexLocal
-		}
-		policy.SpatialIndexes = spatialIndexList
-	} else {
-		policy.SpatialIndexes = nil
 	}
 
 	// No error
@@ -3800,7 +3309,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 					var compositeIndexLocal CompositePath_STATUS
 					err := compositeIndexLocal.AssignProperties_From_CompositePath_STATUS(&compositeIndexItem1)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_From_CompositePath_STATUS() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_From_CompositePath_STATUS() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -3823,7 +3332,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 			var excludedPath ExcludedPath_STATUS
 			err := excludedPath.AssignProperties_From_ExcludedPath_STATUS(&excludedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ExcludedPath_STATUS() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_ExcludedPath_STATUS() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -3841,7 +3350,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 			var includedPath IncludedPath_STATUS
 			err := includedPath.AssignProperties_From_IncludedPath_STATUS(&includedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IncludedPath_STATUS() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_IncludedPath_STATUS() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -3868,7 +3377,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 			var spatialIndexLocal SpatialSpec_STATUS
 			err := spatialIndexLocal.AssignProperties_From_SpatialSpec_STATUS(&spatialIndexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SpatialSpec_STATUS() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_From_SpatialSpec_STATUS() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -3908,7 +3417,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 					var compositeIndexLocal storage.CompositePath_STATUS
 					err := compositeIndexItem1.AssignProperties_To_CompositePath_STATUS(&compositeIndexLocal)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_To_CompositePath_STATUS() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_To_CompositePath_STATUS() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -3931,7 +3440,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 			var excludedPath storage.ExcludedPath_STATUS
 			err := excludedPathItem.AssignProperties_To_ExcludedPath_STATUS(&excludedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ExcludedPath_STATUS() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_ExcludedPath_STATUS() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -3949,7 +3458,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 			var includedPath storage.IncludedPath_STATUS
 			err := includedPathItem.AssignProperties_To_IncludedPath_STATUS(&includedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IncludedPath_STATUS() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_IncludedPath_STATUS() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -3975,7 +3484,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 			var spatialIndexLocal storage.SpatialSpec_STATUS
 			err := spatialIndexItem.AssignProperties_To_SpatialSpec_STATUS(&spatialIndexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SpatialSpec_STATUS() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_To_SpatialSpec_STATUS() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -4061,7 +3570,7 @@ func (policy *UniqueKeyPolicy) AssignProperties_From_UniqueKeyPolicy(source *sto
 			var uniqueKey UniqueKey
 			err := uniqueKey.AssignProperties_From_UniqueKey(&uniqueKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UniqueKey() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_UniqueKey() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -4088,7 +3597,7 @@ func (policy *UniqueKeyPolicy) AssignProperties_To_UniqueKeyPolicy(destination *
 			var uniqueKey storage.UniqueKey
 			err := uniqueKeyItem.AssignProperties_To_UniqueKey(&uniqueKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UniqueKey() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_UniqueKey() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -4102,31 +3611,6 @@ func (policy *UniqueKeyPolicy) AssignProperties_To_UniqueKeyPolicy(destination *
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UniqueKeyPolicy_STATUS populates our UniqueKeyPolicy from the provided source UniqueKeyPolicy_STATUS
-func (policy *UniqueKeyPolicy) Initialize_From_UniqueKeyPolicy_STATUS(source *UniqueKeyPolicy_STATUS) error {
-
-	// UniqueKeys
-	if source.UniqueKeys != nil {
-		uniqueKeyList := make([]UniqueKey, len(source.UniqueKeys))
-		for uniqueKeyIndex, uniqueKeyItem := range source.UniqueKeys {
-			// Shadow the loop variable to avoid aliasing
-			uniqueKeyItem := uniqueKeyItem
-			var uniqueKey UniqueKey
-			err := uniqueKey.Initialize_From_UniqueKey_STATUS(&uniqueKeyItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_UniqueKey_STATUS() to populate field UniqueKeys")
-			}
-			uniqueKeyList[uniqueKeyIndex] = uniqueKey
-		}
-		policy.UniqueKeys = uniqueKeyList
-	} else {
-		policy.UniqueKeys = nil
 	}
 
 	// No error
@@ -4181,7 +3665,7 @@ func (policy *UniqueKeyPolicy_STATUS) AssignProperties_From_UniqueKeyPolicy_STAT
 			var uniqueKey UniqueKey_STATUS
 			err := uniqueKey.AssignProperties_From_UniqueKey_STATUS(&uniqueKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UniqueKey_STATUS() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_UniqueKey_STATUS() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -4208,7 +3692,7 @@ func (policy *UniqueKeyPolicy_STATUS) AssignProperties_To_UniqueKeyPolicy_STATUS
 			var uniqueKey storage.UniqueKey_STATUS
 			err := uniqueKeyItem.AssignProperties_To_UniqueKey_STATUS(&uniqueKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UniqueKey_STATUS() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_UniqueKey_STATUS() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -4364,25 +3848,6 @@ func (path *ClientEncryptionIncludedPath) AssignProperties_To_ClientEncryptionIn
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ClientEncryptionIncludedPath_STATUS populates our ClientEncryptionIncludedPath from the provided source ClientEncryptionIncludedPath_STATUS
-func (path *ClientEncryptionIncludedPath) Initialize_From_ClientEncryptionIncludedPath_STATUS(source *ClientEncryptionIncludedPath_STATUS) error {
-
-	// ClientEncryptionKeyId
-	path.ClientEncryptionKeyId = genruntime.ClonePointerToString(source.ClientEncryptionKeyId)
-
-	// EncryptionAlgorithm
-	path.EncryptionAlgorithm = genruntime.ClonePointerToString(source.EncryptionAlgorithm)
-
-	// EncryptionType
-	path.EncryptionType = genruntime.ClonePointerToString(source.EncryptionType)
-
-	// Path
-	path.Path = genruntime.ClonePointerToString(source.Path)
 
 	// No error
 	return nil
@@ -4597,24 +4062,6 @@ func (path *CompositePath) AssignProperties_To_CompositePath(destination *storag
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CompositePath_STATUS populates our CompositePath from the provided source CompositePath_STATUS
-func (path *CompositePath) Initialize_From_CompositePath_STATUS(source *CompositePath_STATUS) error {
-
-	// Order
-	if source.Order != nil {
-		order := genruntime.ToEnum(string(*source.Order), compositePath_Order_Values)
-		path.Order = &order
-	} else {
-		path.Order = nil
-	}
-
-	// Path
-	path.Path = genruntime.ClonePointerToString(source.Path)
 
 	// No error
 	return nil
@@ -4839,16 +4286,6 @@ func (path *ExcludedPath) AssignProperties_To_ExcludedPath(destination *storage.
 	return nil
 }
 
-// Initialize_From_ExcludedPath_STATUS populates our ExcludedPath from the provided source ExcludedPath_STATUS
-func (path *ExcludedPath) Initialize_From_ExcludedPath_STATUS(source *ExcludedPath_STATUS) error {
-
-	// Path
-	path.Path = genruntime.ClonePointerToString(source.Path)
-
-	// No error
-	return nil
-}
-
 type ExcludedPath_STATUS struct {
 	// Path: The path for which the indexing behavior applies to. Index paths typically start with root and end with wildcard
 	// (/path/*)
@@ -4988,7 +4425,7 @@ func (path *IncludedPath) AssignProperties_From_IncludedPath(source *storage.Inc
 			var indexLocal Indexes
 			err := indexLocal.AssignProperties_From_Indexes(&indexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Indexes() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_From_Indexes() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -5018,7 +4455,7 @@ func (path *IncludedPath) AssignProperties_To_IncludedPath(destination *storage.
 			var indexLocal storage.Indexes
 			err := indexItem.AssignProperties_To_Indexes(&indexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Indexes() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_To_Indexes() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -5036,34 +4473,6 @@ func (path *IncludedPath) AssignProperties_To_IncludedPath(destination *storage.
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_IncludedPath_STATUS populates our IncludedPath from the provided source IncludedPath_STATUS
-func (path *IncludedPath) Initialize_From_IncludedPath_STATUS(source *IncludedPath_STATUS) error {
-
-	// Indexes
-	if source.Indexes != nil {
-		indexList := make([]Indexes, len(source.Indexes))
-		for index, indexItem := range source.Indexes {
-			// Shadow the loop variable to avoid aliasing
-			indexItem := indexItem
-			var indexLocal Indexes
-			err := indexLocal.Initialize_From_Indexes_STATUS(&indexItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_Indexes_STATUS() to populate field Indexes")
-			}
-			indexList[index] = indexLocal
-		}
-		path.Indexes = indexList
-	} else {
-		path.Indexes = nil
-	}
-
-	// Path
-	path.Path = genruntime.ClonePointerToString(source.Path)
 
 	// No error
 	return nil
@@ -5125,7 +4534,7 @@ func (path *IncludedPath_STATUS) AssignProperties_From_IncludedPath_STATUS(sourc
 			var indexLocal Indexes_STATUS
 			err := indexLocal.AssignProperties_From_Indexes_STATUS(&indexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Indexes_STATUS() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_From_Indexes_STATUS() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -5155,7 +4564,7 @@ func (path *IncludedPath_STATUS) AssignProperties_To_IncludedPath_STATUS(destina
 			var indexLocal storage.Indexes_STATUS
 			err := indexItem.AssignProperties_To_Indexes_STATUS(&indexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Indexes_STATUS() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_To_Indexes_STATUS() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -5326,30 +4735,6 @@ func (spatial *SpatialSpec) AssignProperties_To_SpatialSpec(destination *storage
 	return nil
 }
 
-// Initialize_From_SpatialSpec_STATUS populates our SpatialSpec from the provided source SpatialSpec_STATUS
-func (spatial *SpatialSpec) Initialize_From_SpatialSpec_STATUS(source *SpatialSpec_STATUS) error {
-
-	// Path
-	spatial.Path = genruntime.ClonePointerToString(source.Path)
-
-	// Types
-	if source.Types != nil {
-		typeList := make([]SpatialType, len(source.Types))
-		for typeIndex, typeItem := range source.Types {
-			// Shadow the loop variable to avoid aliasing
-			typeItem := typeItem
-			typeVar := genruntime.ToEnum(string(typeItem), spatialType_Values)
-			typeList[typeIndex] = typeVar
-		}
-		spatial.Types = typeList
-	} else {
-		spatial.Types = nil
-	}
-
-	// No error
-	return nil
-}
-
 type SpatialSpec_STATUS struct {
 	// Path: The path for which the indexing behavior applies to. Index paths typically start with root and end with wildcard
 	// (/path/*)
@@ -5512,16 +4897,6 @@ func (uniqueKey *UniqueKey) AssignProperties_To_UniqueKey(destination *storage.U
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UniqueKey_STATUS populates our UniqueKey from the provided source UniqueKey_STATUS
-func (uniqueKey *UniqueKey) Initialize_From_UniqueKey_STATUS(source *UniqueKey_STATUS) error {
-
-	// Paths
-	uniqueKey.Paths = genruntime.CloneSliceOfString(source.Paths)
 
 	// No error
 	return nil
@@ -5753,32 +5128,6 @@ func (indexes *Indexes) AssignProperties_To_Indexes(destination *storage.Indexes
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Indexes_STATUS populates our Indexes from the provided source Indexes_STATUS
-func (indexes *Indexes) Initialize_From_Indexes_STATUS(source *Indexes_STATUS) error {
-
-	// DataType
-	if source.DataType != nil {
-		dataType := genruntime.ToEnum(string(*source.DataType), indexes_DataType_Values)
-		indexes.DataType = &dataType
-	} else {
-		indexes.DataType = nil
-	}
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), indexes_Kind_Values)
-		indexes.Kind = &kind
-	} else {
-		indexes.Kind = nil
-	}
-
-	// Precision
-	indexes.Precision = genruntime.ClonePointerToInt(source.Precision)
 
 	// No error
 	return nil

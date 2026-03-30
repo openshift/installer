@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -217,4 +217,10 @@ func (v *VirtualMachineSnapshot) ExportSnapshot(ctx *Context, req *types.ExportS
 			Returnval: lease.Reference(),
 		},
 	}
+}
+
+func copyConfigFromVmConfig(src *types.VirtualMachineConfigInfo) types.VirtualMachineConfigInfo {
+	var dest types.VirtualMachineConfigInfo
+	deepCopy(*src, &dest)
+	return dest
 }

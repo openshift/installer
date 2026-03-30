@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -64,6 +65,16 @@ func (c *VersionGateClient) Delete() *VersionGateDeleteRequest {
 // Retrieves the details of the version gate.
 func (c *VersionGateClient) Get() *VersionGateGetRequest {
 	return &VersionGateGetRequest{
+		transport: c.transport,
+		path:      c.path,
+	}
+}
+
+// Update creates a request for the 'update' method.
+//
+// Updates the version gate.
+func (c *VersionGateClient) Update() *VersionGateUpdateRequest {
+	return &VersionGateUpdateRequest{
 		transport: c.transport,
 		path:      c.path,
 	}
@@ -416,6 +427,149 @@ func (r *VersionGateGetResponse) Body() *VersionGate {
 // GetBody returns the value of the 'body' parameter and
 // a flag indicating if the parameter has a value.
 func (r *VersionGateGetResponse) GetBody() (value *VersionGate, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// VersionGateUpdateRequest is the request for the 'update' method.
+type VersionGateUpdateRequest struct {
+	transport http.RoundTripper
+	path      string
+	query     url.Values
+	header    http.Header
+	body      *VersionGate
+}
+
+// Parameter adds a query parameter.
+func (r *VersionGateUpdateRequest) Parameter(name string, value interface{}) *VersionGateUpdateRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *VersionGateUpdateRequest) Header(name string, value interface{}) *VersionGateUpdateRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Impersonate wraps requests on behalf of another user.
+// Note: Services that do not support this feature may silently ignore this call.
+func (r *VersionGateUpdateRequest) Impersonate(user string) *VersionGateUpdateRequest {
+	helpers.AddImpersonationHeader(&r.header, user)
+	return r
+}
+
+// Body sets the value of the 'body' parameter.
+func (r *VersionGateUpdateRequest) Body(value *VersionGate) *VersionGateUpdateRequest {
+	r.body = value
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *VersionGateUpdateRequest) Send() (result *VersionGateUpdateResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *VersionGateUpdateRequest) SendContext(ctx context.Context) (result *VersionGateUpdateResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.CopyHeader(r.header)
+	buffer := &bytes.Buffer{}
+	err = writeVersionGateUpdateRequest(r, buffer)
+	if err != nil {
+		return
+	}
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "PATCH",
+		URL:    uri,
+		Header: header,
+		Body:   io.NopCloser(buffer),
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = &VersionGateUpdateResponse{}
+	result.status = response.StatusCode
+	result.header = response.Header
+	reader := bufio.NewReader(response.Body)
+	_, err = reader.Peek(1)
+	if err == io.EOF {
+		err = nil
+		return
+	}
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalErrorStatus(reader, result.status)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	err = readVersionGateUpdateResponse(result, reader)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// VersionGateUpdateResponse is the response for the 'update' method.
+type VersionGateUpdateResponse struct {
+	status int
+	header http.Header
+	err    *errors.Error
+	body   *VersionGate
+}
+
+// Status returns the response status code.
+func (r *VersionGateUpdateResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *VersionGateUpdateResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *VersionGateUpdateResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
+}
+
+// Body returns the value of the 'body' parameter.
+func (r *VersionGateUpdateResponse) Body() *VersionGate {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+func (r *VersionGateUpdateResponse) GetBody() (value *VersionGate, ok bool) {
 	ok = r != nil && r.body != nil
 	if ok {
 		value = r.body

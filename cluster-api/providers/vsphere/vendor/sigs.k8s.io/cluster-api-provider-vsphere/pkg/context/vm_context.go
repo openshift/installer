@@ -21,7 +21,8 @@ import (
 	"context"
 	"fmt"
 
-	"sigs.k8s.io/cluster-api/util/patch"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -44,7 +45,15 @@ func (c *VMContext) String() string {
 
 // Patch updates the object and its status on the API server.
 func (c *VMContext) Patch(ctx context.Context) error {
-	return c.PatchHelper.Patch(ctx, c.VSphereVM)
+	return c.PatchHelper.Patch(ctx, c.VSphereVM, patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+		infrav1.VSphereVMReadyV1Beta2Condition,
+		infrav1.VSphereVMVCenterAvailableV1Beta2Condition,
+		infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
+		infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+		infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Condition,
+		infrav1.VSphereVMPCIDevicesDetachedV1Beta2Condition,
+		clusterv1beta1.PausedV1Beta2Condition,
+	}})
 }
 
 // GetSession returns this context's session.

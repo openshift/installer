@@ -98,6 +98,7 @@ Disk_STATUS: Object (11 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 Disk_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -176,6 +177,7 @@ Disk_Spec: Object (7 properties)
 │       └── "UltraSSD_LRS"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 Snapshot_STATUS: Object (9 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -262,6 +264,7 @@ Snapshot_STATUS: Object (9 properties)
 │   └── Tier: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 Snapshot_Spec: Object (6 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -339,3 +342,4 @@ Snapshot_Spec: Object (6 properties)
 │       ├── "Standard_LRS"
 │       └── "Standard_ZRS"
 └── Tags: map[string]string
+

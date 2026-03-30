@@ -35,8 +35,9 @@ import (
 	stsservice "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/sts"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/patch"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 )
 
 // ROSAControlPlaneScopeParams defines the input parameters used to create a new ROSAControlPlaneScope.
@@ -76,7 +77,7 @@ func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlP
 		return nil, errors.Errorf("failed to create aws V2 session: %v", err)
 	}
 
-	helper, err := patch.NewHelper(params.ControlPlane, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.ControlPlane, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
@@ -99,7 +100,7 @@ func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlP
 type ROSAControlPlaneScope struct {
 	logger.Logger
 	Client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	Cluster      *clusterv1.Cluster
 	ControlPlane *rosacontrolplanev1.ROSAControlPlane
@@ -138,9 +139,11 @@ func (s *ROSAControlPlaneScope) ControllerName() string {
 	return s.controllerName
 }
 
-var _ cloud.ScopeUsage = (*ROSAControlPlaneScope)(nil)
-var _ cloud.Session = (*ROSAControlPlaneScope)(nil)
-var _ cloud.SessionMetadata = (*ROSAControlPlaneScope)(nil)
+var (
+	_ cloud.ScopeUsage      = (*ROSAControlPlaneScope)(nil)
+	_ cloud.Session         = (*ROSAControlPlaneScope)(nil)
+	_ cloud.SessionMetadata = (*ROSAControlPlaneScope)(nil)
+)
 
 // Name returns the CAPI cluster name.
 func (s *ROSAControlPlaneScope) Name() string {
@@ -212,7 +215,7 @@ func (s *ROSAControlPlaneScope) PatchObject() error {
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.ControlPlane,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
 			rosacontrolplanev1.ROSAControlPlaneReadyCondition,
 			rosacontrolplanev1.ROSAControlPlaneValidCondition,
 			rosacontrolplanev1.ROSAControlPlaneUpgradingCondition,

@@ -81,7 +81,7 @@ func (*openStackMachineTemplateWebhook) ValidateUpdate(ctx context.Context, oldO
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a admission.Request inside context: %v", err))
 	}
 
-	if !topology.ShouldSkipImmutabilityChecks(req, newObj) &&
+	if !topology.IsDryRunRequest(req, newObj) &&
 		!reflect.DeepEqual(newObj.Spec.Template.Spec, oldObj.Spec.Template.Spec) {
 		allErrs = append(allErrs,
 			field.Invalid(field.NewPath("spec", "template", "spec"), newObj.Spec.Template.Spec, "OpenStackMachineTemplate spec.template.spec field is immutable. Please create a new resource instead. Ref doc: https://cluster-api.sigs.k8s.io/tasks/change-machine-template.html"),

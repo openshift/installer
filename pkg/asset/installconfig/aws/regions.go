@@ -9,20 +9,27 @@ import (
 
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
-)
-
-const (
-	isoPartition  = "aws-iso"
-	isobPartition = "aws-iso-b"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
 // knownPublicRegions is the subset of public AWS regions where RHEL CoreOS images are published.
 // This subset does not include supported regions which are found in other partitions, such as us-gov-east-1.
 // Returns: a list of region names.
-func knownPublicRegions(architecture types.Architecture) ([]string, error) {
-	required := rhcos.AMIRegions(architecture)
+func knownPublicRegions(architecture types.Architecture, osImageStream types.OSImageStream) ([]string, error) {
+	required := rhcos.AMIRegions(architecture, osImageStream)
 
-	regions, err := GetRegions(context.Background())
+	ctx := context.Background()
+	client, err := NewEC2Client(ctx, EndpointOptions{
+		// Pass the default region (used for survey purposes) as the region here.
+		// Without a region, the DescribeRegions call will fail immediately.
+		// At this point, custom endpoints are unknown as they are not yet configured.
+		Region: "us-east-1",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
+	}
+
+	regions, err := GetRegions(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aws regions: %w", err)
 	}
@@ -38,8 +45,8 @@ func knownPublicRegions(architecture types.Architecture) ([]string, error) {
 
 // IsKnownPublicRegion returns true if a specified region is Known to the installer.
 // A known region is the subset of public AWS regions where RHEL CoreOS images are published.
-func IsKnownPublicRegion(region string, architecture types.Architecture) (bool, error) {
-	publicRegions, err := knownPublicRegions(architecture)
+func IsKnownPublicRegion(region string, architecture types.Architecture, osImageStream types.OSImageStream) (bool, error) {
+	publicRegions, err := knownPublicRegions(architecture, osImageStream)
 	if err != nil {
 		return false, err
 	}
@@ -47,6 +54,7 @@ func IsKnownPublicRegion(region string, architecture types.Architecture) (bool, 
 }
 
 // IsSecretRegion determines if the region is part of a secret partition.
+// Note: This uses the v1 EndpointResolver, which exposes the partition ID.
 func IsSecretRegion(region string) (bool, error) {
 	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
 	if err != nil {
@@ -54,7 +62,7 @@ func IsSecretRegion(region string) (bool, error) {
 	}
 
 	switch endpoint.PartitionID {
-	case isoPartition, isobPartition:
+	case typesaws.AwsIsoPartitionID, typesaws.AwsIsoBPartitionID:
 		return true, nil
 	}
 

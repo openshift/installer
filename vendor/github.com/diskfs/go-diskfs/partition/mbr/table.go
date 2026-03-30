@@ -2,6 +2,7 @@ package mbr
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/diskfs/go-diskfs/partition/part"
@@ -13,7 +14,7 @@ type Table struct {
 	Partitions         []*Partition
 	LogicalSectorSize  int // logical size of a sector
 	PhysicalSectorSize int // physical size of the sector
-	initialized        bool
+	partitionTableUUID string
 }
 
 const (
@@ -23,6 +24,9 @@ const (
 	partitionEntriesStart = 446
 	partitionEntriesCount = 4
 	signatureStart        = 510
+	// the partition table UUID is stored in 4 bytes in the MBR
+	partitionTableUUIDStart = 440
+	partitionTableUUIDEnd   = 444
 )
 
 // partitionEntrySize standard size of an MBR partition
@@ -54,20 +58,7 @@ func comparePartitionArray(p1, p2 []*Partition) bool {
 	return matches
 }
 
-// ensure that a blank table is initialized
-func (t *Table) initTable() {
-	// default settings
-	if t.LogicalSectorSize == 0 {
-		t.LogicalSectorSize = 512
-	}
-	if t.PhysicalSectorSize == 0 {
-		t.PhysicalSectorSize = 512
-	}
-
-	t.initialized = true
-}
-
-// Equal check if another table is equal to this one, ignoring CHS start and end for the partitions
+// Equal check if another table is equal to this one, ignoring the partition table UUID and CHS start and end for the partitions
 func (t *Table) Equal(t2 *Table) bool {
 	if t2 == nil {
 		return false
@@ -85,13 +76,14 @@ func tableFromBytes(b []byte) (*Table, error) {
 	if len(b) != mbrSize {
 		return nil, fmt.Errorf("data for partition was %d bytes instead of expected %d", len(b), mbrSize)
 	}
-	mbrSignature := b[signatureStart:]
 
 	// validate signature
+	mbrSignature := b[signatureStart:]
 	if !bytes.Equal(mbrSignature, getMbrSignature()) {
 		return nil, fmt.Errorf("invalid MBR Signature %v", mbrSignature)
 	}
 
+	ptUUID := readPartitionTableUUID(b)
 	parts := make([]*Partition, 0, partitionEntriesCount)
 	count := int(partitionEntriesCount)
 	for i := 0; i < count; i++ {
@@ -102,6 +94,7 @@ func tableFromBytes(b []byte) (*Table, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading partition entry %d: %v", i, err)
 		}
+		p.partitionUUID = formatPartitionUUID(ptUUID, i+1)
 		parts = append(parts, p)
 	}
 
@@ -109,9 +102,28 @@ func tableFromBytes(b []byte) (*Table, error) {
 		Partitions:         parts,
 		LogicalSectorSize:  logicalSectorSize,
 		PhysicalSectorSize: 512,
+		partitionTableUUID: ptUUID,
 	}
 
 	return table, nil
+}
+
+func readPartitionTableUUID(b []byte) string {
+	ptUUID := b[partitionTableUUIDStart:partitionTableUUIDEnd]
+	return fmt.Sprintf("%x", binary.LittleEndian.Uint32(ptUUID))
+}
+
+// UUID returns the partition table UUID used to identify disks
+func (t *Table) UUID() string {
+	return t.partitionTableUUID
+}
+
+// formatPartitionUUID creates the partition UUID which is created by using the
+// partition table UUID and the partition index.
+// Format string taken from libblkid:
+// https://github.com/util-linux/util-linux/blob/master/libblkid/src/partitions/partitions.c#L1387C42-L1387C52
+func formatPartitionUUID(ptUUID string, index int) string {
+	return fmt.Sprintf("%.33s-%02x", ptUUID, index)
 }
 
 // Type report the type of table, always the string "mbr"
@@ -120,6 +132,8 @@ func (t *Table) Type() string {
 }
 
 // Read read a partition table from a disk, given the logical block size and physical block size
+//
+//nolint:unused,revive // not used in MBR, but it is important to implement the interface
 func Read(f util.File, logicalBlockSize, physicalBlockSize int) (*Table, error) {
 	// read the data off of the disk
 	b := make([]byte, mbrSize)
@@ -155,6 +169,8 @@ func (t *Table) toBytes() []byte {
 
 // Write writes a given MBR Table to disk.
 // Must be passed the util.File to write to and the size of the disk
+//
+//nolint:unused,revive // not used in MBR, but it is important to implement the interface
 func (t *Table) Write(f util.File, size int64) error {
 	b := t.toBytes()
 
@@ -175,4 +191,18 @@ func (t *Table) GetPartitions() []part.Partition {
 		parts[i] = p
 	}
 	return parts
+}
+
+// Verify will attempt to evaluate the headers
+//
+//nolint:unused,revive // not used in MBR, but it is important to implement the interface
+func (t *Table) Verify(f util.File, diskSize uint64) error {
+	return nil
+}
+
+// Repair will attempt to repair a broken Master Boot Record
+//
+//nolint:unused,revive // not used in MBR, but it is important to implement the interface
+func (t *Table) Repair(diskSize uint64) error {
+	return nil
 }

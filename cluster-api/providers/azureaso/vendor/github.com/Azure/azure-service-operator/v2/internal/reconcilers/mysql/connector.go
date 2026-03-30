@@ -8,11 +8,11 @@ package mysql
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	ctrlconversion "sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	asomysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1"
-	dbformysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
+	dbformysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 )
@@ -33,12 +33,12 @@ func getServerFQDN(ctx context.Context, resourceResolver *resolver.Resolver, use
 	// Note that this is not actually possible for this type because we don't allow ARMID references for these owners,
 	// but protecting against it here anyway.
 	if !ownerDetails.FoundKubernetesOwner() {
-		return "", errors.Errorf("user owner must exist in Kubernetes for user %s", user.Name)
+		return "", eris.Errorf("user owner must exist in Kubernetes for user %s", user.Name)
 	}
 
 	flexibleServer, ok := ownerDetails.Owner.(*dbformysql.FlexibleServer)
 	if !ok {
-		return "", errors.Errorf("owner was not type FlexibleServer, instead: %T", ownerDetails)
+		return "", eris.Errorf("owner was not type FlexibleServer, instead: %T", ownerDetails)
 	}
 
 	// Assertion to ensure that this is still the storage type
@@ -47,7 +47,7 @@ func getServerFQDN(ctx context.Context, resourceResolver *resolver.Resolver, use
 
 	if flexibleServer.Status.FullyQualifiedDomainName == nil {
 		// This possibly means that the server hasn't finished deploying yet
-		err = errors.Errorf("owning Flexibleserver %q '.status.fullyQualifiedDomainName' not set. Has the server been provisioned successfully?", flexibleServer.Name)
+		err = eris.Errorf("owning Flexibleserver %q '.status.fullyQualifiedDomainName' not set. Has the server been provisioned successfully?", flexibleServer.Name)
 		return "", conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonWaitingForOwner)
 	}
 	serverFQDN := *flexibleServer.Status.FullyQualifiedDomainName

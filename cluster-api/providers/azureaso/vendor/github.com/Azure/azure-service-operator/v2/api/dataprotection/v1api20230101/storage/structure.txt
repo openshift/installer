@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101/stor
 -----------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-01-01"
+
 BackupVault: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (9 properties)
@@ -104,6 +105,7 @@ BackupVault: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 BackupVaultsBackupPolicy: Resource
 ├── Owner: dataprotection/v1api20230101.BackupVault
 ├── Spec: Object (6 properties)
@@ -323,86 +325,170 @@ BackupVaultsBackupPolicy: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 augmentConversionForAbsoluteDeleteOption: Interface
+
 augmentConversionForAbsoluteDeleteOption_STATUS: Interface
+
 augmentConversionForAdhocBasedTaggingCriteria: Interface
+
 augmentConversionForAdhocBasedTaggingCriteria_STATUS: Interface
+
 augmentConversionForAdhocBasedTriggerContext: Interface
+
 augmentConversionForAdhocBasedTriggerContext_STATUS: Interface
+
 augmentConversionForAzureBackupParams: Interface
+
 augmentConversionForAzureBackupParams_STATUS: Interface
+
 augmentConversionForAzureBackupRule: Interface
+
 augmentConversionForAzureBackupRule_STATUS: Interface
+
 augmentConversionForAzureMonitorAlertSettings: Interface
+
 augmentConversionForAzureMonitorAlertSettings_STATUS: Interface
+
 augmentConversionForAzureRetentionRule: Interface
+
 augmentConversionForAzureRetentionRule_STATUS: Interface
+
 augmentConversionForBackupCriteria: Interface
+
 augmentConversionForBackupCriteria_STATUS: Interface
+
 augmentConversionForBackupParameters: Interface
+
 augmentConversionForBackupParameters_STATUS: Interface
+
 augmentConversionForBackupPolicy: Interface
+
 augmentConversionForBackupPolicy_STATUS: Interface
+
 augmentConversionForBackupSchedule: Interface
+
 augmentConversionForBackupSchedule_STATUS: Interface
+
 augmentConversionForBackupVault: Interface
+
 augmentConversionForBackupVaultOperatorConfigMaps: Interface
+
 augmentConversionForBackupVaultOperatorSpec: Interface
+
 augmentConversionForBackupVaultResource_STATUS: Interface
+
 augmentConversionForBackupVaultSpec: Interface
+
 augmentConversionForBackupVault_STATUS: Interface
+
 augmentConversionForBackupVault_Spec: Interface
+
 augmentConversionForBackupVaultsBackupPolicy: Interface
+
 augmentConversionForBackupVaultsBackupPolicyOperatorSpec: Interface
+
 augmentConversionForBackupVaultsBackupPolicy_STATUS: Interface
+
 augmentConversionForBackupVaultsBackupPolicy_Spec: Interface
+
 augmentConversionForBaseBackupPolicy: Interface
+
 augmentConversionForBaseBackupPolicy_STATUS: Interface
+
 augmentConversionForBasePolicyRule: Interface
+
 augmentConversionForBasePolicyRule_STATUS: Interface
+
 augmentConversionForCopyOnExpiryOption: Interface
+
 augmentConversionForCopyOnExpiryOption_STATUS: Interface
+
 augmentConversionForCopyOption: Interface
+
 augmentConversionForCopyOption_STATUS: Interface
+
 augmentConversionForCrossSubscriptionRestoreSettings: Interface
+
 augmentConversionForCrossSubscriptionRestoreSettings_STATUS: Interface
+
 augmentConversionForCustomCopyOption: Interface
+
 augmentConversionForCustomCopyOption_STATUS: Interface
+
 augmentConversionForDataStoreInfoBase: Interface
+
 augmentConversionForDataStoreInfoBase_STATUS: Interface
+
 augmentConversionForDay: Interface
+
 augmentConversionForDay_STATUS: Interface
+
 augmentConversionForDeleteOption: Interface
+
 augmentConversionForDeleteOption_STATUS: Interface
+
 augmentConversionForDppIdentityDetails: Interface
+
 augmentConversionForDppIdentityDetails_STATUS: Interface
+
 augmentConversionForFeatureSettings: Interface
+
 augmentConversionForFeatureSettings_STATUS: Interface
+
 augmentConversionForImmediateCopyOption: Interface
+
 augmentConversionForImmediateCopyOption_STATUS: Interface
+
 augmentConversionForImmutabilitySettings: Interface
+
 augmentConversionForImmutabilitySettings_STATUS: Interface
+
 augmentConversionForMonitoringSettings: Interface
+
 augmentConversionForMonitoringSettings_STATUS: Interface
+
 augmentConversionForResourceMoveDetails_STATUS: Interface
+
 augmentConversionForRetentionTag: Interface
+
 augmentConversionForRetentionTag_STATUS: Interface
+
 augmentConversionForScheduleBasedBackupCriteria: Interface
+
 augmentConversionForScheduleBasedBackupCriteria_STATUS: Interface
+
 augmentConversionForScheduleBasedTriggerContext: Interface
+
 augmentConversionForScheduleBasedTriggerContext_STATUS: Interface
+
 augmentConversionForSecuritySettings: Interface
+
 augmentConversionForSecuritySettings_STATUS: Interface
+
 augmentConversionForSoftDeleteSettings: Interface
+
 augmentConversionForSoftDeleteSettings_STATUS: Interface
+
 augmentConversionForSourceLifeCycle: Interface
+
 augmentConversionForSourceLifeCycle_STATUS: Interface
+
 augmentConversionForStorageSetting: Interface
+
 augmentConversionForStorageSetting_STATUS: Interface
+
 augmentConversionForSystemData_STATUS: Interface
+
 augmentConversionForTaggingCriteria: Interface
+
 augmentConversionForTaggingCriteria_STATUS: Interface
+
 augmentConversionForTargetCopySetting: Interface
+
 augmentConversionForTargetCopySetting_STATUS: Interface
+
 augmentConversionForTriggerContext: Interface
+
 augmentConversionForTriggerContext_STATUS: Interface
+

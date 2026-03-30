@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -114,6 +114,10 @@ func (encryption *ServersDatabasesTransparentDataEncryption) NewEmptyStatus() ge
 
 // Owner returns the ResourceReference of the owner
 func (encryption *ServersDatabasesTransparentDataEncryption) Owner() *genruntime.ResourceReference {
+	if encryption.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(encryption.Spec)
 	return encryption.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -130,7 +134,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption) SetStatus(status ge
 	var st ServersDatabasesTransparentDataEncryption_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	encryption.Status = st
@@ -179,7 +183,7 @@ var _ genruntime.ConvertibleSpec = &ServersDatabasesTransparentDataEncryption_Sp
 // ConvertSpecFrom populates our ServersDatabasesTransparentDataEncryption_Spec from the provided source
 func (encryption *ServersDatabasesTransparentDataEncryption_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == encryption {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(encryption)
@@ -188,7 +192,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption_Spec) ConvertSpecFro
 // ConvertSpecTo populates the provided destination from our ServersDatabasesTransparentDataEncryption_Spec
 func (encryption *ServersDatabasesTransparentDataEncryption_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == encryption {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(encryption)
@@ -209,7 +213,7 @@ var _ genruntime.ConvertibleStatus = &ServersDatabasesTransparentDataEncryption_
 // ConvertStatusFrom populates our ServersDatabasesTransparentDataEncryption_STATUS from the provided source
 func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == encryption {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(encryption)
@@ -218,7 +222,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) ConvertStatu
 // ConvertStatusTo populates the provided destination from our ServersDatabasesTransparentDataEncryption_STATUS
 func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == encryption {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(encryption)

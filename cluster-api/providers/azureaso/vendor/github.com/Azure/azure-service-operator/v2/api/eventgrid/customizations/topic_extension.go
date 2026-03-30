@@ -7,15 +7,16 @@ package customizations
 import (
 	"context"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/eventgrid/armeventgrid"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -40,7 +41,7 @@ func (ext *TopicExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*storage.Topic)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *eventgrid.Topic", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *eventgrid.Topic", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -66,13 +67,13 @@ func (ext *TopicExtension) ExportKubernetesSecrets(
 	var confClient *armeventgrid.TopicsClient
 	confClient, err = armeventgrid.NewTopicsClient(subscription, armClient.Creds(), armClient.ClientOptions())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create new TopicsClient")
+		return nil, eris.Wrapf(err, "failed to create new TopicsClient")
 	}
 
 	var resp armeventgrid.TopicsClientListSharedAccessKeysResponse
 	resp, err = confClient.ListSharedAccessKeys(ctx, id.ResourceGroupName, typedObj.AzureName(), nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed listing keys")
+		return nil, eris.Wrapf(err, "failed listing keys")
 	}
 
 	secretSlice, err := secretsToWrite(typedObj, resp)

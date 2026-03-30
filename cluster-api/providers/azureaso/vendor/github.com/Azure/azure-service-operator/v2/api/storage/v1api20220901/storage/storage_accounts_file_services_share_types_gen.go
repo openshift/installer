@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -136,6 +136,10 @@ func (share *StorageAccountsFileServicesShare) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (share *StorageAccountsFileServicesShare) Owner() *genruntime.ResourceReference {
+	if share.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(share.Spec)
 	return share.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +156,7 @@ func (share *StorageAccountsFileServicesShare) SetStatus(status genruntime.Conve
 	var st StorageAccountsFileServicesShare_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	share.Status = st
@@ -169,7 +173,7 @@ func (share *StorageAccountsFileServicesShare) AssignProperties_From_StorageAcco
 	var spec StorageAccountsFileServicesShare_Spec
 	err := spec.AssignProperties_From_StorageAccountsFileServicesShare_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsFileServicesShare_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsFileServicesShare_Spec() to populate field Spec")
 	}
 	share.Spec = spec
 
@@ -177,7 +181,7 @@ func (share *StorageAccountsFileServicesShare) AssignProperties_From_StorageAcco
 	var status StorageAccountsFileServicesShare_STATUS
 	err = status.AssignProperties_From_StorageAccountsFileServicesShare_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsFileServicesShare_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsFileServicesShare_STATUS() to populate field Status")
 	}
 	share.Status = status
 
@@ -186,7 +190,7 @@ func (share *StorageAccountsFileServicesShare) AssignProperties_From_StorageAcco
 	if augmentedShare, ok := shareAsAny.(augmentConversionForStorageAccountsFileServicesShare); ok {
 		err := augmentedShare.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +208,7 @@ func (share *StorageAccountsFileServicesShare) AssignProperties_To_StorageAccoun
 	var spec storage.StorageAccountsFileServicesShare_Spec
 	err := share.Spec.AssignProperties_To_StorageAccountsFileServicesShare_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsFileServicesShare_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsFileServicesShare_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +216,7 @@ func (share *StorageAccountsFileServicesShare) AssignProperties_To_StorageAccoun
 	var status storage.StorageAccountsFileServicesShare_STATUS
 	err = share.Status.AssignProperties_To_StorageAccountsFileServicesShare_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsFileServicesShare_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsFileServicesShare_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +225,7 @@ func (share *StorageAccountsFileServicesShare) AssignProperties_To_StorageAccoun
 	if augmentedShare, ok := shareAsAny.(augmentConversionForStorageAccountsFileServicesShare); ok {
 		err := augmentedShare.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -291,13 +295,13 @@ func (share *StorageAccountsFileServicesShare_Spec) ConvertSpecFrom(source genru
 	src = &storage.StorageAccountsFileServicesShare_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = share.AssignProperties_From_StorageAccountsFileServicesShare_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -315,13 +319,13 @@ func (share *StorageAccountsFileServicesShare_Spec) ConvertSpecTo(destination ge
 	dst = &storage.StorageAccountsFileServicesShare_Spec{}
 	err := share.AssignProperties_To_StorageAccountsFileServicesShare_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -349,7 +353,7 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_From_Storag
 		var operatorSpec StorageAccountsFileServicesShareOperatorSpec
 		err := operatorSpec.AssignProperties_From_StorageAccountsFileServicesShareOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsFileServicesShareOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsFileServicesShareOperatorSpec() to populate field OperatorSpec")
 		}
 		share.OperatorSpec = &operatorSpec
 	} else {
@@ -382,7 +386,7 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_From_Storag
 			var signedIdentifier SignedIdentifier
 			err := signedIdentifier.AssignProperties_From_SignedIdentifier(&signedIdentifierItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SignedIdentifier() to populate field SignedIdentifiers")
+				return eris.Wrap(err, "calling AssignProperties_From_SignedIdentifier() to populate field SignedIdentifiers")
 			}
 			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
 		}
@@ -403,7 +407,7 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_From_Storag
 	if augmentedShare, ok := shareAsAny.(augmentConversionForStorageAccountsFileServicesShare_Spec); ok {
 		err := augmentedShare.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -433,7 +437,7 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_To_StorageA
 		var operatorSpec storage.StorageAccountsFileServicesShareOperatorSpec
 		err := share.OperatorSpec.AssignProperties_To_StorageAccountsFileServicesShareOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsFileServicesShareOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsFileServicesShareOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -466,7 +470,7 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_To_StorageA
 			var signedIdentifier storage.SignedIdentifier
 			err := signedIdentifierItem.AssignProperties_To_SignedIdentifier(&signedIdentifier)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SignedIdentifier() to populate field SignedIdentifiers")
+				return eris.Wrap(err, "calling AssignProperties_To_SignedIdentifier() to populate field SignedIdentifiers")
 			}
 			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
 		}
@@ -487,7 +491,7 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_To_StorageA
 	if augmentedShare, ok := shareAsAny.(augmentConversionForStorageAccountsFileServicesShare_Spec); ok {
 		err := augmentedShare.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -537,13 +541,13 @@ func (share *StorageAccountsFileServicesShare_STATUS) ConvertStatusFrom(source g
 	src = &storage.StorageAccountsFileServicesShare_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = share.AssignProperties_From_StorageAccountsFileServicesShare_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -561,13 +565,13 @@ func (share *StorageAccountsFileServicesShare_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.StorageAccountsFileServicesShare_STATUS{}
 	err := share.AssignProperties_To_StorageAccountsFileServicesShare_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -649,7 +653,7 @@ func (share *StorageAccountsFileServicesShare_STATUS) AssignProperties_From_Stor
 			var signedIdentifier SignedIdentifier_STATUS
 			err := signedIdentifier.AssignProperties_From_SignedIdentifier_STATUS(&signedIdentifierItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SignedIdentifier_STATUS() to populate field SignedIdentifiers")
+				return eris.Wrap(err, "calling AssignProperties_From_SignedIdentifier_STATUS() to populate field SignedIdentifiers")
 			}
 			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
 		}
@@ -679,7 +683,7 @@ func (share *StorageAccountsFileServicesShare_STATUS) AssignProperties_From_Stor
 	if augmentedShare, ok := shareAsAny.(augmentConversionForStorageAccountsFileServicesShare_STATUS); ok {
 		err := augmentedShare.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -763,7 +767,7 @@ func (share *StorageAccountsFileServicesShare_STATUS) AssignProperties_To_Storag
 			var signedIdentifier storage.SignedIdentifier_STATUS
 			err := signedIdentifierItem.AssignProperties_To_SignedIdentifier_STATUS(&signedIdentifier)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SignedIdentifier_STATUS() to populate field SignedIdentifiers")
+				return eris.Wrap(err, "calling AssignProperties_To_SignedIdentifier_STATUS() to populate field SignedIdentifiers")
 			}
 			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
 		}
@@ -793,7 +797,7 @@ func (share *StorageAccountsFileServicesShare_STATUS) AssignProperties_To_Storag
 	if augmentedShare, ok := shareAsAny.(augmentConversionForStorageAccountsFileServicesShare_STATUS); ok {
 		err := augmentedShare.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -830,7 +834,7 @@ func (identifier *SignedIdentifier) AssignProperties_From_SignedIdentifier(sourc
 		var accessPolicy AccessPolicy
 		err := accessPolicy.AssignProperties_From_AccessPolicy(source.AccessPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AccessPolicy() to populate field AccessPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_AccessPolicy() to populate field AccessPolicy")
 		}
 		identifier.AccessPolicy = &accessPolicy
 	} else {
@@ -857,7 +861,7 @@ func (identifier *SignedIdentifier) AssignProperties_From_SignedIdentifier(sourc
 	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForSignedIdentifier); ok {
 		err := augmentedIdentifier.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -875,7 +879,7 @@ func (identifier *SignedIdentifier) AssignProperties_To_SignedIdentifier(destina
 		var accessPolicy storage.AccessPolicy
 		err := identifier.AccessPolicy.AssignProperties_To_AccessPolicy(&accessPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AccessPolicy() to populate field AccessPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_AccessPolicy() to populate field AccessPolicy")
 		}
 		destination.AccessPolicy = &accessPolicy
 	} else {
@@ -902,7 +906,7 @@ func (identifier *SignedIdentifier) AssignProperties_To_SignedIdentifier(destina
 	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForSignedIdentifier); ok {
 		err := augmentedIdentifier.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -927,7 +931,7 @@ func (identifier *SignedIdentifier_STATUS) AssignProperties_From_SignedIdentifie
 		var accessPolicy AccessPolicy_STATUS
 		err := accessPolicy.AssignProperties_From_AccessPolicy_STATUS(source.AccessPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AccessPolicy_STATUS() to populate field AccessPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_AccessPolicy_STATUS() to populate field AccessPolicy")
 		}
 		identifier.AccessPolicy = &accessPolicy
 	} else {
@@ -949,7 +953,7 @@ func (identifier *SignedIdentifier_STATUS) AssignProperties_From_SignedIdentifie
 	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForSignedIdentifier_STATUS); ok {
 		err := augmentedIdentifier.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -967,7 +971,7 @@ func (identifier *SignedIdentifier_STATUS) AssignProperties_To_SignedIdentifier_
 		var accessPolicy storage.AccessPolicy_STATUS
 		err := identifier.AccessPolicy.AssignProperties_To_AccessPolicy_STATUS(&accessPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AccessPolicy_STATUS() to populate field AccessPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_AccessPolicy_STATUS() to populate field AccessPolicy")
 		}
 		destination.AccessPolicy = &accessPolicy
 	} else {
@@ -989,7 +993,7 @@ func (identifier *SignedIdentifier_STATUS) AssignProperties_To_SignedIdentifier_
 	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForSignedIdentifier_STATUS); ok {
 		err := augmentedIdentifier.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1058,7 +1062,7 @@ func (operator *StorageAccountsFileServicesShareOperatorSpec) AssignProperties_F
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForStorageAccountsFileServicesShareOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1119,7 +1123,7 @@ func (operator *StorageAccountsFileServicesShareOperatorSpec) AssignProperties_T
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForStorageAccountsFileServicesShareOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1161,7 +1165,7 @@ func (policy *AccessPolicy) AssignProperties_From_AccessPolicy(source *storage.A
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAccessPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1195,7 +1199,7 @@ func (policy *AccessPolicy) AssignProperties_To_AccessPolicy(destination *storag
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAccessPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1237,7 +1241,7 @@ func (policy *AccessPolicy_STATUS) AssignProperties_From_AccessPolicy_STATUS(sou
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAccessPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1271,7 +1275,7 @@ func (policy *AccessPolicy_STATUS) AssignProperties_To_AccessPolicy_STATUS(desti
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAccessPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

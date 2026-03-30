@@ -67,6 +67,7 @@ Factory_STATUS: Object (9 properties)
 │   └── Version: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 Factory_Spec: Object (6 properties)
 ├── AdditionalProperties: map[string]v1.JSON
 ├── Identity: *Object (2 properties)
@@ -125,3 +126,4 @@ Factory_Spec: Object (6 properties)
 │           └── Type: Enum (1 value)
 │               └── "FactoryVSTSConfiguration"
 └── Tags: map[string]string
+

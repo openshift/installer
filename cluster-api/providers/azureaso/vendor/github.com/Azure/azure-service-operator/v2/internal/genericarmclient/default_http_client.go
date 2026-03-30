@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var defaultHttpClient *http.Client
+var defaultHTTPClient *http.Client
 
 func init() {
 	// If httpClient is not provided, we use a HTTPClient with default Transport + settings
@@ -35,7 +35,7 @@ func init() {
 		},
 	}
 
-	defaultHttpClient = &http.Client{
+	defaultHTTPClient = &http.Client{
 		Transport: httpTransport,
 	}
 }

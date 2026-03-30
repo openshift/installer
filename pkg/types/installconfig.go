@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
-	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -228,6 +227,10 @@ type InstallConfig struct {
 	// E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].
 	// +optional
 	FeatureGates []string `json:"featureGates,omitempty"`
+
+	// OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
+	// +optional
+	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -620,14 +623,18 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 		customFS = featuregates.GenerateCustomFeatures(c.FeatureGates)
 	}
 
-	clusterProfile := GetClusterProfileName()
-	featureSets, ok := features.AllFeatureSets()[clusterProfile]
+	featureSets, ok := FeatureSetsForProfile()
 	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", clusterProfile)
+		logrus.Warnf("no feature sets for cluster profile %q", GetClusterProfileName())
 	}
 	fg := featuregates.FeatureGateFromFeatureSets(featureSets, c.FeatureSet, customFS)
 
 	return fg
+}
+
+// Enabled returns true if the given feature gate is enabled in the current feature sets.
+func (c *InstallConfig) Enabled(key configv1.FeatureGateName) bool {
+	return c.EnabledFeatureGates().Enabled(key)
 }
 
 // PublicAPI indicates whether the API load balancer should be public
@@ -656,4 +663,21 @@ func (c *InstallConfig) PublicIngress() bool {
 		return true
 	}
 	return false
+}
+
+// OSImageStream represents the name of an OS Image Stream to use in a pool.
+// +kubebuilder:validation:Enum=rhel-9;rhel-10
+type OSImageStream string
+
+const (
+	// OSImageStreamRHCOS9 represents the RHEL 9 OS Image Stream.
+	OSImageStreamRHCOS9 OSImageStream = "rhel-9"
+	// OSImageStreamRHCOS10 represents the RHEL 10 OS Image Stream.
+	OSImageStreamRHCOS10 OSImageStream = "rhel-10"
+)
+
+// OSImageStreamValues holds the list of valid values a OSImageStream can take.
+var OSImageStreamValues = []OSImageStream{
+	OSImageStreamRHCOS9,
+	OSImageStreamRHCOS10,
 }

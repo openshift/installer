@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,6 +116,10 @@ func (extension *VirtualMachineScaleSetsExtension) NewEmptyStatus() genruntime.C
 
 // Owner returns the ResourceReference of the owner
 func (extension *VirtualMachineScaleSetsExtension) Owner() *genruntime.ResourceReference {
+	if extension.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(extension.Spec)
 	return extension.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (extension *VirtualMachineScaleSetsExtension) SetStatus(status genruntime.C
 	var st VirtualMachineScaleSetsExtension_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	extension.Status = st
@@ -195,7 +199,7 @@ var _ genruntime.ConvertibleSpec = &VirtualMachineScaleSetsExtension_Spec{}
 // ConvertSpecFrom populates our VirtualMachineScaleSetsExtension_Spec from the provided source
 func (extension *VirtualMachineScaleSetsExtension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == extension {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(extension)
@@ -204,7 +208,7 @@ func (extension *VirtualMachineScaleSetsExtension_Spec) ConvertSpecFrom(source g
 // ConvertSpecTo populates the provided destination from our VirtualMachineScaleSetsExtension_Spec
 func (extension *VirtualMachineScaleSetsExtension_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == extension {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(extension)
@@ -235,7 +239,7 @@ var _ genruntime.ConvertibleStatus = &VirtualMachineScaleSetsExtension_STATUS{}
 // ConvertStatusFrom populates our VirtualMachineScaleSetsExtension_STATUS from the provided source
 func (extension *VirtualMachineScaleSetsExtension_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == extension {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(extension)
@@ -244,7 +248,7 @@ func (extension *VirtualMachineScaleSetsExtension_STATUS) ConvertStatusFrom(sour
 // ConvertStatusTo populates the provided destination from our VirtualMachineScaleSetsExtension_STATUS
 func (extension *VirtualMachineScaleSetsExtension_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == extension {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(extension)

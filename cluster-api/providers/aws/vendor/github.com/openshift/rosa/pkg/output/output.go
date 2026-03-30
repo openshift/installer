@@ -146,6 +146,14 @@ func Print(resource interface{}) error {
 		if kubeletConfigs, ok := resource.([]*cmv1.KubeletConfig); ok {
 			cmv1.MarshalKubeletConfigList(kubeletConfigs, &b)
 		}
+	case "*v1.LogForwarder":
+		if logForwarder, ok := resource.(*cmv1.LogForwarder); ok {
+			cmv1.MarshalLogForwarder(logForwarder, &b)
+		}
+	case "[]*v1.LogForwarder":
+		if logForwarders, ok := resource.([]*cmv1.LogForwarder); ok {
+			cmv1.MarshalLogForwarderList(logForwarders, &b)
+		}
 	case "*v1.ClusterAutoscaler":
 		if autoscaler, ok := resource.(*cmv1.ClusterAutoscaler); ok {
 			cmv1.MarshalClusterAutoscaler(autoscaler, &b)
@@ -247,7 +255,7 @@ func parseResource(body bytes.Buffer) (string, error) {
 		}
 		return string(out), nil
 	default:
-		return "", fmt.Errorf("Unknown format '%s'. Valid formats are %s", o, formats)
+		return "", fmt.Errorf("unknown format '%s'. Valid formats are %s", o, formats)
 	}
 }
 

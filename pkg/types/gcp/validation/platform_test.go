@@ -232,6 +232,16 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "invalid firewall management",
+			platform: &gcp.Platform{
+				UserProvisionedDNS:      dns.UserProvisionedDNSEnabled,
+				FirewallRulesManagement: "random-test",
+				Region:                  "us-east1",
+				ProjectID:               "valid-project",
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -69,6 +69,7 @@ Image_STATUS: Object (7 properties)
 │       └── ZoneResilient: *bool
 ├── Tags: map[string]string
 └── Type: *string
+
 Image_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -134,6 +135,7 @@ Image_Spec: Object (5 properties)
 │       │       └── "UltraSSD_LRS"
 │       └── ZoneResilient: *bool
 └── Tags: map[string]string
+
 VirtualMachineScaleSet_STATUS: Object (11 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -496,6 +498,7 @@ VirtualMachineScaleSet_STATUS: Object (11 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 VirtualMachineScaleSet_Spec: Object (9 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -847,6 +850,7 @@ VirtualMachineScaleSet_Spec: Object (9 properties)
 │   └── Tier: *string
 ├── Tags: map[string]string
 └── Zones: string[]
+
 VirtualMachineScaleSetsExtension_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -866,6 +870,7 @@ VirtualMachineScaleSetsExtension_STATUS: Object (4 properties)
 │   ├── Type: *string
 │   └── TypeHandlerVersion: *string
 └── Type: *string
+
 VirtualMachineScaleSetsExtension_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (11 properties)
@@ -883,6 +888,7 @@ VirtualMachineScaleSetsExtension_Spec: Object (2 properties)
     ├── SuppressFailures: *bool
     ├── Type: *string
     └── TypeHandlerVersion: *string
+
 VirtualMachine_STATUS: Object (11 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1604,6 +1610,7 @@ VirtualMachine_STATUS: Object (11 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 VirtualMachine_Spec: Object (8 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1925,6 +1932,7 @@ VirtualMachine_Spec: Object (8 properties)
 │       └── Id: *string
 ├── Tags: map[string]string
 └── Zones: string[]
+
 VirtualMachinesExtension_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -1967,6 +1975,7 @@ VirtualMachinesExtension_STATUS: Object (6 properties)
 │   └── TypeHandlerVersion: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 VirtualMachinesExtension_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -2007,3 +2016,4 @@ VirtualMachinesExtension_Spec: Object (4 properties)
 │   ├── Type: *string
 │   └── TypeHandlerVersion: *string
 └── Tags: map[string]string
+

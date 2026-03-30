@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package esx
@@ -238,6 +238,12 @@ var EventInfo = []types.EventDescriptionEventDetail{
 		Description: "Customization succeeded",
 		Category:    "info",
 		FullFormat:  "Customization of VM {{.Vm.Name}} succeeded",
+	},
+	{
+		Key:         "CustomizationNetworkSetupFailed",
+		Description: "Cannot complete customization network setup",
+		Category:    "error",
+		FullFormat:  "An error occurred while setting up network properties of the guest OS",
 	},
 	{
 		Key:         "DrsVmMigratedEvent",

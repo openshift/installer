@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (policy *ProductPolicy) ConvertTo(hub conversion.Hub) error {
 
 	return policy.AssignProperties_To_ProductPolicy(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-apimanagement-azure-com-v1api20220801-productpolicy,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=productpolicies,verbs=create;update,versions=v1api20220801,name=default.v1api20220801.productpolicies.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ProductPolicy{}
-
-// Default applies defaults to the ProductPolicy resource
-func (policy *ProductPolicy) Default() {
-	policy.defaultImpl()
-	var temp any = policy
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ProductPolicy resource
-func (policy *ProductPolicy) defaultImpl() {}
 
 var _ configmaps.Exporter = &ProductPolicy{}
 
@@ -167,6 +148,10 @@ func (policy *ProductPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (policy *ProductPolicy) Owner() *genruntime.ResourceReference {
+	if policy.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(policy.Spec)
 	return policy.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -183,114 +168,11 @@ func (policy *ProductPolicy) SetStatus(status genruntime.ConvertibleStatus) erro
 	var st ProductPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	policy.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-apimanagement-azure-com-v1api20220801-productpolicy,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=productpolicies,verbs=create;update,versions=v1api20220801,name=validate.v1api20220801.productpolicies.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ProductPolicy{}
-
-// ValidateCreate validates the creation of the resource
-func (policy *ProductPolicy) ValidateCreate() (admission.Warnings, error) {
-	validations := policy.createValidations()
-	var temp any = policy
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (policy *ProductPolicy) ValidateDelete() (admission.Warnings, error) {
-	validations := policy.deleteValidations()
-	var temp any = policy
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (policy *ProductPolicy) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := policy.updateValidations()
-	var temp any = policy
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (policy *ProductPolicy) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (policy *ProductPolicy) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (policy *ProductPolicy) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateResourceReferences()
-		},
-		policy.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (policy *ProductPolicy) validateConfigMapDestinations() (admission.Warnings, error) {
-	if policy.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (policy *ProductPolicy) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(policy)
-}
-
-// validateResourceReferences validates all resource references
-func (policy *ProductPolicy) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&policy.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (policy *ProductPolicy) validateSecretDestinations() (admission.Warnings, error) {
-	if policy.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (policy *ProductPolicy) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ProductPolicy)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, policy)
 }
 
 // AssignProperties_From_ProductPolicy populates our ProductPolicy from the provided source ProductPolicy
@@ -303,7 +185,7 @@ func (policy *ProductPolicy) AssignProperties_From_ProductPolicy(source *storage
 	var spec ProductPolicy_Spec
 	err := spec.AssignProperties_From_ProductPolicy_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ProductPolicy_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ProductPolicy_Spec() to populate field Spec")
 	}
 	policy.Spec = spec
 
@@ -311,7 +193,7 @@ func (policy *ProductPolicy) AssignProperties_From_ProductPolicy(source *storage
 	var status ProductPolicy_STATUS
 	err = status.AssignProperties_From_ProductPolicy_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ProductPolicy_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ProductPolicy_STATUS() to populate field Status")
 	}
 	policy.Status = status
 
@@ -329,7 +211,7 @@ func (policy *ProductPolicy) AssignProperties_To_ProductPolicy(destination *stor
 	var spec storage.ProductPolicy_Spec
 	err := policy.Spec.AssignProperties_To_ProductPolicy_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ProductPolicy_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ProductPolicy_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -337,7 +219,7 @@ func (policy *ProductPolicy) AssignProperties_To_ProductPolicy(destination *stor
 	var status storage.ProductPolicy_STATUS
 	err = policy.Status.AssignProperties_To_ProductPolicy_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ProductPolicy_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ProductPolicy_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -470,13 +352,13 @@ func (policy *ProductPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleS
 	src = &storage.ProductPolicy_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = policy.AssignProperties_From_ProductPolicy_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -494,13 +376,13 @@ func (policy *ProductPolicy_Spec) ConvertSpecTo(destination genruntime.Convertib
 	dst = &storage.ProductPolicy_Spec{}
 	err := policy.AssignProperties_To_ProductPolicy_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -523,7 +405,7 @@ func (policy *ProductPolicy_Spec) AssignProperties_From_ProductPolicy_Spec(sourc
 		var operatorSpec ProductPolicyOperatorSpec
 		err := operatorSpec.AssignProperties_From_ProductPolicyOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ProductPolicyOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ProductPolicyOperatorSpec() to populate field OperatorSpec")
 		}
 		policy.OperatorSpec = &operatorSpec
 	} else {
@@ -563,7 +445,7 @@ func (policy *ProductPolicy_Spec) AssignProperties_To_ProductPolicy_Spec(destina
 		var operatorSpec storage.ProductPolicyOperatorSpec
 		err := policy.OperatorSpec.AssignProperties_To_ProductPolicyOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ProductPolicyOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ProductPolicyOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -653,13 +535,13 @@ func (policy *ProductPolicy_STATUS) ConvertStatusFrom(source genruntime.Converti
 	src = &storage.ProductPolicy_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = policy.AssignProperties_From_ProductPolicy_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -677,13 +559,13 @@ func (policy *ProductPolicy_STATUS) ConvertStatusTo(destination genruntime.Conve
 	dst = &storage.ProductPolicy_STATUS{}
 	err := policy.AssignProperties_To_ProductPolicy_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

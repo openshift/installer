@@ -15,10 +15,12 @@ ApplicationSecurityGroup_STATUS: Object (7 properties)
 │   └── ResourceGuid: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 ApplicationSecurityGroup_Spec: Object (3 properties)
 ├── Location: *string
 ├── Name: string
 └── Tags: map[string]string
+
 WebApplicationFirewallPolicy_STATUS: Object (7 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -183,6 +185,7 @@ WebApplicationFirewallPolicy_STATUS: Object (7 properties)
 │       └── "Enabling"
 ├── Tags: map[string]string
 └── Type: *string
+
 WebApplicationFirewallPolicy_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -325,3 +328,4 @@ WebApplicationFirewallPolicy_Spec: Object (4 properties)
 │           ├── "Disabled"
 │           └── "Enabled"
 └── Tags: map[string]string
+

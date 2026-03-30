@@ -10,7 +10,7 @@ import (
 type JsonParseNodeFactory struct {
 }
 
-// Creates a new JsonParseNodeFactory
+// NewJsonParseNodeFactory creates a new JsonParseNodeFactory
 func NewJsonParseNodeFactory() *JsonParseNodeFactory {
 	return &JsonParseNodeFactory{}
 }

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api2024
 --------------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-04-01"
+
 Registry: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (17 properties)
@@ -34,32 +35,22 @@ Registry: Resource
 │   ├── PropertyBag: genruntime.PropertyBag
 │   ├── PublicNetworkAccess: *string
 │   ├── RegionDetails: Object (4 properties)[]
-│   │   ├── AcrDetails: Object (3 properties)[]
+│   │   ├── AcrDetails: Object (2 properties)[]
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   │   ├── SystemCreatedAcrAccount: *Object (3 properties)
-│   │   │   │   ├── AcrAccountName: *string
-│   │   │   │   ├── AcrAccountSku: *string
-│   │   │   │   └── PropertyBag: genruntime.PropertyBag
-│   │   │   └── UserCreatedAcrAccount: *Object (2 properties)
-│   │   │       ├── ArmResourceId: *Object (2 properties)
-│   │   │       │   ├── PropertyBag: genruntime.PropertyBag
-│   │   │       │   └── ResourceReference: *genruntime.ResourceReference
+│   │   │   └── SystemCreatedAcrAccount: *Object (3 properties)
+│   │   │       ├── AcrAccountName: *string
+│   │   │       ├── AcrAccountSku: *string
 │   │   │       └── PropertyBag: genruntime.PropertyBag
 │   │   ├── Location: *string
 │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   └── StorageAccountDetails: Object (3 properties)[]
+│   │   └── StorageAccountDetails: Object (2 properties)[]
 │   │       ├── PropertyBag: genruntime.PropertyBag
-│   │       ├── SystemCreatedStorageAccount: *Object (5 properties)
-│   │       │   ├── AllowBlobPublicAccess: *bool
-│   │       │   ├── PropertyBag: genruntime.PropertyBag
-│   │       │   ├── StorageAccountHnsEnabled: *bool
-│   │       │   ├── StorageAccountName: *string
-│   │       │   └── StorageAccountType: *string
-│   │       └── UserCreatedStorageAccount: *Object (2 properties)
-│   │           ├── ArmResourceId: *Object (2 properties)
-│   │           │   ├── PropertyBag: genruntime.PropertyBag
-│   │           │   └── ResourceReference: *genruntime.ResourceReference
-│   │           └── PropertyBag: genruntime.PropertyBag
+│   │       └── SystemCreatedStorageAccount: *Object (5 properties)
+│   │           ├── AllowBlobPublicAccess: *bool
+│   │           ├── PropertyBag: genruntime.PropertyBag
+│   │           ├── StorageAccountHnsEnabled: *bool
+│   │           ├── StorageAccountName: *string
+│   │           └── StorageAccountType: *string
 │   ├── RegistryPrivateEndpointConnections: Object (7 properties)[]
 │   │   ├── GroupIds: string[]
 │   │   ├── Location: *string
@@ -106,38 +97,28 @@ Registry: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── PublicNetworkAccess: *string
     ├── RegionDetails: Object (4 properties)[]
-    │   ├── AcrDetails: Object (3 properties)[]
+    │   ├── AcrDetails: Object (2 properties)[]
     │   │   ├── PropertyBag: genruntime.PropertyBag
-    │   │   ├── SystemCreatedAcrAccount: *Object (4 properties)
-    │   │   │   ├── AcrAccountName: *string
-    │   │   │   ├── AcrAccountSku: *string
-    │   │   │   ├── ArmResourceId: *Object (2 properties)
-    │   │   │   │   ├── PropertyBag: genruntime.PropertyBag
-    │   │   │   │   └── ResourceId: *string
-    │   │   │   └── PropertyBag: genruntime.PropertyBag
-    │   │   └── UserCreatedAcrAccount: *Object (2 properties)
+    │   │   └── SystemCreatedAcrAccount: *Object (4 properties)
+    │   │       ├── AcrAccountName: *string
+    │   │       ├── AcrAccountSku: *string
     │   │       ├── ArmResourceId: *Object (2 properties)
     │   │       │   ├── PropertyBag: genruntime.PropertyBag
     │   │       │   └── ResourceId: *string
     │   │       └── PropertyBag: genruntime.PropertyBag
     │   ├── Location: *string
     │   ├── PropertyBag: genruntime.PropertyBag
-    │   └── StorageAccountDetails: Object (3 properties)[]
+    │   └── StorageAccountDetails: Object (2 properties)[]
     │       ├── PropertyBag: genruntime.PropertyBag
-    │       ├── SystemCreatedStorageAccount: *Object (6 properties)
-    │       │   ├── AllowBlobPublicAccess: *bool
-    │       │   ├── ArmResourceId: *Object (2 properties)
-    │       │   │   ├── PropertyBag: genruntime.PropertyBag
-    │       │   │   └── ResourceId: *string
-    │       │   ├── PropertyBag: genruntime.PropertyBag
-    │       │   ├── StorageAccountHnsEnabled: *bool
-    │       │   ├── StorageAccountName: *string
-    │       │   └── StorageAccountType: *string
-    │       └── UserCreatedStorageAccount: *Object (2 properties)
+    │       └── SystemCreatedStorageAccount: *Object (6 properties)
+    │           ├── AllowBlobPublicAccess: *bool
     │           ├── ArmResourceId: *Object (2 properties)
     │           │   ├── PropertyBag: genruntime.PropertyBag
     │           │   └── ResourceId: *string
-    │           └── PropertyBag: genruntime.PropertyBag
+    │           ├── PropertyBag: genruntime.PropertyBag
+    │           ├── StorageAccountHnsEnabled: *bool
+    │           ├── StorageAccountName: *string
+    │           └── StorageAccountType: *string
     ├── RegistryPrivateEndpointConnections: Object (7 properties)[]
     │   ├── GroupIds: string[]
     │   ├── Id: *string
@@ -170,6 +151,7 @@ Registry: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 Workspace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (33 properties)
@@ -441,6 +423,7 @@ Workspace: Resource
     │   ├── DefaultWorkspaceResourceGroup: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── WorkspaceId: *string
+
 WorkspacesCompute: Resource
 ├── Owner: machinelearningservices/v1api20240401.Workspace
 ├── Spec: Object (10 properties)
@@ -1420,6 +1403,7 @@ WorkspacesCompute: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 WorkspacesConnection: Resource
 ├── Owner: machinelearningservices/v1api20240401.Workspace
 ├── Spec: Object (6 properties)
@@ -1816,3 +1800,4 @@ WorkspacesConnection: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+

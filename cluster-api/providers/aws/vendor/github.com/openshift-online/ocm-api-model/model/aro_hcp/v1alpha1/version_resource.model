@@ -21,4 +21,3 @@ resource Version {
 		out Body Version
 	}
 }
-

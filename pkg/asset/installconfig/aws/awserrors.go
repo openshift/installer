@@ -2,7 +2,9 @@ package aws
 
 import (
 	"errors"
+	"net/http"
 
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/smithy-go"
 )
 
@@ -23,6 +25,20 @@ func IsUnauthorized(err error) bool {
 		// https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetServiceQuota.html
 		// https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetAWSDefaultServiceQuota.html
 		return apiErr.ErrorCode() == AccessDeniedException || apiErr.ErrorCode() == NoSuchResourceException
+	}
+	return false
+}
+
+// IsHTTPForbidden returns true if and only if the error is an HTTP
+// 403 error from the AWS API.
+func IsHTTPForbidden(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var respErr *awshttp.ResponseError
+	if errors.As(err, &respErr) {
+		return respErr.HTTPStatusCode() == http.StatusForbidden
 	}
 	return false
 }

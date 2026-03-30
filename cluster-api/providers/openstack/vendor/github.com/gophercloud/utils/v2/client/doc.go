@@ -66,8 +66,8 @@ Example usage with the custom logger:
 		Prefix string
 	}
 
-	func (l myLogger) Printf(format string, args ...interface{}) {
-		log.Debugf("%s [DEBUG] "+format, append([]interface{}{l.Prefix}, args...)...)
+	func (l myLogger) Printf(format string, args ...any) {
+		log.Debugf("%s [DEBUG] "+format, append([]any{l.Prefix}, args...)...)
 	}
 
 	func NewComputeV2Client() (*gophercloud.ServiceClient, error) {

@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -95,10 +95,10 @@ func (b *EnvironmentBrowser) initDescriptorReturnVal(
 		cod := types.VirtualMachineConfigOptionDescriptor{
 			Key:                 hv.String(),
 			Description:         hv.String(),
-			DefaultConfigOption: types.NewBool(dco),
-			CreateSupported:     types.NewBool(true),
-			RunSupported:        types.NewBool(true),
-			UpgradeSupported:    types.NewBool(true),
+			DefaultConfigOption: dco,
+			CreateSupported:     true,
+			RunSupported:        true,
+			UpgradeSupported:    true,
 		}
 		for hostRef, hostVer := range maxHardwareVersionForHost {
 			if hostVer >= hv {
@@ -232,7 +232,7 @@ func (b *EnvironmentBrowser) QueryConfigTarget(ctx *Context, req *types.QueryCon
 	}
 
 	target := &types.ConfigTarget{
-		SmcPresent: types.NewBool(false),
+		SmcPresent: false,
 	}
 	body.Res.Returnval = target
 

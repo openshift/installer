@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // Constants block.
@@ -116,7 +116,7 @@ type AWSMachinePoolStatus struct {
 
 	// Conditions defines current service state of the AWSMachinePool.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// Instances contains the status for each instance in the pool
 	// +optional
@@ -215,12 +215,12 @@ func init() {
 }
 
 // GetConditions returns the observations of the operational state of the AWSMachinePool resource.
-func (r *AWSMachinePool) GetConditions() clusterv1.Conditions {
+func (r *AWSMachinePool) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the AWSMachinePool to the predescribed clusterv1.Conditions.
-func (r *AWSMachinePool) SetConditions(conditions clusterv1.Conditions) {
+// SetConditions sets the underlying service state of the AWSMachinePool to the predescribed clusterv1beta1.Conditions.
+func (r *AWSMachinePool) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

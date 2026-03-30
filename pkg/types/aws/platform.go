@@ -5,6 +5,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 const (
@@ -99,9 +100,12 @@ type Platform struct {
 	// transport layer (TCP/SSL). See the following for additional details:
 	// https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
 	//
-	// If this field is not set explicitly, it defaults to "Classic".  This
-	// default is subject to change over time.
+	// If this field is not set explicitly, the default value depends on the ipFamily field:
+	// * "Classic" when ipFamily is not set or set to "IPv4"
+	// * "NLB" when ipFamily is set to "DualStackIPv4Primary" or "DualStackIPv6Primary"
+	// This default is subject to change over time.
 	//
+	// +kubebuilder:validation:Enum="Classic";"NLB"
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
@@ -126,6 +130,18 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// IPFamily specifies the IP address family for the cluster network.
+	// Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+	// with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+	// networking with IPv6 as the primary address family. When using dual-stack, the VPC
+	// and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+	//
+	// +kubebuilder:default:="IPv4"
+	// +default="IPv4"
+	// +kubebuilder:validation:Enum="IPv4";"DualStackIPv4Primary";"DualStackIPv6Primary"
+	// +optional
+	IPFamily network.IPFamily `json:"ipFamily,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to

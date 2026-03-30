@@ -64,39 +64,51 @@ func (v2 WorkspaceConnectionPropertiesV2_STATUS) MarshalJSON() ([]byte, error) {
 	if v2.AAD != nil {
 		return json.Marshal(v2.AAD)
 	}
+
 	if v2.AccessKey != nil {
 		return json.Marshal(v2.AccessKey)
 	}
+
 	if v2.AccountKey != nil {
 		return json.Marshal(v2.AccountKey)
 	}
+
 	if v2.ApiKey != nil {
 		return json.Marshal(v2.ApiKey)
 	}
+
 	if v2.CustomKeys != nil {
 		return json.Marshal(v2.CustomKeys)
 	}
+
 	if v2.ManagedIdentity != nil {
 		return json.Marshal(v2.ManagedIdentity)
 	}
+
 	if v2.None != nil {
 		return json.Marshal(v2.None)
 	}
+
 	if v2.OAuth2 != nil {
 		return json.Marshal(v2.OAuth2)
 	}
+
 	if v2.PAT != nil {
 		return json.Marshal(v2.PAT)
 	}
+
 	if v2.SAS != nil {
 		return json.Marshal(v2.SAS)
 	}
+
 	if v2.ServicePrincipal != nil {
 		return json.Marshal(v2.ServicePrincipal)
 	}
+
 	if v2.UsernamePassword != nil {
 		return json.Marshal(v2.UsernamePassword)
 	}
+
 	return nil, nil
 }
 

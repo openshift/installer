@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201
 ------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-12-01"
+
 Redis: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (18 properties)
@@ -134,6 +135,7 @@ Redis: Resource
     ├── TenantSettings: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 RedisFirewallRule: Resource
 ├── Owner: Redis
 ├── Spec: Object (5 properties)
@@ -151,6 +153,7 @@ RedisFirewallRule: Resource
     ├── Name: *string
     ├── StartIP: *string
     └── Type: *string
+
 RedisLinkedServer: Resource
 ├── Owner: Redis
 ├── Spec: Object (6 properties)
@@ -175,6 +178,7 @@ RedisLinkedServer: Resource
     │   ├── "Primary"
     │   └── "Secondary"
     └── Type: *string
+
 RedisPatchSchedule: Resource
 ├── Owner: Redis
 ├── Spec: Object (3 properties)
@@ -214,3 +218,4 @@ RedisPatchSchedule: Resource
     │   ├── MaintenanceWindow: *string
     │   └── StartHourUtc: *int
     └── Type: *string
+

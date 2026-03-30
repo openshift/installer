@@ -54,7 +54,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 	}
 
 	logrus.Debugf("Creating the security groups")
-	var masterGroup, workerGroup *groups.SecGroup
+	var bootstrapGroup, masterGroup, workerGroup *groups.SecGroup
 	{
 		masterGroup, err = groups.Create(ctx, networkClient, groups.CreateOpts{
 			Name:        infraID + "-master",
@@ -90,6 +90,19 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 			Tags: []string{"openshiftClusterID=" + infraID},
 		}).Extract(); err != nil {
 			return fmt.Errorf("failed to tag the Compute security group: %w", err)
+		}
+
+		bootstrapGroup, err = groups.Create(ctx, networkClient, groups.CreateOpts{
+			Name:        infraID + "-bootstrap",
+			Description: description,
+		}).Extract()
+		if err != nil {
+			return fmt.Errorf("failed to create the Bootstrap security group: %w", err)
+		}
+		if _, err := attributestags.ReplaceAll(ctx, networkClient, "security-groups", bootstrapGroup.ID, attributestags.ReplaceAllOpts{
+			Tags: []string{"openshiftClusterID=" + infraID, "openshiftRole=bootstrap"},
+		}).Extract(); err != nil {
+			return fmt.Errorf("failed to tag the Bootstrap security group: %w", err)
 		}
 	}
 
@@ -156,11 +169,15 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 
 	var masterRules []rules.CreateOpts
 	var workerRules []rules.CreateOpts
+	var bootstrapRules []rules.CreateOpts
 	addMasterRules := func(s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) {
 		masterRules = append(masterRules, buildRules(masterGroup.ID, s, ipVersion, remoteCIDRs)...)
 	}
 	addWorkerRules := func(s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) {
 		workerRules = append(workerRules, buildRules(workerGroup.ID, s, ipVersion, remoteCIDRs)...)
+	}
+	addBootstrapRules := func(s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) {
+		bootstrapRules = append(bootstrapRules, buildRules(bootstrapGroup.ID, s, ipVersion, remoteCIDRs)...)
 	}
 
 	// TODO(mandre) Explicitly enable egress
@@ -184,6 +201,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 			}
 		}(),
 	} {
+		addBootstrapRules(serviceSSH, ipVersion, anyIP)
 		addMasterRules(serviceAPI, ipVersion, anyIP)
 		addMasterRules(serviceICMP, ipVersion, anyIP)
 		addWorkerRules(serviceHTTP, ipVersion, anyIP)
@@ -234,6 +252,9 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 	}
 	if _, err := rules.CreateBulk(ctx, networkClient, workerRules).Extract(); err != nil {
 		return fmt.Errorf("failed to add the rules to the Compute security group: %w", err)
+	}
+	if _, err := rules.CreateBulk(ctx, networkClient, bootstrapRules).Extract(); err != nil {
+		return fmt.Errorf("failed to add the rules to the Bootstrap security group: %w", err)
 	}
 
 	return nil

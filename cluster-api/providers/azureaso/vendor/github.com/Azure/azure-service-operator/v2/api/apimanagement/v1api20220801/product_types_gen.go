@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (product *Product) ConvertTo(hub conversion.Hub) error {
 
 	return product.AssignProperties_To_Product(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-apimanagement-azure-com-v1api20220801-product,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=products,verbs=create;update,versions=v1api20220801,name=default.v1api20220801.products.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Product{}
-
-// Default applies defaults to the Product resource
-func (product *Product) Default() {
-	product.defaultImpl()
-	var temp any = product
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (product *Product) defaultAzureName() {
-	if product.Spec.AzureName == "" {
-		product.Spec.AzureName = product.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Product resource
-func (product *Product) defaultImpl() { product.defaultAzureName() }
 
 var _ configmaps.Exporter = &Product{}
 
@@ -174,6 +148,10 @@ func (product *Product) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (product *Product) Owner() *genruntime.ResourceReference {
+	if product.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(product.Spec)
 	return product.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (product *Product) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Product_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	product.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-apimanagement-azure-com-v1api20220801-product,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=products,verbs=create;update,versions=v1api20220801,name=validate.v1api20220801.products.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Product{}
-
-// ValidateCreate validates the creation of the resource
-func (product *Product) ValidateCreate() (admission.Warnings, error) {
-	validations := product.createValidations()
-	var temp any = product
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (product *Product) ValidateDelete() (admission.Warnings, error) {
-	validations := product.deleteValidations()
-	var temp any = product
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (product *Product) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := product.updateValidations()
-	var temp any = product
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (product *Product) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){product.validateResourceReferences, product.validateOwnerReference, product.validateSecretDestinations, product.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (product *Product) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (product *Product) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return product.validateResourceReferences()
-		},
-		product.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return product.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return product.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return product.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (product *Product) validateConfigMapDestinations() (admission.Warnings, error) {
-	if product.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(product, nil, product.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (product *Product) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(product)
-}
-
-// validateResourceReferences validates all resource references
-func (product *Product) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&product.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (product *Product) validateSecretDestinations() (admission.Warnings, error) {
-	if product.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(product, nil, product.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (product *Product) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Product)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, product)
 }
 
 // AssignProperties_From_Product populates our Product from the provided source Product
@@ -310,7 +185,7 @@ func (product *Product) AssignProperties_From_Product(source *storage.Product) e
 	var spec Product_Spec
 	err := spec.AssignProperties_From_Product_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Product_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Product_Spec() to populate field Spec")
 	}
 	product.Spec = spec
 
@@ -318,7 +193,7 @@ func (product *Product) AssignProperties_From_Product(source *storage.Product) e
 	var status Product_STATUS
 	err = status.AssignProperties_From_Product_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Product_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Product_STATUS() to populate field Status")
 	}
 	product.Status = status
 
@@ -336,7 +211,7 @@ func (product *Product) AssignProperties_To_Product(destination *storage.Product
 	var spec storage.Product_Spec
 	err := product.Spec.AssignProperties_To_Product_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Product_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Product_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (product *Product) AssignProperties_To_Product(destination *storage.Product
 	var status storage.Product_STATUS
 	err = product.Status.AssignProperties_To_Product_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Product_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Product_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -587,13 +462,13 @@ func (product *Product_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Product_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = product.AssignProperties_From_Product_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -611,13 +486,13 @@ func (product *Product_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Product_Spec{}
 	err := product.AssignProperties_To_Product_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -638,27 +513,17 @@ func (product *Product_Spec) AssignProperties_From_Product_Spec(source *storage.
 	product.AzureName = source.AzureName
 
 	// Description
-	if source.Description != nil {
-		description := *source.Description
-		product.Description = &description
-	} else {
-		product.Description = nil
-	}
+	product.Description = genruntime.ClonePointerToString(source.Description)
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		product.DisplayName = &displayName
-	} else {
-		product.DisplayName = nil
-	}
+	product.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// OperatorSpec
 	if source.OperatorSpec != nil {
 		var operatorSpec ProductOperatorSpec
 		err := operatorSpec.AssignProperties_From_ProductOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ProductOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ProductOperatorSpec() to populate field OperatorSpec")
 		}
 		product.OperatorSpec = &operatorSpec
 	} else {
@@ -717,27 +582,17 @@ func (product *Product_Spec) AssignProperties_To_Product_Spec(destination *stora
 	destination.AzureName = product.AzureName
 
 	// Description
-	if product.Description != nil {
-		description := *product.Description
-		destination.Description = &description
-	} else {
-		destination.Description = nil
-	}
+	destination.Description = genruntime.ClonePointerToString(product.Description)
 
 	// DisplayName
-	if product.DisplayName != nil {
-		displayName := *product.DisplayName
-		destination.DisplayName = &displayName
-	} else {
-		destination.DisplayName = nil
-	}
+	destination.DisplayName = genruntime.ClonePointerToString(product.DisplayName)
 
 	// OperatorSpec
 	if product.OperatorSpec != nil {
 		var operatorSpec storage.ProductOperatorSpec
 		err := product.OperatorSpec.AssignProperties_To_ProductOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ProductOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ProductOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -800,20 +655,10 @@ func (product *Product_Spec) Initialize_From_Product_STATUS(source *Product_STAT
 	}
 
 	// Description
-	if source.Description != nil {
-		description := *source.Description
-		product.Description = &description
-	} else {
-		product.Description = nil
-	}
+	product.Description = genruntime.ClonePointerToString(source.Description)
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		product.DisplayName = &displayName
-	} else {
-		product.DisplayName = nil
-	}
+	product.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// State
 	if source.State != nil {
@@ -910,13 +755,13 @@ func (product *Product_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Product_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = product.AssignProperties_From_Product_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -934,13 +779,13 @@ func (product *Product_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Product_STATUS{}
 	err := product.AssignProperties_To_Product_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (schedule *RedisPatchSchedule) ConvertTo(hub conversion.Hub) error {
 
 	return schedule.AssignProperties_To_RedisPatchSchedule(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-cache-azure-com-v1api20230801-redispatchschedule,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redispatchschedules,verbs=create;update,versions=v1api20230801,name=default.v1api20230801.redispatchschedules.cache.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &RedisPatchSchedule{}
-
-// Default applies defaults to the RedisPatchSchedule resource
-func (schedule *RedisPatchSchedule) Default() {
-	schedule.defaultImpl()
-	var temp any = schedule
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the RedisPatchSchedule resource
-func (schedule *RedisPatchSchedule) defaultImpl() {}
 
 var _ configmaps.Exporter = &RedisPatchSchedule{}
 
@@ -166,6 +147,10 @@ func (schedule *RedisPatchSchedule) NewEmptyStatus() genruntime.ConvertibleStatu
 
 // Owner returns the ResourceReference of the owner
 func (schedule *RedisPatchSchedule) Owner() *genruntime.ResourceReference {
+	if schedule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(schedule.Spec)
 	return schedule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -182,114 +167,11 @@ func (schedule *RedisPatchSchedule) SetStatus(status genruntime.ConvertibleStatu
 	var st RedisPatchSchedule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	schedule.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cache-azure-com-v1api20230801-redispatchschedule,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redispatchschedules,verbs=create;update,versions=v1api20230801,name=validate.v1api20230801.redispatchschedules.cache.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &RedisPatchSchedule{}
-
-// ValidateCreate validates the creation of the resource
-func (schedule *RedisPatchSchedule) ValidateCreate() (admission.Warnings, error) {
-	validations := schedule.createValidations()
-	var temp any = schedule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (schedule *RedisPatchSchedule) ValidateDelete() (admission.Warnings, error) {
-	validations := schedule.deleteValidations()
-	var temp any = schedule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (schedule *RedisPatchSchedule) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := schedule.updateValidations()
-	var temp any = schedule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (schedule *RedisPatchSchedule) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){schedule.validateResourceReferences, schedule.validateOwnerReference, schedule.validateSecretDestinations, schedule.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (schedule *RedisPatchSchedule) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (schedule *RedisPatchSchedule) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return schedule.validateResourceReferences()
-		},
-		schedule.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return schedule.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return schedule.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return schedule.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (schedule *RedisPatchSchedule) validateConfigMapDestinations() (admission.Warnings, error) {
-	if schedule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(schedule, nil, schedule.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (schedule *RedisPatchSchedule) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(schedule)
-}
-
-// validateResourceReferences validates all resource references
-func (schedule *RedisPatchSchedule) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&schedule.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (schedule *RedisPatchSchedule) validateSecretDestinations() (admission.Warnings, error) {
-	if schedule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(schedule, nil, schedule.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (schedule *RedisPatchSchedule) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*RedisPatchSchedule)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, schedule)
 }
 
 // AssignProperties_From_RedisPatchSchedule populates our RedisPatchSchedule from the provided source RedisPatchSchedule
@@ -302,7 +184,7 @@ func (schedule *RedisPatchSchedule) AssignProperties_From_RedisPatchSchedule(sou
 	var spec RedisPatchSchedule_Spec
 	err := spec.AssignProperties_From_RedisPatchSchedule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RedisPatchSchedule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_RedisPatchSchedule_Spec() to populate field Spec")
 	}
 	schedule.Spec = spec
 
@@ -310,7 +192,7 @@ func (schedule *RedisPatchSchedule) AssignProperties_From_RedisPatchSchedule(sou
 	var status RedisPatchSchedule_STATUS
 	err = status.AssignProperties_From_RedisPatchSchedule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RedisPatchSchedule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_RedisPatchSchedule_STATUS() to populate field Status")
 	}
 	schedule.Status = status
 
@@ -328,7 +210,7 @@ func (schedule *RedisPatchSchedule) AssignProperties_To_RedisPatchSchedule(desti
 	var spec storage.RedisPatchSchedule_Spec
 	err := schedule.Spec.AssignProperties_To_RedisPatchSchedule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RedisPatchSchedule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_RedisPatchSchedule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -336,7 +218,7 @@ func (schedule *RedisPatchSchedule) AssignProperties_To_RedisPatchSchedule(desti
 	var status storage.RedisPatchSchedule_STATUS
 	err = schedule.Status.AssignProperties_To_RedisPatchSchedule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RedisPatchSchedule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_RedisPatchSchedule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -456,13 +338,13 @@ func (schedule *RedisPatchSchedule_Spec) ConvertSpecFrom(source genruntime.Conve
 	src = &storage.RedisPatchSchedule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = schedule.AssignProperties_From_RedisPatchSchedule_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -480,13 +362,13 @@ func (schedule *RedisPatchSchedule_Spec) ConvertSpecTo(destination genruntime.Co
 	dst = &storage.RedisPatchSchedule_Spec{}
 	err := schedule.AssignProperties_To_RedisPatchSchedule_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -500,7 +382,7 @@ func (schedule *RedisPatchSchedule_Spec) AssignProperties_From_RedisPatchSchedul
 		var operatorSpec RedisPatchScheduleOperatorSpec
 		err := operatorSpec.AssignProperties_From_RedisPatchScheduleOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RedisPatchScheduleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RedisPatchScheduleOperatorSpec() to populate field OperatorSpec")
 		}
 		schedule.OperatorSpec = &operatorSpec
 	} else {
@@ -524,7 +406,7 @@ func (schedule *RedisPatchSchedule_Spec) AssignProperties_From_RedisPatchSchedul
 			var scheduleEntry ScheduleEntry
 			err := scheduleEntry.AssignProperties_From_ScheduleEntry(&scheduleEntryItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ScheduleEntry() to populate field ScheduleEntries")
+				return eris.Wrap(err, "calling AssignProperties_From_ScheduleEntry() to populate field ScheduleEntries")
 			}
 			scheduleEntryList[scheduleEntryIndex] = scheduleEntry
 		}
@@ -547,7 +429,7 @@ func (schedule *RedisPatchSchedule_Spec) AssignProperties_To_RedisPatchSchedule_
 		var operatorSpec storage.RedisPatchScheduleOperatorSpec
 		err := schedule.OperatorSpec.AssignProperties_To_RedisPatchScheduleOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RedisPatchScheduleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RedisPatchScheduleOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -574,7 +456,7 @@ func (schedule *RedisPatchSchedule_Spec) AssignProperties_To_RedisPatchSchedule_
 			var scheduleEntry storage.ScheduleEntry
 			err := scheduleEntryItem.AssignProperties_To_ScheduleEntry(&scheduleEntry)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ScheduleEntry() to populate field ScheduleEntries")
+				return eris.Wrap(err, "calling AssignProperties_To_ScheduleEntry() to populate field ScheduleEntries")
 			}
 			scheduleEntryList[scheduleEntryIndex] = scheduleEntry
 		}
@@ -606,7 +488,7 @@ func (schedule *RedisPatchSchedule_Spec) Initialize_From_RedisPatchSchedule_STAT
 			var scheduleEntry ScheduleEntry
 			err := scheduleEntry.Initialize_From_ScheduleEntry_STATUS(&scheduleEntryItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ScheduleEntry_STATUS() to populate field ScheduleEntries")
+				return eris.Wrap(err, "calling Initialize_From_ScheduleEntry_STATUS() to populate field ScheduleEntries")
 			}
 			scheduleEntryList[scheduleEntryIndex] = scheduleEntry
 		}
@@ -659,13 +541,13 @@ func (schedule *RedisPatchSchedule_STATUS) ConvertStatusFrom(source genruntime.C
 	src = &storage.RedisPatchSchedule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = schedule.AssignProperties_From_RedisPatchSchedule_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -683,13 +565,13 @@ func (schedule *RedisPatchSchedule_STATUS) ConvertStatusTo(destination genruntim
 	dst = &storage.RedisPatchSchedule_STATUS{}
 	err := schedule.AssignProperties_To_RedisPatchSchedule_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -776,7 +658,7 @@ func (schedule *RedisPatchSchedule_STATUS) AssignProperties_From_RedisPatchSched
 			var scheduleEntry ScheduleEntry_STATUS
 			err := scheduleEntry.AssignProperties_From_ScheduleEntry_STATUS(&scheduleEntryItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ScheduleEntry_STATUS() to populate field ScheduleEntries")
+				return eris.Wrap(err, "calling AssignProperties_From_ScheduleEntry_STATUS() to populate field ScheduleEntries")
 			}
 			scheduleEntryList[scheduleEntryIndex] = scheduleEntry
 		}
@@ -818,7 +700,7 @@ func (schedule *RedisPatchSchedule_STATUS) AssignProperties_To_RedisPatchSchedul
 			var scheduleEntry storage.ScheduleEntry_STATUS
 			err := scheduleEntryItem.AssignProperties_To_ScheduleEntry_STATUS(&scheduleEntry)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ScheduleEntry_STATUS() to populate field ScheduleEntries")
+				return eris.Wrap(err, "calling AssignProperties_To_ScheduleEntry_STATUS() to populate field ScheduleEntries")
 			}
 			scheduleEntryList[scheduleEntryIndex] = scheduleEntry
 		}

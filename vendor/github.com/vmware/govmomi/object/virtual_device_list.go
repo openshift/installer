@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package object
@@ -50,6 +50,7 @@ func EthernetCardTypes() VirtualDeviceList {
 	return VirtualDeviceList([]types.BaseVirtualDevice{
 		&types.VirtualE1000{},
 		&types.VirtualE1000e{},
+		&types.VirtualVmxnet{},
 		&types.VirtualVmxnet2{},
 		&types.VirtualVmxnet3{},
 		&types.VirtualVmxnet3Vrdma{},
@@ -237,6 +238,10 @@ func (l VirtualDeviceList) FindSCSIController(name string) (*types.VirtualSCSICo
 	return c.(types.BaseVirtualSCSIController).GetVirtualSCSIController(), nil
 }
 
+var alias = map[string]string{
+	"lsilogicsas": "lsilogic-sas",
+}
+
 // CreateSCSIController creates a new SCSI controller of type name if given, otherwise defaults to lsilogic.
 func (l VirtualDeviceList) CreateSCSIController(name string) (types.BaseVirtualDevice, error) {
 	ctypes := SCSIControllerTypes()
@@ -248,7 +253,8 @@ func (l VirtualDeviceList) CreateSCSIController(name string) (types.BaseVirtualD
 	}
 
 	found := ctypes.Select(func(device types.BaseVirtualDevice) bool {
-		return l.Type(device) == name
+		kind := l.Type(device)
+		return kind == name || kind == alias[name]
 	})
 
 	if len(found) == 0 {

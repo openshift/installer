@@ -17,12 +17,10 @@ limitations under the License.
 package context
 
 import (
-	"context"
 	"fmt"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
@@ -37,16 +35,4 @@ type ClusterContext struct {
 // String returns VSphereClusterGroupVersionKind VSphereClusterNamespace/VSphereClusterName.
 func (c *ClusterContext) String() string {
 	return fmt.Sprintf("%s %s/%s", c.VSphereCluster.GroupVersionKind(), c.VSphereCluster.Namespace, c.VSphereCluster.Name)
-}
-
-// Patch updates the object and its status on the API server.
-func (c *ClusterContext) Patch(ctx context.Context) error {
-	// always update the readyCondition.
-	conditions.SetSummary(c.VSphereCluster,
-		conditions.WithConditions(
-			infrav1.VCenterAvailableCondition,
-		),
-	)
-
-	return c.PatchHelper.Patch(ctx, c.VSphereCluster)
 }

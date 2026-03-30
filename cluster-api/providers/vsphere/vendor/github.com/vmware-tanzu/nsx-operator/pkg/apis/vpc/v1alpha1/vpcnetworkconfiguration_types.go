@@ -14,13 +14,13 @@ import (
 // in a Namespace's VPCNetworkConfiguration, the Namespace will use the value
 // in the default VPCNetworkConfiguration.
 type VPCNetworkConfigurationSpec struct {
-	// NSX path of the VPC the Namespace associated with.
+	// NSX path of the VPC the Namespace is associated with.
 	// If VPC is set, only defaultIPv4SubnetSize and defaultSubnetAccessMode
 	// take effect, other fields are ignored.
 	// +optional
 	VPC string `json:"vpc,omitempty"`
 
-	// NSX Project the Namespace associated with.
+	// NSX Project the Namespace is associated with.
 	NSXProject string `json:"nsxProject,omitempty"`
 
 	// VPCConnectivityProfile ID. This profile has configuration related to creating VPC transit gateway attachment.
@@ -32,12 +32,15 @@ type VPCNetworkConfigurationSpec struct {
 	// Default size of Subnets.
 	// Defaults to 32.
 	// +kubebuilder:default=32
+	// +kubebuilder:validation:Maximum:=65536
+	// +kubebuilder:validation:Minimum:=16
 	DefaultSubnetSize int `json:"defaultSubnetSize,omitempty"`
 }
 
 // VPCNetworkConfigurationStatus defines the observed state of VPCNetworkConfiguration
 type VPCNetworkConfigurationStatus struct {
-	// VPCs describes VPC info, now it includes lb Subnet info which are needed for AKO.
+	// VPCs describes VPC info, now it includes Load Balancer Subnet info which are needed
+	// for the Avi Kubernetes Operator (AKO).
 	VPCs []VPCInfo `json:"vpcs,omitempty"`
 	// Conditions describe current state of VPCNetworkConfiguration.
 	Conditions []Condition `json:"conditions,omitempty"`
@@ -63,8 +66,7 @@ type VPCInfo struct {
 
 // VPCNetworkConfiguration is the Schema for the vpcnetworkconfigurations API.
 // +kubebuilder:resource:scope="Cluster"
-// +kubebuilder:printcolumn:name="NSXProject",type=string,JSONPath=`.spec.nsxProject`,description="NSXProject the Namespace associated with"
-// +kubebuilder:printcolumn:name="PrivateIPs",type=string,JSONPath=`.spec.privateIPs`,description="PrivateIPs assigned to the Namespace"
+// +kubebuilder:printcolumn:name="VPCPath",type=string,JSONPath=`.status.vpcs[0].vpcPath`,description="NSX VPC path the Namespace is associated with"
 type VPCNetworkConfiguration struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

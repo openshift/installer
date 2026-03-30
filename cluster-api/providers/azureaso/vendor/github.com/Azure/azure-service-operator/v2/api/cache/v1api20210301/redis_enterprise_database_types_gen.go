@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cache/v1api20210301/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20210301/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (database *RedisEnterpriseDatabase) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = database.AssignProperties_From_RedisEnterpriseDatabase(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to database")
+		return eris.Wrap(err, "converting from source to database")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (database *RedisEnterpriseDatabase) ConvertTo(hub conversion.Hub) error {
 	var destination storage.RedisEnterpriseDatabase
 	err := database.AssignProperties_To_RedisEnterpriseDatabase(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from database")
+		return eris.Wrap(err, "converting to destination from database")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-cache-azure-com-v1api20210301-redisenterprisedatabase,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redisenterprisedatabases,verbs=create;update,versions=v1api20210301,name=default.v1api20210301.redisenterprisedatabases.cache.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &RedisEnterpriseDatabase{}
-
-// Default applies defaults to the RedisEnterpriseDatabase resource
-func (database *RedisEnterpriseDatabase) Default() {
-	database.defaultImpl()
-	var temp any = database
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (database *RedisEnterpriseDatabase) defaultAzureName() {
-	if database.Spec.AzureName == "" {
-		database.Spec.AzureName = database.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the RedisEnterpriseDatabase resource
-func (database *RedisEnterpriseDatabase) defaultImpl() { database.defaultAzureName() }
 
 var _ configmaps.Exporter = &RedisEnterpriseDatabase{}
 
@@ -176,6 +150,10 @@ func (database *RedisEnterpriseDatabase) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (database *RedisEnterpriseDatabase) Owner() *genruntime.ResourceReference {
+	if database.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(database.Spec)
 	return database.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (database *RedisEnterpriseDatabase) SetStatus(status genruntime.Convertible
 	var st RedisEnterpriseDatabase_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	database.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cache-azure-com-v1api20210301-redisenterprisedatabase,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redisenterprisedatabases,verbs=create;update,versions=v1api20210301,name=validate.v1api20210301.redisenterprisedatabases.cache.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &RedisEnterpriseDatabase{}
-
-// ValidateCreate validates the creation of the resource
-func (database *RedisEnterpriseDatabase) ValidateCreate() (admission.Warnings, error) {
-	validations := database.createValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (database *RedisEnterpriseDatabase) ValidateDelete() (admission.Warnings, error) {
-	validations := database.deleteValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (database *RedisEnterpriseDatabase) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := database.updateValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (database *RedisEnterpriseDatabase) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (database *RedisEnterpriseDatabase) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (database *RedisEnterpriseDatabase) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateResourceReferences()
-		},
-		database.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (database *RedisEnterpriseDatabase) validateConfigMapDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(database, nil, database.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (database *RedisEnterpriseDatabase) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(database)
-}
-
-// validateResourceReferences validates all resource references
-func (database *RedisEnterpriseDatabase) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&database.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (database *RedisEnterpriseDatabase) validateSecretDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(database, nil, database.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (database *RedisEnterpriseDatabase) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*RedisEnterpriseDatabase)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, database)
 }
 
 // AssignProperties_From_RedisEnterpriseDatabase populates our RedisEnterpriseDatabase from the provided source RedisEnterpriseDatabase
@@ -312,7 +187,7 @@ func (database *RedisEnterpriseDatabase) AssignProperties_From_RedisEnterpriseDa
 	var spec RedisEnterpriseDatabase_Spec
 	err := spec.AssignProperties_From_RedisEnterpriseDatabase_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabase_Spec() to populate field Spec")
 	}
 	database.Spec = spec
 
@@ -320,7 +195,7 @@ func (database *RedisEnterpriseDatabase) AssignProperties_From_RedisEnterpriseDa
 	var status RedisEnterpriseDatabase_STATUS
 	err = status.AssignProperties_From_RedisEnterpriseDatabase_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabase_STATUS() to populate field Status")
 	}
 	database.Status = status
 
@@ -338,7 +213,7 @@ func (database *RedisEnterpriseDatabase) AssignProperties_To_RedisEnterpriseData
 	var spec storage.RedisEnterpriseDatabase_Spec
 	err := database.Spec.AssignProperties_To_RedisEnterpriseDatabase_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabase_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (database *RedisEnterpriseDatabase) AssignProperties_To_RedisEnterpriseData
 	var status storage.RedisEnterpriseDatabase_STATUS
 	err = database.Status.AssignProperties_To_RedisEnterpriseDatabase_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabase_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -579,13 +454,13 @@ func (database *RedisEnterpriseDatabase_Spec) ConvertSpecFrom(source genruntime.
 	src = &storage.RedisEnterpriseDatabase_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_RedisEnterpriseDatabase_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -603,13 +478,13 @@ func (database *RedisEnterpriseDatabase_Spec) ConvertSpecTo(destination genrunti
 	dst = &storage.RedisEnterpriseDatabase_Spec{}
 	err := database.AssignProperties_To_RedisEnterpriseDatabase_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -657,7 +532,7 @@ func (database *RedisEnterpriseDatabase_Spec) AssignProperties_From_RedisEnterpr
 			var module Module
 			err := module.AssignProperties_From_Module(&moduleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Module() to populate field Modules")
+				return eris.Wrap(err, "calling AssignProperties_From_Module() to populate field Modules")
 			}
 			moduleList[moduleIndex] = module
 		}
@@ -671,7 +546,7 @@ func (database *RedisEnterpriseDatabase_Spec) AssignProperties_From_RedisEnterpr
 		var operatorSpec RedisEnterpriseDatabaseOperatorSpec
 		err := operatorSpec.AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		database.OperatorSpec = &operatorSpec
 	} else {
@@ -691,7 +566,7 @@ func (database *RedisEnterpriseDatabase_Spec) AssignProperties_From_RedisEnterpr
 		var persistence Persistence
 		err := persistence.AssignProperties_From_Persistence(source.Persistence)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Persistence() to populate field Persistence")
+			return eris.Wrap(err, "calling AssignProperties_From_Persistence() to populate field Persistence")
 		}
 		database.Persistence = &persistence
 	} else {
@@ -746,7 +621,7 @@ func (database *RedisEnterpriseDatabase_Spec) AssignProperties_To_RedisEnterpris
 			var module storage.Module
 			err := moduleItem.AssignProperties_To_Module(&module)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Module() to populate field Modules")
+				return eris.Wrap(err, "calling AssignProperties_To_Module() to populate field Modules")
 			}
 			moduleList[moduleIndex] = module
 		}
@@ -760,7 +635,7 @@ func (database *RedisEnterpriseDatabase_Spec) AssignProperties_To_RedisEnterpris
 		var operatorSpec storage.RedisEnterpriseDatabaseOperatorSpec
 		err := database.OperatorSpec.AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -783,7 +658,7 @@ func (database *RedisEnterpriseDatabase_Spec) AssignProperties_To_RedisEnterpris
 		var persistence storage.Persistence
 		err := database.Persistence.AssignProperties_To_Persistence(&persistence)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Persistence() to populate field Persistence")
+			return eris.Wrap(err, "calling AssignProperties_To_Persistence() to populate field Persistence")
 		}
 		destination.Persistence = &persistence
 	} else {
@@ -868,13 +743,13 @@ func (database *RedisEnterpriseDatabase_STATUS) ConvertStatusFrom(source genrunt
 	src = &storage.RedisEnterpriseDatabase_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_RedisEnterpriseDatabase_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -892,13 +767,13 @@ func (database *RedisEnterpriseDatabase_STATUS) ConvertStatusTo(destination genr
 	dst = &storage.RedisEnterpriseDatabase_STATUS{}
 	err := database.AssignProperties_To_RedisEnterpriseDatabase_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1078,7 +953,7 @@ func (database *RedisEnterpriseDatabase_STATUS) AssignProperties_From_RedisEnter
 			var module Module_STATUS
 			err := module.AssignProperties_From_Module_STATUS(&moduleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Module_STATUS() to populate field Modules")
+				return eris.Wrap(err, "calling AssignProperties_From_Module_STATUS() to populate field Modules")
 			}
 			moduleList[moduleIndex] = module
 		}
@@ -1095,7 +970,7 @@ func (database *RedisEnterpriseDatabase_STATUS) AssignProperties_From_RedisEnter
 		var persistence Persistence_STATUS
 		err := persistence.AssignProperties_From_Persistence_STATUS(source.Persistence)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Persistence_STATUS() to populate field Persistence")
+			return eris.Wrap(err, "calling AssignProperties_From_Persistence_STATUS() to populate field Persistence")
 		}
 		database.Persistence = &persistence
 	} else {
@@ -1174,7 +1049,7 @@ func (database *RedisEnterpriseDatabase_STATUS) AssignProperties_To_RedisEnterpr
 			var module storage.Module_STATUS
 			err := moduleItem.AssignProperties_To_Module_STATUS(&module)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Module_STATUS() to populate field Modules")
+				return eris.Wrap(err, "calling AssignProperties_To_Module_STATUS() to populate field Modules")
 			}
 			moduleList[moduleIndex] = module
 		}
@@ -1191,7 +1066,7 @@ func (database *RedisEnterpriseDatabase_STATUS) AssignProperties_To_RedisEnterpr
 		var persistence storage.Persistence_STATUS
 		err := database.Persistence.AssignProperties_To_Persistence_STATUS(&persistence)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Persistence_STATUS() to populate field Persistence")
+			return eris.Wrap(err, "calling AssignProperties_To_Persistence_STATUS() to populate field Persistence")
 		}
 		destination.Persistence = &persistence
 	} else {

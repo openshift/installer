@@ -22,16 +22,15 @@ import (
 
 	"sigs.k8s.io/cluster-api-provider-gcp/util/location"
 
-	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	container "cloud.google.com/go/container/apiv1"
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/pkg/errors"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	clusterv1exp "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/patch"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -123,7 +122,7 @@ type ManagedControlPlaneScope struct {
 	credentialsClient      *credentials.IamCredentialsClient
 	credential             *Credential
 
-	AllMachinePools        []clusterv1exp.MachinePool
+	AllMachinePools        []clusterv1.MachinePool
 	AllManagedMachinePools []infrav1exp.GCPManagedMachinePool
 }
 
@@ -179,14 +178,14 @@ func (s *ManagedControlPlaneScope) GetCredential() *Credential {
 }
 
 // GetAllNodePools gets all node pools for the control plane.
-func (s *ManagedControlPlaneScope) GetAllNodePools(ctx context.Context) ([]infrav1exp.GCPManagedMachinePool, []clusterv1exp.MachinePool, error) {
+func (s *ManagedControlPlaneScope) GetAllNodePools(ctx context.Context) ([]infrav1exp.GCPManagedMachinePool, []clusterv1.MachinePool, error) {
 	if len(s.AllManagedMachinePools) == 0 {
 		listOptions := []client.ListOption{
 			client.InNamespace(s.GCPManagedControlPlane.Namespace),
 			client.MatchingLabels(map[string]string{clusterv1.ClusterNameLabel: s.Cluster.Name}),
 		}
 
-		machinePoolList := &clusterv1exp.MachinePoolList{}
+		machinePoolList := &clusterv1.MachinePoolList{}
 		if err := s.client.List(ctx, machinePoolList, listOptions...); err != nil {
 			return nil, nil, err
 		}
@@ -236,4 +235,15 @@ func (s *ManagedControlPlaneScope) SetEndpoint(host string) {
 // IsAutopilotCluster returns true if this is an autopilot cluster.
 func (s *ManagedControlPlaneScope) IsAutopilotCluster() bool {
 	return s.GCPManagedControlPlane.Spec.EnableAutopilot
+}
+
+// GetControlPlaneVersion returns the control plane version from the specification.
+func (s *ManagedControlPlaneScope) GetControlPlaneVersion() *string {
+	if s.GCPManagedControlPlane.Spec.Version != nil {
+		return s.GCPManagedControlPlane.Spec.Version
+	}
+	if s.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
+		return s.GCPManagedControlPlane.Spec.ControlPlaneVersion
+	}
+	return nil
 }

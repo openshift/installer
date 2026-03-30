@@ -58,10 +58,6 @@ func (i *CaBundle) Generate(_ context.Context, dependencies asset.Parents) error
 		}
 		additionalTrustBundle = installConfig.Config.AdditionalTrustBundle
 
-	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
-		// Not required
-		return nil
-
 	case workflow.AgentWorkflowTypeAddNodes:
 		additionalTrustBundle = clusterInfo.UserCaBundle
 

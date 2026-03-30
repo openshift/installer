@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (peering *VirtualNetworksVirtualNetworkPeering) NewEmptyStatus() genruntime
 
 // Owner returns the ResourceReference of the owner
 func (peering *VirtualNetworksVirtualNetworkPeering) Owner() *genruntime.ResourceReference {
+	if peering.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(peering.Spec)
 	return peering.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) SetStatus(status genruntime
 	var st VirtualNetworksVirtualNetworkPeering_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	peering.Status = st
@@ -200,7 +204,7 @@ var _ genruntime.ConvertibleSpec = &VirtualNetworksVirtualNetworkPeering_Spec{}
 // ConvertSpecFrom populates our VirtualNetworksVirtualNetworkPeering_Spec from the provided source
 func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == peering {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(peering)
@@ -209,7 +213,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecFrom(source
 // ConvertSpecTo populates the provided destination from our VirtualNetworksVirtualNetworkPeering_Spec
 func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == peering {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(peering)
@@ -250,7 +254,7 @@ var _ genruntime.ConvertibleStatus = &VirtualNetworksVirtualNetworkPeering_STATU
 // ConvertStatusFrom populates our VirtualNetworksVirtualNetworkPeering_STATUS from the provided source
 func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == peering {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(peering)
@@ -259,7 +263,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusFrom(so
 // ConvertStatusTo populates the provided destination from our VirtualNetworksVirtualNetworkPeering_STATUS
 func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == peering {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(peering)

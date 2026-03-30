@@ -2,11 +2,14 @@ package validation
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -15,6 +18,7 @@ func TestValidateMachinePool(t *testing.T) {
 	cases := []struct {
 		name     string
 		pool     *aws.MachinePool
+		poolName string
 		expected string
 	}{
 		{
@@ -73,7 +77,7 @@ func TestValidateMachinePool(t *testing.T) {
 					IOPS: 10000,
 				},
 			},
-			expected: fmt.Sprintf("test-path.iops: Invalid value: 10000: iops not supported for type gp2"),
+			expected: "test-path.iops: Invalid value: 10000: iops not supported for type gp2",
 		},
 		{
 			name: "invalid zone",
@@ -95,18 +99,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Size: 128,
 				},
 			},
-			expected: fmt.Sprintf("test-path.type: Invalid value: \"bad-volume-type\": failed to find volume type bad-volume-type"),
-		},
-		{
-			name: "invalid volume size using zero",
-			pool: &aws.MachinePool{
-				EC2RootVolume: aws.EC2RootVolume{
-					Type: "io2",
-					Size: 0,
-					IOPS: 10000,
-				},
-			},
-			expected: fmt.Sprintf("test-path.size: Invalid value: 0: volume size value must be a positive number"),
+			expected: "test-path.type: Invalid value: \"bad-volume-type\": failed to find volume type bad-volume-type",
 		},
 		{
 			name: "invalid volume size using negative",
@@ -117,7 +110,7 @@ func TestValidateMachinePool(t *testing.T) {
 					IOPS: 10000,
 				},
 			},
-			expected: fmt.Sprintf("test-path.size: Invalid value: -1: volume size value must be a positive number"),
+			expected: "test-path.size: Invalid value: -1: volume size value must be a positive number",
 		},
 		{
 			name: "invalid metadata auth option",
@@ -128,10 +121,275 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.authentication: Invalid value: \"foobarbaz\": must be either Required or Optional$`,
 		},
+		{
+			name: "valid root volume throughput with sufficient iops",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(1200)),
+					IOPS:       4800, // 1200 / 4800 = 0.25, which is the maximum allowed ratio
+				},
+			},
+		},
+		{
+			name: "valid root volume throughput with default iops (within ratio)",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(750)), // 750 / 3000 = 0.25, which is the maximum allowed ratio
+				},
+			},
+		},
+		{
+			name: "invalid root volume throughput, exceeds ratio with default iops",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(1200)), // 1200 / 3000 = 0.4 > 0.25
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 1200: throughput \(MiBps\) to iops ratio of 0\.400000 is too high; maximum is 0\.250000 MiBps per iops\. When iops is not set, AWS defaults to 3000 iops\. Please set iops to at least 4800 to satisfy the constraint$`,
+		},
+		{
+			name: "invalid root volume throughput, exceeds ratio with explicit iops",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(1000)),
+					IOPS:       3000, // 1000 / 3000 = 0.333 > 0.25
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 1000: throughput \(MiBps\) to iops ratio of 0\.333333 is too high; maximum is 0\.250000 MiBps per iops\. When iops is not set, AWS defaults to 3000 iops\. Please set iops to at least 4000 to satisfy the constraint$`,
+		},
+		{
+			name: "valid root volume throughput, nil or unspecified",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type: "gp3",
+					Size: 100,
+				},
+			},
+		},
+		{
+			name: "invalid root volume throughput, below minimum",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(124)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 124: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, above maximum",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(2001)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 2001: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, zero",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(0)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 0: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, negative",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(-100)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: -100: throughput must be between 125 MiB/s and 2000 MiB/s$`,
+		},
+		{
+			name: "invalid root volume throughput, unsupported volume type",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp2",
+					Size:       100,
+					Throughput: ptr.To(int32(125)),
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 125: throughput not supported for type gp2$`,
+		},
+		{
+			name: "host placement any available",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityAnyAvailable),
+				},
+			},
+		},
+		{
+			name: "valid dedicated hosts",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid dedicated hosts - missing hostID",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{},
+					},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost\[0].id: Required value: a hostID must be specified when configuring 'dedicatedHost'$`,
+		},
+		{
+			name: "invalid - hostPlacement without affinity",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{},
+			},
+			expected: `^test-path.hostPlacement.affinity: Required value: affinity is required when hostPlacement is configured$`,
+		},
+		{
+			name: "invalid unknown affinity",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinity("Unknown")),
+				},
+			},
+			expected: `^test-path.hostPlacement.affinity: Unsupported value: "Unknown": supported values: "AnyAvailable", "DedicatedHost"$`,
+		},
+		{
+			name: "any available with dedicated host set",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity:      ptr.To(aws.HostAffinityAnyAvailable),
+					DedicatedHost: []aws.DedicatedHost{{ID: "h-09dcf61cb388b0149"}},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost: Required value: dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise$`,
+		},
+		{
+			name: "invalid - DedicatedHost affinity without dedicatedHost",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost: Required value: dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise$`,
+		},
+		{
+			name: "valid dedicated host - 8 character format",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1a2b3c4d"},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host - 8 character format with zone",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-9876abcd",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host with zone specified",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host with multiple zones",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+						{
+							ID: "h-0a1b2c3d4e5f60789",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "dedicated hosts on control plane not allowed",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1234567890abcdef0"},
+					},
+				},
+			},
+			poolName: "", // Empty poolName indicates control plane
+			expected: `^test-path.hostPlacement: Invalid value:.*: dedicated hosts are not supported on control plane pools$`,
+		},
+		{
+			name: "dedicated hosts on edge pool not allowed",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1234567890abcdef0"},
+					},
+				},
+			},
+			poolName: types.MachinePoolEdgeRoleName,
+			expected: `^test-path.hostPlacement: Invalid value:.*: dedicated hosts are only supported on worker pools, not on edge pools$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(platform, tc.pool, field.NewPath("test-path")).ToAggregate()
+			poolName := tc.poolName
+			// If poolName is not specified, default to worker pool unless the test
+			// is explicitly testing control plane or edge pool behavior
+			if poolName == "" && tc.expected != "" &&
+				!strings.Contains(tc.expected, "control plane") &&
+				!strings.Contains(tc.expected, "edge pool") {
+				poolName = types.MachinePoolComputeRoleName
+			} else if poolName == "" && tc.expected == "" {
+				poolName = types.MachinePoolComputeRoleName
+			}
+			err := ValidateMachinePool(platform, tc.pool, poolName, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
@@ -246,6 +504,60 @@ func Test_validateAMIID(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func Test_validateCPUOptions(t *testing.T) {
+	cases := []struct {
+		name string
+		pool *aws.MachinePool
+		err  string
+	}{{
+		name: "confidential compute policy set to AMD SEV-SNP",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+			},
+		},
+	}, {
+		name: "confidential compute disabled",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicyDisabled),
+			},
+		},
+	}, {
+		name: "empty confidential compute policy",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicy("")),
+			},
+		},
+		err: `^test-path.confidentialCompute: Unsupported value: "": supported values: "Disabled", "AMDEncryptedVirtualizationNestedPaging"$`,
+	}, {
+		name: "invalid confidential compute policy",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicy("invalid")),
+			},
+		},
+		err: `^test-path.confidentialCompute: Unsupported value: "invalid": supported values: "Disabled", "AMDEncryptedVirtualizationNestedPaging"$`,
+	}, {
+		name: "empty cpu options",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{},
+		},
+		err: `^test-path.cpuOptions: Invalid value: "{}": At least one field must be set if cpuOptions is provided$`,
+	}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateCPUOptions(tc.pool, field.NewPath("test-path")).ToAggregate()
+			if tc.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.err, err)
 			}
 		})
 	}

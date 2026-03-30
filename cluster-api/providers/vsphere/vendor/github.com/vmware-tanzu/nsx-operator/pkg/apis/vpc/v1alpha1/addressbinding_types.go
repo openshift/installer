@@ -24,7 +24,7 @@ type AddressBinding struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   AddressBindingSpec   `json:"spec"`
-	Status AddressBindingStatus `json:"status"`
+	Status AddressBindingStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

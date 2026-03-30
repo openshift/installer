@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -55,7 +55,7 @@ func (s *searchDatastore) addFile(fname string, file os.FileInfo, res *types.Hos
 		info.Modification = &mtime
 	}
 
-	if isTrue(details.FileOwner) {
+	if details.FileOwner {
 		// Assume for now this process created all files in the datastore
 		user := os.Getenv("USER")
 

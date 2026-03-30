@@ -23,6 +23,42 @@ import (
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
+// Architecture represents the CPU architecture of the node.
+// Its underlying type is a string and its value can be any of amd64, arm64.
+type Architecture string
+
+// Architecture constants.
+const (
+	ArchitectureAmd64 Architecture = "amd64"
+	ArchitectureArm64 Architecture = "arm64"
+)
+
+// OperatingSystem represents the operating system of the node.
+// Its underlying type is a string and its value can be any of linux, windows.
+type OperatingSystem string
+
+// Operating system constants.
+const (
+	// OperatingSystemLinux represents the Linux operating system.
+	OperatingSystemLinux OperatingSystem = "linux"
+	// OperatingSystemWindows represents the Windows operating system.
+	OperatingSystemWindows OperatingSystem = "windows"
+)
+
+// NodeInfo contains information about the node's architecture and operating system.
+type NodeInfo struct {
+	// Architecture is the CPU architecture of the node.
+	// Its underlying type is a string and its value can be any of amd64, arm64.
+	// +kubebuilder:validation:Enum=amd64;arm64
+	// +optional
+	Architecture Architecture `json:"architecture,omitempty"`
+	// OperatingSystem is the operating system of the node.
+	// Its underlying type is a string and its value can be any of linux, windows.
+	// +kubebuilder:validation:Enum=linux;windows
+	// +optional
+	OperatingSystem OperatingSystem `json:"operatingSystem,omitempty"`
+}
+
 // AWSMachineTemplateStatus defines a status for an AWSMachineTemplate.
 type AWSMachineTemplateStatus struct {
 	// Capacity defines the resource capacity for this machine.
@@ -30,6 +66,16 @@ type AWSMachineTemplateStatus struct {
 	// https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
 	// +optional
 	Capacity corev1.ResourceList `json:"capacity,omitempty"`
+
+	// NodeInfo contains information about the node's architecture and operating system.
+	// This value is used for autoscaling from zero operations as defined in:
+	// https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
+	// +optional
+	NodeInfo *NodeInfo `json:"nodeInfo,omitempty"`
+
+	// Conditions defines current service state of the AWSMachineTemplate.
+	// +optional
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // AWSMachineTemplateSpec defines the desired state of AWSMachineTemplate.
@@ -40,6 +86,7 @@ type AWSMachineTemplateSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=awsmachinetemplates,scope=Namespaced,categories=cluster-api,shortName=awsmt
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 // +k8s:defaulter-gen=true
 
 // AWSMachineTemplate is the schema for the Amazon EC2 Machine Templates API.
@@ -69,6 +116,16 @@ type AWSMachineTemplateResource struct {
 
 	// Spec is the specification of the desired behavior of the machine.
 	Spec AWSMachineSpec `json:"spec"`
+}
+
+// GetConditions returns the observations of the operational state of the AWSMachineTemplate resource.
+func (r *AWSMachineTemplate) GetConditions() clusterv1beta1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the AWSMachineTemplate to the predescribed clusterv1beta1.Conditions.
+func (r *AWSMachineTemplate) SetConditions(conditions clusterv1beta1.Conditions) {
+	r.Status.Conditions = conditions
 }
 
 func init() {

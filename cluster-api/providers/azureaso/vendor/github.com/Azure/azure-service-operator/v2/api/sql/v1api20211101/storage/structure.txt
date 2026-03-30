@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage
 ------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-11-01"
+
 Server: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (18 properties)
@@ -94,6 +95,7 @@ Server: Resource
     ├── Type: *string
     ├── Version: *string
     └── WorkspaceFeature: *string
+
 ServersAdministrator: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (10 properties)
@@ -121,6 +123,7 @@ ServersAdministrator: Resource
     ├── Sid: *string
     ├── TenantId: *string
     └── Type: *string
+
 ServersAdvancedThreatProtectionSetting: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (5 properties)
@@ -148,6 +151,7 @@ ServersAdvancedThreatProtectionSetting: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ServersAuditingSetting: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (15 properties)
@@ -185,6 +189,7 @@ ServersAuditingSetting: Resource
     ├── StorageAccountSubscriptionId: *string
     ├── StorageEndpoint: *string
     └── Type: *string
+
 ServersAzureADOnlyAuthentication: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (5 properties)
@@ -203,6 +208,7 @@ ServersAzureADOnlyAuthentication: Resource
     ├── Name: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ServersConnectionPolicy: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (5 properties)
@@ -223,6 +229,7 @@ ServersConnectionPolicy: Resource
     ├── Name: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ServersDatabase: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (34 properties)
@@ -344,6 +351,7 @@ ServersDatabase: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── ZoneRedundant: *bool
+
 ServersDatabasesAdvancedThreatProtectionSetting: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (5 properties)
@@ -371,6 +379,7 @@ ServersDatabasesAdvancedThreatProtectionSetting: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ServersDatabasesAuditingSetting: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (14 properties)
@@ -407,6 +416,7 @@ ServersDatabasesAuditingSetting: Resource
     ├── StorageAccountSubscriptionId: *string
     ├── StorageEndpoint: *string
     └── Type: *string
+
 ServersDatabasesBackupLongTermRetentionPolicy: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (8 properties)
@@ -431,6 +441,7 @@ ServersDatabasesBackupLongTermRetentionPolicy: Resource
     ├── WeekOfYear: *int
     ├── WeeklyRetention: *string
     └── YearlyRetention: *string
+
 ServersDatabasesBackupShortTermRetentionPolicy: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (6 properties)
@@ -451,6 +462,7 @@ ServersDatabasesBackupShortTermRetentionPolicy: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── RetentionDays: *int
     └── Type: *string
+
 ServersDatabasesSecurityAlertPolicy: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (11 properties)
@@ -489,6 +501,7 @@ ServersDatabasesSecurityAlertPolicy: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ServersDatabasesTransparentDataEncryption: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (5 properties)
@@ -507,6 +520,7 @@ ServersDatabasesTransparentDataEncryption: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── State: *string
     └── Type: *string
+
 ServersDatabasesVulnerabilityAssessment: Resource
 ├── Owner: sql/v1api20211101.ServersDatabase
 ├── Spec: Object (9 properties)
@@ -538,6 +552,7 @@ ServersDatabasesVulnerabilityAssessment: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── StorageContainerPath: *string
     └── Type: *string
+
 ServersElasticPool: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (15 properties)
@@ -596,6 +611,7 @@ ServersElasticPool: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── ZoneRedundant: *bool
+
 ServersFailoverGroup: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (10 properties)
@@ -642,6 +658,7 @@ ServersFailoverGroup: Resource
     ├── ReplicationState: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 ServersFirewallRule: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (7 properties)
@@ -663,6 +680,7 @@ ServersFirewallRule: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── StartIpAddress: *string
     └── Type: *string
+
 ServersIPV6FirewallRule: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (7 properties)
@@ -684,6 +702,7 @@ ServersIPV6FirewallRule: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── StartIPv6Address: *string
     └── Type: *string
+
 ServersOutboundFirewallRule: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (5 properties)
@@ -702,6 +721,7 @@ ServersOutboundFirewallRule: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── ProvisioningState: *string
     └── Type: *string
+
 ServersSecurityAlertPolicy: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (11 properties)
@@ -740,6 +760,7 @@ ServersSecurityAlertPolicy: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 ServersVirtualNetworkRule: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (7 properties)
@@ -762,6 +783,7 @@ ServersVirtualNetworkRule: Resource
     ├── State: *string
     ├── Type: *string
     └── VirtualNetworkSubnetId: *string
+
 ServersVulnerabilityAssessment: Resource
 ├── Owner: sql/v1api20211101.Server
 ├── Spec: Object (9 properties)
@@ -793,3 +815,4 @@ ServersVulnerabilityAssessment: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── StorageContainerPath: *string
     └── Type: *string
+

@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -149,6 +149,45 @@ func (s *SearchIndex) FindByUuid(ctx *Context, req *types.FindByUuid) soap.HasFa
 			if host.Summary.Hardware.Uuid == req.Uuid {
 				body.Res.Returnval = &ref
 				break
+			}
+		}
+	}
+
+	return body
+}
+
+func (s *SearchIndex) FindAllByUuid(ctx *Context, req *types.FindAllByUuid) soap.HasFault {
+	body := &methods.FindAllByUuidBody{Res: new(types.FindAllByUuidResponse)}
+
+	ctx.Map.m.Lock()
+	defer ctx.Map.m.Unlock()
+
+	if req.VmSearch {
+		// Find Virtual Machines using UUID
+		for ref, obj := range ctx.Map.objects {
+			vm, ok := asVirtualMachineMO(obj)
+			if !ok {
+				continue
+			}
+			if req.InstanceUuid != nil && *req.InstanceUuid {
+				if vm.Config.InstanceUuid == req.Uuid {
+					body.Res.Returnval = append(body.Res.Returnval, ref)
+				}
+			} else {
+				if vm.Config.Uuid == req.Uuid {
+					body.Res.Returnval = append(body.Res.Returnval, ref)
+				}
+			}
+		}
+	} else {
+		// Find Host System using UUID
+		for ref, obj := range ctx.Map.objects {
+			host, ok := asHostSystemMO(obj)
+			if !ok {
+				continue
+			}
+			if host.Summary.Hardware.Uuid == req.Uuid {
+				body.Res.Returnval = append(body.Res.Returnval, ref)
 			}
 		}
 	}

@@ -197,6 +197,9 @@ type Instance struct {
 	// The private IPv4 address assigned to the instance.
 	PrivateIP *string `json:"privateIp,omitempty"`
 
+	// The IPv6 address assigned to the instance.
+	IPv6Address *string `json:"ipv6Address,omitempty"`
+
 	// The public IPv4 address assigned to the instance, if applicable.
 	PublicIP *string `json:"publicIp,omitempty"`
 
@@ -219,6 +222,9 @@ type Instance struct {
 
 	// NetworkInterfaceType is the interface type of the primary network Interface.
 	NetworkInterfaceType NetworkInterfaceType `json:"networkInterfaceType,omitempty"`
+
+	// AssignPrimaryIPv6 specifies whether to enable assigning a primary IPv6 address to the primary network Interface.
+	AssignPrimaryIPv6 *PrimaryIPv6AssignmentState `json:"assignPrimaryIPv6,omitempty"`
 
 	// The tags associated with the instance.
 	Tags map[string]string `json:"tags,omitempty"`
@@ -275,9 +281,12 @@ type Instance struct {
 	MarketType MarketType `json:"marketType,omitempty"`
 
 	// HostAffinity specifies the dedicated host affinity setting for the instance.
-	// When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-	// When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-	// When HostAffinity is defined, HostID is required.
+	// When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+	// - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+	// - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+	// When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+	// - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+	// - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
 	// +optional
 	// +kubebuilder:validation:Enum:=default;host
 	HostAffinity *string `json:"hostAffinity,omitempty"`
@@ -385,6 +394,17 @@ const (
 	HTTPTokensStateRequired = HTTPTokensState("required")
 )
 
+// PrimaryIPv6AssignmentState describes whether to assign a primary IPv6 address to the primary network interface.
+type PrimaryIPv6AssignmentState string
+
+const (
+	// PrimaryIPv6AssignmentStateEnabled enables assigning a primary IPv6 address
+	PrimaryIPv6AssignmentStateEnabled = PrimaryIPv6AssignmentState("enabled")
+
+	// PrimaryIPv6AssignmentStateDisabled disables assigning a primary IPv6 address
+	PrimaryIPv6AssignmentStateDisabled = PrimaryIPv6AssignmentState("disabled")
+)
+
 // InstanceMetadataOptions describes metadata options for the EC2 instance.
 type InstanceMetadataOptions struct {
 	// Enables or disables the HTTP metadata endpoint on your instances.
@@ -396,6 +416,15 @@ type InstanceMetadataOptions struct {
 	// +kubebuilder:validation:Enum:=enabled;disabled
 	// +kubebuilder:default=enabled
 	HTTPEndpoint InstanceMetadataState `json:"httpEndpoint,omitempty"`
+
+	// Enables or disables the IPv6 endpoint for the instance metadata service.
+	// This applies only if you enabled the HTTP metadata endpoint.
+	//
+	// Default: disabled
+	//
+	// +kubebuilder:validation:Enum:=enabled;disabled
+	// +kubebuilder:default=disabled
+	HTTPProtocolIPv6 InstanceMetadataState `json:"httpProtocolIpv6,omitempty"`
 
 	// The desired HTTP PUT response hop limit for instance metadata requests. The
 	// larger the number, the further instance metadata requests can travel.
@@ -442,6 +471,9 @@ type InstanceMetadataOptions struct {
 func (obj *InstanceMetadataOptions) SetDefaults() {
 	if obj.HTTPEndpoint == "" {
 		obj.HTTPEndpoint = InstanceMetadataEndpointStateEnabled
+	}
+	if obj.HTTPProtocolIPv6 == "" {
+		obj.HTTPProtocolIPv6 = InstanceMetadataEndpointStateDisabled
 	}
 	if obj.HTTPPutResponseHopLimit == 0 {
 		obj.HTTPPutResponseHopLimit = 1

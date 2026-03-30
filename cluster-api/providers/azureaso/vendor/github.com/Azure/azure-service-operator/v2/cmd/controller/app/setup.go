@@ -14,11 +14,14 @@ import (
 	"os"
 	"time"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/msi-dataplane/pkg/dataplane"
 	"github.com/benbjohnson/clock"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"golang.org/x/time/rate"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,7 +43,6 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/crdmanagement"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	asometrics "github.com/Azure/azure-service-operator/v2/internal/metrics"
 	armreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/generic"
@@ -48,6 +50,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/util/interval"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/internal/util/lockedrand"
+	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	common "github.com/Azure/azure-service-operator/v2/pkg/common/config"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -91,11 +94,17 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 	}
 
 	k8sConfig := ctrl.GetConfigOrDie()
-	mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
+	ctrlOptions := ctrl.Options{
 		Scheme:           scheme,
 		NewCache:         cacheFunc,
 		LeaderElection:   flgs.EnableLeaderElection,
 		LeaderElectionID: "controllers-leader-election-azinfra-generated",
+		// Manually set lease duration (to default) so that we can use it for our leader elector too.
+		// See https://github.com/kubernetes-sigs/controller-runtime/blob/main/pkg/manager/internal.go#L52
+		LeaseDuration:           to.Ptr(15 * time.Second),
+		RenewDeadline:           to.Ptr(10 * time.Second),
+		RetryPeriod:             to.Ptr(2 * time.Second),
+		GracefulShutdownTimeout: to.Ptr(30 * time.Second),
 		// It's only safe to set LeaderElectionReleaseOnCancel to true if the manager binary ends
 		// when the manager exits. This is the case with us today, so we set this to true whenever
 		// flgs.EnableLeaderElection is true.
@@ -106,25 +115,37 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 			Port:    flgs.WebhookPort,
 			CertDir: flgs.WebhookCertDir,
 		}),
-	})
+	}
+	mgr, err := ctrl.NewManager(k8sConfig, ctrlOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to create manager")
 		os.Exit(1)
 	}
 
+	//nolint:contextcheck
 	clients, err := initializeClients(cfg, mgr)
 	if err != nil {
 		setupLog.Error(err, "failed to initialize clients")
 		os.Exit(1)
 	}
 
-	// TODO: Put all of the CRD stuff into a method?
-	crdManager, err := newCRDManager(clients.log, mgr.GetConfig())
+	var leaderElector *crdmanagement.LeaderElector
+	if flgs.EnableLeaderElection {
+		//nolint: contextcheck // false positive?
+		leaderElector, err = crdmanagement.NewLeaderElector(k8sConfig, setupLog, ctrlOptions, mgr)
+		if err != nil {
+			setupLog.Error(err, "failed to initialize leader elector")
+			os.Exit(1)
+		}
+	}
+
+	crdManager, err := newCRDManager(clients.log, mgr.GetConfig(), leaderElector)
 	if err != nil {
 		setupLog.Error(err, "failed to initialize CRD client")
 		os.Exit(1)
 	}
-	existingCRDs, err := crdManager.ListOperatorCRDs(ctx)
+	existingCRDs := apiextensions.CustomResourceDefinitionList{}
+	err = crdManager.ListCRDs(ctx, &existingCRDs)
 	if err != nil {
 		setupLog.Error(err, "failed to list current CRDs")
 		os.Exit(1)
@@ -132,31 +153,15 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 
 	switch flgs.CRDManagementMode {
 	case "auto":
-		var goalCRDs []apiextensions.CustomResourceDefinition
-		goalCRDs, err = crdManager.LoadOperatorCRDs(crdmanagement.CRDLocation, cfg.PodNamespace)
-		if err != nil {
-			setupLog.Error(err, "failed to load CRDs from disk")
-			os.Exit(1)
-		}
-
 		// We only apply CRDs if we're in webhooks mode. No other mode will have CRD CRUD permissions
 		if cfg.OperatorMode.IncludesWebhooks() {
-			var installationInstructions []*crdmanagement.CRDInstallationInstruction
-			installationInstructions, err = crdManager.DetermineCRDsToInstallOrUpgrade(goalCRDs, existingCRDs, flgs.CRDPatterns)
-			if err != nil {
-				setupLog.Error(err, "failed to determine CRDs to apply")
-				os.Exit(1)
-			}
-
-			included := crdmanagement.IncludedCRDs(installationInstructions)
-			if len(included) == 0 {
-				err = errors.New("No existing CRDs in cluster and no --crd-pattern specified")
-				setupLog.Error(err, "failed to apply CRDs")
-				os.Exit(1)
-			}
-
 			// Note that this step will restart the pod when it succeeds
-			err = crdManager.ApplyCRDs(ctx, installationInstructions)
+			err = crdManager.Install(ctx, crdmanagement.Options{
+				CRDPatterns:  flgs.CRDPatterns,
+				ExistingCRDs: &existingCRDs,
+				Path:         crdmanagement.CRDLocation,
+				Namespace:    cfg.PodNamespace,
+			})
 			if err != nil {
 				setupLog.Error(err, "failed to apply CRDs")
 				os.Exit(1)
@@ -171,7 +176,7 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 
 	// There are 3 possibilities once we reach here:
 	// 1. Webhooks mode + crd-management-mode=auto: existingCRDs will be up to date (upgraded, crd-pattern applied, etc)
-	//    by the time we get here as the pod will keep exiting until it is so (see crdManager.ApplyCRDs above).
+	//    by the time we get here as the pod will keep exiting until it is so (see crdManager.applyCRDs above).
 	// 2. Non-webhooks mode + auto: As outlined in https://azure.github.io/azure-service-operator/guide/authentication/multitenant-deployment/#upgrading
 	//    the webhooks mode pod must be upgraded first, so there's not really much practical difference between this and
 	//    crd-management-mode=none (see below).
@@ -182,7 +187,7 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 	//    TODO: the nontrivial startup cost of reading the local copy of CRDs into memory. Since "none" is
 	//    TODO: us approximating the standard operator experience we don't perform this assertion currently as most
 	//    TODO: operators don't.
-	readyResources := crdmanagement.MakeCRDMap(existingCRDs)
+	readyResources := crdmanagement.MakeCRDMap(existingCRDs.Items)
 
 	if cfg.OperatorMode.IncludesWatchers() {
 		//nolint:contextcheck
@@ -279,7 +284,9 @@ func getDefaultAzureCredential(cfg config.Values, setupLog logr.Logger) (*identi
 	return identity.NewDefaultCredential(
 		tokenCred,
 		cfg.PodNamespace,
-		cfg.SubscriptionID), nil
+		cfg.SubscriptionID,
+		cfg.AdditionalTenants,
+	), nil
 }
 
 func getDefaultAzureTokenCredential(cfg config.Values, setupLog logr.Logger) (azcore.TokenCredential, error) {
@@ -290,13 +297,18 @@ func getDefaultAzureTokenCredential(cfg config.Values, setupLog logr.Logger) (az
 	}
 
 	if cfg.UseWorkloadIdentityAuth {
-		credential, err := azidentity.NewWorkloadIdentityCredential(&azidentity.WorkloadIdentityCredentialOptions{
-			ClientID:      cfg.ClientID,
-			TenantID:      cfg.TenantID,
-			TokenFilePath: identity.FederatedTokenFilePath,
-		})
+		credential, err := azidentity.NewWorkloadIdentityCredential(
+			&azidentity.WorkloadIdentityCredentialOptions{
+				ClientOptions: azcore.ClientOptions{
+					Cloud: cfg.Cloud(),
+				},
+				ClientID:                   cfg.ClientID,
+				TenantID:                   cfg.TenantID,
+				TokenFilePath:              identity.FederatedTokenFilePath,
+				AdditionallyAllowedTenants: cfg.AdditionalTenants,
+			})
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to get workload identity credential")
+			return nil, eris.Wrapf(err, "unable to get workload identity credential")
 		}
 
 		return credential, nil
@@ -304,17 +316,49 @@ func getDefaultAzureTokenCredential(cfg config.Values, setupLog logr.Logger) (az
 
 	if cert := os.Getenv(common.AzureClientCertificate); cert != "" {
 		certPassword := os.Getenv(common.AzureClientCertificatePassword)
-		credential, err := identity.NewClientCertificateCredential(cfg.TenantID, cfg.ClientID, []byte(cert), []byte(certPassword))
+		credential, err := identity.NewClientCertificateCredential(
+			cfg.TenantID,
+			cfg.ClientID,
+			[]byte(cert),
+			[]byte(certPassword),
+			&azidentity.ClientCertificateCredentialOptions{
+				ClientOptions: azcore.ClientOptions{
+					Cloud: cfg.Cloud(),
+				},
+				AdditionallyAllowedTenants: cfg.AdditionalTenants,
+			})
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to get client certificate credential")
+			return nil, eris.Wrapf(err, "unable to get client certificate credential")
 		}
 
 		return credential, nil
 	}
 
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
+	// This authentication type is similar to user assigned managed identity authentication combined with client certificate
+	// authentication. As a 1st party Microsoft application, one has access to pull a user assigned managed identity's backing
+	// certificate information from the MSI data plane. Using this data, a user can authenticate to Azure Cloud.
+	if userAssignedCredentialsPath := os.Getenv(common.AzureUserAssignedIdentityCredentials); userAssignedCredentialsPath != "" {
+		options := azcore.ClientOptions{
+			Cloud: cfg.Cloud(),
+		}
+
+		credential, err := dataplane.NewUserAssignedIdentityCredential(context.Background(), userAssignedCredentialsPath, dataplane.WithClientOpts(options))
+		if err != nil {
+			return nil, eris.Wrapf(err, "unable to get user assigned identity credential")
+		}
+
+		return credential, nil
+	}
+
+	credential, err := azidentity.NewDefaultAzureCredential(
+		&azidentity.DefaultAzureCredentialOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud: cfg.Cloud(),
+			},
+			AdditionallyAllowedTenants: cfg.AdditionalTenants,
+		})
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to get default azure credential")
+		return nil, eris.Wrapf(err, "unable to get default azure credential")
 	}
 
 	return credential, err
@@ -339,11 +383,16 @@ func initializeClients(cfg config.Values, mgr ctrl.Manager) (*clients, error) {
 
 	credential, err := getDefaultAzureCredential(cfg, log)
 	if err != nil {
-		return nil, errors.Wrap(err, "error while fetching default global credential")
+		return nil, eris.Wrap(err, "error while fetching default global credential")
 	}
 
 	kubeClient := kubeclient.NewClient(mgr.GetClient())
-	credentialProvider := identity.NewCredentialProvider(credential, kubeClient, nil)
+	credentialProvider := identity.NewCredentialProvider(
+		credential,
+		kubeClient,
+		&identity.CredentialProviderOptions{
+			Cloud: to.Ptr(cfg.Cloud()),
+		})
 
 	armClientCache := armreconciler.NewARMClientCache(
 		credentialProvider,
@@ -365,7 +414,7 @@ func initializeClients(cfg config.Values, mgr ctrl.Manager) (*clients, error) {
 		asocel.Log(log),
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating expression evaluator")
+		return nil, eris.Wrap(err, "error creating expression evaluator")
 	}
 	// Register the evaluator for use by webhooks
 	asocel.RegisterEvaluator(expressionEvaluator)
@@ -395,13 +444,13 @@ func initializeWatchers(readyResources map[string]apiextensions.CustomResourceDe
 		clients.expressionEvaluator,
 		clients.options)
 	if err != nil {
-		return errors.Wrap(err, "failed getting storage types and reconcilers")
+		return eris.Wrap(err, "failed getting storage types and reconcilers")
 	}
 
 	// Filter the types to register
 	objs, err = crdmanagement.FilterStorageTypesByReadyCRDs(clients.log, mgr.GetScheme(), readyResources, objs)
 	if err != nil {
-		return errors.Wrap(err, "failed to filter storage types by ready CRDs")
+		return eris.Wrap(err, "failed to filter storage types by ready CRDs")
 	}
 
 	err = generic.RegisterAll(
@@ -412,7 +461,7 @@ func initializeWatchers(readyResources map[string]apiextensions.CustomResourceDe
 		objs,
 		clients.options)
 	if err != nil {
-		return errors.Wrap(err, "failed to register gvks")
+		return eris.Wrap(err, "failed to register gvks")
 	}
 
 	return nil
@@ -426,6 +475,13 @@ func makeControllerOptions(log logr.Logger, cfg config.Values) generic.Options {
 			&workqueue.TypedBucketRateLimiter[reconcile.Request]{
 				Limiter: rate.NewLimiter(rate.Limit(cfg.RateLimit.QPS), cfg.RateLimit.BucketSize),
 			})
+	}
+
+	// If sync period isn't set, set verySlow delay at 24h, otherwise set it
+	// to the sync period.
+	verySlowDelay := 24 * time.Hour
+	if cfg.SyncPeriod != nil {
+		verySlowDelay = *cfg.SyncPeriod
 	}
 
 	return generic.Options{
@@ -448,23 +504,28 @@ func makeControllerOptions(log logr.Logger, cfg config.Values) generic.Options {
 			// These rate limits are primarily for ReadyConditionImpactingError's
 			interval.CalculatorParameters{
 				//nolint:gosec // do not want cryptographic randomness here
-				Rand:              rand.New(lockedrand.NewSource(time.Now().UnixNano())),
-				ErrorBaseDelay:    1 * time.Second,
-				ErrorMaxFastDelay: 30 * time.Second,
-				ErrorMaxSlowDelay: 3 * time.Minute,
-				SyncPeriod:        cfg.SyncPeriod,
+				Rand:               rand.New(lockedrand.NewSource(time.Now().UnixNano())),
+				ErrorBaseDelay:     1 * time.Second,
+				ErrorMaxFastDelay:  30 * time.Second,
+				ErrorMaxSlowDelay:  3 * time.Minute,
+				ErrorVerySlowDelay: verySlowDelay,
+				SyncPeriod:         cfg.SyncPeriod,
 			}),
 	}
 }
 
-func newCRDManager(logger logr.Logger, k8sConfig *rest.Config) (*crdmanagement.Manager, error) {
+func newCRDManager(
+	logger logr.Logger,
+	k8sConfig *rest.Config,
+	leaderElection *crdmanagement.LeaderElector,
+) (*crdmanagement.Manager, error) {
 	crdScheme := runtime.NewScheme()
 	_ = apiextensions.AddToScheme(crdScheme)
 	crdClient, err := client.New(k8sConfig, client.Options{Scheme: crdScheme})
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create CRD client")
+		return nil, eris.Wrap(err, "unable to create CRD client")
 	}
 
-	crdManager := crdmanagement.NewManager(logger, kubeclient.NewClient(crdClient))
+	crdManager := crdmanagement.NewManager(logger, kubeclient.NewClient(crdClient), leaderElection)
 	return crdManager, nil
 }

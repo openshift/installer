@@ -8,11 +8,13 @@ RedisFirewallRule_STATUS: Object (4 properties)
 │   ├── EndIP: *string
 │   └── StartIP: *string
 └── Type: *string
+
 RedisFirewallRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── EndIP: *string
     └── StartIP: *string
+
 RedisLinkedServer_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -21,6 +23,7 @@ RedisLinkedServer_Spec: Object (2 properties)
     └── ServerRole: *Enum (2 values)
         ├── "Primary"
         └── "Secondary"
+
 RedisPatchSchedule_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Location: *string
@@ -40,6 +43,7 @@ RedisPatchSchedule_STATUS: Object (5 properties)
 │       ├── MaintenanceWindow: *string
 │       └── StartHourUtc: *int
 └── Type: *string
+
 RedisPatchSchedule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -56,6 +60,7 @@ RedisPatchSchedule_Spec: Object (2 properties)
         │   └── "Weekend"
         ├── MaintenanceWindow: *string
         └── StartHourUtc: *int
+
 Redis_LinkedServer_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -67,6 +72,7 @@ Redis_LinkedServer_STATUS: Object (4 properties)
 │       ├── "Primary"
 │       └── "Secondary"
 └── Type: *string
+
 Redis_STATUS: Object (7 properties)
 ├── Id: *string
 ├── Location: *string
@@ -142,6 +148,7 @@ Redis_STATUS: Object (7 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 Redis_Spec: Object (5 properties)
 ├── Location: *string
 ├── Name: string
@@ -186,3 +193,4 @@ Redis_Spec: Object (5 properties)
 │   └── TenantSettings: map[string]string
 ├── Tags: map[string]string
 └── Zones: string[]
+

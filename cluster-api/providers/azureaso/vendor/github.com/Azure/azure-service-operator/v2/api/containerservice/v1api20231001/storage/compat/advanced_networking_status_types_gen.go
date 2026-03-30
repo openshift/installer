@@ -6,7 +6,7 @@ package compat
 import (
 	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // Storage version of v1api20240402preview.AdvancedNetworking_STATUS
@@ -34,7 +34,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_From_AdvancedNetwo
 		var observability AdvancedNetworkingObservability_STATUS
 		err := observability.AssignProperties_From_AdvancedNetworkingObservability_STATUS(source.Observability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AdvancedNetworkingObservability_STATUS() to populate field Observability")
+			return eris.Wrap(err, "calling AssignProperties_From_AdvancedNetworkingObservability_STATUS() to populate field Observability")
 		}
 		networking.Observability = &observability
 	} else {
@@ -60,7 +60,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_From_AdvancedNetwo
 	if augmentedNetworking, ok := networkingAsAny.(augmentConversionForAdvancedNetworking_STATUS); ok {
 		err := augmentedNetworking.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -78,7 +78,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_To_AdvancedNetwork
 		var enabled bool
 		err := propertyBag.Pull("Enabled", &enabled)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Enabled' from propertyBag")
+			return eris.Wrap(err, "pulling 'Enabled' from propertyBag")
 		}
 
 		destination.Enabled = &enabled
@@ -91,7 +91,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_To_AdvancedNetwork
 		var observability storage.AdvancedNetworkingObservability_STATUS
 		err := networking.Observability.AssignProperties_To_AdvancedNetworkingObservability_STATUS(&observability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AdvancedNetworkingObservability_STATUS() to populate field Observability")
+			return eris.Wrap(err, "calling AssignProperties_To_AdvancedNetworkingObservability_STATUS() to populate field Observability")
 		}
 		destination.Observability = &observability
 	} else {
@@ -103,7 +103,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_To_AdvancedNetwork
 		var security storage.AdvancedNetworkingSecurity_STATUS
 		err := propertyBag.Pull("Security", &security)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Security' from propertyBag")
+			return eris.Wrap(err, "pulling 'Security' from propertyBag")
 		}
 
 		destination.Security = &security
@@ -123,7 +123,7 @@ func (networking *AdvancedNetworking_STATUS) AssignProperties_To_AdvancedNetwork
 	if augmentedNetworking, ok := networkingAsAny.(augmentConversionForAdvancedNetworking_STATUS); ok {
 		err := augmentedNetworking.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -163,7 +163,7 @@ func (observability *AdvancedNetworkingObservability_STATUS) AssignProperties_Fr
 	if augmentedObservability, ok := observabilityAsAny.(augmentConversionForAdvancedNetworkingObservability_STATUS); ok {
 		err := augmentedObservability.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -196,7 +196,7 @@ func (observability *AdvancedNetworkingObservability_STATUS) AssignProperties_To
 	if augmentedObservability, ok := observabilityAsAny.(augmentConversionForAdvancedNetworkingObservability_STATUS); ok {
 		err := augmentedObservability.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

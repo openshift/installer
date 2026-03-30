@@ -14,6 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-@ref(path = "/clusters_mgmt/v1/node_pool_status")
+// Representation of the status of a node pool.
 class NodePoolStatus {
+    // The current state of the node pool
+    State NodePoolState
+    
+    // The current number of replicas for the node pool.
+    CurrentReplicas Integer
+
+    // Adds additional information about the NodePool status when the node pool doesn't reach the desired replicas.
+    Message String
 }

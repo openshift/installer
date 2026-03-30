@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (webtest *Webtest) ConvertTo(hub conversion.Hub) error {
 
 	return webtest.AssignProperties_To_Webtest(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-insights-azure-com-v1api20220615-webtest,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=insights.azure.com,resources=webtests,verbs=create;update,versions=v1api20220615,name=default.v1api20220615.webtests.insights.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Webtest{}
-
-// Default applies defaults to the Webtest resource
-func (webtest *Webtest) Default() {
-	webtest.defaultImpl()
-	var temp any = webtest
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (webtest *Webtest) defaultAzureName() {
-	if webtest.Spec.AzureName == "" {
-		webtest.Spec.AzureName = webtest.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Webtest resource
-func (webtest *Webtest) defaultImpl() { webtest.defaultAzureName() }
 
 var _ configmaps.Exporter = &Webtest{}
 
@@ -173,6 +147,10 @@ func (webtest *Webtest) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (webtest *Webtest) Owner() *genruntime.ResourceReference {
+	if webtest.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(webtest.Spec)
 	return webtest.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (webtest *Webtest) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Webtest_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	webtest.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-insights-azure-com-v1api20220615-webtest,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=insights.azure.com,resources=webtests,verbs=create;update,versions=v1api20220615,name=validate.v1api20220615.webtests.insights.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Webtest{}
-
-// ValidateCreate validates the creation of the resource
-func (webtest *Webtest) ValidateCreate() (admission.Warnings, error) {
-	validations := webtest.createValidations()
-	var temp any = webtest
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (webtest *Webtest) ValidateDelete() (admission.Warnings, error) {
-	validations := webtest.deleteValidations()
-	var temp any = webtest
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (webtest *Webtest) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := webtest.updateValidations()
-	var temp any = webtest
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (webtest *Webtest) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){webtest.validateResourceReferences, webtest.validateOwnerReference, webtest.validateSecretDestinations, webtest.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (webtest *Webtest) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (webtest *Webtest) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return webtest.validateResourceReferences()
-		},
-		webtest.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return webtest.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return webtest.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return webtest.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (webtest *Webtest) validateConfigMapDestinations() (admission.Warnings, error) {
-	if webtest.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(webtest, nil, webtest.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (webtest *Webtest) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(webtest)
-}
-
-// validateResourceReferences validates all resource references
-func (webtest *Webtest) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&webtest.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (webtest *Webtest) validateSecretDestinations() (admission.Warnings, error) {
-	if webtest.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(webtest, nil, webtest.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (webtest *Webtest) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Webtest)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, webtest)
 }
 
 // AssignProperties_From_Webtest populates our Webtest from the provided source Webtest
@@ -309,7 +184,7 @@ func (webtest *Webtest) AssignProperties_From_Webtest(source *storage.Webtest) e
 	var spec Webtest_Spec
 	err := spec.AssignProperties_From_Webtest_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Webtest_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Webtest_Spec() to populate field Spec")
 	}
 	webtest.Spec = spec
 
@@ -317,7 +192,7 @@ func (webtest *Webtest) AssignProperties_From_Webtest(source *storage.Webtest) e
 	var status Webtest_STATUS
 	err = status.AssignProperties_From_Webtest_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Webtest_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Webtest_STATUS() to populate field Status")
 	}
 	webtest.Status = status
 
@@ -335,7 +210,7 @@ func (webtest *Webtest) AssignProperties_To_Webtest(destination *storage.Webtest
 	var spec storage.Webtest_Spec
 	err := webtest.Spec.AssignProperties_To_Webtest_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Webtest_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Webtest_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (webtest *Webtest) AssignProperties_To_Webtest(destination *storage.Webtest
 	var status storage.Webtest_STATUS
 	err = webtest.Status.AssignProperties_To_Webtest_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Webtest_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Webtest_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -727,13 +602,13 @@ func (webtest *Webtest_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Webtest_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = webtest.AssignProperties_From_Webtest_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -751,13 +626,13 @@ func (webtest *Webtest_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Webtest_Spec{}
 	err := webtest.AssignProperties_To_Webtest_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -774,7 +649,7 @@ func (webtest *Webtest_Spec) AssignProperties_From_Webtest_Spec(source *storage.
 		var configuration WebTestProperties_Configuration
 		err := configuration.AssignProperties_From_WebTestProperties_Configuration(source.Configuration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_Configuration() to populate field Configuration")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_Configuration() to populate field Configuration")
 		}
 		webtest.Configuration = &configuration
 	} else {
@@ -816,7 +691,7 @@ func (webtest *Webtest_Spec) AssignProperties_From_Webtest_Spec(source *storage.
 			var location WebTestGeolocation
 			err := location.AssignProperties_From_WebTestGeolocation(&locationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_WebTestGeolocation() to populate field Locations")
+				return eris.Wrap(err, "calling AssignProperties_From_WebTestGeolocation() to populate field Locations")
 			}
 			locationList[locationIndex] = location
 		}
@@ -833,7 +708,7 @@ func (webtest *Webtest_Spec) AssignProperties_From_Webtest_Spec(source *storage.
 		var operatorSpec WebtestOperatorSpec
 		err := operatorSpec.AssignProperties_From_WebtestOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebtestOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_WebtestOperatorSpec() to populate field OperatorSpec")
 		}
 		webtest.OperatorSpec = &operatorSpec
 	} else {
@@ -853,7 +728,7 @@ func (webtest *Webtest_Spec) AssignProperties_From_Webtest_Spec(source *storage.
 		var request WebTestProperties_Request
 		err := request.AssignProperties_From_WebTestProperties_Request(source.Request)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_Request() to populate field Request")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_Request() to populate field Request")
 		}
 		webtest.Request = &request
 	} else {
@@ -882,7 +757,7 @@ func (webtest *Webtest_Spec) AssignProperties_From_Webtest_Spec(source *storage.
 		var validationRule WebTestProperties_ValidationRules
 		err := validationRule.AssignProperties_From_WebTestProperties_ValidationRules(source.ValidationRules)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules() to populate field ValidationRules")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules() to populate field ValidationRules")
 		}
 		webtest.ValidationRules = &validationRule
 	} else {
@@ -906,7 +781,7 @@ func (webtest *Webtest_Spec) AssignProperties_To_Webtest_Spec(destination *stora
 		var configuration storage.WebTestProperties_Configuration
 		err := webtest.Configuration.AssignProperties_To_WebTestProperties_Configuration(&configuration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_Configuration() to populate field Configuration")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_Configuration() to populate field Configuration")
 		}
 		destination.Configuration = &configuration
 	} else {
@@ -947,7 +822,7 @@ func (webtest *Webtest_Spec) AssignProperties_To_Webtest_Spec(destination *stora
 			var location storage.WebTestGeolocation
 			err := locationItem.AssignProperties_To_WebTestGeolocation(&location)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_WebTestGeolocation() to populate field Locations")
+				return eris.Wrap(err, "calling AssignProperties_To_WebTestGeolocation() to populate field Locations")
 			}
 			locationList[locationIndex] = location
 		}
@@ -964,7 +839,7 @@ func (webtest *Webtest_Spec) AssignProperties_To_Webtest_Spec(destination *stora
 		var operatorSpec storage.WebtestOperatorSpec
 		err := webtest.OperatorSpec.AssignProperties_To_WebtestOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebtestOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_WebtestOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -987,7 +862,7 @@ func (webtest *Webtest_Spec) AssignProperties_To_Webtest_Spec(destination *stora
 		var request storage.WebTestProperties_Request
 		err := webtest.Request.AssignProperties_To_WebTestProperties_Request(&request)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_Request() to populate field Request")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_Request() to populate field Request")
 		}
 		destination.Request = &request
 	} else {
@@ -1016,7 +891,7 @@ func (webtest *Webtest_Spec) AssignProperties_To_Webtest_Spec(destination *stora
 		var validationRule storage.WebTestProperties_ValidationRules
 		err := webtest.ValidationRules.AssignProperties_To_WebTestProperties_ValidationRules(&validationRule)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules() to populate field ValidationRules")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules() to populate field ValidationRules")
 		}
 		destination.ValidationRules = &validationRule
 	} else {
@@ -1042,7 +917,7 @@ func (webtest *Webtest_Spec) Initialize_From_Webtest_STATUS(source *Webtest_STAT
 		var configuration WebTestProperties_Configuration
 		err := configuration.Initialize_From_WebTestProperties_Configuration_STATUS(source.Configuration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WebTestProperties_Configuration_STATUS() to populate field Configuration")
+			return eris.Wrap(err, "calling Initialize_From_WebTestProperties_Configuration_STATUS() to populate field Configuration")
 		}
 		webtest.Configuration = &configuration
 	} else {
@@ -1083,7 +958,7 @@ func (webtest *Webtest_Spec) Initialize_From_Webtest_STATUS(source *Webtest_STAT
 			var location WebTestGeolocation
 			err := location.Initialize_From_WebTestGeolocation_STATUS(&locationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_WebTestGeolocation_STATUS() to populate field Locations")
+				return eris.Wrap(err, "calling Initialize_From_WebTestGeolocation_STATUS() to populate field Locations")
 			}
 			locationList[locationIndex] = location
 		}
@@ -1100,7 +975,7 @@ func (webtest *Webtest_Spec) Initialize_From_Webtest_STATUS(source *Webtest_STAT
 		var request WebTestProperties_Request
 		err := request.Initialize_From_WebTestProperties_Request_STATUS(source.Request)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WebTestProperties_Request_STATUS() to populate field Request")
+			return eris.Wrap(err, "calling Initialize_From_WebTestProperties_Request_STATUS() to populate field Request")
 		}
 		webtest.Request = &request
 	} else {
@@ -1129,7 +1004,7 @@ func (webtest *Webtest_Spec) Initialize_From_Webtest_STATUS(source *Webtest_STAT
 		var validationRule WebTestProperties_ValidationRules
 		err := validationRule.Initialize_From_WebTestProperties_ValidationRules_STATUS(source.ValidationRules)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WebTestProperties_ValidationRules_STATUS() to populate field ValidationRules")
+			return eris.Wrap(err, "calling Initialize_From_WebTestProperties_ValidationRules_STATUS() to populate field ValidationRules")
 		}
 		webtest.ValidationRules = &validationRule
 	} else {
@@ -1224,13 +1099,13 @@ func (webtest *Webtest_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Webtest_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = webtest.AssignProperties_From_Webtest_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1248,13 +1123,13 @@ func (webtest *Webtest_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Webtest_STATUS{}
 	err := webtest.AssignProperties_To_Webtest_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1461,7 +1336,7 @@ func (webtest *Webtest_STATUS) AssignProperties_From_Webtest_STATUS(source *stor
 		var configuration WebTestProperties_Configuration_STATUS
 		err := configuration.AssignProperties_From_WebTestProperties_Configuration_STATUS(source.Configuration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_Configuration_STATUS() to populate field Configuration")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_Configuration_STATUS() to populate field Configuration")
 		}
 		webtest.Configuration = &configuration
 	} else {
@@ -1506,7 +1381,7 @@ func (webtest *Webtest_STATUS) AssignProperties_From_Webtest_STATUS(source *stor
 			var location WebTestGeolocation_STATUS
 			err := location.AssignProperties_From_WebTestGeolocation_STATUS(&locationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_WebTestGeolocation_STATUS() to populate field Locations")
+				return eris.Wrap(err, "calling AssignProperties_From_WebTestGeolocation_STATUS() to populate field Locations")
 			}
 			locationList[locationIndex] = location
 		}
@@ -1529,7 +1404,7 @@ func (webtest *Webtest_STATUS) AssignProperties_From_Webtest_STATUS(source *stor
 		var request WebTestProperties_Request_STATUS
 		err := request.AssignProperties_From_WebTestProperties_Request_STATUS(source.Request)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_Request_STATUS() to populate field Request")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_Request_STATUS() to populate field Request")
 		}
 		webtest.Request = &request
 	} else {
@@ -1561,7 +1436,7 @@ func (webtest *Webtest_STATUS) AssignProperties_From_Webtest_STATUS(source *stor
 		var validationRule WebTestProperties_ValidationRules_STATUS
 		err := validationRule.AssignProperties_From_WebTestProperties_ValidationRules_STATUS(source.ValidationRules)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules_STATUS() to populate field ValidationRules")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules_STATUS() to populate field ValidationRules")
 		}
 		webtest.ValidationRules = &validationRule
 	} else {
@@ -1585,7 +1460,7 @@ func (webtest *Webtest_STATUS) AssignProperties_To_Webtest_STATUS(destination *s
 		var configuration storage.WebTestProperties_Configuration_STATUS
 		err := webtest.Configuration.AssignProperties_To_WebTestProperties_Configuration_STATUS(&configuration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_Configuration_STATUS() to populate field Configuration")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_Configuration_STATUS() to populate field Configuration")
 		}
 		destination.Configuration = &configuration
 	} else {
@@ -1629,7 +1504,7 @@ func (webtest *Webtest_STATUS) AssignProperties_To_Webtest_STATUS(destination *s
 			var location storage.WebTestGeolocation_STATUS
 			err := locationItem.AssignProperties_To_WebTestGeolocation_STATUS(&location)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_WebTestGeolocation_STATUS() to populate field Locations")
+				return eris.Wrap(err, "calling AssignProperties_To_WebTestGeolocation_STATUS() to populate field Locations")
 			}
 			locationList[locationIndex] = location
 		}
@@ -1652,7 +1527,7 @@ func (webtest *Webtest_STATUS) AssignProperties_To_Webtest_STATUS(destination *s
 		var request storage.WebTestProperties_Request_STATUS
 		err := webtest.Request.AssignProperties_To_WebTestProperties_Request_STATUS(&request)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_Request_STATUS() to populate field Request")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_Request_STATUS() to populate field Request")
 		}
 		destination.Request = &request
 	} else {
@@ -1684,7 +1559,7 @@ func (webtest *Webtest_STATUS) AssignProperties_To_Webtest_STATUS(destination *s
 		var validationRule storage.WebTestProperties_ValidationRules_STATUS
 		err := webtest.ValidationRules.AssignProperties_To_WebTestProperties_ValidationRules_STATUS(&validationRule)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules_STATUS() to populate field ValidationRules")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules_STATUS() to populate field ValidationRules")
 		}
 		destination.ValidationRules = &validationRule
 	} else {
@@ -2267,7 +2142,7 @@ func (request *WebTestProperties_Request) AssignProperties_From_WebTestPropertie
 			var header HeaderField
 			err := header.AssignProperties_From_HeaderField(&headerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_HeaderField() to populate field Headers")
+				return eris.Wrap(err, "calling AssignProperties_From_HeaderField() to populate field Headers")
 			}
 			headerList[headerIndex] = header
 		}
@@ -2319,7 +2194,7 @@ func (request *WebTestProperties_Request) AssignProperties_To_WebTestProperties_
 			var header storage.HeaderField
 			err := headerItem.AssignProperties_To_HeaderField(&header)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_HeaderField() to populate field Headers")
+				return eris.Wrap(err, "calling AssignProperties_To_HeaderField() to populate field Headers")
 			}
 			headerList[headerIndex] = header
 		}
@@ -2376,7 +2251,7 @@ func (request *WebTestProperties_Request) Initialize_From_WebTestProperties_Requ
 			var header HeaderField
 			err := header.Initialize_From_HeaderField_STATUS(&headerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_HeaderField_STATUS() to populate field Headers")
+				return eris.Wrap(err, "calling Initialize_From_HeaderField_STATUS() to populate field Headers")
 			}
 			headerList[headerIndex] = header
 		}
@@ -2504,7 +2379,7 @@ func (request *WebTestProperties_Request_STATUS) AssignProperties_From_WebTestPr
 			var header HeaderField_STATUS
 			err := header.AssignProperties_From_HeaderField_STATUS(&headerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_HeaderField_STATUS() to populate field Headers")
+				return eris.Wrap(err, "calling AssignProperties_From_HeaderField_STATUS() to populate field Headers")
 			}
 			headerList[headerIndex] = header
 		}
@@ -2556,7 +2431,7 @@ func (request *WebTestProperties_Request_STATUS) AssignProperties_To_WebTestProp
 			var header storage.HeaderField_STATUS
 			err := headerItem.AssignProperties_To_HeaderField_STATUS(&header)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_HeaderField_STATUS() to populate field Headers")
+				return eris.Wrap(err, "calling AssignProperties_To_HeaderField_STATUS() to populate field Headers")
 			}
 			headerList[headerIndex] = header
 		}
@@ -2715,7 +2590,7 @@ func (rules *WebTestProperties_ValidationRules) AssignProperties_From_WebTestPro
 		var contentValidation WebTestProperties_ValidationRules_ContentValidation
 		err := contentValidation.AssignProperties_From_WebTestProperties_ValidationRules_ContentValidation(source.ContentValidation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules_ContentValidation() to populate field ContentValidation")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules_ContentValidation() to populate field ContentValidation")
 		}
 		rules.ContentValidation = &contentValidation
 	} else {
@@ -2758,7 +2633,7 @@ func (rules *WebTestProperties_ValidationRules) AssignProperties_To_WebTestPrope
 		var contentValidation storage.WebTestProperties_ValidationRules_ContentValidation
 		err := rules.ContentValidation.AssignProperties_To_WebTestProperties_ValidationRules_ContentValidation(&contentValidation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules_ContentValidation() to populate field ContentValidation")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules_ContentValidation() to populate field ContentValidation")
 		}
 		destination.ContentValidation = &contentValidation
 	} else {
@@ -2806,7 +2681,7 @@ func (rules *WebTestProperties_ValidationRules) Initialize_From_WebTestPropertie
 		var contentValidation WebTestProperties_ValidationRules_ContentValidation
 		err := contentValidation.Initialize_From_WebTestProperties_ValidationRules_ContentValidation_STATUS(source.ContentValidation)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WebTestProperties_ValidationRules_ContentValidation_STATUS() to populate field ContentValidation")
+			return eris.Wrap(err, "calling Initialize_From_WebTestProperties_ValidationRules_ContentValidation_STATUS() to populate field ContentValidation")
 		}
 		rules.ContentValidation = &contentValidation
 	} else {
@@ -2918,7 +2793,7 @@ func (rules *WebTestProperties_ValidationRules_STATUS) AssignProperties_From_Web
 		var contentValidation WebTestProperties_ValidationRules_ContentValidation_STATUS
 		err := contentValidation.AssignProperties_From_WebTestProperties_ValidationRules_ContentValidation_STATUS(source.ContentValidation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules_ContentValidation_STATUS() to populate field ContentValidation")
+			return eris.Wrap(err, "calling AssignProperties_From_WebTestProperties_ValidationRules_ContentValidation_STATUS() to populate field ContentValidation")
 		}
 		rules.ContentValidation = &contentValidation
 	} else {
@@ -2961,7 +2836,7 @@ func (rules *WebTestProperties_ValidationRules_STATUS) AssignProperties_To_WebTe
 		var contentValidation storage.WebTestProperties_ValidationRules_ContentValidation_STATUS
 		err := rules.ContentValidation.AssignProperties_To_WebTestProperties_ValidationRules_ContentValidation_STATUS(&contentValidation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules_ContentValidation_STATUS() to populate field ContentValidation")
+			return eris.Wrap(err, "calling AssignProperties_To_WebTestProperties_ValidationRules_ContentValidation_STATUS() to populate field ContentValidation")
 		}
 		destination.ContentValidation = &contentValidation
 	} else {

@@ -276,6 +276,7 @@ StorageAccount_STATUS: Object (10 properties)
 │       └── "Standard"
 ├── Tags: map[string]string
 └── Type: *string
+
 StorageAccount_Spec: Object (8 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -441,6 +442,7 @@ StorageAccount_Spec: Object (8 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+
 StorageAccountsBlobService_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -499,6 +501,7 @@ StorageAccountsBlobService_STATUS: Object (5 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Type: *string
+
 StorageAccountsBlobService_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (9 properties)
@@ -540,6 +543,7 @@ StorageAccountsBlobService_Spec: Object (2 properties)
     └── RestorePolicy: *Object (2 properties)
         ├── Days: *int
         └── Enabled: *bool
+
 StorageAccountsBlobServicesContainer_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -612,6 +616,7 @@ StorageAccountsBlobServicesContainer_STATUS: Object (5 properties)
 │   ├── RemainingRetentionDays: *int
 │   └── Version: *string
 └── Type: *string
+
 StorageAccountsBlobServicesContainer_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -626,6 +631,7 @@ StorageAccountsBlobServicesContainer_Spec: Object (2 properties)
         ├── "Blob"
         ├── "Container"
         └── "None"
+
 StorageAccountsFileService_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -671,6 +677,7 @@ StorageAccountsFileService_STATUS: Object (5 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Type: *string
+
 StorageAccountsFileService_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -701,6 +708,7 @@ StorageAccountsFileService_Spec: Object (2 properties)
         ├── AllowPermanentDelete: *bool
         ├── Days: *int
         └── Enabled: *bool
+
 StorageAccountsFileServicesShare_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -748,6 +756,7 @@ StorageAccountsFileServicesShare_STATUS: Object (5 properties)
 │   ├── SnapshotTime: *string
 │   └── Version: *string
 └── Type: *string
+
 StorageAccountsFileServicesShare_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (6 properties)
@@ -771,6 +780,7 @@ StorageAccountsFileServicesShare_Spec: Object (2 properties)
         │   ├── Permission: *string
         │   └── StartTime: *string
         └── Id: *string
+
 StorageAccountsManagementPolicy_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -851,6 +861,7 @@ StorageAccountsManagementPolicy_STATUS: Object (4 properties)
 │           └── Type: *Enum (1 value)
 │               └── "Lifecycle"
 └── Type: *string
+
 StorageAccountsManagementPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -928,6 +939,7 @@ StorageAccountsManagementPolicy_Spec: Object (2 properties)
             ├── Name: *string
             └── Type: *Enum (1 value)
                 └── "Lifecycle"
+
 StorageAccountsQueueService_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -948,6 +960,7 @@ StorageAccountsQueueService_STATUS: Object (4 properties)
 │           ├── ExposedHeaders: string[]
 │           └── MaxAgeInSeconds: *int
 └── Type: *string
+
 StorageAccountsQueueService_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -966,6 +979,7 @@ StorageAccountsQueueService_Spec: Object (2 properties)
             ├── AllowedOrigins: string[]
             ├── ExposedHeaders: string[]
             └── MaxAgeInSeconds: *int
+
 StorageAccountsQueueServicesQueue_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -973,10 +987,12 @@ StorageAccountsQueueServicesQueue_STATUS: Object (4 properties)
 │   ├── ApproximateMessageCount: *int
 │   └── Metadata: map[string]string
 └── Type: *string
+
 StorageAccountsQueueServicesQueue_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
     └── Metadata: map[string]string
+
 StorageAccountsTableService_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -997,6 +1013,7 @@ StorageAccountsTableService_STATUS: Object (4 properties)
 │           ├── ExposedHeaders: string[]
 │           └── MaxAgeInSeconds: *int
 └── Type: *string
+
 StorageAccountsTableService_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -1015,6 +1032,7 @@ StorageAccountsTableService_Spec: Object (2 properties)
             ├── AllowedOrigins: string[]
             ├── ExposedHeaders: string[]
             └── MaxAgeInSeconds: *int
+
 StorageAccountsTableServicesTable_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -1027,6 +1045,7 @@ StorageAccountsTableServicesTable_STATUS: Object (4 properties)
 │   │   └── Id: *string
 │   └── TableName: *string
 └── Type: *string
+
 StorageAccountsTableServicesTable_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -1036,3 +1055,4 @@ StorageAccountsTableServicesTable_Spec: Object (2 properties)
         │   ├── Permission: *string
         │   └── StartTime: *string
         └── Id: *string
+

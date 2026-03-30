@@ -14,6 +14,8 @@
         "api_op_DisassociateServiceQuotaTemplate.go",
         "api_op_GetAWSDefaultServiceQuota.go",
         "api_op_GetAssociationForServiceQuotaTemplate.go",
+        "api_op_GetAutoManagementConfiguration.go",
+        "api_op_GetQuotaUtilizationReport.go",
         "api_op_GetRequestedServiceQuotaChange.go",
         "api_op_GetServiceQuota.go",
         "api_op_GetServiceQuotaIncreaseRequestFromTemplate.go",
@@ -26,8 +28,12 @@
         "api_op_ListTagsForResource.go",
         "api_op_PutServiceQuotaIncreaseRequestIntoTemplate.go",
         "api_op_RequestServiceQuotaIncrease.go",
+        "api_op_StartAutoManagement.go",
+        "api_op_StartQuotaUtilizationReport.go",
+        "api_op_StopAutoManagement.go",
         "api_op_TagResource.go",
         "api_op_UntagResource.go",
+        "api_op_UpdateAutoManagement.go",
         "auth.go",
         "deserializers.go",
         "doc.go",
@@ -47,7 +53,7 @@
         "types/types.go",
         "validators.go"
     ],
-    "go": "1.22",
+    "go": "1.23",
     "module": "github.com/aws/aws-sdk-go-v2/service/servicequotas",
     "unstable": false
 }

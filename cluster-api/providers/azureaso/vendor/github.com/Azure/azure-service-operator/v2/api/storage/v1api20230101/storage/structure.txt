@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-01-01"
+
 StorageAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (34 properties)
@@ -371,6 +372,7 @@ StorageAccount: Resource
     ├── SupportsHttpsTrafficOnly: *bool
     ├── Tags: map[string]string
     └── Type: *string
+
 StorageAccountsBlobService: Resource
 ├── Owner: storage/v1api20230101.StorageAccount
 ├── Spec: Object (13 properties)
@@ -465,6 +467,7 @@ StorageAccountsBlobService: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Tier: *string
     └── Type: *string
+
 StorageAccountsBlobServicesContainer: Resource
 ├── Owner: storage/v1api20230101.StorageAccountsBlobService
 ├── Spec: Object (12 properties)
@@ -544,6 +547,7 @@ StorageAccountsBlobServicesContainer: Resource
     ├── RemainingRetentionDays: *int
     ├── Type: *string
     └── Version: *string
+
 StorageAccountsFileService: Resource
 ├── Owner: storage/v1api20230101.StorageAccount
 ├── Spec: Object (7 properties)
@@ -614,6 +618,7 @@ StorageAccountsFileService: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Tier: *string
     └── Type: *string
+
 StorageAccountsFileServicesShare: Resource
 ├── Owner: storage/v1api20230101.StorageAccountsFileService
 ├── Spec: Object (11 properties)
@@ -670,6 +675,7 @@ StorageAccountsFileServicesShare: Resource
     ├── SnapshotTime: *string
     ├── Type: *string
     └── Version: *string
+
 StorageAccountsManagementPolicy: Resource
 ├── Owner: storage/v1api20230101.StorageAccount
 ├── Spec: Object (5 properties)
@@ -881,6 +887,7 @@ StorageAccountsManagementPolicy: Resource
     │       └── Type: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 StorageAccountsQueueService: Resource
 ├── Owner: storage/v1api20230101.StorageAccount
 ├── Spec: Object (5 properties)
@@ -915,6 +922,7 @@ StorageAccountsQueueService: Resource
     ├── Name: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 StorageAccountsQueueServicesQueue: Resource
 ├── Owner: storage/v1api20230101.StorageAccountsQueueService
 ├── Spec: Object (6 properties)
@@ -935,6 +943,7 @@ StorageAccountsQueueServicesQueue: Resource
     ├── Name: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 StorageAccountsTableService: Resource
 ├── Owner: storage/v1api20230101.StorageAccount
 ├── Spec: Object (5 properties)
@@ -969,6 +978,7 @@ StorageAccountsTableService: Resource
     ├── Name: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 StorageAccountsTableServicesTable: Resource
 ├── Owner: storage/v1api20230101.StorageAccountsTableService
 ├── Spec: Object (6 properties)
@@ -1003,3 +1013,4 @@ StorageAccountsTableServicesTable: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── TableName: *string
     └── Type: *string
+

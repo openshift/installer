@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (gateway *NatGateway) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = gateway.AssignProperties_From_NatGateway(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to gateway")
+		return eris.Wrap(err, "converting from source to gateway")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (gateway *NatGateway) ConvertTo(hub conversion.Hub) error {
 	var destination storage.NatGateway
 	err := gateway.AssignProperties_To_NatGateway(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from gateway")
+		return eris.Wrap(err, "converting to destination from gateway")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20220701-natgateway,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=natgateways,verbs=create;update,versions=v1api20220701,name=default.v1api20220701.natgateways.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &NatGateway{}
-
-// Default applies defaults to the NatGateway resource
-func (gateway *NatGateway) Default() {
-	gateway.defaultImpl()
-	var temp any = gateway
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (gateway *NatGateway) defaultAzureName() {
-	if gateway.Spec.AzureName == "" {
-		gateway.Spec.AzureName = gateway.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the NatGateway resource
-func (gateway *NatGateway) defaultImpl() { gateway.defaultAzureName() }
 
 var _ configmaps.Exporter = &NatGateway{}
 
@@ -176,6 +150,10 @@ func (gateway *NatGateway) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (gateway *NatGateway) Owner() *genruntime.ResourceReference {
+	if gateway.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(gateway.Spec)
 	return gateway.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (gateway *NatGateway) SetStatus(status genruntime.ConvertibleStatus) error 
 	var st NatGateway_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	gateway.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20220701-natgateway,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=natgateways,verbs=create;update,versions=v1api20220701,name=validate.v1api20220701.natgateways.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &NatGateway{}
-
-// ValidateCreate validates the creation of the resource
-func (gateway *NatGateway) ValidateCreate() (admission.Warnings, error) {
-	validations := gateway.createValidations()
-	var temp any = gateway
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (gateway *NatGateway) ValidateDelete() (admission.Warnings, error) {
-	validations := gateway.deleteValidations()
-	var temp any = gateway
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (gateway *NatGateway) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := gateway.updateValidations()
-	var temp any = gateway
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (gateway *NatGateway) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){gateway.validateResourceReferences, gateway.validateOwnerReference, gateway.validateSecretDestinations, gateway.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (gateway *NatGateway) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (gateway *NatGateway) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateResourceReferences()
-		},
-		gateway.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (gateway *NatGateway) validateConfigMapDestinations() (admission.Warnings, error) {
-	if gateway.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(gateway, nil, gateway.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (gateway *NatGateway) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(gateway)
-}
-
-// validateResourceReferences validates all resource references
-func (gateway *NatGateway) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&gateway.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (gateway *NatGateway) validateSecretDestinations() (admission.Warnings, error) {
-	if gateway.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(gateway, nil, gateway.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (gateway *NatGateway) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*NatGateway)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, gateway)
 }
 
 // AssignProperties_From_NatGateway populates our NatGateway from the provided source NatGateway
@@ -312,7 +187,7 @@ func (gateway *NatGateway) AssignProperties_From_NatGateway(source *storage.NatG
 	var spec NatGateway_Spec
 	err := spec.AssignProperties_From_NatGateway_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NatGateway_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NatGateway_Spec() to populate field Spec")
 	}
 	gateway.Spec = spec
 
@@ -320,7 +195,7 @@ func (gateway *NatGateway) AssignProperties_From_NatGateway(source *storage.NatG
 	var status NatGateway_STATUS
 	err = status.AssignProperties_From_NatGateway_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NatGateway_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NatGateway_STATUS() to populate field Status")
 	}
 	gateway.Status = status
 
@@ -338,7 +213,7 @@ func (gateway *NatGateway) AssignProperties_To_NatGateway(destination *storage.N
 	var spec storage.NatGateway_Spec
 	err := gateway.Spec.AssignProperties_To_NatGateway_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NatGateway_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NatGateway_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (gateway *NatGateway) AssignProperties_To_NatGateway(destination *storage.N
 	var status storage.NatGateway_STATUS
 	err = gateway.Status.AssignProperties_To_NatGateway_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NatGateway_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NatGateway_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -584,13 +459,13 @@ func (gateway *NatGateway_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpe
 	src = &storage.NatGateway_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = gateway.AssignProperties_From_NatGateway_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -608,13 +483,13 @@ func (gateway *NatGateway_Spec) ConvertSpecTo(destination genruntime.Convertible
 	dst = &storage.NatGateway_Spec{}
 	err := gateway.AssignProperties_To_NatGateway_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -637,7 +512,7 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *st
 		var operatorSpec NatGatewayOperatorSpec
 		err := operatorSpec.AssignProperties_From_NatGatewayOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NatGatewayOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewayOperatorSpec() to populate field OperatorSpec")
 		}
 		gateway.OperatorSpec = &operatorSpec
 	} else {
@@ -661,7 +536,7 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *st
 			var publicIpAddress SubResource
 			err := publicIpAddress.AssignProperties_From_SubResource(&publicIpAddressItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIpAddresses")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIpAddresses")
 			}
 			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
 		}
@@ -679,7 +554,7 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *st
 			var publicIpPrefix SubResource
 			err := publicIpPrefix.AssignProperties_From_SubResource(&publicIpPrefixItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIpPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIpPrefixes")
 			}
 			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
 		}
@@ -693,7 +568,7 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *st
 		var sku NatGatewaySku
 		err := sku.AssignProperties_From_NatGatewaySku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NatGatewaySku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewaySku() to populate field Sku")
 		}
 		gateway.Sku = &sku
 	} else {
@@ -729,7 +604,7 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 		var operatorSpec storage.NatGatewayOperatorSpec
 		err := gateway.OperatorSpec.AssignProperties_To_NatGatewayOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NatGatewayOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewayOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -756,7 +631,7 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 			var publicIpAddress storage.SubResource
 			err := publicIpAddressItem.AssignProperties_To_SubResource(&publicIpAddress)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIpAddresses")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIpAddresses")
 			}
 			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
 		}
@@ -774,7 +649,7 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 			var publicIpPrefix storage.SubResource
 			err := publicIpPrefixItem.AssignProperties_To_SubResource(&publicIpPrefix)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIpPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIpPrefixes")
 			}
 			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
 		}
@@ -788,7 +663,7 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 		var sku storage.NatGatewaySku
 		err := gateway.Sku.AssignProperties_To_NatGatewaySku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NatGatewaySku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewaySku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -882,13 +757,13 @@ func (gateway *NatGateway_STATUS) ConvertStatusFrom(source genruntime.Convertibl
 	src = &storage.NatGateway_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = gateway.AssignProperties_From_NatGateway_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -906,13 +781,13 @@ func (gateway *NatGateway_STATUS) ConvertStatusTo(destination genruntime.Convert
 	dst = &storage.NatGateway_STATUS{}
 	err := gateway.AssignProperties_To_NatGateway_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1099,7 +974,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 			var publicIpAddress SubResource_STATUS
 			err := publicIpAddress.AssignProperties_From_SubResource_STATUS(&publicIpAddressItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIpAddresses")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIpAddresses")
 			}
 			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
 		}
@@ -1117,7 +992,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 			var publicIpPrefix SubResource_STATUS
 			err := publicIpPrefix.AssignProperties_From_SubResource_STATUS(&publicIpPrefixItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIpPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIpPrefixes")
 			}
 			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
 		}
@@ -1134,7 +1009,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 		var sku NatGatewaySku_STATUS
 		err := sku.AssignProperties_From_NatGatewaySku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NatGatewaySku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewaySku_STATUS() to populate field Sku")
 		}
 		gateway.Sku = &sku
 	} else {
@@ -1150,7 +1025,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 			var subnet SubResource_STATUS
 			err := subnet.AssignProperties_From_SubResource_STATUS(&subnetItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -1212,7 +1087,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 			var publicIpAddress storage.SubResource_STATUS
 			err := publicIpAddressItem.AssignProperties_To_SubResource_STATUS(&publicIpAddress)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIpAddresses")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIpAddresses")
 			}
 			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
 		}
@@ -1230,7 +1105,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 			var publicIpPrefix storage.SubResource_STATUS
 			err := publicIpPrefixItem.AssignProperties_To_SubResource_STATUS(&publicIpPrefix)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIpPrefixes")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIpPrefixes")
 			}
 			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
 		}
@@ -1247,7 +1122,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 		var sku storage.NatGatewaySku_STATUS
 		err := gateway.Sku.AssignProperties_To_NatGatewaySku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NatGatewaySku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewaySku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1263,7 +1138,7 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 			var subnet storage.SubResource_STATUS
 			err := subnetItem.AssignProperties_To_SubResource_STATUS(&subnet)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101
 ---------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-01-01"
+
 BackupVault: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (7 properties)
@@ -134,6 +135,7 @@ BackupVault: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+
 BackupVaultsBackupPolicy: Resource
 ├── Owner: BackupVault
 ├── Spec: Object (4 properties)
@@ -396,3 +398,4 @@ BackupVaultsBackupPolicy: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+

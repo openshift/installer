@@ -90,6 +90,8 @@ func (c *ClusterClient) Autoscaler() *AutoscalerClient {
 }
 
 // ExternalAuthConfig returns the target 'external_auth_config' resource.
+//
+// Reference to the resource that manages the external authentication configuration.
 func (c *ClusterClient) ExternalAuthConfig() *ExternalAuthConfigClient {
 	return NewExternalAuthConfigClient(
 		c.transport,
@@ -108,6 +110,8 @@ func (c *ClusterClient) InflightChecks() *InflightChecksClient {
 }
 
 // NodePools returns the target 'node_pools' resource.
+//
+// Reference to the resource that manages the collection of node pool resources.
 func (c *ClusterClient) NodePools() *NodePoolsClient {
 	return NewNodePoolsClient(
 		c.transport,
@@ -116,6 +120,8 @@ func (c *ClusterClient) NodePools() *NodePoolsClient {
 }
 
 // Status returns the target 'cluster_status' resource.
+//
+// Reference to the resource that manages the detailed status of the cluster.
 func (c *ClusterClient) Status() *ClusterStatusClient {
 	return NewClusterStatusClient(
 		c.transport,
@@ -242,12 +248,13 @@ func (c *ClusterClient) Poll() *ClusterPollRequest {
 
 // ClusterDeleteRequest is the request for the 'async_delete' method.
 type ClusterDeleteRequest struct {
-	transport  http.RoundTripper
-	path       string
-	query      url.Values
-	header     http.Header
-	bestEffort *bool
-	dryRun     *bool
+	transport   http.RoundTripper
+	path        string
+	query       url.Values
+	header      http.Header
+	bestEffort  *bool
+	deprovision *bool
+	dryRun      *bool
 }
 
 // Parameter adds a query parameter.
@@ -277,6 +284,15 @@ func (r *ClusterDeleteRequest) BestEffort(value bool) *ClusterDeleteRequest {
 	return r
 }
 
+// Deprovision sets the value of the 'deprovision' parameter.
+//
+// If false it will only delete from OCM but not the actual cluster resources.
+// false is only allowed for OCP clusters. true by default.
+func (r *ClusterDeleteRequest) Deprovision(value bool) *ClusterDeleteRequest {
+	r.deprovision = &value
+	return r
+}
+
 // DryRun sets the value of the 'dry_run' parameter.
 //
 // Dry run flag is used to check if the operation can be completed, but won't delete.
@@ -298,6 +314,9 @@ func (r *ClusterDeleteRequest) SendContext(ctx context.Context) (result *Cluster
 	query := helpers.CopyQuery(r.query)
 	if r.bestEffort != nil {
 		helpers.AddValue(&query, "best_effort", *r.bestEffort)
+	}
+	if r.deprovision != nil {
+		helpers.AddValue(&query, "deprovision", *r.deprovision)
 	}
 	if r.dryRun != nil {
 		helpers.AddValue(&query, "dry_run", *r.dryRun)

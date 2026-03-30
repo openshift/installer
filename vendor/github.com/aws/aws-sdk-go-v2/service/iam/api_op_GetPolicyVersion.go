@@ -12,20 +12,31 @@ import (
 )
 
 // Retrieves information about the specified version of the specified managed
-// policy, including the policy document. Policies returned by this operation are
-// URL-encoded compliant with RFC 3986 (https://tools.ietf.org/html/rfc3986) . You
-// can use a URL decoding method to convert the policy back to plain JSON text. For
+// policy, including the policy document.
+//
+// Policies returned by this operation are URL-encoded compliant with [RFC 3986]. You can
+// use a URL decoding method to convert the policy back to plain JSON text. For
 // example, if you use Java, you can use the decode method of the
 // java.net.URLDecoder utility class in the Java SDK. Other languages and SDKs
-// provide similar functionality. To list the available versions for a policy, use
-// ListPolicyVersions . This operation retrieves information about managed
-// policies. To retrieve information about an inline policy that is embedded in a
-// user, group, or role, use GetUserPolicy , GetGroupPolicy , or GetRolePolicy .
-// For more information about the types of policies, see Managed policies and
-// inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
-// in the IAM User Guide. For more information about managed policy versions, see
-// Versioning for managed policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html)
-// in the IAM User Guide.
+// provide similar functionality, and some SDKs do this decoding automatically.
+//
+// To list the available versions for a policy, use [ListPolicyVersions].
+//
+// This operation retrieves information about managed policies. To retrieve
+// information about an inline policy that is embedded in a user, group, or role,
+// use [GetUserPolicy], [GetGroupPolicy], or [GetRolePolicy].
+//
+// For more information about the types of policies, see [Managed policies and inline policies] in the IAM User Guide.
+//
+// For more information about managed policy versions, see [Versioning for managed policies] in the IAM User Guide.
+//
+// [RFC 3986]: https://tools.ietf.org/html/rfc3986
+// [GetRolePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetRolePolicy.html
+// [GetGroupPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetGroupPolicy.html
+// [GetUserPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetUserPolicy.html
+// [Versioning for managed policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-versions.html
+// [ListPolicyVersions]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListPolicyVersions.html
+// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
 func (c *Client) GetPolicyVersion(ctx context.Context, params *GetPolicyVersionInput, optFns ...func(*Options)) (*GetPolicyVersionOutput, error) {
 	if params == nil {
 		params = &GetPolicyVersionInput{}
@@ -44,16 +55,23 @@ func (c *Client) GetPolicyVersion(ctx context.Context, params *GetPolicyVersionI
 type GetPolicyVersionInput struct {
 
 	// The Amazon Resource Name (ARN) of the managed policy that you want information
-	// about. For more information about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
-	// in the Amazon Web Services General Reference.
+	// about.
+	//
+	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
+	// Reference.
+	//
+	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
 	//
 	// This member is required.
 	PolicyArn *string
 
-	// Identifies the policy version to retrieve. This parameter allows (through its
-	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters that
-	// consists of the lowercase letter 'v' followed by one or two digits, and
-	// optionally followed by a period '.' and a string of letters and digits.
+	// Identifies the policy version to retrieve.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters that consists of
+	// the lowercase letter 'v' followed by one or two digits, and optionally followed
+	// by a period '.' and a string of letters and digits.
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	VersionId *string
@@ -61,7 +79,9 @@ type GetPolicyVersionInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetPolicyVersion request.
+// Contains the response to a successful [GetPolicyVersion] request.
+//
+// [GetPolicyVersion]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicyVersion.html
 type GetPolicyVersionOutput struct {
 
 	// A structure containing details about the policy version.
@@ -116,6 +136,9 @@ func (c *Client) addOperationGetPolicyVersionMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +149,15 @@ func (c *Client) addOperationGetPolicyVersionMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetPolicyVersionValidationMiddleware(stack); err != nil {
@@ -147,6 +179,15 @@ func (c *Client) addOperationGetPolicyVersionMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

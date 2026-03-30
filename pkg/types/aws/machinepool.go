@@ -48,6 +48,22 @@ type MachinePool struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
+
+	// CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+	// When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+	// More info:
+	// https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html,
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
+	// +optional
+	CPUOptions *CPUOptions `json:"cpuOptions,omitempty,omitzero"`
+
+	// hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host
+	// for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL),
+	// and to gain visibility and control over instance placement on a physical server.
+	// When omitted, the instance is not constrained to a dedicated host.
+	// +openshift:enable:FeatureGate=AWSDedicatedHosts
+	// +optional
+	HostPlacement *HostPlacement `json:"hostPlacement,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -70,6 +86,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.EC2RootVolume.IOPS != 0 {
 		a.EC2RootVolume.IOPS = required.EC2RootVolume.IOPS
+	}
+	if required.EC2RootVolume.Throughput != nil {
+		a.EC2RootVolume.Throughput = required.EC2RootVolume.Throughput
 	}
 	if required.EC2RootVolume.Size != 0 {
 		a.EC2RootVolume.Size = required.EC2RootVolume.Size
@@ -96,6 +115,14 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if len(required.AdditionalSecurityGroupIDs) > 0 {
 		a.AdditionalSecurityGroupIDs = required.AdditionalSecurityGroupIDs
 	}
+
+	if required.CPUOptions != nil {
+		a.CPUOptions = required.CPUOptions
+	}
+
+	if required.HostPlacement != nil {
+		a.HostPlacement = required.HostPlacement
+	}
 }
 
 // EC2RootVolume defines the storage for an ec2 instance.
@@ -106,6 +133,20 @@ type EC2RootVolume struct {
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	IOPS int `json:"iops"`
+
+	// Throughput to provision in MiB/s supported for the volume type. Not applicable to all types.
+	//
+	// This parameter is valid only for gp3 volumes.
+	// Valid Range: Minimum value of 125. Maximum value of 2000.
+	//
+	// When omitted, this means no opinion, and the platform is left to
+	// choose a reasonable default, which is subject to change over time.
+	// The current default is 125.
+	//
+	// +kubebuilder:validation:Minimum:=125
+	// +kubebuilder:validation:Maximum:=2000
+	// +optional
+	Throughput *int32 `json:"throughput,omitempty"`
 
 	// Size defines the size of the volume in gibibytes (GiB).
 	//
@@ -134,4 +175,78 @@ type EC2Metadata struct {
 	// +kubebuilder:validation:Enum=Required;Optional
 	// +optional
 	Authentication string `json:"authentication,omitempty"`
+}
+
+// ConfidentialComputePolicy represents the confidential compute configuration for the instance.
+// +kubebuilder:validation:Enum=Disabled;AMDEncryptedVirtualizationNestedPaging
+type ConfidentialComputePolicy string
+
+const (
+	// ConfidentialComputePolicyDisabled disables confidential computing for the instance.
+	ConfidentialComputePolicyDisabled ConfidentialComputePolicy = "Disabled"
+	// ConfidentialComputePolicySEVSNP enables AMD SEV-SNP as the confidential computing technology for the instance.
+	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
+)
+
+// CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+// If provided, it must not be empty — at least one field must be set.
+// +kubebuilder:validation:MinProperties=1
+type CPUOptions struct {
+	// ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+	// and, if so, which confidential computing technology to use.
+	// Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted.
+	// When set to Disabled, confidential computing will be disabled for the instance.
+	// When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+	// In this case, ensure the following conditions are met:
+	// 1) The selected instance type supports AMD SEV-SNP.
+	// 2) The selected AWS region supports AMD SEV-SNP.
+	// 3) The selected AMI supports AMD SEV-SNP.
+	// More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+	// When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+	// which is subject to change without notice. The current default is Disabled.
+	// +optional
+	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+}
+
+// HostPlacement is the type that will be used to configure the placement of AWS instances.
+// This can be configured for default placement (AnyAvailable) and dedicated hosts (DedicatedHost).
+// +kubebuilder:validation:XValidation:rule="has(self.affinity) && self.affinity == 'DedicatedHost' ?  has(self.dedicatedHost) : !has(self.dedicatedHost)",message="dedicatedHost is required when affinity is DedicatedHost, and forbidden otherwise"
+type HostPlacement struct {
+	// affinity specifies the affinity setting for the instance.
+	// Allowed values are AnyAvailable and DedicatedHost.
+	// When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set.
+	// When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.
+	// +required
+	// +unionDiscriminator
+	Affinity *HostAffinity `json:"affinity,omitempty"`
+
+	// dedicatedHost specifies the exact host that an instance should be restarted on if stopped.
+	// dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.
+	// +optional
+	// +unionMember
+	DedicatedHost []DedicatedHost `json:"dedicatedHost,omitempty"`
+}
+
+// HostAffinity selects how an instance should be placed on AWS Dedicated Hosts.
+// +kubebuilder:validation:Enum:=DedicatedHost;AnyAvailable
+type HostAffinity string
+
+const (
+	// HostAffinityAnyAvailable lets the platform select any available dedicated host.
+	HostAffinityAnyAvailable HostAffinity = "AnyAvailable"
+
+	// HostAffinityDedicatedHost requires specifying a particular host via dedicatedHost.host.id.
+	HostAffinityDedicatedHost HostAffinity = "DedicatedHost"
+)
+
+// DedicatedHost represents the configuration for the usage of dedicated host.
+type DedicatedHost struct {
+	// id identifies the AWS Dedicated Host on which the instance must run.
+	// The value must start with "h-" followed by 17 lowercase hexadecimal characters (0-9 and a-f).
+	// Must be exactly 19 characters in length.
+	// +kubebuilder:validation:XValidation:rule="self.matches('^h-[0-9a-f]{17}$')",message="hostID must start with 'h-' followed by 17 lowercase hexadecimal characters (0-9 and a-f)"
+	// +kubebuilder:validation:MinLength=19
+	// +kubebuilder:validation:MaxLength=19
+	// +required
+	ID string `json:"id,omitempty"`
 }

@@ -148,14 +148,14 @@ func NewARMResource(spec ARMResourceSpec, status ARMResourceStatus, id string) A
 	return &armResourceImpl{
 		spec:   spec,
 		status: status,
-		Id:     id,
+		id:     id,
 	}
 }
 
 type armResourceImpl struct {
 	spec   ARMResourceSpec
 	status ARMResourceStatus
-	Id     string
+	id     string
 }
 
 var _ ARMResource = &armResourceImpl{}
@@ -169,7 +169,7 @@ func (resource *armResourceImpl) Status() ARMResourceStatus {
 }
 
 func (resource *armResourceImpl) GetID() string {
-	return resource.Id
+	return resource.id
 }
 
 // GetReadyCondition gets the ready condition from the object

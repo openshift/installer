@@ -5,11 +5,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/nutanix"
 )
 
 func defaultPlatform() *nutanix.Platform {
-	return &nutanix.Platform{}
+	return &nutanix.Platform{
+		DNSRecordsType: configv1.DNSRecordsTypeInternal,
+	}
 }
 
 func TestSetPlatformDefaults(t *testing.T) {

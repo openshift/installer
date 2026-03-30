@@ -6,7 +6,7 @@
 package merger
 
 import (
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -30,12 +30,12 @@ func MergeObjects(objs []client.Object) ([]client.Object, error) {
 		switch typedObj := obj.(type) {
 		case *v1.Secret:
 			if namespace != obj.GetNamespace() {
-				return nil, errors.Errorf("cannot merge objects from different namespaces: '%s' : '%s'", namespace, obj.GetNamespace())
+				return nil, eris.Errorf("cannot merge objects from different namespaces: '%s' : '%s'", namespace, obj.GetNamespace())
 			}
 			secretSlice = append(secretSlice, typedObj)
 		case *v1.ConfigMap:
 			if namespace != obj.GetNamespace() {
-				return nil, errors.Errorf("cannot merge objects from different namespaces: '%s' : '%s'", namespace, obj.GetNamespace())
+				return nil, eris.Errorf("cannot merge objects from different namespaces: '%s' : '%s'", namespace, obj.GetNamespace())
 			}
 			configMapSlice = append(configMapSlice, typedObj)
 		default:
@@ -45,11 +45,11 @@ func MergeObjects(objs []client.Object) ([]client.Object, error) {
 
 	mergedSecrets, err := mergeSecrets(namespace, secretSlice)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed merging secrets")
+		return nil, eris.Wrap(err, "failed merging secrets")
 	}
 	mergedConfigMaps, err := mergeConfigMaps(namespace, configMapSlice)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed merging config maps")
+		return nil, eris.Wrap(err, "failed merging config maps")
 	}
 
 	result := append(other, secrets.SliceToClientObjectSlice(mergedSecrets)...)

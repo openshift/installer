@@ -15,6 +15,11 @@ approvers:
 - tzvatot
 - cristianoveiga
 - macgregor
+# ARO approvers
+- miguelsorianod
+# ROSA approvers
+- robpblake
+- lucasponce
 reviewers:
 - ciaranRoche
 - davidleerh

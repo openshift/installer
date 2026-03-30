@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20210501preview
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-05-01-preview"
+
 DiagnosticSetting: Resource
 ├── Spec: Object (12 properties)
 │   ├── AzureName: string
@@ -74,3 +75,4 @@ DiagnosticSetting: Resource
     │       └── "User"
     ├── Type: *string
     └── WorkspaceId: *string
+

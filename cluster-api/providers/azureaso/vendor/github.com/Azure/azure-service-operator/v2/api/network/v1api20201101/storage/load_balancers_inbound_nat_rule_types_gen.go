@@ -13,7 +13,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -138,6 +138,10 @@ func (rule *LoadBalancersInboundNatRule) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (rule *LoadBalancersInboundNatRule) Owner() *genruntime.ResourceReference {
+	if rule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(rule.Spec)
 	return rule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -154,7 +158,7 @@ func (rule *LoadBalancersInboundNatRule) SetStatus(status genruntime.Convertible
 	var st LoadBalancersInboundNatRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	rule.Status = st
@@ -171,7 +175,7 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_From_LoadBalancersInbo
 	var spec LoadBalancersInboundNatRule_Spec
 	err := spec.AssignProperties_From_LoadBalancersInboundNatRule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_Spec() to populate field Spec")
 	}
 	rule.Spec = spec
 
@@ -179,7 +183,7 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_From_LoadBalancersInbo
 	var status LoadBalancersInboundNatRule_STATUS
 	err = status.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRule_STATUS() to populate field Status")
 	}
 	rule.Status = status
 
@@ -188,7 +192,7 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_From_LoadBalancersInbo
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule); ok {
 		err := augmentedRule.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -206,7 +210,7 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_To_LoadBalancersInboun
 	var spec v20240301s.LoadBalancersInboundNatRule_Spec
 	err := rule.Spec.AssignProperties_To_LoadBalancersInboundNatRule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -214,7 +218,7 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_To_LoadBalancersInboun
 	var status v20240301s.LoadBalancersInboundNatRule_STATUS
 	err = rule.Status.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -223,7 +227,7 @@ func (rule *LoadBalancersInboundNatRule) AssignProperties_To_LoadBalancersInboun
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule); ok {
 		err := augmentedRule.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -293,13 +297,13 @@ func (rule *LoadBalancersInboundNatRule_Spec) ConvertSpecFrom(source genruntime.
 	src = &v20240301s.LoadBalancersInboundNatRule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_LoadBalancersInboundNatRule_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -317,13 +321,13 @@ func (rule *LoadBalancersInboundNatRule_Spec) ConvertSpecTo(destination genrunti
 	dst = &v20240301s.LoadBalancersInboundNatRule_Spec{}
 	err := rule.AssignProperties_To_LoadBalancersInboundNatRule_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -368,12 +372,12 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_From_LoadBalancer
 		var subResourceStash v20220701s.SubResource
 		err := subResourceStash.AssignProperties_From_SubResource(source.FrontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from FrontendIPConfiguration")
 		}
 		var frontendIPConfiguration SubResource
 		err = frontendIPConfiguration.AssignProperties_From_SubResource(&subResourceStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration from SubResourceStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration from SubResourceStash")
 		}
 		rule.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -405,7 +409,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_From_LoadBalancer
 		var operatorSpec LoadBalancersInboundNatRuleOperatorSpec
 		err := operatorSpec.AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		rule.OperatorSpec = &operatorSpec
 	} else {
@@ -438,7 +442,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_From_LoadBalancer
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_Spec); ok {
 		err := augmentedRule.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -459,7 +463,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersI
 		var backendAddressPool v20240301s.SubResource
 		err := propertyBag.Pull("BackendAddressPool", &backendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'BackendAddressPool' from propertyBag")
+			return eris.Wrap(err, "pulling 'BackendAddressPool' from propertyBag")
 		}
 
 		destination.BackendAddressPool = &backendAddressPool
@@ -491,12 +495,12 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersI
 		var subResourceStash v20220701s.SubResource
 		err := rule.FrontendIPConfiguration.AssignProperties_To_SubResource(&subResourceStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from FrontendIPConfiguration")
 		}
 		var frontendIPConfiguration v20240301s.SubResource
 		err = subResourceStash.AssignProperties_To_SubResource(&frontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration from SubResourceStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration from SubResourceStash")
 		}
 		destination.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -511,7 +515,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersI
 		var frontendPortRangeEnd int
 		err := propertyBag.Pull("FrontendPortRangeEnd", &frontendPortRangeEnd)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'FrontendPortRangeEnd' from propertyBag")
+			return eris.Wrap(err, "pulling 'FrontendPortRangeEnd' from propertyBag")
 		}
 
 		destination.FrontendPortRangeEnd = &frontendPortRangeEnd
@@ -524,7 +528,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersI
 		var frontendPortRangeStart int
 		err := propertyBag.Pull("FrontendPortRangeStart", &frontendPortRangeStart)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'FrontendPortRangeStart' from propertyBag")
+			return eris.Wrap(err, "pulling 'FrontendPortRangeStart' from propertyBag")
 		}
 
 		destination.FrontendPortRangeStart = &frontendPortRangeStart
@@ -540,7 +544,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersI
 		var operatorSpec v20240301s.LoadBalancersInboundNatRuleOperatorSpec
 		err := rule.OperatorSpec.AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_LoadBalancersInboundNatRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -573,7 +577,7 @@ func (rule *LoadBalancersInboundNatRule_Spec) AssignProperties_To_LoadBalancersI
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_Spec); ok {
 		err := augmentedRule.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -614,13 +618,13 @@ func (rule *LoadBalancersInboundNatRule_STATUS) ConvertStatusFrom(source genrunt
 	src = &v20240301s.LoadBalancersInboundNatRule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_LoadBalancersInboundNatRule_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -638,13 +642,13 @@ func (rule *LoadBalancersInboundNatRule_STATUS) ConvertStatusTo(destination genr
 	dst = &v20240301s.LoadBalancersInboundNatRule_STATUS{}
 	err := rule.AssignProperties_To_LoadBalancersInboundNatRule_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -667,7 +671,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_From_LoadBalanc
 		var backendIPConfiguration NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
 		err := backendIPConfiguration.AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded(source.BackendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded() to populate field BackendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded() to populate field BackendIPConfiguration")
 		}
 		rule.BackendIPConfiguration = &backendIPConfiguration
 	} else {
@@ -704,17 +708,17 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_From_LoadBalanc
 		var subResourceSTATUSStash v20240101s.SubResource_STATUS
 		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.FrontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from FrontendIPConfiguration")
 		}
 		var subResourceSTATUSStashLocal v20220701s.SubResource_STATUS
 		err = subResourceSTATUSStashLocal.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
 		}
 		var frontendIPConfiguration SubResource_STATUS
 		err = frontendIPConfiguration.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStashLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field FrontendIPConfiguration from SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field FrontendIPConfiguration from SubResource_STATUSStash")
 		}
 		rule.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -768,7 +772,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_From_LoadBalanc
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_STATUS); ok {
 		err := augmentedRule.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -786,7 +790,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancer
 		var backendAddressPool v20240301s.SubResource_STATUS
 		err := propertyBag.Pull("BackendAddressPool", &backendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'BackendAddressPool' from propertyBag")
+			return eris.Wrap(err, "pulling 'BackendAddressPool' from propertyBag")
 		}
 
 		destination.BackendAddressPool = &backendAddressPool
@@ -799,7 +803,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancer
 		var backendIPConfiguration v20240301s.NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded
 		err := rule.BackendIPConfiguration.AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded(&backendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded() to populate field BackendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded() to populate field BackendIPConfiguration")
 		}
 		destination.BackendIPConfiguration = &backendIPConfiguration
 	} else {
@@ -836,17 +840,17 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancer
 		var subResourceSTATUSStash v20220701s.SubResource_STATUS
 		err := rule.FrontendIPConfiguration.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from FrontendIPConfiguration")
 		}
 		var subResourceSTATUSStashLocal v20240101s.SubResource_STATUS
 		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStashLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
 		}
 		var frontendIPConfiguration v20240301s.SubResource_STATUS
 		err = subResourceSTATUSStashLocal.AssignProperties_To_SubResource_STATUS(&frontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field FrontendIPConfiguration from SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field FrontendIPConfiguration from SubResource_STATUSStash")
 		}
 		destination.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -861,7 +865,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancer
 		var frontendPortRangeEnd int
 		err := propertyBag.Pull("FrontendPortRangeEnd", &frontendPortRangeEnd)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'FrontendPortRangeEnd' from propertyBag")
+			return eris.Wrap(err, "pulling 'FrontendPortRangeEnd' from propertyBag")
 		}
 
 		destination.FrontendPortRangeEnd = &frontendPortRangeEnd
@@ -874,7 +878,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancer
 		var frontendPortRangeStart int
 		err := propertyBag.Pull("FrontendPortRangeStart", &frontendPortRangeStart)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'FrontendPortRangeStart' from propertyBag")
+			return eris.Wrap(err, "pulling 'FrontendPortRangeStart' from propertyBag")
 		}
 
 		destination.FrontendPortRangeStart = &frontendPortRangeStart
@@ -912,7 +916,7 @@ func (rule *LoadBalancersInboundNatRule_STATUS) AssignProperties_To_LoadBalancer
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForLoadBalancersInboundNatRule_STATUS); ok {
 		err := augmentedRule.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -991,7 +995,7 @@ func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_From_L
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForLoadBalancersInboundNatRuleOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1052,7 +1056,7 @@ func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_To_Loa
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForLoadBalancersInboundNatRuleOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1087,7 +1091,7 @@ func (embedded *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatR
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1115,7 +1119,7 @@ func (embedded *NetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatR
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_STATUS_LoadBalancers_InboundNatRule_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1157,7 +1161,7 @@ func (resource *SubResource) AssignProperties_From_SubResource(source *v20220701
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1190,7 +1194,7 @@ func (resource *SubResource) AssignProperties_To_SubResource(destination *v20220
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1225,7 +1229,7 @@ func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(sou
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1253,7 +1257,7 @@ func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(desti
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

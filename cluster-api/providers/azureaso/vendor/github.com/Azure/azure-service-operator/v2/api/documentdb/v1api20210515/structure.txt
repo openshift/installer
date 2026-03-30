@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515
 -----------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-05-15"
+
 DatabaseAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (30 properties)
@@ -220,6 +221,7 @@ DatabaseAccount: Resource
         ├── IsZoneRedundant: *bool
         ├── LocationName: *string
         └── ProvisioningState: *string
+
 MongodbDatabase: Resource
 ├── Owner: DatabaseAccount
 ├── Spec: Object (7 properties)
@@ -252,6 +254,7 @@ MongodbDatabase: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 MongodbDatabaseCollection: Resource
 ├── Owner: MongodbDatabase
 ├── Spec: Object (7 properties)
@@ -300,6 +303,7 @@ MongodbDatabaseCollection: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 MongodbDatabaseCollectionThroughputSetting: Resource
 ├── Owner: MongodbDatabaseCollection
 ├── Spec: Object (5 properties)
@@ -338,6 +342,7 @@ MongodbDatabaseCollectionThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 MongodbDatabaseThroughputSetting: Resource
 ├── Owner: MongodbDatabase
 ├── Spec: Object (5 properties)
@@ -376,6 +381,7 @@ MongodbDatabaseThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabase: Resource
 ├── Owner: DatabaseAccount
 ├── Spec: Object (7 properties)
@@ -410,6 +416,7 @@ SqlDatabase: Resource
     │   └── Users: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainer: Resource
 ├── Owner: SqlDatabase
 ├── Spec: Object (7 properties)
@@ -551,6 +558,7 @@ SqlDatabaseContainer: Resource
     │           └── Paths: string[]
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerStoredProcedure: Resource
 ├── Owner: SqlDatabaseContainer
 ├── Spec: Object (7 properties)
@@ -581,6 +589,7 @@ SqlDatabaseContainerStoredProcedure: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerThroughputSetting: Resource
 ├── Owner: SqlDatabaseContainer
 ├── Spec: Object (5 properties)
@@ -619,6 +628,7 @@ SqlDatabaseContainerThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerTrigger: Resource
 ├── Owner: SqlDatabaseContainer
 ├── Spec: Object (7 properties)
@@ -667,6 +677,7 @@ SqlDatabaseContainerTrigger: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseContainerUserDefinedFunction: Resource
 ├── Owner: SqlDatabaseContainer
 ├── Spec: Object (7 properties)
@@ -697,6 +708,7 @@ SqlDatabaseContainerUserDefinedFunction: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlDatabaseThroughputSetting: Resource
 ├── Owner: SqlDatabase
 ├── Spec: Object (5 properties)
@@ -735,6 +747,7 @@ SqlDatabaseThroughputSetting: Resource
     │   └── Ts: *float64
     ├── Tags: map[string]string
     └── Type: *string
+
 SqlRoleAssignment: Resource
 ├── Owner: DatabaseAccount
 ├── Spec: Object (7 properties)
@@ -755,3 +768,4 @@ SqlRoleAssignment: Resource
     ├── RoleDefinitionId: *string
     ├── Scope: *string
     └── Type: *string
+

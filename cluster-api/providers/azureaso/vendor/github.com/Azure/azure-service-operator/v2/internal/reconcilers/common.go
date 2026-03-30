@@ -10,11 +10,12 @@ import (
 	"fmt"
 	"strings"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/ownerutil"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	asocel "github.com/Azure/azure-service-operator/v2/internal/util/cel"
@@ -64,7 +65,7 @@ func LogObj(log logr.Logger, level int, note string, obj genruntime.MetaObject) 
 		// Log just what we're interested in. We avoid logging the whole obj
 		// due to possible risk of disclosing secrets or other data that is "private" and users may
 		// not want in logs.
-		// nolint: logrlint // We can see the keys and values, above, but the linter can't
+		//nolint: logrlint // We can see the keys and values, above, but the linter can't
 		log.V(level).Info(note, keysAndValues...)
 	}
 }
@@ -79,12 +80,12 @@ func (r *ARMOwnedResourceReconcilerCommon) NeedsToWaitForOwner(ctx context.Conte
 	ownerDetails, err := r.ResourceResolver.ResolveOwner(ctx, obj)
 	if err != nil {
 		var typedErr *core.ReferenceNotFound
-		if errors.As(err, &typedErr) {
+		if eris.As(err, &typedErr) {
 			log.V(Info).Info("Owner does not yet exist", "NamespacedName", typedErr.NamespacedName)
 			return true, nil
 		}
 
-		return true, errors.Wrap(err, "failed to get owner")
+		return true, eris.Wrap(err, "failed to get owner")
 	}
 
 	// No need to wait for resources that don't have an owner
@@ -112,7 +113,7 @@ func (r *ARMOwnedResourceReconcilerCommon) NeedsToWaitForOwner(ctx context.Conte
 func (r *ARMOwnedResourceReconcilerCommon) ApplyOwnership(ctx context.Context, log logr.Logger, obj genruntime.ARMOwnedMetaObject) error {
 	ownerDetails, err := r.ResourceResolver.ResolveOwner(ctx, obj)
 	if err != nil {
-		return errors.Wrap(err, "failed to get owner")
+		return eris.Wrap(err, "failed to get owner")
 	}
 
 	if !ownerDetails.FoundKubernetesOwner() {
@@ -140,7 +141,7 @@ func (r *ARMOwnedResourceReconcilerCommon) ClaimResource(ctx context.Context, lo
 	}
 
 	if waitForOwner {
-		err = errors.Errorf("Owner %q cannot be found. Progress is blocked until the owner is created.", obj.Owner().String())
+		err = eris.Errorf("Owner %q cannot be found. Progress is blocked until the owner is created.", obj.Owner().String())
 		err = conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonWaitingForOwner)
 		return err
 	}
@@ -167,19 +168,19 @@ type ReconcilerCommon struct {
 func ClassifyResolverError(err error) error {
 	// If it's specifically secret not found, say so
 	var secretErr *core.SecretNotFound
-	if errors.As(err, &secretErr) {
+	if eris.As(err, &secretErr) {
 		return conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonSecretNotFound)
 	}
 
 	// If it's specifically configmap not found, say so
 	var configMapErr *core.ConfigMapNotFound
-	if errors.As(err, &configMapErr) {
+	if eris.As(err, &configMapErr) {
 		return conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonConfigMapNotFound)
 	}
 
 	// If it's subscription mismatch, classify that
 	var subscriptionMismatchErr *core.SubscriptionMismatch
-	if errors.As(err, &subscriptionMismatchErr) {
+	if eris.As(err, &subscriptionMismatchErr) {
 		return conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityError, conditions.ReasonFailed)
 	}
 

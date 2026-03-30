@@ -15,8 +15,10 @@ import (
 	smithy "github.com/aws/smithy-go"
 	smithyauth "github.com/aws/smithy-go/auth"
 	smithyendpoints "github.com/aws/smithy-go/endpoints"
+	"github.com/aws/smithy-go/endpoints/private/rulesfn"
 	"github.com/aws/smithy-go/middleware"
 	"github.com/aws/smithy-go/ptr"
+	"github.com/aws/smithy-go/tracing"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"net/http"
 	"net/url"
@@ -217,24 +219,20 @@ func resolveBaseEndpoint(cfg aws.Config, o *Options) {
 	}
 }
 
-func bindRegion(region string) *string {
+func bindRegion(region string) (*string, error) {
 	if region == "" {
-		return nil
+		return nil, nil
 	}
-	return aws.String(endpoints.MapFIPSRegion(region))
+	if !rulesfn.IsValidHostLabel(region, true) {
+		return nil, fmt.Errorf("invalid input region %s", region)
+	}
+
+	return aws.String(endpoints.MapFIPSRegion(region)), nil
 }
 
 // EndpointParameters provides the parameters that influence how endpoints are
 // resolved.
 type EndpointParameters struct {
-	// The AWS region used to dispatch the request.
-	//
-	// Parameter is
-	// required.
-	//
-	// AWS::Region
-	Region *string
-
 	// When true, use the dual-stack endpoint. If the configured endpoint does not
 	// support dual-stack, dispatching the request MAY return an error.
 	//
@@ -261,6 +259,14 @@ type EndpointParameters struct {
 	//
 	// SDK::Endpoint
 	Endpoint *string
+
+	// The AWS region used to dispatch the request.
+	//
+	// Parameter is
+	// required.
+	//
+	// AWS::Region
+	Region *string
 }
 
 // ValidateRequired validates required parameters are set.
@@ -287,6 +293,17 @@ func (p EndpointParameters) WithDefaults() EndpointParameters {
 		p.UseFIPS = ptr.Bool(false)
 	}
 	return p
+}
+
+type stringSlice []string
+
+func (s stringSlice) Get(i int) *string {
+	if i < 0 || i >= len(s) {
+		return nil
+	}
+
+	v := s[i]
+	return &v
 }
 
 // EndpointResolverV2 provides the interface for resolving service endpoints.
@@ -317,7 +334,9 @@ func (r *resolver) ResolveEndpoint(
 		return endpoint, fmt.Errorf("endpoint parameters are not valid, %w", err)
 	}
 	_UseDualStack := *params.UseDualStack
+	_ = _UseDualStack
 	_UseFIPS := *params.UseFIPS
+	_ = _UseFIPS
 
 	if exprVal := params.Endpoint; exprVal != nil {
 		_Endpoint := *exprVal
@@ -348,8 +367,8 @@ func (r *resolver) ResolveEndpoint(
 			_ = _PartitionResult
 			if _PartitionResult.Name == "aws" {
 				if _UseFIPS == false {
-					if _UseDualStack == false {
-						uriString := "https://iam.amazonaws.com"
+					if _UseDualStack == true {
+						uriString := "https://iam.global.api.aws"
 
 						uri, err := url.Parse(uriString)
 						if err != nil {
@@ -366,9 +385,6 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-east-1")
 											return sp
 										}(),
@@ -382,8 +398,8 @@ func (r *resolver) ResolveEndpoint(
 			}
 			if _PartitionResult.Name == "aws" {
 				if _UseFIPS == true {
-					if _UseDualStack == false {
-						uriString := "https://iam-fips.amazonaws.com"
+					if _UseDualStack == true {
+						uriString := "https://iam-fips.global.api.aws"
 
 						uri, err := url.Parse(uriString)
 						if err != nil {
@@ -400,10 +416,38 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-east-1")
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
+					}
+				}
+			}
+			if _PartitionResult.Name == "aws-cn" {
+				if _UseFIPS == false {
+					if _UseDualStack == true {
+						uriString := "https://iam.global.api.amazonwebservices.com.cn"
+
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
+											smithyhttp.SetSigV4SigningRegion(&sp, "cn-north-1")
 											return sp
 										}(),
 									},
@@ -434,10 +478,69 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "cn-north-1")
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
+					}
+				}
+			}
+			if _PartitionResult.Name == "aws-us-gov" {
+				if _UseFIPS == false {
+					if _UseDualStack == true {
+						uriString := "https://iam.us-gov.api.aws"
+
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
+											smithyhttp.SetSigV4SigningRegion(&sp, "us-gov-west-1")
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
+					}
+				}
+			}
+			if _PartitionResult.Name == "aws-us-gov" {
+				if _UseFIPS == true {
+					if _UseDualStack == true {
+						uriString := "https://iam.us-gov.api.aws"
+
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
+											smithyhttp.SetSigV4SigningRegion(&sp, "us-gov-west-1")
 											return sp
 										}(),
 									},
@@ -468,9 +571,6 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-gov-west-1")
 											return sp
 										}(),
@@ -502,9 +602,6 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-gov-west-1")
 											return sp
 										}(),
@@ -536,9 +633,37 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
+											smithyhttp.SetSigV4SigningRegion(&sp, "us-iso-east-1")
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
+					}
+				}
+			}
+			if _PartitionResult.Name == "aws-iso" {
+				if _UseFIPS == true {
+					if _UseDualStack == false {
+						uriString := "https://iam-fips.us-iso-east-1.c2s.ic.gov"
 
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-iso-east-1")
 											return sp
 										}(),
@@ -570,9 +695,37 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
+											smithyhttp.SetSigV4SigningRegion(&sp, "us-isob-east-1")
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
+					}
+				}
+			}
+			if _PartitionResult.Name == "aws-iso-b" {
+				if _UseFIPS == true {
+					if _UseDualStack == false {
+						uriString := "https://iam-fips.us-isob-east-1.sc2s.sgov.gov"
 
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-isob-east-1")
 											return sp
 										}(),
@@ -604,9 +757,6 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "eu-isoe-west-1")
 											return sp
 										}(),
@@ -638,10 +788,38 @@ func (r *resolver) ResolveEndpoint(
 										SchemeID: "aws.auth#sigv4",
 										SignerProperties: func() smithy.Properties {
 											var sp smithy.Properties
-											smithyhttp.SetSigV4SigningName(&sp, "iam")
-											smithyhttp.SetSigV4ASigningName(&sp, "iam")
-
 											smithyhttp.SetSigV4SigningRegion(&sp, "us-isof-south-1")
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
+					}
+				}
+			}
+			if _PartitionResult.Name == "aws-eusc" {
+				if _UseFIPS == false {
+					if _UseDualStack == false {
+						uriString := "https://iam.eusc-de-east-1.amazonaws.eu"
+
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
+											smithyhttp.SetSigV4SigningRegion(&sp, "eusc-de-east-1")
 											return sp
 										}(),
 									},
@@ -659,8 +837,6 @@ func (r *resolver) ResolveEndpoint(
 							uriString := func() string {
 								var out strings.Builder
 								out.WriteString("https://iam-fips.")
-								out.WriteString(_Region)
-								out.WriteString(".")
 								out.WriteString(_PartitionResult.DualStackDnsSuffix)
 								return out.String()
 							}()
@@ -673,6 +849,20 @@ func (r *resolver) ResolveEndpoint(
 							return smithyendpoints.Endpoint{
 								URI:     *uri,
 								Headers: http.Header{},
+								Properties: func() smithy.Properties {
+									var out smithy.Properties
+									smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+										{
+											SchemeID: "aws.auth#sigv4",
+											SignerProperties: func() smithy.Properties {
+												var sp smithy.Properties
+												smithyhttp.SetSigV4SigningRegion(&sp, _PartitionResult.ImplicitGlobalRegion)
+												return sp
+											}(),
+										},
+									})
+									return out
+								}(),
 							}, nil
 						}
 					}
@@ -680,56 +870,82 @@ func (r *resolver) ResolveEndpoint(
 				}
 			}
 			if _UseFIPS == true {
-				if _PartitionResult.SupportsFIPS == true {
-					uriString := func() string {
-						var out strings.Builder
-						out.WriteString("https://iam-fips.")
-						out.WriteString(_Region)
-						out.WriteString(".")
-						out.WriteString(_PartitionResult.DnsSuffix)
-						return out.String()
-					}()
+				if _UseDualStack == false {
+					if _PartitionResult.SupportsFIPS == true {
+						uriString := func() string {
+							var out strings.Builder
+							out.WriteString("https://iam-fips.")
+							out.WriteString(_PartitionResult.DnsSuffix)
+							return out.String()
+						}()
 
-					uri, err := url.Parse(uriString)
-					if err != nil {
-						return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
+											smithyhttp.SetSigV4SigningRegion(&sp, _PartitionResult.ImplicitGlobalRegion)
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
 					}
-
-					return smithyendpoints.Endpoint{
-						URI:     *uri,
-						Headers: http.Header{},
-					}, nil
+					return endpoint, fmt.Errorf("endpoint rule error, %s", "FIPS is enabled but this partition does not support FIPS")
 				}
-				return endpoint, fmt.Errorf("endpoint rule error, %s", "FIPS is enabled but this partition does not support FIPS")
 			}
-			if _UseDualStack == true {
-				if true == _PartitionResult.SupportsDualStack {
-					uriString := func() string {
-						var out strings.Builder
-						out.WriteString("https://iam.")
-						out.WriteString(_Region)
-						out.WriteString(".")
-						out.WriteString(_PartitionResult.DualStackDnsSuffix)
-						return out.String()
-					}()
+			if _UseFIPS == false {
+				if _UseDualStack == true {
+					if true == _PartitionResult.SupportsDualStack {
+						uriString := func() string {
+							var out strings.Builder
+							out.WriteString("https://iam.")
+							out.WriteString(_PartitionResult.DualStackDnsSuffix)
+							return out.String()
+						}()
 
-					uri, err := url.Parse(uriString)
-					if err != nil {
-						return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						uri, err := url.Parse(uriString)
+						if err != nil {
+							return endpoint, fmt.Errorf("Failed to parse uri: %s", uriString)
+						}
+
+						return smithyendpoints.Endpoint{
+							URI:     *uri,
+							Headers: http.Header{},
+							Properties: func() smithy.Properties {
+								var out smithy.Properties
+								smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+									{
+										SchemeID: "aws.auth#sigv4",
+										SignerProperties: func() smithy.Properties {
+											var sp smithy.Properties
+											smithyhttp.SetSigV4SigningRegion(&sp, _PartitionResult.ImplicitGlobalRegion)
+											return sp
+										}(),
+									},
+								})
+								return out
+							}(),
+						}, nil
 					}
-
-					return smithyendpoints.Endpoint{
-						URI:     *uri,
-						Headers: http.Header{},
-					}, nil
+					return endpoint, fmt.Errorf("endpoint rule error, %s", "DualStack is enabled but this partition does not support DualStack")
 				}
-				return endpoint, fmt.Errorf("endpoint rule error, %s", "DualStack is enabled but this partition does not support DualStack")
 			}
 			uriString := func() string {
 				var out strings.Builder
 				out.WriteString("https://iam.")
-				out.WriteString(_Region)
-				out.WriteString(".")
 				out.WriteString(_PartitionResult.DnsSuffix)
 				return out.String()
 			}()
@@ -742,6 +958,20 @@ func (r *resolver) ResolveEndpoint(
 			return smithyendpoints.Endpoint{
 				URI:     *uri,
 				Headers: http.Header{},
+				Properties: func() smithy.Properties {
+					var out smithy.Properties
+					smithyauth.SetAuthOptions(&out, []*smithyauth.Option{
+						{
+							SchemeID: "aws.auth#sigv4",
+							SignerProperties: func() smithy.Properties {
+								var sp smithy.Properties
+								smithyhttp.SetSigV4SigningRegion(&sp, _PartitionResult.ImplicitGlobalRegion)
+								return sp
+							}(),
+						},
+					})
+					return out
+				}(),
 			}, nil
 		}
 		return endpoint, fmt.Errorf("Endpoint resolution failed. Invalid operation or environment input.")
@@ -753,19 +983,23 @@ type endpointParamsBinder interface {
 	bindEndpointParams(*EndpointParameters)
 }
 
-func bindEndpointParams(input interface{}, options Options) *EndpointParameters {
+func bindEndpointParams(ctx context.Context, input interface{}, options Options) (*EndpointParameters, error) {
 	params := &EndpointParameters{}
 
-	params.Region = bindRegion(options.Region)
 	params.UseDualStack = aws.Bool(options.EndpointOptions.UseDualStackEndpoint == aws.DualStackEndpointStateEnabled)
 	params.UseFIPS = aws.Bool(options.EndpointOptions.UseFIPSEndpoint == aws.FIPSEndpointStateEnabled)
 	params.Endpoint = options.BaseEndpoint
+	region, err := bindRegion(options.Region)
+	if err != nil {
+		return nil, err
+	}
+	params.Region = region
 
 	if b, ok := input.(endpointParamsBinder); ok {
 		b.bindEndpointParams(params)
 	}
 
-	return params
+	return params, nil
 }
 
 type resolveEndpointV2Middleware struct {
@@ -779,6 +1013,9 @@ func (*resolveEndpointV2Middleware) ID() string {
 func (m *resolveEndpointV2Middleware) HandleFinalize(ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler) (
 	out middleware.FinalizeOutput, metadata middleware.Metadata, err error,
 ) {
+	_, span := tracing.StartSpan(ctx, "ResolveEndpoint")
+	defer span.End()
+
 	if awsmiddleware.GetRequiresLegacyEndpoints(ctx) {
 		return next.HandleFinalize(ctx, in)
 	}
@@ -792,11 +1029,19 @@ func (m *resolveEndpointV2Middleware) HandleFinalize(ctx context.Context, in mid
 		return out, metadata, fmt.Errorf("expected endpoint resolver to not be nil")
 	}
 
-	params := bindEndpointParams(getOperationInput(ctx), m.options)
-	endpt, err := m.options.EndpointResolverV2.ResolveEndpoint(ctx, *params)
+	params, err := bindEndpointParams(ctx, getOperationInput(ctx), m.options)
+	if err != nil {
+		return out, metadata, fmt.Errorf("failed to bind endpoint params, %w", err)
+	}
+	endpt, err := timeOperationMetric(ctx, "client.call.resolve_endpoint_duration",
+		func() (smithyendpoints.Endpoint, error) {
+			return m.options.EndpointResolverV2.ResolveEndpoint(ctx, *params)
+		})
 	if err != nil {
 		return out, metadata, fmt.Errorf("failed to resolve service endpoint, %w", err)
 	}
+
+	span.SetProperty("client.call.resolved_endpoint", endpt.URI.String())
 
 	if endpt.URI.RawPath == "" && req.URL.RawPath != "" {
 		endpt.URI.RawPath = endpt.URI.Path
@@ -819,5 +1064,6 @@ func (m *resolveEndpointV2Middleware) HandleFinalize(ctx context.Context, in mid
 		rscheme.SignerProperties.SetAll(&o.SignerProperties)
 	}
 
+	span.End()
 	return next.HandleFinalize(ctx, in)
 }

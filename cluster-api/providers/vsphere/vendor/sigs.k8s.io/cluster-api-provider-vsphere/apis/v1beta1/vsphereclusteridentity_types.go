@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -26,6 +26,27 @@ const (
 	SecretIdentitySetFinalizer = "vspherecluster/infrastructure.cluster.x-k8s.io"
 	// VSphereClusterIdentityFinalizer is the finalizer for VSphereClusterIdentity credentials secrets.
 	VSphereClusterIdentityFinalizer = "vsphereclusteridentity/infrastructure.cluster.x-k8s.io"
+)
+
+// VSphereClusterIdentity's Available condition and corresponding reasons that will be used in v1Beta2 API version.
+const (
+	// VSphereClusterIdentityAvailableV1Beta2Condition documents the availability for a VSphereClusterIdentity.
+	VSphereClusterIdentityAvailableV1Beta2Condition = clusterv1beta1.AvailableV1Beta2Condition
+
+	// VSphereClusterIdentityAvailableV1Beta2Reason surfaces when the VSphereClusterIdentity is available.
+	VSphereClusterIdentityAvailableV1Beta2Reason = clusterv1beta1.AvailableV1Beta2Reason
+
+	// VSphereClusterIdentitySecretNotAvailableV1Beta2Reason surfaces when the VSphereClusterIdentity secret is not available.
+	VSphereClusterIdentitySecretNotAvailableV1Beta2Reason = "SecretNotAvailable"
+
+	// VSphereClusterIdentitySecretAlreadyInUseV1Beta2Reason surfaces when the VSphereClusterIdentity secret is already in use.
+	VSphereClusterIdentitySecretAlreadyInUseV1Beta2Reason = "SecretAlreadyInUse"
+
+	// VSphereClusterIdentitySettingSecretOwnerReferenceFailedV1Beta2Reason surfaces when setting the owner reference on the VSphereClusterIdentity secret failed.
+	VSphereClusterIdentitySettingSecretOwnerReferenceFailedV1Beta2Reason = "SettingSecretOwnerReferenceFailed"
+
+	// VSphereClusterIdentityDeletingV1Beta2Reason surfaces when the VSphereClusterIdentity is being deleted.
+	VSphereClusterIdentityDeletingV1Beta2Reason = clusterv1beta1.DeletingV1Beta2Reason
 )
 
 // VSphereClusterIdentitySpec contains a secret reference and a group of allowed namespaces.
@@ -48,7 +69,23 @@ type VSphereClusterIdentityStatus struct {
 
 	// Conditions defines current service state of the VSphereCluster.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in VSphereClusterIdentity's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *VSphereClusterIdentityV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// VSphereClusterIdentityV1Beta2Status groups all the fields that will be added or modified in VSphereClusterIdentityStatus with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type VSphereClusterIdentityV1Beta2Status struct {
+	// conditions represents the observations of a VSphereClusterIdentity's current state.
+	// Known condition types are Available and Paused.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // AllowedNamespaces restricts the namespaces this VSphereClusterIdentity can be used from.
@@ -80,13 +117,29 @@ type VSphereIdentityReference struct {
 }
 
 // GetConditions returns the conditions for the VSphereClusterIdentity.
-func (c *VSphereClusterIdentity) GetConditions() clusterv1.Conditions {
+func (c *VSphereClusterIdentity) GetConditions() clusterv1beta1.Conditions {
 	return c.Status.Conditions
 }
 
 // SetConditions sets the conditions on the VSphereClusterIdentity.
-func (c *VSphereClusterIdentity) SetConditions(conditions clusterv1.Conditions) {
+func (c *VSphereClusterIdentity) SetConditions(conditions clusterv1beta1.Conditions) {
 	c.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (c *VSphereClusterIdentity) GetV1Beta2Conditions() []metav1.Condition {
+	if c.Status.V1Beta2 == nil {
+		return nil
+	}
+	return c.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (c *VSphereClusterIdentity) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if c.Status.V1Beta2 == nil {
+		c.Status.V1Beta2 = &VSphereClusterIdentityV1Beta2Status{}
+	}
+	c.Status.V1Beta2.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

@@ -305,8 +305,7 @@ machineconfigurations.operator.openshift.io:
   FeatureGates:
   - BootImageSkewEnforcement
   - IrreconcilableMachineConfig
-  - ManagedBootImages
-  - ManagedBootImages+ManagedBootImagesCPMS
+  - ManagedBootImagesCPMS
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"
@@ -328,9 +327,7 @@ networks.operator.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
-  - AdditionalRoutingCapabilities
-  - NetworkLiveMigration
-  - RouteAdvertisements
+  - NoOverlayMode
   FilenameOperatorName: network
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_70"

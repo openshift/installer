@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (domain *Domain) ConvertTo(hub conversion.Hub) error {
 
 	return domain.AssignProperties_To_Domain(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-eventgrid-azure-com-v1api20200601-domain,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventgrid.azure.com,resources=domains,verbs=create;update,versions=v1api20200601,name=default.v1api20200601.domains.eventgrid.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Domain{}
-
-// Default applies defaults to the Domain resource
-func (domain *Domain) Default() {
-	domain.defaultImpl()
-	var temp any = domain
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (domain *Domain) defaultAzureName() {
-	if domain.Spec.AzureName == "" {
-		domain.Spec.AzureName = domain.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Domain resource
-func (domain *Domain) defaultImpl() { domain.defaultAzureName() }
 
 var _ configmaps.Exporter = &Domain{}
 
@@ -173,6 +147,10 @@ func (domain *Domain) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (domain *Domain) Owner() *genruntime.ResourceReference {
+	if domain.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(domain.Spec)
 	return domain.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (domain *Domain) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Domain_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	domain.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-eventgrid-azure-com-v1api20200601-domain,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventgrid.azure.com,resources=domains,verbs=create;update,versions=v1api20200601,name=validate.v1api20200601.domains.eventgrid.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Domain{}
-
-// ValidateCreate validates the creation of the resource
-func (domain *Domain) ValidateCreate() (admission.Warnings, error) {
-	validations := domain.createValidations()
-	var temp any = domain
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (domain *Domain) ValidateDelete() (admission.Warnings, error) {
-	validations := domain.deleteValidations()
-	var temp any = domain
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (domain *Domain) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := domain.updateValidations()
-	var temp any = domain
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (domain *Domain) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){domain.validateResourceReferences, domain.validateOwnerReference, domain.validateSecretDestinations, domain.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (domain *Domain) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (domain *Domain) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return domain.validateResourceReferences()
-		},
-		domain.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return domain.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return domain.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return domain.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (domain *Domain) validateConfigMapDestinations() (admission.Warnings, error) {
-	if domain.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(domain, nil, domain.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (domain *Domain) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(domain)
-}
-
-// validateResourceReferences validates all resource references
-func (domain *Domain) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&domain.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (domain *Domain) validateSecretDestinations() (admission.Warnings, error) {
-	if domain.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(domain, nil, domain.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (domain *Domain) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Domain)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, domain)
 }
 
 // AssignProperties_From_Domain populates our Domain from the provided source Domain
@@ -309,7 +184,7 @@ func (domain *Domain) AssignProperties_From_Domain(source *storage.Domain) error
 	var spec Domain_Spec
 	err := spec.AssignProperties_From_Domain_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Domain_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Domain_Spec() to populate field Spec")
 	}
 	domain.Spec = spec
 
@@ -317,7 +192,7 @@ func (domain *Domain) AssignProperties_From_Domain(source *storage.Domain) error
 	var status Domain_STATUS
 	err = status.AssignProperties_From_Domain_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Domain_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Domain_STATUS() to populate field Status")
 	}
 	domain.Status = status
 
@@ -335,7 +210,7 @@ func (domain *Domain) AssignProperties_To_Domain(destination *storage.Domain) er
 	var spec storage.Domain_Spec
 	err := domain.Spec.AssignProperties_To_Domain_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Domain_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Domain_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (domain *Domain) AssignProperties_To_Domain(destination *storage.Domain) er
 	var status storage.Domain_STATUS
 	err = domain.Status.AssignProperties_To_Domain_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Domain_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Domain_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -580,13 +455,13 @@ func (domain *Domain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) er
 	src = &storage.Domain_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = domain.AssignProperties_From_Domain_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -604,13 +479,13 @@ func (domain *Domain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec)
 	dst = &storage.Domain_Spec{}
 	err := domain.AssignProperties_To_Domain_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -631,7 +506,7 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *storage.Dom
 			var inboundIpRule InboundIpRule
 			err := inboundIpRule.AssignProperties_From_InboundIpRule(&inboundIpRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InboundIpRule() to populate field InboundIpRules")
+				return eris.Wrap(err, "calling AssignProperties_From_InboundIpRule() to populate field InboundIpRules")
 			}
 			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
 		}
@@ -654,7 +529,7 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *storage.Dom
 		var inputSchemaMapping InputSchemaMapping
 		err := inputSchemaMapping.AssignProperties_From_InputSchemaMapping(source.InputSchemaMapping)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InputSchemaMapping() to populate field InputSchemaMapping")
+			return eris.Wrap(err, "calling AssignProperties_From_InputSchemaMapping() to populate field InputSchemaMapping")
 		}
 		domain.InputSchemaMapping = &inputSchemaMapping
 	} else {
@@ -669,7 +544,7 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *storage.Dom
 		var operatorSpec DomainOperatorSpec
 		err := operatorSpec.AssignProperties_From_DomainOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DomainOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DomainOperatorSpec() to populate field OperatorSpec")
 		}
 		domain.OperatorSpec = &operatorSpec
 	} else {
@@ -717,7 +592,7 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *storage.
 			var inboundIpRule storage.InboundIpRule
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule(&inboundIpRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InboundIpRule() to populate field InboundIpRules")
+				return eris.Wrap(err, "calling AssignProperties_To_InboundIpRule() to populate field InboundIpRules")
 			}
 			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
 		}
@@ -739,7 +614,7 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *storage.
 		var inputSchemaMapping storage.InputSchemaMapping
 		err := domain.InputSchemaMapping.AssignProperties_To_InputSchemaMapping(&inputSchemaMapping)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InputSchemaMapping() to populate field InputSchemaMapping")
+			return eris.Wrap(err, "calling AssignProperties_To_InputSchemaMapping() to populate field InputSchemaMapping")
 		}
 		destination.InputSchemaMapping = &inputSchemaMapping
 	} else {
@@ -754,7 +629,7 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *storage.
 		var operatorSpec storage.DomainOperatorSpec
 		err := domain.OperatorSpec.AssignProperties_To_DomainOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DomainOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DomainOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -806,7 +681,7 @@ func (domain *Domain_Spec) Initialize_From_Domain_STATUS(source *Domain_STATUS) 
 			var inboundIpRule InboundIpRule
 			err := inboundIpRule.Initialize_From_InboundIpRule_STATUS(&inboundIpRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_InboundIpRule_STATUS() to populate field InboundIpRules")
+				return eris.Wrap(err, "calling Initialize_From_InboundIpRule_STATUS() to populate field InboundIpRules")
 			}
 			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
 		}
@@ -828,7 +703,7 @@ func (domain *Domain_Spec) Initialize_From_Domain_STATUS(source *Domain_STATUS) 
 		var inputSchemaMapping InputSchemaMapping
 		err := inputSchemaMapping.Initialize_From_InputSchemaMapping_STATUS(source.InputSchemaMapping)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
+			return eris.Wrap(err, "calling Initialize_From_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
 		}
 		domain.InputSchemaMapping = &inputSchemaMapping
 	} else {
@@ -926,13 +801,13 @@ func (domain *Domain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStat
 	src = &storage.Domain_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = domain.AssignProperties_From_Domain_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -950,13 +825,13 @@ func (domain *Domain_STATUS) ConvertStatusTo(destination genruntime.ConvertibleS
 	dst = &storage.Domain_STATUS{}
 	err := domain.AssignProperties_To_Domain_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1137,7 +1012,7 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage
 			var inboundIpRule InboundIpRule_STATUS
 			err := inboundIpRule.AssignProperties_From_InboundIpRule_STATUS(&inboundIpRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InboundIpRule_STATUS() to populate field InboundIpRules")
+				return eris.Wrap(err, "calling AssignProperties_From_InboundIpRule_STATUS() to populate field InboundIpRules")
 			}
 			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
 		}
@@ -1160,7 +1035,7 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage
 		var inputSchemaMapping InputSchemaMapping_STATUS
 		err := inputSchemaMapping.AssignProperties_From_InputSchemaMapping_STATUS(source.InputSchemaMapping)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
+			return eris.Wrap(err, "calling AssignProperties_From_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
 		}
 		domain.InputSchemaMapping = &inputSchemaMapping
 	} else {
@@ -1185,7 +1060,7 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage
 			var privateEndpointConnection PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -1217,7 +1092,7 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		domain.SystemData = &systemDatum
 	} else {
@@ -1257,7 +1132,7 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *stor
 			var inboundIpRule storage.InboundIpRule_STATUS
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule_STATUS(&inboundIpRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InboundIpRule_STATUS() to populate field InboundIpRules")
+				return eris.Wrap(err, "calling AssignProperties_To_InboundIpRule_STATUS() to populate field InboundIpRules")
 			}
 			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
 		}
@@ -1279,7 +1154,7 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *stor
 		var inputSchemaMapping storage.InputSchemaMapping_STATUS
 		err := domain.InputSchemaMapping.AssignProperties_To_InputSchemaMapping_STATUS(&inputSchemaMapping)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
+			return eris.Wrap(err, "calling AssignProperties_To_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
 		}
 		destination.InputSchemaMapping = &inputSchemaMapping
 	} else {
@@ -1304,7 +1179,7 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *stor
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -1334,7 +1209,7 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *stor
 		var systemDatum storage.SystemData_STATUS
 		err := domain.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1815,7 +1690,7 @@ func (mapping *InputSchemaMapping) AssignProperties_From_InputSchemaMapping(sour
 		var json JsonInputSchemaMapping
 		err := json.AssignProperties_From_JsonInputSchemaMapping(source.Json)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonInputSchemaMapping() to populate field Json")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonInputSchemaMapping() to populate field Json")
 		}
 		mapping.Json = &json
 	} else {
@@ -1836,7 +1711,7 @@ func (mapping *InputSchemaMapping) AssignProperties_To_InputSchemaMapping(destin
 		var json storage.JsonInputSchemaMapping
 		err := mapping.Json.AssignProperties_To_JsonInputSchemaMapping(&json)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping() to populate field Json")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping() to populate field Json")
 		}
 		destination.Json = &json
 	} else {
@@ -1862,7 +1737,7 @@ func (mapping *InputSchemaMapping) Initialize_From_InputSchemaMapping_STATUS(sou
 		var json JsonInputSchemaMapping
 		err := json.Initialize_From_JsonInputSchemaMapping_STATUS(source.Json)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonInputSchemaMapping_STATUS() to populate field Json")
+			return eris.Wrap(err, "calling Initialize_From_JsonInputSchemaMapping_STATUS() to populate field Json")
 		}
 		mapping.Json = &json
 	} else {
@@ -1915,7 +1790,7 @@ func (mapping *InputSchemaMapping_STATUS) AssignProperties_From_InputSchemaMappi
 		var json JsonInputSchemaMapping_STATUS
 		err := json.AssignProperties_From_JsonInputSchemaMapping_STATUS(source.Json)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonInputSchemaMapping_STATUS() to populate field Json")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonInputSchemaMapping_STATUS() to populate field Json")
 		}
 		mapping.Json = &json
 	} else {
@@ -1936,7 +1811,7 @@ func (mapping *InputSchemaMapping_STATUS) AssignProperties_To_InputSchemaMapping
 		var json storage.JsonInputSchemaMapping_STATUS
 		err := mapping.Json.AssignProperties_To_JsonInputSchemaMapping_STATUS(&json)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping_STATUS() to populate field Json")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping_STATUS() to populate field Json")
 		}
 		destination.Json = &json
 	} else {
@@ -2408,7 +2283,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 		var dataVersion JsonFieldWithDefault
 		err := dataVersion.AssignProperties_From_JsonFieldWithDefault(source.DataVersion)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field DataVersion")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field DataVersion")
 		}
 		mapping.DataVersion = &dataVersion
 	} else {
@@ -2420,7 +2295,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 		var eventTime JsonField
 		err := eventTime.AssignProperties_From_JsonField(source.EventTime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonField() to populate field EventTime")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField() to populate field EventTime")
 		}
 		mapping.EventTime = &eventTime
 	} else {
@@ -2432,7 +2307,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 		var eventType JsonFieldWithDefault
 		err := eventType.AssignProperties_From_JsonFieldWithDefault(source.EventType)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field EventType")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field EventType")
 		}
 		mapping.EventType = &eventType
 	} else {
@@ -2444,7 +2319,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 		var id JsonField
 		err := id.AssignProperties_From_JsonField(source.Id)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonField() to populate field Id")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField() to populate field Id")
 		}
 		mapping.Id = &id
 	} else {
@@ -2465,7 +2340,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 		var subject JsonFieldWithDefault
 		err := subject.AssignProperties_From_JsonFieldWithDefault(source.Subject)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field Subject")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field Subject")
 		}
 		mapping.Subject = &subject
 	} else {
@@ -2477,7 +2352,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapp
 		var topic JsonField
 		err := topic.AssignProperties_From_JsonField(source.Topic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonField() to populate field Topic")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField() to populate field Topic")
 		}
 		mapping.Topic = &topic
 	} else {
@@ -2498,7 +2373,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 		var dataVersion storage.JsonFieldWithDefault
 		err := mapping.DataVersion.AssignProperties_To_JsonFieldWithDefault(&dataVersion)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field DataVersion")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field DataVersion")
 		}
 		destination.DataVersion = &dataVersion
 	} else {
@@ -2510,7 +2385,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 		var eventTime storage.JsonField
 		err := mapping.EventTime.AssignProperties_To_JsonField(&eventTime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonField() to populate field EventTime")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField() to populate field EventTime")
 		}
 		destination.EventTime = &eventTime
 	} else {
@@ -2522,7 +2397,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 		var eventType storage.JsonFieldWithDefault
 		err := mapping.EventType.AssignProperties_To_JsonFieldWithDefault(&eventType)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field EventType")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field EventType")
 		}
 		destination.EventType = &eventType
 	} else {
@@ -2534,7 +2409,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 		var id storage.JsonField
 		err := mapping.Id.AssignProperties_To_JsonField(&id)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Id")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Id")
 		}
 		destination.Id = &id
 	} else {
@@ -2554,7 +2429,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 		var subject storage.JsonFieldWithDefault
 		err := mapping.Subject.AssignProperties_To_JsonFieldWithDefault(&subject)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field Subject")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field Subject")
 		}
 		destination.Subject = &subject
 	} else {
@@ -2566,7 +2441,7 @@ func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMappin
 		var topic storage.JsonField
 		err := mapping.Topic.AssignProperties_To_JsonField(&topic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Topic")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Topic")
 		}
 		destination.Topic = &topic
 	} else {
@@ -2592,7 +2467,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 		var dataVersion JsonFieldWithDefault
 		err := dataVersion.Initialize_From_JsonFieldWithDefault_STATUS(source.DataVersion)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonFieldWithDefault_STATUS() to populate field DataVersion")
+			return eris.Wrap(err, "calling Initialize_From_JsonFieldWithDefault_STATUS() to populate field DataVersion")
 		}
 		mapping.DataVersion = &dataVersion
 	} else {
@@ -2604,7 +2479,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 		var eventTime JsonField
 		err := eventTime.Initialize_From_JsonField_STATUS(source.EventTime)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonField_STATUS() to populate field EventTime")
+			return eris.Wrap(err, "calling Initialize_From_JsonField_STATUS() to populate field EventTime")
 		}
 		mapping.EventTime = &eventTime
 	} else {
@@ -2616,7 +2491,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 		var eventType JsonFieldWithDefault
 		err := eventType.Initialize_From_JsonFieldWithDefault_STATUS(source.EventType)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonFieldWithDefault_STATUS() to populate field EventType")
+			return eris.Wrap(err, "calling Initialize_From_JsonFieldWithDefault_STATUS() to populate field EventType")
 		}
 		mapping.EventType = &eventType
 	} else {
@@ -2628,7 +2503,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 		var id JsonField
 		err := id.Initialize_From_JsonField_STATUS(source.Id)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonField_STATUS() to populate field Id")
+			return eris.Wrap(err, "calling Initialize_From_JsonField_STATUS() to populate field Id")
 		}
 		mapping.Id = &id
 	} else {
@@ -2648,7 +2523,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 		var subject JsonFieldWithDefault
 		err := subject.Initialize_From_JsonFieldWithDefault_STATUS(source.Subject)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonFieldWithDefault_STATUS() to populate field Subject")
+			return eris.Wrap(err, "calling Initialize_From_JsonFieldWithDefault_STATUS() to populate field Subject")
 		}
 		mapping.Subject = &subject
 	} else {
@@ -2660,7 +2535,7 @@ func (mapping *JsonInputSchemaMapping) Initialize_From_JsonInputSchemaMapping_ST
 		var topic JsonField
 		err := topic.Initialize_From_JsonField_STATUS(source.Topic)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_JsonField_STATUS() to populate field Topic")
+			return eris.Wrap(err, "calling Initialize_From_JsonField_STATUS() to populate field Topic")
 		}
 		mapping.Topic = &topic
 	} else {
@@ -2811,7 +2686,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 		var dataVersion JsonFieldWithDefault_STATUS
 		err := dataVersion.AssignProperties_From_JsonFieldWithDefault_STATUS(source.DataVersion)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field DataVersion")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field DataVersion")
 		}
 		mapping.DataVersion = &dataVersion
 	} else {
@@ -2823,7 +2698,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 		var eventTime JsonField_STATUS
 		err := eventTime.AssignProperties_From_JsonField_STATUS(source.EventTime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field EventTime")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field EventTime")
 		}
 		mapping.EventTime = &eventTime
 	} else {
@@ -2835,7 +2710,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 		var eventType JsonFieldWithDefault_STATUS
 		err := eventType.AssignProperties_From_JsonFieldWithDefault_STATUS(source.EventType)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field EventType")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field EventType")
 		}
 		mapping.EventType = &eventType
 	} else {
@@ -2847,7 +2722,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 		var id JsonField_STATUS
 		err := id.AssignProperties_From_JsonField_STATUS(source.Id)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field Id")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field Id")
 		}
 		mapping.Id = &id
 	} else {
@@ -2868,7 +2743,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 		var subject JsonFieldWithDefault_STATUS
 		err := subject.AssignProperties_From_JsonFieldWithDefault_STATUS(source.Subject)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field Subject")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field Subject")
 		}
 		mapping.Subject = &subject
 	} else {
@@ -2880,7 +2755,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSch
 		var topic JsonField_STATUS
 		err := topic.AssignProperties_From_JsonField_STATUS(source.Topic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field Topic")
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field Topic")
 		}
 		mapping.Topic = &topic
 	} else {
@@ -2901,7 +2776,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 		var dataVersion storage.JsonFieldWithDefault_STATUS
 		err := mapping.DataVersion.AssignProperties_To_JsonFieldWithDefault_STATUS(&dataVersion)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field DataVersion")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field DataVersion")
 		}
 		destination.DataVersion = &dataVersion
 	} else {
@@ -2913,7 +2788,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 		var eventTime storage.JsonField_STATUS
 		err := mapping.EventTime.AssignProperties_To_JsonField_STATUS(&eventTime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field EventTime")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field EventTime")
 		}
 		destination.EventTime = &eventTime
 	} else {
@@ -2925,7 +2800,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 		var eventType storage.JsonFieldWithDefault_STATUS
 		err := mapping.EventType.AssignProperties_To_JsonFieldWithDefault_STATUS(&eventType)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field EventType")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field EventType")
 		}
 		destination.EventType = &eventType
 	} else {
@@ -2937,7 +2812,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 		var id storage.JsonField_STATUS
 		err := mapping.Id.AssignProperties_To_JsonField_STATUS(&id)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Id")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Id")
 		}
 		destination.Id = &id
 	} else {
@@ -2957,7 +2832,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 		var subject storage.JsonFieldWithDefault_STATUS
 		err := mapping.Subject.AssignProperties_To_JsonFieldWithDefault_STATUS(&subject)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field Subject")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field Subject")
 		}
 		destination.Subject = &subject
 	} else {
@@ -2969,7 +2844,7 @@ func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchem
 		var topic storage.JsonField_STATUS
 		err := mapping.Topic.AssignProperties_To_JsonField_STATUS(&topic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Topic")
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Topic")
 		}
 		destination.Topic = &topic
 	} else {

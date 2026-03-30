@@ -10,13 +10,10 @@ aliases:
     - richardcase
   cluster-api-aws-maintainers:
     - richardcase
-    - Ankitasw
     - dlipovetsky
     - nrb
     - AndiDog
+    - damdo
   cluster-api-aws-reviewers:
-    - luthermonson
-    - cnmcavoy
     - faiq
     - fiunchinho
-    - damdo

@@ -6,7 +6,7 @@ env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE=<not-valid-image>
 
 ! exists $WORK/agent.x86_64.iso
 stderr 'level=warning msg=Found override for OS Image. Please be warned, this is not advised'
-stderr 'level=fatal msg=failed to fetch Agent Installer ISO: failed to fetch dependency of "Agent Installer ISO": failed to fetch dependency of "Agent Installer Artifacts": failed to generate asset "BaseIso Image": failed to get base ISO image: parse "<not-valid-image>": invalid URI for request'
+stderr 'level=fatal msg=failed to fetch Agent Installer ISO: failed to fetch dependency of "Agent Installer ISO": failed to fetch dependency of "Agent Installer Artifacts": failed to generate asset "Base ISO Image": failed to get base ISO image: parse "<not-valid-image>": invalid URI for request'
 
 -- install-config.yaml --
 apiVersion: v1

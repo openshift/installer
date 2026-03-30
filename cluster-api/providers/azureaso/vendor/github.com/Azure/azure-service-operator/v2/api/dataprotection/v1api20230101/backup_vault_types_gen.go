@@ -9,20 +9,17 @@ import (
 	arm "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -62,12 +59,12 @@ func (vault *BackupVault) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = vault.AssignProperties_From_BackupVault(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to vault")
+		return eris.Wrap(err, "converting from source to vault")
 	}
 
 	return nil
@@ -79,38 +76,15 @@ func (vault *BackupVault) ConvertTo(hub conversion.Hub) error {
 	var destination storage.BackupVault
 	err := vault.AssignProperties_To_BackupVault(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from vault")
+		return eris.Wrap(err, "converting to destination from vault")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-dataprotection-azure-com-v1api20230101-backupvault,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dataprotection.azure.com,resources=backupvaults,verbs=create;update,versions=v1api20230101,name=default.v1api20230101.backupvaults.dataprotection.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &BackupVault{}
-
-// Default applies defaults to the BackupVault resource
-func (vault *BackupVault) Default() {
-	vault.defaultImpl()
-	var temp any = vault
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (vault *BackupVault) defaultAzureName() {
-	if vault.Spec.AzureName == "" {
-		vault.Spec.AzureName = vault.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the BackupVault resource
-func (vault *BackupVault) defaultImpl() { vault.defaultAzureName() }
 
 var _ configmaps.Exporter = &BackupVault{}
 
@@ -199,6 +173,10 @@ func (vault *BackupVault) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (vault *BackupVault) Owner() *genruntime.ResourceReference {
+	if vault.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(vault.Spec)
 	return vault.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -215,120 +193,11 @@ func (vault *BackupVault) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st BackupVaultResource_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	vault.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-dataprotection-azure-com-v1api20230101-backupvault,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dataprotection.azure.com,resources=backupvaults,verbs=create;update,versions=v1api20230101,name=validate.v1api20230101.backupvaults.dataprotection.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &BackupVault{}
-
-// ValidateCreate validates the creation of the resource
-func (vault *BackupVault) ValidateCreate() (admission.Warnings, error) {
-	validations := vault.createValidations()
-	var temp any = vault
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (vault *BackupVault) ValidateDelete() (admission.Warnings, error) {
-	validations := vault.deleteValidations()
-	var temp any = vault
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (vault *BackupVault) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := vault.updateValidations()
-	var temp any = vault
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (vault *BackupVault) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){vault.validateResourceReferences, vault.validateOwnerReference, vault.validateSecretDestinations, vault.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (vault *BackupVault) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (vault *BackupVault) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateResourceReferences()
-		},
-		vault.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return vault.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (vault *BackupVault) validateConfigMapDestinations() (admission.Warnings, error) {
-	if vault.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.ConfigMapDestination
-	if vault.Spec.OperatorSpec.ConfigMaps != nil {
-		toValidate = []*genruntime.ConfigMapDestination{
-			vault.Spec.OperatorSpec.ConfigMaps.PrincipalId,
-		}
-	}
-	return configmaps.ValidateDestinations(vault, toValidate, vault.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (vault *BackupVault) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(vault)
-}
-
-// validateResourceReferences validates all resource references
-func (vault *BackupVault) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&vault.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (vault *BackupVault) validateSecretDestinations() (admission.Warnings, error) {
-	if vault.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(vault, nil, vault.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (vault *BackupVault) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*BackupVault)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, vault)
 }
 
 // AssignProperties_From_BackupVault populates our BackupVault from the provided source BackupVault
@@ -341,7 +210,7 @@ func (vault *BackupVault) AssignProperties_From_BackupVault(source *storage.Back
 	var spec BackupVault_Spec
 	err := spec.AssignProperties_From_BackupVault_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_BackupVault_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_BackupVault_Spec() to populate field Spec")
 	}
 	vault.Spec = spec
 
@@ -349,7 +218,7 @@ func (vault *BackupVault) AssignProperties_From_BackupVault(source *storage.Back
 	var status BackupVaultResource_STATUS
 	err = status.AssignProperties_From_BackupVaultResource_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_BackupVaultResource_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_BackupVaultResource_STATUS() to populate field Status")
 	}
 	vault.Status = status
 
@@ -367,7 +236,7 @@ func (vault *BackupVault) AssignProperties_To_BackupVault(destination *storage.B
 	var spec storage.BackupVault_Spec
 	err := vault.Spec.AssignProperties_To_BackupVault_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_BackupVault_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_BackupVault_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -375,7 +244,7 @@ func (vault *BackupVault) AssignProperties_To_BackupVault(destination *storage.B
 	var status storage.BackupVaultResource_STATUS
 	err = vault.Status.AssignProperties_To_BackupVaultResource_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_BackupVaultResource_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_BackupVaultResource_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -561,13 +430,13 @@ func (vault *BackupVault_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 	src = &storage.BackupVault_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = vault.AssignProperties_From_BackupVault_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -585,13 +454,13 @@ func (vault *BackupVault_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 	dst = &storage.BackupVault_Spec{}
 	err := vault.AssignProperties_To_BackupVault_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -608,7 +477,7 @@ func (vault *BackupVault_Spec) AssignProperties_From_BackupVault_Spec(source *st
 		var identity DppIdentityDetails
 		err := identity.AssignProperties_From_DppIdentityDetails(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DppIdentityDetails() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_DppIdentityDetails() to populate field Identity")
 		}
 		vault.Identity = &identity
 	} else {
@@ -623,7 +492,7 @@ func (vault *BackupVault_Spec) AssignProperties_From_BackupVault_Spec(source *st
 		var operatorSpec BackupVaultOperatorSpec
 		err := operatorSpec.AssignProperties_From_BackupVaultOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_BackupVaultOperatorSpec() to populate field OperatorSpec")
 		}
 		vault.OperatorSpec = &operatorSpec
 	} else {
@@ -643,7 +512,7 @@ func (vault *BackupVault_Spec) AssignProperties_From_BackupVault_Spec(source *st
 		var property BackupVaultSpec
 		err := property.AssignProperties_From_BackupVaultSpec(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultSpec() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_BackupVaultSpec() to populate field Properties")
 		}
 		vault.Properties = &property
 	} else {
@@ -670,7 +539,7 @@ func (vault *BackupVault_Spec) AssignProperties_To_BackupVault_Spec(destination 
 		var identity storage.DppIdentityDetails
 		err := vault.Identity.AssignProperties_To_DppIdentityDetails(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DppIdentityDetails() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_DppIdentityDetails() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -685,7 +554,7 @@ func (vault *BackupVault_Spec) AssignProperties_To_BackupVault_Spec(destination 
 		var operatorSpec storage.BackupVaultOperatorSpec
 		err := vault.OperatorSpec.AssignProperties_To_BackupVaultOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_BackupVaultOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -708,7 +577,7 @@ func (vault *BackupVault_Spec) AssignProperties_To_BackupVault_Spec(destination 
 		var property storage.BackupVaultSpec
 		err := vault.Properties.AssignProperties_To_BackupVaultSpec(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultSpec() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_BackupVaultSpec() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -784,13 +653,13 @@ func (resource *BackupVaultResource_STATUS) ConvertStatusFrom(source genruntime.
 	src = &storage.BackupVaultResource_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = resource.AssignProperties_From_BackupVaultResource_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -808,13 +677,13 @@ func (resource *BackupVaultResource_STATUS) ConvertStatusTo(destination genrunti
 	dst = &storage.BackupVaultResource_STATUS{}
 	err := resource.AssignProperties_To_BackupVaultResource_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -928,7 +797,7 @@ func (resource *BackupVaultResource_STATUS) AssignProperties_From_BackupVaultRes
 		var identity DppIdentityDetails_STATUS
 		err := identity.AssignProperties_From_DppIdentityDetails_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DppIdentityDetails_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_DppIdentityDetails_STATUS() to populate field Identity")
 		}
 		resource.Identity = &identity
 	} else {
@@ -946,7 +815,7 @@ func (resource *BackupVaultResource_STATUS) AssignProperties_From_BackupVaultRes
 		var property BackupVault_STATUS
 		err := property.AssignProperties_From_BackupVault_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BackupVault_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_BackupVault_STATUS() to populate field Properties")
 		}
 		resource.Properties = &property
 	} else {
@@ -958,7 +827,7 @@ func (resource *BackupVaultResource_STATUS) AssignProperties_From_BackupVaultRes
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		resource.SystemData = &systemDatum
 	} else {
@@ -994,7 +863,7 @@ func (resource *BackupVaultResource_STATUS) AssignProperties_To_BackupVaultResou
 		var identity storage.DppIdentityDetails_STATUS
 		err := resource.Identity.AssignProperties_To_DppIdentityDetails_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DppIdentityDetails_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_DppIdentityDetails_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1012,7 +881,7 @@ func (resource *BackupVaultResource_STATUS) AssignProperties_To_BackupVaultResou
 		var property storage.BackupVault_STATUS
 		err := resource.Properties.AssignProperties_To_BackupVault_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BackupVault_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_BackupVault_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -1024,7 +893,7 @@ func (resource *BackupVaultResource_STATUS) AssignProperties_To_BackupVaultResou
 		var systemDatum storage.SystemData_STATUS
 		err := resource.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1177,7 +1046,7 @@ func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source
 		var featureSetting FeatureSettings_STATUS
 		err := featureSetting.AssignProperties_From_FeatureSettings_STATUS(source.FeatureSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FeatureSettings_STATUS() to populate field FeatureSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_FeatureSettings_STATUS() to populate field FeatureSettings")
 		}
 		vault.FeatureSettings = &featureSetting
 	} else {
@@ -1197,7 +1066,7 @@ func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source
 		var monitoringSetting MonitoringSettings_STATUS
 		err := monitoringSetting.AssignProperties_From_MonitoringSettings_STATUS(source.MonitoringSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MonitoringSettings_STATUS() to populate field MonitoringSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_MonitoringSettings_STATUS() to populate field MonitoringSettings")
 		}
 		vault.MonitoringSettings = &monitoringSetting
 	} else {
@@ -1218,7 +1087,7 @@ func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source
 		var resourceMoveDetail ResourceMoveDetails_STATUS
 		err := resourceMoveDetail.AssignProperties_From_ResourceMoveDetails_STATUS(source.ResourceMoveDetails)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceMoveDetails_STATUS() to populate field ResourceMoveDetails")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceMoveDetails_STATUS() to populate field ResourceMoveDetails")
 		}
 		vault.ResourceMoveDetails = &resourceMoveDetail
 	} else {
@@ -1239,7 +1108,7 @@ func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source
 		var securitySetting SecuritySettings_STATUS
 		err := securitySetting.AssignProperties_From_SecuritySettings_STATUS(source.SecuritySettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecuritySettings_STATUS() to populate field SecuritySettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SecuritySettings_STATUS() to populate field SecuritySettings")
 		}
 		vault.SecuritySettings = &securitySetting
 	} else {
@@ -1255,7 +1124,7 @@ func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source
 			var storageSetting StorageSetting_STATUS
 			err := storageSetting.AssignProperties_From_StorageSetting_STATUS(&storageSettingItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_StorageSetting_STATUS() to populate field StorageSettings")
+				return eris.Wrap(err, "calling AssignProperties_From_StorageSetting_STATUS() to populate field StorageSettings")
 			}
 			storageSettingList[storageSettingIndex] = storageSetting
 		}
@@ -1278,7 +1147,7 @@ func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destinat
 		var featureSetting storage.FeatureSettings_STATUS
 		err := vault.FeatureSettings.AssignProperties_To_FeatureSettings_STATUS(&featureSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FeatureSettings_STATUS() to populate field FeatureSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_FeatureSettings_STATUS() to populate field FeatureSettings")
 		}
 		destination.FeatureSettings = &featureSetting
 	} else {
@@ -1298,7 +1167,7 @@ func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destinat
 		var monitoringSetting storage.MonitoringSettings_STATUS
 		err := vault.MonitoringSettings.AssignProperties_To_MonitoringSettings_STATUS(&monitoringSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MonitoringSettings_STATUS() to populate field MonitoringSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_MonitoringSettings_STATUS() to populate field MonitoringSettings")
 		}
 		destination.MonitoringSettings = &monitoringSetting
 	} else {
@@ -1318,7 +1187,7 @@ func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destinat
 		var resourceMoveDetail storage.ResourceMoveDetails_STATUS
 		err := vault.ResourceMoveDetails.AssignProperties_To_ResourceMoveDetails_STATUS(&resourceMoveDetail)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceMoveDetails_STATUS() to populate field ResourceMoveDetails")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceMoveDetails_STATUS() to populate field ResourceMoveDetails")
 		}
 		destination.ResourceMoveDetails = &resourceMoveDetail
 	} else {
@@ -1338,7 +1207,7 @@ func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destinat
 		var securitySetting storage.SecuritySettings_STATUS
 		err := vault.SecuritySettings.AssignProperties_To_SecuritySettings_STATUS(&securitySetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecuritySettings_STATUS() to populate field SecuritySettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SecuritySettings_STATUS() to populate field SecuritySettings")
 		}
 		destination.SecuritySettings = &securitySetting
 	} else {
@@ -1354,7 +1223,7 @@ func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destinat
 			var storageSetting storage.StorageSetting_STATUS
 			err := storageSettingItem.AssignProperties_To_StorageSetting_STATUS(&storageSetting)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_StorageSetting_STATUS() to populate field StorageSettings")
+				return eris.Wrap(err, "calling AssignProperties_To_StorageSetting_STATUS() to populate field StorageSettings")
 			}
 			storageSettingList[storageSettingIndex] = storageSetting
 		}
@@ -1412,7 +1281,7 @@ func (operator *BackupVaultOperatorSpec) AssignProperties_From_BackupVaultOperat
 		var configMap BackupVaultOperatorConfigMaps
 		err := configMap.AssignProperties_From_BackupVaultOperatorConfigMaps(source.ConfigMaps)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_From_BackupVaultOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		operator.ConfigMaps = &configMap
 	} else {
@@ -1469,7 +1338,7 @@ func (operator *BackupVaultOperatorSpec) AssignProperties_To_BackupVaultOperator
 		var configMap storage.BackupVaultOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_BackupVaultOperatorConfigMaps(&configMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_To_BackupVaultOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		destination.ConfigMaps = &configMap
 	} else {
@@ -1638,7 +1507,7 @@ func (vault *BackupVaultSpec) AssignProperties_From_BackupVaultSpec(source *stor
 		var featureSetting FeatureSettings
 		err := featureSetting.AssignProperties_From_FeatureSettings(source.FeatureSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FeatureSettings() to populate field FeatureSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_FeatureSettings() to populate field FeatureSettings")
 		}
 		vault.FeatureSettings = &featureSetting
 	} else {
@@ -1650,7 +1519,7 @@ func (vault *BackupVaultSpec) AssignProperties_From_BackupVaultSpec(source *stor
 		var monitoringSetting MonitoringSettings
 		err := monitoringSetting.AssignProperties_From_MonitoringSettings(source.MonitoringSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MonitoringSettings() to populate field MonitoringSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_MonitoringSettings() to populate field MonitoringSettings")
 		}
 		vault.MonitoringSettings = &monitoringSetting
 	} else {
@@ -1662,7 +1531,7 @@ func (vault *BackupVaultSpec) AssignProperties_From_BackupVaultSpec(source *stor
 		var securitySetting SecuritySettings
 		err := securitySetting.AssignProperties_From_SecuritySettings(source.SecuritySettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecuritySettings() to populate field SecuritySettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SecuritySettings() to populate field SecuritySettings")
 		}
 		vault.SecuritySettings = &securitySetting
 	} else {
@@ -1678,7 +1547,7 @@ func (vault *BackupVaultSpec) AssignProperties_From_BackupVaultSpec(source *stor
 			var storageSetting StorageSetting
 			err := storageSetting.AssignProperties_From_StorageSetting(&storageSettingItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_StorageSetting() to populate field StorageSettings")
+				return eris.Wrap(err, "calling AssignProperties_From_StorageSetting() to populate field StorageSettings")
 			}
 			storageSettingList[storageSettingIndex] = storageSetting
 		}
@@ -1701,7 +1570,7 @@ func (vault *BackupVaultSpec) AssignProperties_To_BackupVaultSpec(destination *s
 		var featureSetting storage.FeatureSettings
 		err := vault.FeatureSettings.AssignProperties_To_FeatureSettings(&featureSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FeatureSettings() to populate field FeatureSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_FeatureSettings() to populate field FeatureSettings")
 		}
 		destination.FeatureSettings = &featureSetting
 	} else {
@@ -1713,7 +1582,7 @@ func (vault *BackupVaultSpec) AssignProperties_To_BackupVaultSpec(destination *s
 		var monitoringSetting storage.MonitoringSettings
 		err := vault.MonitoringSettings.AssignProperties_To_MonitoringSettings(&monitoringSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MonitoringSettings() to populate field MonitoringSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_MonitoringSettings() to populate field MonitoringSettings")
 		}
 		destination.MonitoringSettings = &monitoringSetting
 	} else {
@@ -1725,7 +1594,7 @@ func (vault *BackupVaultSpec) AssignProperties_To_BackupVaultSpec(destination *s
 		var securitySetting storage.SecuritySettings
 		err := vault.SecuritySettings.AssignProperties_To_SecuritySettings(&securitySetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecuritySettings() to populate field SecuritySettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SecuritySettings() to populate field SecuritySettings")
 		}
 		destination.SecuritySettings = &securitySetting
 	} else {
@@ -1741,7 +1610,7 @@ func (vault *BackupVaultSpec) AssignProperties_To_BackupVaultSpec(destination *s
 			var storageSetting storage.StorageSetting
 			err := storageSettingItem.AssignProperties_To_StorageSetting(&storageSetting)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_StorageSetting() to populate field StorageSettings")
+				return eris.Wrap(err, "calling AssignProperties_To_StorageSetting() to populate field StorageSettings")
 			}
 			storageSettingList[storageSettingIndex] = storageSetting
 		}
@@ -2239,7 +2108,7 @@ func (settings *FeatureSettings) AssignProperties_From_FeatureSettings(source *s
 		var crossSubscriptionRestoreSetting CrossSubscriptionRestoreSettings
 		err := crossSubscriptionRestoreSetting.AssignProperties_From_CrossSubscriptionRestoreSettings(source.CrossSubscriptionRestoreSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CrossSubscriptionRestoreSettings() to populate field CrossSubscriptionRestoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_CrossSubscriptionRestoreSettings() to populate field CrossSubscriptionRestoreSettings")
 		}
 		settings.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
 	} else {
@@ -2260,7 +2129,7 @@ func (settings *FeatureSettings) AssignProperties_To_FeatureSettings(destination
 		var crossSubscriptionRestoreSetting storage.CrossSubscriptionRestoreSettings
 		err := settings.CrossSubscriptionRestoreSettings.AssignProperties_To_CrossSubscriptionRestoreSettings(&crossSubscriptionRestoreSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CrossSubscriptionRestoreSettings() to populate field CrossSubscriptionRestoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_CrossSubscriptionRestoreSettings() to populate field CrossSubscriptionRestoreSettings")
 		}
 		destination.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
 	} else {
@@ -2321,7 +2190,7 @@ func (settings *FeatureSettings_STATUS) AssignProperties_From_FeatureSettings_ST
 		var crossSubscriptionRestoreSetting CrossSubscriptionRestoreSettings_STATUS
 		err := crossSubscriptionRestoreSetting.AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS(source.CrossSubscriptionRestoreSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS() to populate field CrossSubscriptionRestoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS() to populate field CrossSubscriptionRestoreSettings")
 		}
 		settings.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
 	} else {
@@ -2342,7 +2211,7 @@ func (settings *FeatureSettings_STATUS) AssignProperties_To_FeatureSettings_STAT
 		var crossSubscriptionRestoreSetting storage.CrossSubscriptionRestoreSettings_STATUS
 		err := settings.CrossSubscriptionRestoreSettings.AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS(&crossSubscriptionRestoreSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS() to populate field CrossSubscriptionRestoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS() to populate field CrossSubscriptionRestoreSettings")
 		}
 		destination.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
 	} else {
@@ -2422,7 +2291,7 @@ func (settings *MonitoringSettings) AssignProperties_From_MonitoringSettings(sou
 		var azureMonitorAlertSetting AzureMonitorAlertSettings
 		err := azureMonitorAlertSetting.AssignProperties_From_AzureMonitorAlertSettings(source.AzureMonitorAlertSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureMonitorAlertSettings() to populate field AzureMonitorAlertSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureMonitorAlertSettings() to populate field AzureMonitorAlertSettings")
 		}
 		settings.AzureMonitorAlertSettings = &azureMonitorAlertSetting
 	} else {
@@ -2443,7 +2312,7 @@ func (settings *MonitoringSettings) AssignProperties_To_MonitoringSettings(desti
 		var azureMonitorAlertSetting storage.AzureMonitorAlertSettings
 		err := settings.AzureMonitorAlertSettings.AssignProperties_To_AzureMonitorAlertSettings(&azureMonitorAlertSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureMonitorAlertSettings() to populate field AzureMonitorAlertSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureMonitorAlertSettings() to populate field AzureMonitorAlertSettings")
 		}
 		destination.AzureMonitorAlertSettings = &azureMonitorAlertSetting
 	} else {
@@ -2504,7 +2373,7 @@ func (settings *MonitoringSettings_STATUS) AssignProperties_From_MonitoringSetti
 		var azureMonitorAlertSetting AzureMonitorAlertSettings_STATUS
 		err := azureMonitorAlertSetting.AssignProperties_From_AzureMonitorAlertSettings_STATUS(source.AzureMonitorAlertSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureMonitorAlertSettings_STATUS() to populate field AzureMonitorAlertSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureMonitorAlertSettings_STATUS() to populate field AzureMonitorAlertSettings")
 		}
 		settings.AzureMonitorAlertSettings = &azureMonitorAlertSetting
 	} else {
@@ -2525,7 +2394,7 @@ func (settings *MonitoringSettings_STATUS) AssignProperties_To_MonitoringSetting
 		var azureMonitorAlertSetting storage.AzureMonitorAlertSettings_STATUS
 		err := settings.AzureMonitorAlertSettings.AssignProperties_To_AzureMonitorAlertSettings_STATUS(&azureMonitorAlertSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureMonitorAlertSettings_STATUS() to populate field AzureMonitorAlertSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureMonitorAlertSettings_STATUS() to populate field AzureMonitorAlertSettings")
 		}
 		destination.AzureMonitorAlertSettings = &azureMonitorAlertSetting
 	} else {
@@ -2748,7 +2617,7 @@ func (settings *SecuritySettings) AssignProperties_From_SecuritySettings(source 
 		var immutabilitySetting ImmutabilitySettings
 		err := immutabilitySetting.AssignProperties_From_ImmutabilitySettings(source.ImmutabilitySettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ImmutabilitySettings() to populate field ImmutabilitySettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ImmutabilitySettings() to populate field ImmutabilitySettings")
 		}
 		settings.ImmutabilitySettings = &immutabilitySetting
 	} else {
@@ -2760,7 +2629,7 @@ func (settings *SecuritySettings) AssignProperties_From_SecuritySettings(source 
 		var softDeleteSetting SoftDeleteSettings
 		err := softDeleteSetting.AssignProperties_From_SoftDeleteSettings(source.SoftDeleteSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SoftDeleteSettings() to populate field SoftDeleteSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SoftDeleteSettings() to populate field SoftDeleteSettings")
 		}
 		settings.SoftDeleteSettings = &softDeleteSetting
 	} else {
@@ -2781,7 +2650,7 @@ func (settings *SecuritySettings) AssignProperties_To_SecuritySettings(destinati
 		var immutabilitySetting storage.ImmutabilitySettings
 		err := settings.ImmutabilitySettings.AssignProperties_To_ImmutabilitySettings(&immutabilitySetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ImmutabilitySettings() to populate field ImmutabilitySettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ImmutabilitySettings() to populate field ImmutabilitySettings")
 		}
 		destination.ImmutabilitySettings = &immutabilitySetting
 	} else {
@@ -2793,7 +2662,7 @@ func (settings *SecuritySettings) AssignProperties_To_SecuritySettings(destinati
 		var softDeleteSetting storage.SoftDeleteSettings
 		err := settings.SoftDeleteSettings.AssignProperties_To_SoftDeleteSettings(&softDeleteSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SoftDeleteSettings() to populate field SoftDeleteSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SoftDeleteSettings() to populate field SoftDeleteSettings")
 		}
 		destination.SoftDeleteSettings = &softDeleteSetting
 	} else {
@@ -2868,7 +2737,7 @@ func (settings *SecuritySettings_STATUS) AssignProperties_From_SecuritySettings_
 		var immutabilitySetting ImmutabilitySettings_STATUS
 		err := immutabilitySetting.AssignProperties_From_ImmutabilitySettings_STATUS(source.ImmutabilitySettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ImmutabilitySettings_STATUS() to populate field ImmutabilitySettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ImmutabilitySettings_STATUS() to populate field ImmutabilitySettings")
 		}
 		settings.ImmutabilitySettings = &immutabilitySetting
 	} else {
@@ -2880,7 +2749,7 @@ func (settings *SecuritySettings_STATUS) AssignProperties_From_SecuritySettings_
 		var softDeleteSetting SoftDeleteSettings_STATUS
 		err := softDeleteSetting.AssignProperties_From_SoftDeleteSettings_STATUS(source.SoftDeleteSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SoftDeleteSettings_STATUS() to populate field SoftDeleteSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SoftDeleteSettings_STATUS() to populate field SoftDeleteSettings")
 		}
 		settings.SoftDeleteSettings = &softDeleteSetting
 	} else {
@@ -2901,7 +2770,7 @@ func (settings *SecuritySettings_STATUS) AssignProperties_To_SecuritySettings_ST
 		var immutabilitySetting storage.ImmutabilitySettings_STATUS
 		err := settings.ImmutabilitySettings.AssignProperties_To_ImmutabilitySettings_STATUS(&immutabilitySetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ImmutabilitySettings_STATUS() to populate field ImmutabilitySettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ImmutabilitySettings_STATUS() to populate field ImmutabilitySettings")
 		}
 		destination.ImmutabilitySettings = &immutabilitySetting
 	} else {
@@ -2913,7 +2782,7 @@ func (settings *SecuritySettings_STATUS) AssignProperties_To_SecuritySettings_ST
 		var softDeleteSetting storage.SoftDeleteSettings_STATUS
 		err := settings.SoftDeleteSettings.AssignProperties_To_SoftDeleteSettings_STATUS(&softDeleteSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SoftDeleteSettings_STATUS() to populate field SoftDeleteSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SoftDeleteSettings_STATUS() to populate field SoftDeleteSettings")
 		}
 		destination.SoftDeleteSettings = &softDeleteSetting
 	} else {

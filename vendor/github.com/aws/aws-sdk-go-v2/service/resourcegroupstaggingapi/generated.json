@@ -13,6 +13,7 @@
         "api_op_GetResources.go",
         "api_op_GetTagKeys.go",
         "api_op_GetTagValues.go",
+        "api_op_ListRequiredTags.go",
         "api_op_StartReportCreation.go",
         "api_op_TagResources.go",
         "api_op_UntagResources.go",
@@ -35,7 +36,7 @@
         "types/types.go",
         "validators.go"
     ],
-    "go": "1.22",
+    "go": "1.23",
     "module": "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi",
     "unstable": false
 }

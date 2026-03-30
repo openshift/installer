@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package esx
@@ -1708,7 +1708,7 @@ var HostSystem = mo.HostSystem{
 			SslThumbprint:         "",
 			Product:               &HostConfigInfo.Product,
 			VmotionEnabled:        false,
-			FaultToleranceEnabled: types.NewBool(true),
+			FaultToleranceEnabled: true,
 			FeatureVersion:        nil,
 			AgentVmDatastore:      (*types.ManagedObjectReference)(nil),
 			AgentVmNetwork:        (*types.ManagedObjectReference)(nil),

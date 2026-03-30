@@ -21,7 +21,7 @@ import (
 
 	"github.com/pkg/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -45,7 +45,7 @@ func GetVSphereClusterFromVMwareMachine(ctx context.Context, c client.Client, ma
 		return nil, err
 	}
 
-	if cluster.Spec.InfrastructureRef == nil {
+	if !cluster.Spec.InfrastructureRef.IsDefined() {
 		return nil, errors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s: Cluster.spec.infrastructureRef not yet set",
 			machine.Namespace, machine.Name)
 	}
@@ -75,7 +75,7 @@ func GetVSphereClusterFromVSphereMachine(ctx context.Context, c client.Client, m
 		return nil, err
 	}
 
-	if cluster.Spec.InfrastructureRef == nil {
+	if !cluster.Spec.InfrastructureRef.IsDefined() {
 		return nil, errors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s: Cluster.spec.infrastructureRef not yet set",
 			machine.Namespace, machine.Name)
 	}

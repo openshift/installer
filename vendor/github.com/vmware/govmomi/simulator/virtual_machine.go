@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -30,6 +30,7 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
+	"github.com/vmware/govmomi/vmdk"
 )
 
 type VirtualMachine struct {
@@ -127,7 +128,7 @@ func NewVirtualMachine(ctx *Context, parent types.ManagedObjectReference, spec *
 
 	defaults := types.VirtualMachineConfigSpec{
 		NumCPUs:           1,
-		NumCoresPerSocket: 1,
+		NumCoresPerSocket: types.NewInt32(1),
 		MemoryMB:          32,
 		Uuid:              vm.uid.String(),
 		InstanceUuid:      newUUID(strings.ToUpper(spec.Files.VmPathName)),
@@ -141,8 +142,8 @@ func NewVirtualMachine(ctx *Context, parent types.ManagedObjectReference, spec *
 		},
 	}
 
-	// Add the default devices
-	defaults.DeviceChange, _ = object.VirtualDeviceList(esx.VirtualDevice).ConfigSpec(types.VirtualDeviceConfigSpecOperationAdd)
+	// Add the default devices.
+	vm.addDefaultDevices(&defaults, spec)
 
 	err := vm.configure(ctx, &defaults)
 	if err != nil {
@@ -153,7 +154,7 @@ func NewVirtualMachine(ctx *Context, parent types.ManagedObjectReference, spec *
 	vm.Runtime.ConnectionState = types.VirtualMachineConnectionStateConnected
 	vm.Summary.Runtime = vm.Runtime
 
-	vm.Capability.ChangeTrackingSupported = types.NewBool(changeTrackingSupported(spec))
+	vm.Capability.ChangeTrackingSupported = changeTrackingSupported(spec)
 
 	vm.Summary.QuickStats.GuestHeartbeatStatus = types.ManagedEntityStatusGray
 	vm.Summary.OverallStatus = types.ManagedEntityStatusGreen
@@ -165,6 +166,98 @@ func NewVirtualMachine(ctx *Context, parent types.ManagedObjectReference, spec *
 	folderPutChild(ctx, f, vm)
 
 	return vm, nil
+}
+
+func (o VirtualMachine) addDefaultDevices(
+	dst, src *types.VirtualMachineConfigSpec) {
+
+	var (
+		oldControllerKeysToNew   = map[int32]int32{}
+		existingDefaultDeviceMap = map[int32]struct{}{}
+	)
+
+	for i := range src.DeviceChange {
+		var (
+			dc     = src.DeviceChange[i]
+			vd     = dc.GetVirtualDeviceConfigSpec()
+			de     = vd.Device.GetVirtualDevice()
+			oldKey = de.Key
+		)
+
+		fn := func(bvd types.BaseVirtualDevice) {
+			d := bvd.GetVirtualDevice()
+			vd.Device = bvd
+			existingDefaultDeviceMap[d.Key] = struct{}{}
+			dst.DeviceChange = append(dst.DeviceChange, dc)
+			if _, ok := bvd.(types.BaseVirtualController); ok {
+				oldControllerKeysToNew[oldKey] = d.Key
+			}
+		}
+
+		switch td := vd.Device.(type) {
+		case *types.VirtualIDEController:
+			switch td.BusNumber {
+			case 0:
+				fn(esx.VirtualMachineDefaultDeviceIDEControllerBus0)
+			case 1:
+				fn(esx.VirtualMachineDefaultDeviceIDEControllerBus1)
+			}
+		case *types.VirtualPS2Controller:
+			fn(esx.VirtualMachineDefaultDevicePS2Controller)
+		case *types.VirtualPCIController:
+			fn(esx.VirtualMachineDefaultDevicePCIController)
+		case *types.VirtualSIOController:
+			fn(esx.VirtualMachineDefaultDeviceSIOController)
+		case *types.VirtualKeyboard:
+			fn(esx.VirtualMachineDefaultDeviceVirtualKeyboard)
+		case *types.VirtualPointingDevice:
+			fn(esx.VirtualMachineDefaultDeviceVirtualPointingDevice)
+		case *types.VirtualMachineVideoCard:
+			fn(esx.VirtualMachineDefaultDeviceVideoCard)
+		case *types.VirtualMachineVMCIDevice:
+			fn(esx.VirtualMachineDefaultDeviceVMCIDevice)
+		}
+	}
+
+	// Add any of the missing default devices.
+	for i := range esx.VirtualDevice {
+		vd := esx.VirtualDevice[i].GetVirtualDevice()
+		if _, ok := existingDefaultDeviceMap[vd.Key]; !ok {
+			dst.DeviceChange = append(
+				dst.DeviceChange,
+				&types.VirtualDeviceConfigSpec{
+					Operation: types.VirtualDeviceConfigSpecOperationAdd,
+					Device:    esx.VirtualDevice[i],
+				})
+		}
+	}
+
+	// Remove the default devices from the source config spec so they are not
+	// added twice.
+	src.DeviceChange = slices.DeleteFunc(
+		src.DeviceChange,
+		func(bdc types.BaseVirtualDeviceConfigSpec) bool {
+			var (
+				vd = bdc.GetVirtualDeviceConfigSpec()
+				de = vd.Device.GetVirtualDevice()
+			)
+			_, ok := existingDefaultDeviceMap[de.Key]
+			return ok
+		})
+
+	// Update the source config spec so any children point to any updated
+	// controller keys.
+	for i := range src.DeviceChange {
+		var (
+			dc = src.DeviceChange[i]
+			vd = dc.GetVirtualDeviceConfigSpec()
+			de = vd.Device.GetVirtualDevice()
+			ck = de.ControllerKey
+		)
+		if nk, ok := oldControllerKeysToNew[ck]; ok {
+			de.ControllerKey = nk
+		}
+	}
 }
 
 func (o *VirtualMachine) RenameTask(ctx *Context, r *types.Rename_Task) soap.HasFault {
@@ -324,7 +417,7 @@ func (vm *VirtualMachine) apply(spec *types.VirtualMachineConfigSpec) {
 		vm.Summary.Config.NumCpu = vm.Config.Hardware.NumCPU
 	}
 
-	if spec.NumCoresPerSocket != 0 {
+	if spec.NumCoresPerSocket != nil {
 		vm.Config.Hardware.NumCoresPerSocket = spec.NumCoresPerSocket
 	}
 
@@ -598,6 +691,10 @@ func (vm *VirtualMachine) configure(ctx *Context, spec *types.VirtualMachineConf
 		}
 	}
 
+	if err := vm.updateTagSpec(ctx, spec.TagSpecs); err != nil {
+		return err
+	}
+
 	return vm.configureDevices(ctx, spec)
 }
 
@@ -762,13 +859,17 @@ func (vm *VirtualMachine) updateDiskLayouts(ctx *Context) types.BaseMethodFault 
 	disks := object.VirtualDeviceList(vm.Config.Hardware.Device).SelectByType((*types.VirtualDisk)(nil))
 	for _, disk := range disks {
 		disk := disk.(*types.VirtualDisk)
-		diskBacking := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo)
+		diskBacking, ok := disk.Backing.(types.BaseVirtualDeviceFileBackingInfo)
+		if !ok {
+			continue
+		}
 
 		diskLayout := &types.VirtualMachineFileLayoutDiskLayout{Key: disk.Key}
 		diskLayoutEx := &types.VirtualMachineFileLayoutExDiskLayout{Key: disk.Key}
 
 		// Iterate through disk and its parents
-		for {
+		for diskBacking != nil {
+
 			dFileName := diskBacking.GetVirtualDeviceFileBackingInfo().FileName
 
 			var fileKeys []int32
@@ -799,10 +900,39 @@ func (vm *VirtualMachine) updateDiskLayouts(ctx *Context) types.BaseMethodFault 
 				FileKey: fileKeys,
 			})
 
-			if parent := diskBacking.Parent; parent != nil {
-				diskBacking = parent
-			} else {
-				break
+			switch tBack := diskBacking.(type) {
+			case *types.VirtualDiskFlatVer1BackingInfo:
+				if tBack.Parent == nil {
+					diskBacking = nil
+				} else {
+					diskBacking = tBack.Parent
+				}
+			case *types.VirtualDiskFlatVer2BackingInfo:
+				if tBack.Parent == nil {
+					diskBacking = nil
+				} else {
+					diskBacking = tBack.Parent
+				}
+			case *types.VirtualDiskSeSparseBackingInfo:
+				if tBack.Parent == nil {
+					diskBacking = nil
+				} else {
+					diskBacking = tBack.Parent
+				}
+			case *types.VirtualDiskSparseVer1BackingInfo:
+				if tBack.Parent == nil {
+					diskBacking = nil
+				} else {
+					diskBacking = tBack.Parent
+				}
+			case *types.VirtualDiskSparseVer2BackingInfo:
+				if tBack.Parent == nil {
+					diskBacking = nil
+				} else {
+					diskBacking = tBack.Parent
+				}
+			default:
+				diskBacking = nil
 			}
 		}
 
@@ -1047,9 +1177,20 @@ func (vm *VirtualMachine) createFile(ctx *Context, spec string, name string, reg
 
 	_, err := os.Stat(file)
 	if err == nil {
-		fault := &types.FileAlreadyExists{FileFault: types.FileFault{File: file}}
-		log.Printf("%T: %s", fault, file)
-		return nil, fault
+		switch path.Ext(file) {
+		case ".nvram":
+			f, err := os.Open(file)
+			if err != nil {
+				return nil, &types.FileFault{
+					File: file,
+				}
+			}
+			return f, nil
+		default:
+			fault := &types.FileAlreadyExists{FileFault: types.FileFault{File: file}}
+			log.Printf("%T: %s", fault, file)
+			return nil, fault
+		}
 	}
 
 	// Create parent directory if needed
@@ -1287,6 +1428,47 @@ func (vm *VirtualMachine) configureDevice(
 		var net types.ManagedObjectReference
 		var name string
 
+		if b, ok := d.Backing.(*types.VirtualEthernetCardOpaqueNetworkBackingInfo); ok &&
+			b.OpaqueNetworkType == "nsx.LogicalSwitch" {
+
+			// For NSX opaque networks, replace the backing with the actual DVPG.
+			var dvpg *DistributedVirtualPortgroup
+
+			var find func(types.ManagedObjectReference)
+			find = func(child types.ManagedObjectReference) {
+				d, ok := ctx.Map.Get(child).(*DistributedVirtualPortgroup)
+				if ok && d.Config.LogicalSwitchUuid == b.OpaqueNetworkId {
+					dvpg = d
+					return
+				}
+				walk(ctx.Map.Get(child), find)
+			}
+			f := ctx.Map.getEntityDatacenter(vm).NetworkFolder
+			walk(ctx.Map.Get(f), find) // search in NetworkFolder and any sub folders
+
+			if dvpg == nil {
+				log.Printf("DPVG for NSX LogicalSwitch %s cannot be found", b.OpaqueNetworkId)
+				fault := new(types.NotFound)
+				fault.FaultMessage = []types.LocalizableMessage{
+					{
+						Key: "com.vmware.nsx.attachFailed",
+						Message: fmt.Sprintf("The operation failed due to An error occurred during host configuration: "+
+							"Failed to attach VIF: The requested object : LogicalSwitch/%s could not be found. Object identifiers are case sensitive.", b.OpaqueNetworkId),
+					},
+				}
+				return fault
+			}
+
+			dvs := ctx.Map.Get(*dvpg.Config.DistributedVirtualSwitch).(*DistributedVirtualSwitch)
+
+			d.Backing = &types.VirtualEthernetCardDistributedVirtualPortBackingInfo{
+				Port: types.DistributedVirtualSwitchPortConnection{
+					PortgroupKey: dvpg.Key,
+					SwitchUuid:   dvs.Uuid,
+				},
+			}
+		}
+
 		switch b := d.Backing.(type) {
 		case *types.VirtualEthernetCardNetworkBackingInfo:
 			name = b.DeviceName
@@ -1351,6 +1533,45 @@ func (vm *VirtualMachine) configureDevice(
 			}
 		}
 
+		getCryptoKeyID := func(desc *vmdk.Descriptor) *types.CryptoKeyId {
+			if desc == nil {
+				return nil
+			}
+			if ek := desc.EncryptionKeys; ek != nil {
+				if l := ek.List; len(l) > 0 {
+					if p := l[0].Pair; p != nil {
+						if l := p.Locker; l != nil {
+							if i := l.Indirect; i != nil {
+								var (
+									keyID      = i.FQID.KeyID
+									providerID = i.FQID.KeyServerID
+								)
+
+								if keyID == "" && providerID == "" {
+									return nil
+								}
+
+								cki := &types.CryptoKeyId{
+									KeyId: i.FQID.KeyID,
+								}
+
+								if providerID != "" {
+									cki.ProviderId = &types.KeyProviderId{
+										Id: providerID,
+									}
+								}
+
+								return cki
+							}
+						}
+					}
+				}
+			}
+			return nil
+		}
+
+		var setCryptoKeyID func(desc *vmdk.Descriptor)
+
 		switch b := d.Backing.(type) {
 		case *types.VirtualDiskSparseVer2BackingInfo:
 			// Sparse disk creation not supported in ESX
@@ -1360,20 +1581,71 @@ func (vm *VirtualMachine) configureDevice(
 				},
 			}
 		case types.BaseVirtualDeviceFileBackingInfo:
-			parent := ""
+			var (
+				parent string
+				crypto types.BaseCryptoSpec
+			)
 
 			switch backing := d.Backing.(type) {
 			case *types.VirtualDiskFlatVer2BackingInfo:
 				if backing.Parent != nil {
 					parent = backing.Parent.FileName
 				}
+				if spec.Backing != nil {
+					crypto = spec.Backing.Crypto
+					switch tCrypto := crypto.(type) {
+					case *types.CryptoSpecEncrypt:
+						backing.KeyId = &tCrypto.CryptoKeyId
+					case *types.CryptoSpecShallowRecrypt:
+						backing.KeyId = &tCrypto.NewKeyId
+					case *types.CryptoSpecDeepRecrypt:
+						backing.KeyId = &tCrypto.NewKeyId
+					case *types.CryptoSpecDecrypt:
+						backing.KeyId = nil
+					}
+				}
+				setCryptoKeyID = func(desc *vmdk.Descriptor) {
+					backing.KeyId = getCryptoKeyID(desc)
+				}
 			case *types.VirtualDiskSeSparseBackingInfo:
 				if backing.Parent != nil {
 					parent = backing.Parent.FileName
 				}
+				if spec.Backing != nil {
+					crypto = spec.Backing.Crypto
+					switch tCrypto := crypto.(type) {
+					case *types.CryptoSpecEncrypt:
+						backing.KeyId = &tCrypto.CryptoKeyId
+					case *types.CryptoSpecShallowRecrypt:
+						backing.KeyId = &tCrypto.NewKeyId
+					case *types.CryptoSpecDeepRecrypt:
+						backing.KeyId = &tCrypto.NewKeyId
+					case *types.CryptoSpecDecrypt:
+						backing.KeyId = nil
+					}
+				}
+				setCryptoKeyID = func(desc *vmdk.Descriptor) {
+					backing.KeyId = getCryptoKeyID(desc)
+				}
 			case *types.VirtualDiskSparseVer2BackingInfo:
 				if backing.Parent != nil {
 					parent = backing.Parent.FileName
+				}
+				if spec.Backing != nil {
+					crypto = spec.Backing.Crypto
+					switch tCrypto := crypto.(type) {
+					case *types.CryptoSpecEncrypt:
+						backing.KeyId = &tCrypto.CryptoKeyId
+					case *types.CryptoSpecShallowRecrypt:
+						backing.KeyId = &tCrypto.NewKeyId
+					case *types.CryptoSpecDeepRecrypt:
+						backing.KeyId = &tCrypto.NewKeyId
+					case *types.CryptoSpecDecrypt:
+						backing.KeyId = nil
+					}
+				}
+				setCryptoKeyID = func(desc *vmdk.Descriptor) {
+					backing.KeyId = getCryptoKeyID(desc)
 				}
 			}
 
@@ -1407,13 +1679,20 @@ func (vm *VirtualMachine) configureDevice(
 				info.FileName = filename
 			}
 
-			err := vdmCreateVirtualDisk(ctx, spec.FileOperation, &types.CreateVirtualDisk_Task{
+			desc, err := vdmCreateVirtualDisk(ctx, spec.FileOperation, &types.CreateVirtualDisk_Task{
 				Datacenter: &dc.Self,
 				Name:       info.FileName,
-				Spec:       &types.FileBackedVirtualDiskSpec{CapacityKb: x.CapacityInKB},
+				Spec: &types.FileBackedVirtualDiskSpec{
+					CapacityKb: x.CapacityInKB,
+					Crypto:     crypto,
+				},
 			})
 			if err != nil {
 				return err
+			}
+
+			if desc != nil && setCryptoKeyID != nil {
+				setCryptoKeyID(desc)
 			}
 
 			ctx.Update(vm, []types.PropertyChange{
@@ -1457,7 +1736,10 @@ func (vm *VirtualMachine) configureDevice(
 						*prop = types.NewBool(false)
 					}
 				}
-				disk.Uuid = virtualDiskUUID(&dc.Self, info.FileName)
+
+				if disk.Uuid == "" {
+					disk.Uuid = virtualDiskUUID(&dc.Self, info.FileName)
+				}
 			}
 		}
 	case *types.VirtualCdrom:
@@ -2174,7 +2456,7 @@ func (vm *VirtualMachine) UpgradeVMTask(ctx *Context, req *types.UpgradeVM_Task)
 							supportedHardwareVersions[cod.Key] = struct{}{}
 						}
 						if latestHardwareVersion == "" {
-							if def := cod.DefaultConfigOption; def != nil && *def {
+							if def := cod.DefaultConfigOption; def {
 								latestHardwareVersion = cod.Key
 							}
 						}
@@ -2435,6 +2717,8 @@ func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soa
 				// Leave FileName empty so CreateVM will just create a new one under VmPathName
 				disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo).FileName = ""
 				disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo).Parent = nil
+				// Clear UUID so a new unique UUID is generated for the cloned disk
+				disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo).Uuid = ""
 			}
 
 			config.DeviceChange = append(config.DeviceChange, &types.VirtualDeviceConfigSpec{
@@ -2580,6 +2864,19 @@ func (vm *VirtualMachine) customize(ctx *Context) {
 		{Name: "config.tools.pendingCustomization", Val: ""},
 	}
 
+	if len(vm.Guest.Net) != len(vm.imc.NicSettingMap) {
+		ctx.postEvent(&types.CustomizationNetworkSetupFailed{
+			CustomizationFailed: types.CustomizationFailed{
+				CustomizationEvent: event,
+				Reason:             "NicSettingMismatch",
+			},
+		})
+
+		vm.imc = nil
+		ctx.Update(vm, changes)
+		return
+	}
+
 	hostname := ""
 	address := ""
 
@@ -2722,7 +3019,7 @@ func (vm *VirtualMachine) CreateSnapshotExTask(ctx *Context, req *types.CreateSn
 
 		snapshot := &VirtualMachineSnapshot{}
 		snapshot.Vm = vm.Reference()
-		snapshot.Config = *vm.Config
+		snapshot.Config = copyConfigFromVmConfig(vm.Config)
 		snapshot.DataSets = copyDataSetsForVmClone(vm.DataSets)
 
 		ctx.Map.Put(snapshot)
@@ -2732,6 +3029,11 @@ func (vm *VirtualMachine) CreateSnapshotExTask(ctx *Context, req *types.CreateSn
 			quiesced = true
 		}
 
+		snapPowerState := vm.Runtime.PowerState
+		if !req.Memory {
+			snapPowerState = types.VirtualMachinePowerStatePoweredOff
+		}
+
 		treeItem := types.VirtualMachineSnapshotTree{
 			Snapshot:        snapshot.Self,
 			Vm:              snapshot.Vm,
@@ -2739,7 +3041,7 @@ func (vm *VirtualMachine) CreateSnapshotExTask(ctx *Context, req *types.CreateSn
 			Description:     req.Description,
 			Id:              atomic.AddInt32(&vm.sid, 1),
 			CreateTime:      time.Now(),
-			State:           vm.Runtime.PowerState,
+			State:           snapPowerState,
 			Quiesced:        quiesced,
 			BackupManifest:  "",
 			ReplaySupported: types.NewBool(false),
@@ -3180,4 +3482,50 @@ func (vm *VirtualMachine) updateLastModifiedAndChangeVersion(ctx *Context) {
 			Op:   types.PropertyChangeOpAssign,
 		},
 	})
+}
+
+func (vm *VirtualMachine) updateTagSpec(
+	ctx *Context,
+	specs []types.TagSpec) types.BaseMethodFault {
+
+	if len(specs) == 0 {
+		return nil
+	}
+
+	// If the VAPI simulator is not loaded, the tagManager will be nil.
+	if ctx.Map.tagManager == nil {
+		return nil
+	}
+
+	vmRef := vm.Reference()
+
+	for _, spec := range specs {
+		tagID := spec.Id.Uuid
+		if spec.Id.NameId != nil {
+			t, err := ctx.Map.tagManager.GetTagByCategoryAndName(
+				spec.Id.NameId.Category,
+				spec.Id.NameId.Tag)
+			if err != nil {
+				return err
+			}
+			tagID = t
+		}
+
+		switch spec.Operation {
+		case types.ArrayUpdateOperationAdd:
+			if err := ctx.Map.tagManager.AttachTag(vmRef, tagID); err != nil {
+				return err
+			}
+		case types.ArrayUpdateOperationRemove:
+			if err := ctx.Map.tagManager.DetachTag(vmRef, tagID); err != nil {
+				return err
+			}
+		default:
+			return &types.InvalidArgument{
+				InvalidProperty: "tagSpecs.operation",
+			}
+		}
+	}
+
+	return nil
 }

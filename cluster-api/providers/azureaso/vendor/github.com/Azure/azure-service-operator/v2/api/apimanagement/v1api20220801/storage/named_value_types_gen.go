@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -116,6 +116,10 @@ func (value *NamedValue) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (value *NamedValue) Owner() *genruntime.ResourceReference {
+	if value.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(value.Spec)
 	return value.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (value *NamedValue) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st NamedValue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	value.Status = st
@@ -188,7 +192,7 @@ var _ genruntime.ConvertibleSpec = &NamedValue_Spec{}
 // ConvertSpecFrom populates our NamedValue_Spec from the provided source
 func (value *NamedValue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == value {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(value)
@@ -197,7 +201,7 @@ func (value *NamedValue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec)
 // ConvertSpecTo populates the provided destination from our NamedValue_Spec
 func (value *NamedValue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == value {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(value)
@@ -222,7 +226,7 @@ var _ genruntime.ConvertibleStatus = &NamedValue_STATUS{}
 // ConvertStatusFrom populates our NamedValue_STATUS from the provided source
 func (value *NamedValue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == value {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(value)
@@ -231,7 +235,7 @@ func (value *NamedValue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleS
 // ConvertStatusTo populates the provided destination from our NamedValue_STATUS
 func (value *NamedValue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == value {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(value)

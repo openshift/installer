@@ -16,6 +16,7 @@ DiskAccess_STATUS: Object (7 properties)
 │   └── TimeCreated: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 DiskAccess_Spec: Object (4 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -24,6 +25,7 @@ DiskAccess_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
 └── Tags: map[string]string
+
 DiskEncryptionSet_STATUS: Object (7 properties)
 ├── Id: *string
 ├── Identity: *Object (4 properties)
@@ -69,6 +71,7 @@ DiskEncryptionSet_STATUS: Object (7 properties)
 │   └── RotationToLatestKeyVersionEnabled: *bool
 ├── Tags: map[string]string
 └── Type: *string
+
 DiskEncryptionSet_Spec: Object (5 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -91,6 +94,7 @@ DiskEncryptionSet_Spec: Object (5 properties)
 │   ├── FederatedClientId: *string
 │   └── RotationToLatestKeyVersionEnabled: *bool
 └── Tags: map[string]string
+
 Disk_STATUS: Object (11 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -234,6 +238,7 @@ Disk_STATUS: Object (11 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 Disk_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -352,6 +357,7 @@ Disk_Spec: Object (7 properties)
 │       └── "UltraSSD_LRS"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 Snapshot_STATUS: Object (9 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -481,6 +487,7 @@ Snapshot_STATUS: Object (9 properties)
 │   └── Tier: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 Snapshot_Spec: Object (6 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -600,3 +607,4 @@ Snapshot_Spec: Object (6 properties)
 │       ├── "Standard_LRS"
 │       └── "Standard_ZRS"
 └── Tags: map[string]string
+

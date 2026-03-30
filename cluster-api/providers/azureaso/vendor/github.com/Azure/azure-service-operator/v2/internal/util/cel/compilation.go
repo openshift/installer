@@ -7,7 +7,7 @@ package cel
 
 import (
 	"github.com/google/cel-go/cel"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 var (
@@ -34,7 +34,7 @@ type CompilationResult struct {
 func Compile(env *cel.Env, expression string) (*CompilationResult, error) {
 	ast, iss := env.Compile(expression)
 	if iss.Err() != nil {
-		return nil, errors.Wrapf(iss.Err(), "failed to compile CEL expression: %q", expression)
+		return nil, eris.Wrapf(iss.Err(), "failed to compile CEL expression: %q", expression)
 	}
 
 	err := CheckOutputTypeAllowed(ast, AllowedOutputTypes()...)
@@ -44,7 +44,7 @@ func Compile(env *cel.Env, expression string) (*CompilationResult, error) {
 
 	program, err := env.Program(ast)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to generate program from CEL AST: %q", expression)
+		return nil, eris.Wrapf(err, "failed to generate program from CEL AST: %q", expression)
 	}
 
 	return &CompilationResult{

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-12-01"
+
 FlexibleServer: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (22 properties)
@@ -204,6 +205,7 @@ FlexibleServer: Resource
         ├── "12"
         ├── "13"
         └── "14"
+
 FlexibleServersConfiguration: Resource
 ├── Owner: FlexibleServer
 ├── Spec: Object (5 properties)
@@ -251,6 +253,7 @@ FlexibleServersConfiguration: Resource
     ├── Type: *string
     ├── Unit: *string
     └── Value: *string
+
 FlexibleServersDatabase: Resource
 ├── Owner: FlexibleServer
 ├── Spec: Object (5 properties)
@@ -287,6 +290,7 @@ FlexibleServersDatabase: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 FlexibleServersFirewallRule: Resource
 ├── Owner: FlexibleServer
 ├── Spec: Object (5 properties)
@@ -323,3 +327,4 @@ FlexibleServersFirewallRule: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+

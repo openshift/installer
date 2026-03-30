@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (rule *FlexibleServersFirewallRule) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = rule.AssignProperties_From_FlexibleServersFirewallRule(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to rule")
+		return eris.Wrap(err, "converting from source to rule")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (rule *FlexibleServersFirewallRule) ConvertTo(hub conversion.Hub) error {
 	var destination storage.FlexibleServersFirewallRule
 	err := rule.AssignProperties_To_FlexibleServersFirewallRule(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from rule")
+		return eris.Wrap(err, "converting to destination from rule")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-dbformysql-azure-com-v1api20210501-flexibleserversfirewallrule,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversfirewallrules,verbs=create;update,versions=v1api20210501,name=default.v1api20210501.flexibleserversfirewallrules.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &FlexibleServersFirewallRule{}
-
-// Default applies defaults to the FlexibleServersFirewallRule resource
-func (rule *FlexibleServersFirewallRule) Default() {
-	rule.defaultImpl()
-	var temp any = rule
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (rule *FlexibleServersFirewallRule) defaultAzureName() {
-	if rule.Spec.AzureName == "" {
-		rule.Spec.AzureName = rule.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the FlexibleServersFirewallRule resource
-func (rule *FlexibleServersFirewallRule) defaultImpl() { rule.defaultAzureName() }
 
 var _ configmaps.Exporter = &FlexibleServersFirewallRule{}
 
@@ -176,6 +150,10 @@ func (rule *FlexibleServersFirewallRule) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (rule *FlexibleServersFirewallRule) Owner() *genruntime.ResourceReference {
+	if rule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(rule.Spec)
 	return rule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (rule *FlexibleServersFirewallRule) SetStatus(status genruntime.Convertible
 	var st FlexibleServersFirewallRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	rule.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-dbformysql-azure-com-v1api20210501-flexibleserversfirewallrule,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversfirewallrules,verbs=create;update,versions=v1api20210501,name=validate.v1api20210501.flexibleserversfirewallrules.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &FlexibleServersFirewallRule{}
-
-// ValidateCreate validates the creation of the resource
-func (rule *FlexibleServersFirewallRule) ValidateCreate() (admission.Warnings, error) {
-	validations := rule.createValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (rule *FlexibleServersFirewallRule) ValidateDelete() (admission.Warnings, error) {
-	validations := rule.deleteValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (rule *FlexibleServersFirewallRule) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := rule.updateValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (rule *FlexibleServersFirewallRule) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (rule *FlexibleServersFirewallRule) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (rule *FlexibleServersFirewallRule) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateResourceReferences()
-		},
-		rule.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (rule *FlexibleServersFirewallRule) validateConfigMapDestinations() (admission.Warnings, error) {
-	if rule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (rule *FlexibleServersFirewallRule) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(rule)
-}
-
-// validateResourceReferences validates all resource references
-func (rule *FlexibleServersFirewallRule) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&rule.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (rule *FlexibleServersFirewallRule) validateSecretDestinations() (admission.Warnings, error) {
-	if rule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (rule *FlexibleServersFirewallRule) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*FlexibleServersFirewallRule)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, rule)
 }
 
 // AssignProperties_From_FlexibleServersFirewallRule populates our FlexibleServersFirewallRule from the provided source FlexibleServersFirewallRule
@@ -312,7 +187,7 @@ func (rule *FlexibleServersFirewallRule) AssignProperties_From_FlexibleServersFi
 	var spec FlexibleServersFirewallRule_Spec
 	err := spec.AssignProperties_From_FlexibleServersFirewallRule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersFirewallRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersFirewallRule_Spec() to populate field Spec")
 	}
 	rule.Spec = spec
 
@@ -320,7 +195,7 @@ func (rule *FlexibleServersFirewallRule) AssignProperties_From_FlexibleServersFi
 	var status FlexibleServersFirewallRule_STATUS
 	err = status.AssignProperties_From_FlexibleServersFirewallRule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersFirewallRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersFirewallRule_STATUS() to populate field Status")
 	}
 	rule.Status = status
 
@@ -338,7 +213,7 @@ func (rule *FlexibleServersFirewallRule) AssignProperties_To_FlexibleServersFire
 	var spec storage.FlexibleServersFirewallRule_Spec
 	err := rule.Spec.AssignProperties_To_FlexibleServersFirewallRule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersFirewallRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersFirewallRule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (rule *FlexibleServersFirewallRule) AssignProperties_To_FlexibleServersFire
 	var status storage.FlexibleServersFirewallRule_STATUS
 	err = rule.Status.AssignProperties_To_FlexibleServersFirewallRule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersFirewallRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersFirewallRule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -485,13 +360,13 @@ func (rule *FlexibleServersFirewallRule_Spec) ConvertSpecFrom(source genruntime.
 	src = &storage.FlexibleServersFirewallRule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_FlexibleServersFirewallRule_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -509,13 +384,13 @@ func (rule *FlexibleServersFirewallRule_Spec) ConvertSpecTo(destination genrunti
 	dst = &storage.FlexibleServersFirewallRule_Spec{}
 	err := rule.AssignProperties_To_FlexibleServersFirewallRule_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -528,19 +403,14 @@ func (rule *FlexibleServersFirewallRule_Spec) AssignProperties_From_FlexibleServ
 	rule.AzureName = source.AzureName
 
 	// EndIpAddress
-	if source.EndIpAddress != nil {
-		endIpAddress := *source.EndIpAddress
-		rule.EndIpAddress = &endIpAddress
-	} else {
-		rule.EndIpAddress = nil
-	}
+	rule.EndIpAddress = genruntime.ClonePointerToString(source.EndIpAddress)
 
 	// OperatorSpec
 	if source.OperatorSpec != nil {
 		var operatorSpec FlexibleServersFirewallRuleOperatorSpec
 		err := operatorSpec.AssignProperties_From_FlexibleServersFirewallRuleOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersFirewallRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersFirewallRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		rule.OperatorSpec = &operatorSpec
 	} else {
@@ -556,12 +426,7 @@ func (rule *FlexibleServersFirewallRule_Spec) AssignProperties_From_FlexibleServ
 	}
 
 	// StartIpAddress
-	if source.StartIpAddress != nil {
-		startIpAddress := *source.StartIpAddress
-		rule.StartIpAddress = &startIpAddress
-	} else {
-		rule.StartIpAddress = nil
-	}
+	rule.StartIpAddress = genruntime.ClonePointerToString(source.StartIpAddress)
 
 	// No error
 	return nil
@@ -576,19 +441,14 @@ func (rule *FlexibleServersFirewallRule_Spec) AssignProperties_To_FlexibleServer
 	destination.AzureName = rule.AzureName
 
 	// EndIpAddress
-	if rule.EndIpAddress != nil {
-		endIpAddress := *rule.EndIpAddress
-		destination.EndIpAddress = &endIpAddress
-	} else {
-		destination.EndIpAddress = nil
-	}
+	destination.EndIpAddress = genruntime.ClonePointerToString(rule.EndIpAddress)
 
 	// OperatorSpec
 	if rule.OperatorSpec != nil {
 		var operatorSpec storage.FlexibleServersFirewallRuleOperatorSpec
 		err := rule.OperatorSpec.AssignProperties_To_FlexibleServersFirewallRuleOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersFirewallRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersFirewallRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -607,12 +467,7 @@ func (rule *FlexibleServersFirewallRule_Spec) AssignProperties_To_FlexibleServer
 	}
 
 	// StartIpAddress
-	if rule.StartIpAddress != nil {
-		startIpAddress := *rule.StartIpAddress
-		destination.StartIpAddress = &startIpAddress
-	} else {
-		destination.StartIpAddress = nil
-	}
+	destination.StartIpAddress = genruntime.ClonePointerToString(rule.StartIpAddress)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -673,13 +528,13 @@ func (rule *FlexibleServersFirewallRule_STATUS) ConvertStatusFrom(source genrunt
 	src = &storage.FlexibleServersFirewallRule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_FlexibleServersFirewallRule_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -697,13 +552,13 @@ func (rule *FlexibleServersFirewallRule_STATUS) ConvertStatusTo(destination genr
 	dst = &storage.FlexibleServersFirewallRule_STATUS{}
 	err := rule.AssignProperties_To_FlexibleServersFirewallRule_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -799,7 +654,7 @@ func (rule *FlexibleServersFirewallRule_STATUS) AssignProperties_From_FlexibleSe
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		rule.SystemData = &systemDatum
 	} else {
@@ -838,7 +693,7 @@ func (rule *FlexibleServersFirewallRule_STATUS) AssignProperties_To_FlexibleServ
 		var systemDatum storage.SystemData_STATUS
 		err := rule.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

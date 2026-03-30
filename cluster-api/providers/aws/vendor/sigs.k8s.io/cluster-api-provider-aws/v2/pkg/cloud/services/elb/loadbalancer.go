@@ -46,8 +46,8 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/hash"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 // ResourceGroups are filtered by ARN identifier: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arns-syntax
@@ -306,6 +306,67 @@ func (s *Service) getAdditionalTargetGroupHealthCheck(ln infrav1.AdditionalListe
 	return healthCheck
 }
 
+// getAPITargetGroupIPType determines the IP address type for the API server target group.
+// It examines the control plane subnets to determine if they have IPv4 and/or IPv6 addresses,
+// and can be overridden by the load balancer spec.
+func (s *Service) getAPITargetGroupIPType(lbSpec *infrav1.AWSLoadBalancerSpec) infrav1.TargetGroupIPType {
+	// If explicitly set in spec, use that value
+	if lbSpec != nil && lbSpec.TargetGroupIPType != nil {
+		return *lbSpec.TargetGroupIPType
+	}
+	// Otherwise, determine based on control plane subnet addresses
+	return s.getTargetGroupIPAddressType()
+}
+
+// getAdditionalTargetGroupIPType determines the IP address type for an additional listener's target group.
+// It examines the control plane subnets to determine if they have IPv4 and/or IPv6 addresses,
+// and can be overridden by the listener spec.
+func (s *Service) getAdditionalTargetGroupIPType(ln infrav1.AdditionalListenerSpec) infrav1.TargetGroupIPType {
+	// If explicitly set in spec, use that value
+	if ln.TargetGroupIPType != nil {
+		return *ln.TargetGroupIPType
+	}
+	// Otherwise, determine based on control plane subnet addresses
+	return s.getTargetGroupIPAddressType()
+}
+
+// getTargetGroupIPAddressType determines the target group IP address type based on
+// control plane subnet configurations. It examines whether subnets have IPv4 and/or
+// IPv6 CIDR blocks and returns the appropriate IP type.
+func (s *Service) getTargetGroupIPAddressType() infrav1.TargetGroupIPType {
+	// We should only consider IPv6 features if the user explicitly enables IPv6 capabilities
+	// Thus, return IPv4 as IPv4 is the only IP family in use.
+	if !s.scope.VPC().IsIPv6Enabled() {
+		return infrav1.TargetGroupIPTypeIPv4
+	}
+
+	var hasIPv4OnlySn, hasIPv6OnlySn bool
+
+	cpSubnets := s.scope.Subnets().FilterPrivate().FilterNonCni()
+	for _, subnet := range cpSubnets {
+		if subnet.CidrBlock != "" && !subnet.IsIPv6 {
+			hasIPv4OnlySn = true
+		}
+		if subnet.CidrBlock == "" && subnet.IsIPv6 {
+			hasIPv6OnlySn = true
+		}
+	}
+
+	// CP nodes may only have IPv4 addresses
+	if hasIPv4OnlySn {
+		return infrav1.TargetGroupIPTypeIPv4
+	}
+
+	// CP nodes may only have IPv6 addresses
+	if hasIPv6OnlySn {
+		return infrav1.TargetGroupIPTypeIPv6
+	}
+
+	// Cluster subnets include only dual-stack subnets
+	// CP nodes may have both address types. Prefer IPv6.
+	return infrav1.TargetGroupIPTypeIPv6
+}
+
 func (s *Service) getAPIServerLBSpec(ctx context.Context, elbName string, lbSpec *infrav1.AWSLoadBalancerSpec) (*infrav1.LoadBalancer, error) {
 	var securityGroupIDs []string
 	if lbSpec != nil {
@@ -335,6 +396,7 @@ func (s *Service) getAPIServerLBSpec(ctx context.Context, elbName string, lbSpec
 					Protocol:    infrav1.ELBProtocolTCP,
 					VpcID:       s.scope.VPC().ID,
 					HealthCheck: apiHealthCheck,
+					IPType:      s.getAPITargetGroupIPType(lbSpec),
 				},
 			},
 		},
@@ -360,6 +422,7 @@ func (s *Service) getAPIServerLBSpec(ctx context.Context, elbName string, lbSpec
 					Protocol:    listener.Protocol,
 					VpcID:       s.scope.VPC().ID,
 					HealthCheck: lnHealthCheck,
+					IPType:      s.getAdditionalTargetGroupIPType(listener),
 				},
 			})
 		}
@@ -682,7 +745,7 @@ func (s *Service) deleteAPIServerELB(ctx context.Context) error {
 		return errors.Wrap(err, "failed to get control plane load balancer name")
 	}
 
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1beta1.DeletingReason, clusterv1beta1.ConditionSeverityInfo, "")
 	if err := s.scope.PatchObject(); err != nil {
 		return err
 	}
@@ -690,7 +753,7 @@ func (s *Service) deleteAPIServerELB(ctx context.Context) error {
 	apiELB, err := s.describeClassicELB(ctx, elbName)
 	if IsNotFound(err) {
 		s.scope.Debug("Control plane load balancer not found, skipping deletion")
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return nil
 	}
 	if err != nil {
@@ -699,13 +762,13 @@ func (s *Service) deleteAPIServerELB(ctx context.Context) error {
 
 	if apiELB.IsUnmanaged(s.scope.Name()) {
 		s.scope.Debug("Found unmanaged classic load balancer for apiserver, skipping deletion", "api-server-elb-name", apiELB.Name)
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return nil
 	}
 
 	s.scope.Debug("deleting load balancer", "name", elbName)
 	if err := s.deleteClassicELB(ctx, elbName); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
+		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, "DeletingFailed", clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 
@@ -717,7 +780,7 @@ func (s *Service) deleteAPIServerELB(ctx context.Context) error {
 		return errors.Wrapf(err, "failed to wait for %q load balancer deletion", s.scope.Name())
 	}
 
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 	s.scope.Info("Deleted control plane load balancer", "name", elbName)
 	return nil
 }
@@ -792,7 +855,7 @@ func (s *Service) deleteExistingNLB(ctx context.Context, lbSpec *infrav1.AWSLoad
 	if err != nil {
 		return errors.Wrap(err, "failed to get control plane load balancer name")
 	}
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1beta1.DeletingReason, clusterv1beta1.ConditionSeverityInfo, "")
 	if err := s.scope.PatchObject(); err != nil {
 		return err
 	}
@@ -811,7 +874,7 @@ func (s *Service) deleteExistingNLB(ctx context.Context, lbSpec *infrav1.AWSLoad
 	}
 	s.scope.Debug("deleting load balancer", "name", name)
 	if err := s.deleteLB(ctx, lb.ARN); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
+		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, "DeletingFailed", clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 
@@ -823,7 +886,7 @@ func (s *Service) deleteExistingNLB(ctx context.Context, lbSpec *infrav1.AWSLoad
 		return errors.Wrapf(err, "failed to wait for %q load balancer deletion", s.scope.Name())
 	}
 
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.LoadBalancerReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
 	s.scope.Info("Deleted control plane load balancer", "name", name)
 
 	return nil
@@ -1422,7 +1485,6 @@ func (s *Service) listByTag(ctx context.Context, tag string) ([]string, error) {
 			names = append(names, name)
 		}
 	})
-
 	if err != nil {
 		record.Eventf(s.scope.InfraCluster(), "FailedListELBsByTag", "Failed to list %s ELB by Tags: %v", s.scope.Name(), err)
 		return nil, errors.Wrapf(err, "failed to list %s ELBs by tag group", s.scope.Name())
@@ -1780,9 +1842,11 @@ func (s *Service) createTargetGroup(ctx context.Context, ln infrav1.Listener, ta
 		HealthyThresholdCount:      aws.Int32(infrav1.DefaultAPIServerHealthThresholdCount),
 		UnhealthyThresholdCount:    aws.Int32(infrav1.DefaultAPIServerUnhealthThresholdCount),
 	}
-	if s.scope.VPC().IsIPv6Enabled() {
-		targetGroupInput.IpAddressType = elbv2types.TargetGroupIpAddressTypeEnumIpv6
+
+	if ln.TargetGroup.IPType != "" {
+		targetGroupInput.IpAddressType = elbv2types.TargetGroupIpAddressTypeEnum(ln.TargetGroup.IPType)
 	}
+
 	if ln.TargetGroup.HealthCheck != nil {
 		targetGroupInput.HealthCheckEnabled = aws.Bool(true)
 
@@ -1841,6 +1905,8 @@ func fromSDKTypeToClassicELB(v *elbtypes.LoadBalancerDescription, attrs *elbtype
 		DNSName:          aws.ToString(v.DNSName),
 		Tags:             converters.ELBTagsToMap(tags),
 		LoadBalancerType: infrav1.LoadBalancerTypeClassic,
+		// Classic Load Balancers only support IPv4.
+		LoadBalancerIPAddressType: infrav1.LoadBalancerIPAddressTypeIPv4,
 	}
 
 	if attrs.ConnectionSettings != nil && attrs.ConnectionSettings.IdleTimeout != nil {
@@ -1860,14 +1926,24 @@ func fromSDKTypeToLB(v elbv2types.LoadBalancer, attrs []elbv2types.LoadBalancerA
 		availabilityZones[i] = aws.ToString(az.ZoneName)
 	}
 	res := &infrav1.LoadBalancer{
-		ARN:               aws.ToString(v.LoadBalancerArn),
-		Name:              aws.ToString(v.LoadBalancerName),
-		Scheme:            infrav1.ELBScheme(v.Scheme),
-		SubnetIDs:         subnetIDs,
-		SecurityGroupIDs:  v.SecurityGroups,
-		AvailabilityZones: availabilityZones,
-		DNSName:           aws.ToString(v.DNSName),
-		Tags:              converters.V2TagsToMap(tags),
+		ARN:                       aws.ToString(v.LoadBalancerArn),
+		Name:                      aws.ToString(v.LoadBalancerName),
+		Scheme:                    infrav1.ELBScheme(v.Scheme),
+		SubnetIDs:                 subnetIDs,
+		SecurityGroupIDs:          v.SecurityGroups,
+		AvailabilityZones:         availabilityZones,
+		DNSName:                   aws.ToString(v.DNSName),
+		Tags:                      converters.V2TagsToMap(tags),
+		LoadBalancerIPAddressType: infrav1.LoadBalancerIPAddressType(v.IpAddressType),
+	}
+
+	switch v.Type {
+	case elbv2types.LoadBalancerTypeEnumApplication:
+		res.LoadBalancerType = infrav1.LoadBalancerTypeALB
+	case elbv2types.LoadBalancerTypeEnumNetwork:
+		res.LoadBalancerType = infrav1.LoadBalancerTypeNLB
+	case elbv2types.LoadBalancerTypeEnumGateway:
+		res.LoadBalancerType = infrav1.LoadBalancerTypeELB
 	}
 
 	infraAttrs := make(map[string]*string, len(attrs))
@@ -1927,7 +2003,9 @@ func isSDKTargetGroupEqualToTargetGroup(elbTG *elbv2types.TargetGroup, spec *inf
 		// Not created by CAPA
 		return false
 	}
-	return int64(ptr.Deref(elbTG.Port, 0)) == spec.Port && strings.EqualFold(string(elbTG.Protocol), spec.Protocol.String())
+	return int64(ptr.Deref(elbTG.Port, 0)) == spec.Port &&
+		strings.EqualFold(string(elbTG.Protocol), spec.Protocol.String()) &&
+		strings.EqualFold(string(elbTG.IpAddressType), string(spec.IPType))
 }
 
 // SchemeToSDKScheme converts infrav1.ELBScheme to elbv2types.LoadBalancerSchemeEnum.

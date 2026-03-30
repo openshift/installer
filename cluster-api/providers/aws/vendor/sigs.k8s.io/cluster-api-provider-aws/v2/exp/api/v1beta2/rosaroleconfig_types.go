@@ -22,7 +22,7 @@ import (
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // OidcProviderType set to Managed or UnManaged
@@ -191,7 +191,7 @@ type ROSARoleConfigStatus struct {
 	OperatorRolesRef rosacontrolplanev1.AWSRolesRef `json:"operatorRolesRef,omitempty"`
 
 	// Conditions specifies the ROSARoleConfig conditions
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // AccountRolesRef defscribes ARNs used as Account roles.
@@ -229,12 +229,12 @@ type ROSARoleConfigList struct {
 }
 
 // SetConditions sets the conditions of the ROSARoleConfig.
-func (r *ROSARoleConfig) SetConditions(conditions clusterv1.Conditions) {
+func (r *ROSARoleConfig) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 
 // GetConditions returns the observations of the operational state of the RosaNetwork resource.
-func (r *ROSARoleConfig) GetConditions() clusterv1.Conditions {
+func (r *ROSARoleConfig) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 

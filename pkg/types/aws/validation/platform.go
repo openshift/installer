@@ -10,8 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 // tagRegex is used to check that the keys and values of a tag contain only valid characters.
@@ -55,9 +57,42 @@ func ValidatePlatform(p *aws.Platform, publish types.PublishingStrategy, cm type
 	allErrs = append(allErrs, validateSubnets(p.VPC.Subnets, publish, fldPath.Child("vpc", "subnets"))...)
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
 	allErrs = append(allErrs, validateUserTags(p.UserTags, p.PropagateUserTag, fldPath.Child("userTags"))...)
+	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
+	allErrs = append(allErrs, validateLBType(p.LBType, p.IPFamily, fldPath.Child("lbType"))...)
 
 	if p.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, types.MachinePoolDefaultConfig, fldPath.Child("defaultMachinePlatform"))...)
+	}
+
+	return allErrs
+}
+
+func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ipFamily == "" {
+		return allErrs
+	}
+	validFamilies := []string{
+		string(network.IPv4),
+		string(network.DualStackIPv4Primary),
+		string(network.DualStackIPv6Primary),
+	}
+	switch ipFamily {
+	case network.IPv4, network.DualStackIPv4Primary, network.DualStackIPv6Primary:
+		// valid
+	default:
+		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, validFamilies))
+	}
+	return allErrs
+}
+
+func validateLBType(lbType configv1.AWSLBType, ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ipFamily.DualStackEnabled() {
+		if lbType == configv1.Classic {
+			allErrs = append(allErrs, field.Invalid(fldPath, lbType, "Classic load balancers do not support dual-stack networking"))
+		}
 	}
 
 	return allErrs

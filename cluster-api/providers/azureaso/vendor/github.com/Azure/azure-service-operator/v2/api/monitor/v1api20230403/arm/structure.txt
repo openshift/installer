@@ -42,6 +42,7 @@ Account_STATUS: Object (8 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Account_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -50,3 +51,4 @@ Account_Spec: Object (4 properties)
 │       ├── "Disabled"
 │       └── "Enabled"
 └── Tags: map[string]string
+

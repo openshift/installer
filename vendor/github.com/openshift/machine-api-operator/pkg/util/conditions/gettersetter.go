@@ -151,6 +151,20 @@ func IsFalse(from interface{}, t machinev1.ConditionType) bool {
 	return false
 }
 
+// IsEquivalentTo returns true if condition a is equivalent to condition b,
+// by checking for equality of the following fields: Type, Status, Reason, Severity and Message (it excludes LastTransitionTime).
+func IsEquivalentTo(a, b *machinev1.Condition) bool {
+	if a == nil && b == nil {
+		return true
+	} else if a == nil {
+		return false
+	} else if b == nil {
+		return false
+	}
+
+	return hasSameState(a, b)
+}
+
 // lexicographicLess returns true if a condition is less than another with regards to the
 // to order of conditions designed for convenience of the consumer, i.e. kubectl.
 func lexicographicLess(i, j *machinev1.Condition) bool {

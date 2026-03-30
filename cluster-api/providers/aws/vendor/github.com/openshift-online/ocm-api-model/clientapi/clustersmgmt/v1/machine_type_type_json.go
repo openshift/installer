@@ -110,7 +110,16 @@ func WriteMachineType(object *MachineType, stream *jsoniter.Stream) {
 		WriteCloudProvider(object.cloudProvider, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8] && object.features != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("features")
+		WriteMachineTypeFeatures(object.features, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -119,7 +128,7 @@ func WriteMachineType(object *MachineType, stream *jsoniter.Stream) {
 		stream.WriteString(object.genericName)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9] && object.memory != nil
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.memory != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -128,7 +137,7 @@ func WriteMachineType(object *MachineType, stream *jsoniter.Stream) {
 		WriteValue(object.memory, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -137,7 +146,7 @@ func WriteMachineType(object *MachineType, stream *jsoniter.Stream) {
 		stream.WriteString(object.name)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -163,7 +172,7 @@ func UnmarshalMachineType(source interface{}) (object *MachineType, err error) {
 // ReadMachineType reads a value of the 'machine_type' type from the given iterator.
 func ReadMachineType(iterator *jsoniter.Iterator) *MachineType {
 	object := &MachineType{
-		fieldSet_: make([]bool, 12),
+		fieldSet_: make([]bool, 13),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -204,23 +213,27 @@ func ReadMachineType(iterator *jsoniter.Iterator) *MachineType {
 			value := ReadCloudProvider(iterator)
 			object.cloudProvider = value
 			object.fieldSet_[7] = true
+		case "features":
+			value := ReadMachineTypeFeatures(iterator)
+			object.features = value
+			object.fieldSet_[8] = true
 		case "generic_name":
 			value := iterator.ReadString()
 			object.genericName = value
-			object.fieldSet_[8] = true
+			object.fieldSet_[9] = true
 		case "memory":
 			value := ReadValue(iterator)
 			object.memory = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[10] = true
 		case "name":
 			value := iterator.ReadString()
 			object.name = value
-			object.fieldSet_[10] = true
+			object.fieldSet_[11] = true
 		case "size":
 			text := iterator.ReadString()
 			value := MachineTypeSize(text)
 			object.size = value
-			object.fieldSet_[11] = true
+			object.fieldSet_[12] = true
 		default:
 			iterator.ReadAny()
 		}

@@ -4,14 +4,13 @@
 package storage
 
 import (
-	"fmt"
 	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -50,22 +49,36 @@ var _ conversion.Convertible = &SqlDatabaseContainerThroughputSetting{}
 
 // ConvertFrom populates our SqlDatabaseContainerThroughputSetting from the provided hub SqlDatabaseContainerThroughputSetting
 func (setting *SqlDatabaseContainerThroughputSetting) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SqlDatabaseContainerThroughputSetting)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainerThroughputSetting but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SqlDatabaseContainerThroughputSetting
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting(source)
+	err = setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to setting")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SqlDatabaseContainerThroughputSetting from our SqlDatabaseContainerThroughputSetting
 func (setting *SqlDatabaseContainerThroughputSetting) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SqlDatabaseContainerThroughputSetting)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainerThroughputSetting but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SqlDatabaseContainerThroughputSetting
+	err := setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from setting")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &SqlDatabaseContainerThroughputSetting{}
@@ -135,6 +148,10 @@ func (setting *SqlDatabaseContainerThroughputSetting) NewEmptyStatus() genruntim
 
 // Owner returns the ResourceReference of the owner
 func (setting *SqlDatabaseContainerThroughputSetting) Owner() *genruntime.ResourceReference {
+	if setting.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(setting.Spec)
 	return setting.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -151,7 +168,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) SetStatus(status genruntim
 	var st SqlDatabaseContainerThroughputSetting_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	setting.Status = st
@@ -168,7 +185,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_From_SqlD
 	var spec SqlDatabaseContainerThroughputSetting_Spec
 	err := spec.AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec() to populate field Spec")
 	}
 	setting.Spec = spec
 
@@ -176,7 +193,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_From_SqlD
 	var status SqlDatabaseContainerThroughputSetting_STATUS
 	err = status.AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS() to populate field Status")
 	}
 	setting.Status = status
 
@@ -185,7 +202,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_From_SqlD
 	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting); ok {
 		err := augmentedSetting.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -203,7 +220,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_To_SqlDat
 	var spec storage.SqlDatabaseContainerThroughputSetting_Spec
 	err := setting.Spec.AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -211,7 +228,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_To_SqlDat
 	var status storage.SqlDatabaseContainerThroughputSetting_STATUS
 	err = setting.Status.AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -220,7 +237,7 @@ func (setting *SqlDatabaseContainerThroughputSetting) AssignProperties_To_SqlDat
 	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting); ok {
 		err := augmentedSetting.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -283,13 +300,13 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) ConvertSpecFrom(sourc
 	src = &storage.SqlDatabaseContainerThroughputSetting_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -307,13 +324,13 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) ConvertSpecTo(destina
 	dst = &storage.SqlDatabaseContainerThroughputSetting_Spec{}
 	err := setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -332,7 +349,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_From
 		var operatorSpec SqlDatabaseContainerThroughputSettingOperatorSpec
 		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerThroughputSettingOperatorSpec() to populate field OperatorSpec")
 		}
 		setting.OperatorSpec = &operatorSpec
 	} else {
@@ -355,7 +372,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_From
 		var resource ThroughputSettingsResource
 		err := resource.AssignProperties_From_ThroughputSettingsResource(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ThroughputSettingsResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_ThroughputSettingsResource() to populate field Resource")
 		}
 		setting.Resource = &resource
 	} else {
@@ -377,7 +394,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_From
 	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_Spec); ok {
 		err := augmentedSetting.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -398,7 +415,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_To_S
 		var operatorSpec storage.SqlDatabaseContainerThroughputSettingOperatorSpec
 		err := setting.OperatorSpec.AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerThroughputSettingOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -421,7 +438,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_To_S
 		var resource storage.ThroughputSettingsResource
 		err := setting.Resource.AssignProperties_To_ThroughputSettingsResource(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ThroughputSettingsResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_ThroughputSettingsResource() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -443,7 +460,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_Spec) AssignProperties_To_S
 	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_Spec); ok {
 		err := augmentedSetting.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -477,13 +494,13 @@ func (setting *SqlDatabaseContainerThroughputSetting_STATUS) ConvertStatusFrom(s
 	src = &storage.SqlDatabaseContainerThroughputSetting_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = setting.AssignProperties_From_SqlDatabaseContainerThroughputSetting_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -501,13 +518,13 @@ func (setting *SqlDatabaseContainerThroughputSetting_STATUS) ConvertStatusTo(des
 	dst = &storage.SqlDatabaseContainerThroughputSetting_STATUS{}
 	err := setting.AssignProperties_To_SqlDatabaseContainerThroughputSetting_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -535,7 +552,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_STATUS) AssignProperties_Fr
 		var resource ThroughputSettingsGetProperties_Resource_STATUS
 		err := resource.AssignProperties_From_ThroughputSettingsGetProperties_Resource_STATUS(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ThroughputSettingsGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_ThroughputSettingsGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		setting.Resource = &resource
 	} else {
@@ -560,7 +577,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_STATUS) AssignProperties_Fr
 	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS); ok {
 		err := augmentedSetting.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -590,7 +607,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_STATUS) AssignProperties_To
 		var resource storage.ThroughputSettingsGetProperties_Resource_STATUS
 		err := setting.Resource.AssignProperties_To_ThroughputSettingsGetProperties_Resource_STATUS(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ThroughputSettingsGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_ThroughputSettingsGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -615,7 +632,7 @@ func (setting *SqlDatabaseContainerThroughputSetting_STATUS) AssignProperties_To
 	if augmentedSetting, ok := settingAsAny.(augmentConversionForSqlDatabaseContainerThroughputSetting_STATUS); ok {
 		err := augmentedSetting.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -694,7 +711,7 @@ func (operator *SqlDatabaseContainerThroughputSettingOperatorSpec) AssignPropert
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -755,7 +772,7 @@ func (operator *SqlDatabaseContainerThroughputSettingOperatorSpec) AssignPropert
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerThroughputSettingOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

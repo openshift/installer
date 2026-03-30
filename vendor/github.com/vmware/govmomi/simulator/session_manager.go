@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -67,7 +67,7 @@ func createSession(ctx *Context, name string, locale string) types.UserSession {
 			LastActiveTime:   now,
 			Locale:           locale,
 			MessageLocale:    locale,
-			ExtensionSession: types.NewBool(false),
+			ExtensionSession: false,
 		},
 		Registry: NewRegistry(),
 		Map:      ctx.Map,

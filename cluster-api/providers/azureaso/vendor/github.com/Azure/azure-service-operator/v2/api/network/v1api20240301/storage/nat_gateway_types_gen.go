@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (gateway *NatGateway) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (gateway *NatGateway) Owner() *genruntime.ResourceReference {
+	if gateway.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(gateway.Spec)
 	return gateway.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (gateway *NatGateway) SetStatus(status genruntime.ConvertibleStatus) error 
 	var st NatGateway_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	gateway.Status = st
@@ -189,7 +193,7 @@ var _ genruntime.ConvertibleSpec = &NatGateway_Spec{}
 // ConvertSpecFrom populates our NatGateway_Spec from the provided source
 func (gateway *NatGateway_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == gateway {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(gateway)
@@ -198,7 +202,7 @@ func (gateway *NatGateway_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpe
 // ConvertSpecTo populates the provided destination from our NatGateway_Spec
 func (gateway *NatGateway_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == gateway {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(gateway)
@@ -230,7 +234,7 @@ var _ genruntime.ConvertibleStatus = &NatGateway_STATUS{}
 // ConvertStatusFrom populates our NatGateway_STATUS from the provided source
 func (gateway *NatGateway_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == gateway {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(gateway)
@@ -239,7 +243,7 @@ func (gateway *NatGateway_STATUS) ConvertStatusFrom(source genruntime.Convertibl
 // ConvertStatusTo populates the provided destination from our NatGateway_STATUS
 func (gateway *NatGateway_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == gateway {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(gateway)

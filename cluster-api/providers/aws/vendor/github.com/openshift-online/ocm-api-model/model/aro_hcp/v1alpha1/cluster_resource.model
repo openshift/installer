@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024 Red Hat, Inc.
+Copyright (c) 2025 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,6 +30,10 @@ resource Cluster {
 	// Deletes the cluster.
 	@go(name="Delete")
 	method AsyncDelete {
+		// If false it will only delete from OCM but not the actual cluster resources.
+		// false is only allowed for OCP clusters. true by default.
+		in Deprovision Boolean = true
+
 		// Dry run flag is used to check if the operation can be completed, but won't delete.
 		in DryRun Boolean = false
 
@@ -37,6 +41,7 @@ resource Cluster {
 		in BestEffort Boolean = false
 	}
 
+	// Reference to the resource that manages the detailed status of the cluster.
 	locator Status {
 		target ClusterStatus
 	}
@@ -46,10 +51,12 @@ resource Cluster {
 		target InflightChecks
 	}
 
+	// Reference to the resource that manages the collection of node pool resources.
 	locator NodePools {
 		target NodePools
 	}
-        
+
+	// Reference to the resource that manages the external authentication configuration.
 	locator ExternalAuthConfig {
 		target ExternalAuthConfig
 	}
@@ -57,5 +64,6 @@ resource Cluster {
 	locator Autoscaler {
 		target Autoscaler
 	}
+
 
 }

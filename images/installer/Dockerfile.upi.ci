@@ -6,7 +6,7 @@
 FROM registry.ci.openshift.org/ocp/4.17:installer-kube-apiserver-artifacts AS kas-artifacts
 FROM registry.ci.openshift.org/ocp/4.17:installer-etcd-artifacts AS etcd-artifacts
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.25-openshift-4.22 AS builder
 # FIPS support is offered via the baremetal-installer image
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
@@ -21,7 +21,7 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.17:cli as cli
 FROM quay.io/ocp-splat/govc:v0.30.7 as govc
-FROM quay.io/ocp-splat/pwsh:v7.3.12 as pwsh
+FROM quay.io/ocp-splat/pwsh:latest as pwsh
 FROM quay.io/multi-arch/yq:3.3.0 as yq3
 FROM quay.io/multi-arch/yq:4.30.5 as yq4
 

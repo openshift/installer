@@ -22,7 +22,7 @@ type IPBlocksInfo struct {
 	ExternalIPCIDRs []string `json:"externalIPCIDRs,omitempty"`
 	// PrivateTGWIPCIDRs is a list of CIDR strings. Each CIDR is a contiguous IP address
 	// spaces represented by network address and prefix length. The visibility of the
-	// IPBlocks is PrivateTWG. Only IPBlocks in default project will be included.
+	// IPBlocks is Private Transit Gateway. Only IPBlocks in default project will be included.
 	PrivateTGWIPCIDRs []string `json:"privateTGWIPCIDRs,omitempty"`
 }
 

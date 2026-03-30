@@ -16,7 +16,6 @@ limitations under the License.
 
 // Manages the collection of versions.
 resource Versions {
-
 	// Retrieves a list of versions.
 	method List {
 		// Index of the requested page, where one corresponds to the first page.

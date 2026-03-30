@@ -525,6 +525,11 @@ func (s *Service) createOrGetInternalAddress(ctx context.Context, lbname string)
 		log.Error(err, "Error getting subnet for Internal Load Balancer")
 		return nil, err
 	}
+	lbSpec := s.scope.LoadBalancer()
+	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.IPAddress != nil {
+		// If an IP address is configured, use it instead of creating a new one.
+		addrSpec.Address = *lbSpec.InternalLoadBalancer.IPAddress
+	}
 	addrSpec.Subnetwork = subnet.SelfLink
 	addrSpec.Purpose = "GCE_ENDPOINT"
 	log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
@@ -601,6 +606,10 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	spec.LoadBalancingScheme = string(loadBalanceTrafficInternal)
 	spec.Region = s.scope.Region()
 	spec.BackendService = backendSvc.SelfLink
+	lbSpec := s.scope.LoadBalancer()
+	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.InternalAccess == infrav1.InternalAccessGlobal {
+		spec.AllowGlobalAccess = true
+	}
 	// Ports is used instead or PortRange for passthrough Load Balancer
 	// Configure ports for k8s API to match the external API which is the first port of range
 	var ports []string

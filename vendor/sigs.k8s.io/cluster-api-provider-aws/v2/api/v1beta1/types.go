@@ -32,6 +32,7 @@ type AWSResourceReference struct {
 
 	// ARN of resource.
 	// +optional
+	//
 	// Deprecated: This field has no function and is going to be removed in the next release.
 	ARN *string `json:"arn,omitempty"`
 

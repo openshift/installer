@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (subscription *EventSubscription) ConvertTo(hub conversion.Hub) error {
 
 	return subscription.AssignProperties_To_EventSubscription(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-eventgrid-azure-com-v1api20200601-eventsubscription,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventgrid.azure.com,resources=eventsubscriptions,verbs=create;update,versions=v1api20200601,name=default.v1api20200601.eventsubscriptions.eventgrid.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &EventSubscription{}
-
-// Default applies defaults to the EventSubscription resource
-func (subscription *EventSubscription) Default() {
-	subscription.defaultImpl()
-	var temp any = subscription
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (subscription *EventSubscription) defaultAzureName() {
-	if subscription.Spec.AzureName == "" {
-		subscription.Spec.AzureName = subscription.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the EventSubscription resource
-func (subscription *EventSubscription) defaultImpl() { subscription.defaultAzureName() }
 
 var _ configmaps.Exporter = &EventSubscription{}
 
@@ -173,6 +147,10 @@ func (subscription *EventSubscription) NewEmptyStatus() genruntime.ConvertibleSt
 
 // Owner returns the ResourceReference of the owner
 func (subscription *EventSubscription) Owner() *genruntime.ResourceReference {
+	if subscription.Spec.Owner == nil {
+		return nil
+	}
+
 	return subscription.Spec.Owner.AsResourceReference()
 }
 
@@ -188,106 +166,11 @@ func (subscription *EventSubscription) SetStatus(status genruntime.ConvertibleSt
 	var st EventSubscription_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	subscription.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-eventgrid-azure-com-v1api20200601-eventsubscription,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventgrid.azure.com,resources=eventsubscriptions,verbs=create;update,versions=v1api20200601,name=validate.v1api20200601.eventsubscriptions.eventgrid.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &EventSubscription{}
-
-// ValidateCreate validates the creation of the resource
-func (subscription *EventSubscription) ValidateCreate() (admission.Warnings, error) {
-	validations := subscription.createValidations()
-	var temp any = subscription
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (subscription *EventSubscription) ValidateDelete() (admission.Warnings, error) {
-	validations := subscription.deleteValidations()
-	var temp any = subscription
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (subscription *EventSubscription) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := subscription.updateValidations()
-	var temp any = subscription
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (subscription *EventSubscription) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateSecretDestinations, subscription.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (subscription *EventSubscription) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (subscription *EventSubscription) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateResourceReferences()
-		},
-		subscription.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (subscription *EventSubscription) validateConfigMapDestinations() (admission.Warnings, error) {
-	if subscription.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(subscription, nil, subscription.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateResourceReferences validates all resource references
-func (subscription *EventSubscription) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&subscription.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (subscription *EventSubscription) validateSecretDestinations() (admission.Warnings, error) {
-	if subscription.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(subscription, nil, subscription.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (subscription *EventSubscription) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*EventSubscription)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, subscription)
 }
 
 // AssignProperties_From_EventSubscription populates our EventSubscription from the provided source EventSubscription
@@ -300,7 +183,7 @@ func (subscription *EventSubscription) AssignProperties_From_EventSubscription(s
 	var spec EventSubscription_Spec
 	err := spec.AssignProperties_From_EventSubscription_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_EventSubscription_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_EventSubscription_Spec() to populate field Spec")
 	}
 	subscription.Spec = spec
 
@@ -308,7 +191,7 @@ func (subscription *EventSubscription) AssignProperties_From_EventSubscription(s
 	var status EventSubscription_STATUS
 	err = status.AssignProperties_From_EventSubscription_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_EventSubscription_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_EventSubscription_STATUS() to populate field Status")
 	}
 	subscription.Status = status
 
@@ -326,7 +209,7 @@ func (subscription *EventSubscription) AssignProperties_To_EventSubscription(des
 	var spec storage.EventSubscription_Spec
 	err := subscription.Spec.AssignProperties_To_EventSubscription_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_EventSubscription_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_EventSubscription_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -334,7 +217,7 @@ func (subscription *EventSubscription) AssignProperties_To_EventSubscription(des
 	var status storage.EventSubscription_STATUS
 	err = subscription.Status.AssignProperties_To_EventSubscription_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_EventSubscription_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_EventSubscription_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -591,13 +474,13 @@ func (subscription *EventSubscription_Spec) ConvertSpecFrom(source genruntime.Co
 	src = &storage.EventSubscription_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = subscription.AssignProperties_From_EventSubscription_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -615,13 +498,13 @@ func (subscription *EventSubscription_Spec) ConvertSpecTo(destination genruntime
 	dst = &storage.EventSubscription_Spec{}
 	err := subscription.AssignProperties_To_EventSubscription_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -638,7 +521,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 		var deadLetterDestination DeadLetterDestination
 		err := deadLetterDestination.AssignProperties_From_DeadLetterDestination(source.DeadLetterDestination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DeadLetterDestination() to populate field DeadLetterDestination")
+			return eris.Wrap(err, "calling AssignProperties_From_DeadLetterDestination() to populate field DeadLetterDestination")
 		}
 		subscription.DeadLetterDestination = &deadLetterDestination
 	} else {
@@ -650,7 +533,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 		var destination EventSubscriptionDestination
 		err := destination.AssignProperties_From_EventSubscriptionDestination(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventSubscriptionDestination() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_From_EventSubscriptionDestination() to populate field Destination")
 		}
 		subscription.Destination = &destination
 	} else {
@@ -674,7 +557,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 		var filter EventSubscriptionFilter
 		err := filter.AssignProperties_From_EventSubscriptionFilter(source.Filter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventSubscriptionFilter() to populate field Filter")
+			return eris.Wrap(err, "calling AssignProperties_From_EventSubscriptionFilter() to populate field Filter")
 		}
 		subscription.Filter = &filter
 	} else {
@@ -689,7 +572,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 		var operatorSpec EventSubscriptionOperatorSpec
 		err := operatorSpec.AssignProperties_From_EventSubscriptionOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventSubscriptionOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_EventSubscriptionOperatorSpec() to populate field OperatorSpec")
 		}
 		subscription.OperatorSpec = &operatorSpec
 	} else {
@@ -709,7 +592,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_From_EventSubscript
 		var retryPolicy RetryPolicy
 		err := retryPolicy.AssignProperties_From_RetryPolicy(source.RetryPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RetryPolicy() to populate field RetryPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_RetryPolicy() to populate field RetryPolicy")
 		}
 		subscription.RetryPolicy = &retryPolicy
 	} else {
@@ -733,7 +616,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 		var deadLetterDestination storage.DeadLetterDestination
 		err := subscription.DeadLetterDestination.AssignProperties_To_DeadLetterDestination(&deadLetterDestination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DeadLetterDestination() to populate field DeadLetterDestination")
+			return eris.Wrap(err, "calling AssignProperties_To_DeadLetterDestination() to populate field DeadLetterDestination")
 		}
 		destination.DeadLetterDestination = &deadLetterDestination
 	} else {
@@ -745,7 +628,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 		var destinationLocal storage.EventSubscriptionDestination
 		err := subscription.Destination.AssignProperties_To_EventSubscriptionDestination(&destinationLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionDestination() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_To_EventSubscriptionDestination() to populate field Destination")
 		}
 		destination.Destination = &destinationLocal
 	} else {
@@ -768,7 +651,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 		var filter storage.EventSubscriptionFilter
 		err := subscription.Filter.AssignProperties_To_EventSubscriptionFilter(&filter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionFilter() to populate field Filter")
+			return eris.Wrap(err, "calling AssignProperties_To_EventSubscriptionFilter() to populate field Filter")
 		}
 		destination.Filter = &filter
 	} else {
@@ -783,7 +666,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 		var operatorSpec storage.EventSubscriptionOperatorSpec
 		err := subscription.OperatorSpec.AssignProperties_To_EventSubscriptionOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_EventSubscriptionOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -806,7 +689,7 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 		var retryPolicy storage.RetryPolicy
 		err := subscription.RetryPolicy.AssignProperties_To_RetryPolicy(&retryPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RetryPolicy() to populate field RetryPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_RetryPolicy() to populate field RetryPolicy")
 		}
 		destination.RetryPolicy = &retryPolicy
 	} else {
@@ -832,7 +715,7 @@ func (subscription *EventSubscription_Spec) Initialize_From_EventSubscription_ST
 		var deadLetterDestination DeadLetterDestination
 		err := deadLetterDestination.Initialize_From_DeadLetterDestination_STATUS(source.DeadLetterDestination)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
+			return eris.Wrap(err, "calling Initialize_From_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
 		}
 		subscription.DeadLetterDestination = &deadLetterDestination
 	} else {
@@ -844,7 +727,7 @@ func (subscription *EventSubscription_Spec) Initialize_From_EventSubscription_ST
 		var destination EventSubscriptionDestination
 		err := destination.Initialize_From_EventSubscriptionDestination_STATUS(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EventSubscriptionDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling Initialize_From_EventSubscriptionDestination_STATUS() to populate field Destination")
 		}
 		subscription.Destination = &destination
 	} else {
@@ -867,7 +750,7 @@ func (subscription *EventSubscription_Spec) Initialize_From_EventSubscription_ST
 		var filter EventSubscriptionFilter
 		err := filter.Initialize_From_EventSubscriptionFilter_STATUS(source.Filter)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EventSubscriptionFilter_STATUS() to populate field Filter")
+			return eris.Wrap(err, "calling Initialize_From_EventSubscriptionFilter_STATUS() to populate field Filter")
 		}
 		subscription.Filter = &filter
 	} else {
@@ -882,7 +765,7 @@ func (subscription *EventSubscription_Spec) Initialize_From_EventSubscription_ST
 		var retryPolicy RetryPolicy
 		err := retryPolicy.Initialize_From_RetryPolicy_STATUS(source.RetryPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_RetryPolicy_STATUS() to populate field RetryPolicy")
+			return eris.Wrap(err, "calling Initialize_From_RetryPolicy_STATUS() to populate field RetryPolicy")
 		}
 		subscription.RetryPolicy = &retryPolicy
 	} else {
@@ -963,13 +846,13 @@ func (subscription *EventSubscription_STATUS) ConvertStatusFrom(source genruntim
 	src = &storage.EventSubscription_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = subscription.AssignProperties_From_EventSubscription_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -987,13 +870,13 @@ func (subscription *EventSubscription_STATUS) ConvertStatusTo(destination genrun
 	dst = &storage.EventSubscription_STATUS{}
 	err := subscription.AssignProperties_To_EventSubscription_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1163,7 +1046,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 		var deadLetterDestination DeadLetterDestination_STATUS
 		err := deadLetterDestination.AssignProperties_From_DeadLetterDestination_STATUS(source.DeadLetterDestination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
+			return eris.Wrap(err, "calling AssignProperties_From_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
 		}
 		subscription.DeadLetterDestination = &deadLetterDestination
 	} else {
@@ -1175,7 +1058,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 		var destination EventSubscriptionDestination_STATUS
 		err := destination.AssignProperties_From_EventSubscriptionDestination_STATUS(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventSubscriptionDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_From_EventSubscriptionDestination_STATUS() to populate field Destination")
 		}
 		subscription.Destination = &destination
 	} else {
@@ -1199,7 +1082,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 		var filter EventSubscriptionFilter_STATUS
 		err := filter.AssignProperties_From_EventSubscriptionFilter_STATUS(source.Filter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventSubscriptionFilter_STATUS() to populate field Filter")
+			return eris.Wrap(err, "calling AssignProperties_From_EventSubscriptionFilter_STATUS() to populate field Filter")
 		}
 		subscription.Filter = &filter
 	} else {
@@ -1229,7 +1112,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 		var retryPolicy RetryPolicy_STATUS
 		err := retryPolicy.AssignProperties_From_RetryPolicy_STATUS(source.RetryPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RetryPolicy_STATUS() to populate field RetryPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_RetryPolicy_STATUS() to populate field RetryPolicy")
 		}
 		subscription.RetryPolicy = &retryPolicy
 	} else {
@@ -1241,7 +1124,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_From_EventSubscri
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		subscription.SystemData = &systemDatum
 	} else {
@@ -1271,7 +1154,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 		var deadLetterDestination storage.DeadLetterDestination_STATUS
 		err := subscription.DeadLetterDestination.AssignProperties_To_DeadLetterDestination_STATUS(&deadLetterDestination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
+			return eris.Wrap(err, "calling AssignProperties_To_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
 		}
 		destination.DeadLetterDestination = &deadLetterDestination
 	} else {
@@ -1283,7 +1166,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 		var destinationLocal storage.EventSubscriptionDestination_STATUS
 		err := subscription.Destination.AssignProperties_To_EventSubscriptionDestination_STATUS(&destinationLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_To_EventSubscriptionDestination_STATUS() to populate field Destination")
 		}
 		destination.Destination = &destinationLocal
 	} else {
@@ -1306,7 +1189,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 		var filter storage.EventSubscriptionFilter_STATUS
 		err := subscription.Filter.AssignProperties_To_EventSubscriptionFilter_STATUS(&filter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventSubscriptionFilter_STATUS() to populate field Filter")
+			return eris.Wrap(err, "calling AssignProperties_To_EventSubscriptionFilter_STATUS() to populate field Filter")
 		}
 		destination.Filter = &filter
 	} else {
@@ -1335,7 +1218,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 		var retryPolicy storage.RetryPolicy_STATUS
 		err := subscription.RetryPolicy.AssignProperties_To_RetryPolicy_STATUS(&retryPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RetryPolicy_STATUS() to populate field RetryPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_RetryPolicy_STATUS() to populate field RetryPolicy")
 		}
 		destination.RetryPolicy = &retryPolicy
 	} else {
@@ -1347,7 +1230,7 @@ func (subscription *EventSubscription_STATUS) AssignProperties_To_EventSubscript
 		var systemDatum storage.SystemData_STATUS
 		err := subscription.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1432,7 +1315,7 @@ func (destination *DeadLetterDestination) AssignProperties_From_DeadLetterDestin
 		var storageBlob StorageBlobDeadLetterDestination
 		err := storageBlob.AssignProperties_From_StorageBlobDeadLetterDestination(source.StorageBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageBlobDeadLetterDestination() to populate field StorageBlob")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageBlobDeadLetterDestination() to populate field StorageBlob")
 		}
 		destination.StorageBlob = &storageBlob
 	} else {
@@ -1453,7 +1336,7 @@ func (destination *DeadLetterDestination) AssignProperties_To_DeadLetterDestinat
 		var storageBlob storage.StorageBlobDeadLetterDestination
 		err := destination.StorageBlob.AssignProperties_To_StorageBlobDeadLetterDestination(&storageBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageBlobDeadLetterDestination() to populate field StorageBlob")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageBlobDeadLetterDestination() to populate field StorageBlob")
 		}
 		target.StorageBlob = &storageBlob
 	} else {
@@ -1479,7 +1362,7 @@ func (destination *DeadLetterDestination) Initialize_From_DeadLetterDestination_
 		var storageBlob StorageBlobDeadLetterDestination
 		err := storageBlob.Initialize_From_StorageBlobDeadLetterDestination_STATUS(source.StorageBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
+			return eris.Wrap(err, "calling Initialize_From_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
 		}
 		destination.StorageBlob = &storageBlob
 	} else {
@@ -1532,7 +1415,7 @@ func (destination *DeadLetterDestination_STATUS) AssignProperties_From_DeadLette
 		var storageBlob StorageBlobDeadLetterDestination_STATUS
 		err := storageBlob.AssignProperties_From_StorageBlobDeadLetterDestination_STATUS(source.StorageBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
 		}
 		destination.StorageBlob = &storageBlob
 	} else {
@@ -1553,7 +1436,7 @@ func (destination *DeadLetterDestination_STATUS) AssignProperties_To_DeadLetterD
 		var storageBlob storage.StorageBlobDeadLetterDestination_STATUS
 		err := destination.StorageBlob.AssignProperties_To_StorageBlobDeadLetterDestination_STATUS(&storageBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
 		}
 		target.StorageBlob = &storageBlob
 	} else {
@@ -1776,7 +1659,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var azureFunction AzureFunctionEventSubscriptionDestination
 		err := azureFunction.AssignProperties_From_AzureFunctionEventSubscriptionDestination(source.AzureFunction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureFunctionEventSubscriptionDestination() to populate field AzureFunction")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureFunctionEventSubscriptionDestination() to populate field AzureFunction")
 		}
 		destination.AzureFunction = &azureFunction
 	} else {
@@ -1788,7 +1671,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var eventHub EventHubEventSubscriptionDestination
 		err := eventHub.AssignProperties_From_EventHubEventSubscriptionDestination(source.EventHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventHubEventSubscriptionDestination() to populate field EventHub")
+			return eris.Wrap(err, "calling AssignProperties_From_EventHubEventSubscriptionDestination() to populate field EventHub")
 		}
 		destination.EventHub = &eventHub
 	} else {
@@ -1800,7 +1683,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var hybridConnection HybridConnectionEventSubscriptionDestination
 		err := hybridConnection.AssignProperties_From_HybridConnectionEventSubscriptionDestination(source.HybridConnection)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HybridConnectionEventSubscriptionDestination() to populate field HybridConnection")
+			return eris.Wrap(err, "calling AssignProperties_From_HybridConnectionEventSubscriptionDestination() to populate field HybridConnection")
 		}
 		destination.HybridConnection = &hybridConnection
 	} else {
@@ -1812,7 +1695,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var serviceBusQueue ServiceBusQueueEventSubscriptionDestination
 		err := serviceBusQueue.AssignProperties_From_ServiceBusQueueEventSubscriptionDestination(source.ServiceBusQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceBusQueueEventSubscriptionDestination() to populate field ServiceBusQueue")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceBusQueueEventSubscriptionDestination() to populate field ServiceBusQueue")
 		}
 		destination.ServiceBusQueue = &serviceBusQueue
 	} else {
@@ -1824,7 +1707,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var serviceBusTopic ServiceBusTopicEventSubscriptionDestination
 		err := serviceBusTopic.AssignProperties_From_ServiceBusTopicEventSubscriptionDestination(source.ServiceBusTopic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceBusTopicEventSubscriptionDestination() to populate field ServiceBusTopic")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceBusTopicEventSubscriptionDestination() to populate field ServiceBusTopic")
 		}
 		destination.ServiceBusTopic = &serviceBusTopic
 	} else {
@@ -1836,7 +1719,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var storageQueue StorageQueueEventSubscriptionDestination
 		err := storageQueue.AssignProperties_From_StorageQueueEventSubscriptionDestination(source.StorageQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageQueueEventSubscriptionDestination() to populate field StorageQueue")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageQueueEventSubscriptionDestination() to populate field StorageQueue")
 		}
 		destination.StorageQueue = &storageQueue
 	} else {
@@ -1848,7 +1731,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_From_EventSubs
 		var webHook WebHookEventSubscriptionDestination
 		err := webHook.AssignProperties_From_WebHookEventSubscriptionDestination(source.WebHook)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebHookEventSubscriptionDestination() to populate field WebHook")
+			return eris.Wrap(err, "calling AssignProperties_From_WebHookEventSubscriptionDestination() to populate field WebHook")
 		}
 		destination.WebHook = &webHook
 	} else {
@@ -1869,7 +1752,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var azureFunction storage.AzureFunctionEventSubscriptionDestination
 		err := destination.AzureFunction.AssignProperties_To_AzureFunctionEventSubscriptionDestination(&azureFunction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureFunctionEventSubscriptionDestination() to populate field AzureFunction")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureFunctionEventSubscriptionDestination() to populate field AzureFunction")
 		}
 		target.AzureFunction = &azureFunction
 	} else {
@@ -1881,7 +1764,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var eventHub storage.EventHubEventSubscriptionDestination
 		err := destination.EventHub.AssignProperties_To_EventHubEventSubscriptionDestination(&eventHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventHubEventSubscriptionDestination() to populate field EventHub")
+			return eris.Wrap(err, "calling AssignProperties_To_EventHubEventSubscriptionDestination() to populate field EventHub")
 		}
 		target.EventHub = &eventHub
 	} else {
@@ -1893,7 +1776,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var hybridConnection storage.HybridConnectionEventSubscriptionDestination
 		err := destination.HybridConnection.AssignProperties_To_HybridConnectionEventSubscriptionDestination(&hybridConnection)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HybridConnectionEventSubscriptionDestination() to populate field HybridConnection")
+			return eris.Wrap(err, "calling AssignProperties_To_HybridConnectionEventSubscriptionDestination() to populate field HybridConnection")
 		}
 		target.HybridConnection = &hybridConnection
 	} else {
@@ -1905,7 +1788,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var serviceBusQueue storage.ServiceBusQueueEventSubscriptionDestination
 		err := destination.ServiceBusQueue.AssignProperties_To_ServiceBusQueueEventSubscriptionDestination(&serviceBusQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusQueueEventSubscriptionDestination() to populate field ServiceBusQueue")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceBusQueueEventSubscriptionDestination() to populate field ServiceBusQueue")
 		}
 		target.ServiceBusQueue = &serviceBusQueue
 	} else {
@@ -1917,7 +1800,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var serviceBusTopic storage.ServiceBusTopicEventSubscriptionDestination
 		err := destination.ServiceBusTopic.AssignProperties_To_ServiceBusTopicEventSubscriptionDestination(&serviceBusTopic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusTopicEventSubscriptionDestination() to populate field ServiceBusTopic")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceBusTopicEventSubscriptionDestination() to populate field ServiceBusTopic")
 		}
 		target.ServiceBusTopic = &serviceBusTopic
 	} else {
@@ -1929,7 +1812,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var storageQueue storage.StorageQueueEventSubscriptionDestination
 		err := destination.StorageQueue.AssignProperties_To_StorageQueueEventSubscriptionDestination(&storageQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageQueueEventSubscriptionDestination() to populate field StorageQueue")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageQueueEventSubscriptionDestination() to populate field StorageQueue")
 		}
 		target.StorageQueue = &storageQueue
 	} else {
@@ -1941,7 +1824,7 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		var webHook storage.WebHookEventSubscriptionDestination
 		err := destination.WebHook.AssignProperties_To_WebHookEventSubscriptionDestination(&webHook)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebHookEventSubscriptionDestination() to populate field WebHook")
+			return eris.Wrap(err, "calling AssignProperties_To_WebHookEventSubscriptionDestination() to populate field WebHook")
 		}
 		target.WebHook = &webHook
 	} else {
@@ -1967,7 +1850,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var azureFunction AzureFunctionEventSubscriptionDestination
 		err := azureFunction.Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS(source.AzureFunction)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
+			return eris.Wrap(err, "calling Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
 		}
 		destination.AzureFunction = &azureFunction
 	} else {
@@ -1979,7 +1862,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var eventHub EventHubEventSubscriptionDestination
 		err := eventHub.Initialize_From_EventHubEventSubscriptionDestination_STATUS(source.EventHub)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
+			return eris.Wrap(err, "calling Initialize_From_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
 		}
 		destination.EventHub = &eventHub
 	} else {
@@ -1991,7 +1874,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var hybridConnection HybridConnectionEventSubscriptionDestination
 		err := hybridConnection.Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS(source.HybridConnection)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
+			return eris.Wrap(err, "calling Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
 		}
 		destination.HybridConnection = &hybridConnection
 	} else {
@@ -2003,7 +1886,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var serviceBusQueue ServiceBusQueueEventSubscriptionDestination
 		err := serviceBusQueue.Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS(source.ServiceBusQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
+			return eris.Wrap(err, "calling Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
 		}
 		destination.ServiceBusQueue = &serviceBusQueue
 	} else {
@@ -2015,7 +1898,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var serviceBusTopic ServiceBusTopicEventSubscriptionDestination
 		err := serviceBusTopic.Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS(source.ServiceBusTopic)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
+			return eris.Wrap(err, "calling Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
 		}
 		destination.ServiceBusTopic = &serviceBusTopic
 	} else {
@@ -2027,7 +1910,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var storageQueue StorageQueueEventSubscriptionDestination
 		err := storageQueue.Initialize_From_StorageQueueEventSubscriptionDestination_STATUS(source.StorageQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
+			return eris.Wrap(err, "calling Initialize_From_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
 		}
 		destination.StorageQueue = &storageQueue
 	} else {
@@ -2039,7 +1922,7 @@ func (destination *EventSubscriptionDestination) Initialize_From_EventSubscripti
 		var webHook WebHookEventSubscriptionDestination
 		err := webHook.Initialize_From_WebHookEventSubscriptionDestination_STATUS(source.WebHook)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
+			return eris.Wrap(err, "calling Initialize_From_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
 		}
 		destination.WebHook = &webHook
 	} else {
@@ -2176,7 +2059,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var azureFunction AzureFunctionEventSubscriptionDestination_STATUS
 		err := azureFunction.AssignProperties_From_AzureFunctionEventSubscriptionDestination_STATUS(source.AzureFunction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
 		}
 		destination.AzureFunction = &azureFunction
 	} else {
@@ -2188,7 +2071,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var eventHub EventHubEventSubscriptionDestination_STATUS
 		err := eventHub.AssignProperties_From_EventHubEventSubscriptionDestination_STATUS(source.EventHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
+			return eris.Wrap(err, "calling AssignProperties_From_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
 		}
 		destination.EventHub = &eventHub
 	} else {
@@ -2200,7 +2083,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var hybridConnection HybridConnectionEventSubscriptionDestination_STATUS
 		err := hybridConnection.AssignProperties_From_HybridConnectionEventSubscriptionDestination_STATUS(source.HybridConnection)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
+			return eris.Wrap(err, "calling AssignProperties_From_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
 		}
 		destination.HybridConnection = &hybridConnection
 	} else {
@@ -2212,7 +2095,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var serviceBusQueue ServiceBusQueueEventSubscriptionDestination_STATUS
 		err := serviceBusQueue.AssignProperties_From_ServiceBusQueueEventSubscriptionDestination_STATUS(source.ServiceBusQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
 		}
 		destination.ServiceBusQueue = &serviceBusQueue
 	} else {
@@ -2224,7 +2107,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var serviceBusTopic ServiceBusTopicEventSubscriptionDestination_STATUS
 		err := serviceBusTopic.AssignProperties_From_ServiceBusTopicEventSubscriptionDestination_STATUS(source.ServiceBusTopic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
 		}
 		destination.ServiceBusTopic = &serviceBusTopic
 	} else {
@@ -2236,7 +2119,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var storageQueue StorageQueueEventSubscriptionDestination_STATUS
 		err := storageQueue.AssignProperties_From_StorageQueueEventSubscriptionDestination_STATUS(source.StorageQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
 		}
 		destination.StorageQueue = &storageQueue
 	} else {
@@ -2248,7 +2131,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_From_Ev
 		var webHook WebHookEventSubscriptionDestination_STATUS
 		err := webHook.AssignProperties_From_WebHookEventSubscriptionDestination_STATUS(source.WebHook)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
+			return eris.Wrap(err, "calling AssignProperties_From_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
 		}
 		destination.WebHook = &webHook
 	} else {
@@ -2269,7 +2152,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var azureFunction storage.AzureFunctionEventSubscriptionDestination_STATUS
 		err := destination.AzureFunction.AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS(&azureFunction)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
 		}
 		target.AzureFunction = &azureFunction
 	} else {
@@ -2281,7 +2164,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var eventHub storage.EventHubEventSubscriptionDestination_STATUS
 		err := destination.EventHub.AssignProperties_To_EventHubEventSubscriptionDestination_STATUS(&eventHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
+			return eris.Wrap(err, "calling AssignProperties_To_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
 		}
 		target.EventHub = &eventHub
 	} else {
@@ -2293,7 +2176,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var hybridConnection storage.HybridConnectionEventSubscriptionDestination_STATUS
 		err := destination.HybridConnection.AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS(&hybridConnection)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
+			return eris.Wrap(err, "calling AssignProperties_To_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
 		}
 		target.HybridConnection = &hybridConnection
 	} else {
@@ -2305,7 +2188,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var serviceBusQueue storage.ServiceBusQueueEventSubscriptionDestination_STATUS
 		err := destination.ServiceBusQueue.AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS(&serviceBusQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
 		}
 		target.ServiceBusQueue = &serviceBusQueue
 	} else {
@@ -2317,7 +2200,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var serviceBusTopic storage.ServiceBusTopicEventSubscriptionDestination_STATUS
 		err := destination.ServiceBusTopic.AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS(&serviceBusTopic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
 		}
 		target.ServiceBusTopic = &serviceBusTopic
 	} else {
@@ -2329,7 +2212,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var storageQueue storage.StorageQueueEventSubscriptionDestination_STATUS
 		err := destination.StorageQueue.AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS(&storageQueue)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
 		}
 		target.StorageQueue = &storageQueue
 	} else {
@@ -2341,7 +2224,7 @@ func (destination *EventSubscriptionDestination_STATUS) AssignProperties_To_Even
 		var webHook storage.WebHookEventSubscriptionDestination_STATUS
 		err := destination.WebHook.AssignProperties_To_WebHookEventSubscriptionDestination_STATUS(&webHook)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
+			return eris.Wrap(err, "calling AssignProperties_To_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
 		}
 		target.WebHook = &webHook
 	} else {
@@ -2486,7 +2369,7 @@ func (filter *EventSubscriptionFilter) AssignProperties_From_EventSubscriptionFi
 			var advancedFilter AdvancedFilter
 			err := advancedFilter.AssignProperties_From_AdvancedFilter(&advancedFilterItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AdvancedFilter() to populate field AdvancedFilters")
+				return eris.Wrap(err, "calling AssignProperties_From_AdvancedFilter() to populate field AdvancedFilters")
 			}
 			advancedFilterList[advancedFilterIndex] = advancedFilter
 		}
@@ -2530,7 +2413,7 @@ func (filter *EventSubscriptionFilter) AssignProperties_To_EventSubscriptionFilt
 			var advancedFilter storage.AdvancedFilter
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter(&advancedFilter)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AdvancedFilter() to populate field AdvancedFilters")
+				return eris.Wrap(err, "calling AssignProperties_To_AdvancedFilter() to populate field AdvancedFilters")
 			}
 			advancedFilterList[advancedFilterIndex] = advancedFilter
 		}
@@ -2579,7 +2462,7 @@ func (filter *EventSubscriptionFilter) Initialize_From_EventSubscriptionFilter_S
 			var advancedFilter AdvancedFilter
 			err := advancedFilter.Initialize_From_AdvancedFilter_STATUS(&advancedFilterItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_AdvancedFilter_STATUS() to populate field AdvancedFilters")
+				return eris.Wrap(err, "calling Initialize_From_AdvancedFilter_STATUS() to populate field AdvancedFilters")
 			}
 			advancedFilterList[advancedFilterIndex] = advancedFilter
 		}
@@ -2695,7 +2578,7 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_From_EventSubscri
 			var advancedFilter AdvancedFilter_STATUS
 			err := advancedFilter.AssignProperties_From_AdvancedFilter_STATUS(&advancedFilterItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AdvancedFilter_STATUS() to populate field AdvancedFilters")
+				return eris.Wrap(err, "calling AssignProperties_From_AdvancedFilter_STATUS() to populate field AdvancedFilters")
 			}
 			advancedFilterList[advancedFilterIndex] = advancedFilter
 		}
@@ -2739,7 +2622,7 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_To_EventSubscript
 			var advancedFilter storage.AdvancedFilter_STATUS
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter_STATUS(&advancedFilter)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AdvancedFilter_STATUS() to populate field AdvancedFilters")
+				return eris.Wrap(err, "calling AssignProperties_To_AdvancedFilter_STATUS() to populate field AdvancedFilters")
 			}
 			advancedFilterList[advancedFilterIndex] = advancedFilter
 		}
@@ -3441,7 +3324,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var boolEqual BoolEqualsAdvancedFilter
 		err := boolEqual.AssignProperties_From_BoolEqualsAdvancedFilter(source.BoolEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BoolEqualsAdvancedFilter() to populate field BoolEquals")
+			return eris.Wrap(err, "calling AssignProperties_From_BoolEqualsAdvancedFilter() to populate field BoolEquals")
 		}
 		filter.BoolEquals = &boolEqual
 	} else {
@@ -3453,7 +3336,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var numberGreaterThan NumberGreaterThanAdvancedFilter
 		err := numberGreaterThan.AssignProperties_From_NumberGreaterThanAdvancedFilter(source.NumberGreaterThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberGreaterThanAdvancedFilter() to populate field NumberGreaterThan")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberGreaterThanAdvancedFilter() to populate field NumberGreaterThan")
 		}
 		filter.NumberGreaterThan = &numberGreaterThan
 	} else {
@@ -3465,7 +3348,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var numberGreaterThanOrEqual NumberGreaterThanOrEqualsAdvancedFilter
 		err := numberGreaterThanOrEqual.AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter(source.NumberGreaterThanOrEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter() to populate field NumberGreaterThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter() to populate field NumberGreaterThanOrEquals")
 		}
 		filter.NumberGreaterThanOrEquals = &numberGreaterThanOrEqual
 	} else {
@@ -3477,7 +3360,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var numberIn NumberInAdvancedFilter
 		err := numberIn.AssignProperties_From_NumberInAdvancedFilter(source.NumberIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberInAdvancedFilter() to populate field NumberIn")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberInAdvancedFilter() to populate field NumberIn")
 		}
 		filter.NumberIn = &numberIn
 	} else {
@@ -3489,7 +3372,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var numberLessThan NumberLessThanAdvancedFilter
 		err := numberLessThan.AssignProperties_From_NumberLessThanAdvancedFilter(source.NumberLessThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberLessThanAdvancedFilter() to populate field NumberLessThan")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberLessThanAdvancedFilter() to populate field NumberLessThan")
 		}
 		filter.NumberLessThan = &numberLessThan
 	} else {
@@ -3501,7 +3384,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var numberLessThanOrEqual NumberLessThanOrEqualsAdvancedFilter
 		err := numberLessThanOrEqual.AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter(source.NumberLessThanOrEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter() to populate field NumberLessThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter() to populate field NumberLessThanOrEquals")
 		}
 		filter.NumberLessThanOrEquals = &numberLessThanOrEqual
 	} else {
@@ -3513,7 +3396,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var numberNotIn NumberNotInAdvancedFilter
 		err := numberNotIn.AssignProperties_From_NumberNotInAdvancedFilter(source.NumberNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberNotInAdvancedFilter() to populate field NumberNotIn")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberNotInAdvancedFilter() to populate field NumberNotIn")
 		}
 		filter.NumberNotIn = &numberNotIn
 	} else {
@@ -3525,7 +3408,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var stringBeginsWith StringBeginsWithAdvancedFilter
 		err := stringBeginsWith.AssignProperties_From_StringBeginsWithAdvancedFilter(source.StringBeginsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringBeginsWithAdvancedFilter() to populate field StringBeginsWith")
+			return eris.Wrap(err, "calling AssignProperties_From_StringBeginsWithAdvancedFilter() to populate field StringBeginsWith")
 		}
 		filter.StringBeginsWith = &stringBeginsWith
 	} else {
@@ -3537,7 +3420,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var stringContain StringContainsAdvancedFilter
 		err := stringContain.AssignProperties_From_StringContainsAdvancedFilter(source.StringContains)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringContainsAdvancedFilter() to populate field StringContains")
+			return eris.Wrap(err, "calling AssignProperties_From_StringContainsAdvancedFilter() to populate field StringContains")
 		}
 		filter.StringContains = &stringContain
 	} else {
@@ -3549,7 +3432,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var stringEndsWith StringEndsWithAdvancedFilter
 		err := stringEndsWith.AssignProperties_From_StringEndsWithAdvancedFilter(source.StringEndsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringEndsWithAdvancedFilter() to populate field StringEndsWith")
+			return eris.Wrap(err, "calling AssignProperties_From_StringEndsWithAdvancedFilter() to populate field StringEndsWith")
 		}
 		filter.StringEndsWith = &stringEndsWith
 	} else {
@@ -3561,7 +3444,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var stringIn StringInAdvancedFilter
 		err := stringIn.AssignProperties_From_StringInAdvancedFilter(source.StringIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringInAdvancedFilter() to populate field StringIn")
+			return eris.Wrap(err, "calling AssignProperties_From_StringInAdvancedFilter() to populate field StringIn")
 		}
 		filter.StringIn = &stringIn
 	} else {
@@ -3573,7 +3456,7 @@ func (filter *AdvancedFilter) AssignProperties_From_AdvancedFilter(source *stora
 		var stringNotIn StringNotInAdvancedFilter
 		err := stringNotIn.AssignProperties_From_StringNotInAdvancedFilter(source.StringNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringNotInAdvancedFilter() to populate field StringNotIn")
+			return eris.Wrap(err, "calling AssignProperties_From_StringNotInAdvancedFilter() to populate field StringNotIn")
 		}
 		filter.StringNotIn = &stringNotIn
 	} else {
@@ -3594,7 +3477,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var boolEqual storage.BoolEqualsAdvancedFilter
 		err := filter.BoolEquals.AssignProperties_To_BoolEqualsAdvancedFilter(&boolEqual)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BoolEqualsAdvancedFilter() to populate field BoolEquals")
+			return eris.Wrap(err, "calling AssignProperties_To_BoolEqualsAdvancedFilter() to populate field BoolEquals")
 		}
 		destination.BoolEquals = &boolEqual
 	} else {
@@ -3606,7 +3489,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var numberGreaterThan storage.NumberGreaterThanAdvancedFilter
 		err := filter.NumberGreaterThan.AssignProperties_To_NumberGreaterThanAdvancedFilter(&numberGreaterThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanAdvancedFilter() to populate field NumberGreaterThan")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberGreaterThanAdvancedFilter() to populate field NumberGreaterThan")
 		}
 		destination.NumberGreaterThan = &numberGreaterThan
 	} else {
@@ -3618,7 +3501,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var numberGreaterThanOrEqual storage.NumberGreaterThanOrEqualsAdvancedFilter
 		err := filter.NumberGreaterThanOrEquals.AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter(&numberGreaterThanOrEqual)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter() to populate field NumberGreaterThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter() to populate field NumberGreaterThanOrEquals")
 		}
 		destination.NumberGreaterThanOrEquals = &numberGreaterThanOrEqual
 	} else {
@@ -3630,7 +3513,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var numberIn storage.NumberInAdvancedFilter
 		err := filter.NumberIn.AssignProperties_To_NumberInAdvancedFilter(&numberIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberInAdvancedFilter() to populate field NumberIn")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberInAdvancedFilter() to populate field NumberIn")
 		}
 		destination.NumberIn = &numberIn
 	} else {
@@ -3642,7 +3525,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var numberLessThan storage.NumberLessThanAdvancedFilter
 		err := filter.NumberLessThan.AssignProperties_To_NumberLessThanAdvancedFilter(&numberLessThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanAdvancedFilter() to populate field NumberLessThan")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberLessThanAdvancedFilter() to populate field NumberLessThan")
 		}
 		destination.NumberLessThan = &numberLessThan
 	} else {
@@ -3654,7 +3537,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var numberLessThanOrEqual storage.NumberLessThanOrEqualsAdvancedFilter
 		err := filter.NumberLessThanOrEquals.AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter(&numberLessThanOrEqual)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter() to populate field NumberLessThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter() to populate field NumberLessThanOrEquals")
 		}
 		destination.NumberLessThanOrEquals = &numberLessThanOrEqual
 	} else {
@@ -3666,7 +3549,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var numberNotIn storage.NumberNotInAdvancedFilter
 		err := filter.NumberNotIn.AssignProperties_To_NumberNotInAdvancedFilter(&numberNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberNotInAdvancedFilter() to populate field NumberNotIn")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberNotInAdvancedFilter() to populate field NumberNotIn")
 		}
 		destination.NumberNotIn = &numberNotIn
 	} else {
@@ -3678,7 +3561,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var stringBeginsWith storage.StringBeginsWithAdvancedFilter
 		err := filter.StringBeginsWith.AssignProperties_To_StringBeginsWithAdvancedFilter(&stringBeginsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringBeginsWithAdvancedFilter() to populate field StringBeginsWith")
+			return eris.Wrap(err, "calling AssignProperties_To_StringBeginsWithAdvancedFilter() to populate field StringBeginsWith")
 		}
 		destination.StringBeginsWith = &stringBeginsWith
 	} else {
@@ -3690,7 +3573,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var stringContain storage.StringContainsAdvancedFilter
 		err := filter.StringContains.AssignProperties_To_StringContainsAdvancedFilter(&stringContain)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringContainsAdvancedFilter() to populate field StringContains")
+			return eris.Wrap(err, "calling AssignProperties_To_StringContainsAdvancedFilter() to populate field StringContains")
 		}
 		destination.StringContains = &stringContain
 	} else {
@@ -3702,7 +3585,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var stringEndsWith storage.StringEndsWithAdvancedFilter
 		err := filter.StringEndsWith.AssignProperties_To_StringEndsWithAdvancedFilter(&stringEndsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringEndsWithAdvancedFilter() to populate field StringEndsWith")
+			return eris.Wrap(err, "calling AssignProperties_To_StringEndsWithAdvancedFilter() to populate field StringEndsWith")
 		}
 		destination.StringEndsWith = &stringEndsWith
 	} else {
@@ -3714,7 +3597,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var stringIn storage.StringInAdvancedFilter
 		err := filter.StringIn.AssignProperties_To_StringInAdvancedFilter(&stringIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringInAdvancedFilter() to populate field StringIn")
+			return eris.Wrap(err, "calling AssignProperties_To_StringInAdvancedFilter() to populate field StringIn")
 		}
 		destination.StringIn = &stringIn
 	} else {
@@ -3726,7 +3609,7 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		var stringNotIn storage.StringNotInAdvancedFilter
 		err := filter.StringNotIn.AssignProperties_To_StringNotInAdvancedFilter(&stringNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringNotInAdvancedFilter() to populate field StringNotIn")
+			return eris.Wrap(err, "calling AssignProperties_To_StringNotInAdvancedFilter() to populate field StringNotIn")
 		}
 		destination.StringNotIn = &stringNotIn
 	} else {
@@ -3752,7 +3635,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var boolEqual BoolEqualsAdvancedFilter
 		err := boolEqual.Initialize_From_BoolEqualsAdvancedFilter_STATUS(source.BoolEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
+			return eris.Wrap(err, "calling Initialize_From_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
 		}
 		filter.BoolEquals = &boolEqual
 	} else {
@@ -3764,7 +3647,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var numberGreaterThan NumberGreaterThanAdvancedFilter
 		err := numberGreaterThan.Initialize_From_NumberGreaterThanAdvancedFilter_STATUS(source.NumberGreaterThan)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
+			return eris.Wrap(err, "calling Initialize_From_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
 		}
 		filter.NumberGreaterThan = &numberGreaterThan
 	} else {
@@ -3776,7 +3659,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var numberGreaterThanOrEqual NumberGreaterThanOrEqualsAdvancedFilter
 		err := numberGreaterThanOrEqual.Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(source.NumberGreaterThanOrEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
+			return eris.Wrap(err, "calling Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
 		}
 		filter.NumberGreaterThanOrEquals = &numberGreaterThanOrEqual
 	} else {
@@ -3788,7 +3671,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var numberIn NumberInAdvancedFilter
 		err := numberIn.Initialize_From_NumberInAdvancedFilter_STATUS(source.NumberIn)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
+			return eris.Wrap(err, "calling Initialize_From_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
 		}
 		filter.NumberIn = &numberIn
 	} else {
@@ -3800,7 +3683,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var numberLessThan NumberLessThanAdvancedFilter
 		err := numberLessThan.Initialize_From_NumberLessThanAdvancedFilter_STATUS(source.NumberLessThan)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
+			return eris.Wrap(err, "calling Initialize_From_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
 		}
 		filter.NumberLessThan = &numberLessThan
 	} else {
@@ -3812,7 +3695,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var numberLessThanOrEqual NumberLessThanOrEqualsAdvancedFilter
 		err := numberLessThanOrEqual.Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS(source.NumberLessThanOrEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
+			return eris.Wrap(err, "calling Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
 		}
 		filter.NumberLessThanOrEquals = &numberLessThanOrEqual
 	} else {
@@ -3824,7 +3707,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var numberNotIn NumberNotInAdvancedFilter
 		err := numberNotIn.Initialize_From_NumberNotInAdvancedFilter_STATUS(source.NumberNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
+			return eris.Wrap(err, "calling Initialize_From_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
 		}
 		filter.NumberNotIn = &numberNotIn
 	} else {
@@ -3836,7 +3719,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var stringBeginsWith StringBeginsWithAdvancedFilter
 		err := stringBeginsWith.Initialize_From_StringBeginsWithAdvancedFilter_STATUS(source.StringBeginsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
+			return eris.Wrap(err, "calling Initialize_From_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
 		}
 		filter.StringBeginsWith = &stringBeginsWith
 	} else {
@@ -3848,7 +3731,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var stringContain StringContainsAdvancedFilter
 		err := stringContain.Initialize_From_StringContainsAdvancedFilter_STATUS(source.StringContains)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
+			return eris.Wrap(err, "calling Initialize_From_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
 		}
 		filter.StringContains = &stringContain
 	} else {
@@ -3860,7 +3743,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var stringEndsWith StringEndsWithAdvancedFilter
 		err := stringEndsWith.Initialize_From_StringEndsWithAdvancedFilter_STATUS(source.StringEndsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
+			return eris.Wrap(err, "calling Initialize_From_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
 		}
 		filter.StringEndsWith = &stringEndsWith
 	} else {
@@ -3872,7 +3755,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var stringIn StringInAdvancedFilter
 		err := stringIn.Initialize_From_StringInAdvancedFilter_STATUS(source.StringIn)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StringInAdvancedFilter_STATUS() to populate field StringIn")
+			return eris.Wrap(err, "calling Initialize_From_StringInAdvancedFilter_STATUS() to populate field StringIn")
 		}
 		filter.StringIn = &stringIn
 	} else {
@@ -3884,7 +3767,7 @@ func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *Adva
 		var stringNotIn StringNotInAdvancedFilter
 		err := stringNotIn.Initialize_From_StringNotInAdvancedFilter_STATUS(source.StringNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
+			return eris.Wrap(err, "calling Initialize_From_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
 		}
 		filter.StringNotIn = &stringNotIn
 	} else {
@@ -4091,7 +3974,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var boolEqual BoolEqualsAdvancedFilter_STATUS
 		err := boolEqual.AssignProperties_From_BoolEqualsAdvancedFilter_STATUS(source.BoolEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
+			return eris.Wrap(err, "calling AssignProperties_From_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
 		}
 		filter.BoolEquals = &boolEqual
 	} else {
@@ -4103,7 +3986,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var numberGreaterThan NumberGreaterThanAdvancedFilter_STATUS
 		err := numberGreaterThan.AssignProperties_From_NumberGreaterThanAdvancedFilter_STATUS(source.NumberGreaterThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
 		}
 		filter.NumberGreaterThan = &numberGreaterThan
 	} else {
@@ -4115,7 +3998,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var numberGreaterThanOrEqual NumberGreaterThanOrEqualsAdvancedFilter_STATUS
 		err := numberGreaterThanOrEqual.AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(source.NumberGreaterThanOrEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
 		}
 		filter.NumberGreaterThanOrEquals = &numberGreaterThanOrEqual
 	} else {
@@ -4127,7 +4010,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var numberIn NumberInAdvancedFilter_STATUS
 		err := numberIn.AssignProperties_From_NumberInAdvancedFilter_STATUS(source.NumberIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
 		}
 		filter.NumberIn = &numberIn
 	} else {
@@ -4139,7 +4022,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var numberLessThan NumberLessThanAdvancedFilter_STATUS
 		err := numberLessThan.AssignProperties_From_NumberLessThanAdvancedFilter_STATUS(source.NumberLessThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
 		}
 		filter.NumberLessThan = &numberLessThan
 	} else {
@@ -4151,7 +4034,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var numberLessThanOrEqual NumberLessThanOrEqualsAdvancedFilter_STATUS
 		err := numberLessThanOrEqual.AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter_STATUS(source.NumberLessThanOrEquals)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
 		}
 		filter.NumberLessThanOrEquals = &numberLessThanOrEqual
 	} else {
@@ -4163,7 +4046,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var numberNotIn NumberNotInAdvancedFilter_STATUS
 		err := numberNotIn.AssignProperties_From_NumberNotInAdvancedFilter_STATUS(source.NumberNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
+			return eris.Wrap(err, "calling AssignProperties_From_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
 		}
 		filter.NumberNotIn = &numberNotIn
 	} else {
@@ -4175,7 +4058,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var stringBeginsWith StringBeginsWithAdvancedFilter_STATUS
 		err := stringBeginsWith.AssignProperties_From_StringBeginsWithAdvancedFilter_STATUS(source.StringBeginsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
+			return eris.Wrap(err, "calling AssignProperties_From_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
 		}
 		filter.StringBeginsWith = &stringBeginsWith
 	} else {
@@ -4187,7 +4070,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var stringContain StringContainsAdvancedFilter_STATUS
 		err := stringContain.AssignProperties_From_StringContainsAdvancedFilter_STATUS(source.StringContains)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
+			return eris.Wrap(err, "calling AssignProperties_From_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
 		}
 		filter.StringContains = &stringContain
 	} else {
@@ -4199,7 +4082,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var stringEndsWith StringEndsWithAdvancedFilter_STATUS
 		err := stringEndsWith.AssignProperties_From_StringEndsWithAdvancedFilter_STATUS(source.StringEndsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
+			return eris.Wrap(err, "calling AssignProperties_From_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
 		}
 		filter.StringEndsWith = &stringEndsWith
 	} else {
@@ -4211,7 +4094,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var stringIn StringInAdvancedFilter_STATUS
 		err := stringIn.AssignProperties_From_StringInAdvancedFilter_STATUS(source.StringIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringInAdvancedFilter_STATUS() to populate field StringIn")
+			return eris.Wrap(err, "calling AssignProperties_From_StringInAdvancedFilter_STATUS() to populate field StringIn")
 		}
 		filter.StringIn = &stringIn
 	} else {
@@ -4223,7 +4106,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_From_AdvancedFilter_STATUS
 		var stringNotIn StringNotInAdvancedFilter_STATUS
 		err := stringNotIn.AssignProperties_From_StringNotInAdvancedFilter_STATUS(source.StringNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
+			return eris.Wrap(err, "calling AssignProperties_From_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
 		}
 		filter.StringNotIn = &stringNotIn
 	} else {
@@ -4244,7 +4127,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var boolEqual storage.BoolEqualsAdvancedFilter_STATUS
 		err := filter.BoolEquals.AssignProperties_To_BoolEqualsAdvancedFilter_STATUS(&boolEqual)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
+			return eris.Wrap(err, "calling AssignProperties_To_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
 		}
 		destination.BoolEquals = &boolEqual
 	} else {
@@ -4256,7 +4139,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var numberGreaterThan storage.NumberGreaterThanAdvancedFilter_STATUS
 		err := filter.NumberGreaterThan.AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS(&numberGreaterThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
 		}
 		destination.NumberGreaterThan = &numberGreaterThan
 	} else {
@@ -4268,7 +4151,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var numberGreaterThanOrEqual storage.NumberGreaterThanOrEqualsAdvancedFilter_STATUS
 		err := filter.NumberGreaterThanOrEquals.AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(&numberGreaterThanOrEqual)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
 		}
 		destination.NumberGreaterThanOrEquals = &numberGreaterThanOrEqual
 	} else {
@@ -4280,7 +4163,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var numberIn storage.NumberInAdvancedFilter_STATUS
 		err := filter.NumberIn.AssignProperties_To_NumberInAdvancedFilter_STATUS(&numberIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
 		}
 		destination.NumberIn = &numberIn
 	} else {
@@ -4292,7 +4175,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var numberLessThan storage.NumberLessThanAdvancedFilter_STATUS
 		err := filter.NumberLessThan.AssignProperties_To_NumberLessThanAdvancedFilter_STATUS(&numberLessThan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
 		}
 		destination.NumberLessThan = &numberLessThan
 	} else {
@@ -4304,7 +4187,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var numberLessThanOrEqual storage.NumberLessThanOrEqualsAdvancedFilter_STATUS
 		err := filter.NumberLessThanOrEquals.AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS(&numberLessThanOrEqual)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
 		}
 		destination.NumberLessThanOrEquals = &numberLessThanOrEqual
 	} else {
@@ -4316,7 +4199,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var numberNotIn storage.NumberNotInAdvancedFilter_STATUS
 		err := filter.NumberNotIn.AssignProperties_To_NumberNotInAdvancedFilter_STATUS(&numberNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
+			return eris.Wrap(err, "calling AssignProperties_To_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
 		}
 		destination.NumberNotIn = &numberNotIn
 	} else {
@@ -4328,7 +4211,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var stringBeginsWith storage.StringBeginsWithAdvancedFilter_STATUS
 		err := filter.StringBeginsWith.AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS(&stringBeginsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
+			return eris.Wrap(err, "calling AssignProperties_To_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
 		}
 		destination.StringBeginsWith = &stringBeginsWith
 	} else {
@@ -4340,7 +4223,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var stringContain storage.StringContainsAdvancedFilter_STATUS
 		err := filter.StringContains.AssignProperties_To_StringContainsAdvancedFilter_STATUS(&stringContain)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
+			return eris.Wrap(err, "calling AssignProperties_To_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
 		}
 		destination.StringContains = &stringContain
 	} else {
@@ -4352,7 +4235,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var stringEndsWith storage.StringEndsWithAdvancedFilter_STATUS
 		err := filter.StringEndsWith.AssignProperties_To_StringEndsWithAdvancedFilter_STATUS(&stringEndsWith)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
+			return eris.Wrap(err, "calling AssignProperties_To_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
 		}
 		destination.StringEndsWith = &stringEndsWith
 	} else {
@@ -4364,7 +4247,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var stringIn storage.StringInAdvancedFilter_STATUS
 		err := filter.StringIn.AssignProperties_To_StringInAdvancedFilter_STATUS(&stringIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringInAdvancedFilter_STATUS() to populate field StringIn")
+			return eris.Wrap(err, "calling AssignProperties_To_StringInAdvancedFilter_STATUS() to populate field StringIn")
 		}
 		destination.StringIn = &stringIn
 	} else {
@@ -4376,7 +4259,7 @@ func (filter *AdvancedFilter_STATUS) AssignProperties_To_AdvancedFilter_STATUS(d
 		var stringNotIn storage.StringNotInAdvancedFilter_STATUS
 		err := filter.StringNotIn.AssignProperties_To_StringNotInAdvancedFilter_STATUS(&stringNotIn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
+			return eris.Wrap(err, "calling AssignProperties_To_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
 		}
 		destination.StringNotIn = &stringNotIn
 	} else {
@@ -6274,7 +6157,7 @@ func (destination *WebHookEventSubscriptionDestination) ConvertToARM(resolved ge
 	if destination.EndpointUrl != nil {
 		endpointUrlSecret, err := resolved.ResolvedSecrets.Lookup(*destination.EndpointUrl)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property EndpointUrl")
+			return nil, eris.Wrap(err, "looking up secret for property EndpointUrl")
 		}
 		endpointUrl := endpointUrlSecret
 		result.Properties.EndpointUrl = &endpointUrl

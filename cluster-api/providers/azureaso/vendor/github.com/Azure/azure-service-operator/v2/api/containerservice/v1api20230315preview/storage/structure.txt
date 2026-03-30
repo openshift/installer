@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315pre
 --------------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-03-15-preview"
+
 Fleet: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -45,6 +46,7 @@ Fleet: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 FleetsMember: Resource
 ├── Owner: containerservice/v1api20230315preview.Fleet
 ├── Spec: Object (7 properties)
@@ -76,6 +78,7 @@ FleetsMember: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 FleetsUpdateRun: Resource
 ├── Owner: containerservice/v1api20230315preview.Fleet
 ├── Spec: Object (7 properties)
@@ -264,4 +267,6 @@ FleetsUpdateRun: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 augmentConversionForSystemData_STATUS: Interface
+

@@ -14,6 +14,7 @@ ApiVersionSet_STATUS: Object (4 properties)
 │       ├── "Query"
 │       └── "Segment"
 └── Type: *string
+
 ApiVersionSet_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (5 properties)
@@ -25,6 +26,7 @@ ApiVersionSet_Spec: Object (2 properties)
         ├── "Header"
         ├── "Query"
         └── "Segment"
+
 Api_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -94,6 +96,7 @@ Api_STATUS: Object (4 properties)
 │       ├── "soap"
 │       └── "websocket"
 └── Type: *string
+
 Api_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (25 properties)
@@ -189,6 +192,7 @@ Api_Spec: Object (2 properties)
     └── WsdlSelector: *Object (2 properties)
         ├── WsdlEndpointName: *string
         └── WsdlServiceName: *string
+
 AuthorizationProvider_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -201,6 +205,7 @@ AuthorizationProvider_STATUS: Object (4 properties)
 │       │   └── ClientCredentials: map[string]string
 │       └── RedirectUrl: *string
 └── Type: *string
+
 AuthorizationProvider_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -211,6 +216,7 @@ AuthorizationProvider_Spec: Object (2 properties)
         │   ├── AuthorizationCode: map[string]string
         │   └── ClientCredentials: map[string]string
         └── RedirectUrl: *string
+
 AuthorizationProvidersAuthorization_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -226,6 +232,7 @@ AuthorizationProvidersAuthorization_STATUS: Object (4 properties)
 │   ├── Parameters: map[string]string
 │   └── Status: *string
 └── Type: *string
+
 AuthorizationProvidersAuthorization_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -235,6 +242,7 @@ AuthorizationProvidersAuthorization_Spec: Object (2 properties)
     │   ├── "AuthorizationCode"
     │   └── "ClientCredentials"
     └── Parameters: map[string]string
+
 AuthorizationProvidersAuthorizationsAccessPolicy_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -243,12 +251,14 @@ AuthorizationProvidersAuthorizationsAccessPolicy_STATUS: Object (4 properties)
 │   ├── ObjectId: *string
 │   └── TenantId: *string
 └── Type: *string
+
 AuthorizationProvidersAuthorizationsAccessPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
     ├── AppIds: string[]
     ├── ObjectId: *string
     └── TenantId: *string
+
 Backend_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -303,6 +313,7 @@ Backend_STATUS: Object (4 properties)
 │   │   └── "Single"
 │   └── Url: *string
 └── Type: *string
+
 Backend_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (12 properties)
@@ -356,6 +367,7 @@ Backend_Spec: Object (2 properties)
     │   ├── "Pool"
     │   └── "Single"
     └── Url: *string
+
 NamedValue_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -373,6 +385,7 @@ NamedValue_STATUS: Object (4 properties)
 │   ├── Tags: string[]
 │   └── Value: *string
 └── Type: *string
+
 NamedValue_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (5 properties)
@@ -383,6 +396,7 @@ NamedValue_Spec: Object (2 properties)
     ├── Secret: *bool
     ├── Tags: string[]
     └── Value: *string
+
 PolicyFragment_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -394,6 +408,7 @@ PolicyFragment_STATUS: Object (4 properties)
 │   ├── ProvisioningState: *string
 │   └── Value: *string
 └── Type: *string
+
 PolicyFragment_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -402,6 +417,7 @@ PolicyFragment_Spec: Object (2 properties)
     │   ├── "rawxml"
     │   └── "xml"
     └── Value: *string
+
 Policy_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -413,6 +429,7 @@ Policy_STATUS: Object (4 properties)
 │   │   └── "xml-link"
 │   └── Value: *string
 └── Type: *string
+
 Policy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
@@ -422,9 +439,12 @@ Policy_Spec: Object (2 properties)
     │   ├── "xml"
     │   └── "xml-link"
     └── Value: *string
+
 ProductApi_STATUS: Object (0 properties)
+
 ProductApi_Spec: Object (1 property)
 └── Name: string
+
 ProductPolicy_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -436,6 +456,7 @@ ProductPolicy_STATUS: Object (4 properties)
 │   │   └── "xml-link"
 │   └── Value: *string
 └── Type: *string
+
 ProductPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
@@ -445,6 +466,7 @@ ProductPolicy_Spec: Object (2 properties)
     │   ├── "xml"
     │   └── "xml-link"
     └── Value: *string
+
 Product_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -459,6 +481,7 @@ Product_STATUS: Object (4 properties)
 │   ├── SubscriptionsLimit: *int
 │   └── Terms: *string
 └── Type: *string
+
 Product_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -471,6 +494,7 @@ Product_Spec: Object (2 properties)
     ├── SubscriptionRequired: *bool
     ├── SubscriptionsLimit: *int
     └── Terms: *string
+
 Service_STATUS: Object (11 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -654,6 +678,7 @@ Service_STATUS: Object (11 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 Service_Spec: Object (7 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -769,6 +794,7 @@ Service_Spec: Object (7 properties)
 │       └── "StandardV2"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 Subscription_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -791,6 +817,7 @@ Subscription_STATUS: Object (4 properties)
 │   │   └── "suspended"
 │   └── StateComment: *string
 └── Type: *string
+
 Subscription_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -807,3 +834,4 @@ Subscription_Spec: Object (2 properties)
         ├── "rejected"
         ├── "submitted"
         └── "suspended"
+

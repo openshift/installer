@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &SqlDatabaseContainerTrigger{}
 
 // ConvertFrom populates our SqlDatabaseContainerTrigger from the provided hub SqlDatabaseContainerTrigger
 func (trigger *SqlDatabaseContainerTrigger) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SqlDatabaseContainerTrigger)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainerTrigger but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SqlDatabaseContainerTrigger
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return trigger.AssignProperties_From_SqlDatabaseContainerTrigger(source)
+	err = trigger.AssignProperties_From_SqlDatabaseContainerTrigger(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to trigger")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SqlDatabaseContainerTrigger from our SqlDatabaseContainerTrigger
 func (trigger *SqlDatabaseContainerTrigger) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SqlDatabaseContainerTrigger)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainerTrigger but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SqlDatabaseContainerTrigger
+	err := trigger.AssignProperties_To_SqlDatabaseContainerTrigger(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from trigger")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return trigger.AssignProperties_To_SqlDatabaseContainerTrigger(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-documentdb-azure-com-v1api20231115-sqldatabasecontainertrigger,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=documentdb.azure.com,resources=sqldatabasecontainertriggers,verbs=create;update,versions=v1api20231115,name=default.v1api20231115.sqldatabasecontainertriggers.documentdb.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &SqlDatabaseContainerTrigger{}
-
-// Default applies defaults to the SqlDatabaseContainerTrigger resource
-func (trigger *SqlDatabaseContainerTrigger) Default() {
-	trigger.defaultImpl()
-	var temp any = trigger
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (trigger *SqlDatabaseContainerTrigger) defaultAzureName() {
-	if trigger.Spec.AzureName == "" {
-		trigger.Spec.AzureName = trigger.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the SqlDatabaseContainerTrigger resource
-func (trigger *SqlDatabaseContainerTrigger) defaultImpl() { trigger.defaultAzureName() }
 
 var _ configmaps.Exporter = &SqlDatabaseContainerTrigger{}
 
@@ -112,17 +100,6 @@ func (trigger *SqlDatabaseContainerTrigger) SecretDestinationExpressions() []*co
 		return nil
 	}
 	return trigger.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &SqlDatabaseContainerTrigger{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (trigger *SqlDatabaseContainerTrigger) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*SqlDatabaseContainerTrigger_STATUS); ok {
-		return trigger.Spec.Initialize_From_SqlDatabaseContainerTrigger_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type SqlDatabaseContainerTrigger_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &SqlDatabaseContainerTrigger{}
@@ -173,6 +150,10 @@ func (trigger *SqlDatabaseContainerTrigger) NewEmptyStatus() genruntime.Converti
 
 // Owner returns the ResourceReference of the owner
 func (trigger *SqlDatabaseContainerTrigger) Owner() *genruntime.ResourceReference {
+	if trigger.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(trigger.Spec)
 	return trigger.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +170,11 @@ func (trigger *SqlDatabaseContainerTrigger) SetStatus(status genruntime.Converti
 	var st SqlDatabaseContainerTrigger_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	trigger.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-documentdb-azure-com-v1api20231115-sqldatabasecontainertrigger,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=documentdb.azure.com,resources=sqldatabasecontainertriggers,verbs=create;update,versions=v1api20231115,name=validate.v1api20231115.sqldatabasecontainertriggers.documentdb.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &SqlDatabaseContainerTrigger{}
-
-// ValidateCreate validates the creation of the resource
-func (trigger *SqlDatabaseContainerTrigger) ValidateCreate() (admission.Warnings, error) {
-	validations := trigger.createValidations()
-	var temp any = trigger
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (trigger *SqlDatabaseContainerTrigger) ValidateDelete() (admission.Warnings, error) {
-	validations := trigger.deleteValidations()
-	var temp any = trigger
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (trigger *SqlDatabaseContainerTrigger) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := trigger.updateValidations()
-	var temp any = trigger
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (trigger *SqlDatabaseContainerTrigger) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){trigger.validateResourceReferences, trigger.validateOwnerReference, trigger.validateSecretDestinations, trigger.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (trigger *SqlDatabaseContainerTrigger) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (trigger *SqlDatabaseContainerTrigger) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return trigger.validateResourceReferences()
-		},
-		trigger.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return trigger.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return trigger.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return trigger.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (trigger *SqlDatabaseContainerTrigger) validateConfigMapDestinations() (admission.Warnings, error) {
-	if trigger.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(trigger, nil, trigger.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (trigger *SqlDatabaseContainerTrigger) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(trigger)
-}
-
-// validateResourceReferences validates all resource references
-func (trigger *SqlDatabaseContainerTrigger) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&trigger.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (trigger *SqlDatabaseContainerTrigger) validateSecretDestinations() (admission.Warnings, error) {
-	if trigger.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(trigger, nil, trigger.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (trigger *SqlDatabaseContainerTrigger) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*SqlDatabaseContainerTrigger)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, trigger)
 }
 
 // AssignProperties_From_SqlDatabaseContainerTrigger populates our SqlDatabaseContainerTrigger from the provided source SqlDatabaseContainerTrigger
@@ -309,7 +187,7 @@ func (trigger *SqlDatabaseContainerTrigger) AssignProperties_From_SqlDatabaseCon
 	var spec SqlDatabaseContainerTrigger_Spec
 	err := spec.AssignProperties_From_SqlDatabaseContainerTrigger_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTrigger_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTrigger_Spec() to populate field Spec")
 	}
 	trigger.Spec = spec
 
@@ -317,7 +195,7 @@ func (trigger *SqlDatabaseContainerTrigger) AssignProperties_From_SqlDatabaseCon
 	var status SqlDatabaseContainerTrigger_STATUS
 	err = status.AssignProperties_From_SqlDatabaseContainerTrigger_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTrigger_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTrigger_STATUS() to populate field Status")
 	}
 	trigger.Status = status
 
@@ -335,7 +213,7 @@ func (trigger *SqlDatabaseContainerTrigger) AssignProperties_To_SqlDatabaseConta
 	var spec storage.SqlDatabaseContainerTrigger_Spec
 	err := trigger.Spec.AssignProperties_To_SqlDatabaseContainerTrigger_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTrigger_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTrigger_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +221,7 @@ func (trigger *SqlDatabaseContainerTrigger) AssignProperties_To_SqlDatabaseConta
 	var status storage.SqlDatabaseContainerTrigger_STATUS
 	err = trigger.Status.AssignProperties_To_SqlDatabaseContainerTrigger_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTrigger_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTrigger_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -530,13 +408,13 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) ConvertSpecFrom(source genrunti
 	src = &storage.SqlDatabaseContainerTrigger_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = trigger.AssignProperties_From_SqlDatabaseContainerTrigger_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -554,13 +432,13 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) ConvertSpecTo(destination genru
 	dst = &storage.SqlDatabaseContainerTrigger_Spec{}
 	err := trigger.AssignProperties_To_SqlDatabaseContainerTrigger_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -580,7 +458,7 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_From_SqlDataba
 		var operatorSpec SqlDatabaseContainerTriggerOperatorSpec
 		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec() to populate field OperatorSpec")
 		}
 		trigger.OperatorSpec = &operatorSpec
 	} else {
@@ -592,7 +470,7 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_From_SqlDataba
 		var option CreateUpdateOptions
 		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
 		}
 		trigger.Options = &option
 	} else {
@@ -612,7 +490,7 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_From_SqlDataba
 		var resource SqlTriggerResource
 		err := resource.AssignProperties_From_SqlTriggerResource(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlTriggerResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlTriggerResource() to populate field Resource")
 		}
 		trigger.Resource = &resource
 	} else {
@@ -642,7 +520,7 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_To_SqlDatabase
 		var operatorSpec storage.SqlDatabaseContainerTriggerOperatorSpec
 		err := trigger.OperatorSpec.AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -654,7 +532,7 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_To_SqlDatabase
 		var option storage.CreateUpdateOptions
 		err := trigger.Options.AssignProperties_To_CreateUpdateOptions(&option)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
 		}
 		destination.Options = &option
 	} else {
@@ -677,7 +555,7 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_To_SqlDatabase
 		var resource storage.SqlTriggerResource
 		err := trigger.Resource.AssignProperties_To_SqlTriggerResource(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlTriggerResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlTriggerResource() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -693,31 +571,6 @@ func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_To_SqlDatabase
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SqlDatabaseContainerTrigger_STATUS populates our SqlDatabaseContainerTrigger_Spec from the provided source SqlDatabaseContainerTrigger_STATUS
-func (trigger *SqlDatabaseContainerTrigger_Spec) Initialize_From_SqlDatabaseContainerTrigger_STATUS(source *SqlDatabaseContainerTrigger_STATUS) error {
-
-	// Location
-	trigger.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Resource
-	if source.Resource != nil {
-		var resource SqlTriggerResource
-		err := resource.Initialize_From_SqlTriggerGetProperties_Resource_STATUS(source.Resource)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
-		}
-		trigger.Resource = &resource
-	} else {
-		trigger.Resource = nil
-	}
-
-	// Tags
-	trigger.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -766,13 +619,13 @@ func (trigger *SqlDatabaseContainerTrigger_STATUS) ConvertStatusFrom(source genr
 	src = &storage.SqlDatabaseContainerTrigger_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = trigger.AssignProperties_From_SqlDatabaseContainerTrigger_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -790,13 +643,13 @@ func (trigger *SqlDatabaseContainerTrigger_STATUS) ConvertStatusTo(destination g
 	dst = &storage.SqlDatabaseContainerTrigger_STATUS{}
 	err := trigger.AssignProperties_To_SqlDatabaseContainerTrigger_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -888,7 +741,7 @@ func (trigger *SqlDatabaseContainerTrigger_STATUS) AssignProperties_From_SqlData
 		var resource SqlTriggerGetProperties_Resource_STATUS
 		err := resource.AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		trigger.Resource = &resource
 	} else {
@@ -927,7 +780,7 @@ func (trigger *SqlDatabaseContainerTrigger_STATUS) AssignProperties_To_SqlDataba
 		var resource storage.SqlTriggerGetProperties_Resource_STATUS
 		err := trigger.Resource.AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -1401,35 +1254,6 @@ func (resource *SqlTriggerResource) AssignProperties_To_SqlTriggerResource(desti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SqlTriggerGetProperties_Resource_STATUS populates our SqlTriggerResource from the provided source SqlTriggerGetProperties_Resource_STATUS
-func (resource *SqlTriggerResource) Initialize_From_SqlTriggerGetProperties_Resource_STATUS(source *SqlTriggerGetProperties_Resource_STATUS) error {
-
-	// Body
-	resource.Body = genruntime.ClonePointerToString(source.Body)
-
-	// Id
-	resource.Id = genruntime.ClonePointerToString(source.Id)
-
-	// TriggerOperation
-	if source.TriggerOperation != nil {
-		triggerOperation := genruntime.ToEnum(string(*source.TriggerOperation), sqlTriggerResource_TriggerOperation_Values)
-		resource.TriggerOperation = &triggerOperation
-	} else {
-		resource.TriggerOperation = nil
-	}
-
-	// TriggerType
-	if source.TriggerType != nil {
-		triggerType := genruntime.ToEnum(string(*source.TriggerType), sqlTriggerResource_TriggerType_Values)
-		resource.TriggerType = &triggerType
-	} else {
-		resource.TriggerType = nil
 	}
 
 	// No error

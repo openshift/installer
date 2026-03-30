@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package list
@@ -152,7 +152,7 @@ func (l Lister) List(ctx context.Context) ([]Element, error) {
 	case "VmwareDistributedVirtualSwitch", "DistributedVirtualSwitch":
 		return l.ListDistributedVirtualSwitch(ctx)
 	default:
-		return nil, fmt.Errorf("cannot traverse type " + l.Reference.Type)
+		return nil, fmt.Errorf("cannot traverse type %s", l.Reference.Type)
 	}
 }
 

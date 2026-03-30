@@ -85,21 +85,18 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 		return nil
 	}
 
-	family, _, _ := strings.Cut(instanceType, "-")
-	if family == "custom" {
-		family = gcp.DefaultCustomInstanceType
-	}
-	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
+	family := gcp.GetGCPInstanceFamily(instanceType)
+	diskTypes, ok := gcp.GetDiskTypes(instanceType)
 	if !ok {
-		return field.NotFound(fldPath.Child("type"), family)
+		logrus.Warnf("unrecognized instance type %s with family %s", instanceType, family)
 	}
 
-	acceptedArmFamilies := sets.New("c4a", "t2a")
+	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a", "a4x")
 	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
 		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
 	}
 
-	if diskType != "" {
+	if diskType != "" && len(diskTypes) > 0 {
 		if !sets.New(diskTypes...).Has(diskType) {
 			return field.Invalid(
 				fldPath.Child("diskType"),
@@ -234,6 +231,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
 		if ic.GCP.DefaultMachinePlatform.DiskType != "" {
 			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
+		} else {
+			defaultDiskType = gcp.DefaultDiskTypeForInstance(defaultInstanceType)
 		}
 
 		if ic.GCP.DefaultMachinePlatform.OnHostMaintenance != "" {
@@ -282,6 +281,17 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if ic.ControlPlane.Platform.GCP.DiskType != "" {
 				cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
+			} else {
+				// When the user-provided instance type is not recognized and
+				// the disk type is not specified, add an error asking for disk type.
+				family := gcp.GetGCPInstanceFamily(instanceType)
+				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+					return append(allErrs, field.Required(
+						field.NewPath("controlPlane", "diskType"),
+						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
+					))
+				}
+				cpDiskType = gcp.DefaultDiskTypeForInstance(instanceType)
 			}
 			if ic.ControlPlane.Platform.GCP.OnHostMaintenance != "" {
 				cpOnHostMaintenance = ic.ControlPlane.Platform.GCP.OnHostMaintenance
@@ -343,10 +353,20 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if compute.Platform.GCP.ConfidentialCompute != "" {
 				confidentialCompute = compute.Platform.GCP.ConfidentialCompute
 			}
-		}
-
-		if compute.Platform.GCP != nil && compute.Platform.GCP.DiskType != "" {
-			diskType = compute.Platform.GCP.DiskType
+			if compute.Platform.GCP.DiskType != "" {
+				diskType = compute.Platform.GCP.DiskType
+			} else {
+				// When the user-provided instance type is not recognized and
+				// the disk type is not specified, add an error asking for disk type.
+				family := gcp.GetGCPInstanceFamily(instanceType)
+				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+					return append(allErrs, field.Required(
+						field.NewPath(fmt.Sprintf("compute[%d]", idx), "diskType"),
+						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
+					))
+				}
+				diskType = gcp.DefaultDiskTypeForInstance(instanceType)
+			}
 		}
 
 		allErrs = append(allErrs,
@@ -493,6 +513,38 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	allErrs := field.ErrorList{}
+
+	if ic.GCP.FirewallRulesManagement == gcp.UnmanagedFirewallRules && ic.GCP.Network == "" {
+		// this is usually a static check, however it is validated here after the
+		// create install-config process to ensure that the create install-config
+		// does not fail in cases where the firewall rules management is set to
+		// unmanaged when the permissions do not exist.
+		allErrs = append(allErrs, field.Required(
+			field.NewPath("platform").Child("gcp").Child("network"),
+			"a network must be specified when firewall rules are unmanaged"),
+		)
+	} else if ic.GCP.FirewallRulesManagement == gcp.ManagedFirewallRules {
+		projectID := ic.GCP.ProjectID
+		configField := "projectID"
+		if ic.GCP.NetworkProjectID != "" {
+			projectID = ic.GCP.NetworkProjectID
+			configField = "networkProjectID"
+		}
+
+		hasPermissions, err := HasPermission(context.TODO(), projectID, []string{
+			CreateFirewallPermission,
+			DeleteFirewallPermission,
+			UpdateNetworksPermission,
+		}, ic.GCP.Endpoint)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(field.NewPath("platform").Child("gcp").Child(configField), err))
+		} else if !hasPermissions {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("platform").Child("gcp").Child("firewallRulesManagement"),
+				ic.GCP.FirewallRulesManagement,
+				"firewall permissions are required when firewall rules management is set to Managed"))
+		}
+	}
 
 	return allErrs.ToAggregate()
 }

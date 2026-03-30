@@ -171,7 +171,7 @@ func (s *Service) checkUserAssignedIdentities(specIdentities []infrav1.UserAssig
 
 	// Check if the expected identities are present in the vm.
 	for _, expectedIdentity := range specIdentities {
-		_, exists := actualMap[strings.TrimPrefix(expectedIdentity.ProviderID, azureutil.ProviderIDPrefix)]
+		_, exists := actualMap[expectedIdentity.ProviderID]
 		if !exists {
 			s.Scope.SetConditionFalse(infrav1.VMIdentitiesReadyCondition, infrav1.UserAssignedIdentityMissingReason, clusterv1.ConditionSeverityWarning, vmMissingUAI+expectedIdentity.ProviderID)
 			return

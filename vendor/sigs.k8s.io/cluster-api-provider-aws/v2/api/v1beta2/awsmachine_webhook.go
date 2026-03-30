@@ -38,6 +38,11 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
 )
 
+const (
+	hostTenancy  = "host"
+	hostAffinity = "host"
+)
+
 // log is for logging in this package.
 var log = ctrl.Log.WithName("awsmachine-resource")
 
@@ -344,8 +349,9 @@ func (r *AWSMachine) validateRootVolume() field.ErrorList {
 		if r.Spec.RootVolume.Type != VolumeTypeGP3 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec.rootVolume.throughput"), "throughput is valid only for type 'gp3'"))
 		}
-		if *r.Spec.RootVolume.Throughput < 0 {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec.rootVolume.throughput"), "throughput must be nonnegative"))
+		// See https://aws.amazon.com/ebs/general-purpose/ for gp3 limits
+		if *r.Spec.RootVolume.Throughput < 125 || *r.Spec.RootVolume.Throughput > 2000 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec.awsLaunchTemplate.rootVolume.throughput"), "throughput must be between 125 Mib/s and 2000 MiB/s"))
 		}
 	}
 
@@ -481,8 +487,22 @@ func (r *AWSMachine) validateHostAllocation() field.ErrorList {
 	hasHostID := r.Spec.HostID != nil && len(*r.Spec.HostID) > 0
 	hasDynamicHostAllocation := r.Spec.DynamicHostAllocation != nil
 
+	// If both hostID and dynamicHostAllocation are specified, return an error
 	if hasHostID && hasDynamicHostAllocation {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.hostID"), "hostID and dynamicHostAllocation are mutually exclusive"), field.Forbidden(field.NewPath("spec.dynamicHostAllocation"), "hostID and dynamicHostAllocation are mutually exclusive"))
+	}
+
+	// HostID, HostAffinity, and DynamicHostAllocation can only be set when Tenancy is "host"
+	if hasHostID && r.Spec.Tenancy != hostTenancy {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.hostID"), "hostID can only be set when tenancy is 'host'"))
+	}
+
+	if r.Spec.HostAffinity != nil && *r.Spec.HostAffinity == hostAffinity && r.Spec.Tenancy != hostTenancy {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.hostAffinity"), "hostAffinity can only be set to 'host' when tenancy is 'host'"))
+	}
+
+	if hasDynamicHostAllocation && r.Spec.Tenancy != hostTenancy {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.dynamicHostAllocation"), "dynamicHostAllocation can only be set when tenancy is 'host'"))
 	}
 
 	return allErrs

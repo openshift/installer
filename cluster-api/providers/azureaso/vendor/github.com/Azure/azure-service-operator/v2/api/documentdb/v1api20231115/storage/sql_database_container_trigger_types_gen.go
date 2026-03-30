@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources=sqldatabasecontainertriggers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources={sqldatabasecontainertriggers/status,sqldatabasecontainertriggers/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (trigger *SqlDatabaseContainerTrigger) GetConditions() conditions.Condition
 // SetConditions sets the conditions on the resource status
 func (trigger *SqlDatabaseContainerTrigger) SetConditions(conditions conditions.Conditions) {
 	trigger.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &SqlDatabaseContainerTrigger{}
+
+// ConvertFrom populates our SqlDatabaseContainerTrigger from the provided hub SqlDatabaseContainerTrigger
+func (trigger *SqlDatabaseContainerTrigger) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.SqlDatabaseContainerTrigger)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/SqlDatabaseContainerTrigger but received %T instead", hub)
+	}
+
+	return trigger.AssignProperties_From_SqlDatabaseContainerTrigger(source)
+}
+
+// ConvertTo populates the provided hub SqlDatabaseContainerTrigger from our SqlDatabaseContainerTrigger
+func (trigger *SqlDatabaseContainerTrigger) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.SqlDatabaseContainerTrigger)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/SqlDatabaseContainerTrigger but received %T instead", hub)
+	}
+
+	return trigger.AssignProperties_To_SqlDatabaseContainerTrigger(destination)
 }
 
 var _ configmaps.Exporter = &SqlDatabaseContainerTrigger{}
@@ -115,6 +136,10 @@ func (trigger *SqlDatabaseContainerTrigger) NewEmptyStatus() genruntime.Converti
 
 // Owner returns the ResourceReference of the owner
 func (trigger *SqlDatabaseContainerTrigger) Owner() *genruntime.ResourceReference {
+	if trigger.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(trigger.Spec)
 	return trigger.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,15 +156,82 @@ func (trigger *SqlDatabaseContainerTrigger) SetStatus(status genruntime.Converti
 	var st SqlDatabaseContainerTrigger_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	trigger.Status = st
 	return nil
 }
 
-// Hub marks that this SqlDatabaseContainerTrigger is the hub type for conversion
-func (trigger *SqlDatabaseContainerTrigger) Hub() {}
+// AssignProperties_From_SqlDatabaseContainerTrigger populates our SqlDatabaseContainerTrigger from the provided source SqlDatabaseContainerTrigger
+func (trigger *SqlDatabaseContainerTrigger) AssignProperties_From_SqlDatabaseContainerTrigger(source *storage.SqlDatabaseContainerTrigger) error {
+
+	// ObjectMeta
+	trigger.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec SqlDatabaseContainerTrigger_Spec
+	err := spec.AssignProperties_From_SqlDatabaseContainerTrigger_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTrigger_Spec() to populate field Spec")
+	}
+	trigger.Spec = spec
+
+	// Status
+	var status SqlDatabaseContainerTrigger_STATUS
+	err = status.AssignProperties_From_SqlDatabaseContainerTrigger_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTrigger_STATUS() to populate field Status")
+	}
+	trigger.Status = status
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTrigger interface (if implemented) to customize the conversion
+	var triggerAsAny any = trigger
+	if augmentedTrigger, ok := triggerAsAny.(augmentConversionForSqlDatabaseContainerTrigger); ok {
+		err := augmentedTrigger.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerTrigger populates the provided destination SqlDatabaseContainerTrigger from our SqlDatabaseContainerTrigger
+func (trigger *SqlDatabaseContainerTrigger) AssignProperties_To_SqlDatabaseContainerTrigger(destination *storage.SqlDatabaseContainerTrigger) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *trigger.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.SqlDatabaseContainerTrigger_Spec
+	err := trigger.Spec.AssignProperties_To_SqlDatabaseContainerTrigger_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTrigger_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.SqlDatabaseContainerTrigger_STATUS
+	err = trigger.Status.AssignProperties_To_SqlDatabaseContainerTrigger_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTrigger_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTrigger interface (if implemented) to customize the conversion
+	var triggerAsAny any = trigger
+	if augmentedTrigger, ok := triggerAsAny.(augmentConversionForSqlDatabaseContainerTrigger); ok {
+		err := augmentedTrigger.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (trigger *SqlDatabaseContainerTrigger) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type SqlDatabaseContainerTriggerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []SqlDatabaseContainerTrigger `json:"items"`
+}
+
+type augmentConversionForSqlDatabaseContainerTrigger interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerTrigger) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerTrigger) error
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerTrigger_Spec
@@ -185,20 +282,212 @@ var _ genruntime.ConvertibleSpec = &SqlDatabaseContainerTrigger_Spec{}
 
 // ConvertSpecFrom populates our SqlDatabaseContainerTrigger_Spec from the provided source
 func (trigger *SqlDatabaseContainerTrigger_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == trigger {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.SqlDatabaseContainerTrigger_Spec)
+	if ok {
+		// Populate our instance from source
+		return trigger.AssignProperties_From_SqlDatabaseContainerTrigger_Spec(src)
 	}
 
-	return source.ConvertSpecTo(trigger)
+	// Convert to an intermediate form
+	src = &storage.SqlDatabaseContainerTrigger_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = trigger.AssignProperties_From_SqlDatabaseContainerTrigger_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our SqlDatabaseContainerTrigger_Spec
 func (trigger *SqlDatabaseContainerTrigger_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == trigger {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.SqlDatabaseContainerTrigger_Spec)
+	if ok {
+		// Populate destination from our instance
+		return trigger.AssignProperties_To_SqlDatabaseContainerTrigger_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(trigger)
+	// Convert to an intermediate form
+	dst = &storage.SqlDatabaseContainerTrigger_Spec{}
+	err := trigger.AssignProperties_To_SqlDatabaseContainerTrigger_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SqlDatabaseContainerTrigger_Spec populates our SqlDatabaseContainerTrigger_Spec from the provided source SqlDatabaseContainerTrigger_Spec
+func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_From_SqlDatabaseContainerTrigger_Spec(source *storage.SqlDatabaseContainerTrigger_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	trigger.AzureName = source.AzureName
+
+	// Location
+	trigger.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec SqlDatabaseContainerTriggerOperatorSpec
+		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec() to populate field OperatorSpec")
+		}
+		trigger.OperatorSpec = &operatorSpec
+	} else {
+		trigger.OperatorSpec = nil
+	}
+
+	// Options
+	if source.Options != nil {
+		var option CreateUpdateOptions
+		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+		}
+		trigger.Options = &option
+	} else {
+		trigger.Options = nil
+	}
+
+	// OriginalVersion
+	trigger.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		trigger.Owner = &owner
+	} else {
+		trigger.Owner = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource SqlTriggerResource
+		err := resource.AssignProperties_From_SqlTriggerResource(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlTriggerResource() to populate field Resource")
+		}
+		trigger.Resource = &resource
+	} else {
+		trigger.Resource = nil
+	}
+
+	// Tags
+	trigger.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		trigger.PropertyBag = propertyBag
+	} else {
+		trigger.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTrigger_Spec interface (if implemented) to customize the conversion
+	var triggerAsAny any = trigger
+	if augmentedTrigger, ok := triggerAsAny.(augmentConversionForSqlDatabaseContainerTrigger_Spec); ok {
+		err := augmentedTrigger.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerTrigger_Spec populates the provided destination SqlDatabaseContainerTrigger_Spec from our SqlDatabaseContainerTrigger_Spec
+func (trigger *SqlDatabaseContainerTrigger_Spec) AssignProperties_To_SqlDatabaseContainerTrigger_Spec(destination *storage.SqlDatabaseContainerTrigger_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(trigger.PropertyBag)
+
+	// AzureName
+	destination.AzureName = trigger.AzureName
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(trigger.Location)
+
+	// OperatorSpec
+	if trigger.OperatorSpec != nil {
+		var operatorSpec storage.SqlDatabaseContainerTriggerOperatorSpec
+		err := trigger.OperatorSpec.AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// Options
+	if trigger.Options != nil {
+		var option storage.CreateUpdateOptions
+		err := trigger.Options.AssignProperties_To_CreateUpdateOptions(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = trigger.OriginalVersion
+
+	// Owner
+	if trigger.Owner != nil {
+		owner := trigger.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Resource
+	if trigger.Resource != nil {
+		var resource storage.SqlTriggerResource
+		err := trigger.Resource.AssignProperties_To_SqlTriggerResource(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlTriggerResource() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(trigger.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTrigger_Spec interface (if implemented) to customize the conversion
+	var triggerAsAny any = trigger
+	if augmentedTrigger, ok := triggerAsAny.(augmentConversionForSqlDatabaseContainerTrigger_Spec); ok {
+		err := augmentedTrigger.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerTrigger_STATUS
@@ -217,20 +506,170 @@ var _ genruntime.ConvertibleStatus = &SqlDatabaseContainerTrigger_STATUS{}
 
 // ConvertStatusFrom populates our SqlDatabaseContainerTrigger_STATUS from the provided source
 func (trigger *SqlDatabaseContainerTrigger_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == trigger {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.SqlDatabaseContainerTrigger_STATUS)
+	if ok {
+		// Populate our instance from source
+		return trigger.AssignProperties_From_SqlDatabaseContainerTrigger_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(trigger)
+	// Convert to an intermediate form
+	src = &storage.SqlDatabaseContainerTrigger_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = trigger.AssignProperties_From_SqlDatabaseContainerTrigger_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our SqlDatabaseContainerTrigger_STATUS
 func (trigger *SqlDatabaseContainerTrigger_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == trigger {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.SqlDatabaseContainerTrigger_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return trigger.AssignProperties_To_SqlDatabaseContainerTrigger_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(trigger)
+	// Convert to an intermediate form
+	dst = &storage.SqlDatabaseContainerTrigger_STATUS{}
+	err := trigger.AssignProperties_To_SqlDatabaseContainerTrigger_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SqlDatabaseContainerTrigger_STATUS populates our SqlDatabaseContainerTrigger_STATUS from the provided source SqlDatabaseContainerTrigger_STATUS
+func (trigger *SqlDatabaseContainerTrigger_STATUS) AssignProperties_From_SqlDatabaseContainerTrigger_STATUS(source *storage.SqlDatabaseContainerTrigger_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	trigger.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	trigger.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	trigger.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	trigger.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Resource
+	if source.Resource != nil {
+		var resource SqlTriggerGetProperties_Resource_STATUS
+		err := resource.AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		trigger.Resource = &resource
+	} else {
+		trigger.Resource = nil
+	}
+
+	// Tags
+	trigger.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	trigger.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		trigger.PropertyBag = propertyBag
+	} else {
+		trigger.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTrigger_STATUS interface (if implemented) to customize the conversion
+	var triggerAsAny any = trigger
+	if augmentedTrigger, ok := triggerAsAny.(augmentConversionForSqlDatabaseContainerTrigger_STATUS); ok {
+		err := augmentedTrigger.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerTrigger_STATUS populates the provided destination SqlDatabaseContainerTrigger_STATUS from our SqlDatabaseContainerTrigger_STATUS
+func (trigger *SqlDatabaseContainerTrigger_STATUS) AssignProperties_To_SqlDatabaseContainerTrigger_STATUS(destination *storage.SqlDatabaseContainerTrigger_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(trigger.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(trigger.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(trigger.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(trigger.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(trigger.Name)
+
+	// Resource
+	if trigger.Resource != nil {
+		var resource storage.SqlTriggerGetProperties_Resource_STATUS
+		err := trigger.Resource.AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(trigger.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(trigger.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTrigger_STATUS interface (if implemented) to customize the conversion
+	var triggerAsAny any = trigger
+	if augmentedTrigger, ok := triggerAsAny.(augmentConversionForSqlDatabaseContainerTrigger_STATUS); ok {
+		err := augmentedTrigger.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSqlDatabaseContainerTrigger_Spec interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerTrigger_Spec) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerTrigger_Spec) error
+}
+
+type augmentConversionForSqlDatabaseContainerTrigger_STATUS interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerTrigger_STATUS) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerTrigger_STATUS) error
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerTriggerOperatorSpec
@@ -239,6 +678,128 @@ type SqlDatabaseContainerTriggerOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec populates our SqlDatabaseContainerTriggerOperatorSpec from the provided source SqlDatabaseContainerTriggerOperatorSpec
+func (operator *SqlDatabaseContainerTriggerOperatorSpec) AssignProperties_From_SqlDatabaseContainerTriggerOperatorSpec(source *storage.SqlDatabaseContainerTriggerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTriggerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerTriggerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec populates the provided destination SqlDatabaseContainerTriggerOperatorSpec from our SqlDatabaseContainerTriggerOperatorSpec
+func (operator *SqlDatabaseContainerTriggerOperatorSpec) AssignProperties_To_SqlDatabaseContainerTriggerOperatorSpec(destination *storage.SqlDatabaseContainerTriggerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerTriggerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerTriggerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.SqlTriggerGetProperties_Resource_STATUS
@@ -253,6 +814,108 @@ type SqlTriggerGetProperties_Resource_STATUS struct {
 	Ts               *float64               `json:"_ts,omitempty"`
 }
 
+// AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS populates our SqlTriggerGetProperties_Resource_STATUS from the provided source SqlTriggerGetProperties_Resource_STATUS
+func (resource *SqlTriggerGetProperties_Resource_STATUS) AssignProperties_From_SqlTriggerGetProperties_Resource_STATUS(source *storage.SqlTriggerGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Body
+	resource.Body = genruntime.ClonePointerToString(source.Body)
+
+	// Etag
+	resource.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Rid
+	resource.Rid = genruntime.ClonePointerToString(source.Rid)
+
+	// TriggerOperation
+	resource.TriggerOperation = genruntime.ClonePointerToString(source.TriggerOperation)
+
+	// TriggerType
+	resource.TriggerType = genruntime.ClonePointerToString(source.TriggerType)
+
+	// Ts
+	if source.Ts != nil {
+		t := *source.Ts
+		resource.Ts = &t
+	} else {
+		resource.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlTriggerGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlTriggerGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS populates the provided destination SqlTriggerGetProperties_Resource_STATUS from our SqlTriggerGetProperties_Resource_STATUS
+func (resource *SqlTriggerGetProperties_Resource_STATUS) AssignProperties_To_SqlTriggerGetProperties_Resource_STATUS(destination *storage.SqlTriggerGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Body
+	destination.Body = genruntime.ClonePointerToString(resource.Body)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(resource.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Rid
+	destination.Rid = genruntime.ClonePointerToString(resource.Rid)
+
+	// TriggerOperation
+	destination.TriggerOperation = genruntime.ClonePointerToString(resource.TriggerOperation)
+
+	// TriggerType
+	destination.TriggerType = genruntime.ClonePointerToString(resource.TriggerType)
+
+	// Ts
+	if resource.Ts != nil {
+		t := *resource.Ts
+		destination.Ts = &t
+	} else {
+		destination.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlTriggerGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlTriggerGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.SqlTriggerResource
 // Cosmos DB SQL trigger resource object
 type SqlTriggerResource struct {
@@ -261,6 +924,95 @@ type SqlTriggerResource struct {
 	PropertyBag      genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	TriggerOperation *string                `json:"triggerOperation,omitempty"`
 	TriggerType      *string                `json:"triggerType,omitempty"`
+}
+
+// AssignProperties_From_SqlTriggerResource populates our SqlTriggerResource from the provided source SqlTriggerResource
+func (resource *SqlTriggerResource) AssignProperties_From_SqlTriggerResource(source *storage.SqlTriggerResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Body
+	resource.Body = genruntime.ClonePointerToString(source.Body)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// TriggerOperation
+	resource.TriggerOperation = genruntime.ClonePointerToString(source.TriggerOperation)
+
+	// TriggerType
+	resource.TriggerType = genruntime.ClonePointerToString(source.TriggerType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlTriggerResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlTriggerResource); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlTriggerResource populates the provided destination SqlTriggerResource from our SqlTriggerResource
+func (resource *SqlTriggerResource) AssignProperties_To_SqlTriggerResource(destination *storage.SqlTriggerResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Body
+	destination.Body = genruntime.ClonePointerToString(resource.Body)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// TriggerOperation
+	destination.TriggerOperation = genruntime.ClonePointerToString(resource.TriggerOperation)
+
+	// TriggerType
+	destination.TriggerType = genruntime.ClonePointerToString(resource.TriggerType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlTriggerResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlTriggerResource); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSqlDatabaseContainerTriggerOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerTriggerOperatorSpec) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerTriggerOperatorSpec) error
+}
+
+type augmentConversionForSqlTriggerGetProperties_Resource_STATUS interface {
+	AssignPropertiesFrom(src *storage.SqlTriggerGetProperties_Resource_STATUS) error
+	AssignPropertiesTo(dst *storage.SqlTriggerGetProperties_Resource_STATUS) error
+}
+
+type augmentConversionForSqlTriggerResource interface {
+	AssignPropertiesFrom(src *storage.SqlTriggerResource) error
+	AssignPropertiesTo(dst *storage.SqlTriggerResource) error
 }
 
 func init() {

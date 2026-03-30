@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20220615 "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615"
-	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615/storage"
+	v20220615s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20220615/storage"
+	v20240101p "github.com/Azure/azure-service-operator/v2/api/insights/v1api20240101preview"
+	v20240101ps "github.com/Azure/azure-service-operator/v2/api/insights/v1api20240101preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type ScheduledQueryRuleExtension struct {
 func (extension *ScheduledQueryRuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220615.ScheduledQueryRule{},
-		&storage.ScheduledQueryRule{}}
+		&v20220615s.ScheduledQueryRule{},
+		&v20240101p.ScheduledQueryRule{},
+		&v20240101ps.ScheduledQueryRule{}}
 }

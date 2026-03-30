@@ -78,6 +78,8 @@ function gather_storage_data() {
 	cp /etc/mtab "${ARTIFACTS_DIR}/etc/mtab"
 	( >&2 echo -n ".")
 	lsblk > "${ARTIFACTS_DIR}/lsblk"
+	( >&2 echo -n ".")
+        df -h > "${ARTIFACTS_DIR}/df"
 	( >&2 echo " Done")
 }
 

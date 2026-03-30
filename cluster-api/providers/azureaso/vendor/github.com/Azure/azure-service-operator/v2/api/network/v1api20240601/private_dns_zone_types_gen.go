@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (zone *PrivateDnsZone) ConvertTo(hub conversion.Hub) error {
 
 	return zone.AssignProperties_To_PrivateDnsZone(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20240601-privatednszone,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=privatednszones,verbs=create;update,versions=v1api20240601,name=default.v1api20240601.privatednszones.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &PrivateDnsZone{}
-
-// Default applies defaults to the PrivateDnsZone resource
-func (zone *PrivateDnsZone) Default() {
-	zone.defaultImpl()
-	var temp any = zone
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (zone *PrivateDnsZone) defaultAzureName() {
-	if zone.Spec.AzureName == "" {
-		zone.Spec.AzureName = zone.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the PrivateDnsZone resource
-func (zone *PrivateDnsZone) defaultImpl() { zone.defaultAzureName() }
 
 var _ configmaps.Exporter = &PrivateDnsZone{}
 
@@ -173,6 +147,10 @@ func (zone *PrivateDnsZone) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (zone *PrivateDnsZone) Owner() *genruntime.ResourceReference {
+	if zone.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(zone.Spec)
 	return zone.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (zone *PrivateDnsZone) SetStatus(status genruntime.ConvertibleStatus) error
 	var st PrivateDnsZone_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	zone.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20240601-privatednszone,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=privatednszones,verbs=create;update,versions=v1api20240601,name=validate.v1api20240601.privatednszones.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &PrivateDnsZone{}
-
-// ValidateCreate validates the creation of the resource
-func (zone *PrivateDnsZone) ValidateCreate() (admission.Warnings, error) {
-	validations := zone.createValidations()
-	var temp any = zone
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (zone *PrivateDnsZone) ValidateDelete() (admission.Warnings, error) {
-	validations := zone.deleteValidations()
-	var temp any = zone
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (zone *PrivateDnsZone) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := zone.updateValidations()
-	var temp any = zone
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (zone *PrivateDnsZone) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){zone.validateResourceReferences, zone.validateOwnerReference, zone.validateSecretDestinations, zone.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (zone *PrivateDnsZone) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (zone *PrivateDnsZone) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return zone.validateResourceReferences()
-		},
-		zone.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return zone.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return zone.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return zone.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (zone *PrivateDnsZone) validateConfigMapDestinations() (admission.Warnings, error) {
-	if zone.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(zone, nil, zone.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (zone *PrivateDnsZone) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(zone)
-}
-
-// validateResourceReferences validates all resource references
-func (zone *PrivateDnsZone) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&zone.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (zone *PrivateDnsZone) validateSecretDestinations() (admission.Warnings, error) {
-	if zone.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(zone, nil, zone.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (zone *PrivateDnsZone) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*PrivateDnsZone)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, zone)
 }
 
 // AssignProperties_From_PrivateDnsZone populates our PrivateDnsZone from the provided source PrivateDnsZone
@@ -309,7 +184,7 @@ func (zone *PrivateDnsZone) AssignProperties_From_PrivateDnsZone(source *storage
 	var spec PrivateDnsZone_Spec
 	err := spec.AssignProperties_From_PrivateDnsZone_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZone_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZone_Spec() to populate field Spec")
 	}
 	zone.Spec = spec
 
@@ -317,7 +192,7 @@ func (zone *PrivateDnsZone) AssignProperties_From_PrivateDnsZone(source *storage
 	var status PrivateDnsZone_STATUS
 	err = status.AssignProperties_From_PrivateDnsZone_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZone_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZone_STATUS() to populate field Status")
 	}
 	zone.Status = status
 
@@ -335,7 +210,7 @@ func (zone *PrivateDnsZone) AssignProperties_To_PrivateDnsZone(destination *stor
 	var spec storage.PrivateDnsZone_Spec
 	err := zone.Spec.AssignProperties_To_PrivateDnsZone_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZone_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZone_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (zone *PrivateDnsZone) AssignProperties_To_PrivateDnsZone(destination *stor
 	var status storage.PrivateDnsZone_STATUS
 	err = zone.Status.AssignProperties_To_PrivateDnsZone_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZone_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZone_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -495,13 +370,13 @@ func (zone *PrivateDnsZone_Spec) ConvertSpecFrom(source genruntime.ConvertibleSp
 	src = &storage.PrivateDnsZone_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = zone.AssignProperties_From_PrivateDnsZone_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -519,13 +394,13 @@ func (zone *PrivateDnsZone_Spec) ConvertSpecTo(destination genruntime.Convertibl
 	dst = &storage.PrivateDnsZone_Spec{}
 	err := zone.AssignProperties_To_PrivateDnsZone_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -548,7 +423,7 @@ func (zone *PrivateDnsZone_Spec) AssignProperties_From_PrivateDnsZone_Spec(sourc
 		var operatorSpec PrivateDnsZoneOperatorSpec
 		err := operatorSpec.AssignProperties_From_PrivateDnsZoneOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZoneOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZoneOperatorSpec() to populate field OperatorSpec")
 		}
 		zone.OperatorSpec = &operatorSpec
 	} else {
@@ -589,7 +464,7 @@ func (zone *PrivateDnsZone_Spec) AssignProperties_To_PrivateDnsZone_Spec(destina
 		var operatorSpec storage.PrivateDnsZoneOperatorSpec
 		err := zone.OperatorSpec.AssignProperties_To_PrivateDnsZoneOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZoneOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZoneOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -715,13 +590,13 @@ func (zone *PrivateDnsZone_STATUS) ConvertStatusFrom(source genruntime.Convertib
 	src = &storage.PrivateDnsZone_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = zone.AssignProperties_From_PrivateDnsZone_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -739,13 +614,13 @@ func (zone *PrivateDnsZone_STATUS) ConvertStatusTo(destination genruntime.Conver
 	dst = &storage.PrivateDnsZone_STATUS{}
 	err := zone.AssignProperties_To_PrivateDnsZone_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

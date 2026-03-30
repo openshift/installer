@@ -201,16 +201,19 @@ func HandleOperatorRoleCreationByPrefix(r *rosa.Runtime, env string,
 		}
 		if r.Reporter.IsTerminal() {
 			hostedCpOutputParam := ""
+			stsParam := " --sts"
 			if args.hostedCp {
 				hostedCpOutputParam = fmt.Sprintf(" --%s", HostedCpFlag)
+				// HCP clusters are STS by default, so we don't need the --sts flag
+				stsParam = ""
 			}
 			installerRoleArnParam := ""
 			if args.installerRoleArn != "" && path != "" {
 				installerRoleArnParam = fmt.Sprintf(" --role-arn %s", args.installerRoleArn)
 			}
 			r.Reporter.Infof(fmt.Sprintf("To create a cluster with these roles, run the following command:\n"+
-				"\trosa create cluster --sts --oidc-config-id %s --operator-roles-prefix %s%s%s",
-				args.oidcConfigId, args.prefix, hostedCpOutputParam, installerRoleArnParam))
+				"\trosa create cluster%s --oidc-config-id %s --operator-roles-prefix %s%s%s",
+				stsParam, args.oidcConfigId, args.prefix, hostedCpOutputParam, installerRoleArnParam))
 		}
 		r.OCMClient.LogEvent("ROSACreateOperatorRolesModeAuto", map[string]string{
 			ocm.OperatorRolesPrefix: operatorRolesPrefix,

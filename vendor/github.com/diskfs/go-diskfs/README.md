@@ -85,49 +85,7 @@ Some filesystem types are intended to be created once, after which they are read
 
 ### Example
 
-There are examples in the [examples/](./examples/) directory. Here is one to get you started.
-
-The following example will create a fully bootable EFI disk image. It assumes you have a bootable EFI file (any modern Linux kernel compiled with `CONFIG_EFI_STUB=y` will work) available.
-
-```go
-import diskfs "github.com/diskfs/go-diskfs"
-
-espSize int := 100*1024*1024 // 100 MB
-diskSize int := espSize + 4*1024*1024 // 104 MB
-
-
-// create a disk image
-diskImg := "/tmp/disk.img"
-disk := diskfs.Create(diskImg, diskSize, diskfs.Raw, diskfs.SectorSizeDefault)
-// create a partition table
-blkSize int := 512
-partitionSectors int := espSize / blkSize
-partitionStart int := 2048
-partitionEnd int := partitionSectors - partitionStart + 1
-table := PartitionTable{
-	type: partition.GPT,
-	partitions:[
-		Partition{Start: partitionStart, End: partitionEnd, Type: partition.EFISystemPartition, Name: "EFI System"}
-	]
-}
-// apply the partition table
-err = disk.Partition(table)
-
-
-/*
- * create an ESP partition with some contents
- */
-kernel, err := os.ReadFile("/some/kernel/file")
-
-fs, err := disk.CreateFilesystem(0, diskfs.TypeFat32)
-
-// make our directories
-err = fs.Mkdir("/EFI/BOOT")
-rw, err := fs.OpenFile("/EFI/BOOT/BOOTX64.EFI", os.O_CREATE|os.O_RDRWR)
-
-err = rw.Write(kernel)
-
-```
+There are examples in the [examples/](./examples/) directory. See for example how to [create a fully bootable EFI disk image](./examples/efi_create.go).
 
 ## Tests
 There are two ways to run tests: unit and integration (somewhat loosely defined).
@@ -151,7 +109,6 @@ cat $PWD/foo.img | docker run -i --rm $INT_IMAGE mdir -i /file.img /abc
 Future plans are to add the following:
 
 * embed boot code in `mbr` e.g. `altmbr.bin` (no need for `gpt` since an ESP with `/EFI/BOOT/BOOT<arch>.EFI` will boot)
-* `ext4` filesystem
 * `Joliet` extensions to `iso9660`
 * `Rock Ridge` sparse file support - supports the flag, but not yet reading or writing
 * `squashfs` sparse file support - currently treats sparse files as regular files

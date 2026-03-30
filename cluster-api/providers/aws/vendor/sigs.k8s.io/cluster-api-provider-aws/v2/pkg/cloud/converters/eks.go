@@ -189,11 +189,11 @@ func NodegroupUpdateconfigToSDK(updateConfig *expinfrav1.UpdateConfig) (*ekstype
 
 	converted := &ekstypes.NodegroupUpdateConfig{}
 	if updateConfig.MaxUnavailable != nil {
-		//nolint:gosec,G115 // Added golint exception as there is a kubebuilder validation configured
+		//nolint:G115 // Added golint exception as there is a kubebuilder validation configured
 		converted.MaxUnavailable = aws.Int32(int32(*updateConfig.MaxUnavailable))
 	}
 	if updateConfig.MaxUnavailablePercentage != nil {
-		//nolint:gosec,G115 // Added golint exception as there is a kubebuilder validation configured
+		//nolint:G115 // Added golint exception as there is a kubebuilder validation configured
 		converted.MaxUnavailablePercentage = aws.Int32(int32(*updateConfig.MaxUnavailablePercentage))
 	}
 
@@ -215,6 +215,20 @@ func NodegroupUpdateconfigFromSDK(ngUpdateConfig *ekstypes.NodegroupUpdateConfig
 	}
 
 	return converted
+}
+
+// NodeRepairConfigToSDK is used to convert a CAPA NodeRepairConfig to AWS SDK NodeRepairConfig.
+func NodeRepairConfigToSDK(repairConfig *expinfrav1.NodeRepairConfig) *ekstypes.NodeRepairConfig {
+	if repairConfig == nil {
+		// Default to disabled if not specified to avoid behavior changes
+		return &ekstypes.NodeRepairConfig{
+			Enabled: aws.Bool(false),
+		}
+	}
+
+	return &ekstypes.NodeRepairConfig{
+		Enabled: repairConfig.Enabled,
+	}
 }
 
 // AMITypeToSDK converts a CAPA ManagedMachineAMIType to AWS SDK AMIType.

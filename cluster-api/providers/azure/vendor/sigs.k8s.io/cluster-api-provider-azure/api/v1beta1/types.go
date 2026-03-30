@@ -259,6 +259,10 @@ type NatGateway struct {
 	// +optional
 	NatGatewayIP PublicIPSpec `json:"ip,omitempty"`
 
+	// Zones mentions the list of zones the NAT gateway should be a part of.
+	// +optional
+	Zones []string `json:"zones,omitempty"`
+
 	NatGatewayClassSpec `json:",inline"`
 }
 

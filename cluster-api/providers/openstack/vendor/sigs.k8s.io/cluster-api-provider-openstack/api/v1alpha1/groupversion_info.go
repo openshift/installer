@@ -24,10 +24,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
-var (
-	// SchemeGroupVersion is group version used to register these objects.
-	SchemeGroupVersion = schema.GroupVersion{Group: "infrastructure.cluster.x-k8s.io", Version: "v1alpha1"}
+// GroupName is the group name use in this package.
+const GroupName = "infrastructure.cluster.x-k8s.io"
 
+// SchemeGroupVersion is group version used to register these objects.
+var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1alpha1"}
+
+// Resource takes an unqualified resource and returns a Group qualified GroupResource.
+func Resource(resource string) schema.GroupResource {
+	return SchemeGroupVersion.WithResource(resource).GroupResource()
+}
+
+var (
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 

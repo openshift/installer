@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20211001 "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001"
-	storage "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001/storage"
+	v20211001s "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001/storage"
+	v20240301 "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20240301"
+	v20240301s "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type SignalRExtension struct {
 func (extension *SignalRExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20211001.SignalR{},
-		&storage.SignalR{}}
+		&v20211001s.SignalR{},
+		&v20240301.SignalR{},
+		&v20240301s.SignalR{}}
 }

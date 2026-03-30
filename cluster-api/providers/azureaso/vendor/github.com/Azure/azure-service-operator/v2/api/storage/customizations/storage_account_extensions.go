@@ -8,15 +8,16 @@ package customizations
 import (
 	"context"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -41,7 +42,7 @@ func (ext *StorageAccountExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*storage.StorageAccount)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *storage.StorageAccount", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *storage.StorageAccount", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -69,13 +70,13 @@ func (ext *StorageAccountExtension) ExportKubernetesSecrets(
 		var acctClient *armstorage.AccountsClient
 		acctClient, err = armstorage.NewAccountsClient(subscription, armClient.Creds(), armClient.ClientOptions())
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create new AccountsClient")
+			return nil, eris.Wrapf(err, "failed to create new AccountsClient")
 		}
 
 		var resp armstorage.AccountsClientListKeysResponse
 		resp, err = acctClient.ListKeys(ctx, id.ResourceGroupName, typedObj.AzureName(), nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed listing keys")
+			return nil, eris.Wrapf(err, "failed listing keys")
 		}
 
 		keys = secretsByName(resp.Keys)

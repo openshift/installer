@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/IBM/ibm-cos-sdk-go/aws"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	awssdk "github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
@@ -18,7 +16,6 @@ import (
 // does not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	session           *session.Session
 	availabilityZones []string
 	availableRegions  []string
 	edgeZones         []string
@@ -26,7 +23,9 @@ type Metadata struct {
 	vpcSubnets        SubnetGroups
 	vpc               VPC
 	instanceTypes     map[string]InstanceType
+	images            map[string]ImageInfo
 
+	Hosts           map[string]Host
 	Region          string                     `json:"region,omitempty"`
 	ProvidedSubnets []typesaws.Subnet          `json:"subnets,omitempty"`
 	Services        []typesaws.ServiceEndpoint `json:"services,omitempty"`
@@ -39,27 +38,6 @@ type Metadata struct {
 // NewMetadata initializes a new Metadata object.
 func NewMetadata(region string, subnets []typesaws.Subnet, services []typesaws.ServiceEndpoint) *Metadata {
 	return &Metadata{Region: region, ProvidedSubnets: subnets, Services: services}
-}
-
-// Session holds an AWS session which can be used for AWS API calls
-// during asset generation.
-func (m *Metadata) Session(ctx context.Context) (*session.Session, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	return m.unlockedSession(ctx)
-}
-
-func (m *Metadata) unlockedSession(ctx context.Context) (*session.Session, error) {
-	if m.session == nil {
-		var err error
-		m.session, err = GetSessionWithOptions(WithRegion(m.Region), WithServiceEndpoints(m.Region, m.Services))
-		if err != nil {
-			return nil, fmt.Errorf("creating AWS session: %w", err)
-		}
-	}
-
-	return m.session, nil
 }
 
 // EC2Client initiates a new EC2 client when one does not already exist, otherwise the existing client
@@ -84,11 +62,12 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	defer m.mutex.Unlock()
 
 	if len(m.availabilityZones) == 0 {
-		session, err := m.unlockedSession(ctx)
+		client, err := m.EC2Client(ctx)
 		if err != nil {
 			return nil, err
 		}
-		m.availabilityZones, err = availabilityZones(ctx, session, m.Region)
+
+		m.availabilityZones, err = availabilityZones(ctx, client, m.Region)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
 		}
@@ -127,12 +106,12 @@ func (m *Metadata) EdgeZones(ctx context.Context) ([]string, error) {
 	defer m.mutex.Unlock()
 
 	if len(m.edgeZones) == 0 {
-		session, err := m.unlockedSession(ctx)
+		client, err := m.EC2Client(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		m.edgeZones, err = edgeZones(ctx, session, m.Region)
+		m.edgeZones, err = edgeZones(ctx, client, m.Region)
 		if err != nil {
 			return nil, fmt.Errorf("getting Local Zones: %w", err)
 		}
@@ -154,28 +133,29 @@ func (m *Metadata) EdgeSubnets(ctx context.Context) (Subnets, error) {
 
 // SetZoneAttributes retrieves AWS Zone attributes and update required fields in zones.
 func (m *Metadata) SetZoneAttributes(ctx context.Context, zoneNames []string, zones Zones) error {
-	sess, err := m.Session(ctx)
+	client, err := m.EC2Client(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to get aws session to populate zone details: %w", err)
+		return err
 	}
-	azs, err := describeFilteredZones(ctx, sess, m.Region, zoneNames)
+
+	azs, err := describeFilteredZones(ctx, client, m.Region, zoneNames)
 	if err != nil {
 		return fmt.Errorf("unable to filter zones: %w", err)
 	}
 
 	for _, az := range azs {
-		zoneName := awssdk.StringValue(az.ZoneName)
+		zoneName := aws.ToString(az.ZoneName)
 		if _, ok := zones[zoneName]; !ok {
 			zones[zoneName] = &Zone{Name: zoneName}
 		}
 		if zones[zoneName].GroupName == "" {
-			zones[zoneName].GroupName = awssdk.StringValue(az.GroupName)
+			zones[zoneName].GroupName = aws.ToString(az.GroupName)
 		}
 		if zones[zoneName].Type == "" {
-			zones[zoneName].Type = awssdk.StringValue(az.ZoneType)
+			zones[zoneName].Type = aws.ToString(az.ZoneType)
 		}
 		if az.ParentZoneName != nil {
-			zones[zoneName].ParentZoneName = awssdk.StringValue(az.ParentZoneName)
+			zones[zoneName].ParentZoneName = aws.ToString(az.ParentZoneName)
 		}
 	}
 	return nil
@@ -183,24 +163,25 @@ func (m *Metadata) SetZoneAttributes(ctx context.Context, zoneNames []string, zo
 
 // AllZones return all the zones and it's attributes available on the region.
 func (m *Metadata) AllZones(ctx context.Context) (Zones, error) {
-	sess, err := m.Session(ctx)
+	client, err := m.EC2Client(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get aws session to populate zone details: %w", err)
+		return nil, err
 	}
-	azs, err := describeAvailabilityZones(ctx, sess, m.Region, []string{})
+
+	azs, err := describeAvailabilityZones(ctx, client, m.Region, []string{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to gather availability zones: %w", err)
 	}
 	zoneDesc := make(Zones, len(azs))
 	for _, az := range azs {
-		zoneName := awssdk.StringValue(az.ZoneName)
+		zoneName := aws.ToString(az.ZoneName)
 		zoneDesc[zoneName] = &Zone{
 			Name:      zoneName,
-			GroupName: awssdk.StringValue(az.GroupName),
-			Type:      awssdk.StringValue(az.ZoneType),
+			GroupName: aws.ToString(az.GroupName),
+			Type:      aws.ToString(az.ZoneType),
 		}
 		if az.ParentZoneName != nil {
-			zoneDesc[zoneName].ParentZoneName = awssdk.StringValue(az.ParentZoneName)
+			zoneDesc[zoneName].ParentZoneName = aws.ToString(az.ParentZoneName)
 		}
 	}
 	return zoneDesc, nil
@@ -377,16 +358,78 @@ func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, 
 	defer m.mutex.Unlock()
 
 	if len(m.instanceTypes) == 0 {
-		session, err := m.unlockedSession(ctx)
+		client, err := m.EC2Client(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		m.instanceTypes, err = instanceTypes(ctx, session, m.Region)
+		m.instanceTypes, err = instanceTypes(ctx, client)
 		if err != nil {
 			return nil, fmt.Errorf("error listing instance types: %w", err)
 		}
 	}
 
 	return m.instanceTypes, nil
+}
+
+// Images retrieves image metadata for the specified AMI ID.
+func (m *Metadata) Images(ctx context.Context, amiID string) (ImageInfo, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if amiID == "" {
+		return ImageInfo{}, fmt.Errorf("AMI ID cannot be empty")
+	}
+
+	// Check if AMI is already cached
+	if imageInfo, ok := m.images[amiID]; ok {
+		return imageInfo, nil
+	}
+
+	// Fetch uncached AMI
+	client, err := m.EC2Client(ctx)
+	if err != nil {
+		return ImageInfo{}, err
+	}
+
+	imageInfo, err := images(ctx, client, amiID)
+	if err != nil {
+		return ImageInfo{}, fmt.Errorf("error fetching AMI metadata: %w", err)
+	}
+
+	// Initialize map if needed
+	if m.images == nil {
+		m.images = map[string]ImageInfo{}
+	}
+
+	// Add newly fetched image to cache
+	m.images[amiID] = imageInfo
+
+	return imageInfo, nil
+}
+
+// DedicatedHosts retrieves all hosts available for use to verify against this installation for configured region.
+func (m *Metadata) DedicatedHosts(ctx context.Context, hosts []typesaws.DedicatedHost) (map[string]Host, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	// Create array of host IDs for client
+	hostIDs := make([]string, len(hosts))
+	for idx, host := range hosts {
+		hostIDs[idx] = host.ID
+	}
+
+	if len(m.Hosts) == 0 {
+		client, err := m.EC2Client(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		m.Hosts, err = dedicatedHosts(ctx, client, hostIDs)
+		if err != nil {
+			return nil, fmt.Errorf("error listing dedicated hosts: %w", err)
+		}
+	}
+
+	return m.Hosts, nil
 }

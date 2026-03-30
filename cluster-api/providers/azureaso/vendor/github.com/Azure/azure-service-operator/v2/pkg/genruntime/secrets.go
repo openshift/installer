@@ -12,6 +12,8 @@ import (
 // SecretReference is a reference to a Kubernetes secret and key in the same namespace as
 // the resource it is on.
 // +kubebuilder:object:generate=true
+//
+//nolint:recvcheck
 type SecretReference struct {
 	// Name is the name of the Kubernetes secret being referenced.
 	// The secret must be in the same namespace as the resource
@@ -29,8 +31,8 @@ type SecretReference struct {
 
 var _ Indexer = SecretReference{}
 
-func (c SecretReference) Index() []string {
-	return []string{c.Name}
+func (s SecretReference) Index() []string {
+	return []string{s.Name}
 }
 
 // Copy makes an independent copy of the SecretReference
@@ -63,6 +65,8 @@ func (s NamespacedSecretReference) String() string {
 // SecretMapReference is a reference to a Kubernetes secret in the same namespace as
 // the resource it is on.
 // +kubebuilder:object:generate=true
+//
+//nolint:recvcheck
 type SecretMapReference struct {
 	// Name is the name of the Kubernetes secret being referenced.
 	// The secret must be in the same namespace as the resource
@@ -79,8 +83,8 @@ type SecretMapReference struct {
 
 var _ Indexer = SecretMapReference{}
 
-func (c SecretMapReference) Index() []string {
-	return []string{c.Name}
+func (s SecretMapReference) Index() []string {
+	return []string{s.Name}
 }
 
 // Copy makes an independent copy of the SecretMapReference

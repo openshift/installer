@@ -12,12 +12,12 @@ type FakeMachineconfigurationV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeMachineconfigurationV1alpha1) MachineConfigNodes() v1alpha1.MachineConfigNodeInterface {
-	return newFakeMachineConfigNodes(c)
+func (c *FakeMachineconfigurationV1alpha1) InternalReleaseImages() v1alpha1.InternalReleaseImageInterface {
+	return newFakeInternalReleaseImages(c)
 }
 
-func (c *FakeMachineconfigurationV1alpha1) PinnedImageSets() v1alpha1.PinnedImageSetInterface {
-	return newFakePinnedImageSets(c)
+func (c *FakeMachineconfigurationV1alpha1) OSImageStreams() v1alpha1.OSImageStreamInterface {
+	return newFakeOSImageStreams(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

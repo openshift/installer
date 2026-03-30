@@ -8,7 +8,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscription"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -32,7 +32,7 @@ func (extension *AliasExtension) Delete(
 	// First cancel the subscription, then delete the alias
 	typedObj, ok := obj.(*storage.Alias)
 	if !ok {
-		return ctrl.Result{}, errors.Errorf("cannot run on unknown resource type %T, expected *subscription.Alias", obj)
+		return ctrl.Result{}, eris.Errorf("cannot run on unknown resource type %T, expected *subscription.Alias", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -50,7 +50,7 @@ func (extension *AliasExtension) Delete(
 	// connection each time through
 	subscriptionClient, err := armsubscription.NewClient(armClient.Creds(), armClient.ClientOptions())
 	if err != nil {
-		return ctrl.Result{}, errors.Wrapf(err, "failed to create new workspaceClient")
+		return ctrl.Result{}, eris.Wrapf(err, "failed to create new workspaceClient")
 	}
 
 	// Don't need to do anything with the response here so just ignore it.
@@ -58,7 +58,7 @@ func (extension *AliasExtension) Delete(
 	_, err = subscriptionClient.Cancel(ctx, subscriptionID, nil)
 	if err != nil {
 		// TODO: May need to set condition error here
-		return ctrl.Result{}, errors.Wrapf(err, "failed to cancel subscription %q", subscriptionID)
+		return ctrl.Result{}, eris.Wrapf(err, "failed to cancel subscription %q", subscriptionID)
 	}
 
 	return next(ctx, log, resolver, armClient, obj)
@@ -69,7 +69,7 @@ var _ extensions.SuccessfulCreationHandler = &AliasExtension{}
 func (extension *AliasExtension) Success(obj genruntime.ARMMetaObject) error {
 	typedObj, ok := obj.(*storage.Alias)
 	if !ok {
-		return errors.Errorf("cannot run on unknown resource type %T, expected *subscription.Alias", obj)
+		return eris.Errorf("cannot run on unknown resource type %T, expected *subscription.Alias", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -80,7 +80,7 @@ func (extension *AliasExtension) Success(obj genruntime.ARMMetaObject) error {
 	subscriptionID, ok := getSubscriptionID(typedObj)
 	if !ok {
 		// SubscriptionID isn't populated. That's a problem
-		return errors.Errorf("SubscriptionID field not populated")
+		return eris.Errorf("SubscriptionID field not populated")
 	}
 
 	genruntime.SetChildResourceIDOverride(typedObj, genericarmclient.MakeSubscriptionID(subscriptionID))

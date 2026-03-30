@@ -9,16 +9,17 @@ import (
 	"context"
 	"database/sql"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlconversion "sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	asopostgresql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1"
-	dbforpostgressql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201/storage"
+	dbforpostgressql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/config"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
@@ -58,7 +59,7 @@ func NewPostgreSQLUserReconciler(
 func (r *PostgreSQLUserReconciler) asUser(obj genruntime.MetaObject) (*asopostgresql.User, error) {
 	typedObj, ok := obj.(*asopostgresql.User)
 	if !ok {
-		return nil, errors.Errorf("cannot modify resource that is not of type *asopostgresql.User. Type is %T", obj)
+		return nil, eris.Errorf("cannot modify resource that is not of type *asopostgresql.User. Type is %T", obj)
 	}
 
 	return typedObj, nil
@@ -89,7 +90,7 @@ func (r *PostgreSQLUserReconciler) CreateOrUpdate(ctx context.Context, log logr.
 
 	password, err := secrets.LookupFromPtr(user.Spec.LocalUser.Password)
 	if err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "failed to look up .spec.localUser.Password")
+		return ctrl.Result{}, eris.Wrap(err, "failed to look up .spec.localUser.Password")
 	}
 
 	// Create or update the user. Note that this updates password if it has changed
@@ -97,34 +98,34 @@ func (r *PostgreSQLUserReconciler) CreateOrUpdate(ctx context.Context, log logr.
 
 	sqlUser, err := postgresqlutil.FindUserIfExist(ctx, db, username)
 	if err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "failed to find user")
+		return ctrl.Result{}, eris.Wrap(err, "failed to find user")
 	}
 	if sqlUser == nil {
 		sqlUser, err = postgresqlutil.CreateUser(ctx, db, username, password)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(err, "failed to create user")
+			return ctrl.Result{}, eris.Wrap(err, "failed to create user")
 		}
 	} else {
 		err = postgresqlutil.UpdateUser(ctx, db, *sqlUser, password)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(err, "failed to update user")
+			return ctrl.Result{}, eris.Wrap(err, "failed to update user")
 		}
 	}
 	// TODO integrate in create and update user?
 	if user.Spec.RoleOptions == nil {
-		return ctrl.Result{}, errors.Wrap(err, "failed to look up .spec.roleOptions")
+		return ctrl.Result{}, eris.Wrap(err, "failed to look up .spec.roleOptions")
 	}
 	roleOptions := postgresqlutil.RoleOptions(*user.Spec.RoleOptions)
 	// Ensure that the user role options are set
 	err = postgresqlutil.ReconcileUserRoleOptions(ctx, db, *sqlUser, roleOptions)
 	if err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "ensuring user role options")
+		return ctrl.Result{}, eris.Wrap(err, "ensuring user role options")
 	}
 
 	// Ensure that the roles are set
 	err = postgresqlutil.ReconcileUserServerRoles(ctx, db, *sqlUser, user.Spec.Roles)
 	if err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "ensuring server roles")
+		return ctrl.Result{}, eris.Wrap(err, "ensuring server roles")
 	}
 
 	log.V(Status).Info("Successfully reconciled PostgreSqlUser")
@@ -148,7 +149,7 @@ func (r *PostgreSQLUserReconciler) Delete(ctx context.Context, log logr.Logger, 
 	_, err = r.ResourceResolver.ResolveOwner(ctx, user)
 	if err != nil {
 		var typedErr *core.ReferenceNotFound
-		if errors.As(err, &typedErr) {
+		if eris.As(err, &typedErr) {
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
@@ -183,7 +184,7 @@ func (r *PostgreSQLUserReconciler) Claim(ctx context.Context, log logr.Logger, e
 		return err
 	}
 
-	err = r.ARMOwnedResourceReconcilerCommon.ClaimResource(ctx, log, user)
+	err = r.ClaimResource(ctx, log, user)
 	if err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func (r *PostgreSQLUserReconciler) UpdateStatus(ctx context.Context, log logr.Lo
 	}
 
 	if !exists {
-		err = errors.Errorf("user %s does not exist", user.Spec.AzureName)
+		err = eris.Errorf("user %s does not exist", user.Spec.AzureName)
 		err = conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonAzureResourceNotFound)
 		return err
 	}
@@ -226,18 +227,18 @@ func (r *PostgreSQLUserReconciler) connectToDB(ctx context.Context, _ logr.Logge
 	// Get the owner - at this point it must exist
 	ownerDetails, err := r.ResourceResolver.ResolveOwner(ctx, user)
 	if err != nil {
-		return nil, errors.Wrapf(err, "resolving owner for user %s", user.Name)
+		return nil, eris.Wrapf(err, "resolving owner for user %s", user.Name)
 	}
 
 	// Note that this is not actually possible for this type because we don't allow ARMID references for these owners,
 	// but protecting against it here anyway.
 	if !ownerDetails.FoundKubernetesOwner() {
-		return nil, errors.Errorf("user owner must exist in Kubernetes for user %s", user.Name)
+		return nil, eris.Errorf("user owner must exist in Kubernetes for user %s", user.Name)
 	}
 
 	flexibleServer, ok := ownerDetails.Owner.(*dbforpostgressql.FlexibleServer)
 	if !ok {
-		return nil, errors.Errorf("owner was not type FlexibleServer, instead: %T", ownerDetails)
+		return nil, eris.Errorf("owner was not type FlexibleServer, instead: %T", ownerDetails)
 	}
 	// Assertion to ensure that this is still the storage type
 	// If this doesn't compile, update the version being imported to the new Hub version
@@ -245,14 +246,14 @@ func (r *PostgreSQLUserReconciler) connectToDB(ctx context.Context, _ logr.Logge
 
 	if flexibleServer.Status.FullyQualifiedDomainName == nil {
 		// This possibly means that the server hasn't finished deploying yet
-		err = errors.Errorf("owning Flexibleserver %q '.status.fullyQualifiedDomainName' not set. Has the server been provisioned successfully?", flexibleServer.Name)
+		err = eris.Errorf("owning Flexibleserver %q '.status.fullyQualifiedDomainName' not set. Has the server been provisioned successfully?", flexibleServer.Name)
 		return nil, conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonWaitingForOwner)
 	}
 	serverFQDN := *flexibleServer.Status.FullyQualifiedDomainName
 
 	adminPassword, err := secrets.LookupFromPtr(user.Spec.LocalUser.ServerAdminPassword)
 	if err != nil {
-		err = errors.Wrap(err, "failed to look up .spec.localUser.ServerAdminPassword")
+		err = eris.Wrap(err, "failed to look up .spec.localUser.ServerAdminPassword")
 		err = conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonSecretNotFound)
 		return nil, err
 	}
@@ -263,7 +264,7 @@ func (r *PostgreSQLUserReconciler) connectToDB(ctx context.Context, _ logr.Logge
 	// Connect to the DB
 	db, err := postgresqlutil.ConnectToDB(ctx, serverFQDN, postgresqlutil.DefaultMaintanenceDatabase, postgresqlutil.PSqlServerPort, adminUser, adminPassword)
 	if err != nil {
-		return nil, errors.Wrapf(
+		return nil, eris.Wrapf(
 			err,
 			"failed to connect database. Server: %s, Database: %s, Port: %d, AdminUser: %s",
 			serverFQDN,

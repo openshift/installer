@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/tags"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 const (
@@ -122,7 +122,7 @@ func (s *Service) reconcileRouteTables() error {
 		s.scope.Debug("Subnet has been associated with route table", "subnet-id", sn.GetResourceID(), "route-table-id", rt.ID)
 		sn.RouteTableID = aws.String(rt.ID)
 	}
-	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition)
+	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition)
 	return nil
 }
 
@@ -145,7 +145,8 @@ func (s *Service) fixMismatchedRouting(specRoute *ec2.CreateRouteInput, currentR
 		if (currentRoute.DestinationIpv6CidrBlock != nil &&
 			aws.ToString(currentRoute.DestinationIpv6CidrBlock) == aws.ToString(specRoute.DestinationIpv6CidrBlock)) &&
 			((currentRoute.GatewayId != nil && aws.ToString(currentRoute.GatewayId) != aws.ToString(specRoute.GatewayId)) ||
-				(currentRoute.NatGatewayId != nil && aws.ToString(currentRoute.NatGatewayId) != aws.ToString(specRoute.NatGatewayId))) {
+				(currentRoute.NatGatewayId != nil && aws.ToString(currentRoute.NatGatewayId) != aws.ToString(specRoute.NatGatewayId)) ||
+				(currentRoute.EgressOnlyInternetGatewayId != nil && aws.ToString(currentRoute.EgressOnlyInternetGatewayId) != aws.ToString(specRoute.EgressOnlyInternetGatewayId))) {
 			input = &ec2.ReplaceRouteInput{
 				RouteTableId:                rt.RouteTableId,
 				DestinationIpv6CidrBlock:    specRoute.DestinationIpv6CidrBlock,
@@ -265,7 +266,8 @@ func (s *Service) createRouteTableWithRoutes(routes []*ec2.CreateRouteInput, isP
 	out, err := s.EC2Client.CreateRouteTable(context.TODO(), &ec2.CreateRouteTableInput{
 		VpcId: aws.String(s.scope.VPC().ID),
 		TagSpecifications: []types.TagSpecification{
-			tags.BuildParamsToTagSpecification(types.ResourceTypeRouteTable, s.getRouteTableTagParams(services.TemporaryResourceID, isPublic, zone))},
+			tags.BuildParamsToTagSpecification(types.ResourceTypeRouteTable, s.getRouteTableTagParams(services.TemporaryResourceID, isPublic, zone)),
+		},
 	})
 	if err != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedCreateRouteTable", "Failed to create managed RouteTable: %v", err)
@@ -317,6 +319,13 @@ func (s *Service) getNatGatewayPrivateRoute(natGatewayID string) *ec2.CreateRout
 	return &ec2.CreateRouteInput{
 		NatGatewayId:         aws.String(natGatewayID),
 		DestinationCidrBlock: aws.String(services.AnyIPv4CidrBlock),
+	}
+}
+
+func (s *Service) getNat64PrivateRoute(natGatewayID string) *ec2.CreateRouteInput {
+	return &ec2.CreateRouteInput{
+		NatGatewayId:             aws.String(natGatewayID),
+		DestinationIpv6CidrBlock: aws.String(services.NAT64CidrBlock),
 	}
 }
 
@@ -414,6 +423,11 @@ func (s *Service) getRoutesToPrivateSubnet(sn *infrav1.SubnetSpec) (routes []*ec
 
 	routes = append(routes, s.getNatGatewayPrivateRoute(natGatewayID))
 	if sn.IsIPv6 {
+		// We add the NAT64 route only if DNS64 is enabled for the subnet
+		// That is when the subnet is private and IPv6-only.
+		if sn.CidrBlock == "" {
+			routes = append(routes, s.getNat64PrivateRoute(natGatewayID))
+		}
 		if !s.scope.VPC().IsIPv6Enabled() {
 			// Safety net because EgressOnlyInternetGateway needs the ID from the ipv6 block.
 			// if, for whatever reason by this point that is not available, we don't want to

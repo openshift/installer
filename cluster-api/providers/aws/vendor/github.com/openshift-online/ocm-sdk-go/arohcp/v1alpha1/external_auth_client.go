@@ -34,7 +34,7 @@ import (
 
 // ExternalAuthClient is the client of the 'external_auth' resource.
 //
-// Manages a specific external authentication provider for an ARO HCP cluster.
+// Manages a specific external authentication.
 type ExternalAuthClient struct {
 	transport http.RoundTripper
 	path      string
@@ -52,7 +52,7 @@ func NewExternalAuthClient(transport http.RoundTripper, path string) *ExternalAu
 
 // Delete creates a request for the 'async_delete' method.
 //
-// Deletes the external authentication provider.
+// Deletes the external authentication.
 func (c *ExternalAuthClient) Delete() *ExternalAuthDeleteRequest {
 	return &ExternalAuthDeleteRequest{
 		transport: c.transport,
@@ -62,7 +62,7 @@ func (c *ExternalAuthClient) Delete() *ExternalAuthDeleteRequest {
 
 // Update creates a request for the 'async_update' method.
 //
-// Updates the external authentication provider.
+// Updates the external authentication.
 func (c *ExternalAuthClient) Update() *ExternalAuthUpdateRequest {
 	return &ExternalAuthUpdateRequest{
 		transport: c.transport,
@@ -72,7 +72,7 @@ func (c *ExternalAuthClient) Update() *ExternalAuthUpdateRequest {
 
 // Get creates a request for the 'get' method.
 //
-// Retrieves the details of an external authentication provider.
+// Retrieves the details of an external authentication.
 func (c *ExternalAuthClient) Get() *ExternalAuthGetRequest {
 	return &ExternalAuthGetRequest{
 		transport: c.transport,

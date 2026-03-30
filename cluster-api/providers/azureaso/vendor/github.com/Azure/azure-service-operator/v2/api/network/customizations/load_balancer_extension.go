@@ -7,14 +7,15 @@ import (
 	"net/http"
 	"reflect"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -37,7 +38,7 @@ func (extension *LoadBalancerExtension) ModifyARMResource(
 ) (genruntime.ARMResource, error) {
 	typedObj, ok := obj.(*network.LoadBalancer)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *network.LoadBalancer", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *network.LoadBalancer", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -52,7 +53,7 @@ func (extension *LoadBalancerExtension) ModifyARMResource(
 
 	apiVersion, err := genruntime.GetAPIVersion(typedObj, kubeClient.Scheme())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
+		return nil, eris.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
 	}
 
 	// Get the raw resource
@@ -61,22 +62,22 @@ func (extension *LoadBalancerExtension) ModifyARMResource(
 	if err != nil {
 		// If the error is NotFound, the resource we're trying to Create doesn't exist and so no modification is needed
 		var responseError *azcore.ResponseError
-		if errors.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
+		if eris.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
 			return armObj, nil
 		}
-		return nil, errors.Wrapf(err, "getting resource with ID: %q", resourceID)
+		return nil, eris.Wrapf(err, "getting resource with ID: %q", resourceID)
 	}
 
 	azureInboundNatRules, err := getRawChildCollection(raw, "inboundNatRules")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get inboundNatRules")
+		return nil, eris.Wrapf(err, "failed to get inboundNatRules")
 	}
 
 	log.V(Info).Info("Found InboundNatRules to include on LoadBalancer", "count", len(azureInboundNatRules), "names", genruntime.RawNames(azureInboundNatRules))
 
 	err = setInboundNatRules(armObj.Spec(), azureInboundNatRules)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to set inboundNatRules")
+		return nil, eris.Wrapf(err, "failed to set inboundNatRules")
 	}
 
 	return armObj, nil
@@ -85,13 +86,13 @@ func (extension *LoadBalancerExtension) ModifyARMResource(
 func getNameField(natValue reflect.Value) (ret reflect.Value, err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
 	nameField := natValue.FieldByName("Name")
 	if !nameField.IsValid() {
-		return nameField, errors.Errorf("couldn't find name field")
+		return nameField, eris.Errorf("couldn't find name field")
 	}
 
 	nameField = reflect.Indirect(nameField)
@@ -102,7 +103,7 @@ func getNameField(natValue reflect.Value) (ret reflect.Value, err error) {
 func setInboundNatRules(lb genruntime.ARMResourceSpec, azureInboundNatRules []any) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
@@ -126,7 +127,7 @@ func setInboundNatRules(lb genruntime.ARMResourceSpec, azureInboundNatRules []an
 
 	inboundNatRulesSlice, err = mergeNatRules(inboundNatRulesField, inboundNatRulesSlice)
 	if err != nil {
-		return errors.Wrapf(err, "failed to merge NAT rules")
+		return eris.Wrapf(err, "failed to merge NAT rules")
 	}
 
 	inboundNatRulesField.Set(inboundNatRulesSlice)
@@ -152,7 +153,7 @@ func mergeNatRules(inboundNatRulesField reflect.Value, azureInboundNatRules refl
 		inboundNatRule := azureInboundNatRules.Index(i)
 		newRuleName, err := getNameField(inboundNatRule)
 		if err != nil {
-			return reflect.Value{}, errors.Wrapf(err, "failed to get name for new rule")
+			return reflect.Value{}, eris.Wrapf(err, "failed to get name for new rule")
 		}
 		foundExistingRule := false
 
@@ -161,7 +162,7 @@ func mergeNatRules(inboundNatRulesField reflect.Value, azureInboundNatRules refl
 			var existingName reflect.Value
 			existingName, err = getNameField(existingInboundNatRule)
 			if err != nil {
-				return reflect.Value{}, errors.Wrapf(err, "failed to get name for existing rule")
+				return reflect.Value{}, eris.Wrapf(err, "failed to get name for existing rule")
 			}
 
 			if existingName.String() == newRuleName.String() {

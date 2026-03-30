@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // the pgx lib
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // PSqlServerPort is the default server port for sql server
@@ -45,14 +45,14 @@ func CreateUser(ctx context.Context, db *sql.DB, username string, password strin
 	// make an effort to prevent sql injection
 	// TODO find better solution to check user and password for SQL Injection
 	if err := FindBadChars(username); err != nil {
-		return nil, errors.Wrap(err, "problem found with username")
+		return nil, eris.Wrap(err, "problem found with username")
 	}
 	if err := FindBadChars(password); err != nil {
-		return nil, errors.Wrap(err, "problem found with password")
+		return nil, eris.Wrap(err, "problem found with password")
 	}
 	_, err := db.ExecContext(ctx, fmt.Sprintf("CREATE USER \"%s\" WITH PASSWORD '%s'", username, password))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create user %s", username)
+		return nil, eris.Wrapf(err, "failed to create user %s", username)
 	}
 	return &SQLUser{Name: username}, nil
 }
@@ -61,11 +61,11 @@ func UpdateUser(ctx context.Context, db *sql.DB, user SQLUser, password string) 
 	// make an effort to prevent sql injection
 	// TODO find better solution to check password for SQL Injection
 	if err := FindBadChars(password); err != nil {
-		return errors.Wrap(err, "problem found with password")
+		return eris.Wrap(err, "problem found with password")
 	}
 	_, err := db.ExecContext(ctx, fmt.Sprintf("ALTER USER \"%s\" WITH PASSWORD '%s'", user.Name, password))
 	if err != nil {
-		return errors.Wrapf(err, "failed to alter user %s", user.Name)
+		return eris.Wrapf(err, "failed to alter user %s", user.Name)
 	}
 	return nil
 }
@@ -96,7 +96,7 @@ func DoesUserExist(ctx context.Context, db *sql.DB, username string) (bool, erro
 // DropUser drops a user from db
 func DropUser(ctx context.Context, db *sql.DB, user string) error {
 	if err := FindBadChars(user); err != nil {
-		return errors.Wrap(err, "problem found with username")
+		return eris.Wrap(err, "problem found with username")
 	}
 
 	_, err := db.ExecContext(ctx, fmt.Sprintf("DROP USER IF EXISTS \"%s\"", user))
@@ -114,13 +114,33 @@ func DatabaseExists(ctx context.Context, db *sql.DB, dbName string) (bool, error
 }
 
 // RoleExists checks if db contains role
-func RoleExists(ctx context.Context, db *sql.DB, rolname string) (bool, error) {
-	res, err := db.ExecContext(ctx, "SELECT * FROM pg_roles WHERE rolname = $1", rolname)
+func RoleExists(ctx context.Context, db *sql.DB, roleName string) (bool, error) {
+	res, err := db.ExecContext(ctx, "SELECT * FROM pg_roles WHERE rolname = $1", roleName)
 	if err != nil {
 		return false, err
 	}
 	rows, err := res.RowsAffected()
 	return rows > 0, err
+}
+
+// CreateRoleWithPermissions creates a role.
+// Note that this is not currently used except for test
+func CreateRoleWithPermissions(ctx context.Context, db *sql.DB, roleName string, permissions ...string) error {
+	if err := FindBadChars(roleName); err != nil {
+		return eris.Wrap(err, "problem found with roleName")
+	}
+
+	permissionString := strings.Join(permissions, " ")
+	if err := FindBadChars(permissionString); err != nil {
+		return eris.Wrap(err, "problem found with permissions")
+	}
+
+	_, err := db.ExecContext(ctx, fmt.Sprintf("CREATE ROLE %q WITH %s", roleName, permissionString))
+	if err != nil {
+		return eris.Wrap(err, "failed to create role")
+	}
+
+	return nil
 }
 
 // Use this type only for user, which are already checked

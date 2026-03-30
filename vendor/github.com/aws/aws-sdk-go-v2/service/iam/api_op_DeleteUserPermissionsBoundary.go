@@ -10,9 +10,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the permissions boundary for the specified IAM user. Deleting the
-// permissions boundary for a user might increase its permissions by allowing the
-// user to perform all the actions granted in its permissions policies.
+// Deletes the permissions boundary for the specified IAM user.
+//
+// Deleting the permissions boundary for a user might increase its permissions by
+// allowing the user to perform all the actions granted in its permissions
+// policies.
 func (c *Client) DeleteUserPermissionsBoundary(ctx context.Context, params *DeleteUserPermissionsBoundaryInput, optFns ...func(*Options)) (*DeleteUserPermissionsBoundaryOutput, error) {
 	if params == nil {
 		params = &DeleteUserPermissionsBoundaryInput{}
@@ -89,6 +91,9 @@ func (c *Client) addOperationDeleteUserPermissionsBoundaryMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -99,6 +104,15 @@ func (c *Client) addOperationDeleteUserPermissionsBoundaryMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteUserPermissionsBoundaryValidationMiddleware(stack); err != nil {
@@ -120,6 +134,15 @@ func (c *Client) addOperationDeleteUserPermissionsBoundaryMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

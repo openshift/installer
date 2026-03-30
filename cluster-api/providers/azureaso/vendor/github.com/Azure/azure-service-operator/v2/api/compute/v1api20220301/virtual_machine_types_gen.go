@@ -7,19 +7,16 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -71,29 +68,6 @@ func (machine *VirtualMachine) ConvertTo(hub conversion.Hub) error {
 
 	return machine.AssignProperties_To_VirtualMachine(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-compute-azure-com-v1api20220301-virtualmachine,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=compute.azure.com,resources=virtualmachines,verbs=create;update,versions=v1api20220301,name=default.v1api20220301.virtualmachines.compute.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &VirtualMachine{}
-
-// Default applies defaults to the VirtualMachine resource
-func (machine *VirtualMachine) Default() {
-	machine.defaultImpl()
-	var temp any = machine
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (machine *VirtualMachine) defaultAzureName() {
-	if machine.Spec.AzureName == "" {
-		machine.Spec.AzureName = machine.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the VirtualMachine resource
-func (machine *VirtualMachine) defaultImpl() { machine.defaultAzureName() }
 
 var _ configmaps.Exporter = &VirtualMachine{}
 
@@ -174,6 +148,10 @@ func (machine *VirtualMachine) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (machine *VirtualMachine) Owner() *genruntime.ResourceReference {
+	if machine.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(machine.Spec)
 	return machine.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (machine *VirtualMachine) SetStatus(status genruntime.ConvertibleStatus) er
 	var st VirtualMachine_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	machine.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-compute-azure-com-v1api20220301-virtualmachine,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=compute.azure.com,resources=virtualmachines,verbs=create;update,versions=v1api20220301,name=validate.v1api20220301.virtualmachines.compute.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &VirtualMachine{}
-
-// ValidateCreate validates the creation of the resource
-func (machine *VirtualMachine) ValidateCreate() (admission.Warnings, error) {
-	validations := machine.createValidations()
-	var temp any = machine
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (machine *VirtualMachine) ValidateDelete() (admission.Warnings, error) {
-	validations := machine.deleteValidations()
-	var temp any = machine
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (machine *VirtualMachine) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := machine.updateValidations()
-	var temp any = machine
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (machine *VirtualMachine) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){machine.validateResourceReferences, machine.validateOwnerReference, machine.validateSecretDestinations, machine.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (machine *VirtualMachine) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (machine *VirtualMachine) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return machine.validateResourceReferences()
-		},
-		machine.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return machine.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return machine.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return machine.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (machine *VirtualMachine) validateConfigMapDestinations() (admission.Warnings, error) {
-	if machine.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(machine, nil, machine.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (machine *VirtualMachine) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(machine)
-}
-
-// validateResourceReferences validates all resource references
-func (machine *VirtualMachine) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&machine.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (machine *VirtualMachine) validateSecretDestinations() (admission.Warnings, error) {
-	if machine.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(machine, nil, machine.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (machine *VirtualMachine) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*VirtualMachine)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, machine)
 }
 
 // AssignProperties_From_VirtualMachine populates our VirtualMachine from the provided source VirtualMachine
@@ -310,7 +185,7 @@ func (machine *VirtualMachine) AssignProperties_From_VirtualMachine(source *stor
 	var spec VirtualMachine_Spec
 	err := spec.AssignProperties_From_VirtualMachine_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualMachine_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualMachine_Spec() to populate field Spec")
 	}
 	machine.Spec = spec
 
@@ -318,7 +193,7 @@ func (machine *VirtualMachine) AssignProperties_From_VirtualMachine(source *stor
 	var status VirtualMachine_STATUS
 	err = status.AssignProperties_From_VirtualMachine_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualMachine_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualMachine_STATUS() to populate field Status")
 	}
 	machine.Status = status
 
@@ -336,7 +211,7 @@ func (machine *VirtualMachine) AssignProperties_To_VirtualMachine(destination *s
 	var spec storage.VirtualMachine_Spec
 	err := machine.Spec.AssignProperties_To_VirtualMachine_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualMachine_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualMachine_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (machine *VirtualMachine) AssignProperties_To_VirtualMachine(destination *s
 	var status storage.VirtualMachine_STATUS
 	err = machine.Status.AssignProperties_To_VirtualMachine_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualMachine_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualMachine_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -1143,13 +1018,13 @@ func (machine *VirtualMachine_Spec) ConvertSpecFrom(source genruntime.Convertibl
 	src = &storage.VirtualMachine_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = machine.AssignProperties_From_VirtualMachine_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -1167,13 +1042,13 @@ func (machine *VirtualMachine_Spec) ConvertSpecTo(destination genruntime.Convert
 	dst = &storage.VirtualMachine_Spec{}
 	err := machine.AssignProperties_To_VirtualMachine_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -1187,7 +1062,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var additionalCapability AdditionalCapabilities
 		err := additionalCapability.AssignProperties_From_AdditionalCapabilities(source.AdditionalCapabilities)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AdditionalCapabilities() to populate field AdditionalCapabilities")
+			return eris.Wrap(err, "calling AssignProperties_From_AdditionalCapabilities() to populate field AdditionalCapabilities")
 		}
 		machine.AdditionalCapabilities = &additionalCapability
 	} else {
@@ -1199,7 +1074,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var applicationProfile ApplicationProfile
 		err := applicationProfile.AssignProperties_From_ApplicationProfile(source.ApplicationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationProfile() to populate field ApplicationProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationProfile() to populate field ApplicationProfile")
 		}
 		machine.ApplicationProfile = &applicationProfile
 	} else {
@@ -1211,7 +1086,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var availabilitySet SubResource
 		err := availabilitySet.AssignProperties_From_SubResource(source.AvailabilitySet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field AvailabilitySet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field AvailabilitySet")
 		}
 		machine.AvailabilitySet = &availabilitySet
 	} else {
@@ -1226,7 +1101,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var billingProfile BillingProfile
 		err := billingProfile.AssignProperties_From_BillingProfile(source.BillingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BillingProfile() to populate field BillingProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_BillingProfile() to populate field BillingProfile")
 		}
 		machine.BillingProfile = &billingProfile
 	} else {
@@ -1238,7 +1113,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var capacityReservation CapacityReservationProfile
 		err := capacityReservation.AssignProperties_From_CapacityReservationProfile(source.CapacityReservation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CapacityReservationProfile() to populate field CapacityReservation")
+			return eris.Wrap(err, "calling AssignProperties_From_CapacityReservationProfile() to populate field CapacityReservation")
 		}
 		machine.CapacityReservation = &capacityReservation
 	} else {
@@ -1250,7 +1125,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var diagnosticsProfile DiagnosticsProfile
 		err := diagnosticsProfile.AssignProperties_From_DiagnosticsProfile(source.DiagnosticsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiagnosticsProfile() to populate field DiagnosticsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_DiagnosticsProfile() to populate field DiagnosticsProfile")
 		}
 		machine.DiagnosticsProfile = &diagnosticsProfile
 	} else {
@@ -1271,7 +1146,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var extendedLocation ExtendedLocation
 		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		machine.ExtendedLocation = &extendedLocation
 	} else {
@@ -1286,7 +1161,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var hardwareProfile HardwareProfile
 		err := hardwareProfile.AssignProperties_From_HardwareProfile(source.HardwareProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HardwareProfile() to populate field HardwareProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_HardwareProfile() to populate field HardwareProfile")
 		}
 		machine.HardwareProfile = &hardwareProfile
 	} else {
@@ -1298,7 +1173,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var host SubResource
 		err := host.AssignProperties_From_SubResource(source.Host)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Host")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Host")
 		}
 		machine.Host = &host
 	} else {
@@ -1310,7 +1185,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var hostGroup SubResource
 		err := hostGroup.AssignProperties_From_SubResource(source.HostGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field HostGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field HostGroup")
 		}
 		machine.HostGroup = &hostGroup
 	} else {
@@ -1322,7 +1197,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var identity VirtualMachineIdentity
 		err := identity.AssignProperties_From_VirtualMachineIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineIdentity() to populate field Identity")
 		}
 		machine.Identity = &identity
 	} else {
@@ -1340,7 +1215,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var networkProfile NetworkProfile
 		err := networkProfile.AssignProperties_From_NetworkProfile(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkProfile() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkProfile() to populate field NetworkProfile")
 		}
 		machine.NetworkProfile = &networkProfile
 	} else {
@@ -1352,7 +1227,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var operatorSpec VirtualMachineOperatorSpec
 		err := operatorSpec.AssignProperties_From_VirtualMachineOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineOperatorSpec() to populate field OperatorSpec")
 		}
 		machine.OperatorSpec = &operatorSpec
 	} else {
@@ -1364,7 +1239,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var osProfile OSProfile
 		err := osProfile.AssignProperties_From_OSProfile(source.OsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_OSProfile() to populate field OsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_OSProfile() to populate field OsProfile")
 		}
 		machine.OsProfile = &osProfile
 	} else {
@@ -1384,7 +1259,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var plan Plan
 		err := plan.AssignProperties_From_Plan(source.Plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Plan() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_From_Plan() to populate field Plan")
 		}
 		machine.Plan = &plan
 	} else {
@@ -1408,7 +1283,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var proximityPlacementGroup SubResource
 		err := proximityPlacementGroup.AssignProperties_From_SubResource(source.ProximityPlacementGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field ProximityPlacementGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field ProximityPlacementGroup")
 		}
 		machine.ProximityPlacementGroup = &proximityPlacementGroup
 	} else {
@@ -1420,7 +1295,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var scheduledEventsProfile ScheduledEventsProfile
 		err := scheduledEventsProfile.AssignProperties_From_ScheduledEventsProfile(source.ScheduledEventsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScheduledEventsProfile() to populate field ScheduledEventsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ScheduledEventsProfile() to populate field ScheduledEventsProfile")
 		}
 		machine.ScheduledEventsProfile = &scheduledEventsProfile
 	} else {
@@ -1432,7 +1307,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var securityProfile SecurityProfile
 		err := securityProfile.AssignProperties_From_SecurityProfile(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_SecurityProfile() to populate field SecurityProfile")
 		}
 		machine.SecurityProfile = &securityProfile
 	} else {
@@ -1444,7 +1319,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var storageProfile StorageProfile
 		err := storageProfile.AssignProperties_From_StorageProfile(source.StorageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageProfile() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageProfile() to populate field StorageProfile")
 		}
 		machine.StorageProfile = &storageProfile
 	} else {
@@ -1462,7 +1337,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_From_VirtualMachine_Spec(so
 		var virtualMachineScaleSet SubResource
 		err := virtualMachineScaleSet.AssignProperties_From_SubResource(source.VirtualMachineScaleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field VirtualMachineScaleSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field VirtualMachineScaleSet")
 		}
 		machine.VirtualMachineScaleSet = &virtualMachineScaleSet
 	} else {
@@ -1486,7 +1361,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var additionalCapability storage.AdditionalCapabilities
 		err := machine.AdditionalCapabilities.AssignProperties_To_AdditionalCapabilities(&additionalCapability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AdditionalCapabilities() to populate field AdditionalCapabilities")
+			return eris.Wrap(err, "calling AssignProperties_To_AdditionalCapabilities() to populate field AdditionalCapabilities")
 		}
 		destination.AdditionalCapabilities = &additionalCapability
 	} else {
@@ -1498,7 +1373,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var applicationProfile storage.ApplicationProfile
 		err := machine.ApplicationProfile.AssignProperties_To_ApplicationProfile(&applicationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationProfile() to populate field ApplicationProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationProfile() to populate field ApplicationProfile")
 		}
 		destination.ApplicationProfile = &applicationProfile
 	} else {
@@ -1510,7 +1385,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var availabilitySet storage.SubResource
 		err := machine.AvailabilitySet.AssignProperties_To_SubResource(&availabilitySet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field AvailabilitySet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field AvailabilitySet")
 		}
 		destination.AvailabilitySet = &availabilitySet
 	} else {
@@ -1525,7 +1400,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var billingProfile storage.BillingProfile
 		err := machine.BillingProfile.AssignProperties_To_BillingProfile(&billingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BillingProfile() to populate field BillingProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_BillingProfile() to populate field BillingProfile")
 		}
 		destination.BillingProfile = &billingProfile
 	} else {
@@ -1537,7 +1412,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var capacityReservation storage.CapacityReservationProfile
 		err := machine.CapacityReservation.AssignProperties_To_CapacityReservationProfile(&capacityReservation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CapacityReservationProfile() to populate field CapacityReservation")
+			return eris.Wrap(err, "calling AssignProperties_To_CapacityReservationProfile() to populate field CapacityReservation")
 		}
 		destination.CapacityReservation = &capacityReservation
 	} else {
@@ -1549,7 +1424,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var diagnosticsProfile storage.DiagnosticsProfile
 		err := machine.DiagnosticsProfile.AssignProperties_To_DiagnosticsProfile(&diagnosticsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiagnosticsProfile() to populate field DiagnosticsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_DiagnosticsProfile() to populate field DiagnosticsProfile")
 		}
 		destination.DiagnosticsProfile = &diagnosticsProfile
 	} else {
@@ -1569,7 +1444,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var extendedLocation storage.ExtendedLocation
 		err := machine.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -1584,7 +1459,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var hardwareProfile storage.HardwareProfile
 		err := machine.HardwareProfile.AssignProperties_To_HardwareProfile(&hardwareProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HardwareProfile() to populate field HardwareProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_HardwareProfile() to populate field HardwareProfile")
 		}
 		destination.HardwareProfile = &hardwareProfile
 	} else {
@@ -1596,7 +1471,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var host storage.SubResource
 		err := machine.Host.AssignProperties_To_SubResource(&host)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Host")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Host")
 		}
 		destination.Host = &host
 	} else {
@@ -1608,7 +1483,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var hostGroup storage.SubResource
 		err := machine.HostGroup.AssignProperties_To_SubResource(&hostGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field HostGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field HostGroup")
 		}
 		destination.HostGroup = &hostGroup
 	} else {
@@ -1620,7 +1495,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var identity storage.VirtualMachineIdentity
 		err := machine.Identity.AssignProperties_To_VirtualMachineIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1638,7 +1513,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var networkProfile storage.NetworkProfile
 		err := machine.NetworkProfile.AssignProperties_To_NetworkProfile(&networkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkProfile() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkProfile() to populate field NetworkProfile")
 		}
 		destination.NetworkProfile = &networkProfile
 	} else {
@@ -1650,7 +1525,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var operatorSpec storage.VirtualMachineOperatorSpec
 		err := machine.OperatorSpec.AssignProperties_To_VirtualMachineOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1665,7 +1540,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var osProfile storage.OSProfile
 		err := machine.OsProfile.AssignProperties_To_OSProfile(&osProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_OSProfile() to populate field OsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_OSProfile() to populate field OsProfile")
 		}
 		destination.OsProfile = &osProfile
 	} else {
@@ -1685,7 +1560,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var plan storage.Plan
 		err := machine.Plan.AssignProperties_To_Plan(&plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Plan() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_To_Plan() to populate field Plan")
 		}
 		destination.Plan = &plan
 	} else {
@@ -1708,7 +1583,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var proximityPlacementGroup storage.SubResource
 		err := machine.ProximityPlacementGroup.AssignProperties_To_SubResource(&proximityPlacementGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field ProximityPlacementGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field ProximityPlacementGroup")
 		}
 		destination.ProximityPlacementGroup = &proximityPlacementGroup
 	} else {
@@ -1720,7 +1595,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var scheduledEventsProfile storage.ScheduledEventsProfile
 		err := machine.ScheduledEventsProfile.AssignProperties_To_ScheduledEventsProfile(&scheduledEventsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScheduledEventsProfile() to populate field ScheduledEventsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ScheduledEventsProfile() to populate field ScheduledEventsProfile")
 		}
 		destination.ScheduledEventsProfile = &scheduledEventsProfile
 	} else {
@@ -1732,7 +1607,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var securityProfile storage.SecurityProfile
 		err := machine.SecurityProfile.AssignProperties_To_SecurityProfile(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_SecurityProfile() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -1744,7 +1619,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var storageProfile storage.StorageProfile
 		err := machine.StorageProfile.AssignProperties_To_StorageProfile(&storageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageProfile() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageProfile() to populate field StorageProfile")
 		}
 		destination.StorageProfile = &storageProfile
 	} else {
@@ -1762,7 +1637,7 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 		var virtualMachineScaleSet storage.SubResource
 		err := machine.VirtualMachineScaleSet.AssignProperties_To_SubResource(&virtualMachineScaleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field VirtualMachineScaleSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field VirtualMachineScaleSet")
 		}
 		destination.VirtualMachineScaleSet = &virtualMachineScaleSet
 	} else {
@@ -1791,7 +1666,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var additionalCapability AdditionalCapabilities
 		err := additionalCapability.Initialize_From_AdditionalCapabilities_STATUS(source.AdditionalCapabilities)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
+			return eris.Wrap(err, "calling Initialize_From_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
 		}
 		machine.AdditionalCapabilities = &additionalCapability
 	} else {
@@ -1803,7 +1678,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var applicationProfile ApplicationProfile
 		err := applicationProfile.Initialize_From_ApplicationProfile_STATUS(source.ApplicationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ApplicationProfile_STATUS() to populate field ApplicationProfile")
+			return eris.Wrap(err, "calling Initialize_From_ApplicationProfile_STATUS() to populate field ApplicationProfile")
 		}
 		machine.ApplicationProfile = &applicationProfile
 	} else {
@@ -1815,7 +1690,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var availabilitySet SubResource
 		err := availabilitySet.Initialize_From_SubResource_STATUS(source.AvailabilitySet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field AvailabilitySet")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field AvailabilitySet")
 		}
 		machine.AvailabilitySet = &availabilitySet
 	} else {
@@ -1827,7 +1702,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var billingProfile BillingProfile
 		err := billingProfile.Initialize_From_BillingProfile_STATUS(source.BillingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_BillingProfile_STATUS() to populate field BillingProfile")
+			return eris.Wrap(err, "calling Initialize_From_BillingProfile_STATUS() to populate field BillingProfile")
 		}
 		machine.BillingProfile = &billingProfile
 	} else {
@@ -1839,7 +1714,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var capacityReservation CapacityReservationProfile
 		err := capacityReservation.Initialize_From_CapacityReservationProfile_STATUS(source.CapacityReservation)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
+			return eris.Wrap(err, "calling Initialize_From_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
 		}
 		machine.CapacityReservation = &capacityReservation
 	} else {
@@ -1851,7 +1726,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var diagnosticsProfile DiagnosticsProfile
 		err := diagnosticsProfile.Initialize_From_DiagnosticsProfile_STATUS(source.DiagnosticsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
+			return eris.Wrap(err, "calling Initialize_From_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
 		}
 		machine.DiagnosticsProfile = &diagnosticsProfile
 	} else {
@@ -1871,7 +1746,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var extendedLocation ExtendedLocation
 		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		machine.ExtendedLocation = &extendedLocation
 	} else {
@@ -1886,7 +1761,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var hardwareProfile HardwareProfile
 		err := hardwareProfile.Initialize_From_HardwareProfile_STATUS(source.HardwareProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_HardwareProfile_STATUS() to populate field HardwareProfile")
+			return eris.Wrap(err, "calling Initialize_From_HardwareProfile_STATUS() to populate field HardwareProfile")
 		}
 		machine.HardwareProfile = &hardwareProfile
 	} else {
@@ -1898,7 +1773,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var host SubResource
 		err := host.Initialize_From_SubResource_STATUS(source.Host)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Host")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Host")
 		}
 		machine.Host = &host
 	} else {
@@ -1910,7 +1785,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var hostGroup SubResource
 		err := hostGroup.Initialize_From_SubResource_STATUS(source.HostGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field HostGroup")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field HostGroup")
 		}
 		machine.HostGroup = &hostGroup
 	} else {
@@ -1922,7 +1797,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var identity VirtualMachineIdentity
 		err := identity.Initialize_From_VirtualMachineIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualMachineIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_VirtualMachineIdentity_STATUS() to populate field Identity")
 		}
 		machine.Identity = &identity
 	} else {
@@ -1940,7 +1815,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var networkProfile NetworkProfile
 		err := networkProfile.Initialize_From_NetworkProfile_STATUS(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling Initialize_From_NetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		machine.NetworkProfile = &networkProfile
 	} else {
@@ -1952,7 +1827,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var osProfile OSProfile
 		err := osProfile.Initialize_From_OSProfile_STATUS(source.OsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_OSProfile_STATUS() to populate field OsProfile")
+			return eris.Wrap(err, "calling Initialize_From_OSProfile_STATUS() to populate field OsProfile")
 		}
 		machine.OsProfile = &osProfile
 	} else {
@@ -1964,7 +1839,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var plan Plan
 		err := plan.Initialize_From_Plan_STATUS(source.Plan)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Plan_STATUS() to populate field Plan")
+			return eris.Wrap(err, "calling Initialize_From_Plan_STATUS() to populate field Plan")
 		}
 		machine.Plan = &plan
 	} else {
@@ -1987,7 +1862,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var proximityPlacementGroup SubResource
 		err := proximityPlacementGroup.Initialize_From_SubResource_STATUS(source.ProximityPlacementGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ProximityPlacementGroup")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ProximityPlacementGroup")
 		}
 		machine.ProximityPlacementGroup = &proximityPlacementGroup
 	} else {
@@ -1999,7 +1874,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var scheduledEventsProfile ScheduledEventsProfile
 		err := scheduledEventsProfile.Initialize_From_ScheduledEventsProfile_STATUS(source.ScheduledEventsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
+			return eris.Wrap(err, "calling Initialize_From_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
 		}
 		machine.ScheduledEventsProfile = &scheduledEventsProfile
 	} else {
@@ -2011,7 +1886,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var securityProfile SecurityProfile
 		err := securityProfile.Initialize_From_SecurityProfile_STATUS(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling Initialize_From_SecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		machine.SecurityProfile = &securityProfile
 	} else {
@@ -2023,7 +1898,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var storageProfile StorageProfile
 		err := storageProfile.Initialize_From_StorageProfile_STATUS(source.StorageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_StorageProfile_STATUS() to populate field StorageProfile")
+			return eris.Wrap(err, "calling Initialize_From_StorageProfile_STATUS() to populate field StorageProfile")
 		}
 		machine.StorageProfile = &storageProfile
 	} else {
@@ -2041,7 +1916,7 @@ func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source
 		var virtualMachineScaleSet SubResource
 		err := virtualMachineScaleSet.Initialize_From_SubResource_STATUS(source.VirtualMachineScaleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field VirtualMachineScaleSet")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field VirtualMachineScaleSet")
 		}
 		machine.VirtualMachineScaleSet = &virtualMachineScaleSet
 	} else {
@@ -2244,13 +2119,13 @@ func (machine *VirtualMachine_STATUS) ConvertStatusFrom(source genruntime.Conver
 	src = &storage.VirtualMachine_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = machine.AssignProperties_From_VirtualMachine_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -2268,13 +2143,13 @@ func (machine *VirtualMachine_STATUS) ConvertStatusTo(destination genruntime.Con
 	dst = &storage.VirtualMachine_STATUS{}
 	err := machine.AssignProperties_To_VirtualMachine_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -2711,7 +2586,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var additionalCapability AdditionalCapabilities_STATUS
 		err := additionalCapability.AssignProperties_From_AdditionalCapabilities_STATUS(source.AdditionalCapabilities)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
+			return eris.Wrap(err, "calling AssignProperties_From_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
 		}
 		machine.AdditionalCapabilities = &additionalCapability
 	} else {
@@ -2723,7 +2598,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var applicationProfile ApplicationProfile_STATUS
 		err := applicationProfile.AssignProperties_From_ApplicationProfile_STATUS(source.ApplicationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationProfile_STATUS() to populate field ApplicationProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationProfile_STATUS() to populate field ApplicationProfile")
 		}
 		machine.ApplicationProfile = &applicationProfile
 	} else {
@@ -2735,7 +2610,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var availabilitySet SubResource_STATUS
 		err := availabilitySet.AssignProperties_From_SubResource_STATUS(source.AvailabilitySet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field AvailabilitySet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field AvailabilitySet")
 		}
 		machine.AvailabilitySet = &availabilitySet
 	} else {
@@ -2747,7 +2622,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var billingProfile BillingProfile_STATUS
 		err := billingProfile.AssignProperties_From_BillingProfile_STATUS(source.BillingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BillingProfile_STATUS() to populate field BillingProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_BillingProfile_STATUS() to populate field BillingProfile")
 		}
 		machine.BillingProfile = &billingProfile
 	} else {
@@ -2759,7 +2634,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var capacityReservation CapacityReservationProfile_STATUS
 		err := capacityReservation.AssignProperties_From_CapacityReservationProfile_STATUS(source.CapacityReservation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
+			return eris.Wrap(err, "calling AssignProperties_From_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
 		}
 		machine.CapacityReservation = &capacityReservation
 	} else {
@@ -2774,7 +2649,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var diagnosticsProfile DiagnosticsProfile_STATUS
 		err := diagnosticsProfile.AssignProperties_From_DiagnosticsProfile_STATUS(source.DiagnosticsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
 		}
 		machine.DiagnosticsProfile = &diagnosticsProfile
 	} else {
@@ -2795,7 +2670,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var extendedLocation ExtendedLocation_STATUS
 		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		machine.ExtendedLocation = &extendedLocation
 	} else {
@@ -2810,7 +2685,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var hardwareProfile HardwareProfile_STATUS
 		err := hardwareProfile.AssignProperties_From_HardwareProfile_STATUS(source.HardwareProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HardwareProfile_STATUS() to populate field HardwareProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_HardwareProfile_STATUS() to populate field HardwareProfile")
 		}
 		machine.HardwareProfile = &hardwareProfile
 	} else {
@@ -2822,7 +2697,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var host SubResource_STATUS
 		err := host.AssignProperties_From_SubResource_STATUS(source.Host)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Host")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Host")
 		}
 		machine.Host = &host
 	} else {
@@ -2834,7 +2709,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var hostGroup SubResource_STATUS
 		err := hostGroup.AssignProperties_From_SubResource_STATUS(source.HostGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field HostGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field HostGroup")
 		}
 		machine.HostGroup = &hostGroup
 	} else {
@@ -2849,7 +2724,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var identity VirtualMachineIdentity_STATUS
 		err := identity.AssignProperties_From_VirtualMachineIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineIdentity_STATUS() to populate field Identity")
 		}
 		machine.Identity = &identity
 	} else {
@@ -2861,7 +2736,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var instanceView VirtualMachineInstanceView_STATUS
 		err := instanceView.AssignProperties_From_VirtualMachineInstanceView_STATUS(source.InstanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineInstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineInstanceView_STATUS() to populate field InstanceView")
 		}
 		machine.InstanceView = &instanceView
 	} else {
@@ -2882,7 +2757,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var networkProfile NetworkProfile_STATUS
 		err := networkProfile.AssignProperties_From_NetworkProfile_STATUS(source.NetworkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		machine.NetworkProfile = &networkProfile
 	} else {
@@ -2894,7 +2769,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var osProfile OSProfile_STATUS
 		err := osProfile.AssignProperties_From_OSProfile_STATUS(source.OsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_OSProfile_STATUS() to populate field OsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_OSProfile_STATUS() to populate field OsProfile")
 		}
 		machine.OsProfile = &osProfile
 	} else {
@@ -2906,7 +2781,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var plan Plan_STATUS
 		err := plan.AssignProperties_From_Plan_STATUS(source.Plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Plan_STATUS() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_From_Plan_STATUS() to populate field Plan")
 		}
 		machine.Plan = &plan
 	} else {
@@ -2933,7 +2808,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var proximityPlacementGroup SubResource_STATUS
 		err := proximityPlacementGroup.AssignProperties_From_SubResource_STATUS(source.ProximityPlacementGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field ProximityPlacementGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field ProximityPlacementGroup")
 		}
 		machine.ProximityPlacementGroup = &proximityPlacementGroup
 	} else {
@@ -2949,7 +2824,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 			var resource VirtualMachineExtension_STATUS
 			err := resource.AssignProperties_From_VirtualMachineExtension_STATUS(&resourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineExtension_STATUS() to populate field Resources")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineExtension_STATUS() to populate field Resources")
 			}
 			resourceList[resourceIndex] = resource
 		}
@@ -2963,7 +2838,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var scheduledEventsProfile ScheduledEventsProfile_STATUS
 		err := scheduledEventsProfile.AssignProperties_From_ScheduledEventsProfile_STATUS(source.ScheduledEventsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
 		}
 		machine.ScheduledEventsProfile = &scheduledEventsProfile
 	} else {
@@ -2975,7 +2850,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var securityProfile SecurityProfile_STATUS
 		err := securityProfile.AssignProperties_From_SecurityProfile_STATUS(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_SecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		machine.SecurityProfile = &securityProfile
 	} else {
@@ -2987,7 +2862,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var storageProfile StorageProfile_STATUS
 		err := storageProfile.AssignProperties_From_StorageProfile_STATUS(source.StorageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageProfile_STATUS() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageProfile_STATUS() to populate field StorageProfile")
 		}
 		machine.StorageProfile = &storageProfile
 	} else {
@@ -3011,7 +2886,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var virtualMachineScaleSet SubResource_STATUS
 		err := virtualMachineScaleSet.AssignProperties_From_SubResource_STATUS(source.VirtualMachineScaleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field VirtualMachineScaleSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field VirtualMachineScaleSet")
 		}
 		machine.VirtualMachineScaleSet = &virtualMachineScaleSet
 	} else {
@@ -3038,7 +2913,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var additionalCapability storage.AdditionalCapabilities_STATUS
 		err := machine.AdditionalCapabilities.AssignProperties_To_AdditionalCapabilities_STATUS(&additionalCapability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
+			return eris.Wrap(err, "calling AssignProperties_To_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
 		}
 		destination.AdditionalCapabilities = &additionalCapability
 	} else {
@@ -3050,7 +2925,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var applicationProfile storage.ApplicationProfile_STATUS
 		err := machine.ApplicationProfile.AssignProperties_To_ApplicationProfile_STATUS(&applicationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationProfile_STATUS() to populate field ApplicationProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationProfile_STATUS() to populate field ApplicationProfile")
 		}
 		destination.ApplicationProfile = &applicationProfile
 	} else {
@@ -3062,7 +2937,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var availabilitySet storage.SubResource_STATUS
 		err := machine.AvailabilitySet.AssignProperties_To_SubResource_STATUS(&availabilitySet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field AvailabilitySet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field AvailabilitySet")
 		}
 		destination.AvailabilitySet = &availabilitySet
 	} else {
@@ -3074,7 +2949,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var billingProfile storage.BillingProfile_STATUS
 		err := machine.BillingProfile.AssignProperties_To_BillingProfile_STATUS(&billingProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BillingProfile_STATUS() to populate field BillingProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_BillingProfile_STATUS() to populate field BillingProfile")
 		}
 		destination.BillingProfile = &billingProfile
 	} else {
@@ -3086,7 +2961,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var capacityReservation storage.CapacityReservationProfile_STATUS
 		err := machine.CapacityReservation.AssignProperties_To_CapacityReservationProfile_STATUS(&capacityReservation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
+			return eris.Wrap(err, "calling AssignProperties_To_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
 		}
 		destination.CapacityReservation = &capacityReservation
 	} else {
@@ -3101,7 +2976,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var diagnosticsProfile storage.DiagnosticsProfile_STATUS
 		err := machine.DiagnosticsProfile.AssignProperties_To_DiagnosticsProfile_STATUS(&diagnosticsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
 		}
 		destination.DiagnosticsProfile = &diagnosticsProfile
 	} else {
@@ -3121,7 +2996,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var extendedLocation storage.ExtendedLocation_STATUS
 		err := machine.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -3136,7 +3011,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var hardwareProfile storage.HardwareProfile_STATUS
 		err := machine.HardwareProfile.AssignProperties_To_HardwareProfile_STATUS(&hardwareProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HardwareProfile_STATUS() to populate field HardwareProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_HardwareProfile_STATUS() to populate field HardwareProfile")
 		}
 		destination.HardwareProfile = &hardwareProfile
 	} else {
@@ -3148,7 +3023,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var host storage.SubResource_STATUS
 		err := machine.Host.AssignProperties_To_SubResource_STATUS(&host)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Host")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Host")
 		}
 		destination.Host = &host
 	} else {
@@ -3160,7 +3035,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var hostGroup storage.SubResource_STATUS
 		err := machine.HostGroup.AssignProperties_To_SubResource_STATUS(&hostGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field HostGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field HostGroup")
 		}
 		destination.HostGroup = &hostGroup
 	} else {
@@ -3175,7 +3050,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var identity storage.VirtualMachineIdentity_STATUS
 		err := machine.Identity.AssignProperties_To_VirtualMachineIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -3187,7 +3062,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var instanceView storage.VirtualMachineInstanceView_STATUS
 		err := machine.InstanceView.AssignProperties_To_VirtualMachineInstanceView_STATUS(&instanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineInstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineInstanceView_STATUS() to populate field InstanceView")
 		}
 		destination.InstanceView = &instanceView
 	} else {
@@ -3208,7 +3083,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var networkProfile storage.NetworkProfile_STATUS
 		err := machine.NetworkProfile.AssignProperties_To_NetworkProfile_STATUS(&networkProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkProfile_STATUS() to populate field NetworkProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkProfile_STATUS() to populate field NetworkProfile")
 		}
 		destination.NetworkProfile = &networkProfile
 	} else {
@@ -3220,7 +3095,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var osProfile storage.OSProfile_STATUS
 		err := machine.OsProfile.AssignProperties_To_OSProfile_STATUS(&osProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_OSProfile_STATUS() to populate field OsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_OSProfile_STATUS() to populate field OsProfile")
 		}
 		destination.OsProfile = &osProfile
 	} else {
@@ -3232,7 +3107,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var plan storage.Plan_STATUS
 		err := machine.Plan.AssignProperties_To_Plan_STATUS(&plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Plan_STATUS() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_To_Plan_STATUS() to populate field Plan")
 		}
 		destination.Plan = &plan
 	} else {
@@ -3258,7 +3133,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var proximityPlacementGroup storage.SubResource_STATUS
 		err := machine.ProximityPlacementGroup.AssignProperties_To_SubResource_STATUS(&proximityPlacementGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field ProximityPlacementGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field ProximityPlacementGroup")
 		}
 		destination.ProximityPlacementGroup = &proximityPlacementGroup
 	} else {
@@ -3274,7 +3149,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 			var resource storage.VirtualMachineExtension_STATUS
 			err := resourceItem.AssignProperties_To_VirtualMachineExtension_STATUS(&resource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineExtension_STATUS() to populate field Resources")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineExtension_STATUS() to populate field Resources")
 			}
 			resourceList[resourceIndex] = resource
 		}
@@ -3288,7 +3163,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var scheduledEventsProfile storage.ScheduledEventsProfile_STATUS
 		err := machine.ScheduledEventsProfile.AssignProperties_To_ScheduledEventsProfile_STATUS(&scheduledEventsProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
 		}
 		destination.ScheduledEventsProfile = &scheduledEventsProfile
 	} else {
@@ -3300,7 +3175,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var securityProfile storage.SecurityProfile_STATUS
 		err := machine.SecurityProfile.AssignProperties_To_SecurityProfile_STATUS(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_SecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -3312,7 +3187,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var storageProfile storage.StorageProfile_STATUS
 		err := machine.StorageProfile.AssignProperties_To_StorageProfile_STATUS(&storageProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageProfile_STATUS() to populate field StorageProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageProfile_STATUS() to populate field StorageProfile")
 		}
 		destination.StorageProfile = &storageProfile
 	} else {
@@ -3336,7 +3211,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var virtualMachineScaleSet storage.SubResource_STATUS
 		err := machine.VirtualMachineScaleSet.AssignProperties_To_SubResource_STATUS(&virtualMachineScaleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field VirtualMachineScaleSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field VirtualMachineScaleSet")
 		}
 		destination.VirtualMachineScaleSet = &virtualMachineScaleSet
 	} else {
@@ -3660,7 +3535,7 @@ func (profile *ApplicationProfile) AssignProperties_From_ApplicationProfile(sour
 			var galleryApplication VMGalleryApplication
 			err := galleryApplication.AssignProperties_From_VMGalleryApplication(&galleryApplicationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VMGalleryApplication() to populate field GalleryApplications")
+				return eris.Wrap(err, "calling AssignProperties_From_VMGalleryApplication() to populate field GalleryApplications")
 			}
 			galleryApplicationList[galleryApplicationIndex] = galleryApplication
 		}
@@ -3687,7 +3562,7 @@ func (profile *ApplicationProfile) AssignProperties_To_ApplicationProfile(destin
 			var galleryApplication storage.VMGalleryApplication
 			err := galleryApplicationItem.AssignProperties_To_VMGalleryApplication(&galleryApplication)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VMGalleryApplication() to populate field GalleryApplications")
+				return eris.Wrap(err, "calling AssignProperties_To_VMGalleryApplication() to populate field GalleryApplications")
 			}
 			galleryApplicationList[galleryApplicationIndex] = galleryApplication
 		}
@@ -3719,7 +3594,7 @@ func (profile *ApplicationProfile) Initialize_From_ApplicationProfile_STATUS(sou
 			var galleryApplication VMGalleryApplication
 			err := galleryApplication.Initialize_From_VMGalleryApplication_STATUS(&galleryApplicationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VMGalleryApplication_STATUS() to populate field GalleryApplications")
+				return eris.Wrap(err, "calling Initialize_From_VMGalleryApplication_STATUS() to populate field GalleryApplications")
 			}
 			galleryApplicationList[galleryApplicationIndex] = galleryApplication
 		}
@@ -3778,7 +3653,7 @@ func (profile *ApplicationProfile_STATUS) AssignProperties_From_ApplicationProfi
 			var galleryApplication VMGalleryApplication_STATUS
 			err := galleryApplication.AssignProperties_From_VMGalleryApplication_STATUS(&galleryApplicationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VMGalleryApplication_STATUS() to populate field GalleryApplications")
+				return eris.Wrap(err, "calling AssignProperties_From_VMGalleryApplication_STATUS() to populate field GalleryApplications")
 			}
 			galleryApplicationList[galleryApplicationIndex] = galleryApplication
 		}
@@ -3805,7 +3680,7 @@ func (profile *ApplicationProfile_STATUS) AssignProperties_To_ApplicationProfile
 			var galleryApplication storage.VMGalleryApplication_STATUS
 			err := galleryApplicationItem.AssignProperties_To_VMGalleryApplication_STATUS(&galleryApplication)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VMGalleryApplication_STATUS() to populate field GalleryApplications")
+				return eris.Wrap(err, "calling AssignProperties_To_VMGalleryApplication_STATUS() to populate field GalleryApplications")
 			}
 			galleryApplicationList[galleryApplicationIndex] = galleryApplication
 		}
@@ -4081,7 +3956,7 @@ func (profile *CapacityReservationProfile) AssignProperties_From_CapacityReserva
 		var capacityReservationGroup SubResource
 		err := capacityReservationGroup.AssignProperties_From_SubResource(source.CapacityReservationGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field CapacityReservationGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field CapacityReservationGroup")
 		}
 		profile.CapacityReservationGroup = &capacityReservationGroup
 	} else {
@@ -4102,7 +3977,7 @@ func (profile *CapacityReservationProfile) AssignProperties_To_CapacityReservati
 		var capacityReservationGroup storage.SubResource
 		err := profile.CapacityReservationGroup.AssignProperties_To_SubResource(&capacityReservationGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field CapacityReservationGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field CapacityReservationGroup")
 		}
 		destination.CapacityReservationGroup = &capacityReservationGroup
 	} else {
@@ -4128,7 +4003,7 @@ func (profile *CapacityReservationProfile) Initialize_From_CapacityReservationPr
 		var capacityReservationGroup SubResource
 		err := capacityReservationGroup.Initialize_From_SubResource_STATUS(source.CapacityReservationGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field CapacityReservationGroup")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field CapacityReservationGroup")
 		}
 		profile.CapacityReservationGroup = &capacityReservationGroup
 	} else {
@@ -4184,7 +4059,7 @@ func (profile *CapacityReservationProfile_STATUS) AssignProperties_From_Capacity
 		var capacityReservationGroup SubResource_STATUS
 		err := capacityReservationGroup.AssignProperties_From_SubResource_STATUS(source.CapacityReservationGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field CapacityReservationGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field CapacityReservationGroup")
 		}
 		profile.CapacityReservationGroup = &capacityReservationGroup
 	} else {
@@ -4205,7 +4080,7 @@ func (profile *CapacityReservationProfile_STATUS) AssignProperties_To_CapacityRe
 		var capacityReservationGroup storage.SubResource_STATUS
 		err := profile.CapacityReservationGroup.AssignProperties_To_SubResource_STATUS(&capacityReservationGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field CapacityReservationGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field CapacityReservationGroup")
 		}
 		destination.CapacityReservationGroup = &capacityReservationGroup
 	} else {
@@ -4291,7 +4166,7 @@ func (profile *DiagnosticsProfile) AssignProperties_From_DiagnosticsProfile(sour
 		var bootDiagnostic BootDiagnostics
 		err := bootDiagnostic.AssignProperties_From_BootDiagnostics(source.BootDiagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BootDiagnostics() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling AssignProperties_From_BootDiagnostics() to populate field BootDiagnostics")
 		}
 		profile.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -4312,7 +4187,7 @@ func (profile *DiagnosticsProfile) AssignProperties_To_DiagnosticsProfile(destin
 		var bootDiagnostic storage.BootDiagnostics
 		err := profile.BootDiagnostics.AssignProperties_To_BootDiagnostics(&bootDiagnostic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BootDiagnostics() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling AssignProperties_To_BootDiagnostics() to populate field BootDiagnostics")
 		}
 		destination.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -4338,7 +4213,7 @@ func (profile *DiagnosticsProfile) Initialize_From_DiagnosticsProfile_STATUS(sou
 		var bootDiagnostic BootDiagnostics
 		err := bootDiagnostic.Initialize_From_BootDiagnostics_STATUS(source.BootDiagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_BootDiagnostics_STATUS() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling Initialize_From_BootDiagnostics_STATUS() to populate field BootDiagnostics")
 		}
 		profile.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -4398,7 +4273,7 @@ func (profile *DiagnosticsProfile_STATUS) AssignProperties_From_DiagnosticsProfi
 		var bootDiagnostic BootDiagnostics_STATUS
 		err := bootDiagnostic.AssignProperties_From_BootDiagnostics_STATUS(source.BootDiagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BootDiagnostics_STATUS() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling AssignProperties_From_BootDiagnostics_STATUS() to populate field BootDiagnostics")
 		}
 		profile.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -4419,7 +4294,7 @@ func (profile *DiagnosticsProfile_STATUS) AssignProperties_To_DiagnosticsProfile
 		var bootDiagnostic storage.BootDiagnostics_STATUS
 		err := profile.BootDiagnostics.AssignProperties_To_BootDiagnostics_STATUS(&bootDiagnostic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BootDiagnostics_STATUS() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling AssignProperties_To_BootDiagnostics_STATUS() to populate field BootDiagnostics")
 		}
 		destination.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -4558,7 +4433,7 @@ func (profile *HardwareProfile) AssignProperties_From_HardwareProfile(source *st
 		var vmSizeProperty VMSizeProperties
 		err := vmSizeProperty.AssignProperties_From_VMSizeProperties(source.VmSizeProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VMSizeProperties() to populate field VmSizeProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_VMSizeProperties() to populate field VmSizeProperties")
 		}
 		profile.VmSizeProperties = &vmSizeProperty
 	} else {
@@ -4582,7 +4457,7 @@ func (profile *HardwareProfile) AssignProperties_To_HardwareProfile(destination 
 		var vmSizeProperty storage.VMSizeProperties
 		err := profile.VmSizeProperties.AssignProperties_To_VMSizeProperties(&vmSizeProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VMSizeProperties() to populate field VmSizeProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_VMSizeProperties() to populate field VmSizeProperties")
 		}
 		destination.VmSizeProperties = &vmSizeProperty
 	} else {
@@ -4616,7 +4491,7 @@ func (profile *HardwareProfile) Initialize_From_HardwareProfile_STATUS(source *H
 		var vmSizeProperty VMSizeProperties
 		err := vmSizeProperty.Initialize_From_VMSizeProperties_STATUS(source.VmSizeProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VMSizeProperties_STATUS() to populate field VmSizeProperties")
+			return eris.Wrap(err, "calling Initialize_From_VMSizeProperties_STATUS() to populate field VmSizeProperties")
 		}
 		profile.VmSizeProperties = &vmSizeProperty
 	} else {
@@ -4702,7 +4577,7 @@ func (profile *HardwareProfile_STATUS) AssignProperties_From_HardwareProfile_STA
 		var vmSizeProperty VMSizeProperties_STATUS
 		err := vmSizeProperty.AssignProperties_From_VMSizeProperties_STATUS(source.VmSizeProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VMSizeProperties_STATUS() to populate field VmSizeProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_VMSizeProperties_STATUS() to populate field VmSizeProperties")
 		}
 		profile.VmSizeProperties = &vmSizeProperty
 	} else {
@@ -4731,7 +4606,7 @@ func (profile *HardwareProfile_STATUS) AssignProperties_To_HardwareProfile_STATU
 		var vmSizeProperty storage.VMSizeProperties_STATUS
 		err := profile.VmSizeProperties.AssignProperties_To_VMSizeProperties_STATUS(&vmSizeProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VMSizeProperties_STATUS() to populate field VmSizeProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_VMSizeProperties_STATUS() to populate field VmSizeProperties")
 		}
 		destination.VmSizeProperties = &vmSizeProperty
 	} else {
@@ -4865,7 +4740,7 @@ func (profile *NetworkProfile) AssignProperties_From_NetworkProfile(source *stor
 			var networkInterfaceConfiguration VirtualMachineNetworkInterfaceConfiguration
 			err := networkInterfaceConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration(&networkInterfaceConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration() to populate field NetworkInterfaceConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration() to populate field NetworkInterfaceConfigurations")
 			}
 			networkInterfaceConfigurationList[networkInterfaceConfigurationIndex] = networkInterfaceConfiguration
 		}
@@ -4883,7 +4758,7 @@ func (profile *NetworkProfile) AssignProperties_From_NetworkProfile(source *stor
 			var networkInterface NetworkInterfaceReference
 			err := networkInterface.AssignProperties_From_NetworkInterfaceReference(&networkInterfaceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_NetworkInterfaceReference() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceReference() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -4918,7 +4793,7 @@ func (profile *NetworkProfile) AssignProperties_To_NetworkProfile(destination *s
 			var networkInterfaceConfiguration storage.VirtualMachineNetworkInterfaceConfiguration
 			err := networkInterfaceConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration(&networkInterfaceConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration() to populate field NetworkInterfaceConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration() to populate field NetworkInterfaceConfigurations")
 			}
 			networkInterfaceConfigurationList[networkInterfaceConfigurationIndex] = networkInterfaceConfiguration
 		}
@@ -4936,7 +4811,7 @@ func (profile *NetworkProfile) AssignProperties_To_NetworkProfile(destination *s
 			var networkInterface storage.NetworkInterfaceReference
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterfaceReference(&networkInterface)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_NetworkInterfaceReference() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceReference() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -4976,7 +4851,7 @@ func (profile *NetworkProfile) Initialize_From_NetworkProfile_STATUS(source *Net
 			var networkInterfaceConfiguration VirtualMachineNetworkInterfaceConfiguration
 			err := networkInterfaceConfiguration.Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS(&networkInterfaceConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
 			}
 			networkInterfaceConfigurationList[networkInterfaceConfigurationIndex] = networkInterfaceConfiguration
 		}
@@ -4994,7 +4869,7 @@ func (profile *NetworkProfile) Initialize_From_NetworkProfile_STATUS(source *Net
 			var networkInterface NetworkInterfaceReference
 			err := networkInterface.Initialize_From_NetworkInterfaceReference_STATUS(&networkInterfaceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling Initialize_From_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -5088,7 +4963,7 @@ func (profile *NetworkProfile_STATUS) AssignProperties_From_NetworkProfile_STATU
 			var networkInterfaceConfiguration VirtualMachineNetworkInterfaceConfiguration_STATUS
 			err := networkInterfaceConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration_STATUS(&networkInterfaceConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
 			}
 			networkInterfaceConfigurationList[networkInterfaceConfigurationIndex] = networkInterfaceConfiguration
 		}
@@ -5106,7 +4981,7 @@ func (profile *NetworkProfile_STATUS) AssignProperties_From_NetworkProfile_STATU
 			var networkInterface NetworkInterfaceReference_STATUS
 			err := networkInterface.AssignProperties_From_NetworkInterfaceReference_STATUS(&networkInterfaceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -5141,7 +5016,7 @@ func (profile *NetworkProfile_STATUS) AssignProperties_To_NetworkProfile_STATUS(
 			var networkInterfaceConfiguration storage.VirtualMachineNetworkInterfaceConfiguration_STATUS
 			err := networkInterfaceConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration_STATUS(&networkInterfaceConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
 			}
 			networkInterfaceConfigurationList[networkInterfaceConfigurationIndex] = networkInterfaceConfiguration
 		}
@@ -5159,7 +5034,7 @@ func (profile *NetworkProfile_STATUS) AssignProperties_To_NetworkProfile_STATUS(
 			var networkInterface storage.NetworkInterfaceReference_STATUS
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterfaceReference_STATUS(&networkInterface)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
 			}
 			networkInterfaceList[networkInterfaceIndex] = networkInterface
 		}
@@ -5264,7 +5139,7 @@ func (profile *OSProfile) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 	if profile.AdminPassword != nil {
 		adminPasswordSecret, err := resolved.ResolvedSecrets.Lookup(*profile.AdminPassword)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property AdminPassword")
+			return nil, eris.Wrap(err, "looking up secret for property AdminPassword")
 		}
 		adminPassword := adminPasswordSecret
 		result.AdminPassword = &adminPassword
@@ -5444,7 +5319,7 @@ func (profile *OSProfile) AssignProperties_From_OSProfile(source *storage.OSProf
 		var linuxConfiguration LinuxConfiguration
 		err := linuxConfiguration.AssignProperties_From_LinuxConfiguration(source.LinuxConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxConfiguration() to populate field LinuxConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxConfiguration() to populate field LinuxConfiguration")
 		}
 		profile.LinuxConfiguration = &linuxConfiguration
 	} else {
@@ -5468,7 +5343,7 @@ func (profile *OSProfile) AssignProperties_From_OSProfile(source *storage.OSProf
 			var secret VaultSecretGroup
 			err := secret.AssignProperties_From_VaultSecretGroup(&secretItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VaultSecretGroup() to populate field Secrets")
+				return eris.Wrap(err, "calling AssignProperties_From_VaultSecretGroup() to populate field Secrets")
 			}
 			secretList[secretIndex] = secret
 		}
@@ -5482,7 +5357,7 @@ func (profile *OSProfile) AssignProperties_From_OSProfile(source *storage.OSProf
 		var windowsConfiguration WindowsConfiguration
 		err := windowsConfiguration.AssignProperties_From_WindowsConfiguration(source.WindowsConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WindowsConfiguration() to populate field WindowsConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_WindowsConfiguration() to populate field WindowsConfiguration")
 		}
 		profile.WindowsConfiguration = &windowsConfiguration
 	} else {
@@ -5528,7 +5403,7 @@ func (profile *OSProfile) AssignProperties_To_OSProfile(destination *storage.OSP
 		var linuxConfiguration storage.LinuxConfiguration
 		err := profile.LinuxConfiguration.AssignProperties_To_LinuxConfiguration(&linuxConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxConfiguration() to populate field LinuxConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxConfiguration() to populate field LinuxConfiguration")
 		}
 		destination.LinuxConfiguration = &linuxConfiguration
 	} else {
@@ -5552,7 +5427,7 @@ func (profile *OSProfile) AssignProperties_To_OSProfile(destination *storage.OSP
 			var secret storage.VaultSecretGroup
 			err := secretItem.AssignProperties_To_VaultSecretGroup(&secret)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VaultSecretGroup() to populate field Secrets")
+				return eris.Wrap(err, "calling AssignProperties_To_VaultSecretGroup() to populate field Secrets")
 			}
 			secretList[secretIndex] = secret
 		}
@@ -5566,7 +5441,7 @@ func (profile *OSProfile) AssignProperties_To_OSProfile(destination *storage.OSP
 		var windowsConfiguration storage.WindowsConfiguration
 		err := profile.WindowsConfiguration.AssignProperties_To_WindowsConfiguration(&windowsConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WindowsConfiguration() to populate field WindowsConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_WindowsConfiguration() to populate field WindowsConfiguration")
 		}
 		destination.WindowsConfiguration = &windowsConfiguration
 	} else {
@@ -5609,7 +5484,7 @@ func (profile *OSProfile) Initialize_From_OSProfile_STATUS(source *OSProfile_STA
 		var linuxConfiguration LinuxConfiguration
 		err := linuxConfiguration.Initialize_From_LinuxConfiguration_STATUS(source.LinuxConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
 		}
 		profile.LinuxConfiguration = &linuxConfiguration
 	} else {
@@ -5633,7 +5508,7 @@ func (profile *OSProfile) Initialize_From_OSProfile_STATUS(source *OSProfile_STA
 			var secret VaultSecretGroup
 			err := secret.Initialize_From_VaultSecretGroup_STATUS(&secretItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VaultSecretGroup_STATUS() to populate field Secrets")
+				return eris.Wrap(err, "calling Initialize_From_VaultSecretGroup_STATUS() to populate field Secrets")
 			}
 			secretList[secretIndex] = secret
 		}
@@ -5647,7 +5522,7 @@ func (profile *OSProfile) Initialize_From_OSProfile_STATUS(source *OSProfile_STA
 		var windowsConfiguration WindowsConfiguration
 		err := windowsConfiguration.Initialize_From_WindowsConfiguration_STATUS(source.WindowsConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
 		}
 		profile.WindowsConfiguration = &windowsConfiguration
 	} else {
@@ -5817,7 +5692,7 @@ func (profile *OSProfile_STATUS) AssignProperties_From_OSProfile_STATUS(source *
 		var linuxConfiguration LinuxConfiguration_STATUS
 		err := linuxConfiguration.AssignProperties_From_LinuxConfiguration_STATUS(source.LinuxConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
 		}
 		profile.LinuxConfiguration = &linuxConfiguration
 	} else {
@@ -5841,7 +5716,7 @@ func (profile *OSProfile_STATUS) AssignProperties_From_OSProfile_STATUS(source *
 			var secret VaultSecretGroup_STATUS
 			err := secret.AssignProperties_From_VaultSecretGroup_STATUS(&secretItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VaultSecretGroup_STATUS() to populate field Secrets")
+				return eris.Wrap(err, "calling AssignProperties_From_VaultSecretGroup_STATUS() to populate field Secrets")
 			}
 			secretList[secretIndex] = secret
 		}
@@ -5855,7 +5730,7 @@ func (profile *OSProfile_STATUS) AssignProperties_From_OSProfile_STATUS(source *
 		var windowsConfiguration WindowsConfiguration_STATUS
 		err := windowsConfiguration.AssignProperties_From_WindowsConfiguration_STATUS(source.WindowsConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
 		}
 		profile.WindowsConfiguration = &windowsConfiguration
 	} else {
@@ -5893,7 +5768,7 @@ func (profile *OSProfile_STATUS) AssignProperties_To_OSProfile_STATUS(destinatio
 		var linuxConfiguration storage.LinuxConfiguration_STATUS
 		err := profile.LinuxConfiguration.AssignProperties_To_LinuxConfiguration_STATUS(&linuxConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
 		}
 		destination.LinuxConfiguration = &linuxConfiguration
 	} else {
@@ -5917,7 +5792,7 @@ func (profile *OSProfile_STATUS) AssignProperties_To_OSProfile_STATUS(destinatio
 			var secret storage.VaultSecretGroup_STATUS
 			err := secretItem.AssignProperties_To_VaultSecretGroup_STATUS(&secret)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VaultSecretGroup_STATUS() to populate field Secrets")
+				return eris.Wrap(err, "calling AssignProperties_To_VaultSecretGroup_STATUS() to populate field Secrets")
 			}
 			secretList[secretIndex] = secret
 		}
@@ -5931,7 +5806,7 @@ func (profile *OSProfile_STATUS) AssignProperties_To_OSProfile_STATUS(destinatio
 		var windowsConfiguration storage.WindowsConfiguration_STATUS
 		err := profile.WindowsConfiguration.AssignProperties_To_WindowsConfiguration_STATUS(&windowsConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
 		}
 		destination.WindowsConfiguration = &windowsConfiguration
 	} else {
@@ -6315,7 +6190,7 @@ func (profile *ScheduledEventsProfile) AssignProperties_From_ScheduledEventsProf
 		var terminateNotificationProfile TerminateNotificationProfile
 		err := terminateNotificationProfile.AssignProperties_From_TerminateNotificationProfile(source.TerminateNotificationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_TerminateNotificationProfile() to populate field TerminateNotificationProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_TerminateNotificationProfile() to populate field TerminateNotificationProfile")
 		}
 		profile.TerminateNotificationProfile = &terminateNotificationProfile
 	} else {
@@ -6336,7 +6211,7 @@ func (profile *ScheduledEventsProfile) AssignProperties_To_ScheduledEventsProfil
 		var terminateNotificationProfile storage.TerminateNotificationProfile
 		err := profile.TerminateNotificationProfile.AssignProperties_To_TerminateNotificationProfile(&terminateNotificationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_TerminateNotificationProfile() to populate field TerminateNotificationProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_TerminateNotificationProfile() to populate field TerminateNotificationProfile")
 		}
 		destination.TerminateNotificationProfile = &terminateNotificationProfile
 	} else {
@@ -6362,7 +6237,7 @@ func (profile *ScheduledEventsProfile) Initialize_From_ScheduledEventsProfile_ST
 		var terminateNotificationProfile TerminateNotificationProfile
 		err := terminateNotificationProfile.Initialize_From_TerminateNotificationProfile_STATUS(source.TerminateNotificationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
+			return eris.Wrap(err, "calling Initialize_From_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
 		}
 		profile.TerminateNotificationProfile = &terminateNotificationProfile
 	} else {
@@ -6415,7 +6290,7 @@ func (profile *ScheduledEventsProfile_STATUS) AssignProperties_From_ScheduledEve
 		var terminateNotificationProfile TerminateNotificationProfile_STATUS
 		err := terminateNotificationProfile.AssignProperties_From_TerminateNotificationProfile_STATUS(source.TerminateNotificationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
 		}
 		profile.TerminateNotificationProfile = &terminateNotificationProfile
 	} else {
@@ -6436,7 +6311,7 @@ func (profile *ScheduledEventsProfile_STATUS) AssignProperties_To_ScheduledEvent
 		var terminateNotificationProfile storage.TerminateNotificationProfile_STATUS
 		err := profile.TerminateNotificationProfile.AssignProperties_To_TerminateNotificationProfile_STATUS(&terminateNotificationProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
 		}
 		destination.TerminateNotificationProfile = &terminateNotificationProfile
 	} else {
@@ -6573,7 +6448,7 @@ func (profile *SecurityProfile) AssignProperties_From_SecurityProfile(source *st
 		var uefiSetting UefiSettings
 		err := uefiSetting.AssignProperties_From_UefiSettings(source.UefiSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UefiSettings() to populate field UefiSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_UefiSettings() to populate field UefiSettings")
 		}
 		profile.UefiSettings = &uefiSetting
 	} else {
@@ -6610,7 +6485,7 @@ func (profile *SecurityProfile) AssignProperties_To_SecurityProfile(destination 
 		var uefiSetting storage.UefiSettings
 		err := profile.UefiSettings.AssignProperties_To_UefiSettings(&uefiSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UefiSettings() to populate field UefiSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_UefiSettings() to populate field UefiSettings")
 		}
 		destination.UefiSettings = &uefiSetting
 	} else {
@@ -6652,7 +6527,7 @@ func (profile *SecurityProfile) Initialize_From_SecurityProfile_STATUS(source *S
 		var uefiSetting UefiSettings
 		err := uefiSetting.Initialize_From_UefiSettings_STATUS(source.UefiSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UefiSettings_STATUS() to populate field UefiSettings")
+			return eris.Wrap(err, "calling Initialize_From_UefiSettings_STATUS() to populate field UefiSettings")
 		}
 		profile.UefiSettings = &uefiSetting
 	} else {
@@ -6749,7 +6624,7 @@ func (profile *SecurityProfile_STATUS) AssignProperties_From_SecurityProfile_STA
 		var uefiSetting UefiSettings_STATUS
 		err := uefiSetting.AssignProperties_From_UefiSettings_STATUS(source.UefiSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UefiSettings_STATUS() to populate field UefiSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_UefiSettings_STATUS() to populate field UefiSettings")
 		}
 		profile.UefiSettings = &uefiSetting
 	} else {
@@ -6786,7 +6661,7 @@ func (profile *SecurityProfile_STATUS) AssignProperties_To_SecurityProfile_STATU
 		var uefiSetting storage.UefiSettings_STATUS
 		err := profile.UefiSettings.AssignProperties_To_UefiSettings_STATUS(&uefiSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UefiSettings_STATUS() to populate field UefiSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_UefiSettings_STATUS() to populate field UefiSettings")
 		}
 		destination.UefiSettings = &uefiSetting
 	} else {
@@ -6922,7 +6797,7 @@ func (profile *StorageProfile) AssignProperties_From_StorageProfile(source *stor
 			var dataDisk DataDisk
 			err := dataDisk.AssignProperties_From_DataDisk(&dataDiskItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DataDisk() to populate field DataDisks")
+				return eris.Wrap(err, "calling AssignProperties_From_DataDisk() to populate field DataDisks")
 			}
 			dataDiskList[dataDiskIndex] = dataDisk
 		}
@@ -6936,7 +6811,7 @@ func (profile *StorageProfile) AssignProperties_From_StorageProfile(source *stor
 		var imageReference ImageReference
 		err := imageReference.AssignProperties_From_ImageReference(source.ImageReference)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ImageReference() to populate field ImageReference")
+			return eris.Wrap(err, "calling AssignProperties_From_ImageReference() to populate field ImageReference")
 		}
 		profile.ImageReference = &imageReference
 	} else {
@@ -6948,7 +6823,7 @@ func (profile *StorageProfile) AssignProperties_From_StorageProfile(source *stor
 		var osDisk OSDisk
 		err := osDisk.AssignProperties_From_OSDisk(source.OsDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_OSDisk() to populate field OsDisk")
+			return eris.Wrap(err, "calling AssignProperties_From_OSDisk() to populate field OsDisk")
 		}
 		profile.OsDisk = &osDisk
 	} else {
@@ -6973,7 +6848,7 @@ func (profile *StorageProfile) AssignProperties_To_StorageProfile(destination *s
 			var dataDisk storage.DataDisk
 			err := dataDiskItem.AssignProperties_To_DataDisk(&dataDisk)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DataDisk() to populate field DataDisks")
+				return eris.Wrap(err, "calling AssignProperties_To_DataDisk() to populate field DataDisks")
 			}
 			dataDiskList[dataDiskIndex] = dataDisk
 		}
@@ -6987,7 +6862,7 @@ func (profile *StorageProfile) AssignProperties_To_StorageProfile(destination *s
 		var imageReference storage.ImageReference
 		err := profile.ImageReference.AssignProperties_To_ImageReference(&imageReference)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ImageReference() to populate field ImageReference")
+			return eris.Wrap(err, "calling AssignProperties_To_ImageReference() to populate field ImageReference")
 		}
 		destination.ImageReference = &imageReference
 	} else {
@@ -6999,7 +6874,7 @@ func (profile *StorageProfile) AssignProperties_To_StorageProfile(destination *s
 		var osDisk storage.OSDisk
 		err := profile.OsDisk.AssignProperties_To_OSDisk(&osDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_OSDisk() to populate field OsDisk")
+			return eris.Wrap(err, "calling AssignProperties_To_OSDisk() to populate field OsDisk")
 		}
 		destination.OsDisk = &osDisk
 	} else {
@@ -7029,7 +6904,7 @@ func (profile *StorageProfile) Initialize_From_StorageProfile_STATUS(source *Sto
 			var dataDisk DataDisk
 			err := dataDisk.Initialize_From_DataDisk_STATUS(&dataDiskItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_DataDisk_STATUS() to populate field DataDisks")
+				return eris.Wrap(err, "calling Initialize_From_DataDisk_STATUS() to populate field DataDisks")
 			}
 			dataDiskList[dataDiskIndex] = dataDisk
 		}
@@ -7043,7 +6918,7 @@ func (profile *StorageProfile) Initialize_From_StorageProfile_STATUS(source *Sto
 		var imageReference ImageReference
 		err := imageReference.Initialize_From_ImageReference_STATUS(source.ImageReference)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ImageReference_STATUS() to populate field ImageReference")
+			return eris.Wrap(err, "calling Initialize_From_ImageReference_STATUS() to populate field ImageReference")
 		}
 		profile.ImageReference = &imageReference
 	} else {
@@ -7055,7 +6930,7 @@ func (profile *StorageProfile) Initialize_From_StorageProfile_STATUS(source *Sto
 		var osDisk OSDisk
 		err := osDisk.Initialize_From_OSDisk_STATUS(source.OsDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_OSDisk_STATUS() to populate field OsDisk")
+			return eris.Wrap(err, "calling Initialize_From_OSDisk_STATUS() to populate field OsDisk")
 		}
 		profile.OsDisk = &osDisk
 	} else {
@@ -7146,7 +7021,7 @@ func (profile *StorageProfile_STATUS) AssignProperties_From_StorageProfile_STATU
 			var dataDisk DataDisk_STATUS
 			err := dataDisk.AssignProperties_From_DataDisk_STATUS(&dataDiskItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DataDisk_STATUS() to populate field DataDisks")
+				return eris.Wrap(err, "calling AssignProperties_From_DataDisk_STATUS() to populate field DataDisks")
 			}
 			dataDiskList[dataDiskIndex] = dataDisk
 		}
@@ -7160,7 +7035,7 @@ func (profile *StorageProfile_STATUS) AssignProperties_From_StorageProfile_STATU
 		var imageReference ImageReference_STATUS
 		err := imageReference.AssignProperties_From_ImageReference_STATUS(source.ImageReference)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ImageReference_STATUS() to populate field ImageReference")
+			return eris.Wrap(err, "calling AssignProperties_From_ImageReference_STATUS() to populate field ImageReference")
 		}
 		profile.ImageReference = &imageReference
 	} else {
@@ -7172,7 +7047,7 @@ func (profile *StorageProfile_STATUS) AssignProperties_From_StorageProfile_STATU
 		var osDisk OSDisk_STATUS
 		err := osDisk.AssignProperties_From_OSDisk_STATUS(source.OsDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_OSDisk_STATUS() to populate field OsDisk")
+			return eris.Wrap(err, "calling AssignProperties_From_OSDisk_STATUS() to populate field OsDisk")
 		}
 		profile.OsDisk = &osDisk
 	} else {
@@ -7197,7 +7072,7 @@ func (profile *StorageProfile_STATUS) AssignProperties_To_StorageProfile_STATUS(
 			var dataDisk storage.DataDisk_STATUS
 			err := dataDiskItem.AssignProperties_To_DataDisk_STATUS(&dataDisk)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DataDisk_STATUS() to populate field DataDisks")
+				return eris.Wrap(err, "calling AssignProperties_To_DataDisk_STATUS() to populate field DataDisks")
 			}
 			dataDiskList[dataDiskIndex] = dataDisk
 		}
@@ -7211,7 +7086,7 @@ func (profile *StorageProfile_STATUS) AssignProperties_To_StorageProfile_STATUS(
 		var imageReference storage.ImageReference_STATUS
 		err := profile.ImageReference.AssignProperties_To_ImageReference_STATUS(&imageReference)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ImageReference_STATUS() to populate field ImageReference")
+			return eris.Wrap(err, "calling AssignProperties_To_ImageReference_STATUS() to populate field ImageReference")
 		}
 		destination.ImageReference = &imageReference
 	} else {
@@ -7223,7 +7098,7 @@ func (profile *StorageProfile_STATUS) AssignProperties_To_StorageProfile_STATUS(
 		var osDisk storage.OSDisk_STATUS
 		err := profile.OsDisk.AssignProperties_To_OSDisk_STATUS(&osDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_OSDisk_STATUS() to populate field OsDisk")
+			return eris.Wrap(err, "calling AssignProperties_To_OSDisk_STATUS() to populate field OsDisk")
 		}
 		destination.OsDisk = &osDisk
 	} else {
@@ -7488,7 +7363,7 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_From_VirtualMa
 		var instanceView VirtualMachineExtensionInstanceView_STATUS
 		err := instanceView.AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS(source.InstanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS() to populate field InstanceView")
 		}
 		extension.InstanceView = &instanceView
 	} else {
@@ -7509,7 +7384,7 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_From_VirtualMa
 		var protectedSettingsFromKeyVault KeyVaultSecretReference_STATUS
 		err := protectedSettingsFromKeyVault.AssignProperties_From_KeyVaultSecretReference_STATUS(source.ProtectedSettingsFromKeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultSecretReference_STATUS() to populate field ProtectedSettingsFromKeyVault")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultSecretReference_STATUS() to populate field ProtectedSettingsFromKeyVault")
 		}
 		extension.ProtectedSettingsFromKeyVault = &protectedSettingsFromKeyVault
 	} else {
@@ -7588,7 +7463,7 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_To_VirtualMach
 		var instanceView storage.VirtualMachineExtensionInstanceView_STATUS
 		err := extension.InstanceView.AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(&instanceView)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS() to populate field InstanceView")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS() to populate field InstanceView")
 		}
 		destination.InstanceView = &instanceView
 	} else {
@@ -7609,7 +7484,7 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_To_VirtualMach
 		var protectedSettingsFromKeyVault storage.KeyVaultSecretReference_STATUS
 		err := extension.ProtectedSettingsFromKeyVault.AssignProperties_To_KeyVaultSecretReference_STATUS(&protectedSettingsFromKeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference_STATUS() to populate field ProtectedSettingsFromKeyVault")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference_STATUS() to populate field ProtectedSettingsFromKeyVault")
 		}
 		destination.ProtectedSettingsFromKeyVault = &protectedSettingsFromKeyVault
 	} else {
@@ -7753,7 +7628,7 @@ func (identity *VirtualMachineIdentity) AssignProperties_From_VirtualMachineIden
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -7788,7 +7663,7 @@ func (identity *VirtualMachineIdentity) AssignProperties_To_VirtualMachineIdenti
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -7934,7 +7809,7 @@ func (identity *VirtualMachineIdentity_STATUS) AssignProperties_From_VirtualMach
 			var userAssignedIdentity VirtualMachineIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_VirtualMachineIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -7975,7 +7850,7 @@ func (identity *VirtualMachineIdentity_STATUS) AssignProperties_To_VirtualMachin
 			var userAssignedIdentity storage.VirtualMachineIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_VirtualMachineIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -8215,7 +8090,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 		var bootDiagnostic BootDiagnosticsInstanceView_STATUS
 		err := bootDiagnostic.AssignProperties_From_BootDiagnosticsInstanceView_STATUS(source.BootDiagnostics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BootDiagnosticsInstanceView_STATUS() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling AssignProperties_From_BootDiagnosticsInstanceView_STATUS() to populate field BootDiagnostics")
 		}
 		view.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -8234,7 +8109,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 			var disk DiskInstanceView_STATUS
 			err := disk.AssignProperties_From_DiskInstanceView_STATUS(&diskItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DiskInstanceView_STATUS() to populate field Disks")
+				return eris.Wrap(err, "calling AssignProperties_From_DiskInstanceView_STATUS() to populate field Disks")
 			}
 			diskList[diskIndex] = disk
 		}
@@ -8252,7 +8127,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 			var extension VirtualMachineExtensionInstanceView_STATUS
 			err := extension.AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS(&extensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS() to populate field Extensions")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS() to populate field Extensions")
 			}
 			extensionList[extensionIndex] = extension
 		}
@@ -8275,7 +8150,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 		var maintenanceRedeployStatus MaintenanceRedeployStatus_STATUS
 		err := maintenanceRedeployStatus.AssignProperties_From_MaintenanceRedeployStatus_STATUS(source.MaintenanceRedeployStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MaintenanceRedeployStatus_STATUS() to populate field MaintenanceRedeployStatus")
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceRedeployStatus_STATUS() to populate field MaintenanceRedeployStatus")
 		}
 		view.MaintenanceRedeployStatus = &maintenanceRedeployStatus
 	} else {
@@ -8293,7 +8168,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 		var patchStatus VirtualMachinePatchStatus_STATUS
 		err := patchStatus.AssignProperties_From_VirtualMachinePatchStatus_STATUS(source.PatchStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinePatchStatus_STATUS() to populate field PatchStatus")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinePatchStatus_STATUS() to populate field PatchStatus")
 		}
 		view.PatchStatus = &patchStatus
 	} else {
@@ -8318,7 +8193,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -8332,7 +8207,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 		var vmAgent VirtualMachineAgentInstanceView_STATUS
 		err := vmAgent.AssignProperties_From_VirtualMachineAgentInstanceView_STATUS(source.VmAgent)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineAgentInstanceView_STATUS() to populate field VmAgent")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineAgentInstanceView_STATUS() to populate field VmAgent")
 		}
 		view.VmAgent = &vmAgent
 	} else {
@@ -8344,7 +8219,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 		var vmHealth VirtualMachineHealthStatus_STATUS
 		err := vmHealth.AssignProperties_From_VirtualMachineHealthStatus_STATUS(source.VmHealth)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineHealthStatus_STATUS() to populate field VmHealth")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineHealthStatus_STATUS() to populate field VmHealth")
 		}
 		view.VmHealth = &vmHealth
 	} else {
@@ -8368,7 +8243,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 		var bootDiagnostic storage.BootDiagnosticsInstanceView_STATUS
 		err := view.BootDiagnostics.AssignProperties_To_BootDiagnosticsInstanceView_STATUS(&bootDiagnostic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BootDiagnosticsInstanceView_STATUS() to populate field BootDiagnostics")
+			return eris.Wrap(err, "calling AssignProperties_To_BootDiagnosticsInstanceView_STATUS() to populate field BootDiagnostics")
 		}
 		destination.BootDiagnostics = &bootDiagnostic
 	} else {
@@ -8387,7 +8262,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 			var disk storage.DiskInstanceView_STATUS
 			err := diskItem.AssignProperties_To_DiskInstanceView_STATUS(&disk)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DiskInstanceView_STATUS() to populate field Disks")
+				return eris.Wrap(err, "calling AssignProperties_To_DiskInstanceView_STATUS() to populate field Disks")
 			}
 			diskList[diskIndex] = disk
 		}
@@ -8405,7 +8280,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 			var extension storage.VirtualMachineExtensionInstanceView_STATUS
 			err := extensionItem.AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(&extension)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS() to populate field Extensions")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS() to populate field Extensions")
 			}
 			extensionList[extensionIndex] = extension
 		}
@@ -8427,7 +8302,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 		var maintenanceRedeployStatus storage.MaintenanceRedeployStatus_STATUS
 		err := view.MaintenanceRedeployStatus.AssignProperties_To_MaintenanceRedeployStatus_STATUS(&maintenanceRedeployStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MaintenanceRedeployStatus_STATUS() to populate field MaintenanceRedeployStatus")
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceRedeployStatus_STATUS() to populate field MaintenanceRedeployStatus")
 		}
 		destination.MaintenanceRedeployStatus = &maintenanceRedeployStatus
 	} else {
@@ -8445,7 +8320,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 		var patchStatus storage.VirtualMachinePatchStatus_STATUS
 		err := view.PatchStatus.AssignProperties_To_VirtualMachinePatchStatus_STATUS(&patchStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinePatchStatus_STATUS() to populate field PatchStatus")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinePatchStatus_STATUS() to populate field PatchStatus")
 		}
 		destination.PatchStatus = &patchStatus
 	} else {
@@ -8470,7 +8345,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -8484,7 +8359,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 		var vmAgent storage.VirtualMachineAgentInstanceView_STATUS
 		err := view.VmAgent.AssignProperties_To_VirtualMachineAgentInstanceView_STATUS(&vmAgent)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineAgentInstanceView_STATUS() to populate field VmAgent")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineAgentInstanceView_STATUS() to populate field VmAgent")
 		}
 		destination.VmAgent = &vmAgent
 	} else {
@@ -8496,7 +8371,7 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 		var vmHealth storage.VirtualMachineHealthStatus_STATUS
 		err := view.VmHealth.AssignProperties_To_VirtualMachineHealthStatus_STATUS(&vmHealth)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineHealthStatus_STATUS() to populate field VmHealth")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineHealthStatus_STATUS() to populate field VmHealth")
 		}
 		destination.VmHealth = &vmHealth
 	} else {
@@ -8903,7 +8778,7 @@ func (view *BootDiagnosticsInstanceView_STATUS) AssignProperties_From_BootDiagno
 		var status InstanceViewStatus_STATUS
 		err := status.AssignProperties_From_InstanceViewStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Status")
 		}
 		view.Status = &status
 	} else {
@@ -8930,7 +8805,7 @@ func (view *BootDiagnosticsInstanceView_STATUS) AssignProperties_To_BootDiagnost
 		var status storage.InstanceViewStatus_STATUS
 		err := view.Status.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &status
 	} else {
@@ -9275,7 +9150,7 @@ func (disk *DataDisk) AssignProperties_From_DataDisk(source *storage.DataDisk) e
 		var image VirtualHardDisk
 		err := image.AssignProperties_From_VirtualHardDisk(source.Image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Image")
 		}
 		disk.Image = &image
 	} else {
@@ -9290,7 +9165,7 @@ func (disk *DataDisk) AssignProperties_From_DataDisk(source *storage.DataDisk) e
 		var managedDisk ManagedDiskParameters
 		err := managedDisk.AssignProperties_From_ManagedDiskParameters(source.ManagedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters() to populate field ManagedDisk")
 		}
 		disk.ManagedDisk = &managedDisk
 	} else {
@@ -9313,7 +9188,7 @@ func (disk *DataDisk) AssignProperties_From_DataDisk(source *storage.DataDisk) e
 		var vhd VirtualHardDisk
 		err := vhd.AssignProperties_From_VirtualHardDisk(source.Vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Vhd")
 		}
 		disk.Vhd = &vhd
 	} else {
@@ -9377,7 +9252,7 @@ func (disk *DataDisk) AssignProperties_To_DataDisk(destination *storage.DataDisk
 		var image storage.VirtualHardDisk
 		err := disk.Image.AssignProperties_To_VirtualHardDisk(&image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Image")
 		}
 		destination.Image = &image
 	} else {
@@ -9392,7 +9267,7 @@ func (disk *DataDisk) AssignProperties_To_DataDisk(destination *storage.DataDisk
 		var managedDisk storage.ManagedDiskParameters
 		err := disk.ManagedDisk.AssignProperties_To_ManagedDiskParameters(&managedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters() to populate field ManagedDisk")
 		}
 		destination.ManagedDisk = &managedDisk
 	} else {
@@ -9415,7 +9290,7 @@ func (disk *DataDisk) AssignProperties_To_DataDisk(destination *storage.DataDisk
 		var vhd storage.VirtualHardDisk
 		err := disk.Vhd.AssignProperties_To_VirtualHardDisk(&vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Vhd")
 		}
 		destination.Vhd = &vhd
 	} else {
@@ -9484,7 +9359,7 @@ func (disk *DataDisk) Initialize_From_DataDisk_STATUS(source *DataDisk_STATUS) e
 		var image VirtualHardDisk
 		err := image.Initialize_From_VirtualHardDisk_STATUS(source.Image)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Image")
+			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Image")
 		}
 		disk.Image = &image
 	} else {
@@ -9499,7 +9374,7 @@ func (disk *DataDisk) Initialize_From_DataDisk_STATUS(source *DataDisk_STATUS) e
 		var managedDisk ManagedDiskParameters
 		err := managedDisk.Initialize_From_ManagedDiskParameters_STATUS(source.ManagedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling Initialize_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
 		}
 		disk.ManagedDisk = &managedDisk
 	} else {
@@ -9522,7 +9397,7 @@ func (disk *DataDisk) Initialize_From_DataDisk_STATUS(source *DataDisk_STATUS) e
 		var vhd VirtualHardDisk
 		err := vhd.Initialize_From_VirtualHardDisk_STATUS(source.Vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Vhd")
+			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Vhd")
 		}
 		disk.Vhd = &vhd
 	} else {
@@ -9792,7 +9667,7 @@ func (disk *DataDisk_STATUS) AssignProperties_From_DataDisk_STATUS(source *stora
 		var image VirtualHardDisk_STATUS
 		err := image.AssignProperties_From_VirtualHardDisk_STATUS(source.Image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Image")
 		}
 		disk.Image = &image
 	} else {
@@ -9807,7 +9682,7 @@ func (disk *DataDisk_STATUS) AssignProperties_From_DataDisk_STATUS(source *stora
 		var managedDisk ManagedDiskParameters_STATUS
 		err := managedDisk.AssignProperties_From_ManagedDiskParameters_STATUS(source.ManagedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
 		}
 		disk.ManagedDisk = &managedDisk
 	} else {
@@ -9830,7 +9705,7 @@ func (disk *DataDisk_STATUS) AssignProperties_From_DataDisk_STATUS(source *stora
 		var vhd VirtualHardDisk_STATUS
 		err := vhd.AssignProperties_From_VirtualHardDisk_STATUS(source.Vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Vhd")
 		}
 		disk.Vhd = &vhd
 	} else {
@@ -9900,7 +9775,7 @@ func (disk *DataDisk_STATUS) AssignProperties_To_DataDisk_STATUS(destination *st
 		var image storage.VirtualHardDisk_STATUS
 		err := disk.Image.AssignProperties_To_VirtualHardDisk_STATUS(&image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Image")
 		}
 		destination.Image = &image
 	} else {
@@ -9915,7 +9790,7 @@ func (disk *DataDisk_STATUS) AssignProperties_To_DataDisk_STATUS(destination *st
 		var managedDisk storage.ManagedDiskParameters_STATUS
 		err := disk.ManagedDisk.AssignProperties_To_ManagedDiskParameters_STATUS(&managedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
 		}
 		destination.ManagedDisk = &managedDisk
 	} else {
@@ -9938,7 +9813,7 @@ func (disk *DataDisk_STATUS) AssignProperties_To_DataDisk_STATUS(destination *st
 		var vhd storage.VirtualHardDisk_STATUS
 		err := disk.Vhd.AssignProperties_To_VirtualHardDisk_STATUS(&vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Vhd")
 		}
 		destination.Vhd = &vhd
 	} else {
@@ -10033,7 +9908,7 @@ func (view *DiskInstanceView_STATUS) AssignProperties_From_DiskInstanceView_STAT
 			var encryptionSetting DiskEncryptionSettings_STATUS
 			err := encryptionSetting.AssignProperties_From_DiskEncryptionSettings_STATUS(&encryptionSettingItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
+				return eris.Wrap(err, "calling AssignProperties_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
 			}
 			encryptionSettingList[encryptionSettingIndex] = encryptionSetting
 		}
@@ -10054,7 +9929,7 @@ func (view *DiskInstanceView_STATUS) AssignProperties_From_DiskInstanceView_STAT
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -10081,7 +9956,7 @@ func (view *DiskInstanceView_STATUS) AssignProperties_To_DiskInstanceView_STATUS
 			var encryptionSetting storage.DiskEncryptionSettings_STATUS
 			err := encryptionSettingItem.AssignProperties_To_DiskEncryptionSettings_STATUS(&encryptionSetting)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
+				return eris.Wrap(err, "calling AssignProperties_To_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
 			}
 			encryptionSettingList[encryptionSettingIndex] = encryptionSetting
 		}
@@ -10102,7 +9977,7 @@ func (view *DiskInstanceView_STATUS) AssignProperties_To_DiskInstanceView_STATUS
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -11156,7 +11031,7 @@ func (configuration *LinuxConfiguration) AssignProperties_From_LinuxConfiguratio
 		var patchSetting LinuxPatchSettings
 		err := patchSetting.AssignProperties_From_LinuxPatchSettings(source.PatchSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxPatchSettings() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxPatchSettings() to populate field PatchSettings")
 		}
 		configuration.PatchSettings = &patchSetting
 	} else {
@@ -11176,7 +11051,7 @@ func (configuration *LinuxConfiguration) AssignProperties_From_LinuxConfiguratio
 		var ssh SshConfiguration
 		err := ssh.AssignProperties_From_SshConfiguration(source.Ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SshConfiguration() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_From_SshConfiguration() to populate field Ssh")
 		}
 		configuration.Ssh = &ssh
 	} else {
@@ -11205,7 +11080,7 @@ func (configuration *LinuxConfiguration) AssignProperties_To_LinuxConfiguration(
 		var patchSetting storage.LinuxPatchSettings
 		err := configuration.PatchSettings.AssignProperties_To_LinuxPatchSettings(&patchSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxPatchSettings() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxPatchSettings() to populate field PatchSettings")
 		}
 		destination.PatchSettings = &patchSetting
 	} else {
@@ -11225,7 +11100,7 @@ func (configuration *LinuxConfiguration) AssignProperties_To_LinuxConfiguration(
 		var ssh storage.SshConfiguration
 		err := configuration.Ssh.AssignProperties_To_SshConfiguration(&ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SshConfiguration() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_To_SshConfiguration() to populate field Ssh")
 		}
 		destination.Ssh = &ssh
 	} else {
@@ -11259,7 +11134,7 @@ func (configuration *LinuxConfiguration) Initialize_From_LinuxConfiguration_STAT
 		var patchSetting LinuxPatchSettings
 		err := patchSetting.Initialize_From_LinuxPatchSettings_STATUS(source.PatchSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_LinuxPatchSettings_STATUS() to populate field PatchSettings")
+			return eris.Wrap(err, "calling Initialize_From_LinuxPatchSettings_STATUS() to populate field PatchSettings")
 		}
 		configuration.PatchSettings = &patchSetting
 	} else {
@@ -11279,7 +11154,7 @@ func (configuration *LinuxConfiguration) Initialize_From_LinuxConfiguration_STAT
 		var ssh SshConfiguration
 		err := ssh.Initialize_From_SshConfiguration_STATUS(source.Ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SshConfiguration_STATUS() to populate field Ssh")
+			return eris.Wrap(err, "calling Initialize_From_SshConfiguration_STATUS() to populate field Ssh")
 		}
 		configuration.Ssh = &ssh
 	} else {
@@ -11378,7 +11253,7 @@ func (configuration *LinuxConfiguration_STATUS) AssignProperties_From_LinuxConfi
 		var patchSetting LinuxPatchSettings_STATUS
 		err := patchSetting.AssignProperties_From_LinuxPatchSettings_STATUS(source.PatchSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxPatchSettings_STATUS() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxPatchSettings_STATUS() to populate field PatchSettings")
 		}
 		configuration.PatchSettings = &patchSetting
 	} else {
@@ -11398,7 +11273,7 @@ func (configuration *LinuxConfiguration_STATUS) AssignProperties_From_LinuxConfi
 		var ssh SshConfiguration_STATUS
 		err := ssh.AssignProperties_From_SshConfiguration_STATUS(source.Ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SshConfiguration_STATUS() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_From_SshConfiguration_STATUS() to populate field Ssh")
 		}
 		configuration.Ssh = &ssh
 	} else {
@@ -11427,7 +11302,7 @@ func (configuration *LinuxConfiguration_STATUS) AssignProperties_To_LinuxConfigu
 		var patchSetting storage.LinuxPatchSettings_STATUS
 		err := configuration.PatchSettings.AssignProperties_To_LinuxPatchSettings_STATUS(&patchSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxPatchSettings_STATUS() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxPatchSettings_STATUS() to populate field PatchSettings")
 		}
 		destination.PatchSettings = &patchSetting
 	} else {
@@ -11447,7 +11322,7 @@ func (configuration *LinuxConfiguration_STATUS) AssignProperties_To_LinuxConfigu
 		var ssh storage.SshConfiguration_STATUS
 		err := configuration.Ssh.AssignProperties_To_SshConfiguration_STATUS(&ssh)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SshConfiguration_STATUS() to populate field Ssh")
+			return eris.Wrap(err, "calling AssignProperties_To_SshConfiguration_STATUS() to populate field Ssh")
 		}
 		destination.Ssh = &ssh
 	} else {
@@ -12296,7 +12171,7 @@ func (disk *OSDisk) AssignProperties_From_OSDisk(source *storage.OSDisk) error {
 		var diffDiskSetting DiffDiskSettings
 		err := diffDiskSetting.AssignProperties_From_DiffDiskSettings(source.DiffDiskSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiffDiskSettings() to populate field DiffDiskSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_DiffDiskSettings() to populate field DiffDiskSettings")
 		}
 		disk.DiffDiskSettings = &diffDiskSetting
 	} else {
@@ -12311,7 +12186,7 @@ func (disk *OSDisk) AssignProperties_From_OSDisk(source *storage.OSDisk) error {
 		var encryptionSetting DiskEncryptionSettings
 		err := encryptionSetting.AssignProperties_From_DiskEncryptionSettings(source.EncryptionSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiskEncryptionSettings() to populate field EncryptionSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskEncryptionSettings() to populate field EncryptionSettings")
 		}
 		disk.EncryptionSettings = &encryptionSetting
 	} else {
@@ -12323,7 +12198,7 @@ func (disk *OSDisk) AssignProperties_From_OSDisk(source *storage.OSDisk) error {
 		var image VirtualHardDisk
 		err := image.AssignProperties_From_VirtualHardDisk(source.Image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Image")
 		}
 		disk.Image = &image
 	} else {
@@ -12335,7 +12210,7 @@ func (disk *OSDisk) AssignProperties_From_OSDisk(source *storage.OSDisk) error {
 		var managedDisk ManagedDiskParameters
 		err := managedDisk.AssignProperties_From_ManagedDiskParameters(source.ManagedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters() to populate field ManagedDisk")
 		}
 		disk.ManagedDisk = &managedDisk
 	} else {
@@ -12359,7 +12234,7 @@ func (disk *OSDisk) AssignProperties_From_OSDisk(source *storage.OSDisk) error {
 		var vhd VirtualHardDisk
 		err := vhd.AssignProperties_From_VirtualHardDisk(source.Vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk() to populate field Vhd")
 		}
 		disk.Vhd = &vhd
 	} else {
@@ -12412,7 +12287,7 @@ func (disk *OSDisk) AssignProperties_To_OSDisk(destination *storage.OSDisk) erro
 		var diffDiskSetting storage.DiffDiskSettings
 		err := disk.DiffDiskSettings.AssignProperties_To_DiffDiskSettings(&diffDiskSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiffDiskSettings() to populate field DiffDiskSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_DiffDiskSettings() to populate field DiffDiskSettings")
 		}
 		destination.DiffDiskSettings = &diffDiskSetting
 	} else {
@@ -12427,7 +12302,7 @@ func (disk *OSDisk) AssignProperties_To_OSDisk(destination *storage.OSDisk) erro
 		var encryptionSetting storage.DiskEncryptionSettings
 		err := disk.EncryptionSettings.AssignProperties_To_DiskEncryptionSettings(&encryptionSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiskEncryptionSettings() to populate field EncryptionSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskEncryptionSettings() to populate field EncryptionSettings")
 		}
 		destination.EncryptionSettings = &encryptionSetting
 	} else {
@@ -12439,7 +12314,7 @@ func (disk *OSDisk) AssignProperties_To_OSDisk(destination *storage.OSDisk) erro
 		var image storage.VirtualHardDisk
 		err := disk.Image.AssignProperties_To_VirtualHardDisk(&image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Image")
 		}
 		destination.Image = &image
 	} else {
@@ -12451,7 +12326,7 @@ func (disk *OSDisk) AssignProperties_To_OSDisk(destination *storage.OSDisk) erro
 		var managedDisk storage.ManagedDiskParameters
 		err := disk.ManagedDisk.AssignProperties_To_ManagedDiskParameters(&managedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters() to populate field ManagedDisk")
 		}
 		destination.ManagedDisk = &managedDisk
 	} else {
@@ -12474,7 +12349,7 @@ func (disk *OSDisk) AssignProperties_To_OSDisk(destination *storage.OSDisk) erro
 		var vhd storage.VirtualHardDisk
 		err := disk.Vhd.AssignProperties_To_VirtualHardDisk(&vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk() to populate field Vhd")
 		}
 		destination.Vhd = &vhd
 	} else {
@@ -12532,7 +12407,7 @@ func (disk *OSDisk) Initialize_From_OSDisk_STATUS(source *OSDisk_STATUS) error {
 		var diffDiskSetting DiffDiskSettings
 		err := diffDiskSetting.Initialize_From_DiffDiskSettings_STATUS(source.DiffDiskSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
+			return eris.Wrap(err, "calling Initialize_From_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
 		}
 		disk.DiffDiskSettings = &diffDiskSetting
 	} else {
@@ -12547,7 +12422,7 @@ func (disk *OSDisk) Initialize_From_OSDisk_STATUS(source *OSDisk_STATUS) error {
 		var encryptionSetting DiskEncryptionSettings
 		err := encryptionSetting.Initialize_From_DiskEncryptionSettings_STATUS(source.EncryptionSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
+			return eris.Wrap(err, "calling Initialize_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
 		}
 		disk.EncryptionSettings = &encryptionSetting
 	} else {
@@ -12559,7 +12434,7 @@ func (disk *OSDisk) Initialize_From_OSDisk_STATUS(source *OSDisk_STATUS) error {
 		var image VirtualHardDisk
 		err := image.Initialize_From_VirtualHardDisk_STATUS(source.Image)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Image")
+			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Image")
 		}
 		disk.Image = &image
 	} else {
@@ -12571,7 +12446,7 @@ func (disk *OSDisk) Initialize_From_OSDisk_STATUS(source *OSDisk_STATUS) error {
 		var managedDisk ManagedDiskParameters
 		err := managedDisk.Initialize_From_ManagedDiskParameters_STATUS(source.ManagedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling Initialize_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
 		}
 		disk.ManagedDisk = &managedDisk
 	} else {
@@ -12594,7 +12469,7 @@ func (disk *OSDisk) Initialize_From_OSDisk_STATUS(source *OSDisk_STATUS) error {
 		var vhd VirtualHardDisk
 		err := vhd.Initialize_From_VirtualHardDisk_STATUS(source.Vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Vhd")
+			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Vhd")
 		}
 		disk.Vhd = &vhd
 	} else {
@@ -12836,7 +12711,7 @@ func (disk *OSDisk_STATUS) AssignProperties_From_OSDisk_STATUS(source *storage.O
 		var diffDiskSetting DiffDiskSettings_STATUS
 		err := diffDiskSetting.AssignProperties_From_DiffDiskSettings_STATUS(source.DiffDiskSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
 		}
 		disk.DiffDiskSettings = &diffDiskSetting
 	} else {
@@ -12851,7 +12726,7 @@ func (disk *OSDisk_STATUS) AssignProperties_From_OSDisk_STATUS(source *storage.O
 		var encryptionSetting DiskEncryptionSettings_STATUS
 		err := encryptionSetting.AssignProperties_From_DiskEncryptionSettings_STATUS(source.EncryptionSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
 		}
 		disk.EncryptionSettings = &encryptionSetting
 	} else {
@@ -12863,7 +12738,7 @@ func (disk *OSDisk_STATUS) AssignProperties_From_OSDisk_STATUS(source *storage.O
 		var image VirtualHardDisk_STATUS
 		err := image.AssignProperties_From_VirtualHardDisk_STATUS(source.Image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Image")
 		}
 		disk.Image = &image
 	} else {
@@ -12875,7 +12750,7 @@ func (disk *OSDisk_STATUS) AssignProperties_From_OSDisk_STATUS(source *storage.O
 		var managedDisk ManagedDiskParameters_STATUS
 		err := managedDisk.AssignProperties_From_ManagedDiskParameters_STATUS(source.ManagedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
 		}
 		disk.ManagedDisk = &managedDisk
 	} else {
@@ -12899,7 +12774,7 @@ func (disk *OSDisk_STATUS) AssignProperties_From_OSDisk_STATUS(source *storage.O
 		var vhd VirtualHardDisk_STATUS
 		err := vhd.AssignProperties_From_VirtualHardDisk_STATUS(source.Vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualHardDisk_STATUS() to populate field Vhd")
 		}
 		disk.Vhd = &vhd
 	} else {
@@ -12952,7 +12827,7 @@ func (disk *OSDisk_STATUS) AssignProperties_To_OSDisk_STATUS(destination *storag
 		var diffDiskSetting storage.DiffDiskSettings_STATUS
 		err := disk.DiffDiskSettings.AssignProperties_To_DiffDiskSettings_STATUS(&diffDiskSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
 		}
 		destination.DiffDiskSettings = &diffDiskSetting
 	} else {
@@ -12967,7 +12842,7 @@ func (disk *OSDisk_STATUS) AssignProperties_To_OSDisk_STATUS(destination *storag
 		var encryptionSetting storage.DiskEncryptionSettings_STATUS
 		err := disk.EncryptionSettings.AssignProperties_To_DiskEncryptionSettings_STATUS(&encryptionSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
 		}
 		destination.EncryptionSettings = &encryptionSetting
 	} else {
@@ -12979,7 +12854,7 @@ func (disk *OSDisk_STATUS) AssignProperties_To_OSDisk_STATUS(destination *storag
 		var image storage.VirtualHardDisk_STATUS
 		err := disk.Image.AssignProperties_To_VirtualHardDisk_STATUS(&image)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Image")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Image")
 		}
 		destination.Image = &image
 	} else {
@@ -12991,7 +12866,7 @@ func (disk *OSDisk_STATUS) AssignProperties_To_OSDisk_STATUS(destination *storag
 		var managedDisk storage.ManagedDiskParameters_STATUS
 		err := disk.ManagedDisk.AssignProperties_To_ManagedDiskParameters_STATUS(&managedDisk)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
 		}
 		destination.ManagedDisk = &managedDisk
 	} else {
@@ -13014,7 +12889,7 @@ func (disk *OSDisk_STATUS) AssignProperties_To_OSDisk_STATUS(destination *storag
 		var vhd storage.VirtualHardDisk_STATUS
 		err := disk.Vhd.AssignProperties_To_VirtualHardDisk_STATUS(&vhd)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Vhd")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualHardDisk_STATUS() to populate field Vhd")
 		}
 		destination.Vhd = &vhd
 	} else {
@@ -13634,7 +13509,7 @@ func (group *VaultSecretGroup) AssignProperties_From_VaultSecretGroup(source *st
 		var sourceVault SubResource
 		err := sourceVault.AssignProperties_From_SubResource(source.SourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SourceVault")
 		}
 		group.SourceVault = &sourceVault
 	} else {
@@ -13650,7 +13525,7 @@ func (group *VaultSecretGroup) AssignProperties_From_VaultSecretGroup(source *st
 			var vaultCertificate VaultCertificate
 			err := vaultCertificate.AssignProperties_From_VaultCertificate(&vaultCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VaultCertificate() to populate field VaultCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_VaultCertificate() to populate field VaultCertificates")
 			}
 			vaultCertificateList[vaultCertificateIndex] = vaultCertificate
 		}
@@ -13673,7 +13548,7 @@ func (group *VaultSecretGroup) AssignProperties_To_VaultSecretGroup(destination 
 		var sourceVault storage.SubResource
 		err := group.SourceVault.AssignProperties_To_SubResource(&sourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SourceVault")
 		}
 		destination.SourceVault = &sourceVault
 	} else {
@@ -13689,7 +13564,7 @@ func (group *VaultSecretGroup) AssignProperties_To_VaultSecretGroup(destination 
 			var vaultCertificate storage.VaultCertificate
 			err := vaultCertificateItem.AssignProperties_To_VaultCertificate(&vaultCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VaultCertificate() to populate field VaultCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_VaultCertificate() to populate field VaultCertificates")
 			}
 			vaultCertificateList[vaultCertificateIndex] = vaultCertificate
 		}
@@ -13717,7 +13592,7 @@ func (group *VaultSecretGroup) Initialize_From_VaultSecretGroup_STATUS(source *V
 		var sourceVault SubResource
 		err := sourceVault.Initialize_From_SubResource_STATUS(source.SourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
 		}
 		group.SourceVault = &sourceVault
 	} else {
@@ -13733,7 +13608,7 @@ func (group *VaultSecretGroup) Initialize_From_VaultSecretGroup_STATUS(source *V
 			var vaultCertificate VaultCertificate
 			err := vaultCertificate.Initialize_From_VaultCertificate_STATUS(&vaultCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VaultCertificate_STATUS() to populate field VaultCertificates")
+				return eris.Wrap(err, "calling Initialize_From_VaultCertificate_STATUS() to populate field VaultCertificates")
 			}
 			vaultCertificateList[vaultCertificateIndex] = vaultCertificate
 		}
@@ -13802,7 +13677,7 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_From_VaultSecretGroup_STA
 		var sourceVault SubResource_STATUS
 		err := sourceVault.AssignProperties_From_SubResource_STATUS(source.SourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SourceVault")
 		}
 		group.SourceVault = &sourceVault
 	} else {
@@ -13818,7 +13693,7 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_From_VaultSecretGroup_STA
 			var vaultCertificate VaultCertificate_STATUS
 			err := vaultCertificate.AssignProperties_From_VaultCertificate_STATUS(&vaultCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VaultCertificate_STATUS() to populate field VaultCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_VaultCertificate_STATUS() to populate field VaultCertificates")
 			}
 			vaultCertificateList[vaultCertificateIndex] = vaultCertificate
 		}
@@ -13841,7 +13716,7 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_To_VaultSecretGroup_STATU
 		var sourceVault storage.SubResource_STATUS
 		err := group.SourceVault.AssignProperties_To_SubResource_STATUS(&sourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SourceVault")
 		}
 		destination.SourceVault = &sourceVault
 	} else {
@@ -13857,7 +13732,7 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_To_VaultSecretGroup_STATU
 			var vaultCertificate storage.VaultCertificate_STATUS
 			err := vaultCertificateItem.AssignProperties_To_VaultCertificate_STATUS(&vaultCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VaultCertificate_STATUS() to populate field VaultCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_VaultCertificate_STATUS() to populate field VaultCertificates")
 			}
 			vaultCertificateList[vaultCertificateIndex] = vaultCertificate
 		}
@@ -13945,7 +13820,7 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_From_Virtua
 			var extensionHandler VirtualMachineExtensionHandlerInstanceView_STATUS
 			err := extensionHandler.AssignProperties_From_VirtualMachineExtensionHandlerInstanceView_STATUS(&extensionHandlerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineExtensionHandlerInstanceView_STATUS() to populate field ExtensionHandlers")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineExtensionHandlerInstanceView_STATUS() to populate field ExtensionHandlers")
 			}
 			extensionHandlerList[extensionHandlerIndex] = extensionHandler
 		}
@@ -13963,7 +13838,7 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_From_Virtua
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -13993,7 +13868,7 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_To_VirtualM
 			var extensionHandler storage.VirtualMachineExtensionHandlerInstanceView_STATUS
 			err := extensionHandlerItem.AssignProperties_To_VirtualMachineExtensionHandlerInstanceView_STATUS(&extensionHandler)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionHandlerInstanceView_STATUS() to populate field ExtensionHandlers")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionHandlerInstanceView_STATUS() to populate field ExtensionHandlers")
 			}
 			extensionHandlerList[extensionHandlerIndex] = extensionHandler
 		}
@@ -14011,7 +13886,7 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_To_VirtualM
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -14077,7 +13952,7 @@ func (status *VirtualMachineHealthStatus_STATUS) AssignProperties_From_VirtualMa
 		var statusLocal InstanceViewStatus_STATUS
 		err := statusLocal.AssignProperties_From_InstanceViewStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Status")
 		}
 		status.Status = &statusLocal
 	} else {
@@ -14098,7 +13973,7 @@ func (status *VirtualMachineHealthStatus_STATUS) AssignProperties_To_VirtualMach
 		var statusLocal storage.InstanceViewStatus_STATUS
 		err := status.Status.AssignProperties_To_InstanceViewStatus_STATUS(&statusLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &statusLocal
 	} else {
@@ -14494,7 +14369,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		var dnsSetting VirtualMachineNetworkInterfaceDnsSettingsConfiguration
 		err := dnsSetting.AssignProperties_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration() to populate field DnsSettings")
 		}
 		configuration.DnsSettings = &dnsSetting
 	} else {
@@ -14506,7 +14381,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		var dscpConfiguration SubResource
 		err := dscpConfiguration.AssignProperties_From_SubResource(source.DscpConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DscpConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DscpConfiguration")
 		}
 		configuration.DscpConfiguration = &dscpConfiguration
 	} else {
@@ -14546,7 +14421,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 			var ipConfiguration VirtualMachineNetworkInterfaceIPConfiguration
 			err := ipConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -14563,7 +14438,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		var networkSecurityGroup SubResource
 		err := networkSecurityGroup.AssignProperties_From_SubResource(source.NetworkSecurityGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field NetworkSecurityGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field NetworkSecurityGroup")
 		}
 		configuration.NetworkSecurityGroup = &networkSecurityGroup
 	} else {
@@ -14600,7 +14475,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		var dnsSetting storage.VirtualMachineNetworkInterfaceDnsSettingsConfiguration
 		err := configuration.DnsSettings.AssignProperties_To_VirtualMachineNetworkInterfaceDnsSettingsConfiguration(&dnsSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceDnsSettingsConfiguration() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceDnsSettingsConfiguration() to populate field DnsSettings")
 		}
 		destination.DnsSettings = &dnsSetting
 	} else {
@@ -14612,7 +14487,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		var dscpConfiguration storage.SubResource
 		err := configuration.DscpConfiguration.AssignProperties_To_SubResource(&dscpConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DscpConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DscpConfiguration")
 		}
 		destination.DscpConfiguration = &dscpConfiguration
 	} else {
@@ -14652,7 +14527,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 			var ipConfiguration storage.VirtualMachineNetworkInterfaceIPConfiguration
 			err := ipConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration(&ipConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -14669,7 +14544,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		var networkSecurityGroup storage.SubResource
 		err := configuration.NetworkSecurityGroup.AssignProperties_To_SubResource(&networkSecurityGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field NetworkSecurityGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field NetworkSecurityGroup")
 		}
 		destination.NetworkSecurityGroup = &networkSecurityGroup
 	} else {
@@ -14711,7 +14586,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) Initialize_Fro
 		var dnsSetting VirtualMachineNetworkInterfaceDnsSettingsConfiguration
 		err := dnsSetting.Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
 		}
 		configuration.DnsSettings = &dnsSetting
 	} else {
@@ -14723,7 +14598,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) Initialize_Fro
 		var dscpConfiguration SubResource
 		err := dscpConfiguration.Initialize_From_SubResource_STATUS(source.DscpConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DscpConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DscpConfiguration")
 		}
 		configuration.DscpConfiguration = &dscpConfiguration
 	} else {
@@ -14763,7 +14638,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) Initialize_Fro
 			var ipConfiguration VirtualMachineNetworkInterfaceIPConfiguration
 			err := ipConfiguration.Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -14780,7 +14655,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) Initialize_Fro
 		var networkSecurityGroup SubResource
 		err := networkSecurityGroup.Initialize_From_SubResource_STATUS(source.NetworkSecurityGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field NetworkSecurityGroup")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field NetworkSecurityGroup")
 		}
 		configuration.NetworkSecurityGroup = &networkSecurityGroup
 	} else {
@@ -14973,7 +14848,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 		var dnsSetting VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS
 		err := dnsSetting.AssignProperties_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
 		}
 		configuration.DnsSettings = &dnsSetting
 	} else {
@@ -14985,7 +14860,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 		var dscpConfiguration SubResource_STATUS
 		err := dscpConfiguration.AssignProperties_From_SubResource_STATUS(source.DscpConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DscpConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DscpConfiguration")
 		}
 		configuration.DscpConfiguration = &dscpConfiguration
 	} else {
@@ -15025,7 +14900,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 			var ipConfiguration VirtualMachineNetworkInterfaceIPConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -15042,7 +14917,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 		var networkSecurityGroup SubResource_STATUS
 		err := networkSecurityGroup.AssignProperties_From_SubResource_STATUS(source.NetworkSecurityGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field NetworkSecurityGroup")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field NetworkSecurityGroup")
 		}
 		configuration.NetworkSecurityGroup = &networkSecurityGroup
 	} else {
@@ -15079,7 +14954,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 		var dnsSetting storage.VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS
 		err := configuration.DnsSettings.AssignProperties_To_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS(&dnsSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
 		}
 		destination.DnsSettings = &dnsSetting
 	} else {
@@ -15091,7 +14966,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 		var dscpConfiguration storage.SubResource_STATUS
 		err := configuration.DscpConfiguration.AssignProperties_To_SubResource_STATUS(&dscpConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DscpConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DscpConfiguration")
 		}
 		destination.DscpConfiguration = &dscpConfiguration
 	} else {
@@ -15131,7 +15006,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 			var ipConfiguration storage.VirtualMachineNetworkInterfaceIPConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -15148,7 +15023,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 		var networkSecurityGroup storage.SubResource_STATUS
 		err := configuration.NetworkSecurityGroup.AssignProperties_To_SubResource_STATUS(&networkSecurityGroup)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field NetworkSecurityGroup")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field NetworkSecurityGroup")
 		}
 		destination.NetworkSecurityGroup = &networkSecurityGroup
 	} else {
@@ -15244,7 +15119,7 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_From_VirtualMac
 		var availablePatchSummary AvailablePatchSummary_STATUS
 		err := availablePatchSummary.AssignProperties_From_AvailablePatchSummary_STATUS(source.AvailablePatchSummary)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AvailablePatchSummary_STATUS() to populate field AvailablePatchSummary")
+			return eris.Wrap(err, "calling AssignProperties_From_AvailablePatchSummary_STATUS() to populate field AvailablePatchSummary")
 		}
 		status.AvailablePatchSummary = &availablePatchSummary
 	} else {
@@ -15260,7 +15135,7 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_From_VirtualMac
 			var configurationStatus InstanceViewStatus_STATUS
 			err := configurationStatus.AssignProperties_From_InstanceViewStatus_STATUS(&configurationStatusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field ConfigurationStatuses")
+				return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field ConfigurationStatuses")
 			}
 			configurationStatusList[configurationStatusIndex] = configurationStatus
 		}
@@ -15274,7 +15149,7 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_From_VirtualMac
 		var lastPatchInstallationSummary LastPatchInstallationSummary_STATUS
 		err := lastPatchInstallationSummary.AssignProperties_From_LastPatchInstallationSummary_STATUS(source.LastPatchInstallationSummary)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LastPatchInstallationSummary_STATUS() to populate field LastPatchInstallationSummary")
+			return eris.Wrap(err, "calling AssignProperties_From_LastPatchInstallationSummary_STATUS() to populate field LastPatchInstallationSummary")
 		}
 		status.LastPatchInstallationSummary = &lastPatchInstallationSummary
 	} else {
@@ -15295,7 +15170,7 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_To_VirtualMachi
 		var availablePatchSummary storage.AvailablePatchSummary_STATUS
 		err := status.AvailablePatchSummary.AssignProperties_To_AvailablePatchSummary_STATUS(&availablePatchSummary)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AvailablePatchSummary_STATUS() to populate field AvailablePatchSummary")
+			return eris.Wrap(err, "calling AssignProperties_To_AvailablePatchSummary_STATUS() to populate field AvailablePatchSummary")
 		}
 		destination.AvailablePatchSummary = &availablePatchSummary
 	} else {
@@ -15311,7 +15186,7 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_To_VirtualMachi
 			var configurationStatus storage.InstanceViewStatus_STATUS
 			err := configurationStatusItem.AssignProperties_To_InstanceViewStatus_STATUS(&configurationStatus)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field ConfigurationStatuses")
+				return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field ConfigurationStatuses")
 			}
 			configurationStatusList[configurationStatusIndex] = configurationStatus
 		}
@@ -15325,7 +15200,7 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_To_VirtualMachi
 		var lastPatchInstallationSummary storage.LastPatchInstallationSummary_STATUS
 		err := status.LastPatchInstallationSummary.AssignProperties_To_LastPatchInstallationSummary_STATUS(&lastPatchInstallationSummary)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LastPatchInstallationSummary_STATUS() to populate field LastPatchInstallationSummary")
+			return eris.Wrap(err, "calling AssignProperties_To_LastPatchInstallationSummary_STATUS() to populate field LastPatchInstallationSummary")
 		}
 		destination.LastPatchInstallationSummary = &lastPatchInstallationSummary
 	} else {
@@ -16117,7 +15992,7 @@ func (configuration *WindowsConfiguration) AssignProperties_From_WindowsConfigur
 			var additionalUnattendContent AdditionalUnattendContent
 			err := additionalUnattendContent.AssignProperties_From_AdditionalUnattendContent(&additionalUnattendContentItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AdditionalUnattendContent() to populate field AdditionalUnattendContent")
+				return eris.Wrap(err, "calling AssignProperties_From_AdditionalUnattendContent() to populate field AdditionalUnattendContent")
 			}
 			additionalUnattendContentList[additionalUnattendContentIndex] = additionalUnattendContent
 		}
@@ -16139,7 +16014,7 @@ func (configuration *WindowsConfiguration) AssignProperties_From_WindowsConfigur
 		var patchSetting PatchSettings
 		err := patchSetting.AssignProperties_From_PatchSettings(source.PatchSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PatchSettings() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_PatchSettings() to populate field PatchSettings")
 		}
 		configuration.PatchSettings = &patchSetting
 	} else {
@@ -16162,7 +16037,7 @@ func (configuration *WindowsConfiguration) AssignProperties_From_WindowsConfigur
 		var winRM WinRMConfiguration
 		err := winRM.AssignProperties_From_WinRMConfiguration(source.WinRM)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WinRMConfiguration() to populate field WinRM")
+			return eris.Wrap(err, "calling AssignProperties_From_WinRMConfiguration() to populate field WinRM")
 		}
 		configuration.WinRM = &winRM
 	} else {
@@ -16187,7 +16062,7 @@ func (configuration *WindowsConfiguration) AssignProperties_To_WindowsConfigurat
 			var additionalUnattendContent storage.AdditionalUnattendContent
 			err := additionalUnattendContentItem.AssignProperties_To_AdditionalUnattendContent(&additionalUnattendContent)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AdditionalUnattendContent() to populate field AdditionalUnattendContent")
+				return eris.Wrap(err, "calling AssignProperties_To_AdditionalUnattendContent() to populate field AdditionalUnattendContent")
 			}
 			additionalUnattendContentList[additionalUnattendContentIndex] = additionalUnattendContent
 		}
@@ -16209,7 +16084,7 @@ func (configuration *WindowsConfiguration) AssignProperties_To_WindowsConfigurat
 		var patchSetting storage.PatchSettings
 		err := configuration.PatchSettings.AssignProperties_To_PatchSettings(&patchSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PatchSettings() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_PatchSettings() to populate field PatchSettings")
 		}
 		destination.PatchSettings = &patchSetting
 	} else {
@@ -16232,7 +16107,7 @@ func (configuration *WindowsConfiguration) AssignProperties_To_WindowsConfigurat
 		var winRM storage.WinRMConfiguration
 		err := configuration.WinRM.AssignProperties_To_WinRMConfiguration(&winRM)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WinRMConfiguration() to populate field WinRM")
+			return eris.Wrap(err, "calling AssignProperties_To_WinRMConfiguration() to populate field WinRM")
 		}
 		destination.WinRM = &winRM
 	} else {
@@ -16262,7 +16137,7 @@ func (configuration *WindowsConfiguration) Initialize_From_WindowsConfiguration_
 			var additionalUnattendContent AdditionalUnattendContent
 			err := additionalUnattendContent.Initialize_From_AdditionalUnattendContent_STATUS(&additionalUnattendContentItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
+				return eris.Wrap(err, "calling Initialize_From_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
 			}
 			additionalUnattendContentList[additionalUnattendContentIndex] = additionalUnattendContent
 		}
@@ -16284,7 +16159,7 @@ func (configuration *WindowsConfiguration) Initialize_From_WindowsConfiguration_
 		var patchSetting PatchSettings
 		err := patchSetting.Initialize_From_PatchSettings_STATUS(source.PatchSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PatchSettings_STATUS() to populate field PatchSettings")
+			return eris.Wrap(err, "calling Initialize_From_PatchSettings_STATUS() to populate field PatchSettings")
 		}
 		configuration.PatchSettings = &patchSetting
 	} else {
@@ -16307,7 +16182,7 @@ func (configuration *WindowsConfiguration) Initialize_From_WindowsConfiguration_
 		var winRM WinRMConfiguration
 		err := winRM.Initialize_From_WinRMConfiguration_STATUS(source.WinRM)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WinRMConfiguration_STATUS() to populate field WinRM")
+			return eris.Wrap(err, "calling Initialize_From_WinRMConfiguration_STATUS() to populate field WinRM")
 		}
 		configuration.WinRM = &winRM
 	} else {
@@ -16428,7 +16303,7 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_From_WindowsC
 			var additionalUnattendContent AdditionalUnattendContent_STATUS
 			err := additionalUnattendContent.AssignProperties_From_AdditionalUnattendContent_STATUS(&additionalUnattendContentItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
+				return eris.Wrap(err, "calling AssignProperties_From_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
 			}
 			additionalUnattendContentList[additionalUnattendContentIndex] = additionalUnattendContent
 		}
@@ -16450,7 +16325,7 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_From_WindowsC
 		var patchSetting PatchSettings_STATUS
 		err := patchSetting.AssignProperties_From_PatchSettings_STATUS(source.PatchSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PatchSettings_STATUS() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_PatchSettings_STATUS() to populate field PatchSettings")
 		}
 		configuration.PatchSettings = &patchSetting
 	} else {
@@ -16473,7 +16348,7 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_From_WindowsC
 		var winRM WinRMConfiguration_STATUS
 		err := winRM.AssignProperties_From_WinRMConfiguration_STATUS(source.WinRM)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WinRMConfiguration_STATUS() to populate field WinRM")
+			return eris.Wrap(err, "calling AssignProperties_From_WinRMConfiguration_STATUS() to populate field WinRM")
 		}
 		configuration.WinRM = &winRM
 	} else {
@@ -16498,7 +16373,7 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_To_WindowsCon
 			var additionalUnattendContent storage.AdditionalUnattendContent_STATUS
 			err := additionalUnattendContentItem.AssignProperties_To_AdditionalUnattendContent_STATUS(&additionalUnattendContent)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
+				return eris.Wrap(err, "calling AssignProperties_To_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
 			}
 			additionalUnattendContentList[additionalUnattendContentIndex] = additionalUnattendContent
 		}
@@ -16520,7 +16395,7 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_To_WindowsCon
 		var patchSetting storage.PatchSettings_STATUS
 		err := configuration.PatchSettings.AssignProperties_To_PatchSettings_STATUS(&patchSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PatchSettings_STATUS() to populate field PatchSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_PatchSettings_STATUS() to populate field PatchSettings")
 		}
 		destination.PatchSettings = &patchSetting
 	} else {
@@ -16543,7 +16418,7 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_To_WindowsCon
 		var winRM storage.WinRMConfiguration_STATUS
 		err := configuration.WinRM.AssignProperties_To_WinRMConfiguration_STATUS(&winRM)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WinRMConfiguration_STATUS() to populate field WinRM")
+			return eris.Wrap(err, "calling AssignProperties_To_WinRMConfiguration_STATUS() to populate field WinRM")
 		}
 		destination.WinRM = &winRM
 	} else {
@@ -17046,7 +16921,7 @@ func (summary *AvailablePatchSummary_STATUS) AssignProperties_From_AvailablePatc
 		var error ApiError_STATUS
 		err := error.AssignProperties_From_ApiError_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApiError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_ApiError_STATUS() to populate field Error")
 		}
 		summary.Error = &error
 	} else {
@@ -17099,7 +16974,7 @@ func (summary *AvailablePatchSummary_STATUS) AssignProperties_To_AvailablePatchS
 		var error storage.ApiError_STATUS
 		err := summary.Error.AssignProperties_To_ApiError_STATUS(&error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApiError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_ApiError_STATUS() to populate field Error")
 		}
 		destination.Error = &error
 	} else {
@@ -17673,7 +17548,7 @@ func (settings *DiskEncryptionSettings) AssignProperties_From_DiskEncryptionSett
 		var diskEncryptionKey KeyVaultSecretReference
 		err := diskEncryptionKey.AssignProperties_From_KeyVaultSecretReference(source.DiskEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultSecretReference() to populate field DiskEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultSecretReference() to populate field DiskEncryptionKey")
 		}
 		settings.DiskEncryptionKey = &diskEncryptionKey
 	} else {
@@ -17693,7 +17568,7 @@ func (settings *DiskEncryptionSettings) AssignProperties_From_DiskEncryptionSett
 		var keyEncryptionKey KeyVaultKeyReference
 		err := keyEncryptionKey.AssignProperties_From_KeyVaultKeyReference(source.KeyEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultKeyReference() to populate field KeyEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultKeyReference() to populate field KeyEncryptionKey")
 		}
 		settings.KeyEncryptionKey = &keyEncryptionKey
 	} else {
@@ -17714,7 +17589,7 @@ func (settings *DiskEncryptionSettings) AssignProperties_To_DiskEncryptionSettin
 		var diskEncryptionKey storage.KeyVaultSecretReference
 		err := settings.DiskEncryptionKey.AssignProperties_To_KeyVaultSecretReference(&diskEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference() to populate field DiskEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference() to populate field DiskEncryptionKey")
 		}
 		destination.DiskEncryptionKey = &diskEncryptionKey
 	} else {
@@ -17734,7 +17609,7 @@ func (settings *DiskEncryptionSettings) AssignProperties_To_DiskEncryptionSettin
 		var keyEncryptionKey storage.KeyVaultKeyReference
 		err := settings.KeyEncryptionKey.AssignProperties_To_KeyVaultKeyReference(&keyEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultKeyReference() to populate field KeyEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultKeyReference() to populate field KeyEncryptionKey")
 		}
 		destination.KeyEncryptionKey = &keyEncryptionKey
 	} else {
@@ -17760,7 +17635,7 @@ func (settings *DiskEncryptionSettings) Initialize_From_DiskEncryptionSettings_S
 		var diskEncryptionKey KeyVaultSecretReference
 		err := diskEncryptionKey.Initialize_From_KeyVaultSecretReference_STATUS(source.DiskEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
+			return eris.Wrap(err, "calling Initialize_From_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
 		}
 		settings.DiskEncryptionKey = &diskEncryptionKey
 	} else {
@@ -17780,7 +17655,7 @@ func (settings *DiskEncryptionSettings) Initialize_From_DiskEncryptionSettings_S
 		var keyEncryptionKey KeyVaultKeyReference
 		err := keyEncryptionKey.Initialize_From_KeyVaultKeyReference_STATUS(source.KeyEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
+			return eris.Wrap(err, "calling Initialize_From_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
 		}
 		settings.KeyEncryptionKey = &keyEncryptionKey
 	} else {
@@ -17857,7 +17732,7 @@ func (settings *DiskEncryptionSettings_STATUS) AssignProperties_From_DiskEncrypt
 		var diskEncryptionKey KeyVaultSecretReference_STATUS
 		err := diskEncryptionKey.AssignProperties_From_KeyVaultSecretReference_STATUS(source.DiskEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
 		}
 		settings.DiskEncryptionKey = &diskEncryptionKey
 	} else {
@@ -17877,7 +17752,7 @@ func (settings *DiskEncryptionSettings_STATUS) AssignProperties_From_DiskEncrypt
 		var keyEncryptionKey KeyVaultKeyReference_STATUS
 		err := keyEncryptionKey.AssignProperties_From_KeyVaultKeyReference_STATUS(source.KeyEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
 		}
 		settings.KeyEncryptionKey = &keyEncryptionKey
 	} else {
@@ -17898,7 +17773,7 @@ func (settings *DiskEncryptionSettings_STATUS) AssignProperties_To_DiskEncryptio
 		var diskEncryptionKey storage.KeyVaultSecretReference_STATUS
 		err := settings.DiskEncryptionKey.AssignProperties_To_KeyVaultSecretReference_STATUS(&diskEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
 		}
 		destination.DiskEncryptionKey = &diskEncryptionKey
 	} else {
@@ -17918,7 +17793,7 @@ func (settings *DiskEncryptionSettings_STATUS) AssignProperties_To_DiskEncryptio
 		var keyEncryptionKey storage.KeyVaultKeyReference_STATUS
 		err := settings.KeyEncryptionKey.AssignProperties_To_KeyVaultKeyReference_STATUS(&keyEncryptionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
 		}
 		destination.KeyEncryptionKey = &keyEncryptionKey
 	} else {
@@ -18091,7 +17966,7 @@ func (summary *LastPatchInstallationSummary_STATUS) AssignProperties_From_LastPa
 		var error ApiError_STATUS
 		err := error.AssignProperties_From_ApiError_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApiError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_ApiError_STATUS() to populate field Error")
 		}
 		summary.Error = &error
 	} else {
@@ -18153,7 +18028,7 @@ func (summary *LastPatchInstallationSummary_STATUS) AssignProperties_To_LastPatc
 		var error storage.ApiError_STATUS
 		err := summary.Error.AssignProperties_To_ApiError_STATUS(&error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApiError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_ApiError_STATUS() to populate field Error")
 		}
 		destination.Error = &error
 	} else {
@@ -18329,7 +18204,7 @@ func (settings *LinuxPatchSettings) AssignProperties_From_LinuxPatchSettings(sou
 		var automaticByPlatformSetting LinuxVMGuestPatchAutomaticByPlatformSettings
 		err := automaticByPlatformSetting.AssignProperties_From_LinuxVMGuestPatchAutomaticByPlatformSettings(source.AutomaticByPlatformSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
 		}
 		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -18367,7 +18242,7 @@ func (settings *LinuxPatchSettings) AssignProperties_To_LinuxPatchSettings(desti
 		var automaticByPlatformSetting storage.LinuxVMGuestPatchAutomaticByPlatformSettings
 		err := settings.AutomaticByPlatformSettings.AssignProperties_To_LinuxVMGuestPatchAutomaticByPlatformSettings(&automaticByPlatformSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
 		}
 		destination.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -18409,7 +18284,7 @@ func (settings *LinuxPatchSettings) Initialize_From_LinuxPatchSettings_STATUS(so
 		var automaticByPlatformSetting LinuxVMGuestPatchAutomaticByPlatformSettings
 		err := automaticByPlatformSetting.Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS(source.AutomaticByPlatformSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
 		}
 		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -18511,7 +18386,7 @@ func (settings *LinuxPatchSettings_STATUS) AssignProperties_From_LinuxPatchSetti
 		var automaticByPlatformSetting LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS
 		err := automaticByPlatformSetting.AssignProperties_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS(source.AutomaticByPlatformSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
 		}
 		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -18549,7 +18424,7 @@ func (settings *LinuxPatchSettings_STATUS) AssignProperties_To_LinuxPatchSetting
 		var automaticByPlatformSetting storage.LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS
 		err := settings.AutomaticByPlatformSettings.AssignProperties_To_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS(&automaticByPlatformSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
 		}
 		destination.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -18713,7 +18588,7 @@ func (parameters *ManagedDiskParameters) AssignProperties_From_ManagedDiskParame
 		var diskEncryptionSet SubResource
 		err := diskEncryptionSet.AssignProperties_From_SubResource(source.DiskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DiskEncryptionSet")
 		}
 		parameters.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -18733,7 +18608,7 @@ func (parameters *ManagedDiskParameters) AssignProperties_From_ManagedDiskParame
 		var securityProfile VMDiskSecurityProfile
 		err := securityProfile.AssignProperties_From_VMDiskSecurityProfile(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VMDiskSecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_VMDiskSecurityProfile() to populate field SecurityProfile")
 		}
 		parameters.SecurityProfile = &securityProfile
 	} else {
@@ -18763,7 +18638,7 @@ func (parameters *ManagedDiskParameters) AssignProperties_To_ManagedDiskParamete
 		var diskEncryptionSet storage.SubResource
 		err := parameters.DiskEncryptionSet.AssignProperties_To_SubResource(&diskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DiskEncryptionSet")
 		}
 		destination.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -18783,7 +18658,7 @@ func (parameters *ManagedDiskParameters) AssignProperties_To_ManagedDiskParamete
 		var securityProfile storage.VMDiskSecurityProfile
 		err := parameters.SecurityProfile.AssignProperties_To_VMDiskSecurityProfile(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VMDiskSecurityProfile() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_VMDiskSecurityProfile() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -18817,7 +18692,7 @@ func (parameters *ManagedDiskParameters) Initialize_From_ManagedDiskParameters_S
 		var diskEncryptionSet SubResource
 		err := diskEncryptionSet.Initialize_From_SubResource_STATUS(source.DiskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DiskEncryptionSet")
 		}
 		parameters.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -18837,7 +18712,7 @@ func (parameters *ManagedDiskParameters) Initialize_From_ManagedDiskParameters_S
 		var securityProfile VMDiskSecurityProfile
 		err := securityProfile.Initialize_From_VMDiskSecurityProfile_STATUS(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling Initialize_From_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		parameters.SecurityProfile = &securityProfile
 	} else {
@@ -18934,7 +18809,7 @@ func (parameters *ManagedDiskParameters_STATUS) AssignProperties_From_ManagedDis
 		var diskEncryptionSet SubResource_STATUS
 		err := diskEncryptionSet.AssignProperties_From_SubResource_STATUS(source.DiskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DiskEncryptionSet")
 		}
 		parameters.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -18949,7 +18824,7 @@ func (parameters *ManagedDiskParameters_STATUS) AssignProperties_From_ManagedDis
 		var securityProfile VMDiskSecurityProfile_STATUS
 		err := securityProfile.AssignProperties_From_VMDiskSecurityProfile_STATUS(source.SecurityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		parameters.SecurityProfile = &securityProfile
 	} else {
@@ -18979,7 +18854,7 @@ func (parameters *ManagedDiskParameters_STATUS) AssignProperties_To_ManagedDiskP
 		var diskEncryptionSet storage.SubResource_STATUS
 		err := parameters.DiskEncryptionSet.AssignProperties_To_SubResource_STATUS(&diskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DiskEncryptionSet")
 		}
 		destination.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -18994,7 +18869,7 @@ func (parameters *ManagedDiskParameters_STATUS) AssignProperties_To_ManagedDiskP
 		var securityProfile storage.VMDiskSecurityProfile_STATUS
 		err := parameters.SecurityProfile.AssignProperties_To_VMDiskSecurityProfile_STATUS(&securityProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
 		}
 		destination.SecurityProfile = &securityProfile
 	} else {
@@ -19212,7 +19087,7 @@ func (settings *PatchSettings) AssignProperties_From_PatchSettings(source *stora
 		var automaticByPlatformSetting WindowsVMGuestPatchAutomaticByPlatformSettings
 		err := automaticByPlatformSetting.AssignProperties_From_WindowsVMGuestPatchAutomaticByPlatformSettings(source.AutomaticByPlatformSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WindowsVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_WindowsVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
 		}
 		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -19258,7 +19133,7 @@ func (settings *PatchSettings) AssignProperties_To_PatchSettings(destination *st
 		var automaticByPlatformSetting storage.WindowsVMGuestPatchAutomaticByPlatformSettings
 		err := settings.AutomaticByPlatformSettings.AssignProperties_To_WindowsVMGuestPatchAutomaticByPlatformSettings(&automaticByPlatformSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WindowsVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_WindowsVMGuestPatchAutomaticByPlatformSettings() to populate field AutomaticByPlatformSettings")
 		}
 		destination.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -19308,7 +19183,7 @@ func (settings *PatchSettings) Initialize_From_PatchSettings_STATUS(source *Patc
 		var automaticByPlatformSetting WindowsVMGuestPatchAutomaticByPlatformSettings
 		err := automaticByPlatformSetting.Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS(source.AutomaticByPlatformSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
 		}
 		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -19432,7 +19307,7 @@ func (settings *PatchSettings_STATUS) AssignProperties_From_PatchSettings_STATUS
 		var automaticByPlatformSetting WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS
 		err := automaticByPlatformSetting.AssignProperties_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS(source.AutomaticByPlatformSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
 		}
 		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -19478,7 +19353,7 @@ func (settings *PatchSettings_STATUS) AssignProperties_To_PatchSettings_STATUS(d
 		var automaticByPlatformSetting storage.WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS
 		err := settings.AutomaticByPlatformSettings.AssignProperties_To_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS(&automaticByPlatformSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
 		}
 		destination.AutomaticByPlatformSettings = &automaticByPlatformSetting
 	} else {
@@ -19576,7 +19451,7 @@ func (configuration *SshConfiguration) AssignProperties_From_SshConfiguration(so
 			var publicKey SshPublicKeySpec
 			err := publicKey.AssignProperties_From_SshPublicKeySpec(&publicKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SshPublicKeySpec() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_SshPublicKeySpec() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -19603,7 +19478,7 @@ func (configuration *SshConfiguration) AssignProperties_To_SshConfiguration(dest
 			var publicKey storage.SshPublicKeySpec
 			err := publicKeyItem.AssignProperties_To_SshPublicKeySpec(&publicKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SshPublicKeySpec() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_SshPublicKeySpec() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -19635,7 +19510,7 @@ func (configuration *SshConfiguration) Initialize_From_SshConfiguration_STATUS(s
 			var publicKey SshPublicKeySpec
 			err := publicKey.Initialize_From_SshPublicKey_STATUS(&publicKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SshPublicKey_STATUS() to populate field PublicKeys")
+				return eris.Wrap(err, "calling Initialize_From_SshPublicKey_STATUS() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -19694,7 +19569,7 @@ func (configuration *SshConfiguration_STATUS) AssignProperties_From_SshConfigura
 			var publicKey SshPublicKey_STATUS
 			err := publicKey.AssignProperties_From_SshPublicKey_STATUS(&publicKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SshPublicKey_STATUS() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_SshPublicKey_STATUS() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -19721,7 +19596,7 @@ func (configuration *SshConfiguration_STATUS) AssignProperties_To_SshConfigurati
 			var publicKey storage.SshPublicKey_STATUS
 			err := publicKeyItem.AssignProperties_To_SshPublicKey_STATUS(&publicKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SshPublicKey_STATUS() to populate field PublicKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_SshPublicKey_STATUS() to populate field PublicKeys")
 			}
 			publicKeyList[publicKeyIndex] = publicKey
 		}
@@ -20157,7 +20032,7 @@ func (view *VirtualMachineExtensionHandlerInstanceView_STATUS) AssignProperties_
 		var status InstanceViewStatus_STATUS
 		err := status.AssignProperties_From_InstanceViewStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_InstanceViewStatus_STATUS() to populate field Status")
 		}
 		view.Status = &status
 	} else {
@@ -20184,7 +20059,7 @@ func (view *VirtualMachineExtensionHandlerInstanceView_STATUS) AssignProperties_
 		var status storage.InstanceViewStatus_STATUS
 		err := view.Status.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &status
 	} else {
@@ -20604,7 +20479,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 			var applicationGatewayBackendAddressPool SubResource
 			err := applicationGatewayBackendAddressPool.AssignProperties_From_SubResource(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field ApplicationGatewayBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field ApplicationGatewayBackendAddressPools")
 			}
 			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
 		}
@@ -20622,7 +20497,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 			var applicationSecurityGroup SubResource
 			err := applicationSecurityGroup.AssignProperties_From_SubResource(&applicationSecurityGroupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field ApplicationSecurityGroups")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field ApplicationSecurityGroups")
 			}
 			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
 		}
@@ -20640,7 +20515,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 			var loadBalancerBackendAddressPool SubResource
 			err := loadBalancerBackendAddressPool.AssignProperties_From_SubResource(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field LoadBalancerBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field LoadBalancerBackendAddressPools")
 			}
 			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
 		}
@@ -20674,7 +20549,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 		var publicIPAddressConfiguration VirtualMachinePublicIPAddressConfiguration
 		err := publicIPAddressConfiguration.AssignProperties_From_VirtualMachinePublicIPAddressConfiguration(source.PublicIPAddressConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressConfiguration() to populate field PublicIPAddressConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressConfiguration() to populate field PublicIPAddressConfiguration")
 		}
 		configuration.PublicIPAddressConfiguration = &publicIPAddressConfiguration
 	} else {
@@ -20686,7 +20561,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 		var subnet SubResource
 		err := subnet.AssignProperties_From_SubResource(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -20711,7 +20586,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 			var applicationGatewayBackendAddressPool storage.SubResource
 			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_SubResource(&applicationGatewayBackendAddressPool)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field ApplicationGatewayBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field ApplicationGatewayBackendAddressPools")
 			}
 			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
 		}
@@ -20729,7 +20604,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 			var applicationSecurityGroup storage.SubResource
 			err := applicationSecurityGroupItem.AssignProperties_To_SubResource(&applicationSecurityGroup)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field ApplicationSecurityGroups")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field ApplicationSecurityGroups")
 			}
 			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
 		}
@@ -20747,7 +20622,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 			var loadBalancerBackendAddressPool storage.SubResource
 			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_SubResource(&loadBalancerBackendAddressPool)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field LoadBalancerBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field LoadBalancerBackendAddressPools")
 			}
 			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
 		}
@@ -20780,7 +20655,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 		var publicIPAddressConfiguration storage.VirtualMachinePublicIPAddressConfiguration
 		err := configuration.PublicIPAddressConfiguration.AssignProperties_To_VirtualMachinePublicIPAddressConfiguration(&publicIPAddressConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressConfiguration() to populate field PublicIPAddressConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressConfiguration() to populate field PublicIPAddressConfiguration")
 		}
 		destination.PublicIPAddressConfiguration = &publicIPAddressConfiguration
 	} else {
@@ -20792,7 +20667,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 		var subnet storage.SubResource
 		err := configuration.Subnet.AssignProperties_To_SubResource(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -20822,7 +20697,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) Initialize_F
 			var applicationGatewayBackendAddressPool SubResource
 			err := applicationGatewayBackendAddressPool.Initialize_From_SubResource_STATUS(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
+				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
 			}
 			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
 		}
@@ -20840,7 +20715,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) Initialize_F
 			var applicationSecurityGroup SubResource
 			err := applicationSecurityGroup.Initialize_From_SubResource_STATUS(&applicationSecurityGroupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ApplicationSecurityGroups")
+				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ApplicationSecurityGroups")
 			}
 			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
 		}
@@ -20858,7 +20733,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) Initialize_F
 			var loadBalancerBackendAddressPool SubResource
 			err := loadBalancerBackendAddressPool.Initialize_From_SubResource_STATUS(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
+				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
 			}
 			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
 		}
@@ -20891,7 +20766,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) Initialize_F
 		var publicIPAddressConfiguration VirtualMachinePublicIPAddressConfiguration
 		err := publicIPAddressConfiguration.Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS(source.PublicIPAddressConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
 		}
 		configuration.PublicIPAddressConfiguration = &publicIPAddressConfiguration
 	} else {
@@ -20903,7 +20778,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) Initialize_F
 		var subnet SubResource
 		err := subnet.Initialize_From_SubResource_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -21069,7 +20944,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 			var applicationGatewayBackendAddressPool SubResource_STATUS
 			err := applicationGatewayBackendAddressPool.AssignProperties_From_SubResource_STATUS(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
 			}
 			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
 		}
@@ -21087,7 +20962,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 			var applicationSecurityGroup SubResource_STATUS
 			err := applicationSecurityGroup.AssignProperties_From_SubResource_STATUS(&applicationSecurityGroupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field ApplicationSecurityGroups")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field ApplicationSecurityGroups")
 			}
 			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
 		}
@@ -21105,7 +20980,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 			var loadBalancerBackendAddressPool SubResource_STATUS
 			err := loadBalancerBackendAddressPool.AssignProperties_From_SubResource_STATUS(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
 			}
 			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
 		}
@@ -21139,7 +21014,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 		var publicIPAddressConfiguration VirtualMachinePublicIPAddressConfiguration_STATUS
 		err := publicIPAddressConfiguration.AssignProperties_From_VirtualMachinePublicIPAddressConfiguration_STATUS(source.PublicIPAddressConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
 		}
 		configuration.PublicIPAddressConfiguration = &publicIPAddressConfiguration
 	} else {
@@ -21151,7 +21026,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 		var subnet SubResource_STATUS
 		err := subnet.AssignProperties_From_SubResource_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -21176,7 +21051,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 			var applicationGatewayBackendAddressPool storage.SubResource_STATUS
 			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_SubResource_STATUS(&applicationGatewayBackendAddressPool)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
 			}
 			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
 		}
@@ -21194,7 +21069,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 			var applicationSecurityGroup storage.SubResource_STATUS
 			err := applicationSecurityGroupItem.AssignProperties_To_SubResource_STATUS(&applicationSecurityGroup)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field ApplicationSecurityGroups")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field ApplicationSecurityGroups")
 			}
 			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
 		}
@@ -21212,7 +21087,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 			var loadBalancerBackendAddressPool storage.SubResource_STATUS
 			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_SubResource_STATUS(&loadBalancerBackendAddressPool)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
 			}
 			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
 		}
@@ -21245,7 +21120,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 		var publicIPAddressConfiguration storage.VirtualMachinePublicIPAddressConfiguration_STATUS
 		err := configuration.PublicIPAddressConfiguration.AssignProperties_To_VirtualMachinePublicIPAddressConfiguration_STATUS(&publicIPAddressConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
 		}
 		destination.PublicIPAddressConfiguration = &publicIPAddressConfiguration
 	} else {
@@ -21257,7 +21132,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 		var subnet storage.SubResource_STATUS
 		err := configuration.Subnet.AssignProperties_To_SubResource_STATUS(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -21339,7 +21214,7 @@ func (configuration *WinRMConfiguration) AssignProperties_From_WinRMConfiguratio
 			var listener WinRMListener
 			err := listener.AssignProperties_From_WinRMListener(&listenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_WinRMListener() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_From_WinRMListener() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -21366,7 +21241,7 @@ func (configuration *WinRMConfiguration) AssignProperties_To_WinRMConfiguration(
 			var listener storage.WinRMListener
 			err := listenerItem.AssignProperties_To_WinRMListener(&listener)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_WinRMListener() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_To_WinRMListener() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -21398,7 +21273,7 @@ func (configuration *WinRMConfiguration) Initialize_From_WinRMConfiguration_STAT
 			var listener WinRMListener
 			err := listener.Initialize_From_WinRMListener_STATUS(&listenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_WinRMListener_STATUS() to populate field Listeners")
+				return eris.Wrap(err, "calling Initialize_From_WinRMListener_STATUS() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -21457,7 +21332,7 @@ func (configuration *WinRMConfiguration_STATUS) AssignProperties_From_WinRMConfi
 			var listener WinRMListener_STATUS
 			err := listener.AssignProperties_From_WinRMListener_STATUS(&listenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_WinRMListener_STATUS() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_From_WinRMListener_STATUS() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -21484,7 +21359,7 @@ func (configuration *WinRMConfiguration_STATUS) AssignProperties_To_WinRMConfigu
 			var listener storage.WinRMListener_STATUS
 			err := listenerItem.AssignProperties_To_WinRMListener_STATUS(&listener)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_WinRMListener_STATUS() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_To_WinRMListener_STATUS() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -21659,7 +21534,7 @@ func (error *ApiError_STATUS) AssignProperties_From_ApiError_STATUS(source *stor
 			var detail ApiErrorBase_STATUS
 			err := detail.AssignProperties_From_ApiErrorBase_STATUS(&detailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApiErrorBase_STATUS() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_From_ApiErrorBase_STATUS() to populate field Details")
 			}
 			detailList[detailIndex] = detail
 		}
@@ -21673,7 +21548,7 @@ func (error *ApiError_STATUS) AssignProperties_From_ApiError_STATUS(source *stor
 		var innererror InnerError_STATUS
 		err := innererror.AssignProperties_From_InnerError_STATUS(source.Innererror)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InnerError_STATUS() to populate field Innererror")
+			return eris.Wrap(err, "calling AssignProperties_From_InnerError_STATUS() to populate field Innererror")
 		}
 		error.Innererror = &innererror
 	} else {
@@ -21707,7 +21582,7 @@ func (error *ApiError_STATUS) AssignProperties_To_ApiError_STATUS(destination *s
 			var detail storage.ApiErrorBase_STATUS
 			err := detailItem.AssignProperties_To_ApiErrorBase_STATUS(&detail)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApiErrorBase_STATUS() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_To_ApiErrorBase_STATUS() to populate field Details")
 			}
 			detailList[detailIndex] = detail
 		}
@@ -21721,7 +21596,7 @@ func (error *ApiError_STATUS) AssignProperties_To_ApiError_STATUS(destination *s
 		var innererror storage.InnerError_STATUS
 		err := error.Innererror.AssignProperties_To_InnerError_STATUS(&innererror)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InnerError_STATUS() to populate field Innererror")
+			return eris.Wrap(err, "calling AssignProperties_To_InnerError_STATUS() to populate field Innererror")
 		}
 		destination.Innererror = &innererror
 	} else {
@@ -21904,7 +21779,7 @@ func (reference *KeyVaultKeyReference) AssignProperties_From_KeyVaultKeyReferenc
 		var sourceVault SubResource
 		err := sourceVault.AssignProperties_From_SubResource(source.SourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SourceVault")
 		}
 		reference.SourceVault = &sourceVault
 	} else {
@@ -21928,7 +21803,7 @@ func (reference *KeyVaultKeyReference) AssignProperties_To_KeyVaultKeyReference(
 		var sourceVault storage.SubResource
 		err := reference.SourceVault.AssignProperties_To_SubResource(&sourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SourceVault")
 		}
 		destination.SourceVault = &sourceVault
 	} else {
@@ -21957,7 +21832,7 @@ func (reference *KeyVaultKeyReference) Initialize_From_KeyVaultKeyReference_STAT
 		var sourceVault SubResource
 		err := sourceVault.Initialize_From_SubResource_STATUS(source.SourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
 		}
 		reference.SourceVault = &sourceVault
 	} else {
@@ -22023,7 +21898,7 @@ func (reference *KeyVaultKeyReference_STATUS) AssignProperties_From_KeyVaultKeyR
 		var sourceVault SubResource_STATUS
 		err := sourceVault.AssignProperties_From_SubResource_STATUS(source.SourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SourceVault")
 		}
 		reference.SourceVault = &sourceVault
 	} else {
@@ -22047,7 +21922,7 @@ func (reference *KeyVaultKeyReference_STATUS) AssignProperties_To_KeyVaultKeyRef
 		var sourceVault storage.SubResource_STATUS
 		err := reference.SourceVault.AssignProperties_To_SubResource_STATUS(&sourceVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SourceVault")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SourceVault")
 		}
 		destination.SourceVault = &sourceVault
 	} else {
@@ -22837,7 +22712,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		var dnsSetting VirtualMachinePublicIPAddressDnsSettingsConfiguration
 		err := dnsSetting.AssignProperties_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration() to populate field DnsSettings")
 		}
 		configuration.DnsSettings = &dnsSetting
 	} else {
@@ -22856,7 +22731,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 			var ipTag VirtualMachineIpTag
 			err := ipTag.AssignProperties_From_VirtualMachineIpTag(&ipTagItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineIpTag() to populate field IpTags")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineIpTag() to populate field IpTags")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -22891,7 +22766,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		var publicIPPrefix SubResource
 		err := publicIPPrefix.AssignProperties_From_SubResource(source.PublicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPPrefix")
 		}
 		configuration.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -22903,7 +22778,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		var sku PublicIPAddressSku
 		err := sku.AssignProperties_From_PublicIPAddressSku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku() to populate field Sku")
 		}
 		configuration.Sku = &sku
 	} else {
@@ -22932,7 +22807,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		var dnsSetting storage.VirtualMachinePublicIPAddressDnsSettingsConfiguration
 		err := configuration.DnsSettings.AssignProperties_To_VirtualMachinePublicIPAddressDnsSettingsConfiguration(&dnsSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressDnsSettingsConfiguration() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressDnsSettingsConfiguration() to populate field DnsSettings")
 		}
 		destination.DnsSettings = &dnsSetting
 	} else {
@@ -22951,7 +22826,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 			var ipTag storage.VirtualMachineIpTag
 			err := ipTagItem.AssignProperties_To_VirtualMachineIpTag(&ipTag)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineIpTag() to populate field IpTags")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineIpTag() to populate field IpTags")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -22984,7 +22859,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		var publicIPPrefix storage.SubResource
 		err := configuration.PublicIPPrefix.AssignProperties_To_SubResource(&publicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPPrefix")
 		}
 		destination.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -22996,7 +22871,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		var sku storage.PublicIPAddressSku
 		err := configuration.Sku.AssignProperties_To_PublicIPAddressSku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -23030,7 +22905,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) Initialize_From
 		var dnsSetting VirtualMachinePublicIPAddressDnsSettingsConfiguration
 		err := dnsSetting.Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
 		}
 		configuration.DnsSettings = &dnsSetting
 	} else {
@@ -23049,7 +22924,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) Initialize_From
 			var ipTag VirtualMachineIpTag
 			err := ipTag.Initialize_From_VirtualMachineIpTag_STATUS(&ipTagItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_VirtualMachineIpTag_STATUS() to populate field IpTags")
+				return eris.Wrap(err, "calling Initialize_From_VirtualMachineIpTag_STATUS() to populate field IpTags")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -23082,7 +22957,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) Initialize_From
 		var publicIPPrefix SubResource
 		err := publicIPPrefix.Initialize_From_SubResource_STATUS(source.PublicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field PublicIPPrefix")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field PublicIPPrefix")
 		}
 		configuration.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -23094,7 +22969,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) Initialize_From
 		var sku PublicIPAddressSku
 		err := sku.Initialize_From_PublicIPAddressSku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PublicIPAddressSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_PublicIPAddressSku_STATUS() to populate field Sku")
 		}
 		configuration.Sku = &sku
 	} else {
@@ -23271,7 +23146,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 		var dnsSetting VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS
 		err := dnsSetting.AssignProperties_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
 		}
 		configuration.DnsSettings = &dnsSetting
 	} else {
@@ -23290,7 +23165,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 			var ipTag VirtualMachineIpTag_STATUS
 			err := ipTag.AssignProperties_From_VirtualMachineIpTag_STATUS(&ipTagItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineIpTag_STATUS() to populate field IpTags")
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineIpTag_STATUS() to populate field IpTags")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -23325,7 +23200,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 		var publicIPPrefix SubResource_STATUS
 		err := publicIPPrefix.AssignProperties_From_SubResource_STATUS(source.PublicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIPPrefix")
 		}
 		configuration.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -23337,7 +23212,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 		var sku PublicIPAddressSku_STATUS
 		err := sku.AssignProperties_From_PublicIPAddressSku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku_STATUS() to populate field Sku")
 		}
 		configuration.Sku = &sku
 	} else {
@@ -23366,7 +23241,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 		var dnsSetting storage.VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS
 		err := configuration.DnsSettings.AssignProperties_To_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS(&dnsSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
 		}
 		destination.DnsSettings = &dnsSetting
 	} else {
@@ -23385,7 +23260,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 			var ipTag storage.VirtualMachineIpTag_STATUS
 			err := ipTagItem.AssignProperties_To_VirtualMachineIpTag_STATUS(&ipTag)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineIpTag_STATUS() to populate field IpTags")
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineIpTag_STATUS() to populate field IpTags")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -23418,7 +23293,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 		var publicIPPrefix storage.SubResource_STATUS
 		err := configuration.PublicIPPrefix.AssignProperties_To_SubResource_STATUS(&publicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIPPrefix")
 		}
 		destination.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -23430,7 +23305,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 		var sku storage.PublicIPAddressSku_STATUS
 		err := configuration.Sku.AssignProperties_To_PublicIPAddressSku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -23534,7 +23409,7 @@ func (profile *VMDiskSecurityProfile) AssignProperties_From_VMDiskSecurityProfil
 		var diskEncryptionSet SubResource
 		err := diskEncryptionSet.AssignProperties_From_SubResource(source.DiskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DiskEncryptionSet")
 		}
 		profile.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -23564,7 +23439,7 @@ func (profile *VMDiskSecurityProfile) AssignProperties_To_VMDiskSecurityProfile(
 		var diskEncryptionSet storage.SubResource
 		err := profile.DiskEncryptionSet.AssignProperties_To_SubResource(&diskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DiskEncryptionSet")
 		}
 		destination.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -23598,7 +23473,7 @@ func (profile *VMDiskSecurityProfile) Initialize_From_VMDiskSecurityProfile_STAT
 		var diskEncryptionSet SubResource
 		err := diskEncryptionSet.Initialize_From_SubResource_STATUS(source.DiskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DiskEncryptionSet")
 		}
 		profile.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -23676,7 +23551,7 @@ func (profile *VMDiskSecurityProfile_STATUS) AssignProperties_From_VMDiskSecurit
 		var diskEncryptionSet SubResource_STATUS
 		err := diskEncryptionSet.AssignProperties_From_SubResource_STATUS(source.DiskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DiskEncryptionSet")
 		}
 		profile.DiskEncryptionSet = &diskEncryptionSet
 	} else {
@@ -23706,7 +23581,7 @@ func (profile *VMDiskSecurityProfile_STATUS) AssignProperties_To_VMDiskSecurityP
 		var diskEncryptionSet storage.SubResource_STATUS
 		err := profile.DiskEncryptionSet.AssignProperties_To_SubResource_STATUS(&diskEncryptionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DiskEncryptionSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DiskEncryptionSet")
 		}
 		destination.DiskEncryptionSet = &diskEncryptionSet
 	} else {

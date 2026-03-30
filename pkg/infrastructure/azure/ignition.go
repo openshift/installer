@@ -50,5 +50,5 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput, publicIP str
 		apiLBIP = publicIP
 	}
 	logrus.Debugf("Azure: Editing Ignition files with API LB IP: %s and API Int LB IP: %s", apiLBIP, apiIntLBIP)
-	return clusterapi.EditIgnition(in, azure.Name, []string{apiLBIP}, []string{apiIntLBIP})
+	return clusterapi.EditIgnitionForCustomDNS(in, azure.Name, []string{apiLBIP}, []string{apiIntLBIP})
 }

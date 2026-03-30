@@ -28,6 +28,7 @@ type MachineTypeBuilder struct {
 	architecture  ProcessorType
 	category      MachineTypeCategory
 	cloudProvider *CloudProviderBuilder
+	features      *MachineTypeFeaturesBuilder
 	genericName   string
 	memory        *ValueBuilder
 	name          string
@@ -38,14 +39,14 @@ type MachineTypeBuilder struct {
 // NewMachineType creates a new builder of 'machine_type' objects.
 func NewMachineType() *MachineTypeBuilder {
 	return &MachineTypeBuilder{
-		fieldSet_: make([]bool, 12),
+		fieldSet_: make([]bool, 13),
 	}
 }
 
 // Link sets the flag that indicates if this is a link.
 func (b *MachineTypeBuilder) Link(value bool) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.fieldSet_[0] = true
 	return b
@@ -54,7 +55,7 @@ func (b *MachineTypeBuilder) Link(value bool) *MachineTypeBuilder {
 // ID sets the identifier of the object.
 func (b *MachineTypeBuilder) ID(value string) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.id = value
 	b.fieldSet_[1] = true
@@ -64,7 +65,7 @@ func (b *MachineTypeBuilder) ID(value string) *MachineTypeBuilder {
 // HREF sets the link to the object.
 func (b *MachineTypeBuilder) HREF(value string) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.href = value
 	b.fieldSet_[2] = true
@@ -88,7 +89,7 @@ func (b *MachineTypeBuilder) Empty() bool {
 // CCSOnly sets the value of the 'CCS_only' attribute to the given value.
 func (b *MachineTypeBuilder) CCSOnly(value bool) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.ccsOnly = value
 	b.fieldSet_[3] = true
@@ -117,7 +118,7 @@ func (b *MachineTypeBuilder) CCSOnly(value bool) *MachineTypeBuilder {
 // - 1 PiB = 2^50 bytes
 func (b *MachineTypeBuilder) CPU(value *ValueBuilder) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.cpu = value
 	if value != nil {
@@ -133,7 +134,7 @@ func (b *MachineTypeBuilder) CPU(value *ValueBuilder) *MachineTypeBuilder {
 // Processor type category.
 func (b *MachineTypeBuilder) Architecture(value ProcessorType) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.architecture = value
 	b.fieldSet_[5] = true
@@ -145,7 +146,7 @@ func (b *MachineTypeBuilder) Architecture(value ProcessorType) *MachineTypeBuild
 // Machine type category.
 func (b *MachineTypeBuilder) Category(value MachineTypeCategory) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.category = value
 	b.fieldSet_[6] = true
@@ -157,7 +158,7 @@ func (b *MachineTypeBuilder) Category(value MachineTypeCategory) *MachineTypeBui
 // Cloud provider.
 func (b *MachineTypeBuilder) CloudProvider(value *CloudProviderBuilder) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.cloudProvider = value
 	if value != nil {
@@ -168,13 +169,29 @@ func (b *MachineTypeBuilder) CloudProvider(value *CloudProviderBuilder) *Machine
 	return b
 }
 
+// Features sets the value of the 'features' attribute to the given value.
+//
+// Defines the features enabled or disabled on a particular machine type
+func (b *MachineTypeBuilder) Features(value *MachineTypeFeaturesBuilder) *MachineTypeBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 13)
+	}
+	b.features = value
+	if value != nil {
+		b.fieldSet_[8] = true
+	} else {
+		b.fieldSet_[8] = false
+	}
+	return b
+}
+
 // GenericName sets the value of the 'generic_name' attribute to the given value.
 func (b *MachineTypeBuilder) GenericName(value string) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.genericName = value
-	b.fieldSet_[8] = true
+	b.fieldSet_[9] = true
 	return b
 }
 
@@ -200,13 +217,13 @@ func (b *MachineTypeBuilder) GenericName(value string) *MachineTypeBuilder {
 // - 1 PiB = 2^50 bytes
 func (b *MachineTypeBuilder) Memory(value *ValueBuilder) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.memory = value
 	if value != nil {
-		b.fieldSet_[9] = true
+		b.fieldSet_[10] = true
 	} else {
-		b.fieldSet_[9] = false
+		b.fieldSet_[10] = false
 	}
 	return b
 }
@@ -214,10 +231,10 @@ func (b *MachineTypeBuilder) Memory(value *ValueBuilder) *MachineTypeBuilder {
 // Name sets the value of the 'name' attribute to the given value.
 func (b *MachineTypeBuilder) Name(value string) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.name = value
-	b.fieldSet_[10] = true
+	b.fieldSet_[11] = true
 	return b
 }
 
@@ -226,10 +243,10 @@ func (b *MachineTypeBuilder) Name(value string) *MachineTypeBuilder {
 // Machine type size.
 func (b *MachineTypeBuilder) Size(value MachineTypeSize) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 12)
+		b.fieldSet_ = make([]bool, 13)
 	}
 	b.size = value
-	b.fieldSet_[11] = true
+	b.fieldSet_[12] = true
 	return b
 }
 
@@ -256,6 +273,11 @@ func (b *MachineTypeBuilder) Copy(object *MachineType) *MachineTypeBuilder {
 		b.cloudProvider = NewCloudProvider().Copy(object.cloudProvider)
 	} else {
 		b.cloudProvider = nil
+	}
+	if object.features != nil {
+		b.features = NewMachineTypeFeatures().Copy(object.features)
+	} else {
+		b.features = nil
 	}
 	b.genericName = object.genericName
 	if object.memory != nil {
@@ -288,6 +310,12 @@ func (b *MachineTypeBuilder) Build() (object *MachineType, err error) {
 	object.category = b.category
 	if b.cloudProvider != nil {
 		object.cloudProvider, err = b.cloudProvider.Build()
+		if err != nil {
+			return
+		}
+	}
+	if b.features != nil {
+		object.features, err = b.features.Build()
 		if err != nil {
 			return
 		}

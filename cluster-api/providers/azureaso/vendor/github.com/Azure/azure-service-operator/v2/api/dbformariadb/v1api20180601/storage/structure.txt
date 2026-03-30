@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storag
 ---------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-06-01"
+
 Configuration: Resource
 ├── Owner: dbformariadb/v1api20180601.Server
 ├── Spec: Object (7 properties)
@@ -28,6 +29,7 @@ Configuration: Resource
     ├── Source: *string
     ├── Type: *string
     └── Value: *string
+
 Database: Resource
 ├── Owner: dbformariadb/v1api20180601.Server
 ├── Spec: Object (7 properties)
@@ -49,6 +51,7 @@ Database: Resource
     ├── Name: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 Server: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (9 properties)
@@ -178,3 +181,4 @@ Server: Resource
     ├── Type: *string
     ├── UserVisibleState: *string
     └── Version: *string
+

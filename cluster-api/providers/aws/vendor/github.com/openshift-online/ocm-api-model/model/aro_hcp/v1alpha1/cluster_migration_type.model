@@ -1,0 +1,40 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of a cluster migration.
+class ClusterMigration {
+    // Internal cluster ID.
+    ClusterID string
+
+    // Type of cluster migration. The rest of the attributes will be populated according to this
+    // value. For example, if the type is `sdnToOvn` then only the `SdnToOvn` attribute will be
+    // populated.
+    Type ClusterMigrationType
+
+    // The state of the cluster migration.
+    State ClusterMigrationState
+
+    // Details for `SdnToOvn` cluster migrations.
+    SdnToOvn SdnToOvnClusterMigration
+
+    // Date and time when the cluster migration was initially created, using the
+    // format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+    CreationTimestamp Date
+
+    // Date and time when the cluster migration was last updated, using the
+    // format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+    UpdatedTimestamp Date
+}

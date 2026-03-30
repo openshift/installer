@@ -39,7 +39,7 @@ func NewSimpleSpanProcessor(exporter SpanExporter) SpanProcessor {
 }
 
 // OnStart does nothing.
-func (ssp *simpleSpanProcessor) OnStart(context.Context, ReadWriteSpan) {}
+func (*simpleSpanProcessor) OnStart(context.Context, ReadWriteSpan) {}
 
 // OnEnd immediately exports a ReadOnlySpan.
 func (ssp *simpleSpanProcessor) OnEnd(s ReadOnlySpan) {
@@ -58,7 +58,7 @@ func (ssp *simpleSpanProcessor) Shutdown(ctx context.Context) error {
 	var err error
 	ssp.stopOnce.Do(func() {
 		stopFunc := func(exp SpanExporter) (<-chan error, func()) {
-			done := make(chan error)
+			done := make(chan error, 1)
 			return done, func() { done <- exp.Shutdown(ctx) }
 		}
 
@@ -104,13 +104,13 @@ func (ssp *simpleSpanProcessor) Shutdown(ctx context.Context) error {
 }
 
 // ForceFlush does nothing as there is no data to flush.
-func (ssp *simpleSpanProcessor) ForceFlush(context.Context) error {
+func (*simpleSpanProcessor) ForceFlush(context.Context) error {
 	return nil
 }
 
 // MarshalLog is the marshaling function used by the logging system to represent
 // this Span Processor.
-func (ssp *simpleSpanProcessor) MarshalLog() interface{} {
+func (ssp *simpleSpanProcessor) MarshalLog() any {
 	return struct {
 		Type     string
 		Exporter SpanExporter

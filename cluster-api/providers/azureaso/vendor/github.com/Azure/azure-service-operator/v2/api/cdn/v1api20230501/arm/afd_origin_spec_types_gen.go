@@ -43,7 +43,7 @@ type AFDOriginProperties struct {
 
 	// HostName: The address of the origin. Domain names, IPv4 addresses, and IPv6 addresses are supported.This should be
 	// unique across all origins in an endpoint.
-	HostName *string `json:"hostName,omitempty"`
+	HostName *string `json:"hostName,omitempty" optionalConfigMapPair:"HostName"`
 
 	// HttpPort: The value of the HTTP port. Must be between 1 and 65535.
 	HttpPort *int `json:"httpPort,omitempty"`

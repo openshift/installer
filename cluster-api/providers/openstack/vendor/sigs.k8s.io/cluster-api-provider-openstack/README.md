@@ -41,7 +41,6 @@ This provider's versions are compatible with the following versions of Cluster A
 
 |                                    | v1beta1 (v1.x) |
 |------------------------------------| -------------- |
-| OpenStack Provider v1alpha6 (v0.7) | ✓              |
 | OpenStack Provider v1alpha7 (v0.9) | ✓              |
 | OpenStack Provider v1beta1         | ✓              |
 

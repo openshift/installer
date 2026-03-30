@@ -23,7 +23,6 @@ import (
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -108,7 +107,7 @@ func WriteMachineType(object *MachineType, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider")
-		v1.WriteCloudProvider(object.cloudProvider, stream)
+		WriteCloudProvider(object.cloudProvider, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
@@ -202,7 +201,7 @@ func ReadMachineType(iterator *jsoniter.Iterator) *MachineType {
 			object.category = value
 			object.fieldSet_[6] = true
 		case "cloud_provider":
-			value := v1.ReadCloudProvider(iterator)
+			value := ReadCloudProvider(iterator)
 			object.cloudProvider = value
 			object.fieldSet_[7] = true
 		case "generic_name":

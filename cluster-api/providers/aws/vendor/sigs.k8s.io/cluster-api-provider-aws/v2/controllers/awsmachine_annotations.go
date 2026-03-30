@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"maps"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
@@ -40,12 +41,13 @@ func (r *AWSMachineReconciler) updateMachineAnnotationJSON(machine *infrav1.AWSM
 // `content`.
 func (r *AWSMachineReconciler) updateMachineAnnotation(machine *infrav1.AWSMachine, annotation, content string) {
 	// Get the annotations
-	annotations := machine.GetAnnotations()
+	annotations := maps.Clone(machine.GetAnnotations())
 
-	// Set our annotation to the given content.
-	if annotations != nil {
-		annotations[annotation] = content
+	if annotations == nil {
+		annotations = map[string]string{}
 	}
+
+	annotations[annotation] = content
 
 	// Update the machine object with these annotations
 	machine.SetAnnotations(annotations)

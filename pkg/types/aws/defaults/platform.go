@@ -3,11 +3,13 @@ package defaults
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 const (
@@ -30,10 +32,44 @@ var (
 	// - us-east-1e is a well-known limited zone, with limited offering of
 	// 	 instance types supported by installer.
 	skippedZones = []string{"us-east-1e"}
+
+	// defaultServiceEndpoints is a list of known default endpoints for specific regions that would
+	// otherwise require user to set the service overrides.
+	// Note: This is a workaround for when the AWS SDK cannot yet handle new regions, for example, EUSC regions.
+	defaultServiceEndpoints = map[string][]aws.ServiceEndpoint{
+		// Reference: https://docs.aws.eu/general/latest/gr/endpoints.html
+		aws.EuscDeEast1RegionID: {
+			{Name: "ec2", URL: "https://ec2.eusc-de-east-1.amazonaws.eu"},
+			{Name: "elasticloadbalancing", URL: "https://elasticloadbalancing.eusc-de-east-1.amazonaws.eu"},
+			{Name: "s3", URL: "https://s3.eusc-de-east-1.amazonaws.eu"},
+			{Name: "route53", URL: "https://route53.amazonaws.eu"},
+			{Name: "iam", URL: "https://iam.eusc-de-east-1.amazonaws.eu"},
+			{Name: "sts", URL: "https://sts.eusc-de-east-1.amazonaws.eu"},
+			{Name: "tagging", URL: "https://tagging.eusc-de-east-1.amazonaws.eu"},
+		},
+	}
 )
 
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *aws.Platform) {
+	if p.IPFamily == "" {
+		p.IPFamily = network.IPv4
+		logrus.Infof("ipFamily is not specified in install-config; defaulting to %q", network.IPv4)
+	}
+
+	if p.LBType == "" {
+		if p.IPFamily.DualStackEnabled() {
+			p.LBType = configv1.NLB
+		}
+	}
+
+	// TODO: Remove when all openshift components migrate to AWS SDK v2
+	if len(p.ServiceEndpoints) == 0 {
+		if eps, ok := defaultServiceEndpoints[p.Region]; ok {
+			p.ServiceEndpoints = eps
+			logrus.Infof("Adding default service endpoints for region %s", p.Region)
+		}
+	}
 }
 
 // InstanceTypes returns a list of instance types, in decreasing priority order, which we should use for a given

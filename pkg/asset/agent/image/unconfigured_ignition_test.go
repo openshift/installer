@@ -14,9 +14,10 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	agenttypes "github.com/openshift/installer/pkg/types/agent"
 )
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
@@ -43,43 +44,6 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"agent-extract-tui.service":          true},
 		},
 		{
-			name: "interactive-disconnected-workflow-should-have-agent-extract-tui-service-enabled",
-			overrideDeps: []asset.Asset{
-				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstallInteractiveDisconnected},
-			},
-			serviceEnabledMap: map[string]bool{
-				"agent-extract-tui.service": true},
-		},
-		{
-			name: "with-mirror-configs",
-			overrideDeps: []asset.Asset{
-				&mirror.RegistriesConf{
-					File: &asset.File{
-						Filename: mirror.RegistriesConfFilename,
-						Data:     []byte(""),
-					},
-					MirrorConfig: []mirror.RegistriesConfig{
-						{
-							Location: "some.registry.org/release",
-							Mirrors:  []string{"some.mirror.org"},
-						},
-					},
-				},
-				&mirror.CaBundle{
-					File: &asset.File{
-						Filename: "my.crt",
-						Data:     []byte("my-certificate"),
-					},
-				},
-			},
-			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
-				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
-			serviceEnabledMap: map[string]bool{
-				"pre-network-manager-config.service": false,
-				"oci-eval-user-data.service":         true,
-				"agent-check-config-image.service":   true},
-		},
-		{
 			name: "with-nmstateconfigs",
 			overrideDeps: []asset.Asset{
 				&nmStateConfig,
@@ -90,6 +54,75 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"pre-network-manager-config.service": true,
 				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true},
+		},
+		{
+			name: "valid-agentconfig-with-rendezvousIP",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP: "192.168.111.20",
+					},
+				},
+			},
+			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/rendezvous-host.env", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true,
+				"agent-extract-tui.service":          true},
+		},
+		{
+			name: "invalid-agentconfig-with-hosts",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP: "192.168.111.20",
+						Hosts: []agenttypes.Host{
+							{
+								Hostname: "master-0",
+								Role:     "master",
+							},
+						},
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain hosts. Hosts configuration should be provided via nmstateconfig.yaml",
+		},
+		{
+			name: "invalid-agentconfig-with-additionalNTPSources",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP:         "192.168.111.20",
+						AdditionalNTPSources: []string{"ntp.example.com"},
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain additionalNTPSources. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-agentconfig-with-bootArtifactsBaseURL",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP:         "192.168.111.20",
+						BootArtifactsBaseURL: "http://example.com",
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain bootArtifactsBaseURL. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-agentconfig-with-minimalISO",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP: "192.168.111.20",
+						MinimalISO:   true,
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not set minimalISO. Only rendezvousIP is allowed",
 		},
 	}
 	for _, tc := range cases {
@@ -131,11 +164,10 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 		&infraEnv,
 		&agentPullSecret,
 		&clusterImageSet,
-		&manifests.NMStateConfig{},
-		&mirror.RegistriesConf{},
-		&mirror.CaBundle{},
+		&manifests.NMStateConfigFile{},
 		&common.InfraEnvID{},
 		&agentconfig.AgentConfig{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
@@ -184,8 +216,8 @@ func getTestClusterImageSet() manifests.ClusterImageSet {
 	}
 }
 
-func getTestNMStateConfig() manifests.NMStateConfig {
-	return manifests.NMStateConfig{
+func getTestNMStateConfig() manifests.NMStateConfigFile {
+	return manifests.NMStateConfigFile{
 		Config: []*aiv1beta1.NMStateConfig{
 			{
 				Spec: aiv1beta1.NMStateConfigSpec{
@@ -222,4 +254,89 @@ func generatedFilesUnconfiguredIgnition(otherFiles ...string) []string {
 	}
 	unconfiguredIgnitionFiles = append(unconfiguredIgnitionFiles, otherFiles...)
 	return append(unconfiguredIgnitionFiles, commonFiles()...)
+}
+
+func TestValidateAgentConfigForUnconfiguredIgnition(t *testing.T) {
+	cases := []struct {
+		name          string
+		agentConfig   *agenttypes.Config
+		expectedError string
+	}{
+		{
+			name: "valid-with-rendezvousIP-only",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP: "192.168.111.20",
+			},
+			expectedError: "",
+		},
+		{
+			name:          "valid-empty-config",
+			agentConfig:   &agenttypes.Config{},
+			expectedError: "",
+		},
+		{
+			name: "invalid-with-hosts",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP: "192.168.111.20",
+				Hosts: []agenttypes.Host{
+					{
+						Hostname: "master-0",
+						Role:     "master",
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain hosts. Hosts configuration should be provided via nmstateconfig.yaml",
+		},
+		{
+			name: "invalid-with-additionalNTPSources",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP:         "192.168.111.20",
+				AdditionalNTPSources: []string{"ntp.example.com"},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain additionalNTPSources. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-with-bootArtifactsBaseURL",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP:         "192.168.111.20",
+				BootArtifactsBaseURL: "http://example.com",
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain bootArtifactsBaseURL. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-with-minimalISO",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP: "192.168.111.20",
+				MinimalISO:   true,
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not set minimalISO. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-with-multiple-fields",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP:         "192.168.111.20",
+				AdditionalNTPSources: []string{"ntp.example.com"},
+				BootArtifactsBaseURL: "http://example.com",
+				MinimalISO:           true,
+				Hosts: []agenttypes.Host{
+					{
+						Hostname: "master-0",
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain hosts. Hosts configuration should be provided via nmstateconfig.yaml",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateAgentConfigForUnconfiguredIgnition(tc.agentConfig)
+
+			if tc.expectedError != "" {
+				assert.EqualError(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

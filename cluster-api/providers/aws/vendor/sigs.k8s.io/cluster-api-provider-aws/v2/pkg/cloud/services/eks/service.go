@@ -62,6 +62,14 @@ type EKSAPI interface {
 	TagResource(ctx context.Context, params *eks.TagResourceInput, optFns ...func(*eks.Options)) (*eks.TagResourceOutput, error)
 	UntagResource(ctx context.Context, params *eks.UntagResourceInput, optFns ...func(*eks.Options)) (*eks.UntagResourceOutput, error)
 	DisassociateIdentityProviderConfig(ctx context.Context, params *eks.DisassociateIdentityProviderConfigInput, optFns ...func(*eks.Options)) (*eks.DisassociateIdentityProviderConfigOutput, error)
+	ListAccessEntries(ctx context.Context, params *eks.ListAccessEntriesInput, optFns ...func(*eks.Options)) (*eks.ListAccessEntriesOutput, error)
+	DescribeAccessEntry(ctx context.Context, params *eks.DescribeAccessEntryInput, optFns ...func(*eks.Options)) (*eks.DescribeAccessEntryOutput, error)
+	CreateAccessEntry(ctx context.Context, params *eks.CreateAccessEntryInput, optFns ...func(*eks.Options)) (*eks.CreateAccessEntryOutput, error)
+	UpdateAccessEntry(ctx context.Context, params *eks.UpdateAccessEntryInput, optFns ...func(*eks.Options)) (*eks.UpdateAccessEntryOutput, error)
+	DeleteAccessEntry(ctx context.Context, params *eks.DeleteAccessEntryInput, optFns ...func(*eks.Options)) (*eks.DeleteAccessEntryOutput, error)
+	ListAssociatedAccessPolicies(ctx context.Context, params *eks.ListAssociatedAccessPoliciesInput, optFns ...func(*eks.Options)) (*eks.ListAssociatedAccessPoliciesOutput, error)
+	AssociateAccessPolicy(ctx context.Context, params *eks.AssociateAccessPolicyInput, optFns ...func(*eks.Options)) (*eks.AssociateAccessPolicyOutput, error)
+	DisassociateAccessPolicy(ctx context.Context, params *eks.DisassociateAccessPolicyInput, optFns ...func(*eks.Options)) (*eks.DisassociateAccessPolicyOutput, error)
 
 	// Waiters for EKS Cluster
 	WaitUntilClusterActive(ctx context.Context, params *eks.DescribeClusterInput, maxWait time.Duration) error

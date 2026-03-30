@@ -28,7 +28,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	ipamv1beta1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -40,7 +40,7 @@ import (
 // of parsing IPAM addresses for a given device.
 type ipamDeviceConfig struct {
 	DeviceIndex         int
-	IPAMAddresses       []*ipamv1.IPAddress
+	IPAMAddresses       []*ipamv1beta1.IPAddress
 	MACAddress          string
 	NetworkSpecGateway4 string
 	IPAMConfigGateway4  string
@@ -131,7 +131,7 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 		}
 
 		ipamDeviceConfig := ipamDeviceConfig{
-			IPAMAddresses:       []*ipamv1.IPAddress{},
+			IPAMAddresses:       []*ipamv1beta1.IPAddress{},
 			MACAddress:          networkStatus[devIdx].MACAddr,
 			NetworkSpecGateway4: networkSpecDevice.Gateway4,
 			NetworkSpecGateway6: networkSpecDevice.Gateway6,
@@ -161,7 +161,7 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 				continue
 			}
 
-			ipAddr := &ipamv1.IPAddress{}
+			ipAddr := &ipamv1beta1.IPAddress{}
 			ipAddrKey := apitypes.NamespacedName{
 				Namespace: vmCtx.VSphereVM.Namespace,
 				Name:      ipAddrName,
@@ -185,10 +185,10 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 }
 
 // getIPAddrClaim fetches an IPAddressClaim from the api with the given name.
-func getIPAddrClaim(ctx context.Context, vmCtx capvcontext.VMContext, ipAddrClaimName string) (*ipamv1.IPAddressClaim, error) {
+func getIPAddrClaim(ctx context.Context, vmCtx capvcontext.VMContext, ipAddrClaimName string) (*ipamv1beta1.IPAddressClaim, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	ipAddrClaim := &ipamv1.IPAddressClaim{}
+	ipAddrClaim := &ipamv1beta1.IPAddressClaim{}
 	ipAddrClaimKey := apitypes.NamespacedName{
 		Namespace: vmCtx.VSphereVM.Namespace,
 		Name:      ipAddrClaimName,

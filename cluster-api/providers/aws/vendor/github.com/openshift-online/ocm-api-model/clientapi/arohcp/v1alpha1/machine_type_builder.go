@@ -19,7 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1" //
 // Machine type.
 type MachineTypeBuilder struct {
 	fieldSet_     []bool
@@ -28,7 +27,7 @@ type MachineTypeBuilder struct {
 	cpu           *ValueBuilder
 	architecture  ProcessorType
 	category      MachineTypeCategory
-	cloudProvider *v1.CloudProviderBuilder
+	cloudProvider *CloudProviderBuilder
 	genericName   string
 	memory        *ValueBuilder
 	name          string
@@ -156,7 +155,7 @@ func (b *MachineTypeBuilder) Category(value MachineTypeCategory) *MachineTypeBui
 // CloudProvider sets the value of the 'cloud_provider' attribute to the given value.
 //
 // Cloud provider.
-func (b *MachineTypeBuilder) CloudProvider(value *v1.CloudProviderBuilder) *MachineTypeBuilder {
+func (b *MachineTypeBuilder) CloudProvider(value *CloudProviderBuilder) *MachineTypeBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 12)
 	}
@@ -254,7 +253,7 @@ func (b *MachineTypeBuilder) Copy(object *MachineType) *MachineTypeBuilder {
 	b.architecture = object.architecture
 	b.category = object.category
 	if object.cloudProvider != nil {
-		b.cloudProvider = v1.NewCloudProvider().Copy(object.cloudProvider)
+		b.cloudProvider = NewCloudProvider().Copy(object.cloudProvider)
 	} else {
 		b.cloudProvider = nil
 	}

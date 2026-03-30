@@ -1,0 +1,39 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// ImageMirror represents a container image mirror configuration for a cluster.
+// This enables Day 2 image mirroring configuration for ROSA HCP clusters using
+// HyperShift's native imageContentSources mechanism.
+class ImageMirror {
+	// Type specifies the mirror type, currently only "digest" is supported.
+	Type String
+
+	// Source is the source registry that will be mirrored.
+	// Source registry must be unique per cluster and is immutable after creation.
+	// Source is used to identify mirror entries in HostedCluster imageContentSources.
+	Source String
+
+	// Mirrors is the list of mirror registries that will serve content for the source.
+	// Mirrors array cannot be empty (must contain at least one mirror registry).
+	// Each mirror registry URL must conform to OpenShift's ImageDigestMirrorSet format specifications.
+	Mirrors []String
+
+	// CreationTimestamp indicates when the image mirror was created.
+	CreationTimestamp Date
+
+	// LastUpdateTimestamp indicates when the image mirror was last updated.
+	LastUpdateTimestamp Date
+}

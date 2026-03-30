@@ -10,7 +10,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -116,6 +116,10 @@ func (host *BastionHost) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (host *BastionHost) Owner() *genruntime.ResourceReference {
+	if host.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(host.Spec)
 	return host.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (host *BastionHost) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st BastionHost_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	host.Status = st
@@ -205,7 +209,7 @@ var _ genruntime.ConvertibleSpec = &BastionHost_Spec{}
 // ConvertSpecFrom populates our BastionHost_Spec from the provided source
 func (host *BastionHost_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == host {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(host)
@@ -214,7 +218,7 @@ func (host *BastionHost_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec)
 // ConvertSpecTo populates the provided destination from our BastionHost_Spec
 func (host *BastionHost_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == host {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(host)
@@ -253,7 +257,7 @@ var _ genruntime.ConvertibleStatus = &BastionHost_STATUS{}
 // ConvertStatusFrom populates our BastionHost_STATUS from the provided source
 func (host *BastionHost_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == host {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(host)
@@ -262,7 +266,7 @@ func (host *BastionHost_STATUS) ConvertStatusFrom(source genruntime.ConvertibleS
 // ConvertStatusTo populates the provided destination from our BastionHost_STATUS
 func (host *BastionHost_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == host {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(host)
@@ -353,7 +357,7 @@ func (resource *SubResource) AssignProperties_From_SubResource(source *storage.S
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -386,7 +390,7 @@ func (resource *SubResource) AssignProperties_To_SubResource(destination *storag
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -421,7 +425,7 @@ func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(sou
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -449,7 +453,7 @@ func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(desti
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

@@ -2,12 +2,175 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.5.4](https://github.com/microsoft/kiota-http-go/compare/v1.5.3...v1.5.4) (2025-06-06)
 
-## [Unreleased]
+
+### Bug Fixes
+
+* retry handler exponential backoff ([#205](https://github.com/microsoft/kiota-http-go/issues/205)) ([2f2a350](https://github.com/microsoft/kiota-http-go/commit/2f2a3500e91531c248d1eb28997c4ca3bc361a85))
+
+## [1.5.3](https://github.com/microsoft/kiota-http-go/compare/v1.5.2...v1.5.3) (2025-04-03)
+
+
+### Bug Fixes
+
+* adding middleware with options errors with "unsupported option type" ([beeb32d](https://github.com/microsoft/kiota-http-go/commit/beeb32db1f6a5ebabfd4efdf66d701a6d12ed43f))
+
+## [1.5.2](https://github.com/microsoft/kiota-http-go/compare/v1.5.1...v1.5.2) (2025-04-02)
+
+
+### Bug Fixes
+
+* removes common go dependency ([42c2137](https://github.com/microsoft/kiota-http-go/commit/42c21377c7d3af3863bfcfcf28956cdaad99c850))
+* removes common go dependency ([df1bf28](https://github.com/microsoft/kiota-http-go/commit/df1bf281692b9b3dede2f1a845cb590c0a490717))
+
+## [1.5.1](https://github.com/microsoft/kiota-http-go/compare/v1.5.0...v1.5.1) (2025-03-24)
+
+
+### Bug Fixes
+
+* upgrades common go dependency to solve triming issues ([4a57c46](https://github.com/microsoft/kiota-http-go/commit/4a57c4687dec3e8d6801538c458cab19f47a480d))
+* upgrades common go dependency to solve triming issues ([d1aa07f](https://github.com/microsoft/kiota-http-go/commit/d1aa07f2a1b9c0d21f5808a8be41c65f236c8929))
+
+## [1.5.0](https://github.com/microsoft/kiota-http-go/compare/v1.4.7...v1.5.0) (2025-03-13)
+
+
+### Features
+
+* upgrades required go version from go1.18 to go 1.22 ([2e60cd5](https://github.com/microsoft/kiota-http-go/commit/2e60cd5800241b2c08b21ab523d9ffc216383db0))
+
+## [1.4.7] - 2024-12-13
+
+### Changed
+
+- Updated HTTP span attributes to comply with updated OpenTelemetry semantic conventions. [#182](https://github.com/microsoft/kiota-http-go/issues/182)
+
+## [1.4.6] - 2024-12-13
+
+### Changed
+
+- Fixed a bug where headers inspection handler would fail upon receiving an error.
+
+## [1.4.5] - 2024-09-03
+
+### Changed
+
+- Fixed a bug in compression middleware which caused empty body to send on retries
+
+## [1.4.4] - 2024-08-13
+
+### Changed
+
+- Added `http.request.resend_delay` as a span attribute for the retry handler
+- Changed the `http.retry_count` span attribute to `http.request.resend_count` to conform to OpenTelemetry specs.
+
+## [1.4.3] - 2024-07-22
+
+### Changed
+
+- Fixed a bug to prevent double request compression by the compression handler.
+
+## [1.4.2] - 2024-07-16
+
+### Changed
+
+- Prevent compression if Content-Range header is present.
+- Fix bug which leads to a missing Content-Length header.
+
+## [1.4.1] - 2024-05-09
+
+### Changed
+
+- Allow custom response handlers to return nil result values.
+
+## [1.4.0] - 2024-05-09
+
+- Support retry after as a date.
+
+## [1.3.3] - 2024-03-19
+
+- Fix bug where overriding http.DefaultTransport with an implementation other than http.Transport would result in an interface conversion panic
+
+### Changed
+
+## [1.3.2] - 2024-02-28
+
+### Changed
+
+- Fix bug with headers inspection handler using wrong key.
+
+## [1.3.1] - 2024-02-09
+
+### Changed
+
+- Fix bug that resulted in the error "content is empty" being returned instead of HTTP status information if the request returned no content and an unsuccessful status code.
+
+## [1.3.0] - 2024-01-22
 
 ### Added
+
+- Added support to override default middleware with function `GetDefaultMiddlewaresWithOptions`.
+
+## [1.2.1] - 2023-01-22
+
+### Changed
+
+- Fix bug passing no timeout in client as 0 timeout in context  .
+
+## [1.2.0] - 2024-01-22
+
+### Added
+
+- Adds support for XXX status code.
+
+## [1.1.2] - 2024-01-20
+
+### Changed
+
+- Changed the code by replacing ioutil.ReadAll and ioutil.NopCloser with io.ReadAll and io.NopCloser, respectively, due to their deprecation.
+
+## [1.1.1] - 2023-11-22
+
+### Added
+
+- Added response headers and status code to returned error in `throwIfFailedResponse`.
+
+## [1.1.0] - 2023-08-11
+
+### Added
+
+- Added headers inspection middleware and option.
+
+## [1.0.1] - 2023-07-19
+
+### Changed
+
+- Bug Fix: Update Host for Redirect URL in go client.
+
+## [1.0.0] - 2023-05-04
+
+### Changed
+
+- GA Release.
+
+## [0.17.0] - 2023-04-26
+
+### Added
+
+- Adds Response Headers to the ApiError returned on Api requests errors.
+
+## [0.16.2] - 2023-04-17
+
+### Added
+
+- Exit retry handler earlier if context is done.
+- Adds exported method `ReplacePathTokens` that can be used to process url replacement logic globally.
+
+## [0.16.1] - 2023-03-20
+
+### Added
+
+- Context deadline for requests defaults to client timeout when not provided.
 
 ## [0.16.0] - 2023-03-01
 

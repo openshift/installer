@@ -38,6 +38,8 @@ The content of the release notes differs depending on the type of release, speci
 
 ## Process
 
+There is an [issue template](.github/ISSUE_TEMPLATE/new_release.md) to help track release activities.
+
 1. Make sure your repo is clean by git's standards. It is recommended to use a fresh checkout.
 1. When bumping `X` or `Y` (but not Z or the pre-release suffix) in the release version you must create a new release branch called `release-X.Y`.
    > NOTE: `upstream` should be the name of the remote pointing to `github.com/kubernetes-sigs/cluster-api-provider-openstack`
@@ -60,6 +62,7 @@ The content of the release notes differs depending on the type of release, speci
 
    This will cause the image to be automatically built by CI and pushed to the staging repository. As this only builds
    the image, it only takes a few minutes.
+   It also triggers the [release](https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/main/.github/workflows/release.yaml) workflow which will generate release notes and artifacts, and create a draft release in GitHub.
 1. Follow the [image promotion process](https://github.com/kubernetes/k8s.io/blob/main/registry.k8s.io/README.md#image-promoter) to promote the image from the staging repo to `registry.k8s.io/capi-openstack`.
    The staging repository can be inspected at https://console.cloud.google.com/gcr/images/k8s-staging-capi-openstack/GLOBAL. Be
    sure to choose the top level `capi-openstack-controller`, which will provide the multi-arch manifest, rather than one for a specific architecture.
@@ -68,25 +71,19 @@ The content of the release notes differs depending on the type of release, speci
 
    It is good practise to get somebody else to review this PR. It is safe to perform the following steps while waiting
    for review and the promotion of the image.
-1. Run `make release` to build artifacts to be attached to the GitHub release.
-1. Generate and finalize the release notes and save them for the next step.
-   - Run `make release-notes RELEASE_NOTES_ARGS="--from <tag>"`.
-     - Depending on the type of release, substitute `<tag>` with the following:
-       - Stable releases: tag of the last stable release
-       - Pre-releases*: tag of the latest pre-release (or last stable release if there isn't one)
-   - Pay close attention to the `## :question: Sort these by hand` section, as it contains items that need to be manually sorted.
-1. Create a draft release in GitHub based on the tag created above
-    - Name the release `Release [VERSION]` where VERSION is the full version string.
-    - For a pre-release, ensure you check `This is a pre-release` in GitHub when creating the release.
-    - Add the release notes generated above as the release description.
-1. Attach the following files to the draft release:
-    - `./out/infrastructure-components.yaml`
-    - `./out/cluster-template.yaml`
-    - `./out/cluster-template-without-lb.yaml`
-    - `./out/cluster-template-flatcar.yaml`
-    - `./out/metadata.yaml`
+1. Check carefully the [draft release](https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases)
+   created by the workflow. Ensure that the release notes are correct and that the artifacts are present.
+   If any changes are needed, edit the release notes in the GitHub UI and add any missing artifacts.
 1. Ensure that the release image has been promoted.
 1. Publish release.
+
+### Post release actions
+
+1. When bumping `X` or `Y` (but not Z or the pre-release suffix), update the [periodic jobs](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/cluster-api-provider-openstack).
+   Make sure there are periodic jobs for the new release branch, and clean up jobs for branches that are no longer supported.
+1. When bumping `X` or `Y` (but not Z or the pre-release suffix), update the [clusterctl upgrade tests](https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/main/test/e2e/suites/e2e/clusterctl_upgrade_test.go) and the [e2e config](https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/main/test/e2e/data/e2e_conf.yaml)
+   to include the new release branch.
+   It is also a good idea to update the Cluster API versions we test against and to clean up older versions that we no longer want to test.
 
 ### Permissions
 

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/s
 --------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-01-01-preview"
+
 Namespace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (11 properties)
@@ -99,6 +100,7 @@ Namespace: Resource
     ├── Type: *string
     ├── UpdatedAt: *string
     └── ZoneRedundant: *bool
+
 NamespacesAuthorizationRule: Resource
 ├── Owner: servicebus/v1api20210101preview.Namespace
 ├── Spec: Object (6 properties)
@@ -132,6 +134,7 @@ NamespacesAuthorizationRule: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 NamespacesQueue: Resource
 ├── Owner: servicebus/v1api20210101preview.Namespace
 ├── Spec: Object (19 properties)
@@ -198,6 +201,7 @@ NamespacesQueue: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesTopic: Resource
 ├── Owner: servicebus/v1api20210101preview.Namespace
 ├── Spec: Object (14 properties)
@@ -254,6 +258,7 @@ NamespacesTopic: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesTopicsSubscription: Resource
 ├── Owner: servicebus/v1api20210101preview.NamespacesTopic
 ├── Spec: Object (16 properties)
@@ -313,6 +318,7 @@ NamespacesTopicsSubscription: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesTopicsSubscriptionsRule: Resource
 ├── Owner: servicebus/v1api20210101preview.NamespacesTopicsSubscription
 ├── Spec: Object (9 properties)
@@ -384,50 +390,98 @@ NamespacesTopicsSubscriptionsRule: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 augmentConversionForAction: Interface
+
 augmentConversionForAction_STATUS: Interface
+
 augmentConversionForCorrelationFilter: Interface
+
 augmentConversionForCorrelationFilter_STATUS: Interface
+
 augmentConversionForDictionaryValue_STATUS: Interface
+
 augmentConversionForEncryption: Interface
+
 augmentConversionForEncryption_STATUS: Interface
+
 augmentConversionForIdentity: Interface
+
 augmentConversionForIdentity_STATUS: Interface
+
 augmentConversionForKeyVaultProperties: Interface
+
 augmentConversionForKeyVaultProperties_STATUS: Interface
+
 augmentConversionForMessageCountDetails_STATUS: Interface
+
 augmentConversionForNamespace: Interface
+
 augmentConversionForNamespaceOperatorSecrets: Interface
+
 augmentConversionForNamespaceOperatorSpec: Interface
+
 augmentConversionForNamespace_STATUS: Interface
+
 augmentConversionForNamespace_Spec: Interface
+
 augmentConversionForNamespacesAuthorizationRule: Interface
+
 augmentConversionForNamespacesAuthorizationRuleOperatorSecrets: Interface
+
 augmentConversionForNamespacesAuthorizationRuleOperatorSpec: Interface
+
 augmentConversionForNamespacesAuthorizationRule_STATUS: Interface
+
 augmentConversionForNamespacesAuthorizationRule_Spec: Interface
+
 augmentConversionForNamespacesQueue: Interface
+
 augmentConversionForNamespacesQueueOperatorSpec: Interface
+
 augmentConversionForNamespacesQueue_STATUS: Interface
+
 augmentConversionForNamespacesQueue_Spec: Interface
+
 augmentConversionForNamespacesTopic: Interface
+
 augmentConversionForNamespacesTopicOperatorSpec: Interface
+
 augmentConversionForNamespacesTopic_STATUS: Interface
+
 augmentConversionForNamespacesTopic_Spec: Interface
+
 augmentConversionForNamespacesTopicsSubscription: Interface
+
 augmentConversionForNamespacesTopicsSubscriptionOperatorSpec: Interface
+
 augmentConversionForNamespacesTopicsSubscription_STATUS: Interface
+
 augmentConversionForNamespacesTopicsSubscription_Spec: Interface
+
 augmentConversionForNamespacesTopicsSubscriptionsRule: Interface
+
 augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec: Interface
+
 augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS: Interface
+
 augmentConversionForNamespacesTopicsSubscriptionsRule_Spec: Interface
+
 augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
 augmentConversionForSBSku: Interface
+
 augmentConversionForSBSku_STATUS: Interface
+
 augmentConversionForSqlFilter: Interface
+
 augmentConversionForSqlFilter_STATUS: Interface
+
 augmentConversionForSystemData_STATUS: Interface
+
 augmentConversionForUserAssignedIdentityDetails: Interface
+
 augmentConversionForUserAssignedIdentityProperties: Interface
+
 augmentConversionForUserAssignedIdentityProperties_STATUS: Interface
+

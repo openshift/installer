@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage
 --------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-06-01"
+
 Factory: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -130,3 +131,4 @@ Factory: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Version: *string
+

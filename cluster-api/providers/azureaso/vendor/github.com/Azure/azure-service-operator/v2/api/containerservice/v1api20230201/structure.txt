@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201
 -----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-02-01"
+
 ManagedCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (36 properties)
@@ -762,6 +763,7 @@ ManagedCluster: Resource
     └── WorkloadAutoScalerProfile: *Object (1 property)
         └── Keda: *Object (1 property)
             └── Enabled: *bool
+
 ManagedClustersAgentPool: Resource
 ├── Owner: ManagedCluster
 ├── Spec: Object (41 properties)
@@ -1007,3 +1009,4 @@ ManagedClustersAgentPool: Resource
     └── WorkloadRuntime: *Enum (2 values)
         ├── "OCIContainer"
         └── "WasmWasi"
+

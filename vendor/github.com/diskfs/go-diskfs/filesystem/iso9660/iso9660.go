@@ -34,15 +34,15 @@ type FileSystem struct {
 }
 
 // Equal compare if two filesystems are equal
-func (fs *FileSystem) Equal(a *FileSystem) bool {
-	localMatch := fs.file == a.file && fs.size == a.size
-	vdMatch := fs.volumes.equal(&a.volumes)
+func (fsm *FileSystem) Equal(a *FileSystem) bool {
+	localMatch := fsm.file == a.file && fsm.size == a.size
+	vdMatch := fsm.volumes.equal(&a.volumes)
 	return localMatch && vdMatch
 }
 
 // Workspace get the workspace path
-func (fs *FileSystem) Workspace() string {
-	return fs.workspace
+func (fsm *FileSystem) Workspace() string {
+	return fsm.workspace
 }
 
 // Create creates an ISO9660 filesystem in a given directory
@@ -283,7 +283,7 @@ func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 }
 
 // Type returns the type code for the filesystem. Always returns filesystem.TypeFat32
-func (fs *FileSystem) Type() filesystem.Type {
+func (fsm *FileSystem) Type() filesystem.Type {
 	return filesystem.TypeISO9660
 }
 
@@ -293,11 +293,11 @@ func (fs *FileSystem) Type() filesystem.Type {
 // * It will not return an error if the path already exists
 //
 // if readonly and not in workspace, will return an error
-func (fs *FileSystem) Mkdir(p string) error {
-	if fs.workspace == "" {
+func (fsm *FileSystem) Mkdir(p string) error {
+	if fsm.workspace == "" {
 		return fmt.Errorf("cannot write to read-only filesystem")
 	}
-	err := os.MkdirAll(path.Join(fs.workspace, p), 0o755)
+	err := os.MkdirAll(path.Join(fsm.workspace, p), 0o755)
 	if err != nil {
 		return fmt.Errorf("could not create directory %s: %v", p, err)
 	}
@@ -310,12 +310,12 @@ func (fs *FileSystem) Mkdir(p string) error {
 // Returns a slice of os.FileInfo with all of the entries in the directory.
 //
 // Will return an error if the directory does not exist or is a regular file and not a directory
-func (fs *FileSystem) ReadDir(p string) ([]os.FileInfo, error) {
+func (fsm *FileSystem) ReadDir(p string) ([]os.FileInfo, error) {
 	var fi []os.FileInfo
 	// non-workspace: read from iso9660
 	// workspace: read from regular filesystem
-	if fs.workspace != "" {
-		fullPath := path.Join(fs.workspace, p)
+	if fsm.workspace != "" {
+		fullPath := path.Join(fsm.workspace, p)
 		// read the entries
 		dirEntries, err := os.ReadDir(fullPath)
 		if err != nil {
@@ -329,7 +329,7 @@ func (fs *FileSystem) ReadDir(p string) ([]os.FileInfo, error) {
 			fi = append(fi, info)
 		}
 	} else {
-		dirEntries, err := fs.readDirectory(p)
+		dirEntries, err := fsm.readDirectory(p)
 		if err != nil {
 			return nil, fmt.Errorf("error reading directory %s: %v", p, err)
 		}
@@ -351,7 +351,7 @@ func (fs *FileSystem) ReadDir(p string) ([]os.FileInfo, error) {
 // accepts normal os.OpenFile flags
 //
 // returns an error if the file does not exist
-func (fs *FileSystem) OpenFile(p string, flag int) (filesystem.File, error) {
+func (fsm *FileSystem) OpenFile(p string, flag int) (filesystem.File, error) {
 	var f filesystem.File
 	var err error
 
@@ -366,14 +366,14 @@ func (fs *FileSystem) OpenFile(p string, flag int) (filesystem.File, error) {
 
 	// cannot open to write or append or create if we do not have a workspace
 	writeMode := flag&os.O_WRONLY != 0 || flag&os.O_RDWR != 0 || flag&os.O_APPEND != 0 || flag&os.O_CREATE != 0 || flag&os.O_TRUNC != 0 || flag&os.O_EXCL != 0
-	if fs.workspace == "" {
+	if fsm.workspace == "" {
 		if writeMode {
 			return nil, fmt.Errorf("cannot write to read-only filesystem")
 		}
 
 		// get the directory entries
 		var entries []*directoryEntry
-		entries, err = fs.readDirectory(dir)
+		entries, err = fsm.readDirectory(dir)
 		if err != nil {
 			return nil, fmt.Errorf("could not read directory entries for %s", dir)
 		}
@@ -405,7 +405,7 @@ func (fs *FileSystem) OpenFile(p string, flag int) (filesystem.File, error) {
 			offset:         0,
 		}
 	} else {
-		f, err = os.OpenFile(path.Join(fs.workspace, p), flag, 0o644)
+		f, err = os.OpenFile(path.Join(fsm.workspace, p), flag, 0o644)
 		if err != nil {
 			return nil, fmt.Errorf("target file %s does not exist: %v", p, err)
 		}
@@ -415,7 +415,7 @@ func (fs *FileSystem) OpenFile(p string, flag int) (filesystem.File, error) {
 }
 
 // readDirectory - read directory entry on iso only (not workspace)
-func (fs *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
+func (fsm *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
 	var (
 		location, size uint32
 		err            error
@@ -424,7 +424,7 @@ func (fs *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
 
 	// try from path table, then walk the directory tree, unless we were told explicitly not to
 	usePathtable := true
-	for _, e := range fs.suspExtensions {
+	for _, e := range fsm.suspExtensions {
 		usePathtable = e.UsePathtable()
 		if !usePathtable {
 			break
@@ -432,14 +432,14 @@ func (fs *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
 	}
 
 	if usePathtable {
-		location = fs.pathTable.getLocation(p)
+		location = fsm.pathTable.getLocation(p)
 	}
 
 	// if we found it, read the first directory entry to get the size
 	if location != 0 {
 		// we need 4 bytes to read the size of the directory; it is at offset 10 from beginning
 		dirb := make([]byte, 4)
-		n, err = fs.file.ReadAt(dirb, int64(location)*fs.blocksize+10)
+		n, err = fsm.file.ReadAt(dirb, int64(location)*fsm.blocksize+10)
 		if err != nil {
 			return nil, fmt.Errorf("could not read directory %s: %v", p, err)
 		}
@@ -451,7 +451,7 @@ func (fs *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
 	} else {
 		// if we could not find the location in the path table, try reading directly from the disk
 		//   it is slow, but this is how Unix does it, since many iso creators *do* create illegitimate disks
-		location, size, err = fs.rootDir.getLocation(p)
+		location, size, err = fsm.rootDir.getLocation(p)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read directory tree for %s: %v", p, err)
 		}
@@ -464,7 +464,7 @@ func (fs *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
 
 	// we have a location, let's read the directories from it
 	b := make([]byte, size)
-	n, err = fs.file.ReadAt(b, int64(location)*fs.blocksize)
+	n, err = fsm.file.ReadAt(b, int64(location)*fsm.blocksize)
 	if err != nil {
 		return nil, fmt.Errorf("could not read directory entries for %s: %v", p, err)
 	}
@@ -472,7 +472,7 @@ func (fs *FileSystem) readDirectory(p string) ([]*directoryEntry, error) {
 		return nil, fmt.Errorf("reading directory %s returned %d bytes read instead of expected %d", p, n, size)
 	}
 	// parse the entries
-	entries, err := parseDirEntries(b, fs)
+	entries, err := parseDirEntries(b, fsm)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse directory entries for %s: %v", p, err)
 	}
@@ -488,13 +488,13 @@ func validateBlocksize(blocksize int64) error {
 	}
 }
 
-func (fs *FileSystem) Label() string {
-	if fs.volumes.primary == nil {
+func (fsm *FileSystem) Label() string {
+	if fsm.volumes.primary == nil {
 		return ""
 	}
-	return fs.volumes.primary.volumeIdentifier
+	return fsm.volumes.primary.volumeIdentifier
 }
 
-func (fs *FileSystem) SetLabel(string) error {
+func (fsm *FileSystem) SetLabel(string) error {
 	return fmt.Errorf("ISO9660 filesystem is read-only")
 }

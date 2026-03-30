@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -35,6 +36,8 @@ type machineProviderInput struct {
 	userTags         map[string]string
 	publicSubnet     bool
 	securityGroupIDs []string
+	cpuOptions       *awstypes.CPUOptions
+	dedicatedHost    string
 }
 
 // Machines returns a list of machines for a machinepool.
@@ -77,6 +80,7 @@ func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *
 			userTags:         userTags,
 			publicSubnet:     publicSubnet,
 			securityGroupIDs: pool.Platform.AWS.AdditionalSecurityGroupIDs,
+			cpuOptions:       mpool.CPUOptions,
 		})
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to create provider")
@@ -239,11 +243,12 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		BlockDevices: []machineapi.BlockDeviceMappingSpec{
 			{
 				EBS: &machineapi.EBSBlockDeviceSpec{
-					VolumeType: pointer.String(in.root.Type),
-					VolumeSize: pointer.Int64(int64(in.root.Size)),
-					Iops:       pointer.Int64(int64(in.root.IOPS)),
-					Encrypted:  pointer.Bool(true),
-					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.String(in.root.KMSKeyARN)},
+					VolumeType:    pointer.String(in.root.Type),
+					VolumeSize:    pointer.Int64(int64(in.root.Size)),
+					Iops:          pointer.Int64(int64(in.root.IOPS)),
+					ThroughputMib: in.root.Throughput,
+					Encrypted:     pointer.Bool(true),
+					KMSKey:        machineapi.AWSResourceReference{ARN: pointer.String(in.root.KMSKeyARN)},
 				},
 			},
 		},
@@ -289,6 +294,27 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 
 	if in.imds.Authentication != "" {
 		config.MetadataServiceOptions.Authentication = machineapi.MetadataServiceAuthentication(in.imds.Authentication)
+	}
+
+	if in.cpuOptions != nil {
+		cpuOptions := machineapi.CPUOptions{}
+
+		if in.cpuOptions.ConfidentialCompute != nil {
+			cpuOptions.ConfidentialCompute = ptr.To(machineapi.AWSConfidentialComputePolicy(*in.cpuOptions.ConfidentialCompute))
+		}
+
+		config.CPUOptions = &cpuOptions
+	}
+
+	if in.dedicatedHost != "" {
+		config.Placement.Tenancy = machineapi.HostTenancy
+		config.Placement.Host = &machineapi.HostPlacement{
+			Affinity: ptr.To(machineapi.HostAffinityDedicatedHost),
+			DedicatedHost: &machineapi.DedicatedHost{
+				AllocationStrategy: ptr.To(machineapi.AllocationStrategyUserProvided),
+				ID:                 in.dedicatedHost,
+			},
+		}
 	}
 
 	return config, nil
@@ -339,4 +365,19 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 
 	providerSpec := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
 	providerSpec.LoadBalancers = lbrefs
+}
+
+// DedicatedHost sets dedicated hosts for the specified zone.
+func DedicatedHost(hosts map[string]aws.Host, placement *awstypes.HostPlacement, zone string) string {
+	// If install-config has HostPlacements configured, lets check the DedicatedHosts to see if one matches our region & zone.
+	if placement != nil {
+		// We only support one host ID currently for an instance.  Need to also get host that matches the zone the machines will be put into.
+		for _, host := range placement.DedicatedHost {
+			hostDetails, found := hosts[host.ID]
+			if found && hostDetails.Zone == zone {
+				return hostDetails.ID
+			}
+		}
+	}
+	return ""
 }

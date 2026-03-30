@@ -12,6 +12,10 @@ type FakeOperatorV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeOperatorV1alpha1) ClusterAPIs() v1alpha1.ClusterAPIInterface {
+	return newFakeClusterAPIs(c)
+}
+
 func (c *FakeOperatorV1alpha1) ClusterVersionOperators() v1alpha1.ClusterVersionOperatorInterface {
 	return newFakeClusterVersionOperators(c)
 }

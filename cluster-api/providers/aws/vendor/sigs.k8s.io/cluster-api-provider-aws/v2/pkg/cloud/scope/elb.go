@@ -19,7 +19,7 @@ package scope
 import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 // ELBScope is a scope for use with the ELB reconciling service.
@@ -39,10 +39,12 @@ type ELBScope interface {
 	VPC() *infrav1.VPCSpec
 
 	// ControlPlaneLoadBalancer returns the AWSLoadBalancerSpec
+	//
 	// Deprecated: Use ControlPlaneLoadBalancers()
 	ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec
 
 	// ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing)
+	//
 	// Deprecated: This method is going to be removed in a future release. Use LoadBalancer.Scheme.
 	ControlPlaneLoadBalancerScheme() infrav1.ELBScheme
 

@@ -30,9 +30,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/container/nodepools"
-	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api-provider-gcp/pkg/capiutils"
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -41,7 +40,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/scope"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -81,8 +80,8 @@ func GetOwnerClusterKey(obj metav1.ObjectMeta) (*client.ObjectKey, error) {
 }
 
 func machinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind) handler.MapFunc {
-	return func(_ context.Context, o client.Object) []reconcile.Request {
-		m, ok := o.(*expclusterv1.MachinePool)
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		m, ok := o.(*clusterv1.MachinePool)
 		if !ok {
 			panic(fmt.Sprintf("Expected a MachinePool but got a %T", o))
 		}
@@ -91,6 +90,7 @@ func machinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind) handler.Map
 		// Return early if the GroupKind doesn't match what we expect
 		infraGK := m.Spec.Template.Spec.InfrastructureRef.GroupVersionKind().GroupKind()
 		if gk != infraGK {
+			log.FromContext(ctx).Info("gk does not match", "gk", gk, "infraGK", infraGK)
 			return nil
 		}
 
@@ -112,7 +112,7 @@ func managedControlPlaneToManagedMachinePoolMapFunc(c client.Client, gvk schema.
 			panic(fmt.Sprintf("Expected a GCPManagedControlPlane but got a %T", o))
 		}
 
-		if !gcpManagedControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !gcpManagedControlPlane.DeletionTimestamp.IsZero() {
 			return nil
 		}
 
@@ -125,7 +125,7 @@ func managedControlPlaneToManagedMachinePoolMapFunc(c client.Client, gvk schema.
 			return nil
 		}
 
-		managedPoolForClusterList := expclusterv1.MachinePoolList{}
+		managedPoolForClusterList := clusterv1.MachinePoolList{}
 		if err := c.List(
 			ctx, &managedPoolForClusterList, client.InNamespace(clusterKey.Namespace), client.MatchingLabels{clusterv1.ClusterNameLabel: clusterKey.Name},
 		); err != nil {
@@ -159,7 +159,7 @@ func (r *GCPManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 		For(&infrav1exp.GCPManagedMachinePool{}).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
 		Watches(
-			&expclusterv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(gvk)),
 		).
 		Watches(
@@ -180,7 +180,7 @@ func (r *GCPManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 	if err := c.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
-			predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+			capiutils.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
 		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
@@ -189,8 +189,8 @@ func (r *GCPManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 }
 
 // getMachinePoolByName finds and return a Machine object using the specified params.
-func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*expclusterv1.MachinePool, error) {
-	m := &expclusterv1.MachinePool{}
+func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*clusterv1.MachinePool, error) {
+	m := &clusterv1.MachinePool{}
 	key := client.ObjectKey{Name: name, Namespace: namespace}
 	if err := c.Get(ctx, key, m); err != nil {
 		return nil, err
@@ -199,7 +199,7 @@ func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name 
 }
 
 // getOwnerMachinePool returns the MachinePool object owning the current resource.
-func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*expclusterv1.MachinePool, error) {
+func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
 	for _, ref := range obj.OwnerReferences {
 		if ref.Kind != "MachinePool" {
 			continue
@@ -208,7 +208,7 @@ func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.Object
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		if gv.Group == expclusterv1.GroupVersion.Group {
+		if gv.Group == clusterv1.GroupVersion.Group {
 			return getMachinePoolByName(ctx, c, obj.Namespace, ref.Name)
 		}
 	}
@@ -220,6 +220,7 @@ func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.Object
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=gcpmanagedmachinepools/finalizers,verbs=update
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=gcpmanagedcontrolplanes,verbs=get;list;watch
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=gcpmanagedclusters,verbs=get;list;watch
+// +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters;clusters/status,verbs=get;list;watch;patch
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinepools;machinepools/status,verbs=get;list;watch
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters;clusters/status,verbs=get;list;watch
 
@@ -231,11 +232,11 @@ func (r *GCPManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 
 	// Get the managed machine pool
 	gcpManagedMachinePool := &infrav1exp.GCPManagedMachinePool{}
-	if err := r.Client.Get(ctx, req.NamespacedName, gcpManagedMachinePool); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, gcpManagedMachinePool); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{}, fmt.Errorf("getting GCPManagedMachinePool: %w", err)
 	}
 
 	// Get the machine pool
@@ -250,15 +251,17 @@ func (r *GCPManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	// Get the cluster
-	cluster, err := util.GetClusterFromMetadata(ctx, r.Client, machinePool.ObjectMeta)
+	cluster, err := capiutils.GetClusterFromMetadata(ctx, r.Client, machinePool.ObjectMeta)
 	if err != nil {
 		log.Info("Failed to retrieve Cluster from MachinePool")
 		return ctrl.Result{}, err
 	}
-	if annotations.IsPaused(cluster, gcpManagedMachinePool) {
+	if capiutils.IsPaused(cluster, gcpManagedMachinePool) {
 		log.Info("Reconciliation is paused for this object")
 		return ctrl.Result{}, nil
 	}
+
+	log.WithValues("ownerCluster", cluster.Name)
 
 	// Get the managed cluster
 	gcpManagedClusterKey := client.ObjectKey{
@@ -266,7 +269,7 @@ func (r *GCPManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 		Name:      cluster.Spec.InfrastructureRef.Name,
 	}
 	gcpManagedCluster := &infrav1exp.GCPManagedCluster{}
-	if err := r.Client.Get(ctx, gcpManagedClusterKey, gcpManagedCluster); err != nil {
+	if err := r.Get(ctx, gcpManagedClusterKey, gcpManagedCluster); err != nil {
 		log.Error(err, "Failed to retrieve GCPManagedCluster from the API Server")
 		return ctrl.Result{}, err
 	}
@@ -276,7 +279,7 @@ func (r *GCPManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 		Name:      cluster.Spec.ControlPlaneRef.Name,
 	}
 	gcpManagedControlPlane := &infrav1exp.GCPManagedControlPlane{}
-	if err := r.Client.Get(ctx, gcpManagedControlPlaneKey, gcpManagedControlPlane); err != nil {
+	if err := r.Get(ctx, gcpManagedControlPlaneKey, gcpManagedControlPlane); err != nil {
 		log.Info("Failed to retrieve ManagedControlPlane from ManagedMachinePool")
 		return reconcile.Result{}, nil
 	}
@@ -321,6 +324,7 @@ func (r *GCPManagedMachinePoolReconciler) reconcile(ctx context.Context, managed
 	log.Info("Reconciling GCPManagedMachinePool")
 
 	controllerutil.AddFinalizer(managedMachinePoolScope.GCPManagedMachinePool, infrav1exp.ManagedMachinePoolFinalizer)
+	managedMachinePoolScope.SetInfrastructureMachineKind()
 	if err := managedMachinePoolScope.PatchObject(); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -347,10 +351,6 @@ func (r *GCPManagedMachinePoolReconciler) reconcile(ctx context.Context, managed
 		}
 		if res.RequeueAfter > 0 {
 			log.V(4).Info("Reconciler requested requeueAfter", "reconciler", name, "after", res.RequeueAfter)
-			return res, nil
-		}
-		if res.Requeue {
-			log.V(4).Info("Reconciler requested requeue", "reconciler", name)
 			return res, nil
 		}
 	}
@@ -383,10 +383,6 @@ func (r *GCPManagedMachinePoolReconciler) reconcileDelete(ctx context.Context, m
 		}
 		if res.RequeueAfter > 0 {
 			log.V(4).Info("Reconciler requested requeueAfter", "reconciler", name, "after", res.RequeueAfter)
-			return res, nil
-		}
-		if res.Requeue {
-			log.V(4).Info("Reconciler requested requeue", "reconciler", name)
 			return res, nil
 		}
 	}

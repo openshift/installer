@@ -14,6 +14,7 @@ import (
 	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	ovirtdefaults "github.com/openshift/installer/pkg/types/ovirt/defaults"
+	powervcdefaults "github.com/openshift/installer/pkg/types/powervc/defaults"
 	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheredefaults "github.com/openshift/installer/pkg/types/vsphere/defaults"
 )
@@ -110,6 +111,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		ibmclouddefaults.SetPlatformDefaults(c.Platform.IBMCloud)
 	case c.Platform.OpenStack != nil:
 		openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
+		// Rather than being standalone, PowerVC has both OpenStack and its own set.
+		// Since OpenStack gets tested first, set our defaults here.
+		if c.Platform.PowerVC != nil {
+			powervcdefaults.SetPlatformDefaults(c.Platform.PowerVC, c.Platform.OpenStack, c.Networking)
+		}
 	case c.Platform.VSphere != nil:
 		vspheredefaults.SetPlatformDefaults(c.Platform.VSphere, c)
 	case c.Platform.BareMetal != nil:

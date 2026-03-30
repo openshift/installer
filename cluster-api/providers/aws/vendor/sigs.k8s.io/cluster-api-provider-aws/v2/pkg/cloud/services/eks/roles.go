@@ -17,13 +17,13 @@ limitations under the License.
 package eks
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/smithy-go"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/cmd/clusterawsadm/api/bootstrap/v1beta1"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
@@ -31,7 +31,7 @@ import (
 	eksiam "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/eks/iam"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/eks"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -244,7 +244,7 @@ func (s *NodegroupService) reconcileNodegroupIAMRole(ctx context.Context) error 
 }
 
 func (s *NodegroupService) deleteNodegroupIAMRole(ctx context.Context) (reterr error) {
-	if err := s.scope.IAMReadyFalse(clusterv1.DeletingReason, ""); err != nil {
+	if err := s.scope.IAMReadyFalse(clusterv1beta1.DeletingReason, ""); err != nil {
 		return err
 	}
 	defer func() {
@@ -255,7 +255,7 @@ func (s *NodegroupService) deleteNodegroupIAMRole(ctx context.Context) (reterr e
 			if err := s.scope.IAMReadyFalse("DeletingFailed", reterr.Error()); err != nil {
 				reterr = err
 			}
-		} else if err := s.scope.IAMReadyFalse(clusterv1.DeletedReason, ""); err != nil {
+		} else if err := s.scope.IAMReadyFalse(clusterv1beta1.DeletedReason, ""); err != nil {
 			reterr = err
 		}
 	}()
@@ -356,7 +356,7 @@ func (s *FargateService) reconcileFargateIAMRole(ctx context.Context) (requeue b
 }
 
 func (s *FargateService) deleteFargateIAMRole(ctx context.Context) (reterr error) {
-	if err := s.scope.IAMReadyFalse(clusterv1.DeletingReason, ""); err != nil {
+	if err := s.scope.IAMReadyFalse(clusterv1beta1.DeletingReason, ""); err != nil {
 		return err
 	}
 	defer func() {
@@ -367,7 +367,7 @@ func (s *FargateService) deleteFargateIAMRole(ctx context.Context) (reterr error
 			if err := s.scope.IAMReadyFalse("DeletingFailed", reterr.Error()); err != nil {
 				reterr = err
 			}
-		} else if err := s.scope.IAMReadyFalse(clusterv1.DeletedReason, ""); err != nil {
+		} else if err := s.scope.IAMReadyFalse(clusterv1beta1.DeletedReason, ""); err != nil {
 			reterr = err
 		}
 	}()

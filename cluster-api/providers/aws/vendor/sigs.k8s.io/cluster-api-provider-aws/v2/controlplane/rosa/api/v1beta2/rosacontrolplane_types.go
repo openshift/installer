@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // RosaEndpointAccessType specifies the publishing scope of cluster endpoints.
@@ -257,7 +257,7 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// ClusterRegistryConfig represents registry config used with the cluster.
 	// +optional
@@ -271,6 +271,52 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// for the ROSA HCP cluster.
 	// +optional
 	ROSANetworkRef *corev1.LocalObjectReference `json:"rosaNetworkRef,omitempty"`
+
+	// cloudWatchlogForwarder set the cloudWatch log forward config for applications and groupVersions.
+	// +optional
+	CloudWatchLogForwarder *CloudWatchLogForwarderConfig `json:"cloudWatchlogForwarder,omitempty"`
+
+	// s3LogForwarder set the AWS S3 log forward config for applications and groupVersions.
+	// +optional
+	S3LogForwarder *S3LogForwarderConfig `json:"s3LogForwarder,omitempty"`
+}
+
+// CloudWatchLogForwarderConfig present the cloudWatch log forward config for applications and groupVersions.
+type CloudWatchLogForwarderConfig struct {
+	// applications list included in the groupLog Ids ex; for groupLog api allowed applications as audit-webhook.
+	// +optional
+	Applications []string `json:"applications,omitempty"`
+
+	// groupLogIDs is list of available groupLog Ids ex; api, authentication, controller manager, scheduler
+	// +optional
+	GroupLogIDs []string `json:"groupLogIDs,omitempty"`
+
+	// cloudWatchLogRoleArn is the ARN of the IAM CloudWatch role for log distribution.
+	// +optional
+	CloudWatchLogRoleArn string `json:"cloudWatchLogRoleArn,omitempty"`
+
+	// cloudWatchLogGroupName is the name of the CloudWatch log group.
+	// +optional
+	CloudWatchLogGroupName string `json:"cloudWatchLogGroupName,omitempty"`
+}
+
+// S3LogForwarderConfig present the AWS S3 log forward config for applications and groupVersions.
+type S3LogForwarderConfig struct {
+	// applications list included in the groupLog Ids ex; for groupLog api allowed applications as audit-webhook.
+	// +optional
+	Applications []string `json:"applications,omitempty"`
+
+	// groupLogIDs is list of available groupLog Ids ex; api, authentication, controller manager, scheduler
+	// +optional
+	GroupLogIDs []string `json:"groupLogIDs,omitempty"`
+
+	// s3ConfigBucketName is the name of the S3 bucket
+	// +optional
+	S3ConfigBucketName string `json:"s3ConfigBucketName,omitempty"`
+
+	// s3ConfigBucketPrefix is the prefix to use for objects stored in the S3 bucket.
+	// +optional
+	S3ConfigBucketPrefix string `json:"s3ConfigBucketPrefix,omitempty"`
 }
 
 // AutoNode set the AutoNode mode and AutoNode role ARN.
@@ -397,7 +443,7 @@ type DefaultMachinePoolSpec struct {
 
 // AutoScaling specifies scaling options.
 type AutoScaling struct {
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	MinReplicas int `json:"minReplicas,omitempty"`
 	// +kubebuilder:validation:Minimum=1
 	MaxReplicas int `json:"maxReplicas,omitempty"`
@@ -806,7 +852,7 @@ type RosaControlPlaneStatus struct {
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 	// Conditions specifies the conditions for the managed control plane
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// ID is the cluster ID given by ROSA.
 	ID string `json:"id,omitempty"`
@@ -850,12 +896,12 @@ type ROSAControlPlaneList struct {
 }
 
 // GetConditions returns the control planes conditions.
-func (r *ROSAControlPlane) GetConditions() clusterv1.Conditions {
+func (r *ROSAControlPlane) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
 // SetConditions sets the status conditions for the AWSManagedControlPlane.
-func (r *ROSAControlPlane) SetConditions(conditions clusterv1.Conditions) {
+func (r *ROSAControlPlane) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

@@ -14,6 +14,52 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-@ref(path = "/clusters_mgmt/v1/version")
+// Representation of an _OpenShift_ version.
 class Version {
+	// RawID is the id of the version - without channel group and prefix.
+	RawID String
+
+	// Indicates if this version can be used to create clusters.
+	Enabled Boolean
+
+	// Indicates if this should be selected as the default version when a cluster is created
+	// without specifying explicitly the version.
+	Default Boolean
+
+	// ChannelGroup is the name of the group where this image belongs.
+	// ChannelGroup is a mechanism to partition the images to different groups,
+	// each image belongs to only a single group.
+	ChannelGroup String
+
+	// ROSAEnabled indicates whether this version can be used to create ROSA clusters.
+	ROSAEnabled Boolean
+
+	// HostedControlPlaneEnabled indicates whether this version can be used to create HCP clusters.
+	HostedControlPlaneEnabled Boolean
+
+	// HostedControlPlaneDefault is a flag that indicates if this should be selected as the default version when a
+	// HCP cluster is created without specifying explicitly the version.
+	HostedControlPlaneDefault Boolean
+
+	// AvailableUpgrades is the list of versions this version can be upgraded to.
+	AvailableUpgrades []String
+
+	// EndOfLifeTimestamp is the date and time when the version will get to End of Life, using the
+	// format defined in https://www.ietf.org/rfc/rfc3339.txt[RC3339].
+	EndOfLifeTimestamp Date
+
+	// ReleaseImage contains the URI of Openshift release image for amd64 architecture.
+	ReleaseImage String
+
+	// ImageOverrides contains the lists of images per cloud provider.
+	ImageOverrides ImageOverrides
+
+	// GCPMarketplaceEnabled indicates if this version can be used to create GCP Marketplace clusters.
+	GCPMarketplaceEnabled Boolean
+
+	// ReleaseImages contains the URI of OpenShift release images for arm64 and multi architectures.
+	ReleaseImages ReleaseImages
+
+	// WifEnabled is a flag that indicates whether this version is enabled for Workload Identity Federation.
+	WifEnabled Boolean
 }

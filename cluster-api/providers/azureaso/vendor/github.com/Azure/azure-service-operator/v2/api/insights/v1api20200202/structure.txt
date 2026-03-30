@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202
 ---------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-02-02"
+
 Component: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (21 properties)
@@ -90,3 +91,4 @@ Component: Resource
     ├── TenantId: *string
     ├── Type: *string
     └── WorkspaceResourceId: *string
+

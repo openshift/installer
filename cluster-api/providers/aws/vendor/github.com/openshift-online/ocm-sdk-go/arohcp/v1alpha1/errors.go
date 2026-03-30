@@ -18,3 +18,8 @@ limitations under the License.
 // your changes will be lost when the file is generated again.
 
 package v1alpha1 // github.com/openshift-online/ocm-sdk-go/arohcp/v1alpha1
+
+const (
+	// Can't create cluster, the given external identifier is already in use.
+	DuplicatedExternalIDError = 1001
+)

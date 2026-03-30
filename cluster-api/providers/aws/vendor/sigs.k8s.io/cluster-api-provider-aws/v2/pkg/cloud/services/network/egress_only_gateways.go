@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/tags"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 )
 
 func (s *Service) reconcileEgressOnlyInternetGateways() error {
@@ -79,7 +79,7 @@ func (s *Service) reconcileEgressOnlyInternetGateways() error {
 		record.Warnf(s.scope.InfraCluster(), "FailedTagEgressOnlyInternetGateway", "Failed to tag managed Egress Only Internet Gateway %q: %v", gateway.EgressOnlyInternetGatewayId, err)
 		return errors.Wrapf(err, "failed to tag egress only internet gateway %q", *gateway.EgressOnlyInternetGatewayId)
 	}
-	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition)
+	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition)
 	return nil
 }
 

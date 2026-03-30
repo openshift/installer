@@ -27,7 +27,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 )
 
@@ -136,15 +136,15 @@ func (p *defaultSubnetPlacementStrategy) getSubnetsForAZs(azs []string, controlP
 // getUnstructuredControlPlane returns the unstructured object for the control plane, if any.
 // When the reference is not set, it returns an empty object.
 func getUnstructuredControlPlane(ctx context.Context, client client.Client, cluster *clusterv1.Cluster) (*unstructured.Unstructured, error) {
-	if cluster.Spec.ControlPlaneRef == nil {
+	if !cluster.Spec.ControlPlaneRef.IsDefined() {
 		// If the control plane ref is not set, return an empty object.
 		// Not having a control plane ref is valid given API contracts.
 		return &unstructured.Unstructured{}, nil
 	}
 
-	u, err := external.Get(ctx, client, cluster.Spec.ControlPlaneRef)
+	u, err := external.GetObjectFromContractVersionedRef(ctx, client, cluster.Spec.ControlPlaneRef, cluster.Namespace)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve control plane object %s/%s", cluster.Spec.ControlPlaneRef.Namespace, cluster.Spec.ControlPlaneRef.Name)
+		return nil, errors.Wrapf(err, "failed to retrieve control plane object %s/%s", cluster.Namespace, cluster.Spec.ControlPlaneRef.Name)
 	}
 	return u, nil
 }

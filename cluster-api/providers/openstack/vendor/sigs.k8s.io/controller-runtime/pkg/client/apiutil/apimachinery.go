@@ -72,7 +72,10 @@ func IsObjectNamespaced(obj runtime.Object, scheme *runtime.Scheme, restmapper m
 // IsGVKNamespaced returns true if the object having the provided
 // GVK is namespace scoped.
 func IsGVKNamespaced(gvk schema.GroupVersionKind, restmapper meta.RESTMapper) (bool, error) {
-	restmapping, err := restmapper.RESTMapping(schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind})
+	// Fetch the RESTMapping using the complete GVK. If we exclude the Version, the Version set
+	// will be populated using the cached Group if available. This can lead to failures updating
+	// the cache with new Versions of CRDs registered at runtime.
+	restmapping, err := restmapper.RESTMapping(schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}, gvk.Version)
 	if err != nil {
 		return false, fmt.Errorf("failed to get restmapping: %w", err)
 	}
@@ -158,15 +161,27 @@ func GVKForObject(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersi
 // RESTClientForGVK constructs a new rest.Interface capable of accessing the resource associated
 // with the given GroupVersionKind. The REST client will be configured to use the negotiated serializer from
 // baseConfig, if set, otherwise a default serializer will be set.
-func RESTClientForGVK(gvk schema.GroupVersionKind, isUnstructured bool, baseConfig *rest.Config, codecs serializer.CodecFactory, httpClient *http.Client) (rest.Interface, error) {
+func RESTClientForGVK(
+	gvk schema.GroupVersionKind,
+	forceDisableProtoBuf bool,
+	isUnstructured bool,
+	baseConfig *rest.Config,
+	codecs serializer.CodecFactory,
+	httpClient *http.Client,
+) (rest.Interface, error) {
 	if httpClient == nil {
 		return nil, fmt.Errorf("httpClient must not be nil, consider using rest.HTTPClientFor(c) to create a client")
 	}
-	return rest.RESTClientForConfigAndClient(createRestConfig(gvk, isUnstructured, baseConfig, codecs), httpClient)
+	return rest.RESTClientForConfigAndClient(createRestConfig(gvk, forceDisableProtoBuf, isUnstructured, baseConfig, codecs), httpClient)
 }
 
 // createRestConfig copies the base config and updates needed fields for a new rest config.
-func createRestConfig(gvk schema.GroupVersionKind, isUnstructured bool, baseConfig *rest.Config, codecs serializer.CodecFactory) *rest.Config {
+func createRestConfig(gvk schema.GroupVersionKind,
+	forceDisableProtoBuf bool,
+	isUnstructured bool,
+	baseConfig *rest.Config,
+	codecs serializer.CodecFactory,
+) *rest.Config {
 	gv := gvk.GroupVersion()
 
 	cfg := rest.CopyConfig(baseConfig)
@@ -180,7 +195,7 @@ func createRestConfig(gvk schema.GroupVersionKind, isUnstructured bool, baseConf
 		cfg.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
 	// TODO(FillZpp): In the long run, we want to check discovery or something to make sure that this is actually true.
-	if cfg.ContentType == "" && !isUnstructured {
+	if cfg.ContentType == "" && !forceDisableProtoBuf {
 		protobufSchemeLock.RLock()
 		if protobufScheme.Recognizes(gvk) {
 			cfg.ContentType = runtime.ContentTypeProtobuf

@@ -70,7 +70,7 @@ type CreateHealthCheckInput struct {
 	//   - If you send a CreateHealthCheck request with the same CallerReference and
 	//   settings as a previous request, and if the health check doesn't exist, Amazon
 	//   Route 53 creates the health check. If the health check does exist, Route 53
-	//   returns the settings for the existing health check.
+	//   returns the health check configuration in the response.
 	//
 	//   - If you send a CreateHealthCheck request with the same CallerReference as a
 	//   deleted health check, regardless of the settings, Route 53 returns a
@@ -182,6 +182,9 @@ func (c *Client) addOperationCreateHealthCheckMiddlewares(stack *middleware.Stac
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpCreateHealthCheckValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -203,16 +206,13 @@ func (c *Client) addOperationCreateHealthCheckMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

@@ -132,11 +132,12 @@ func defaultAzureMachinePoolPlatform(env azuretypes.CloudEnvironment) azuretypes
 }
 
 func defaultGCPMachinePoolPlatform(arch types.Architecture) gcptypes.MachinePool {
+	instanceType := icgcp.DefaultInstanceTypeForArch(arch)
 	return gcptypes.MachinePool{
-		InstanceType: icgcp.DefaultInstanceTypeForArch(arch),
+		InstanceType: instanceType,
 		OSDisk: gcptypes.OSDisk{
 			DiskSizeGB: powerOfTwoRootVolumeSize,
-			DiskType:   "pd-ssd",
+			DiskType:   gcptypes.DefaultDiskTypeForInstance(instanceType),
 		},
 	}
 }
@@ -388,7 +389,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				machineConfigs = append(machineConfigs, ignRoutes)
 			}
 		}
-		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateMultiDiskSetup) {
+		if installConfig.Config.Enabled(features.FeatureGateMultiDiskSetup) {
 			for i, diskSetup := range pool.DiskSetup {
 				var dataDisk any
 				var diskName string
@@ -534,6 +535,14 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				}
 			}
 
+			dHosts := map[string]icaws.Host{}
+			if mpool.HostPlacement != nil && mpool.HostPlacement.Affinity != nil && *mpool.HostPlacement.Affinity == awstypes.HostAffinityDedicatedHost {
+				dHosts, err = installConfig.AWS.DedicatedHosts(ctx, mpool.HostPlacement.DedicatedHost)
+				if err != nil {
+					return fmt.Errorf("failed to retrieve dedicated hosts for compute pool: %w", err)
+				}
+			}
+
 			pool.Platform.AWS = &mpool
 			sets, err := aws.MachineSets(&aws.MachineSetInput{
 				ClusterID:                clusterID.InfraID,
@@ -544,6 +553,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				Pool:                     &pool,
 				Role:                     pool.Name,
 				UserDataSecret:           workerUserDataSecretName,
+				Hosts:                    dHosts,
 			})
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
@@ -572,7 +582,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 
 			if len(mpool.Zones) == 0 {
-				azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
+				azs, err := installConfig.Azure.VMAvailabilityZones(ctx, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -581,6 +591,18 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 					// if no azs are given we set to []string{""} for convenience over later operations.
 					// It means no-zoned for the machine API
 					mpool.Zones = []string{""}
+				}
+			}
+			subnetZones := []string{}
+			if ic.Azure.OutboundType == azuretypes.NATGatewayMultiZoneOutboundType {
+				subnetZones, err = installConfig.Azure.AvailabilityZones(ctx)
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				computeSubnet := installConfig.Config.Azure.ComputeSubnetName(clusterID.InfraID)
+				_, err := installConfig.Azure.GenerateZonesSubnetMap(installConfig.Config.Azure.Subnets, computeSubnet)
+				if err != nil {
+					return err
 				}
 			}
 
@@ -598,13 +620,12 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 			pool.Platform.Azure = &mpool
 
-			capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+			capabilities, err := installConfig.Azure.ComputeCapabilities()
 			if err != nil {
 				return err
 			}
 
-			useImageGallery := ic.Platform.Azure.CloudName != azuretypes.StackCloud
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, useImageGallery, session)
+			sets, err := azure.MachineSets(clusterID.InfraID, installConfig, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, subnetZones, session)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

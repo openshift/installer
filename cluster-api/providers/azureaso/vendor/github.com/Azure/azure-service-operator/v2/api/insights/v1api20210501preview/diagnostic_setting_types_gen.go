@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/insights/v1api20210501preview/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20210501preview/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (setting *DiagnosticSetting) ConvertTo(hub conversion.Hub) error {
 
 	return setting.AssignProperties_To_DiagnosticSetting(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-insights-azure-com-v1api20210501preview-diagnosticsetting,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=insights.azure.com,resources=diagnosticsettings,verbs=create;update,versions=v1api20210501preview,name=default.v1api20210501preview.diagnosticsettings.insights.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &DiagnosticSetting{}
-
-// Default applies defaults to the DiagnosticSetting resource
-func (setting *DiagnosticSetting) Default() {
-	setting.defaultImpl()
-	var temp any = setting
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (setting *DiagnosticSetting) defaultAzureName() {
-	if setting.Spec.AzureName == "" {
-		setting.Spec.AzureName = setting.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the DiagnosticSetting resource
-func (setting *DiagnosticSetting) defaultImpl() { setting.defaultAzureName() }
 
 var _ configmaps.Exporter = &DiagnosticSetting{}
 
@@ -173,6 +147,10 @@ func (setting *DiagnosticSetting) NewEmptyStatus() genruntime.ConvertibleStatus 
 
 // Owner returns the ResourceReference of the owner
 func (setting *DiagnosticSetting) Owner() *genruntime.ResourceReference {
+	if setting.Spec.Owner == nil {
+		return nil
+	}
+
 	return setting.Spec.Owner.AsResourceReference()
 }
 
@@ -188,106 +166,11 @@ func (setting *DiagnosticSetting) SetStatus(status genruntime.ConvertibleStatus)
 	var st DiagnosticSetting_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	setting.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-insights-azure-com-v1api20210501preview-diagnosticsetting,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=insights.azure.com,resources=diagnosticsettings,verbs=create;update,versions=v1api20210501preview,name=validate.v1api20210501preview.diagnosticsettings.insights.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &DiagnosticSetting{}
-
-// ValidateCreate validates the creation of the resource
-func (setting *DiagnosticSetting) ValidateCreate() (admission.Warnings, error) {
-	validations := setting.createValidations()
-	var temp any = setting
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (setting *DiagnosticSetting) ValidateDelete() (admission.Warnings, error) {
-	validations := setting.deleteValidations()
-	var temp any = setting
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (setting *DiagnosticSetting) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := setting.updateValidations()
-	var temp any = setting
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (setting *DiagnosticSetting) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){setting.validateResourceReferences, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (setting *DiagnosticSetting) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (setting *DiagnosticSetting) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateResourceReferences()
-		},
-		setting.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (setting *DiagnosticSetting) validateConfigMapDestinations() (admission.Warnings, error) {
-	if setting.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateResourceReferences validates all resource references
-func (setting *DiagnosticSetting) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&setting.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (setting *DiagnosticSetting) validateSecretDestinations() (admission.Warnings, error) {
-	if setting.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (setting *DiagnosticSetting) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*DiagnosticSetting)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, setting)
 }
 
 // AssignProperties_From_DiagnosticSetting populates our DiagnosticSetting from the provided source DiagnosticSetting
@@ -300,7 +183,7 @@ func (setting *DiagnosticSetting) AssignProperties_From_DiagnosticSetting(source
 	var spec DiagnosticSetting_Spec
 	err := spec.AssignProperties_From_DiagnosticSetting_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DiagnosticSetting_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_DiagnosticSetting_Spec() to populate field Spec")
 	}
 	setting.Spec = spec
 
@@ -308,7 +191,7 @@ func (setting *DiagnosticSetting) AssignProperties_From_DiagnosticSetting(source
 	var status DiagnosticSetting_STATUS
 	err = status.AssignProperties_From_DiagnosticSetting_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DiagnosticSetting_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_DiagnosticSetting_STATUS() to populate field Status")
 	}
 	setting.Status = status
 
@@ -326,7 +209,7 @@ func (setting *DiagnosticSetting) AssignProperties_To_DiagnosticSetting(destinat
 	var spec storage.DiagnosticSetting_Spec
 	err := setting.Spec.AssignProperties_To_DiagnosticSetting_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DiagnosticSetting_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_DiagnosticSetting_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -334,7 +217,7 @@ func (setting *DiagnosticSetting) AssignProperties_To_DiagnosticSetting(destinat
 	var status storage.DiagnosticSetting_STATUS
 	err = setting.Status.AssignProperties_To_DiagnosticSetting_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DiagnosticSetting_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_DiagnosticSetting_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -598,13 +481,13 @@ func (setting *DiagnosticSetting_Spec) ConvertSpecFrom(source genruntime.Convert
 	src = &storage.DiagnosticSetting_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = setting.AssignProperties_From_DiagnosticSetting_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -622,13 +505,13 @@ func (setting *DiagnosticSetting_Spec) ConvertSpecTo(destination genruntime.Conv
 	dst = &storage.DiagnosticSetting_Spec{}
 	err := setting.AssignProperties_To_DiagnosticSetting_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -663,7 +546,7 @@ func (setting *DiagnosticSetting_Spec) AssignProperties_From_DiagnosticSetting_S
 			var log LogSettings
 			err := log.AssignProperties_From_LogSettings(&logItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_LogSettings() to populate field Logs")
+				return eris.Wrap(err, "calling AssignProperties_From_LogSettings() to populate field Logs")
 			}
 			logList[logIndex] = log
 		}
@@ -689,7 +572,7 @@ func (setting *DiagnosticSetting_Spec) AssignProperties_From_DiagnosticSetting_S
 			var metric MetricSettings
 			err := metric.AssignProperties_From_MetricSettings(&metricItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricSettings() to populate field Metrics")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricSettings() to populate field Metrics")
 			}
 			metricList[metricIndex] = metric
 		}
@@ -703,7 +586,7 @@ func (setting *DiagnosticSetting_Spec) AssignProperties_From_DiagnosticSetting_S
 		var operatorSpec DiagnosticSettingOperatorSpec
 		err := operatorSpec.AssignProperties_From_DiagnosticSettingOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiagnosticSettingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DiagnosticSettingOperatorSpec() to populate field OperatorSpec")
 		}
 		setting.OperatorSpec = &operatorSpec
 	} else {
@@ -772,7 +655,7 @@ func (setting *DiagnosticSetting_Spec) AssignProperties_To_DiagnosticSetting_Spe
 			var log storage.LogSettings
 			err := logItem.AssignProperties_To_LogSettings(&log)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_LogSettings() to populate field Logs")
+				return eris.Wrap(err, "calling AssignProperties_To_LogSettings() to populate field Logs")
 			}
 			logList[logIndex] = log
 		}
@@ -798,7 +681,7 @@ func (setting *DiagnosticSetting_Spec) AssignProperties_To_DiagnosticSetting_Spe
 			var metric storage.MetricSettings
 			err := metricItem.AssignProperties_To_MetricSettings(&metric)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricSettings() to populate field Metrics")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricSettings() to populate field Metrics")
 			}
 			metricList[metricIndex] = metric
 		}
@@ -812,7 +695,7 @@ func (setting *DiagnosticSetting_Spec) AssignProperties_To_DiagnosticSetting_Spe
 		var operatorSpec storage.DiagnosticSettingOperatorSpec
 		err := setting.OperatorSpec.AssignProperties_To_DiagnosticSettingOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiagnosticSettingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DiagnosticSettingOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -886,7 +769,7 @@ func (setting *DiagnosticSetting_Spec) Initialize_From_DiagnosticSetting_STATUS(
 			var log LogSettings
 			err := log.Initialize_From_LogSettings_STATUS(&logItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_LogSettings_STATUS() to populate field Logs")
+				return eris.Wrap(err, "calling Initialize_From_LogSettings_STATUS() to populate field Logs")
 			}
 			logList[logIndex] = log
 		}
@@ -912,7 +795,7 @@ func (setting *DiagnosticSetting_Spec) Initialize_From_DiagnosticSetting_STATUS(
 			var metric MetricSettings
 			err := metric.Initialize_From_MetricSettings_STATUS(&metricItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MetricSettings_STATUS() to populate field Metrics")
+				return eris.Wrap(err, "calling Initialize_From_MetricSettings_STATUS() to populate field Metrics")
 			}
 			metricList[metricIndex] = metric
 		}
@@ -1016,13 +899,13 @@ func (setting *DiagnosticSetting_STATUS) ConvertStatusFrom(source genruntime.Con
 	src = &storage.DiagnosticSetting_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = setting.AssignProperties_From_DiagnosticSetting_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1040,13 +923,13 @@ func (setting *DiagnosticSetting_STATUS) ConvertStatusTo(destination genruntime.
 	dst = &storage.DiagnosticSetting_STATUS{}
 	err := setting.AssignProperties_To_DiagnosticSetting_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1217,7 +1100,7 @@ func (setting *DiagnosticSetting_STATUS) AssignProperties_From_DiagnosticSetting
 			var log LogSettings_STATUS
 			err := log.AssignProperties_From_LogSettings_STATUS(&logItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_LogSettings_STATUS() to populate field Logs")
+				return eris.Wrap(err, "calling AssignProperties_From_LogSettings_STATUS() to populate field Logs")
 			}
 			logList[logIndex] = log
 		}
@@ -1238,7 +1121,7 @@ func (setting *DiagnosticSetting_STATUS) AssignProperties_From_DiagnosticSetting
 			var metric MetricSettings_STATUS
 			err := metric.AssignProperties_From_MetricSettings_STATUS(&metricItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricSettings_STATUS() to populate field Metrics")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricSettings_STATUS() to populate field Metrics")
 			}
 			metricList[metricIndex] = metric
 		}
@@ -1261,7 +1144,7 @@ func (setting *DiagnosticSetting_STATUS) AssignProperties_From_DiagnosticSetting
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		setting.SystemData = &systemDatum
 	} else {
@@ -1307,7 +1190,7 @@ func (setting *DiagnosticSetting_STATUS) AssignProperties_To_DiagnosticSetting_S
 			var log storage.LogSettings_STATUS
 			err := logItem.AssignProperties_To_LogSettings_STATUS(&log)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_LogSettings_STATUS() to populate field Logs")
+				return eris.Wrap(err, "calling AssignProperties_To_LogSettings_STATUS() to populate field Logs")
 			}
 			logList[logIndex] = log
 		}
@@ -1328,7 +1211,7 @@ func (setting *DiagnosticSetting_STATUS) AssignProperties_To_DiagnosticSetting_S
 			var metric storage.MetricSettings_STATUS
 			err := metricItem.AssignProperties_To_MetricSettings_STATUS(&metric)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricSettings_STATUS() to populate field Metrics")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricSettings_STATUS() to populate field Metrics")
 			}
 			metricList[metricIndex] = metric
 		}
@@ -1351,7 +1234,7 @@ func (setting *DiagnosticSetting_STATUS) AssignProperties_To_DiagnosticSetting_S
 		var systemDatum storage.SystemData_STATUS
 		err := setting.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1603,7 +1486,7 @@ func (settings *LogSettings) AssignProperties_From_LogSettings(source *storage.L
 		var retentionPolicy RetentionPolicy
 		err := retentionPolicy.AssignProperties_From_RetentionPolicy(source.RetentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RetentionPolicy() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_RetentionPolicy() to populate field RetentionPolicy")
 		}
 		settings.RetentionPolicy = &retentionPolicy
 	} else {
@@ -1638,7 +1521,7 @@ func (settings *LogSettings) AssignProperties_To_LogSettings(destination *storag
 		var retentionPolicy storage.RetentionPolicy
 		err := settings.RetentionPolicy.AssignProperties_To_RetentionPolicy(&retentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RetentionPolicy() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_RetentionPolicy() to populate field RetentionPolicy")
 		}
 		destination.RetentionPolicy = &retentionPolicy
 	} else {
@@ -1678,7 +1561,7 @@ func (settings *LogSettings) Initialize_From_LogSettings_STATUS(source *LogSetti
 		var retentionPolicy RetentionPolicy
 		err := retentionPolicy.Initialize_From_RetentionPolicy_STATUS(source.RetentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling Initialize_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
 		}
 		settings.RetentionPolicy = &retentionPolicy
 	} else {
@@ -1775,7 +1658,7 @@ func (settings *LogSettings_STATUS) AssignProperties_From_LogSettings_STATUS(sou
 		var retentionPolicy RetentionPolicy_STATUS
 		err := retentionPolicy.AssignProperties_From_RetentionPolicy_STATUS(source.RetentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
 		}
 		settings.RetentionPolicy = &retentionPolicy
 	} else {
@@ -1810,7 +1693,7 @@ func (settings *LogSettings_STATUS) AssignProperties_To_LogSettings_STATUS(desti
 		var retentionPolicy storage.RetentionPolicy_STATUS
 		err := settings.RetentionPolicy.AssignProperties_To_RetentionPolicy_STATUS(&retentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RetentionPolicy_STATUS() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_RetentionPolicy_STATUS() to populate field RetentionPolicy")
 		}
 		destination.RetentionPolicy = &retentionPolicy
 	} else {
@@ -1948,7 +1831,7 @@ func (settings *MetricSettings) AssignProperties_From_MetricSettings(source *sto
 		var retentionPolicy RetentionPolicy
 		err := retentionPolicy.AssignProperties_From_RetentionPolicy(source.RetentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RetentionPolicy() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_RetentionPolicy() to populate field RetentionPolicy")
 		}
 		settings.RetentionPolicy = &retentionPolicy
 	} else {
@@ -1983,7 +1866,7 @@ func (settings *MetricSettings) AssignProperties_To_MetricSettings(destination *
 		var retentionPolicy storage.RetentionPolicy
 		err := settings.RetentionPolicy.AssignProperties_To_RetentionPolicy(&retentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RetentionPolicy() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_RetentionPolicy() to populate field RetentionPolicy")
 		}
 		destination.RetentionPolicy = &retentionPolicy
 	} else {
@@ -2023,7 +1906,7 @@ func (settings *MetricSettings) Initialize_From_MetricSettings_STATUS(source *Me
 		var retentionPolicy RetentionPolicy
 		err := retentionPolicy.Initialize_From_RetentionPolicy_STATUS(source.RetentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling Initialize_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
 		}
 		settings.RetentionPolicy = &retentionPolicy
 	} else {
@@ -2119,7 +2002,7 @@ func (settings *MetricSettings_STATUS) AssignProperties_From_MetricSettings_STAT
 		var retentionPolicy RetentionPolicy_STATUS
 		err := retentionPolicy.AssignProperties_From_RetentionPolicy_STATUS(source.RetentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_RetentionPolicy_STATUS() to populate field RetentionPolicy")
 		}
 		settings.RetentionPolicy = &retentionPolicy
 	} else {
@@ -2154,7 +2037,7 @@ func (settings *MetricSettings_STATUS) AssignProperties_To_MetricSettings_STATUS
 		var retentionPolicy storage.RetentionPolicy_STATUS
 		err := settings.RetentionPolicy.AssignProperties_To_RetentionPolicy_STATUS(&retentionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RetentionPolicy_STATUS() to populate field RetentionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_RetentionPolicy_STATUS() to populate field RetentionPolicy")
 		}
 		destination.RetentionPolicy = &retentionPolicy
 	} else {
@@ -2402,12 +2285,7 @@ func (policy *RetentionPolicy) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 func (policy *RetentionPolicy) AssignProperties_From_RetentionPolicy(source *storage.RetentionPolicy) error {
 
 	// Days
-	if source.Days != nil {
-		day := *source.Days
-		policy.Days = &day
-	} else {
-		policy.Days = nil
-	}
+	policy.Days = genruntime.ClonePointerToInt(source.Days)
 
 	// Enabled
 	if source.Enabled != nil {
@@ -2427,12 +2305,7 @@ func (policy *RetentionPolicy) AssignProperties_To_RetentionPolicy(destination *
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Days
-	if policy.Days != nil {
-		day := *policy.Days
-		destination.Days = &day
-	} else {
-		destination.Days = nil
-	}
+	destination.Days = genruntime.ClonePointerToInt(policy.Days)
 
 	// Enabled
 	if policy.Enabled != nil {
@@ -2457,12 +2330,7 @@ func (policy *RetentionPolicy) AssignProperties_To_RetentionPolicy(destination *
 func (policy *RetentionPolicy) Initialize_From_RetentionPolicy_STATUS(source *RetentionPolicy_STATUS) error {
 
 	// Days
-	if source.Days != nil {
-		day := *source.Days
-		policy.Days = &day
-	} else {
-		policy.Days = nil
-	}
+	policy.Days = genruntime.ClonePointerToInt(source.Days)
 
 	// Enabled
 	if source.Enabled != nil {

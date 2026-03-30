@@ -19,4 +19,7 @@ struct ControlPlane {
 	// Information about the backup of the control plane
 	Backup Backup
 
+	// Control plane log forwarders configuration.
+	// This can be set during cluster creation to configure control plane log forwarders.
+	link LogForwarders []LogForwarder
 }

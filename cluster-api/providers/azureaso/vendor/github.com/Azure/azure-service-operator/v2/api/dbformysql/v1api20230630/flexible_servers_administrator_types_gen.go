@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,39 +50,37 @@ var _ conversion.Convertible = &FlexibleServersAdministrator{}
 
 // ConvertFrom populates our FlexibleServersAdministrator from the provided hub FlexibleServersAdministrator
 func (administrator *FlexibleServersAdministrator) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersAdministrator)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20230630/storage/FlexibleServersAdministrator but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersAdministrator
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return administrator.AssignProperties_From_FlexibleServersAdministrator(source)
+	err = administrator.AssignProperties_From_FlexibleServersAdministrator(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to administrator")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersAdministrator from our FlexibleServersAdministrator
 func (administrator *FlexibleServersAdministrator) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersAdministrator)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20230630/storage/FlexibleServersAdministrator but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersAdministrator
+	err := administrator.AssignProperties_To_FlexibleServersAdministrator(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from administrator")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return administrator.AssignProperties_To_FlexibleServersAdministrator(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-dbformysql-azure-com-v1api20230630-flexibleserversadministrator,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversadministrators,verbs=create;update,versions=v1api20230630,name=default.v1api20230630.flexibleserversadministrators.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &FlexibleServersAdministrator{}
-
-// Default applies defaults to the FlexibleServersAdministrator resource
-func (administrator *FlexibleServersAdministrator) Default() {
-	administrator.defaultImpl()
-	var temp any = administrator
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the FlexibleServersAdministrator resource
-func (administrator *FlexibleServersAdministrator) defaultImpl() {}
 
 var _ configmaps.Exporter = &FlexibleServersAdministrator{}
 
@@ -105,17 +100,6 @@ func (administrator *FlexibleServersAdministrator) SecretDestinationExpressions(
 		return nil
 	}
 	return administrator.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersAdministrator{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (administrator *FlexibleServersAdministrator) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersAdministrator_STATUS); ok {
-		return administrator.Spec.Initialize_From_FlexibleServersAdministrator_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersAdministrator_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersAdministrator{}
@@ -166,6 +150,10 @@ func (administrator *FlexibleServersAdministrator) NewEmptyStatus() genruntime.C
 
 // Owner returns the ResourceReference of the owner
 func (administrator *FlexibleServersAdministrator) Owner() *genruntime.ResourceReference {
+	if administrator.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(administrator.Spec)
 	return administrator.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -182,126 +170,11 @@ func (administrator *FlexibleServersAdministrator) SetStatus(status genruntime.C
 	var st FlexibleServersAdministrator_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	administrator.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-dbformysql-azure-com-v1api20230630-flexibleserversadministrator,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversadministrators,verbs=create;update,versions=v1api20230630,name=validate.v1api20230630.flexibleserversadministrators.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &FlexibleServersAdministrator{}
-
-// ValidateCreate validates the creation of the resource
-func (administrator *FlexibleServersAdministrator) ValidateCreate() (admission.Warnings, error) {
-	validations := administrator.createValidations()
-	var temp any = administrator
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (administrator *FlexibleServersAdministrator) ValidateDelete() (admission.Warnings, error) {
-	validations := administrator.deleteValidations()
-	var temp any = administrator
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (administrator *FlexibleServersAdministrator) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := administrator.updateValidations()
-	var temp any = administrator
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (administrator *FlexibleServersAdministrator) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){administrator.validateResourceReferences, administrator.validateOwnerReference, administrator.validateSecretDestinations, administrator.validateConfigMapDestinations, administrator.validateOptionalConfigMapReferences}
-}
-
-// deleteValidations validates the deletion of the resource
-func (administrator *FlexibleServersAdministrator) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (administrator *FlexibleServersAdministrator) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return administrator.validateResourceReferences()
-		},
-		administrator.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return administrator.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return administrator.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return administrator.validateConfigMapDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return administrator.validateOptionalConfigMapReferences()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (administrator *FlexibleServersAdministrator) validateConfigMapDestinations() (admission.Warnings, error) {
-	if administrator.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(administrator, nil, administrator.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
-func (administrator *FlexibleServersAdministrator) validateOptionalConfigMapReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&administrator.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return configmaps.ValidateOptionalReferences(refs)
-}
-
-// validateOwnerReference validates the owner field
-func (administrator *FlexibleServersAdministrator) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(administrator)
-}
-
-// validateResourceReferences validates all resource references
-func (administrator *FlexibleServersAdministrator) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&administrator.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (administrator *FlexibleServersAdministrator) validateSecretDestinations() (admission.Warnings, error) {
-	if administrator.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(administrator, nil, administrator.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (administrator *FlexibleServersAdministrator) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*FlexibleServersAdministrator)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, administrator)
 }
 
 // AssignProperties_From_FlexibleServersAdministrator populates our FlexibleServersAdministrator from the provided source FlexibleServersAdministrator
@@ -314,7 +187,7 @@ func (administrator *FlexibleServersAdministrator) AssignProperties_From_Flexibl
 	var spec FlexibleServersAdministrator_Spec
 	err := spec.AssignProperties_From_FlexibleServersAdministrator_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersAdministrator_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersAdministrator_Spec() to populate field Spec")
 	}
 	administrator.Spec = spec
 
@@ -322,7 +195,7 @@ func (administrator *FlexibleServersAdministrator) AssignProperties_From_Flexibl
 	var status FlexibleServersAdministrator_STATUS
 	err = status.AssignProperties_From_FlexibleServersAdministrator_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersAdministrator_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersAdministrator_STATUS() to populate field Status")
 	}
 	administrator.Status = status
 
@@ -340,7 +213,7 @@ func (administrator *FlexibleServersAdministrator) AssignProperties_To_FlexibleS
 	var spec storage.FlexibleServersAdministrator_Spec
 	err := administrator.Spec.AssignProperties_To_FlexibleServersAdministrator_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersAdministrator_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersAdministrator_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -348,7 +221,7 @@ func (administrator *FlexibleServersAdministrator) AssignProperties_To_FlexibleS
 	var status storage.FlexibleServersAdministrator_STATUS
 	err = administrator.Status.AssignProperties_To_FlexibleServersAdministrator_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersAdministrator_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersAdministrator_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -455,7 +328,7 @@ func (administrator *FlexibleServersAdministrator_Spec) ConvertToARM(resolved ge
 	if administrator.SidFromConfig != nil {
 		sidValue, err := resolved.ResolvedConfigMaps.Lookup(*administrator.SidFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property Sid")
+			return nil, eris.Wrap(err, "looking up configmap for property Sid")
 		}
 		sid := sidValue
 		result.Properties.Sid = &sid
@@ -467,7 +340,7 @@ func (administrator *FlexibleServersAdministrator_Spec) ConvertToARM(resolved ge
 	if administrator.TenantIdFromConfig != nil {
 		tenantIdValue, err := resolved.ResolvedConfigMaps.Lookup(*administrator.TenantIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property TenantId")
+			return nil, eris.Wrap(err, "looking up configmap for property TenantId")
 		}
 		tenantId := tenantIdValue
 		result.Properties.TenantId = &tenantId
@@ -557,13 +430,13 @@ func (administrator *FlexibleServersAdministrator_Spec) ConvertSpecFrom(source g
 	src = &storage.FlexibleServersAdministrator_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = administrator.AssignProperties_From_FlexibleServersAdministrator_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -581,13 +454,13 @@ func (administrator *FlexibleServersAdministrator_Spec) ConvertSpecTo(destinatio
 	dst = &storage.FlexibleServersAdministrator_Spec{}
 	err := administrator.AssignProperties_To_FlexibleServersAdministrator_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -621,7 +494,7 @@ func (administrator *FlexibleServersAdministrator_Spec) AssignProperties_From_Fl
 		var operatorSpec FlexibleServersAdministratorOperatorSpec
 		err := operatorSpec.AssignProperties_From_FlexibleServersAdministratorOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersAdministratorOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersAdministratorOperatorSpec() to populate field OperatorSpec")
 		}
 		administrator.OperatorSpec = &operatorSpec
 	} else {
@@ -691,7 +564,7 @@ func (administrator *FlexibleServersAdministrator_Spec) AssignProperties_To_Flex
 		var operatorSpec storage.FlexibleServersAdministratorOperatorSpec
 		err := administrator.OperatorSpec.AssignProperties_To_FlexibleServersAdministratorOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersAdministratorOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersAdministratorOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -737,38 +610,6 @@ func (administrator *FlexibleServersAdministrator_Spec) AssignProperties_To_Flex
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_FlexibleServersAdministrator_STATUS populates our FlexibleServersAdministrator_Spec from the provided source FlexibleServersAdministrator_STATUS
-func (administrator *FlexibleServersAdministrator_Spec) Initialize_From_FlexibleServersAdministrator_STATUS(source *FlexibleServersAdministrator_STATUS) error {
-
-	// AdministratorType
-	if source.AdministratorType != nil {
-		administratorType := genruntime.ToEnum(string(*source.AdministratorType), administratorProperties_AdministratorType_Values)
-		administrator.AdministratorType = &administratorType
-	} else {
-		administrator.AdministratorType = nil
-	}
-
-	// IdentityResourceReference
-	if source.IdentityResourceId != nil {
-		identityResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.IdentityResourceId)
-		administrator.IdentityResourceReference = &identityResourceReference
-	} else {
-		administrator.IdentityResourceReference = nil
-	}
-
-	// Login
-	administrator.Login = genruntime.ClonePointerToString(source.Login)
-
-	// Sid
-	administrator.Sid = genruntime.ClonePointerToString(source.Sid)
-
-	// TenantId
-	administrator.TenantId = genruntime.ClonePointerToString(source.TenantId)
 
 	// No error
 	return nil
@@ -826,13 +667,13 @@ func (administrator *FlexibleServersAdministrator_STATUS) ConvertStatusFrom(sour
 	src = &storage.FlexibleServersAdministrator_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = administrator.AssignProperties_From_FlexibleServersAdministrator_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -850,13 +691,13 @@ func (administrator *FlexibleServersAdministrator_STATUS) ConvertStatusTo(destin
 	dst = &storage.FlexibleServersAdministrator_STATUS{}
 	err := administrator.AssignProperties_To_FlexibleServersAdministrator_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -993,7 +834,7 @@ func (administrator *FlexibleServersAdministrator_STATUS) AssignProperties_From_
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		administrator.SystemData = &systemDatum
 	} else {
@@ -1046,7 +887,7 @@ func (administrator *FlexibleServersAdministrator_STATUS) AssignProperties_To_Fl
 		var systemDatum storage.SystemData_STATUS
 		err := administrator.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

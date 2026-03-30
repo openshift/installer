@@ -30,7 +30,6 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,16 +37,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	k8sversion "k8s.io/apimachinery/pkg/version"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/contract"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 )
 
@@ -132,7 +130,7 @@ func GetMachineIfExists(ctx context.Context, c client.Client, namespace, name st
 
 // IsControlPlaneMachine checks machine is a control plane node.
 func IsControlPlaneMachine(machine *clusterv1.Machine) bool {
-	_, ok := machine.ObjectMeta.Labels[clusterv1.MachineControlPlaneLabel]
+	_, ok := machine.Labels[clusterv1.MachineControlPlaneLabel]
 	return ok
 }
 
@@ -206,12 +204,12 @@ func ClusterToInfrastructureMapFunc(ctx context.Context, gvk schema.GroupVersion
 		}
 
 		// Return early if the InfrastructureRef is nil.
-		if cluster.Spec.InfrastructureRef == nil {
+		if !cluster.Spec.InfrastructureRef.IsDefined() {
 			return nil
 		}
 		gk := gvk.GroupKind()
 		// Return early if the GroupKind doesn't match what we expect.
-		infraGK := cluster.Spec.InfrastructureRef.GroupVersionKind().GroupKind()
+		infraGK := cluster.Spec.InfrastructureRef.GroupKind()
 		if gk != infraGK {
 			return nil
 		}
@@ -274,7 +272,7 @@ func MachineToInfrastructureMapFunc(gvk schema.GroupVersionKind) handler.MapFunc
 
 		gk := gvk.GroupKind()
 		// Return early if the GroupKind doesn't match what we expect.
-		infraGK := m.Spec.InfrastructureRef.GroupVersionKind().GroupKind()
+		infraGK := m.Spec.InfrastructureRef.GroupKind()
 		if gk != infraGK {
 			return nil
 		}
@@ -332,6 +330,21 @@ func RemoveOwnerRef(ownerReferences []metav1.OwnerReference, inputRef metav1.Own
 		return append(ownerReferences[:index], ownerReferences[index+1:]...)
 	}
 	return ownerReferences
+}
+
+// HasExactOwnerRef returns true if the exact OwnerReference is already in the slice.
+// It matches based on APIVersion, Kind, Name and Controller.
+func HasExactOwnerRef(ownerReferences []metav1.OwnerReference, ref metav1.OwnerReference) bool {
+	for _, r := range ownerReferences {
+		if r.APIVersion == ref.APIVersion &&
+			r.Kind == ref.Kind &&
+			r.Name == ref.Name &&
+			r.UID == ref.UID &&
+			ptr.Deref(r.Controller, false) == ptr.Deref(ref.Controller, false) {
+			return true
+		}
+	}
+	return false
 }
 
 // indexOwnerRef returns the index of the owner reference in the slice if found, or -1.
@@ -438,33 +451,6 @@ func HasOwner(refList []metav1.OwnerReference, apiVersion string, kinds []string
 	}
 
 	return false
-}
-
-// GetGVKMetadata retrieves a CustomResourceDefinition metadata from the API server using partial object metadata.
-//
-// This function is greatly more efficient than GetCRDWithContract and should be preferred in most cases.
-func GetGVKMetadata(ctx context.Context, c client.Client, gvk schema.GroupVersionKind) (*metav1.PartialObjectMetadata, error) {
-	meta := &metav1.PartialObjectMetadata{}
-	meta.SetName(contract.CalculateCRDName(gvk.Group, gvk.Kind))
-	meta.SetGroupVersionKind(apiextensionsv1.SchemeGroupVersion.WithKind("CustomResourceDefinition"))
-	if err := c.Get(ctx, client.ObjectKeyFromObject(meta), meta); err != nil {
-		return meta, errors.Wrap(err, "failed to retrieve metadata from GVK resource")
-	}
-	return meta, nil
-}
-
-// KubeAwareAPIVersions is a sortable slice of kube-like version strings.
-//
-// Kube-like version strings are starting with a v, followed by a major version,
-// optional "alpha" or "beta" strings followed by a minor version (e.g. v1, v2beta1).
-// Versions will be sorted based on GA/alpha/beta first and then major and minor
-// versions. e.g. v2, v1, v1beta2, v1beta1, v1alpha1.
-type KubeAwareAPIVersions []string
-
-func (k KubeAwareAPIVersions) Len() int      { return len(k) }
-func (k KubeAwareAPIVersions) Swap(i, j int) { k[i], k[j] = k[j], k[i] }
-func (k KubeAwareAPIVersions) Less(i, j int) bool {
-	return k8sversion.CompareKubeAwareVersionStrings(k[i], k[j]) < 0
 }
 
 // ClusterToTypedObjectsMapper returns a mapper function that gets a cluster and lists all objects for the object passed in

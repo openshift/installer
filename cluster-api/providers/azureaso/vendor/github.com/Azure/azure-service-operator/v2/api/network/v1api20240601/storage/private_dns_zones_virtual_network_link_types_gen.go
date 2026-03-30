@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (link *PrivateDnsZonesVirtualNetworkLink) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (link *PrivateDnsZonesVirtualNetworkLink) Owner() *genruntime.ResourceReference {
+	if link.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(link.Spec)
 	return link.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink) SetStatus(status genruntime.Conve
 	var st PrivateDnsZonesVirtualNetworkLink_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	link.Status = st
@@ -188,7 +192,7 @@ var _ genruntime.ConvertibleSpec = &PrivateDnsZonesVirtualNetworkLink_Spec{}
 // ConvertSpecFrom populates our PrivateDnsZonesVirtualNetworkLink_Spec from the provided source
 func (link *PrivateDnsZonesVirtualNetworkLink_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(link)
@@ -197,7 +201,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_Spec) ConvertSpecFrom(source genru
 // ConvertSpecTo populates the provided destination from our PrivateDnsZonesVirtualNetworkLink_Spec
 func (link *PrivateDnsZonesVirtualNetworkLink_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(link)
@@ -225,7 +229,7 @@ var _ genruntime.ConvertibleStatus = &PrivateDnsZonesVirtualNetworkLink_STATUS{}
 // ConvertStatusFrom populates our PrivateDnsZonesVirtualNetworkLink_STATUS from the provided source
 func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(link)
@@ -234,7 +238,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) ConvertStatusFrom(source g
 // ConvertStatusTo populates the provided destination from our PrivateDnsZonesVirtualNetworkLink_STATUS
 func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == link {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(link)

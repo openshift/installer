@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (gateway *ApplicationGateway) ConvertTo(hub conversion.Hub) error {
 
 	return gateway.AssignProperties_To_ApplicationGateway(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20220701-applicationgateway,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=applicationgateways,verbs=create;update,versions=v1api20220701,name=default.v1api20220701.applicationgateways.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ApplicationGateway{}
-
-// Default applies defaults to the ApplicationGateway resource
-func (gateway *ApplicationGateway) Default() {
-	gateway.defaultImpl()
-	var temp any = gateway
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (gateway *ApplicationGateway) defaultAzureName() {
-	if gateway.Spec.AzureName == "" {
-		gateway.Spec.AzureName = gateway.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ApplicationGateway resource
-func (gateway *ApplicationGateway) defaultImpl() { gateway.defaultAzureName() }
 
 var _ configmaps.Exporter = &ApplicationGateway{}
 
@@ -173,6 +147,10 @@ func (gateway *ApplicationGateway) NewEmptyStatus() genruntime.ConvertibleStatus
 
 // Owner returns the ResourceReference of the owner
 func (gateway *ApplicationGateway) Owner() *genruntime.ResourceReference {
+	if gateway.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(gateway.Spec)
 	return gateway.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (gateway *ApplicationGateway) SetStatus(status genruntime.ConvertibleStatus
 	var st ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	gateway.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20220701-applicationgateway,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=applicationgateways,verbs=create;update,versions=v1api20220701,name=validate.v1api20220701.applicationgateways.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ApplicationGateway{}
-
-// ValidateCreate validates the creation of the resource
-func (gateway *ApplicationGateway) ValidateCreate() (admission.Warnings, error) {
-	validations := gateway.createValidations()
-	var temp any = gateway
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (gateway *ApplicationGateway) ValidateDelete() (admission.Warnings, error) {
-	validations := gateway.deleteValidations()
-	var temp any = gateway
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (gateway *ApplicationGateway) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := gateway.updateValidations()
-	var temp any = gateway
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (gateway *ApplicationGateway) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){gateway.validateResourceReferences, gateway.validateOwnerReference, gateway.validateSecretDestinations, gateway.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (gateway *ApplicationGateway) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (gateway *ApplicationGateway) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateResourceReferences()
-		},
-		gateway.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return gateway.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (gateway *ApplicationGateway) validateConfigMapDestinations() (admission.Warnings, error) {
-	if gateway.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(gateway, nil, gateway.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (gateway *ApplicationGateway) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(gateway)
-}
-
-// validateResourceReferences validates all resource references
-func (gateway *ApplicationGateway) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&gateway.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (gateway *ApplicationGateway) validateSecretDestinations() (admission.Warnings, error) {
-	if gateway.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(gateway, nil, gateway.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (gateway *ApplicationGateway) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ApplicationGateway)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, gateway)
 }
 
 // AssignProperties_From_ApplicationGateway populates our ApplicationGateway from the provided source ApplicationGateway
@@ -309,7 +184,7 @@ func (gateway *ApplicationGateway) AssignProperties_From_ApplicationGateway(sour
 	var spec ApplicationGateway_Spec
 	err := spec.AssignProperties_From_ApplicationGateway_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ApplicationGateway_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ApplicationGateway_Spec() to populate field Spec")
 	}
 	gateway.Spec = spec
 
@@ -317,7 +192,7 @@ func (gateway *ApplicationGateway) AssignProperties_From_ApplicationGateway(sour
 	var status ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 	err = status.AssignProperties_From_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field Status")
 	}
 	gateway.Status = status
 
@@ -335,7 +210,7 @@ func (gateway *ApplicationGateway) AssignProperties_To_ApplicationGateway(destin
 	var spec storage.ApplicationGateway_Spec
 	err := gateway.Spec.AssignProperties_To_ApplicationGateway_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ApplicationGateway_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ApplicationGateway_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (gateway *ApplicationGateway) AssignProperties_To_ApplicationGateway(destin
 	var status storage.ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 	err = gateway.Status.AssignProperties_To_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field Status")
 	}
 	destination.Status = status
 
@@ -1278,13 +1153,13 @@ func (gateway *ApplicationGateway_Spec) ConvertSpecFrom(source genruntime.Conver
 	src = &storage.ApplicationGateway_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = gateway.AssignProperties_From_ApplicationGateway_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -1302,13 +1177,13 @@ func (gateway *ApplicationGateway_Spec) ConvertSpecTo(destination genruntime.Con
 	dst = &storage.ApplicationGateway_Spec{}
 	err := gateway.AssignProperties_To_ApplicationGateway_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -1326,7 +1201,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var authenticationCertificate ApplicationGatewayAuthenticationCertificate
 			err := authenticationCertificate.AssignProperties_From_ApplicationGatewayAuthenticationCertificate(&authenticationCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAuthenticationCertificate() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAuthenticationCertificate() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -1340,7 +1215,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var autoscaleConfiguration ApplicationGatewayAutoscaleConfiguration
 		err := autoscaleConfiguration.AssignProperties_From_ApplicationGatewayAutoscaleConfiguration(source.AutoscaleConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAutoscaleConfiguration() to populate field AutoscaleConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAutoscaleConfiguration() to populate field AutoscaleConfiguration")
 		}
 		gateway.AutoscaleConfiguration = &autoscaleConfiguration
 	} else {
@@ -1359,7 +1234,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var backendAddressPool ApplicationGatewayBackendAddressPool
 			err := backendAddressPool.AssignProperties_From_ApplicationGatewayBackendAddressPool(&backendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddressPool() to populate field BackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddressPool() to populate field BackendAddressPools")
 			}
 			backendAddressPoolList[backendAddressPoolIndex] = backendAddressPool
 		}
@@ -1377,7 +1252,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var backendHttpSettingsCollection ApplicationGatewayBackendHttpSettings
 			err := backendHttpSettingsCollection.AssignProperties_From_ApplicationGatewayBackendHttpSettings(&backendHttpSettingsCollectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendHttpSettings() to populate field BackendHttpSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendHttpSettings() to populate field BackendHttpSettingsCollection")
 			}
 			backendHttpSettingsCollectionList[backendHttpSettingsCollectionIndex] = backendHttpSettingsCollection
 		}
@@ -1395,7 +1270,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var backendSettingsCollection ApplicationGatewayBackendSettings
 			err := backendSettingsCollection.AssignProperties_From_ApplicationGatewayBackendSettings(&backendSettingsCollectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendSettings() to populate field BackendSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendSettings() to populate field BackendSettingsCollection")
 			}
 			backendSettingsCollectionList[backendSettingsCollectionIndex] = backendSettingsCollection
 		}
@@ -1413,7 +1288,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var customErrorConfiguration ApplicationGatewayCustomError
 			err := customErrorConfiguration.AssignProperties_From_ApplicationGatewayCustomError(&customErrorConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -1443,7 +1318,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var firewallPolicy SubResource
 		err := firewallPolicy.AssignProperties_From_SubResource(source.FirewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FirewallPolicy")
 		}
 		gateway.FirewallPolicy = &firewallPolicy
 	} else {
@@ -1467,7 +1342,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var frontendIPConfiguration ApplicationGatewayFrontendIPConfiguration
 			err := frontendIPConfiguration.AssignProperties_From_ApplicationGatewayFrontendIPConfiguration(&frontendIPConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendIPConfiguration() to populate field FrontendIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendIPConfiguration() to populate field FrontendIPConfigurations")
 			}
 			frontendIPConfigurationList[frontendIPConfigurationIndex] = frontendIPConfiguration
 		}
@@ -1485,7 +1360,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var frontendPort ApplicationGatewayFrontendPort
 			err := frontendPort.AssignProperties_From_ApplicationGatewayFrontendPort(&frontendPortItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendPort() to populate field FrontendPorts")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendPort() to populate field FrontendPorts")
 			}
 			frontendPortList[frontendPortIndex] = frontendPort
 		}
@@ -1503,7 +1378,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var gatewayIPConfiguration ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded
 			err := gatewayIPConfiguration.AssignProperties_From_ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded(&gatewayIPConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
 			}
 			gatewayIPConfigurationList[gatewayIPConfigurationIndex] = gatewayIPConfiguration
 		}
@@ -1517,7 +1392,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var globalConfiguration ApplicationGatewayGlobalConfiguration
 		err := globalConfiguration.AssignProperties_From_ApplicationGatewayGlobalConfiguration(source.GlobalConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayGlobalConfiguration() to populate field GlobalConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayGlobalConfiguration() to populate field GlobalConfiguration")
 		}
 		gateway.GlobalConfiguration = &globalConfiguration
 	} else {
@@ -1533,7 +1408,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var httpListener ApplicationGatewayHttpListener
 			err := httpListener.AssignProperties_From_ApplicationGatewayHttpListener(&httpListenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHttpListener() to populate field HttpListeners")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHttpListener() to populate field HttpListeners")
 			}
 			httpListenerList[httpListenerIndex] = httpListener
 		}
@@ -1547,7 +1422,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var identity ManagedServiceIdentity
 		err := identity.AssignProperties_From_ManagedServiceIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
 		}
 		gateway.Identity = &identity
 	} else {
@@ -1563,7 +1438,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var listener ApplicationGatewayListener
 			err := listener.AssignProperties_From_ApplicationGatewayListener(&listenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayListener() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayListener() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -1581,7 +1456,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var loadDistributionPolicy ApplicationGatewayLoadDistributionPolicy
 			err := loadDistributionPolicy.AssignProperties_From_ApplicationGatewayLoadDistributionPolicy(&loadDistributionPolicyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayLoadDistributionPolicy() to populate field LoadDistributionPolicies")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayLoadDistributionPolicy() to populate field LoadDistributionPolicies")
 			}
 			loadDistributionPolicyList[loadDistributionPolicyIndex] = loadDistributionPolicy
 		}
@@ -1598,7 +1473,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var operatorSpec ApplicationGatewayOperatorSpec
 		err := operatorSpec.AssignProperties_From_ApplicationGatewayOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayOperatorSpec() to populate field OperatorSpec")
 		}
 		gateway.OperatorSpec = &operatorSpec
 	} else {
@@ -1622,7 +1497,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var privateLinkConfiguration ApplicationGatewayPrivateLinkConfiguration
 			err := privateLinkConfiguration.AssignProperties_From_ApplicationGatewayPrivateLinkConfiguration(&privateLinkConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateLinkConfiguration() to populate field PrivateLinkConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateLinkConfiguration() to populate field PrivateLinkConfigurations")
 			}
 			privateLinkConfigurationList[privateLinkConfigurationIndex] = privateLinkConfiguration
 		}
@@ -1640,7 +1515,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var probe ApplicationGatewayProbe
 			err := probe.AssignProperties_From_ApplicationGatewayProbe(&probeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayProbe() to populate field Probes")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayProbe() to populate field Probes")
 			}
 			probeList[probeIndex] = probe
 		}
@@ -1658,7 +1533,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var redirectConfiguration ApplicationGatewayRedirectConfiguration
 			err := redirectConfiguration.AssignProperties_From_ApplicationGatewayRedirectConfiguration(&redirectConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRedirectConfiguration() to populate field RedirectConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRedirectConfiguration() to populate field RedirectConfigurations")
 			}
 			redirectConfigurationList[redirectConfigurationIndex] = redirectConfiguration
 		}
@@ -1676,7 +1551,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var requestRoutingRule ApplicationGatewayRequestRoutingRule
 			err := requestRoutingRule.AssignProperties_From_ApplicationGatewayRequestRoutingRule(&requestRoutingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRequestRoutingRule() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRequestRoutingRule() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -1694,7 +1569,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var rewriteRuleSet ApplicationGatewayRewriteRuleSet
 			err := rewriteRuleSet.AssignProperties_From_ApplicationGatewayRewriteRuleSet(&rewriteRuleSetItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleSet() to populate field RewriteRuleSets")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleSet() to populate field RewriteRuleSets")
 			}
 			rewriteRuleSetList[rewriteRuleSetIndex] = rewriteRuleSet
 		}
@@ -1712,7 +1587,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var routingRule ApplicationGatewayRoutingRule
 			err := routingRule.AssignProperties_From_ApplicationGatewayRoutingRule(&routingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRoutingRule() to populate field RoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRoutingRule() to populate field RoutingRules")
 			}
 			routingRuleList[routingRuleIndex] = routingRule
 		}
@@ -1726,7 +1601,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var sku ApplicationGatewaySku
 		err := sku.AssignProperties_From_ApplicationGatewaySku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySku() to populate field Sku")
 		}
 		gateway.Sku = &sku
 	} else {
@@ -1742,7 +1617,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var sslCertificate ApplicationGatewaySslCertificate
 			err := sslCertificate.AssignProperties_From_ApplicationGatewaySslCertificate(&sslCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslCertificate() to populate field SslCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslCertificate() to populate field SslCertificates")
 			}
 			sslCertificateList[sslCertificateIndex] = sslCertificate
 		}
@@ -1756,7 +1631,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var sslPolicy ApplicationGatewaySslPolicy
 		err := sslPolicy.AssignProperties_From_ApplicationGatewaySslPolicy(source.SslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslPolicy() to populate field SslPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslPolicy() to populate field SslPolicy")
 		}
 		gateway.SslPolicy = &sslPolicy
 	} else {
@@ -1772,7 +1647,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var sslProfile ApplicationGatewaySslProfile
 			err := sslProfile.AssignProperties_From_ApplicationGatewaySslProfile(&sslProfileItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslProfile() to populate field SslProfiles")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslProfile() to populate field SslProfiles")
 			}
 			sslProfileList[sslProfileIndex] = sslProfile
 		}
@@ -1793,7 +1668,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var trustedClientCertificate ApplicationGatewayTrustedClientCertificate
 			err := trustedClientCertificate.AssignProperties_From_ApplicationGatewayTrustedClientCertificate(&trustedClientCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedClientCertificate() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedClientCertificate() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -1811,7 +1686,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var trustedRootCertificate ApplicationGatewayTrustedRootCertificate
 			err := trustedRootCertificate.AssignProperties_From_ApplicationGatewayTrustedRootCertificate(&trustedRootCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedRootCertificate() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedRootCertificate() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -1829,7 +1704,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 			var urlPathMap ApplicationGatewayUrlPathMap
 			err := urlPathMap.AssignProperties_From_ApplicationGatewayUrlPathMap(&urlPathMapItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayUrlPathMap() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayUrlPathMap() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -1843,7 +1718,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_From_ApplicationGateway
 		var webApplicationFirewallConfiguration ApplicationGatewayWebApplicationFirewallConfiguration
 		err := webApplicationFirewallConfiguration.AssignProperties_From_ApplicationGatewayWebApplicationFirewallConfiguration(source.WebApplicationFirewallConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayWebApplicationFirewallConfiguration() to populate field WebApplicationFirewallConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayWebApplicationFirewallConfiguration() to populate field WebApplicationFirewallConfiguration")
 		}
 		gateway.WebApplicationFirewallConfiguration = &webApplicationFirewallConfiguration
 	} else {
@@ -1871,7 +1746,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var authenticationCertificate storage.ApplicationGatewayAuthenticationCertificate
 			err := authenticationCertificateItem.AssignProperties_To_ApplicationGatewayAuthenticationCertificate(&authenticationCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAuthenticationCertificate() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAuthenticationCertificate() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -1885,7 +1760,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var autoscaleConfiguration storage.ApplicationGatewayAutoscaleConfiguration
 		err := gateway.AutoscaleConfiguration.AssignProperties_To_ApplicationGatewayAutoscaleConfiguration(&autoscaleConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAutoscaleConfiguration() to populate field AutoscaleConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAutoscaleConfiguration() to populate field AutoscaleConfiguration")
 		}
 		destination.AutoscaleConfiguration = &autoscaleConfiguration
 	} else {
@@ -1904,7 +1779,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var backendAddressPool storage.ApplicationGatewayBackendAddressPool
 			err := backendAddressPoolItem.AssignProperties_To_ApplicationGatewayBackendAddressPool(&backendAddressPool)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddressPool() to populate field BackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddressPool() to populate field BackendAddressPools")
 			}
 			backendAddressPoolList[backendAddressPoolIndex] = backendAddressPool
 		}
@@ -1922,7 +1797,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var backendHttpSettingsCollection storage.ApplicationGatewayBackendHttpSettings
 			err := backendHttpSettingsCollectionItem.AssignProperties_To_ApplicationGatewayBackendHttpSettings(&backendHttpSettingsCollection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendHttpSettings() to populate field BackendHttpSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendHttpSettings() to populate field BackendHttpSettingsCollection")
 			}
 			backendHttpSettingsCollectionList[backendHttpSettingsCollectionIndex] = backendHttpSettingsCollection
 		}
@@ -1940,7 +1815,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var backendSettingsCollection storage.ApplicationGatewayBackendSettings
 			err := backendSettingsCollectionItem.AssignProperties_To_ApplicationGatewayBackendSettings(&backendSettingsCollection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendSettings() to populate field BackendSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendSettings() to populate field BackendSettingsCollection")
 			}
 			backendSettingsCollectionList[backendSettingsCollectionIndex] = backendSettingsCollection
 		}
@@ -1958,7 +1833,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var customErrorConfiguration storage.ApplicationGatewayCustomError
 			err := customErrorConfigurationItem.AssignProperties_To_ApplicationGatewayCustomError(&customErrorConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -1988,7 +1863,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var firewallPolicy storage.SubResource
 		err := gateway.FirewallPolicy.AssignProperties_To_SubResource(&firewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FirewallPolicy")
 		}
 		destination.FirewallPolicy = &firewallPolicy
 	} else {
@@ -2012,7 +1887,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var frontendIPConfiguration storage.ApplicationGatewayFrontendIPConfiguration
 			err := frontendIPConfigurationItem.AssignProperties_To_ApplicationGatewayFrontendIPConfiguration(&frontendIPConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendIPConfiguration() to populate field FrontendIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendIPConfiguration() to populate field FrontendIPConfigurations")
 			}
 			frontendIPConfigurationList[frontendIPConfigurationIndex] = frontendIPConfiguration
 		}
@@ -2030,7 +1905,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var frontendPort storage.ApplicationGatewayFrontendPort
 			err := frontendPortItem.AssignProperties_To_ApplicationGatewayFrontendPort(&frontendPort)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendPort() to populate field FrontendPorts")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendPort() to populate field FrontendPorts")
 			}
 			frontendPortList[frontendPortIndex] = frontendPort
 		}
@@ -2048,7 +1923,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var gatewayIPConfiguration storage.ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded
 			err := gatewayIPConfigurationItem.AssignProperties_To_ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded(&gatewayIPConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
 			}
 			gatewayIPConfigurationList[gatewayIPConfigurationIndex] = gatewayIPConfiguration
 		}
@@ -2062,7 +1937,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var globalConfiguration storage.ApplicationGatewayGlobalConfiguration
 		err := gateway.GlobalConfiguration.AssignProperties_To_ApplicationGatewayGlobalConfiguration(&globalConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayGlobalConfiguration() to populate field GlobalConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayGlobalConfiguration() to populate field GlobalConfiguration")
 		}
 		destination.GlobalConfiguration = &globalConfiguration
 	} else {
@@ -2078,7 +1953,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var httpListener storage.ApplicationGatewayHttpListener
 			err := httpListenerItem.AssignProperties_To_ApplicationGatewayHttpListener(&httpListener)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHttpListener() to populate field HttpListeners")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHttpListener() to populate field HttpListeners")
 			}
 			httpListenerList[httpListenerIndex] = httpListener
 		}
@@ -2092,7 +1967,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var identity storage.ManagedServiceIdentity
 		err := gateway.Identity.AssignProperties_To_ManagedServiceIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2108,7 +1983,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var listener storage.ApplicationGatewayListener
 			err := listenerItem.AssignProperties_To_ApplicationGatewayListener(&listener)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayListener() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayListener() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -2126,7 +2001,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var loadDistributionPolicy storage.ApplicationGatewayLoadDistributionPolicy
 			err := loadDistributionPolicyItem.AssignProperties_To_ApplicationGatewayLoadDistributionPolicy(&loadDistributionPolicy)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayLoadDistributionPolicy() to populate field LoadDistributionPolicies")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayLoadDistributionPolicy() to populate field LoadDistributionPolicies")
 			}
 			loadDistributionPolicyList[loadDistributionPolicyIndex] = loadDistributionPolicy
 		}
@@ -2143,7 +2018,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var operatorSpec storage.ApplicationGatewayOperatorSpec
 		err := gateway.OperatorSpec.AssignProperties_To_ApplicationGatewayOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -2170,7 +2045,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var privateLinkConfiguration storage.ApplicationGatewayPrivateLinkConfiguration
 			err := privateLinkConfigurationItem.AssignProperties_To_ApplicationGatewayPrivateLinkConfiguration(&privateLinkConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateLinkConfiguration() to populate field PrivateLinkConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateLinkConfiguration() to populate field PrivateLinkConfigurations")
 			}
 			privateLinkConfigurationList[privateLinkConfigurationIndex] = privateLinkConfiguration
 		}
@@ -2188,7 +2063,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var probe storage.ApplicationGatewayProbe
 			err := probeItem.AssignProperties_To_ApplicationGatewayProbe(&probe)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayProbe() to populate field Probes")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayProbe() to populate field Probes")
 			}
 			probeList[probeIndex] = probe
 		}
@@ -2206,7 +2081,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var redirectConfiguration storage.ApplicationGatewayRedirectConfiguration
 			err := redirectConfigurationItem.AssignProperties_To_ApplicationGatewayRedirectConfiguration(&redirectConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRedirectConfiguration() to populate field RedirectConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRedirectConfiguration() to populate field RedirectConfigurations")
 			}
 			redirectConfigurationList[redirectConfigurationIndex] = redirectConfiguration
 		}
@@ -2224,7 +2099,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var requestRoutingRule storage.ApplicationGatewayRequestRoutingRule
 			err := requestRoutingRuleItem.AssignProperties_To_ApplicationGatewayRequestRoutingRule(&requestRoutingRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRequestRoutingRule() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRequestRoutingRule() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -2242,7 +2117,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var rewriteRuleSet storage.ApplicationGatewayRewriteRuleSet
 			err := rewriteRuleSetItem.AssignProperties_To_ApplicationGatewayRewriteRuleSet(&rewriteRuleSet)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleSet() to populate field RewriteRuleSets")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleSet() to populate field RewriteRuleSets")
 			}
 			rewriteRuleSetList[rewriteRuleSetIndex] = rewriteRuleSet
 		}
@@ -2260,7 +2135,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var routingRule storage.ApplicationGatewayRoutingRule
 			err := routingRuleItem.AssignProperties_To_ApplicationGatewayRoutingRule(&routingRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRoutingRule() to populate field RoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRoutingRule() to populate field RoutingRules")
 			}
 			routingRuleList[routingRuleIndex] = routingRule
 		}
@@ -2274,7 +2149,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var sku storage.ApplicationGatewaySku
 		err := gateway.Sku.AssignProperties_To_ApplicationGatewaySku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -2290,7 +2165,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var sslCertificate storage.ApplicationGatewaySslCertificate
 			err := sslCertificateItem.AssignProperties_To_ApplicationGatewaySslCertificate(&sslCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslCertificate() to populate field SslCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslCertificate() to populate field SslCertificates")
 			}
 			sslCertificateList[sslCertificateIndex] = sslCertificate
 		}
@@ -2304,7 +2179,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var sslPolicy storage.ApplicationGatewaySslPolicy
 		err := gateway.SslPolicy.AssignProperties_To_ApplicationGatewaySslPolicy(&sslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslPolicy() to populate field SslPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslPolicy() to populate field SslPolicy")
 		}
 		destination.SslPolicy = &sslPolicy
 	} else {
@@ -2320,7 +2195,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var sslProfile storage.ApplicationGatewaySslProfile
 			err := sslProfileItem.AssignProperties_To_ApplicationGatewaySslProfile(&sslProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslProfile() to populate field SslProfiles")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslProfile() to populate field SslProfiles")
 			}
 			sslProfileList[sslProfileIndex] = sslProfile
 		}
@@ -2341,7 +2216,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var trustedClientCertificate storage.ApplicationGatewayTrustedClientCertificate
 			err := trustedClientCertificateItem.AssignProperties_To_ApplicationGatewayTrustedClientCertificate(&trustedClientCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedClientCertificate() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedClientCertificate() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -2359,7 +2234,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var trustedRootCertificate storage.ApplicationGatewayTrustedRootCertificate
 			err := trustedRootCertificateItem.AssignProperties_To_ApplicationGatewayTrustedRootCertificate(&trustedRootCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedRootCertificate() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedRootCertificate() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -2377,7 +2252,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 			var urlPathMap storage.ApplicationGatewayUrlPathMap
 			err := urlPathMapItem.AssignProperties_To_ApplicationGatewayUrlPathMap(&urlPathMap)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayUrlPathMap() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayUrlPathMap() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -2391,7 +2266,7 @@ func (gateway *ApplicationGateway_Spec) AssignProperties_To_ApplicationGateway_S
 		var webApplicationFirewallConfiguration storage.ApplicationGatewayWebApplicationFirewallConfiguration
 		err := gateway.WebApplicationFirewallConfiguration.AssignProperties_To_ApplicationGatewayWebApplicationFirewallConfiguration(&webApplicationFirewallConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayWebApplicationFirewallConfiguration() to populate field WebApplicationFirewallConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayWebApplicationFirewallConfiguration() to populate field WebApplicationFirewallConfiguration")
 		}
 		destination.WebApplicationFirewallConfiguration = &webApplicationFirewallConfiguration
 	} else {
@@ -2424,7 +2299,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var authenticationCertificate ApplicationGatewayAuthenticationCertificate
 			err := authenticationCertificate.Initialize_From_ApplicationGatewayAuthenticationCertificate_STATUS(&authenticationCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayAuthenticationCertificate_STATUS() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayAuthenticationCertificate_STATUS() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -2438,7 +2313,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var autoscaleConfiguration ApplicationGatewayAutoscaleConfiguration
 		err := autoscaleConfiguration.Initialize_From_ApplicationGatewayAutoscaleConfiguration_STATUS(source.AutoscaleConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayAutoscaleConfiguration_STATUS() to populate field AutoscaleConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayAutoscaleConfiguration_STATUS() to populate field AutoscaleConfiguration")
 		}
 		gateway.AutoscaleConfiguration = &autoscaleConfiguration
 	} else {
@@ -2454,7 +2329,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var backendAddressPool ApplicationGatewayBackendAddressPool
 			err := backendAddressPool.Initialize_From_ApplicationGatewayBackendAddressPool_STATUS(&backendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendAddressPool_STATUS() to populate field BackendAddressPools")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendAddressPool_STATUS() to populate field BackendAddressPools")
 			}
 			backendAddressPoolList[backendAddressPoolIndex] = backendAddressPool
 		}
@@ -2472,7 +2347,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var backendHttpSettingsCollection ApplicationGatewayBackendHttpSettings
 			err := backendHttpSettingsCollection.Initialize_From_ApplicationGatewayBackendHttpSettings_STATUS(&backendHttpSettingsCollectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendHttpSettings_STATUS() to populate field BackendHttpSettingsCollection")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendHttpSettings_STATUS() to populate field BackendHttpSettingsCollection")
 			}
 			backendHttpSettingsCollectionList[backendHttpSettingsCollectionIndex] = backendHttpSettingsCollection
 		}
@@ -2490,7 +2365,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var backendSettingsCollection ApplicationGatewayBackendSettings
 			err := backendSettingsCollection.Initialize_From_ApplicationGatewayBackendSettings_STATUS(&backendSettingsCollectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendSettings_STATUS() to populate field BackendSettingsCollection")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayBackendSettings_STATUS() to populate field BackendSettingsCollection")
 			}
 			backendSettingsCollectionList[backendSettingsCollectionIndex] = backendSettingsCollection
 		}
@@ -2508,7 +2383,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var customErrorConfiguration ApplicationGatewayCustomError
 			err := customErrorConfiguration.Initialize_From_ApplicationGatewayCustomError_STATUS(&customErrorConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayCustomError_STATUS() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayCustomError_STATUS() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -2538,7 +2413,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var firewallPolicy SubResource
 		err := firewallPolicy.Initialize_From_SubResource_STATUS(source.FirewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field FirewallPolicy")
 		}
 		gateway.FirewallPolicy = &firewallPolicy
 	} else {
@@ -2562,7 +2437,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var frontendIPConfiguration ApplicationGatewayFrontendIPConfiguration
 			err := frontendIPConfiguration.Initialize_From_ApplicationGatewayFrontendIPConfiguration_STATUS(&frontendIPConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayFrontendIPConfiguration_STATUS() to populate field FrontendIPConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayFrontendIPConfiguration_STATUS() to populate field FrontendIPConfigurations")
 			}
 			frontendIPConfigurationList[frontendIPConfigurationIndex] = frontendIPConfiguration
 		}
@@ -2580,7 +2455,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var frontendPort ApplicationGatewayFrontendPort
 			err := frontendPort.Initialize_From_ApplicationGatewayFrontendPort_STATUS(&frontendPortItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayFrontendPort_STATUS() to populate field FrontendPorts")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayFrontendPort_STATUS() to populate field FrontendPorts")
 			}
 			frontendPortList[frontendPortIndex] = frontendPort
 		}
@@ -2598,7 +2473,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var gatewayIPConfiguration ApplicationGatewayIPConfiguration_ApplicationGateway_SubResourceEmbedded
 			err := gatewayIPConfiguration.Initialize_From_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded(&gatewayIPConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
 			}
 			gatewayIPConfigurationList[gatewayIPConfigurationIndex] = gatewayIPConfiguration
 		}
@@ -2612,7 +2487,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var globalConfiguration ApplicationGatewayGlobalConfiguration
 		err := globalConfiguration.Initialize_From_ApplicationGatewayGlobalConfiguration_STATUS(source.GlobalConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayGlobalConfiguration_STATUS() to populate field GlobalConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayGlobalConfiguration_STATUS() to populate field GlobalConfiguration")
 		}
 		gateway.GlobalConfiguration = &globalConfiguration
 	} else {
@@ -2628,7 +2503,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var httpListener ApplicationGatewayHttpListener
 			err := httpListener.Initialize_From_ApplicationGatewayHttpListener_STATUS(&httpListenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayHttpListener_STATUS() to populate field HttpListeners")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayHttpListener_STATUS() to populate field HttpListeners")
 			}
 			httpListenerList[httpListenerIndex] = httpListener
 		}
@@ -2642,7 +2517,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var identity ManagedServiceIdentity
 		err := identity.Initialize_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		gateway.Identity = &identity
 	} else {
@@ -2658,7 +2533,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var listener ApplicationGatewayListener
 			err := listener.Initialize_From_ApplicationGatewayListener_STATUS(&listenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayListener_STATUS() to populate field Listeners")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayListener_STATUS() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -2676,7 +2551,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var loadDistributionPolicy ApplicationGatewayLoadDistributionPolicy
 			err := loadDistributionPolicy.Initialize_From_ApplicationGatewayLoadDistributionPolicy_STATUS(&loadDistributionPolicyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayLoadDistributionPolicy_STATUS() to populate field LoadDistributionPolicies")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayLoadDistributionPolicy_STATUS() to populate field LoadDistributionPolicies")
 			}
 			loadDistributionPolicyList[loadDistributionPolicyIndex] = loadDistributionPolicy
 		}
@@ -2697,7 +2572,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var privateLinkConfiguration ApplicationGatewayPrivateLinkConfiguration
 			err := privateLinkConfiguration.Initialize_From_ApplicationGatewayPrivateLinkConfiguration_STATUS(&privateLinkConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayPrivateLinkConfiguration_STATUS() to populate field PrivateLinkConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayPrivateLinkConfiguration_STATUS() to populate field PrivateLinkConfigurations")
 			}
 			privateLinkConfigurationList[privateLinkConfigurationIndex] = privateLinkConfiguration
 		}
@@ -2715,7 +2590,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var probe ApplicationGatewayProbe
 			err := probe.Initialize_From_ApplicationGatewayProbe_STATUS(&probeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayProbe_STATUS() to populate field Probes")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayProbe_STATUS() to populate field Probes")
 			}
 			probeList[probeIndex] = probe
 		}
@@ -2733,7 +2608,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var redirectConfiguration ApplicationGatewayRedirectConfiguration
 			err := redirectConfiguration.Initialize_From_ApplicationGatewayRedirectConfiguration_STATUS(&redirectConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayRedirectConfiguration_STATUS() to populate field RedirectConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayRedirectConfiguration_STATUS() to populate field RedirectConfigurations")
 			}
 			redirectConfigurationList[redirectConfigurationIndex] = redirectConfiguration
 		}
@@ -2751,7 +2626,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var requestRoutingRule ApplicationGatewayRequestRoutingRule
 			err := requestRoutingRule.Initialize_From_ApplicationGatewayRequestRoutingRule_STATUS(&requestRoutingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayRequestRoutingRule_STATUS() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayRequestRoutingRule_STATUS() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -2769,7 +2644,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var rewriteRuleSet ApplicationGatewayRewriteRuleSet
 			err := rewriteRuleSet.Initialize_From_ApplicationGatewayRewriteRuleSet_STATUS(&rewriteRuleSetItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayRewriteRuleSet_STATUS() to populate field RewriteRuleSets")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayRewriteRuleSet_STATUS() to populate field RewriteRuleSets")
 			}
 			rewriteRuleSetList[rewriteRuleSetIndex] = rewriteRuleSet
 		}
@@ -2787,7 +2662,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var routingRule ApplicationGatewayRoutingRule
 			err := routingRule.Initialize_From_ApplicationGatewayRoutingRule_STATUS(&routingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayRoutingRule_STATUS() to populate field RoutingRules")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayRoutingRule_STATUS() to populate field RoutingRules")
 			}
 			routingRuleList[routingRuleIndex] = routingRule
 		}
@@ -2801,7 +2676,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var sku ApplicationGatewaySku
 		err := sku.Initialize_From_ApplicationGatewaySku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ApplicationGatewaySku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_ApplicationGatewaySku_STATUS() to populate field Sku")
 		}
 		gateway.Sku = &sku
 	} else {
@@ -2817,7 +2692,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var sslCertificate ApplicationGatewaySslCertificate
 			err := sslCertificate.Initialize_From_ApplicationGatewaySslCertificate_STATUS(&sslCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewaySslCertificate_STATUS() to populate field SslCertificates")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewaySslCertificate_STATUS() to populate field SslCertificates")
 			}
 			sslCertificateList[sslCertificateIndex] = sslCertificate
 		}
@@ -2831,7 +2706,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var sslPolicy ApplicationGatewaySslPolicy
 		err := sslPolicy.Initialize_From_ApplicationGatewaySslPolicy_STATUS(source.SslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ApplicationGatewaySslPolicy_STATUS() to populate field SslPolicy")
+			return eris.Wrap(err, "calling Initialize_From_ApplicationGatewaySslPolicy_STATUS() to populate field SslPolicy")
 		}
 		gateway.SslPolicy = &sslPolicy
 	} else {
@@ -2847,7 +2722,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var sslProfile ApplicationGatewaySslProfile
 			err := sslProfile.Initialize_From_ApplicationGatewaySslProfile_STATUS(&sslProfileItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewaySslProfile_STATUS() to populate field SslProfiles")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewaySslProfile_STATUS() to populate field SslProfiles")
 			}
 			sslProfileList[sslProfileIndex] = sslProfile
 		}
@@ -2868,7 +2743,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var trustedClientCertificate ApplicationGatewayTrustedClientCertificate
 			err := trustedClientCertificate.Initialize_From_ApplicationGatewayTrustedClientCertificate_STATUS(&trustedClientCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayTrustedClientCertificate_STATUS() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayTrustedClientCertificate_STATUS() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -2886,7 +2761,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var trustedRootCertificate ApplicationGatewayTrustedRootCertificate
 			err := trustedRootCertificate.Initialize_From_ApplicationGatewayTrustedRootCertificate_STATUS(&trustedRootCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayTrustedRootCertificate_STATUS() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayTrustedRootCertificate_STATUS() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -2904,7 +2779,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 			var urlPathMap ApplicationGatewayUrlPathMap
 			err := urlPathMap.Initialize_From_ApplicationGatewayUrlPathMap_STATUS(&urlPathMapItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayUrlPathMap_STATUS() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayUrlPathMap_STATUS() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -2918,7 +2793,7 @@ func (gateway *ApplicationGateway_Spec) Initialize_From_ApplicationGateway_STATU
 		var webApplicationFirewallConfiguration ApplicationGatewayWebApplicationFirewallConfiguration
 		err := webApplicationFirewallConfiguration.Initialize_From_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS(source.WebApplicationFirewallConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS() to populate field WebApplicationFirewallConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS() to populate field WebApplicationFirewallConfiguration")
 		}
 		gateway.WebApplicationFirewallConfiguration = &webApplicationFirewallConfiguration
 	} else {
@@ -3111,13 +2986,13 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 	src = &storage.ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = embedded.AssignProperties_From_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -3135,13 +3010,13 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 	dst = &storage.ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded{}
 	err := embedded.AssignProperties_To_ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -3674,7 +3549,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var authenticationCertificate ApplicationGatewayAuthenticationCertificate_STATUS
 			err := authenticationCertificate.AssignProperties_From_ApplicationGatewayAuthenticationCertificate_STATUS(&authenticationCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAuthenticationCertificate_STATUS() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAuthenticationCertificate_STATUS() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -3688,7 +3563,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var autoscaleConfiguration ApplicationGatewayAutoscaleConfiguration_STATUS
 		err := autoscaleConfiguration.AssignProperties_From_ApplicationGatewayAutoscaleConfiguration_STATUS(source.AutoscaleConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAutoscaleConfiguration_STATUS() to populate field AutoscaleConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayAutoscaleConfiguration_STATUS() to populate field AutoscaleConfiguration")
 		}
 		embedded.AutoscaleConfiguration = &autoscaleConfiguration
 	} else {
@@ -3704,7 +3579,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var backendAddressPool ApplicationGatewayBackendAddressPool_STATUS
 			err := backendAddressPool.AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS(&backendAddressPoolItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS() to populate field BackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS() to populate field BackendAddressPools")
 			}
 			backendAddressPoolList[backendAddressPoolIndex] = backendAddressPool
 		}
@@ -3722,7 +3597,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var backendHttpSettingsCollection ApplicationGatewayBackendHttpSettings_STATUS
 			err := backendHttpSettingsCollection.AssignProperties_From_ApplicationGatewayBackendHttpSettings_STATUS(&backendHttpSettingsCollectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendHttpSettings_STATUS() to populate field BackendHttpSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendHttpSettings_STATUS() to populate field BackendHttpSettingsCollection")
 			}
 			backendHttpSettingsCollectionList[backendHttpSettingsCollectionIndex] = backendHttpSettingsCollection
 		}
@@ -3740,7 +3615,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var backendSettingsCollection ApplicationGatewayBackendSettings_STATUS
 			err := backendSettingsCollection.AssignProperties_From_ApplicationGatewayBackendSettings_STATUS(&backendSettingsCollectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendSettings_STATUS() to populate field BackendSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendSettings_STATUS() to populate field BackendSettingsCollection")
 			}
 			backendSettingsCollectionList[backendSettingsCollectionIndex] = backendSettingsCollection
 		}
@@ -3761,7 +3636,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var customErrorConfiguration ApplicationGatewayCustomError_STATUS
 			err := customErrorConfiguration.AssignProperties_From_ApplicationGatewayCustomError_STATUS(&customErrorConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayCustomError_STATUS() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayCustomError_STATUS() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -3794,7 +3669,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var firewallPolicy SubResource_STATUS
 		err := firewallPolicy.AssignProperties_From_SubResource_STATUS(source.FirewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field FirewallPolicy")
 		}
 		embedded.FirewallPolicy = &firewallPolicy
 	} else {
@@ -3818,7 +3693,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var frontendIPConfiguration ApplicationGatewayFrontendIPConfiguration_STATUS
 			err := frontendIPConfiguration.AssignProperties_From_ApplicationGatewayFrontendIPConfiguration_STATUS(&frontendIPConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendIPConfiguration_STATUS() to populate field FrontendIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendIPConfiguration_STATUS() to populate field FrontendIPConfigurations")
 			}
 			frontendIPConfigurationList[frontendIPConfigurationIndex] = frontendIPConfiguration
 		}
@@ -3836,7 +3711,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var frontendPort ApplicationGatewayFrontendPort_STATUS
 			err := frontendPort.AssignProperties_From_ApplicationGatewayFrontendPort_STATUS(&frontendPortItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendPort_STATUS() to populate field FrontendPorts")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFrontendPort_STATUS() to populate field FrontendPorts")
 			}
 			frontendPortList[frontendPortIndex] = frontendPort
 		}
@@ -3854,7 +3729,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var gatewayIPConfiguration ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded
 			err := gatewayIPConfiguration.AssignProperties_From_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded(&gatewayIPConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
 			}
 			gatewayIPConfigurationList[gatewayIPConfigurationIndex] = gatewayIPConfiguration
 		}
@@ -3868,7 +3743,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var globalConfiguration ApplicationGatewayGlobalConfiguration_STATUS
 		err := globalConfiguration.AssignProperties_From_ApplicationGatewayGlobalConfiguration_STATUS(source.GlobalConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayGlobalConfiguration_STATUS() to populate field GlobalConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayGlobalConfiguration_STATUS() to populate field GlobalConfiguration")
 		}
 		embedded.GlobalConfiguration = &globalConfiguration
 	} else {
@@ -3884,7 +3759,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var httpListener ApplicationGatewayHttpListener_STATUS
 			err := httpListener.AssignProperties_From_ApplicationGatewayHttpListener_STATUS(&httpListenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHttpListener_STATUS() to populate field HttpListeners")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHttpListener_STATUS() to populate field HttpListeners")
 			}
 			httpListenerList[httpListenerIndex] = httpListener
 		}
@@ -3901,7 +3776,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var identity ManagedServiceIdentity_STATUS
 		err := identity.AssignProperties_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		embedded.Identity = &identity
 	} else {
@@ -3917,7 +3792,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var listener ApplicationGatewayListener_STATUS
 			err := listener.AssignProperties_From_ApplicationGatewayListener_STATUS(&listenerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayListener_STATUS() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayListener_STATUS() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -3935,7 +3810,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var loadDistributionPolicy ApplicationGatewayLoadDistributionPolicy_STATUS
 			err := loadDistributionPolicy.AssignProperties_From_ApplicationGatewayLoadDistributionPolicy_STATUS(&loadDistributionPolicyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayLoadDistributionPolicy_STATUS() to populate field LoadDistributionPolicies")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayLoadDistributionPolicy_STATUS() to populate field LoadDistributionPolicies")
 			}
 			loadDistributionPolicyList[loadDistributionPolicyIndex] = loadDistributionPolicy
 		}
@@ -3968,7 +3843,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var privateEndpointConnection ApplicationGatewayPrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_ApplicationGatewayPrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -3986,7 +3861,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var privateLinkConfiguration ApplicationGatewayPrivateLinkConfiguration_STATUS
 			err := privateLinkConfiguration.AssignProperties_From_ApplicationGatewayPrivateLinkConfiguration_STATUS(&privateLinkConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateLinkConfiguration_STATUS() to populate field PrivateLinkConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateLinkConfiguration_STATUS() to populate field PrivateLinkConfigurations")
 			}
 			privateLinkConfigurationList[privateLinkConfigurationIndex] = privateLinkConfiguration
 		}
@@ -4004,7 +3879,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var probe ApplicationGatewayProbe_STATUS
 			err := probe.AssignProperties_From_ApplicationGatewayProbe_STATUS(&probeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayProbe_STATUS() to populate field Probes")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayProbe_STATUS() to populate field Probes")
 			}
 			probeList[probeIndex] = probe
 		}
@@ -4031,7 +3906,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var redirectConfiguration ApplicationGatewayRedirectConfiguration_STATUS
 			err := redirectConfiguration.AssignProperties_From_ApplicationGatewayRedirectConfiguration_STATUS(&redirectConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRedirectConfiguration_STATUS() to populate field RedirectConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRedirectConfiguration_STATUS() to populate field RedirectConfigurations")
 			}
 			redirectConfigurationList[redirectConfigurationIndex] = redirectConfiguration
 		}
@@ -4049,7 +3924,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var requestRoutingRule ApplicationGatewayRequestRoutingRule_STATUS
 			err := requestRoutingRule.AssignProperties_From_ApplicationGatewayRequestRoutingRule_STATUS(&requestRoutingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRequestRoutingRule_STATUS() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRequestRoutingRule_STATUS() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -4070,7 +3945,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var rewriteRuleSet ApplicationGatewayRewriteRuleSet_STATUS
 			err := rewriteRuleSet.AssignProperties_From_ApplicationGatewayRewriteRuleSet_STATUS(&rewriteRuleSetItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleSet_STATUS() to populate field RewriteRuleSets")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleSet_STATUS() to populate field RewriteRuleSets")
 			}
 			rewriteRuleSetList[rewriteRuleSetIndex] = rewriteRuleSet
 		}
@@ -4088,7 +3963,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var routingRule ApplicationGatewayRoutingRule_STATUS
 			err := routingRule.AssignProperties_From_ApplicationGatewayRoutingRule_STATUS(&routingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRoutingRule_STATUS() to populate field RoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRoutingRule_STATUS() to populate field RoutingRules")
 			}
 			routingRuleList[routingRuleIndex] = routingRule
 		}
@@ -4102,7 +3977,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var sku ApplicationGatewaySku_STATUS
 		err := sku.AssignProperties_From_ApplicationGatewaySku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySku_STATUS() to populate field Sku")
 		}
 		embedded.Sku = &sku
 	} else {
@@ -4118,7 +3993,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var sslCertificate ApplicationGatewaySslCertificate_STATUS
 			err := sslCertificate.AssignProperties_From_ApplicationGatewaySslCertificate_STATUS(&sslCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslCertificate_STATUS() to populate field SslCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslCertificate_STATUS() to populate field SslCertificates")
 			}
 			sslCertificateList[sslCertificateIndex] = sslCertificate
 		}
@@ -4132,7 +4007,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var sslPolicy ApplicationGatewaySslPolicy_STATUS
 		err := sslPolicy.AssignProperties_From_ApplicationGatewaySslPolicy_STATUS(source.SslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslPolicy_STATUS() to populate field SslPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslPolicy_STATUS() to populate field SslPolicy")
 		}
 		embedded.SslPolicy = &sslPolicy
 	} else {
@@ -4148,7 +4023,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var sslProfile ApplicationGatewaySslProfile_STATUS
 			err := sslProfile.AssignProperties_From_ApplicationGatewaySslProfile_STATUS(&sslProfileItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslProfile_STATUS() to populate field SslProfiles")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslProfile_STATUS() to populate field SslProfiles")
 			}
 			sslProfileList[sslProfileIndex] = sslProfile
 		}
@@ -4169,7 +4044,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var trustedClientCertificate ApplicationGatewayTrustedClientCertificate_STATUS
 			err := trustedClientCertificate.AssignProperties_From_ApplicationGatewayTrustedClientCertificate_STATUS(&trustedClientCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedClientCertificate_STATUS() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedClientCertificate_STATUS() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -4187,7 +4062,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var trustedRootCertificate ApplicationGatewayTrustedRootCertificate_STATUS
 			err := trustedRootCertificate.AssignProperties_From_ApplicationGatewayTrustedRootCertificate_STATUS(&trustedRootCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedRootCertificate_STATUS() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayTrustedRootCertificate_STATUS() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -4208,7 +4083,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var urlPathMap ApplicationGatewayUrlPathMap_STATUS
 			err := urlPathMap.AssignProperties_From_ApplicationGatewayUrlPathMap_STATUS(&urlPathMapItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayUrlPathMap_STATUS() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayUrlPathMap_STATUS() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -4222,7 +4097,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var webApplicationFirewallConfiguration ApplicationGatewayWebApplicationFirewallConfiguration_STATUS
 		err := webApplicationFirewallConfiguration.AssignProperties_From_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS(source.WebApplicationFirewallConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS() to populate field WebApplicationFirewallConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS() to populate field WebApplicationFirewallConfiguration")
 		}
 		embedded.WebApplicationFirewallConfiguration = &webApplicationFirewallConfiguration
 	} else {
@@ -4250,7 +4125,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var authenticationCertificate storage.ApplicationGatewayAuthenticationCertificate_STATUS
 			err := authenticationCertificateItem.AssignProperties_To_ApplicationGatewayAuthenticationCertificate_STATUS(&authenticationCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAuthenticationCertificate_STATUS() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAuthenticationCertificate_STATUS() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -4264,7 +4139,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var autoscaleConfiguration storage.ApplicationGatewayAutoscaleConfiguration_STATUS
 		err := embedded.AutoscaleConfiguration.AssignProperties_To_ApplicationGatewayAutoscaleConfiguration_STATUS(&autoscaleConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAutoscaleConfiguration_STATUS() to populate field AutoscaleConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayAutoscaleConfiguration_STATUS() to populate field AutoscaleConfiguration")
 		}
 		destination.AutoscaleConfiguration = &autoscaleConfiguration
 	} else {
@@ -4280,7 +4155,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var backendAddressPool storage.ApplicationGatewayBackendAddressPool_STATUS
 			err := backendAddressPoolItem.AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS(&backendAddressPool)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS() to populate field BackendAddressPools")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS() to populate field BackendAddressPools")
 			}
 			backendAddressPoolList[backendAddressPoolIndex] = backendAddressPool
 		}
@@ -4298,7 +4173,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var backendHttpSettingsCollection storage.ApplicationGatewayBackendHttpSettings_STATUS
 			err := backendHttpSettingsCollectionItem.AssignProperties_To_ApplicationGatewayBackendHttpSettings_STATUS(&backendHttpSettingsCollection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendHttpSettings_STATUS() to populate field BackendHttpSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendHttpSettings_STATUS() to populate field BackendHttpSettingsCollection")
 			}
 			backendHttpSettingsCollectionList[backendHttpSettingsCollectionIndex] = backendHttpSettingsCollection
 		}
@@ -4316,7 +4191,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var backendSettingsCollection storage.ApplicationGatewayBackendSettings_STATUS
 			err := backendSettingsCollectionItem.AssignProperties_To_ApplicationGatewayBackendSettings_STATUS(&backendSettingsCollection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendSettings_STATUS() to populate field BackendSettingsCollection")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendSettings_STATUS() to populate field BackendSettingsCollection")
 			}
 			backendSettingsCollectionList[backendSettingsCollectionIndex] = backendSettingsCollection
 		}
@@ -4337,7 +4212,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var customErrorConfiguration storage.ApplicationGatewayCustomError_STATUS
 			err := customErrorConfigurationItem.AssignProperties_To_ApplicationGatewayCustomError_STATUS(&customErrorConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayCustomError_STATUS() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayCustomError_STATUS() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -4370,7 +4245,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var firewallPolicy storage.SubResource_STATUS
 		err := embedded.FirewallPolicy.AssignProperties_To_SubResource_STATUS(&firewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field FirewallPolicy")
 		}
 		destination.FirewallPolicy = &firewallPolicy
 	} else {
@@ -4394,7 +4269,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var frontendIPConfiguration storage.ApplicationGatewayFrontendIPConfiguration_STATUS
 			err := frontendIPConfigurationItem.AssignProperties_To_ApplicationGatewayFrontendIPConfiguration_STATUS(&frontendIPConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendIPConfiguration_STATUS() to populate field FrontendIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendIPConfiguration_STATUS() to populate field FrontendIPConfigurations")
 			}
 			frontendIPConfigurationList[frontendIPConfigurationIndex] = frontendIPConfiguration
 		}
@@ -4412,7 +4287,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var frontendPort storage.ApplicationGatewayFrontendPort_STATUS
 			err := frontendPortItem.AssignProperties_To_ApplicationGatewayFrontendPort_STATUS(&frontendPort)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendPort_STATUS() to populate field FrontendPorts")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFrontendPort_STATUS() to populate field FrontendPorts")
 			}
 			frontendPortList[frontendPortIndex] = frontendPort
 		}
@@ -4430,7 +4305,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var gatewayIPConfiguration storage.ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded
 			err := gatewayIPConfigurationItem.AssignProperties_To_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded(&gatewayIPConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayIPConfiguration_STATUS_ApplicationGateway_SubResourceEmbedded() to populate field GatewayIPConfigurations")
 			}
 			gatewayIPConfigurationList[gatewayIPConfigurationIndex] = gatewayIPConfiguration
 		}
@@ -4444,7 +4319,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var globalConfiguration storage.ApplicationGatewayGlobalConfiguration_STATUS
 		err := embedded.GlobalConfiguration.AssignProperties_To_ApplicationGatewayGlobalConfiguration_STATUS(&globalConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayGlobalConfiguration_STATUS() to populate field GlobalConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayGlobalConfiguration_STATUS() to populate field GlobalConfiguration")
 		}
 		destination.GlobalConfiguration = &globalConfiguration
 	} else {
@@ -4460,7 +4335,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var httpListener storage.ApplicationGatewayHttpListener_STATUS
 			err := httpListenerItem.AssignProperties_To_ApplicationGatewayHttpListener_STATUS(&httpListener)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHttpListener_STATUS() to populate field HttpListeners")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHttpListener_STATUS() to populate field HttpListeners")
 			}
 			httpListenerList[httpListenerIndex] = httpListener
 		}
@@ -4477,7 +4352,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var identity storage.ManagedServiceIdentity_STATUS
 		err := embedded.Identity.AssignProperties_To_ManagedServiceIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -4493,7 +4368,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var listener storage.ApplicationGatewayListener_STATUS
 			err := listenerItem.AssignProperties_To_ApplicationGatewayListener_STATUS(&listener)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayListener_STATUS() to populate field Listeners")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayListener_STATUS() to populate field Listeners")
 			}
 			listenerList[listenerIndex] = listener
 		}
@@ -4511,7 +4386,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var loadDistributionPolicy storage.ApplicationGatewayLoadDistributionPolicy_STATUS
 			err := loadDistributionPolicyItem.AssignProperties_To_ApplicationGatewayLoadDistributionPolicy_STATUS(&loadDistributionPolicy)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayLoadDistributionPolicy_STATUS() to populate field LoadDistributionPolicies")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayLoadDistributionPolicy_STATUS() to populate field LoadDistributionPolicies")
 			}
 			loadDistributionPolicyList[loadDistributionPolicyIndex] = loadDistributionPolicy
 		}
@@ -4543,7 +4418,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var privateEndpointConnection storage.ApplicationGatewayPrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_ApplicationGatewayPrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -4561,7 +4436,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var privateLinkConfiguration storage.ApplicationGatewayPrivateLinkConfiguration_STATUS
 			err := privateLinkConfigurationItem.AssignProperties_To_ApplicationGatewayPrivateLinkConfiguration_STATUS(&privateLinkConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateLinkConfiguration_STATUS() to populate field PrivateLinkConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateLinkConfiguration_STATUS() to populate field PrivateLinkConfigurations")
 			}
 			privateLinkConfigurationList[privateLinkConfigurationIndex] = privateLinkConfiguration
 		}
@@ -4579,7 +4454,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var probe storage.ApplicationGatewayProbe_STATUS
 			err := probeItem.AssignProperties_To_ApplicationGatewayProbe_STATUS(&probe)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayProbe_STATUS() to populate field Probes")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayProbe_STATUS() to populate field Probes")
 			}
 			probeList[probeIndex] = probe
 		}
@@ -4605,7 +4480,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var redirectConfiguration storage.ApplicationGatewayRedirectConfiguration_STATUS
 			err := redirectConfigurationItem.AssignProperties_To_ApplicationGatewayRedirectConfiguration_STATUS(&redirectConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRedirectConfiguration_STATUS() to populate field RedirectConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRedirectConfiguration_STATUS() to populate field RedirectConfigurations")
 			}
 			redirectConfigurationList[redirectConfigurationIndex] = redirectConfiguration
 		}
@@ -4623,7 +4498,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var requestRoutingRule storage.ApplicationGatewayRequestRoutingRule_STATUS
 			err := requestRoutingRuleItem.AssignProperties_To_ApplicationGatewayRequestRoutingRule_STATUS(&requestRoutingRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRequestRoutingRule_STATUS() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRequestRoutingRule_STATUS() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -4644,7 +4519,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var rewriteRuleSet storage.ApplicationGatewayRewriteRuleSet_STATUS
 			err := rewriteRuleSetItem.AssignProperties_To_ApplicationGatewayRewriteRuleSet_STATUS(&rewriteRuleSet)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleSet_STATUS() to populate field RewriteRuleSets")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleSet_STATUS() to populate field RewriteRuleSets")
 			}
 			rewriteRuleSetList[rewriteRuleSetIndex] = rewriteRuleSet
 		}
@@ -4662,7 +4537,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var routingRule storage.ApplicationGatewayRoutingRule_STATUS
 			err := routingRuleItem.AssignProperties_To_ApplicationGatewayRoutingRule_STATUS(&routingRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRoutingRule_STATUS() to populate field RoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRoutingRule_STATUS() to populate field RoutingRules")
 			}
 			routingRuleList[routingRuleIndex] = routingRule
 		}
@@ -4676,7 +4551,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var sku storage.ApplicationGatewaySku_STATUS
 		err := embedded.Sku.AssignProperties_To_ApplicationGatewaySku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -4692,7 +4567,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var sslCertificate storage.ApplicationGatewaySslCertificate_STATUS
 			err := sslCertificateItem.AssignProperties_To_ApplicationGatewaySslCertificate_STATUS(&sslCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslCertificate_STATUS() to populate field SslCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslCertificate_STATUS() to populate field SslCertificates")
 			}
 			sslCertificateList[sslCertificateIndex] = sslCertificate
 		}
@@ -4706,7 +4581,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var sslPolicy storage.ApplicationGatewaySslPolicy_STATUS
 		err := embedded.SslPolicy.AssignProperties_To_ApplicationGatewaySslPolicy_STATUS(&sslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslPolicy_STATUS() to populate field SslPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslPolicy_STATUS() to populate field SslPolicy")
 		}
 		destination.SslPolicy = &sslPolicy
 	} else {
@@ -4722,7 +4597,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var sslProfile storage.ApplicationGatewaySslProfile_STATUS
 			err := sslProfileItem.AssignProperties_To_ApplicationGatewaySslProfile_STATUS(&sslProfile)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslProfile_STATUS() to populate field SslProfiles")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslProfile_STATUS() to populate field SslProfiles")
 			}
 			sslProfileList[sslProfileIndex] = sslProfile
 		}
@@ -4743,7 +4618,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var trustedClientCertificate storage.ApplicationGatewayTrustedClientCertificate_STATUS
 			err := trustedClientCertificateItem.AssignProperties_To_ApplicationGatewayTrustedClientCertificate_STATUS(&trustedClientCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedClientCertificate_STATUS() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedClientCertificate_STATUS() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -4761,7 +4636,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var trustedRootCertificate storage.ApplicationGatewayTrustedRootCertificate_STATUS
 			err := trustedRootCertificateItem.AssignProperties_To_ApplicationGatewayTrustedRootCertificate_STATUS(&trustedRootCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedRootCertificate_STATUS() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayTrustedRootCertificate_STATUS() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -4782,7 +4657,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 			var urlPathMap storage.ApplicationGatewayUrlPathMap_STATUS
 			err := urlPathMapItem.AssignProperties_To_ApplicationGatewayUrlPathMap_STATUS(&urlPathMap)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayUrlPathMap_STATUS() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayUrlPathMap_STATUS() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -4796,7 +4671,7 @@ func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
 		var webApplicationFirewallConfiguration storage.ApplicationGatewayWebApplicationFirewallConfiguration_STATUS
 		err := embedded.WebApplicationFirewallConfiguration.AssignProperties_To_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS(&webApplicationFirewallConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS() to populate field WebApplicationFirewallConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayWebApplicationFirewallConfiguration_STATUS() to populate field WebApplicationFirewallConfiguration")
 		}
 		destination.WebApplicationFirewallConfiguration = &webApplicationFirewallConfiguration
 	} else {
@@ -4848,7 +4723,7 @@ func (certificate *ApplicationGatewayAuthenticationCertificate) ConvertToARM(res
 	if certificate.Data != nil {
 		dataSecret, err := resolved.ResolvedSecrets.Lookup(*certificate.Data)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property Data")
+			return nil, eris.Wrap(err, "looking up secret for property Data")
 		}
 		data := dataSecret
 		result.Properties.Data = &data
@@ -5058,20 +4933,10 @@ func (configuration *ApplicationGatewayAutoscaleConfiguration) PopulateFromARM(o
 func (configuration *ApplicationGatewayAutoscaleConfiguration) AssignProperties_From_ApplicationGatewayAutoscaleConfiguration(source *storage.ApplicationGatewayAutoscaleConfiguration) error {
 
 	// MaxCapacity
-	if source.MaxCapacity != nil {
-		maxCapacity := *source.MaxCapacity
-		configuration.MaxCapacity = &maxCapacity
-	} else {
-		configuration.MaxCapacity = nil
-	}
+	configuration.MaxCapacity = genruntime.ClonePointerToInt(source.MaxCapacity)
 
 	// MinCapacity
-	if source.MinCapacity != nil {
-		minCapacity := *source.MinCapacity
-		configuration.MinCapacity = &minCapacity
-	} else {
-		configuration.MinCapacity = nil
-	}
+	configuration.MinCapacity = genruntime.ClonePointerToInt(source.MinCapacity)
 
 	// No error
 	return nil
@@ -5083,20 +4948,10 @@ func (configuration *ApplicationGatewayAutoscaleConfiguration) AssignProperties_
 	propertyBag := genruntime.NewPropertyBag()
 
 	// MaxCapacity
-	if configuration.MaxCapacity != nil {
-		maxCapacity := *configuration.MaxCapacity
-		destination.MaxCapacity = &maxCapacity
-	} else {
-		destination.MaxCapacity = nil
-	}
+	destination.MaxCapacity = genruntime.ClonePointerToInt(configuration.MaxCapacity)
 
 	// MinCapacity
-	if configuration.MinCapacity != nil {
-		minCapacity := *configuration.MinCapacity
-		destination.MinCapacity = &minCapacity
-	} else {
-		destination.MinCapacity = nil
-	}
+	destination.MinCapacity = genruntime.ClonePointerToInt(configuration.MinCapacity)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -5113,20 +4968,10 @@ func (configuration *ApplicationGatewayAutoscaleConfiguration) AssignProperties_
 func (configuration *ApplicationGatewayAutoscaleConfiguration) Initialize_From_ApplicationGatewayAutoscaleConfiguration_STATUS(source *ApplicationGatewayAutoscaleConfiguration_STATUS) error {
 
 	// MaxCapacity
-	if source.MaxCapacity != nil {
-		maxCapacity := *source.MaxCapacity
-		configuration.MaxCapacity = &maxCapacity
-	} else {
-		configuration.MaxCapacity = nil
-	}
+	configuration.MaxCapacity = genruntime.ClonePointerToInt(source.MaxCapacity)
 
 	// MinCapacity
-	if source.MinCapacity != nil {
-		minCapacity := *source.MinCapacity
-		configuration.MinCapacity = &minCapacity
-	} else {
-		configuration.MinCapacity = nil
-	}
+	configuration.MinCapacity = genruntime.ClonePointerToInt(source.MinCapacity)
 
 	// No error
 	return nil
@@ -5291,7 +5136,7 @@ func (pool *ApplicationGatewayBackendAddressPool) AssignProperties_From_Applicat
 			var backendAddress ApplicationGatewayBackendAddress
 			err := backendAddress.AssignProperties_From_ApplicationGatewayBackendAddress(&backendAddressItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddress() to populate field BackendAddresses")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddress() to populate field BackendAddresses")
 			}
 			backendAddressList[backendAddressIndex] = backendAddress
 		}
@@ -5321,7 +5166,7 @@ func (pool *ApplicationGatewayBackendAddressPool) AssignProperties_To_Applicatio
 			var backendAddress storage.ApplicationGatewayBackendAddress
 			err := backendAddressItem.AssignProperties_To_ApplicationGatewayBackendAddress(&backendAddress)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddress() to populate field BackendAddresses")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddress() to populate field BackendAddresses")
 			}
 			backendAddressList[backendAddressIndex] = backendAddress
 		}
@@ -5738,7 +5583,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_From_App
 			var authenticationCertificate SubResource
 			err := authenticationCertificate.AssignProperties_From_SubResource(&authenticationCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -5752,7 +5597,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_From_App
 		var connectionDraining ApplicationGatewayConnectionDraining
 		err := connectionDraining.AssignProperties_From_ApplicationGatewayConnectionDraining(source.ConnectionDraining)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayConnectionDraining() to populate field ConnectionDraining")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayConnectionDraining() to populate field ConnectionDraining")
 		}
 		settings.ConnectionDraining = &connectionDraining
 	} else {
@@ -5793,7 +5638,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_From_App
 		var probe SubResource
 		err := probe.AssignProperties_From_SubResource(source.Probe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Probe")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Probe")
 		}
 		settings.Probe = &probe
 	} else {
@@ -5829,7 +5674,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_From_App
 			var trustedRootCertificate SubResource
 			err := trustedRootCertificate.AssignProperties_From_SubResource(&trustedRootCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -5859,7 +5704,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_To_Appli
 			var authenticationCertificate storage.SubResource
 			err := authenticationCertificateItem.AssignProperties_To_SubResource(&authenticationCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field AuthenticationCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field AuthenticationCertificates")
 			}
 			authenticationCertificateList[authenticationCertificateIndex] = authenticationCertificate
 		}
@@ -5873,7 +5718,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_To_Appli
 		var connectionDraining storage.ApplicationGatewayConnectionDraining
 		err := settings.ConnectionDraining.AssignProperties_To_ApplicationGatewayConnectionDraining(&connectionDraining)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayConnectionDraining() to populate field ConnectionDraining")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayConnectionDraining() to populate field ConnectionDraining")
 		}
 		destination.ConnectionDraining = &connectionDraining
 	} else {
@@ -5913,7 +5758,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_To_Appli
 		var probe storage.SubResource
 		err := settings.Probe.AssignProperties_To_SubResource(&probe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Probe")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Probe")
 		}
 		destination.Probe = &probe
 	} else {
@@ -5948,7 +5793,7 @@ func (settings *ApplicationGatewayBackendHttpSettings) AssignProperties_To_Appli
 			var trustedRootCertificate storage.SubResource
 			err := trustedRootCertificateItem.AssignProperties_To_SubResource(&trustedRootCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -6249,7 +6094,7 @@ func (settings *ApplicationGatewayBackendSettings) AssignProperties_From_Applica
 		var probe SubResource
 		err := probe.AssignProperties_From_SubResource(source.Probe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Probe")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Probe")
 		}
 		settings.Probe = &probe
 	} else {
@@ -6277,7 +6122,7 @@ func (settings *ApplicationGatewayBackendSettings) AssignProperties_From_Applica
 			var trustedRootCertificate SubResource
 			err := trustedRootCertificate.AssignProperties_From_SubResource(&trustedRootCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -6317,7 +6162,7 @@ func (settings *ApplicationGatewayBackendSettings) AssignProperties_To_Applicati
 		var probe storage.SubResource
 		err := settings.Probe.AssignProperties_To_SubResource(&probe)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Probe")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Probe")
 		}
 		destination.Probe = &probe
 	} else {
@@ -6344,7 +6189,7 @@ func (settings *ApplicationGatewayBackendSettings) AssignProperties_To_Applicati
 			var trustedRootCertificate storage.SubResource
 			err := trustedRootCertificateItem.AssignProperties_To_SubResource(&trustedRootCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TrustedRootCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TrustedRootCertificates")
 			}
 			trustedRootCertificateList[trustedRootCertificateIndex] = trustedRootCertificate
 		}
@@ -6833,7 +6678,7 @@ func (configuration *ApplicationGatewayFrontendIPConfiguration) AssignProperties
 		var privateLinkConfiguration SubResource
 		err := privateLinkConfiguration.AssignProperties_From_SubResource(source.PrivateLinkConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PrivateLinkConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PrivateLinkConfiguration")
 		}
 		configuration.PrivateLinkConfiguration = &privateLinkConfiguration
 	} else {
@@ -6845,7 +6690,7 @@ func (configuration *ApplicationGatewayFrontendIPConfiguration) AssignProperties
 		var publicIPAddress SubResource
 		err := publicIPAddress.AssignProperties_From_SubResource(source.PublicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPAddress")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPAddress")
 		}
 		configuration.PublicIPAddress = &publicIPAddress
 	} else {
@@ -6857,7 +6702,7 @@ func (configuration *ApplicationGatewayFrontendIPConfiguration) AssignProperties
 		var subnet SubResource
 		err := subnet.AssignProperties_From_SubResource(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -6892,7 +6737,7 @@ func (configuration *ApplicationGatewayFrontendIPConfiguration) AssignProperties
 		var privateLinkConfiguration storage.SubResource
 		err := configuration.PrivateLinkConfiguration.AssignProperties_To_SubResource(&privateLinkConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PrivateLinkConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PrivateLinkConfiguration")
 		}
 		destination.PrivateLinkConfiguration = &privateLinkConfiguration
 	} else {
@@ -6904,7 +6749,7 @@ func (configuration *ApplicationGatewayFrontendIPConfiguration) AssignProperties
 		var publicIPAddress storage.SubResource
 		err := configuration.PublicIPAddress.AssignProperties_To_SubResource(&publicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPAddress")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPAddress")
 		}
 		destination.PublicIPAddress = &publicIPAddress
 	} else {
@@ -6916,7 +6761,7 @@ func (configuration *ApplicationGatewayFrontendIPConfiguration) AssignProperties
 		var subnet storage.SubResource
 		err := configuration.Subnet.AssignProperties_To_SubResource(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -7684,7 +7529,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_From_Applicatio
 			var customErrorConfiguration ApplicationGatewayCustomError
 			err := customErrorConfiguration.AssignProperties_From_ApplicationGatewayCustomError(&customErrorConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -7698,7 +7543,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_From_Applicatio
 		var firewallPolicy SubResource
 		err := firewallPolicy.AssignProperties_From_SubResource(source.FirewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FirewallPolicy")
 		}
 		listener.FirewallPolicy = &firewallPolicy
 	} else {
@@ -7710,7 +7555,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_From_Applicatio
 		var frontendIPConfiguration SubResource
 		err := frontendIPConfiguration.AssignProperties_From_SubResource(source.FrontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration")
 		}
 		listener.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -7722,7 +7567,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_From_Applicatio
 		var frontendPort SubResource
 		err := frontendPort.AssignProperties_From_SubResource(source.FrontendPort)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendPort")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendPort")
 		}
 		listener.FrontendPort = &frontendPort
 	} else {
@@ -7760,7 +7605,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_From_Applicatio
 		var sslCertificate SubResource
 		err := sslCertificate.AssignProperties_From_SubResource(source.SslCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslCertificate")
 		}
 		listener.SslCertificate = &sslCertificate
 	} else {
@@ -7772,7 +7617,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_From_Applicatio
 		var sslProfile SubResource
 		err := sslProfile.AssignProperties_From_SubResource(source.SslProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslProfile")
 		}
 		listener.SslProfile = &sslProfile
 	} else {
@@ -7797,7 +7642,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_To_ApplicationG
 			var customErrorConfiguration storage.ApplicationGatewayCustomError
 			err := customErrorConfigurationItem.AssignProperties_To_ApplicationGatewayCustomError(&customErrorConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayCustomError() to populate field CustomErrorConfigurations")
 			}
 			customErrorConfigurationList[customErrorConfigurationIndex] = customErrorConfiguration
 		}
@@ -7811,7 +7656,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_To_ApplicationG
 		var firewallPolicy storage.SubResource
 		err := listener.FirewallPolicy.AssignProperties_To_SubResource(&firewallPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FirewallPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FirewallPolicy")
 		}
 		destination.FirewallPolicy = &firewallPolicy
 	} else {
@@ -7823,7 +7668,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_To_ApplicationG
 		var frontendIPConfiguration storage.SubResource
 		err := listener.FrontendIPConfiguration.AssignProperties_To_SubResource(&frontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration")
 		}
 		destination.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -7835,7 +7680,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_To_ApplicationG
 		var frontendPort storage.SubResource
 		err := listener.FrontendPort.AssignProperties_To_SubResource(&frontendPort)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendPort")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendPort")
 		}
 		destination.FrontendPort = &frontendPort
 	} else {
@@ -7872,7 +7717,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_To_ApplicationG
 		var sslCertificate storage.SubResource
 		err := listener.SslCertificate.AssignProperties_To_SubResource(&sslCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslCertificate")
 		}
 		destination.SslCertificate = &sslCertificate
 	} else {
@@ -7884,7 +7729,7 @@ func (listener *ApplicationGatewayHttpListener) AssignProperties_To_ApplicationG
 		var sslProfile storage.SubResource
 		err := listener.SslProfile.AssignProperties_To_SubResource(&sslProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslProfile")
 		}
 		destination.SslProfile = &sslProfile
 	} else {
@@ -8054,7 +7899,7 @@ func (embedded *ApplicationGatewayIPConfiguration_ApplicationGateway_SubResource
 		var subnet SubResource
 		err := subnet.AssignProperties_From_SubResource(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
 		}
 		embedded.Subnet = &subnet
 	} else {
@@ -8078,7 +7923,7 @@ func (embedded *ApplicationGatewayIPConfiguration_ApplicationGateway_SubResource
 		var subnet storage.SubResource
 		err := embedded.Subnet.AssignProperties_To_SubResource(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -8344,7 +8189,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_From_ApplicationGat
 		var frontendIPConfiguration SubResource
 		err := frontendIPConfiguration.AssignProperties_From_SubResource(source.FrontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendIPConfiguration")
 		}
 		listener.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -8356,7 +8201,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_From_ApplicationGat
 		var frontendPort SubResource
 		err := frontendPort.AssignProperties_From_SubResource(source.FrontendPort)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendPort")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field FrontendPort")
 		}
 		listener.FrontendPort = &frontendPort
 	} else {
@@ -8380,7 +8225,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_From_ApplicationGat
 		var sslCertificate SubResource
 		err := sslCertificate.AssignProperties_From_SubResource(source.SslCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslCertificate")
 		}
 		listener.SslCertificate = &sslCertificate
 	} else {
@@ -8392,7 +8237,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_From_ApplicationGat
 		var sslProfile SubResource
 		err := sslProfile.AssignProperties_From_SubResource(source.SslProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslProfile")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SslProfile")
 		}
 		listener.SslProfile = &sslProfile
 	} else {
@@ -8413,7 +8258,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_To_ApplicationGatew
 		var frontendIPConfiguration storage.SubResource
 		err := listener.FrontendIPConfiguration.AssignProperties_To_SubResource(&frontendIPConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendIPConfiguration")
 		}
 		destination.FrontendIPConfiguration = &frontendIPConfiguration
 	} else {
@@ -8425,7 +8270,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_To_ApplicationGatew
 		var frontendPort storage.SubResource
 		err := listener.FrontendPort.AssignProperties_To_SubResource(&frontendPort)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendPort")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field FrontendPort")
 		}
 		destination.FrontendPort = &frontendPort
 	} else {
@@ -8448,7 +8293,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_To_ApplicationGatew
 		var sslCertificate storage.SubResource
 		err := listener.SslCertificate.AssignProperties_To_SubResource(&sslCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslCertificate")
 		}
 		destination.SslCertificate = &sslCertificate
 	} else {
@@ -8460,7 +8305,7 @@ func (listener *ApplicationGatewayListener) AssignProperties_To_ApplicationGatew
 		var sslProfile storage.SubResource
 		err := listener.SslProfile.AssignProperties_To_SubResource(&sslProfile)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslProfile")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SslProfile")
 		}
 		destination.SslProfile = &sslProfile
 	} else {
@@ -8658,7 +8503,7 @@ func (policy *ApplicationGatewayLoadDistributionPolicy) AssignProperties_From_Ap
 			var loadDistributionTarget ApplicationGatewayLoadDistributionTarget
 			err := loadDistributionTarget.AssignProperties_From_ApplicationGatewayLoadDistributionTarget(&loadDistributionTargetItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayLoadDistributionTarget() to populate field LoadDistributionTargets")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayLoadDistributionTarget() to populate field LoadDistributionTargets")
 			}
 			loadDistributionTargetList[loadDistributionTargetIndex] = loadDistributionTarget
 		}
@@ -8696,7 +8541,7 @@ func (policy *ApplicationGatewayLoadDistributionPolicy) AssignProperties_To_Appl
 			var loadDistributionTarget storage.ApplicationGatewayLoadDistributionTarget
 			err := loadDistributionTargetItem.AssignProperties_To_ApplicationGatewayLoadDistributionTarget(&loadDistributionTarget)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayLoadDistributionTarget() to populate field LoadDistributionTargets")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayLoadDistributionTarget() to populate field LoadDistributionTargets")
 			}
 			loadDistributionTargetList[loadDistributionTargetIndex] = loadDistributionTarget
 		}
@@ -9033,7 +8878,7 @@ func (configuration *ApplicationGatewayPrivateLinkConfiguration) AssignPropertie
 			var ipConfiguration ApplicationGatewayPrivateLinkIpConfiguration
 			err := ipConfiguration.AssignProperties_From_ApplicationGatewayPrivateLinkIpConfiguration(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateLinkIpConfiguration() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPrivateLinkIpConfiguration() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -9063,7 +8908,7 @@ func (configuration *ApplicationGatewayPrivateLinkConfiguration) AssignPropertie
 			var ipConfiguration storage.ApplicationGatewayPrivateLinkIpConfiguration
 			err := ipConfigurationItem.AssignProperties_To_ApplicationGatewayPrivateLinkIpConfiguration(&ipConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateLinkIpConfiguration() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPrivateLinkIpConfiguration() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -9423,7 +9268,7 @@ func (probe *ApplicationGatewayProbe) AssignProperties_From_ApplicationGatewayPr
 		var match ApplicationGatewayProbeHealthResponseMatch
 		err := match.AssignProperties_From_ApplicationGatewayProbeHealthResponseMatch(source.Match)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayProbeHealthResponseMatch() to populate field Match")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayProbeHealthResponseMatch() to populate field Match")
 		}
 		probe.Match = &match
 	} else {
@@ -9456,12 +9301,7 @@ func (probe *ApplicationGatewayProbe) AssignProperties_From_ApplicationGatewayPr
 	}
 
 	// Port
-	if source.Port != nil {
-		port := *source.Port
-		probe.Port = &port
-	} else {
-		probe.Port = nil
-	}
+	probe.Port = genruntime.ClonePointerToInt(source.Port)
 
 	// Protocol
 	if source.Protocol != nil {
@@ -9498,7 +9338,7 @@ func (probe *ApplicationGatewayProbe) AssignProperties_To_ApplicationGatewayProb
 		var match storage.ApplicationGatewayProbeHealthResponseMatch
 		err := probe.Match.AssignProperties_To_ApplicationGatewayProbeHealthResponseMatch(&match)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayProbeHealthResponseMatch() to populate field Match")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayProbeHealthResponseMatch() to populate field Match")
 		}
 		destination.Match = &match
 	} else {
@@ -9531,12 +9371,7 @@ func (probe *ApplicationGatewayProbe) AssignProperties_To_ApplicationGatewayProb
 	}
 
 	// Port
-	if probe.Port != nil {
-		port := *probe.Port
-		destination.Port = &port
-	} else {
-		destination.Port = nil
-	}
+	destination.Port = genruntime.ClonePointerToInt(probe.Port)
 
 	// Protocol
 	if probe.Protocol != nil {
@@ -9914,7 +9749,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_F
 			var pathRule SubResource
 			err := pathRule.AssignProperties_From_SubResource(&pathRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PathRules")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PathRules")
 			}
 			pathRuleList[pathRuleIndex] = pathRule
 		}
@@ -9941,7 +9776,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_F
 			var requestRoutingRule SubResource
 			err := requestRoutingRule.AssignProperties_From_SubResource(&requestRoutingRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -9955,7 +9790,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_F
 		var targetListener SubResource
 		err := targetListener.AssignProperties_From_SubResource(source.TargetListener)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TargetListener")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TargetListener")
 		}
 		configuration.TargetListener = &targetListener
 	} else {
@@ -9974,7 +9809,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_F
 			var urlPathMap SubResource
 			err := urlPathMap.AssignProperties_From_SubResource(&urlPathMapItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -10020,7 +9855,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_T
 			var pathRule storage.SubResource
 			err := pathRuleItem.AssignProperties_To_SubResource(&pathRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PathRules")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PathRules")
 			}
 			pathRuleList[pathRuleIndex] = pathRule
 		}
@@ -10046,7 +9881,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_T
 			var requestRoutingRule storage.SubResource
 			err := requestRoutingRuleItem.AssignProperties_To_SubResource(&requestRoutingRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RequestRoutingRules")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RequestRoutingRules")
 			}
 			requestRoutingRuleList[requestRoutingRuleIndex] = requestRoutingRule
 		}
@@ -10060,7 +9895,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_T
 		var targetListener storage.SubResource
 		err := configuration.TargetListener.AssignProperties_To_SubResource(&targetListener)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TargetListener")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TargetListener")
 		}
 		destination.TargetListener = &targetListener
 	} else {
@@ -10079,7 +9914,7 @@ func (configuration *ApplicationGatewayRedirectConfiguration) AssignProperties_T
 			var urlPathMap storage.SubResource
 			err := urlPathMapItem.AssignProperties_To_SubResource(&urlPathMap)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field UrlPathMaps")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field UrlPathMaps")
 			}
 			urlPathMapList[urlPathMapIndex] = urlPathMap
 		}
@@ -10444,7 +10279,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 		var backendAddressPool SubResource
 		err := backendAddressPool.AssignProperties_From_SubResource(source.BackendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendAddressPool")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendAddressPool")
 		}
 		rule.BackendAddressPool = &backendAddressPool
 	} else {
@@ -10456,7 +10291,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 		var backendHttpSetting SubResource
 		err := backendHttpSetting.AssignProperties_From_SubResource(source.BackendHttpSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendHttpSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendHttpSettings")
 		}
 		rule.BackendHttpSettings = &backendHttpSetting
 	} else {
@@ -10468,7 +10303,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 		var httpListener SubResource
 		err := httpListener.AssignProperties_From_SubResource(source.HttpListener)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field HttpListener")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field HttpListener")
 		}
 		rule.HttpListener = &httpListener
 	} else {
@@ -10480,7 +10315,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 		var loadDistributionPolicy SubResource
 		err := loadDistributionPolicy.AssignProperties_From_SubResource(source.LoadDistributionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field LoadDistributionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field LoadDistributionPolicy")
 		}
 		rule.LoadDistributionPolicy = &loadDistributionPolicy
 	} else {
@@ -10491,19 +10326,14 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 	rule.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Priority
-	if source.Priority != nil {
-		priority := *source.Priority
-		rule.Priority = &priority
-	} else {
-		rule.Priority = nil
-	}
+	rule.Priority = genruntime.ClonePointerToInt(source.Priority)
 
 	// RedirectConfiguration
 	if source.RedirectConfiguration != nil {
 		var redirectConfiguration SubResource
 		err := redirectConfiguration.AssignProperties_From_SubResource(source.RedirectConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RedirectConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RedirectConfiguration")
 		}
 		rule.RedirectConfiguration = &redirectConfiguration
 	} else {
@@ -10515,7 +10345,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 		var rewriteRuleSet SubResource
 		err := rewriteRuleSet.AssignProperties_From_SubResource(source.RewriteRuleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RewriteRuleSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RewriteRuleSet")
 		}
 		rule.RewriteRuleSet = &rewriteRuleSet
 	} else {
@@ -10536,7 +10366,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_From_Applicat
 		var urlPathMap SubResource
 		err := urlPathMap.AssignProperties_From_SubResource(source.UrlPathMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field UrlPathMap")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field UrlPathMap")
 		}
 		rule.UrlPathMap = &urlPathMap
 	} else {
@@ -10557,7 +10387,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 		var backendAddressPool storage.SubResource
 		err := rule.BackendAddressPool.AssignProperties_To_SubResource(&backendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendAddressPool")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendAddressPool")
 		}
 		destination.BackendAddressPool = &backendAddressPool
 	} else {
@@ -10569,7 +10399,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 		var backendHttpSetting storage.SubResource
 		err := rule.BackendHttpSettings.AssignProperties_To_SubResource(&backendHttpSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendHttpSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendHttpSettings")
 		}
 		destination.BackendHttpSettings = &backendHttpSetting
 	} else {
@@ -10581,7 +10411,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 		var httpListener storage.SubResource
 		err := rule.HttpListener.AssignProperties_To_SubResource(&httpListener)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field HttpListener")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field HttpListener")
 		}
 		destination.HttpListener = &httpListener
 	} else {
@@ -10593,7 +10423,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 		var loadDistributionPolicy storage.SubResource
 		err := rule.LoadDistributionPolicy.AssignProperties_To_SubResource(&loadDistributionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field LoadDistributionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field LoadDistributionPolicy")
 		}
 		destination.LoadDistributionPolicy = &loadDistributionPolicy
 	} else {
@@ -10604,19 +10434,14 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 	destination.Name = genruntime.ClonePointerToString(rule.Name)
 
 	// Priority
-	if rule.Priority != nil {
-		priority := *rule.Priority
-		destination.Priority = &priority
-	} else {
-		destination.Priority = nil
-	}
+	destination.Priority = genruntime.ClonePointerToInt(rule.Priority)
 
 	// RedirectConfiguration
 	if rule.RedirectConfiguration != nil {
 		var redirectConfiguration storage.SubResource
 		err := rule.RedirectConfiguration.AssignProperties_To_SubResource(&redirectConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RedirectConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RedirectConfiguration")
 		}
 		destination.RedirectConfiguration = &redirectConfiguration
 	} else {
@@ -10628,7 +10453,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 		var rewriteRuleSet storage.SubResource
 		err := rule.RewriteRuleSet.AssignProperties_To_SubResource(&rewriteRuleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RewriteRuleSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RewriteRuleSet")
 		}
 		destination.RewriteRuleSet = &rewriteRuleSet
 	} else {
@@ -10648,7 +10473,7 @@ func (rule *ApplicationGatewayRequestRoutingRule) AssignProperties_To_Applicatio
 		var urlPathMap storage.SubResource
 		err := rule.UrlPathMap.AssignProperties_To_SubResource(&urlPathMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field UrlPathMap")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field UrlPathMap")
 		}
 		destination.UrlPathMap = &urlPathMap
 	} else {
@@ -10820,7 +10645,7 @@ func (ruleSet *ApplicationGatewayRewriteRuleSet) AssignProperties_From_Applicati
 			var rewriteRule ApplicationGatewayRewriteRule
 			err := rewriteRule.AssignProperties_From_ApplicationGatewayRewriteRule(&rewriteRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRule() to populate field RewriteRules")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRule() to populate field RewriteRules")
 			}
 			rewriteRuleList[rewriteRuleIndex] = rewriteRule
 		}
@@ -10850,7 +10675,7 @@ func (ruleSet *ApplicationGatewayRewriteRuleSet) AssignProperties_To_Application
 			var rewriteRule storage.ApplicationGatewayRewriteRule
 			err := rewriteRuleItem.AssignProperties_To_ApplicationGatewayRewriteRule(&rewriteRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRule() to populate field RewriteRules")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRule() to populate field RewriteRules")
 			}
 			rewriteRuleList[rewriteRuleIndex] = rewriteRule
 		}
@@ -11112,7 +10937,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_From_ApplicationGate
 		var backendAddressPool SubResource
 		err := backendAddressPool.AssignProperties_From_SubResource(source.BackendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendAddressPool")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendAddressPool")
 		}
 		rule.BackendAddressPool = &backendAddressPool
 	} else {
@@ -11124,7 +10949,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_From_ApplicationGate
 		var backendSetting SubResource
 		err := backendSetting.AssignProperties_From_SubResource(source.BackendSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field BackendSettings")
 		}
 		rule.BackendSettings = &backendSetting
 	} else {
@@ -11136,7 +10961,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_From_ApplicationGate
 		var listener SubResource
 		err := listener.AssignProperties_From_SubResource(source.Listener)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Listener")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Listener")
 		}
 		rule.Listener = &listener
 	} else {
@@ -11147,12 +10972,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_From_ApplicationGate
 	rule.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Priority
-	if source.Priority != nil {
-		priority := *source.Priority
-		rule.Priority = &priority
-	} else {
-		rule.Priority = nil
-	}
+	rule.Priority = genruntime.ClonePointerToInt(source.Priority)
 
 	// RuleType
 	if source.RuleType != nil {
@@ -11177,7 +10997,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_To_ApplicationGatewa
 		var backendAddressPool storage.SubResource
 		err := rule.BackendAddressPool.AssignProperties_To_SubResource(&backendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendAddressPool")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendAddressPool")
 		}
 		destination.BackendAddressPool = &backendAddressPool
 	} else {
@@ -11189,7 +11009,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_To_ApplicationGatewa
 		var backendSetting storage.SubResource
 		err := rule.BackendSettings.AssignProperties_To_SubResource(&backendSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field BackendSettings")
 		}
 		destination.BackendSettings = &backendSetting
 	} else {
@@ -11201,7 +11021,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_To_ApplicationGatewa
 		var listener storage.SubResource
 		err := rule.Listener.AssignProperties_To_SubResource(&listener)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Listener")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Listener")
 		}
 		destination.Listener = &listener
 	} else {
@@ -11212,12 +11032,7 @@ func (rule *ApplicationGatewayRoutingRule) AssignProperties_To_ApplicationGatewa
 	destination.Name = genruntime.ClonePointerToString(rule.Name)
 
 	// Priority
-	if rule.Priority != nil {
-		priority := *rule.Priority
-		destination.Priority = &priority
-	} else {
-		destination.Priority = nil
-	}
+	destination.Priority = genruntime.ClonePointerToInt(rule.Priority)
 
 	// RuleType
 	if rule.RuleType != nil {
@@ -11630,7 +11445,7 @@ func (certificate *ApplicationGatewaySslCertificate) ConvertToARM(resolved genru
 	if certificate.Data != nil {
 		dataSecret, err := resolved.ResolvedSecrets.Lookup(*certificate.Data)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property Data")
+			return nil, eris.Wrap(err, "looking up secret for property Data")
 		}
 		data := dataSecret
 		result.Properties.Data = &data
@@ -11642,7 +11457,7 @@ func (certificate *ApplicationGatewaySslCertificate) ConvertToARM(resolved genru
 	if certificate.Password != nil {
 		passwordSecret, err := resolved.ResolvedSecrets.Lookup(*certificate.Password)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property Password")
+			return nil, eris.Wrap(err, "looking up secret for property Password")
 		}
 		password := passwordSecret
 		result.Properties.Password = &password
@@ -12457,7 +12272,7 @@ func (profile *ApplicationGatewaySslProfile) AssignProperties_From_ApplicationGa
 		var clientAuthConfiguration ApplicationGatewayClientAuthConfiguration
 		err := clientAuthConfiguration.AssignProperties_From_ApplicationGatewayClientAuthConfiguration(source.ClientAuthConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayClientAuthConfiguration() to populate field ClientAuthConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayClientAuthConfiguration() to populate field ClientAuthConfiguration")
 		}
 		profile.ClientAuthConfiguration = &clientAuthConfiguration
 	} else {
@@ -12472,7 +12287,7 @@ func (profile *ApplicationGatewaySslProfile) AssignProperties_From_ApplicationGa
 		var sslPolicy ApplicationGatewaySslPolicy
 		err := sslPolicy.AssignProperties_From_ApplicationGatewaySslPolicy(source.SslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslPolicy() to populate field SslPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewaySslPolicy() to populate field SslPolicy")
 		}
 		profile.SslPolicy = &sslPolicy
 	} else {
@@ -12488,7 +12303,7 @@ func (profile *ApplicationGatewaySslProfile) AssignProperties_From_ApplicationGa
 			var trustedClientCertificate SubResource
 			err := trustedClientCertificate.AssignProperties_From_SubResource(&trustedClientCertificateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -12511,7 +12326,7 @@ func (profile *ApplicationGatewaySslProfile) AssignProperties_To_ApplicationGate
 		var clientAuthConfiguration storage.ApplicationGatewayClientAuthConfiguration
 		err := profile.ClientAuthConfiguration.AssignProperties_To_ApplicationGatewayClientAuthConfiguration(&clientAuthConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayClientAuthConfiguration() to populate field ClientAuthConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayClientAuthConfiguration() to populate field ClientAuthConfiguration")
 		}
 		destination.ClientAuthConfiguration = &clientAuthConfiguration
 	} else {
@@ -12526,7 +12341,7 @@ func (profile *ApplicationGatewaySslProfile) AssignProperties_To_ApplicationGate
 		var sslPolicy storage.ApplicationGatewaySslPolicy
 		err := profile.SslPolicy.AssignProperties_To_ApplicationGatewaySslPolicy(&sslPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslPolicy() to populate field SslPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewaySslPolicy() to populate field SslPolicy")
 		}
 		destination.SslPolicy = &sslPolicy
 	} else {
@@ -12542,7 +12357,7 @@ func (profile *ApplicationGatewaySslProfile) AssignProperties_To_ApplicationGate
 			var trustedClientCertificate storage.SubResource
 			err := trustedClientCertificateItem.AssignProperties_To_SubResource(&trustedClientCertificate)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TrustedClientCertificates")
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TrustedClientCertificates")
 			}
 			trustedClientCertificateList[trustedClientCertificateIndex] = trustedClientCertificate
 		}
@@ -12659,7 +12474,7 @@ func (certificate *ApplicationGatewayTrustedClientCertificate) ConvertToARM(reso
 	if certificate.Data != nil {
 		dataSecret, err := resolved.ResolvedSecrets.Lookup(*certificate.Data)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property Data")
+			return nil, eris.Wrap(err, "looking up secret for property Data")
 		}
 		data := dataSecret
 		result.Properties.Data = &data
@@ -12836,7 +12651,7 @@ func (certificate *ApplicationGatewayTrustedRootCertificate) ConvertToARM(resolv
 	if certificate.Data != nil {
 		dataSecret, err := resolved.ResolvedSecrets.Lookup(*certificate.Data)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property Data")
+			return nil, eris.Wrap(err, "looking up secret for property Data")
 		}
 		data := dataSecret
 		result.Properties.Data = &data
@@ -13209,7 +13024,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_From_ApplicationGa
 		var defaultBackendAddressPool SubResource
 		err := defaultBackendAddressPool.AssignProperties_From_SubResource(source.DefaultBackendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultBackendAddressPool")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultBackendAddressPool")
 		}
 		pathMap.DefaultBackendAddressPool = &defaultBackendAddressPool
 	} else {
@@ -13221,7 +13036,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_From_ApplicationGa
 		var defaultBackendHttpSetting SubResource
 		err := defaultBackendHttpSetting.AssignProperties_From_SubResource(source.DefaultBackendHttpSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultBackendHttpSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultBackendHttpSettings")
 		}
 		pathMap.DefaultBackendHttpSettings = &defaultBackendHttpSetting
 	} else {
@@ -13233,7 +13048,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_From_ApplicationGa
 		var defaultLoadDistributionPolicy SubResource
 		err := defaultLoadDistributionPolicy.AssignProperties_From_SubResource(source.DefaultLoadDistributionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultLoadDistributionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultLoadDistributionPolicy")
 		}
 		pathMap.DefaultLoadDistributionPolicy = &defaultLoadDistributionPolicy
 	} else {
@@ -13245,7 +13060,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_From_ApplicationGa
 		var defaultRedirectConfiguration SubResource
 		err := defaultRedirectConfiguration.AssignProperties_From_SubResource(source.DefaultRedirectConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultRedirectConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultRedirectConfiguration")
 		}
 		pathMap.DefaultRedirectConfiguration = &defaultRedirectConfiguration
 	} else {
@@ -13257,7 +13072,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_From_ApplicationGa
 		var defaultRewriteRuleSet SubResource
 		err := defaultRewriteRuleSet.AssignProperties_From_SubResource(source.DefaultRewriteRuleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultRewriteRuleSet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DefaultRewriteRuleSet")
 		}
 		pathMap.DefaultRewriteRuleSet = &defaultRewriteRuleSet
 	} else {
@@ -13276,7 +13091,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_From_ApplicationGa
 			var pathRule ApplicationGatewayPathRule
 			err := pathRule.AssignProperties_From_ApplicationGatewayPathRule(&pathRuleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPathRule() to populate field PathRules")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayPathRule() to populate field PathRules")
 			}
 			pathRuleList[pathRuleIndex] = pathRule
 		}
@@ -13299,7 +13114,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_To_ApplicationGate
 		var defaultBackendAddressPool storage.SubResource
 		err := pathMap.DefaultBackendAddressPool.AssignProperties_To_SubResource(&defaultBackendAddressPool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultBackendAddressPool")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultBackendAddressPool")
 		}
 		destination.DefaultBackendAddressPool = &defaultBackendAddressPool
 	} else {
@@ -13311,7 +13126,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_To_ApplicationGate
 		var defaultBackendHttpSetting storage.SubResource
 		err := pathMap.DefaultBackendHttpSettings.AssignProperties_To_SubResource(&defaultBackendHttpSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultBackendHttpSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultBackendHttpSettings")
 		}
 		destination.DefaultBackendHttpSettings = &defaultBackendHttpSetting
 	} else {
@@ -13323,7 +13138,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_To_ApplicationGate
 		var defaultLoadDistributionPolicy storage.SubResource
 		err := pathMap.DefaultLoadDistributionPolicy.AssignProperties_To_SubResource(&defaultLoadDistributionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultLoadDistributionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultLoadDistributionPolicy")
 		}
 		destination.DefaultLoadDistributionPolicy = &defaultLoadDistributionPolicy
 	} else {
@@ -13335,7 +13150,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_To_ApplicationGate
 		var defaultRedirectConfiguration storage.SubResource
 		err := pathMap.DefaultRedirectConfiguration.AssignProperties_To_SubResource(&defaultRedirectConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultRedirectConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultRedirectConfiguration")
 		}
 		destination.DefaultRedirectConfiguration = &defaultRedirectConfiguration
 	} else {
@@ -13347,7 +13162,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_To_ApplicationGate
 		var defaultRewriteRuleSet storage.SubResource
 		err := pathMap.DefaultRewriteRuleSet.AssignProperties_To_SubResource(&defaultRewriteRuleSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultRewriteRuleSet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DefaultRewriteRuleSet")
 		}
 		destination.DefaultRewriteRuleSet = &defaultRewriteRuleSet
 	} else {
@@ -13366,7 +13181,7 @@ func (pathMap *ApplicationGatewayUrlPathMap) AssignProperties_To_ApplicationGate
 			var pathRule storage.ApplicationGatewayPathRule
 			err := pathRuleItem.AssignProperties_To_ApplicationGatewayPathRule(&pathRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPathRule() to populate field PathRules")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayPathRule() to populate field PathRules")
 			}
 			pathRuleList[pathRuleIndex] = pathRule
 		}
@@ -13671,7 +13486,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 			var disabledRuleGroup ApplicationGatewayFirewallDisabledRuleGroup
 			err := disabledRuleGroup.AssignProperties_From_ApplicationGatewayFirewallDisabledRuleGroup(&disabledRuleGroupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallDisabledRuleGroup() to populate field DisabledRuleGroups")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallDisabledRuleGroup() to populate field DisabledRuleGroups")
 			}
 			disabledRuleGroupList[disabledRuleGroupIndex] = disabledRuleGroup
 		}
@@ -13697,7 +13512,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 			var exclusion ApplicationGatewayFirewallExclusion
 			err := exclusion.AssignProperties_From_ApplicationGatewayFirewallExclusion(&exclusionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallExclusion() to populate field Exclusions")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallExclusion() to populate field Exclusions")
 			}
 			exclusionList[exclusionIndex] = exclusion
 		}
@@ -13707,12 +13522,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 	}
 
 	// FileUploadLimitInMb
-	if source.FileUploadLimitInMb != nil {
-		fileUploadLimitInMb := *source.FileUploadLimitInMb
-		configuration.FileUploadLimitInMb = &fileUploadLimitInMb
-	} else {
-		configuration.FileUploadLimitInMb = nil
-	}
+	configuration.FileUploadLimitInMb = genruntime.ClonePointerToInt(source.FileUploadLimitInMb)
 
 	// FirewallMode
 	if source.FirewallMode != nil {
@@ -13724,20 +13534,10 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 	}
 
 	// MaxRequestBodySize
-	if source.MaxRequestBodySize != nil {
-		maxRequestBodySize := *source.MaxRequestBodySize
-		configuration.MaxRequestBodySize = &maxRequestBodySize
-	} else {
-		configuration.MaxRequestBodySize = nil
-	}
+	configuration.MaxRequestBodySize = genruntime.ClonePointerToInt(source.MaxRequestBodySize)
 
 	// MaxRequestBodySizeInKb
-	if source.MaxRequestBodySizeInKb != nil {
-		maxRequestBodySizeInKb := *source.MaxRequestBodySizeInKb
-		configuration.MaxRequestBodySizeInKb = &maxRequestBodySizeInKb
-	} else {
-		configuration.MaxRequestBodySizeInKb = nil
-	}
+	configuration.MaxRequestBodySizeInKb = genruntime.ClonePointerToInt(source.MaxRequestBodySizeInKb)
 
 	// RequestBodyCheck
 	if source.RequestBodyCheck != nil {
@@ -13771,7 +13571,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 			var disabledRuleGroup storage.ApplicationGatewayFirewallDisabledRuleGroup
 			err := disabledRuleGroupItem.AssignProperties_To_ApplicationGatewayFirewallDisabledRuleGroup(&disabledRuleGroup)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallDisabledRuleGroup() to populate field DisabledRuleGroups")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallDisabledRuleGroup() to populate field DisabledRuleGroups")
 			}
 			disabledRuleGroupList[disabledRuleGroupIndex] = disabledRuleGroup
 		}
@@ -13797,7 +13597,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 			var exclusion storage.ApplicationGatewayFirewallExclusion
 			err := exclusionItem.AssignProperties_To_ApplicationGatewayFirewallExclusion(&exclusion)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallExclusion() to populate field Exclusions")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallExclusion() to populate field Exclusions")
 			}
 			exclusionList[exclusionIndex] = exclusion
 		}
@@ -13807,12 +13607,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 	}
 
 	// FileUploadLimitInMb
-	if configuration.FileUploadLimitInMb != nil {
-		fileUploadLimitInMb := *configuration.FileUploadLimitInMb
-		destination.FileUploadLimitInMb = &fileUploadLimitInMb
-	} else {
-		destination.FileUploadLimitInMb = nil
-	}
+	destination.FileUploadLimitInMb = genruntime.ClonePointerToInt(configuration.FileUploadLimitInMb)
 
 	// FirewallMode
 	if configuration.FirewallMode != nil {
@@ -13823,20 +13618,10 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Assi
 	}
 
 	// MaxRequestBodySize
-	if configuration.MaxRequestBodySize != nil {
-		maxRequestBodySize := *configuration.MaxRequestBodySize
-		destination.MaxRequestBodySize = &maxRequestBodySize
-	} else {
-		destination.MaxRequestBodySize = nil
-	}
+	destination.MaxRequestBodySize = genruntime.ClonePointerToInt(configuration.MaxRequestBodySize)
 
 	// MaxRequestBodySizeInKb
-	if configuration.MaxRequestBodySizeInKb != nil {
-		maxRequestBodySizeInKb := *configuration.MaxRequestBodySizeInKb
-		destination.MaxRequestBodySizeInKb = &maxRequestBodySizeInKb
-	} else {
-		destination.MaxRequestBodySizeInKb = nil
-	}
+	destination.MaxRequestBodySizeInKb = genruntime.ClonePointerToInt(configuration.MaxRequestBodySizeInKb)
 
 	// RequestBodyCheck
 	if configuration.RequestBodyCheck != nil {
@@ -13875,7 +13660,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Init
 			var disabledRuleGroup ApplicationGatewayFirewallDisabledRuleGroup
 			err := disabledRuleGroup.Initialize_From_ApplicationGatewayFirewallDisabledRuleGroup_STATUS(&disabledRuleGroupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayFirewallDisabledRuleGroup_STATUS() to populate field DisabledRuleGroups")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayFirewallDisabledRuleGroup_STATUS() to populate field DisabledRuleGroups")
 			}
 			disabledRuleGroupList[disabledRuleGroupIndex] = disabledRuleGroup
 		}
@@ -13901,7 +13686,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Init
 			var exclusion ApplicationGatewayFirewallExclusion
 			err := exclusion.Initialize_From_ApplicationGatewayFirewallExclusion_STATUS(&exclusionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ApplicationGatewayFirewallExclusion_STATUS() to populate field Exclusions")
+				return eris.Wrap(err, "calling Initialize_From_ApplicationGatewayFirewallExclusion_STATUS() to populate field Exclusions")
 			}
 			exclusionList[exclusionIndex] = exclusion
 		}
@@ -13911,12 +13696,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Init
 	}
 
 	// FileUploadLimitInMb
-	if source.FileUploadLimitInMb != nil {
-		fileUploadLimitInMb := *source.FileUploadLimitInMb
-		configuration.FileUploadLimitInMb = &fileUploadLimitInMb
-	} else {
-		configuration.FileUploadLimitInMb = nil
-	}
+	configuration.FileUploadLimitInMb = genruntime.ClonePointerToInt(source.FileUploadLimitInMb)
 
 	// FirewallMode
 	if source.FirewallMode != nil {
@@ -13927,20 +13707,10 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration) Init
 	}
 
 	// MaxRequestBodySize
-	if source.MaxRequestBodySize != nil {
-		maxRequestBodySize := *source.MaxRequestBodySize
-		configuration.MaxRequestBodySize = &maxRequestBodySize
-	} else {
-		configuration.MaxRequestBodySize = nil
-	}
+	configuration.MaxRequestBodySize = genruntime.ClonePointerToInt(source.MaxRequestBodySize)
 
 	// MaxRequestBodySizeInKb
-	if source.MaxRequestBodySizeInKb != nil {
-		maxRequestBodySizeInKb := *source.MaxRequestBodySizeInKb
-		configuration.MaxRequestBodySizeInKb = &maxRequestBodySizeInKb
-	} else {
-		configuration.MaxRequestBodySizeInKb = nil
-	}
+	configuration.MaxRequestBodySizeInKb = genruntime.ClonePointerToInt(source.MaxRequestBodySizeInKb)
 
 	// RequestBodyCheck
 	if source.RequestBodyCheck != nil {
@@ -14093,7 +13863,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration_STATU
 			var disabledRuleGroup ApplicationGatewayFirewallDisabledRuleGroup_STATUS
 			err := disabledRuleGroup.AssignProperties_From_ApplicationGatewayFirewallDisabledRuleGroup_STATUS(&disabledRuleGroupItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallDisabledRuleGroup_STATUS() to populate field DisabledRuleGroups")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallDisabledRuleGroup_STATUS() to populate field DisabledRuleGroups")
 			}
 			disabledRuleGroupList[disabledRuleGroupIndex] = disabledRuleGroup
 		}
@@ -14119,7 +13889,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration_STATU
 			var exclusion ApplicationGatewayFirewallExclusion_STATUS
 			err := exclusion.AssignProperties_From_ApplicationGatewayFirewallExclusion_STATUS(&exclusionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallExclusion_STATUS() to populate field Exclusions")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayFirewallExclusion_STATUS() to populate field Exclusions")
 			}
 			exclusionList[exclusionIndex] = exclusion
 		}
@@ -14178,7 +13948,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration_STATU
 			var disabledRuleGroup storage.ApplicationGatewayFirewallDisabledRuleGroup_STATUS
 			err := disabledRuleGroupItem.AssignProperties_To_ApplicationGatewayFirewallDisabledRuleGroup_STATUS(&disabledRuleGroup)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallDisabledRuleGroup_STATUS() to populate field DisabledRuleGroups")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallDisabledRuleGroup_STATUS() to populate field DisabledRuleGroups")
 			}
 			disabledRuleGroupList[disabledRuleGroupIndex] = disabledRuleGroup
 		}
@@ -14204,7 +13974,7 @@ func (configuration *ApplicationGatewayWebApplicationFirewallConfiguration_STATU
 			var exclusion storage.ApplicationGatewayFirewallExclusion_STATUS
 			err := exclusionItem.AssignProperties_To_ApplicationGatewayFirewallExclusion_STATUS(&exclusion)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallExclusion_STATUS() to populate field Exclusions")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayFirewallExclusion_STATUS() to populate field Exclusions")
 			}
 			exclusionList[exclusionIndex] = exclusion
 		}
@@ -14345,7 +14115,7 @@ func (identity *ManagedServiceIdentity) AssignProperties_From_ManagedServiceIden
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -14380,7 +14150,7 @@ func (identity *ManagedServiceIdentity) AssignProperties_To_ManagedServiceIdenti
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -14526,7 +14296,7 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_From_ManagedServ
 			var userAssignedIdentity ManagedServiceIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedServiceIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -14567,7 +14337,7 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_To_ManagedServic
 			var userAssignedIdentity storage.ManagedServiceIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_ManagedServiceIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_UserAssignedIdentities_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -15044,12 +14814,7 @@ func (draining *ApplicationGatewayConnectionDraining) PopulateFromARM(owner genr
 func (draining *ApplicationGatewayConnectionDraining) AssignProperties_From_ApplicationGatewayConnectionDraining(source *storage.ApplicationGatewayConnectionDraining) error {
 
 	// DrainTimeoutInSec
-	if source.DrainTimeoutInSec != nil {
-		drainTimeoutInSec := *source.DrainTimeoutInSec
-		draining.DrainTimeoutInSec = &drainTimeoutInSec
-	} else {
-		draining.DrainTimeoutInSec = nil
-	}
+	draining.DrainTimeoutInSec = genruntime.ClonePointerToInt(source.DrainTimeoutInSec)
 
 	// Enabled
 	if source.Enabled != nil {
@@ -15069,12 +14834,7 @@ func (draining *ApplicationGatewayConnectionDraining) AssignProperties_To_Applic
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DrainTimeoutInSec
-	if draining.DrainTimeoutInSec != nil {
-		drainTimeoutInSec := *draining.DrainTimeoutInSec
-		destination.DrainTimeoutInSec = &drainTimeoutInSec
-	} else {
-		destination.DrainTimeoutInSec = nil
-	}
+	destination.DrainTimeoutInSec = genruntime.ClonePointerToInt(draining.DrainTimeoutInSec)
 
 	// Enabled
 	if draining.Enabled != nil {
@@ -16090,7 +15850,7 @@ func (rule *ApplicationGatewayRewriteRule) AssignProperties_From_ApplicationGate
 		var actionSet ApplicationGatewayRewriteRuleActionSet
 		err := actionSet.AssignProperties_From_ApplicationGatewayRewriteRuleActionSet(source.ActionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleActionSet() to populate field ActionSet")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleActionSet() to populate field ActionSet")
 		}
 		rule.ActionSet = &actionSet
 	} else {
@@ -16106,7 +15866,7 @@ func (rule *ApplicationGatewayRewriteRule) AssignProperties_From_ApplicationGate
 			var condition ApplicationGatewayRewriteRuleCondition
 			err := condition.AssignProperties_From_ApplicationGatewayRewriteRuleCondition(&conditionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleCondition() to populate field Conditions")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayRewriteRuleCondition() to populate field Conditions")
 			}
 			conditionList[conditionIndex] = condition
 		}
@@ -16135,7 +15895,7 @@ func (rule *ApplicationGatewayRewriteRule) AssignProperties_To_ApplicationGatewa
 		var actionSet storage.ApplicationGatewayRewriteRuleActionSet
 		err := rule.ActionSet.AssignProperties_To_ApplicationGatewayRewriteRuleActionSet(&actionSet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleActionSet() to populate field ActionSet")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleActionSet() to populate field ActionSet")
 		}
 		destination.ActionSet = &actionSet
 	} else {
@@ -16151,7 +15911,7 @@ func (rule *ApplicationGatewayRewriteRule) AssignProperties_To_ApplicationGatewa
 			var condition storage.ApplicationGatewayRewriteRuleCondition
 			err := conditionItem.AssignProperties_To_ApplicationGatewayRewriteRuleCondition(&condition)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleCondition() to populate field Conditions")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayRewriteRuleCondition() to populate field Conditions")
 			}
 			conditionList[conditionIndex] = condition
 		}
@@ -16842,7 +16602,7 @@ func (actionSet *ApplicationGatewayRewriteRuleActionSet) AssignProperties_From_A
 			var requestHeaderConfiguration ApplicationGatewayHeaderConfiguration
 			err := requestHeaderConfiguration.AssignProperties_From_ApplicationGatewayHeaderConfiguration(&requestHeaderConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHeaderConfiguration() to populate field RequestHeaderConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHeaderConfiguration() to populate field RequestHeaderConfigurations")
 			}
 			requestHeaderConfigurationList[requestHeaderConfigurationIndex] = requestHeaderConfiguration
 		}
@@ -16860,7 +16620,7 @@ func (actionSet *ApplicationGatewayRewriteRuleActionSet) AssignProperties_From_A
 			var responseHeaderConfiguration ApplicationGatewayHeaderConfiguration
 			err := responseHeaderConfiguration.AssignProperties_From_ApplicationGatewayHeaderConfiguration(&responseHeaderConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHeaderConfiguration() to populate field ResponseHeaderConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayHeaderConfiguration() to populate field ResponseHeaderConfigurations")
 			}
 			responseHeaderConfigurationList[responseHeaderConfigurationIndex] = responseHeaderConfiguration
 		}
@@ -16874,7 +16634,7 @@ func (actionSet *ApplicationGatewayRewriteRuleActionSet) AssignProperties_From_A
 		var urlConfiguration ApplicationGatewayUrlConfiguration
 		err := urlConfiguration.AssignProperties_From_ApplicationGatewayUrlConfiguration(source.UrlConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApplicationGatewayUrlConfiguration() to populate field UrlConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayUrlConfiguration() to populate field UrlConfiguration")
 		}
 		actionSet.UrlConfiguration = &urlConfiguration
 	} else {
@@ -16899,7 +16659,7 @@ func (actionSet *ApplicationGatewayRewriteRuleActionSet) AssignProperties_To_App
 			var requestHeaderConfiguration storage.ApplicationGatewayHeaderConfiguration
 			err := requestHeaderConfigurationItem.AssignProperties_To_ApplicationGatewayHeaderConfiguration(&requestHeaderConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHeaderConfiguration() to populate field RequestHeaderConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHeaderConfiguration() to populate field RequestHeaderConfigurations")
 			}
 			requestHeaderConfigurationList[requestHeaderConfigurationIndex] = requestHeaderConfiguration
 		}
@@ -16917,7 +16677,7 @@ func (actionSet *ApplicationGatewayRewriteRuleActionSet) AssignProperties_To_App
 			var responseHeaderConfiguration storage.ApplicationGatewayHeaderConfiguration
 			err := responseHeaderConfigurationItem.AssignProperties_To_ApplicationGatewayHeaderConfiguration(&responseHeaderConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHeaderConfiguration() to populate field ResponseHeaderConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayHeaderConfiguration() to populate field ResponseHeaderConfigurations")
 			}
 			responseHeaderConfigurationList[responseHeaderConfigurationIndex] = responseHeaderConfiguration
 		}
@@ -16931,7 +16691,7 @@ func (actionSet *ApplicationGatewayRewriteRuleActionSet) AssignProperties_To_App
 		var urlConfiguration storage.ApplicationGatewayUrlConfiguration
 		err := actionSet.UrlConfiguration.AssignProperties_To_ApplicationGatewayUrlConfiguration(&urlConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApplicationGatewayUrlConfiguration() to populate field UrlConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayUrlConfiguration() to populate field UrlConfiguration")
 		}
 		destination.UrlConfiguration = &urlConfiguration
 	} else {

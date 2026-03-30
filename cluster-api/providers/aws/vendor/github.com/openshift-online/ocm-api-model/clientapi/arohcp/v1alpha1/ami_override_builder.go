@@ -19,18 +19,14 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // AMIOverride specifies what Amazon Machine Image should be used for a particular product and region.
 type AMIOverrideBuilder struct {
 	fieldSet_ []bool
 	id        string
 	href      string
 	ami       string
-	product   *v1.ProductBuilder
-	region    *v1.CloudRegionBuilder
+	product   *ProductBuilder
+	region    *CloudRegionBuilder
 }
 
 // NewAMIOverride creates a new builder of 'AMI_override' objects.
@@ -96,7 +92,7 @@ func (b *AMIOverrideBuilder) AMI(value string) *AMIOverrideBuilder {
 // Product sets the value of the 'product' attribute to the given value.
 //
 // Representation of an product that can be selected as a cluster type.
-func (b *AMIOverrideBuilder) Product(value *v1.ProductBuilder) *AMIOverrideBuilder {
+func (b *AMIOverrideBuilder) Product(value *ProductBuilder) *AMIOverrideBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 6)
 	}
@@ -112,7 +108,7 @@ func (b *AMIOverrideBuilder) Product(value *v1.ProductBuilder) *AMIOverrideBuild
 // Region sets the value of the 'region' attribute to the given value.
 //
 // Description of a region of a cloud provider.
-func (b *AMIOverrideBuilder) Region(value *v1.CloudRegionBuilder) *AMIOverrideBuilder {
+func (b *AMIOverrideBuilder) Region(value *CloudRegionBuilder) *AMIOverrideBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 6)
 	}
@@ -138,12 +134,12 @@ func (b *AMIOverrideBuilder) Copy(object *AMIOverride) *AMIOverrideBuilder {
 	b.href = object.href
 	b.ami = object.ami
 	if object.product != nil {
-		b.product = v1.NewProduct().Copy(object.product)
+		b.product = NewProduct().Copy(object.product)
 	} else {
 		b.product = nil
 	}
 	if object.region != nil {
-		b.region = v1.NewCloudRegion().Copy(object.region)
+		b.region = NewCloudRegion().Copy(object.region)
 	} else {
 		b.region = nil
 	}

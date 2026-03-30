@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,6 +116,10 @@ func (compute *WorkspacesCompute) NewEmptyStatus() genruntime.ConvertibleStatus 
 
 // Owner returns the ResourceReference of the owner
 func (compute *WorkspacesCompute) Owner() *genruntime.ResourceReference {
+	if compute.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(compute.Spec)
 	return compute.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (compute *WorkspacesCompute) SetStatus(status genruntime.ConvertibleStatus)
 	var st WorkspacesCompute_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	compute.Status = st
@@ -188,7 +192,7 @@ var _ genruntime.ConvertibleSpec = &WorkspacesCompute_Spec{}
 // ConvertSpecFrom populates our WorkspacesCompute_Spec from the provided source
 func (compute *WorkspacesCompute_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == compute {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(compute)
@@ -197,7 +201,7 @@ func (compute *WorkspacesCompute_Spec) ConvertSpecFrom(source genruntime.Convert
 // ConvertSpecTo populates the provided destination from our WorkspacesCompute_Spec
 func (compute *WorkspacesCompute_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == compute {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(compute)
@@ -223,7 +227,7 @@ var _ genruntime.ConvertibleStatus = &WorkspacesCompute_STATUS{}
 // ConvertStatusFrom populates our WorkspacesCompute_STATUS from the provided source
 func (compute *WorkspacesCompute_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == compute {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(compute)
@@ -232,7 +236,7 @@ func (compute *WorkspacesCompute_STATUS) ConvertStatusFrom(source genruntime.Con
 // ConvertStatusTo populates the provided destination from our WorkspacesCompute_STATUS
 func (compute *WorkspacesCompute_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == compute {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(compute)

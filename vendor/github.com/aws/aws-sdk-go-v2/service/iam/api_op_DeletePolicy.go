@@ -10,23 +10,34 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the specified managed policy. Before you can delete a managed policy,
-// you must first detach the policy from all users, groups, and roles that it is
-// attached to. In addition, you must delete all the policy's versions. The
-// following steps describe the process for deleting a managed policy:
+// Deletes the specified managed policy.
+//
+// Before you can delete a managed policy, you must first detach the policy from
+// all users, groups, and roles that it is attached to. In addition, you must
+// delete all the policy's versions. The following steps describe the process for
+// deleting a managed policy:
+//
 //   - Detach the policy from all users, groups, and roles that the policy is
-//     attached to, using DetachUserPolicy , DetachGroupPolicy , or DetachRolePolicy
-//     . To list all the users, groups, and roles that a policy is attached to, use
-//     ListEntitiesForPolicy .
-//   - Delete all versions of the policy using DeletePolicyVersion . To list the
-//     policy's versions, use ListPolicyVersions . You cannot use DeletePolicyVersion
-//     to delete the version that is marked as the default version. You delete the
-//     policy's default version in the next step of the process.
+//     attached to, using [DetachUserPolicy], [DetachGroupPolicy], or [DetachRolePolicy]. To list all the users, groups, and roles that a
+//     policy is attached to, use [ListEntitiesForPolicy].
+//
+//   - Delete all versions of the policy using [DeletePolicyVersion]. To list the policy's versions,
+//     use [ListPolicyVersions]. You cannot use [DeletePolicyVersion]to delete the version that is marked as the default
+//     version. You delete the policy's default version in the next step of the
+//     process.
+//
 //   - Delete the policy (this automatically deletes the policy's default version)
 //     using this operation.
 //
-// For information about managed policies, see Managed policies and inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
-// in the IAM User Guide.
+// For information about managed policies, see [Managed policies and inline policies] in the IAM User Guide.
+//
+// [DetachUserPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DetachUserPolicy.html
+// [DetachRolePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DetachRolePolicy.html
+// [ListEntitiesForPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListEntitiesForPolicy.html
+// [DeletePolicyVersion]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeletePolicyVersion.html
+// [DetachGroupPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DetachGroupPolicy.html
+// [ListPolicyVersions]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListPolicyVersions.html
+// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
 func (c *Client) DeletePolicy(ctx context.Context, params *DeletePolicyInput, optFns ...func(*Options)) (*DeletePolicyOutput, error) {
 	if params == nil {
 		params = &DeletePolicyInput{}
@@ -44,9 +55,12 @@ func (c *Client) DeletePolicy(ctx context.Context, params *DeletePolicyInput, op
 
 type DeletePolicyInput struct {
 
-	// The Amazon Resource Name (ARN) of the IAM policy you want to delete. For more
-	// information about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
-	// in the Amazon Web Services General Reference.
+	// The Amazon Resource Name (ARN) of the IAM policy you want to delete.
+	//
+	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
+	// Reference.
+	//
+	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
 	//
 	// This member is required.
 	PolicyArn *string
@@ -104,6 +118,9 @@ func (c *Client) addOperationDeletePolicyMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +131,15 @@ func (c *Client) addOperationDeletePolicyMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeletePolicyValidationMiddleware(stack); err != nil {
@@ -135,6 +161,15 @@ func (c *Client) addOperationDeletePolicyMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

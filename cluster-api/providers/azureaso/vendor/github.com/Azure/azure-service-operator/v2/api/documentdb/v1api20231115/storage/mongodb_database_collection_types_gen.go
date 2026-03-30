@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources=mongodbdatabasecollections,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources={mongodbdatabasecollections/status,mongodbdatabasecollections/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (collection *MongodbDatabaseCollection) GetConditions() conditions.Conditio
 // SetConditions sets the conditions on the resource status
 func (collection *MongodbDatabaseCollection) SetConditions(conditions conditions.Conditions) {
 	collection.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &MongodbDatabaseCollection{}
+
+// ConvertFrom populates our MongodbDatabaseCollection from the provided hub MongodbDatabaseCollection
+func (collection *MongodbDatabaseCollection) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.MongodbDatabaseCollection)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/MongodbDatabaseCollection but received %T instead", hub)
+	}
+
+	return collection.AssignProperties_From_MongodbDatabaseCollection(source)
+}
+
+// ConvertTo populates the provided hub MongodbDatabaseCollection from our MongodbDatabaseCollection
+func (collection *MongodbDatabaseCollection) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.MongodbDatabaseCollection)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/MongodbDatabaseCollection but received %T instead", hub)
+	}
+
+	return collection.AssignProperties_To_MongodbDatabaseCollection(destination)
 }
 
 var _ configmaps.Exporter = &MongodbDatabaseCollection{}
@@ -115,6 +136,10 @@ func (collection *MongodbDatabaseCollection) NewEmptyStatus() genruntime.Convert
 
 // Owner returns the ResourceReference of the owner
 func (collection *MongodbDatabaseCollection) Owner() *genruntime.ResourceReference {
+	if collection.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(collection.Spec)
 	return collection.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,15 +156,82 @@ func (collection *MongodbDatabaseCollection) SetStatus(status genruntime.Convert
 	var st MongodbDatabaseCollection_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	collection.Status = st
 	return nil
 }
 
-// Hub marks that this MongodbDatabaseCollection is the hub type for conversion
-func (collection *MongodbDatabaseCollection) Hub() {}
+// AssignProperties_From_MongodbDatabaseCollection populates our MongodbDatabaseCollection from the provided source MongodbDatabaseCollection
+func (collection *MongodbDatabaseCollection) AssignProperties_From_MongodbDatabaseCollection(source *storage.MongodbDatabaseCollection) error {
+
+	// ObjectMeta
+	collection.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec MongodbDatabaseCollection_Spec
+	err := spec.AssignProperties_From_MongodbDatabaseCollection_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_MongodbDatabaseCollection_Spec() to populate field Spec")
+	}
+	collection.Spec = spec
+
+	// Status
+	var status MongodbDatabaseCollection_STATUS
+	err = status.AssignProperties_From_MongodbDatabaseCollection_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_MongodbDatabaseCollection_STATUS() to populate field Status")
+	}
+	collection.Status = status
+
+	// Invoke the augmentConversionForMongodbDatabaseCollection interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForMongodbDatabaseCollection); ok {
+		err := augmentedCollection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabaseCollection populates the provided destination MongodbDatabaseCollection from our MongodbDatabaseCollection
+func (collection *MongodbDatabaseCollection) AssignProperties_To_MongodbDatabaseCollection(destination *storage.MongodbDatabaseCollection) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *collection.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.MongodbDatabaseCollection_Spec
+	err := collection.Spec.AssignProperties_To_MongodbDatabaseCollection_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_MongodbDatabaseCollection_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.MongodbDatabaseCollection_STATUS
+	err = collection.Status.AssignProperties_To_MongodbDatabaseCollection_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_MongodbDatabaseCollection_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForMongodbDatabaseCollection interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForMongodbDatabaseCollection); ok {
+		err := augmentedCollection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (collection *MongodbDatabaseCollection) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type MongodbDatabaseCollectionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []MongodbDatabaseCollection `json:"items"`
+}
+
+type augmentConversionForMongodbDatabaseCollection interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabaseCollection) error
+	AssignPropertiesTo(dst *storage.MongodbDatabaseCollection) error
 }
 
 // Storage version of v1api20231115.MongodbDatabaseCollection_Spec
@@ -185,20 +282,212 @@ var _ genruntime.ConvertibleSpec = &MongodbDatabaseCollection_Spec{}
 
 // ConvertSpecFrom populates our MongodbDatabaseCollection_Spec from the provided source
 func (collection *MongodbDatabaseCollection_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == collection {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.MongodbDatabaseCollection_Spec)
+	if ok {
+		// Populate our instance from source
+		return collection.AssignProperties_From_MongodbDatabaseCollection_Spec(src)
 	}
 
-	return source.ConvertSpecTo(collection)
+	// Convert to an intermediate form
+	src = &storage.MongodbDatabaseCollection_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = collection.AssignProperties_From_MongodbDatabaseCollection_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our MongodbDatabaseCollection_Spec
 func (collection *MongodbDatabaseCollection_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == collection {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.MongodbDatabaseCollection_Spec)
+	if ok {
+		// Populate destination from our instance
+		return collection.AssignProperties_To_MongodbDatabaseCollection_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(collection)
+	// Convert to an intermediate form
+	dst = &storage.MongodbDatabaseCollection_Spec{}
+	err := collection.AssignProperties_To_MongodbDatabaseCollection_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_MongodbDatabaseCollection_Spec populates our MongodbDatabaseCollection_Spec from the provided source MongodbDatabaseCollection_Spec
+func (collection *MongodbDatabaseCollection_Spec) AssignProperties_From_MongodbDatabaseCollection_Spec(source *storage.MongodbDatabaseCollection_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	collection.AzureName = source.AzureName
+
+	// Location
+	collection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec MongodbDatabaseCollectionOperatorSpec
+		err := operatorSpec.AssignProperties_From_MongodbDatabaseCollectionOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongodbDatabaseCollectionOperatorSpec() to populate field OperatorSpec")
+		}
+		collection.OperatorSpec = &operatorSpec
+	} else {
+		collection.OperatorSpec = nil
+	}
+
+	// Options
+	if source.Options != nil {
+		var option CreateUpdateOptions
+		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+		}
+		collection.Options = &option
+	} else {
+		collection.Options = nil
+	}
+
+	// OriginalVersion
+	collection.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		collection.Owner = &owner
+	} else {
+		collection.Owner = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource MongoDBCollectionResource
+		err := resource.AssignProperties_From_MongoDBCollectionResource(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoDBCollectionResource() to populate field Resource")
+		}
+		collection.Resource = &resource
+	} else {
+		collection.Resource = nil
+	}
+
+	// Tags
+	collection.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		collection.PropertyBag = propertyBag
+	} else {
+		collection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseCollection_Spec interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForMongodbDatabaseCollection_Spec); ok {
+		err := augmentedCollection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabaseCollection_Spec populates the provided destination MongodbDatabaseCollection_Spec from our MongodbDatabaseCollection_Spec
+func (collection *MongodbDatabaseCollection_Spec) AssignProperties_To_MongodbDatabaseCollection_Spec(destination *storage.MongodbDatabaseCollection_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(collection.PropertyBag)
+
+	// AzureName
+	destination.AzureName = collection.AzureName
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(collection.Location)
+
+	// OperatorSpec
+	if collection.OperatorSpec != nil {
+		var operatorSpec storage.MongodbDatabaseCollectionOperatorSpec
+		err := collection.OperatorSpec.AssignProperties_To_MongodbDatabaseCollectionOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongodbDatabaseCollectionOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// Options
+	if collection.Options != nil {
+		var option storage.CreateUpdateOptions
+		err := collection.Options.AssignProperties_To_CreateUpdateOptions(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = collection.OriginalVersion
+
+	// Owner
+	if collection.Owner != nil {
+		owner := collection.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Resource
+	if collection.Resource != nil {
+		var resource storage.MongoDBCollectionResource
+		err := collection.Resource.AssignProperties_To_MongoDBCollectionResource(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoDBCollectionResource() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(collection.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseCollection_Spec interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForMongodbDatabaseCollection_Spec); ok {
+		err := augmentedCollection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.MongodbDatabaseCollection_STATUS
@@ -218,20 +507,194 @@ var _ genruntime.ConvertibleStatus = &MongodbDatabaseCollection_STATUS{}
 
 // ConvertStatusFrom populates our MongodbDatabaseCollection_STATUS from the provided source
 func (collection *MongodbDatabaseCollection_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == collection {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.MongodbDatabaseCollection_STATUS)
+	if ok {
+		// Populate our instance from source
+		return collection.AssignProperties_From_MongodbDatabaseCollection_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(collection)
+	// Convert to an intermediate form
+	src = &storage.MongodbDatabaseCollection_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = collection.AssignProperties_From_MongodbDatabaseCollection_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our MongodbDatabaseCollection_STATUS
 func (collection *MongodbDatabaseCollection_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == collection {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.MongodbDatabaseCollection_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return collection.AssignProperties_To_MongodbDatabaseCollection_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(collection)
+	// Convert to an intermediate form
+	dst = &storage.MongodbDatabaseCollection_STATUS{}
+	err := collection.AssignProperties_To_MongodbDatabaseCollection_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_MongodbDatabaseCollection_STATUS populates our MongodbDatabaseCollection_STATUS from the provided source MongodbDatabaseCollection_STATUS
+func (collection *MongodbDatabaseCollection_STATUS) AssignProperties_From_MongodbDatabaseCollection_STATUS(source *storage.MongodbDatabaseCollection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	collection.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	collection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	collection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	collection.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Options
+	if source.Options != nil {
+		var option OptionsResource_STATUS
+		err := option.AssignProperties_From_OptionsResource_STATUS(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_OptionsResource_STATUS() to populate field Options")
+		}
+		collection.Options = &option
+	} else {
+		collection.Options = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource MongoDBCollectionGetProperties_Resource_STATUS
+		err := resource.AssignProperties_From_MongoDBCollectionGetProperties_Resource_STATUS(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoDBCollectionGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		collection.Resource = &resource
+	} else {
+		collection.Resource = nil
+	}
+
+	// Tags
+	collection.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	collection.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		collection.PropertyBag = propertyBag
+	} else {
+		collection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseCollection_STATUS interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForMongodbDatabaseCollection_STATUS); ok {
+		err := augmentedCollection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabaseCollection_STATUS populates the provided destination MongodbDatabaseCollection_STATUS from our MongodbDatabaseCollection_STATUS
+func (collection *MongodbDatabaseCollection_STATUS) AssignProperties_To_MongodbDatabaseCollection_STATUS(destination *storage.MongodbDatabaseCollection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(collection.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(collection.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(collection.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(collection.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(collection.Name)
+
+	// Options
+	if collection.Options != nil {
+		var option storage.OptionsResource_STATUS
+		err := collection.Options.AssignProperties_To_OptionsResource_STATUS(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_OptionsResource_STATUS() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// Resource
+	if collection.Resource != nil {
+		var resource storage.MongoDBCollectionGetProperties_Resource_STATUS
+		err := collection.Resource.AssignProperties_To_MongoDBCollectionGetProperties_Resource_STATUS(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoDBCollectionGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(collection.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(collection.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseCollection_STATUS interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForMongodbDatabaseCollection_STATUS); ok {
+		err := augmentedCollection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMongodbDatabaseCollection_Spec interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabaseCollection_Spec) error
+	AssignPropertiesTo(dst *storage.MongodbDatabaseCollection_Spec) error
+}
+
+type augmentConversionForMongodbDatabaseCollection_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabaseCollection_STATUS) error
+	AssignPropertiesTo(dst *storage.MongodbDatabaseCollection_STATUS) error
 }
 
 // Storage version of v1api20231115.MongoDBCollectionGetProperties_Resource_STATUS
@@ -248,6 +711,168 @@ type MongoDBCollectionGetProperties_Resource_STATUS struct {
 	Ts                   *float64                      `json:"_ts,omitempty"`
 }
 
+// AssignProperties_From_MongoDBCollectionGetProperties_Resource_STATUS populates our MongoDBCollectionGetProperties_Resource_STATUS from the provided source MongoDBCollectionGetProperties_Resource_STATUS
+func (resource *MongoDBCollectionGetProperties_Resource_STATUS) AssignProperties_From_MongoDBCollectionGetProperties_Resource_STATUS(source *storage.MongoDBCollectionGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AnalyticalStorageTtl
+	resource.AnalyticalStorageTtl = genruntime.ClonePointerToInt(source.AnalyticalStorageTtl)
+
+	// CreateMode
+	resource.CreateMode = genruntime.ClonePointerToString(source.CreateMode)
+
+	// Etag
+	resource.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Indexes
+	if source.Indexes != nil {
+		indexList := make([]MongoIndex_STATUS, len(source.Indexes))
+		for index, indexItem := range source.Indexes {
+			// Shadow the loop variable to avoid aliasing
+			indexItem := indexItem
+			var indexLocal MongoIndex_STATUS
+			err := indexLocal.AssignProperties_From_MongoIndex_STATUS(&indexItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_MongoIndex_STATUS() to populate field Indexes")
+			}
+			indexList[index] = indexLocal
+		}
+		resource.Indexes = indexList
+	} else {
+		resource.Indexes = nil
+	}
+
+	// RestoreParameters
+	if source.RestoreParameters != nil {
+		var restoreParameter RestoreParametersBase_STATUS
+		err := restoreParameter.AssignProperties_From_RestoreParametersBase_STATUS(source.RestoreParameters)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RestoreParametersBase_STATUS() to populate field RestoreParameters")
+		}
+		resource.RestoreParameters = &restoreParameter
+	} else {
+		resource.RestoreParameters = nil
+	}
+
+	// Rid
+	resource.Rid = genruntime.ClonePointerToString(source.Rid)
+
+	// ShardKey
+	resource.ShardKey = genruntime.CloneMapOfStringToString(source.ShardKey)
+
+	// Ts
+	if source.Ts != nil {
+		t := *source.Ts
+		resource.Ts = &t
+	} else {
+		resource.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBCollectionGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBCollectionGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoDBCollectionGetProperties_Resource_STATUS populates the provided destination MongoDBCollectionGetProperties_Resource_STATUS from our MongoDBCollectionGetProperties_Resource_STATUS
+func (resource *MongoDBCollectionGetProperties_Resource_STATUS) AssignProperties_To_MongoDBCollectionGetProperties_Resource_STATUS(destination *storage.MongoDBCollectionGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// AnalyticalStorageTtl
+	destination.AnalyticalStorageTtl = genruntime.ClonePointerToInt(resource.AnalyticalStorageTtl)
+
+	// CreateMode
+	destination.CreateMode = genruntime.ClonePointerToString(resource.CreateMode)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(resource.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Indexes
+	if resource.Indexes != nil {
+		indexList := make([]storage.MongoIndex_STATUS, len(resource.Indexes))
+		for index, indexItem := range resource.Indexes {
+			// Shadow the loop variable to avoid aliasing
+			indexItem := indexItem
+			var indexLocal storage.MongoIndex_STATUS
+			err := indexItem.AssignProperties_To_MongoIndex_STATUS(&indexLocal)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_MongoIndex_STATUS() to populate field Indexes")
+			}
+			indexList[index] = indexLocal
+		}
+		destination.Indexes = indexList
+	} else {
+		destination.Indexes = nil
+	}
+
+	// RestoreParameters
+	if resource.RestoreParameters != nil {
+		var restoreParameter storage.RestoreParametersBase_STATUS
+		err := resource.RestoreParameters.AssignProperties_To_RestoreParametersBase_STATUS(&restoreParameter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RestoreParametersBase_STATUS() to populate field RestoreParameters")
+		}
+		destination.RestoreParameters = &restoreParameter
+	} else {
+		destination.RestoreParameters = nil
+	}
+
+	// Rid
+	destination.Rid = genruntime.ClonePointerToString(resource.Rid)
+
+	// ShardKey
+	destination.ShardKey = genruntime.CloneMapOfStringToString(resource.ShardKey)
+
+	// Ts
+	if resource.Ts != nil {
+		t := *resource.Ts
+		destination.Ts = &t
+	} else {
+		destination.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBCollectionGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBCollectionGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.MongoDBCollectionResource
 // Cosmos DB MongoDB collection resource object
 type MongoDBCollectionResource struct {
@@ -260,12 +885,283 @@ type MongoDBCollectionResource struct {
 	ShardKey             map[string]string      `json:"shardKey,omitempty"`
 }
 
+// AssignProperties_From_MongoDBCollectionResource populates our MongoDBCollectionResource from the provided source MongoDBCollectionResource
+func (resource *MongoDBCollectionResource) AssignProperties_From_MongoDBCollectionResource(source *storage.MongoDBCollectionResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AnalyticalStorageTtl
+	resource.AnalyticalStorageTtl = genruntime.ClonePointerToInt(source.AnalyticalStorageTtl)
+
+	// CreateMode
+	resource.CreateMode = genruntime.ClonePointerToString(source.CreateMode)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Indexes
+	if source.Indexes != nil {
+		indexList := make([]MongoIndex, len(source.Indexes))
+		for index, indexItem := range source.Indexes {
+			// Shadow the loop variable to avoid aliasing
+			indexItem := indexItem
+			var indexLocal MongoIndex
+			err := indexLocal.AssignProperties_From_MongoIndex(&indexItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_MongoIndex() to populate field Indexes")
+			}
+			indexList[index] = indexLocal
+		}
+		resource.Indexes = indexList
+	} else {
+		resource.Indexes = nil
+	}
+
+	// RestoreParameters
+	if source.RestoreParameters != nil {
+		var restoreParameter RestoreParametersBase
+		err := restoreParameter.AssignProperties_From_RestoreParametersBase(source.RestoreParameters)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RestoreParametersBase() to populate field RestoreParameters")
+		}
+		resource.RestoreParameters = &restoreParameter
+	} else {
+		resource.RestoreParameters = nil
+	}
+
+	// ShardKey
+	resource.ShardKey = genruntime.CloneMapOfStringToString(source.ShardKey)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBCollectionResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBCollectionResource); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoDBCollectionResource populates the provided destination MongoDBCollectionResource from our MongoDBCollectionResource
+func (resource *MongoDBCollectionResource) AssignProperties_To_MongoDBCollectionResource(destination *storage.MongoDBCollectionResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// AnalyticalStorageTtl
+	destination.AnalyticalStorageTtl = genruntime.ClonePointerToInt(resource.AnalyticalStorageTtl)
+
+	// CreateMode
+	destination.CreateMode = genruntime.ClonePointerToString(resource.CreateMode)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Indexes
+	if resource.Indexes != nil {
+		indexList := make([]storage.MongoIndex, len(resource.Indexes))
+		for index, indexItem := range resource.Indexes {
+			// Shadow the loop variable to avoid aliasing
+			indexItem := indexItem
+			var indexLocal storage.MongoIndex
+			err := indexItem.AssignProperties_To_MongoIndex(&indexLocal)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_MongoIndex() to populate field Indexes")
+			}
+			indexList[index] = indexLocal
+		}
+		destination.Indexes = indexList
+	} else {
+		destination.Indexes = nil
+	}
+
+	// RestoreParameters
+	if resource.RestoreParameters != nil {
+		var restoreParameter storage.RestoreParametersBase
+		err := resource.RestoreParameters.AssignProperties_To_RestoreParametersBase(&restoreParameter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RestoreParametersBase() to populate field RestoreParameters")
+		}
+		destination.RestoreParameters = &restoreParameter
+	} else {
+		destination.RestoreParameters = nil
+	}
+
+	// ShardKey
+	destination.ShardKey = genruntime.CloneMapOfStringToString(resource.ShardKey)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBCollectionResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBCollectionResource); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.MongodbDatabaseCollectionOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type MongodbDatabaseCollectionOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_MongodbDatabaseCollectionOperatorSpec populates our MongodbDatabaseCollectionOperatorSpec from the provided source MongodbDatabaseCollectionOperatorSpec
+func (operator *MongodbDatabaseCollectionOperatorSpec) AssignProperties_From_MongodbDatabaseCollectionOperatorSpec(source *storage.MongodbDatabaseCollectionOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseCollectionOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForMongodbDatabaseCollectionOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabaseCollectionOperatorSpec populates the provided destination MongodbDatabaseCollectionOperatorSpec from our MongodbDatabaseCollectionOperatorSpec
+func (operator *MongodbDatabaseCollectionOperatorSpec) AssignProperties_To_MongodbDatabaseCollectionOperatorSpec(destination *storage.MongodbDatabaseCollectionOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseCollectionOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForMongodbDatabaseCollectionOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMongoDBCollectionGetProperties_Resource_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongoDBCollectionGetProperties_Resource_STATUS) error
+	AssignPropertiesTo(dst *storage.MongoDBCollectionGetProperties_Resource_STATUS) error
+}
+
+type augmentConversionForMongoDBCollectionResource interface {
+	AssignPropertiesFrom(src *storage.MongoDBCollectionResource) error
+	AssignPropertiesTo(dst *storage.MongoDBCollectionResource) error
+}
+
+type augmentConversionForMongodbDatabaseCollectionOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabaseCollectionOperatorSpec) error
+	AssignPropertiesTo(dst *storage.MongodbDatabaseCollectionOperatorSpec) error
 }
 
 // Storage version of v1api20231115.MongoIndex
@@ -276,12 +1172,218 @@ type MongoIndex struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_MongoIndex populates our MongoIndex from the provided source MongoIndex
+func (index *MongoIndex) AssignProperties_From_MongoIndex(source *storage.MongoIndex) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Key
+	if source.Key != nil {
+		var key MongoIndexKeys
+		err := key.AssignProperties_From_MongoIndexKeys(source.Key)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoIndexKeys() to populate field Key")
+		}
+		index.Key = &key
+	} else {
+		index.Key = nil
+	}
+
+	// Options
+	if source.Options != nil {
+		var option MongoIndexOptions
+		err := option.AssignProperties_From_MongoIndexOptions(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoIndexOptions() to populate field Options")
+		}
+		index.Options = &option
+	} else {
+		index.Options = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		index.PropertyBag = propertyBag
+	} else {
+		index.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndex interface (if implemented) to customize the conversion
+	var indexAsAny any = index
+	if augmentedIndex, ok := indexAsAny.(augmentConversionForMongoIndex); ok {
+		err := augmentedIndex.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoIndex populates the provided destination MongoIndex from our MongoIndex
+func (index *MongoIndex) AssignProperties_To_MongoIndex(destination *storage.MongoIndex) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(index.PropertyBag)
+
+	// Key
+	if index.Key != nil {
+		var key storage.MongoIndexKeys
+		err := index.Key.AssignProperties_To_MongoIndexKeys(&key)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoIndexKeys() to populate field Key")
+		}
+		destination.Key = &key
+	} else {
+		destination.Key = nil
+	}
+
+	// Options
+	if index.Options != nil {
+		var option storage.MongoIndexOptions
+		err := index.Options.AssignProperties_To_MongoIndexOptions(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoIndexOptions() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndex interface (if implemented) to customize the conversion
+	var indexAsAny any = index
+	if augmentedIndex, ok := indexAsAny.(augmentConversionForMongoIndex); ok {
+		err := augmentedIndex.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.MongoIndex_STATUS
 // Cosmos DB MongoDB collection index key
 type MongoIndex_STATUS struct {
 	Key         *MongoIndexKeys_STATUS    `json:"key,omitempty"`
 	Options     *MongoIndexOptions_STATUS `json:"options,omitempty"`
 	PropertyBag genruntime.PropertyBag    `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_MongoIndex_STATUS populates our MongoIndex_STATUS from the provided source MongoIndex_STATUS
+func (index *MongoIndex_STATUS) AssignProperties_From_MongoIndex_STATUS(source *storage.MongoIndex_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Key
+	if source.Key != nil {
+		var key MongoIndexKeys_STATUS
+		err := key.AssignProperties_From_MongoIndexKeys_STATUS(source.Key)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoIndexKeys_STATUS() to populate field Key")
+		}
+		index.Key = &key
+	} else {
+		index.Key = nil
+	}
+
+	// Options
+	if source.Options != nil {
+		var option MongoIndexOptions_STATUS
+		err := option.AssignProperties_From_MongoIndexOptions_STATUS(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoIndexOptions_STATUS() to populate field Options")
+		}
+		index.Options = &option
+	} else {
+		index.Options = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		index.PropertyBag = propertyBag
+	} else {
+		index.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndex_STATUS interface (if implemented) to customize the conversion
+	var indexAsAny any = index
+	if augmentedIndex, ok := indexAsAny.(augmentConversionForMongoIndex_STATUS); ok {
+		err := augmentedIndex.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoIndex_STATUS populates the provided destination MongoIndex_STATUS from our MongoIndex_STATUS
+func (index *MongoIndex_STATUS) AssignProperties_To_MongoIndex_STATUS(destination *storage.MongoIndex_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(index.PropertyBag)
+
+	// Key
+	if index.Key != nil {
+		var key storage.MongoIndexKeys_STATUS
+		err := index.Key.AssignProperties_To_MongoIndexKeys_STATUS(&key)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoIndexKeys_STATUS() to populate field Key")
+		}
+		destination.Key = &key
+	} else {
+		destination.Key = nil
+	}
+
+	// Options
+	if index.Options != nil {
+		var option storage.MongoIndexOptions_STATUS
+		err := index.Options.AssignProperties_To_MongoIndexOptions_STATUS(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoIndexOptions_STATUS() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndex_STATUS interface (if implemented) to customize the conversion
+	var indexAsAny any = index
+	if augmentedIndex, ok := indexAsAny.(augmentConversionForMongoIndex_STATUS); ok {
+		err := augmentedIndex.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMongoIndex interface {
+	AssignPropertiesFrom(src *storage.MongoIndex) error
+	AssignPropertiesTo(dst *storage.MongoIndex) error
+}
+
+type augmentConversionForMongoIndex_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongoIndex_STATUS) error
+	AssignPropertiesTo(dst *storage.MongoIndex_STATUS) error
 }
 
 // Storage version of v1api20231115.MongoIndexKeys
@@ -291,11 +1393,123 @@ type MongoIndexKeys struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_MongoIndexKeys populates our MongoIndexKeys from the provided source MongoIndexKeys
+func (keys *MongoIndexKeys) AssignProperties_From_MongoIndexKeys(source *storage.MongoIndexKeys) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Keys
+	keys.Keys = genruntime.CloneSliceOfString(source.Keys)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		keys.PropertyBag = propertyBag
+	} else {
+		keys.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexKeys interface (if implemented) to customize the conversion
+	var keysAsAny any = keys
+	if augmentedKeys, ok := keysAsAny.(augmentConversionForMongoIndexKeys); ok {
+		err := augmentedKeys.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoIndexKeys populates the provided destination MongoIndexKeys from our MongoIndexKeys
+func (keys *MongoIndexKeys) AssignProperties_To_MongoIndexKeys(destination *storage.MongoIndexKeys) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(keys.PropertyBag)
+
+	// Keys
+	destination.Keys = genruntime.CloneSliceOfString(keys.Keys)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexKeys interface (if implemented) to customize the conversion
+	var keysAsAny any = keys
+	if augmentedKeys, ok := keysAsAny.(augmentConversionForMongoIndexKeys); ok {
+		err := augmentedKeys.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.MongoIndexKeys_STATUS
 // Cosmos DB MongoDB collection resource object
 type MongoIndexKeys_STATUS struct {
 	Keys        []string               `json:"keys,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_MongoIndexKeys_STATUS populates our MongoIndexKeys_STATUS from the provided source MongoIndexKeys_STATUS
+func (keys *MongoIndexKeys_STATUS) AssignProperties_From_MongoIndexKeys_STATUS(source *storage.MongoIndexKeys_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Keys
+	keys.Keys = genruntime.CloneSliceOfString(source.Keys)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		keys.PropertyBag = propertyBag
+	} else {
+		keys.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexKeys_STATUS interface (if implemented) to customize the conversion
+	var keysAsAny any = keys
+	if augmentedKeys, ok := keysAsAny.(augmentConversionForMongoIndexKeys_STATUS); ok {
+		err := augmentedKeys.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoIndexKeys_STATUS populates the provided destination MongoIndexKeys_STATUS from our MongoIndexKeys_STATUS
+func (keys *MongoIndexKeys_STATUS) AssignProperties_To_MongoIndexKeys_STATUS(destination *storage.MongoIndexKeys_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(keys.PropertyBag)
+
+	// Keys
+	destination.Keys = genruntime.CloneSliceOfString(keys.Keys)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexKeys_STATUS interface (if implemented) to customize the conversion
+	var keysAsAny any = keys
+	if augmentedKeys, ok := keysAsAny.(augmentConversionForMongoIndexKeys_STATUS); ok {
+		err := augmentedKeys.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.MongoIndexOptions
@@ -306,12 +1520,176 @@ type MongoIndexOptions struct {
 	Unique             *bool                  `json:"unique,omitempty"`
 }
 
+// AssignProperties_From_MongoIndexOptions populates our MongoIndexOptions from the provided source MongoIndexOptions
+func (options *MongoIndexOptions) AssignProperties_From_MongoIndexOptions(source *storage.MongoIndexOptions) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ExpireAfterSeconds
+	options.ExpireAfterSeconds = genruntime.ClonePointerToInt(source.ExpireAfterSeconds)
+
+	// Unique
+	if source.Unique != nil {
+		unique := *source.Unique
+		options.Unique = &unique
+	} else {
+		options.Unique = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		options.PropertyBag = propertyBag
+	} else {
+		options.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexOptions interface (if implemented) to customize the conversion
+	var optionsAsAny any = options
+	if augmentedOptions, ok := optionsAsAny.(augmentConversionForMongoIndexOptions); ok {
+		err := augmentedOptions.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoIndexOptions populates the provided destination MongoIndexOptions from our MongoIndexOptions
+func (options *MongoIndexOptions) AssignProperties_To_MongoIndexOptions(destination *storage.MongoIndexOptions) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(options.PropertyBag)
+
+	// ExpireAfterSeconds
+	destination.ExpireAfterSeconds = genruntime.ClonePointerToInt(options.ExpireAfterSeconds)
+
+	// Unique
+	if options.Unique != nil {
+		unique := *options.Unique
+		destination.Unique = &unique
+	} else {
+		destination.Unique = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexOptions interface (if implemented) to customize the conversion
+	var optionsAsAny any = options
+	if augmentedOptions, ok := optionsAsAny.(augmentConversionForMongoIndexOptions); ok {
+		err := augmentedOptions.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.MongoIndexOptions_STATUS
 // Cosmos DB MongoDB collection index options
 type MongoIndexOptions_STATUS struct {
 	ExpireAfterSeconds *int                   `json:"expireAfterSeconds,omitempty"`
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Unique             *bool                  `json:"unique,omitempty"`
+}
+
+// AssignProperties_From_MongoIndexOptions_STATUS populates our MongoIndexOptions_STATUS from the provided source MongoIndexOptions_STATUS
+func (options *MongoIndexOptions_STATUS) AssignProperties_From_MongoIndexOptions_STATUS(source *storage.MongoIndexOptions_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ExpireAfterSeconds
+	options.ExpireAfterSeconds = genruntime.ClonePointerToInt(source.ExpireAfterSeconds)
+
+	// Unique
+	if source.Unique != nil {
+		unique := *source.Unique
+		options.Unique = &unique
+	} else {
+		options.Unique = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		options.PropertyBag = propertyBag
+	} else {
+		options.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexOptions_STATUS interface (if implemented) to customize the conversion
+	var optionsAsAny any = options
+	if augmentedOptions, ok := optionsAsAny.(augmentConversionForMongoIndexOptions_STATUS); ok {
+		err := augmentedOptions.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoIndexOptions_STATUS populates the provided destination MongoIndexOptions_STATUS from our MongoIndexOptions_STATUS
+func (options *MongoIndexOptions_STATUS) AssignProperties_To_MongoIndexOptions_STATUS(destination *storage.MongoIndexOptions_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(options.PropertyBag)
+
+	// ExpireAfterSeconds
+	destination.ExpireAfterSeconds = genruntime.ClonePointerToInt(options.ExpireAfterSeconds)
+
+	// Unique
+	if options.Unique != nil {
+		unique := *options.Unique
+		destination.Unique = &unique
+	} else {
+		destination.Unique = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoIndexOptions_STATUS interface (if implemented) to customize the conversion
+	var optionsAsAny any = options
+	if augmentedOptions, ok := optionsAsAny.(augmentConversionForMongoIndexOptions_STATUS); ok {
+		err := augmentedOptions.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMongoIndexKeys interface {
+	AssignPropertiesFrom(src *storage.MongoIndexKeys) error
+	AssignPropertiesTo(dst *storage.MongoIndexKeys) error
+}
+
+type augmentConversionForMongoIndexKeys_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongoIndexKeys_STATUS) error
+	AssignPropertiesTo(dst *storage.MongoIndexKeys_STATUS) error
+}
+
+type augmentConversionForMongoIndexOptions interface {
+	AssignPropertiesFrom(src *storage.MongoIndexOptions) error
+	AssignPropertiesTo(dst *storage.MongoIndexOptions) error
+}
+
+type augmentConversionForMongoIndexOptions_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongoIndexOptions_STATUS) error
+	AssignPropertiesTo(dst *storage.MongoIndexOptions_STATUS) error
 }
 
 func init() {

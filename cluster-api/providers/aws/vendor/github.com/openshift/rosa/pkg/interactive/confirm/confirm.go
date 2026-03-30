@@ -42,7 +42,7 @@ func Yes() bool {
 
 // Asks the user to confirm the operation, using the specified string as the message
 func ConfirmRaw(q string) bool {
-	return Prompt(false, q)
+	return Prompt(false, "%s", q)
 }
 
 func Confirm(q string, v ...interface{}) bool {

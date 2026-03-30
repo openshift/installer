@@ -62,4 +62,7 @@ class NodePool {
 
     // Management parameters (Optional).
     ManagementUpgrade NodePoolManagementUpgrade
+
+	// Type of Image used to run the nodes (i.e. Windows or Default/Linux)
+	ImageType ImageType
 }

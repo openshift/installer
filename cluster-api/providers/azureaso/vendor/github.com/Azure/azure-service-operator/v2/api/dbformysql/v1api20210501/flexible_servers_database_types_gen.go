@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (database *FlexibleServersDatabase) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = database.AssignProperties_From_FlexibleServersDatabase(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to database")
+		return eris.Wrap(err, "converting from source to database")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (database *FlexibleServersDatabase) ConvertTo(hub conversion.Hub) error {
 	var destination storage.FlexibleServersDatabase
 	err := database.AssignProperties_To_FlexibleServersDatabase(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from database")
+		return eris.Wrap(err, "converting to destination from database")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-dbformysql-azure-com-v1api20210501-flexibleserversdatabase,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversdatabases,verbs=create;update,versions=v1api20210501,name=default.v1api20210501.flexibleserversdatabases.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &FlexibleServersDatabase{}
-
-// Default applies defaults to the FlexibleServersDatabase resource
-func (database *FlexibleServersDatabase) Default() {
-	database.defaultImpl()
-	var temp any = database
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (database *FlexibleServersDatabase) defaultAzureName() {
-	if database.Spec.AzureName == "" {
-		database.Spec.AzureName = database.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the FlexibleServersDatabase resource
-func (database *FlexibleServersDatabase) defaultImpl() { database.defaultAzureName() }
 
 var _ configmaps.Exporter = &FlexibleServersDatabase{}
 
@@ -176,6 +150,10 @@ func (database *FlexibleServersDatabase) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (database *FlexibleServersDatabase) Owner() *genruntime.ResourceReference {
+	if database.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(database.Spec)
 	return database.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (database *FlexibleServersDatabase) SetStatus(status genruntime.Convertible
 	var st FlexibleServersDatabase_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	database.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-dbformysql-azure-com-v1api20210501-flexibleserversdatabase,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformysql.azure.com,resources=flexibleserversdatabases,verbs=create;update,versions=v1api20210501,name=validate.v1api20210501.flexibleserversdatabases.dbformysql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &FlexibleServersDatabase{}
-
-// ValidateCreate validates the creation of the resource
-func (database *FlexibleServersDatabase) ValidateCreate() (admission.Warnings, error) {
-	validations := database.createValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (database *FlexibleServersDatabase) ValidateDelete() (admission.Warnings, error) {
-	validations := database.deleteValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (database *FlexibleServersDatabase) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := database.updateValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (database *FlexibleServersDatabase) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (database *FlexibleServersDatabase) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (database *FlexibleServersDatabase) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateResourceReferences()
-		},
-		database.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (database *FlexibleServersDatabase) validateConfigMapDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(database, nil, database.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (database *FlexibleServersDatabase) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(database)
-}
-
-// validateResourceReferences validates all resource references
-func (database *FlexibleServersDatabase) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&database.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (database *FlexibleServersDatabase) validateSecretDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(database, nil, database.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (database *FlexibleServersDatabase) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*FlexibleServersDatabase)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, database)
 }
 
 // AssignProperties_From_FlexibleServersDatabase populates our FlexibleServersDatabase from the provided source FlexibleServersDatabase
@@ -312,7 +187,7 @@ func (database *FlexibleServersDatabase) AssignProperties_From_FlexibleServersDa
 	var spec FlexibleServersDatabase_Spec
 	err := spec.AssignProperties_From_FlexibleServersDatabase_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_Spec() to populate field Spec")
 	}
 	database.Spec = spec
 
@@ -320,7 +195,7 @@ func (database *FlexibleServersDatabase) AssignProperties_From_FlexibleServersDa
 	var status FlexibleServersDatabase_STATUS
 	err = status.AssignProperties_From_FlexibleServersDatabase_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_STATUS() to populate field Status")
 	}
 	database.Status = status
 
@@ -338,7 +213,7 @@ func (database *FlexibleServersDatabase) AssignProperties_To_FlexibleServersData
 	var spec storage.FlexibleServersDatabase_Spec
 	err := database.Spec.AssignProperties_To_FlexibleServersDatabase_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (database *FlexibleServersDatabase) AssignProperties_To_FlexibleServersData
 	var status storage.FlexibleServersDatabase_STATUS
 	err = database.Status.AssignProperties_To_FlexibleServersDatabase_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -481,13 +356,13 @@ func (database *FlexibleServersDatabase_Spec) ConvertSpecFrom(source genruntime.
 	src = &storage.FlexibleServersDatabase_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_FlexibleServersDatabase_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -505,13 +380,13 @@ func (database *FlexibleServersDatabase_Spec) ConvertSpecTo(destination genrunti
 	dst = &storage.FlexibleServersDatabase_Spec{}
 	err := database.AssignProperties_To_FlexibleServersDatabase_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -534,7 +409,7 @@ func (database *FlexibleServersDatabase_Spec) AssignProperties_From_FlexibleServ
 		var operatorSpec FlexibleServersDatabaseOperatorSpec
 		err := operatorSpec.AssignProperties_From_FlexibleServersDatabaseOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		database.OperatorSpec = &operatorSpec
 	} else {
@@ -572,7 +447,7 @@ func (database *FlexibleServersDatabase_Spec) AssignProperties_To_FlexibleServer
 		var operatorSpec storage.FlexibleServersDatabaseOperatorSpec
 		err := database.OperatorSpec.AssignProperties_To_FlexibleServersDatabaseOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -649,13 +524,13 @@ func (database *FlexibleServersDatabase_STATUS) ConvertStatusFrom(source genrunt
 	src = &storage.FlexibleServersDatabase_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_FlexibleServersDatabase_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -673,13 +548,13 @@ func (database *FlexibleServersDatabase_STATUS) ConvertStatusTo(destination genr
 	dst = &storage.FlexibleServersDatabase_STATUS{}
 	err := database.AssignProperties_To_FlexibleServersDatabase_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -775,7 +650,7 @@ func (database *FlexibleServersDatabase_STATUS) AssignProperties_From_FlexibleSe
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		database.SystemData = &systemDatum
 	} else {
@@ -814,7 +689,7 @@ func (database *FlexibleServersDatabase_STATUS) AssignProperties_To_FlexibleServ
 		var systemDatum storage.SystemData_STATUS
 		err := database.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

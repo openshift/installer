@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
@@ -53,15 +53,15 @@ var computeReq = resourceRequirements{
 }
 
 // Validate executes platform-specific validation.
-func Validate(client API, ic *types.InstallConfig) error {
+func Validate(client API, meta *Metadata, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validateNetworks(client, ic.Azure, ic.Networking.MachineNetwork, field.NewPath("platform").Child("azure"))...)
+	allErrs = append(allErrs, validateNetworks(client, ic.Azure, field.NewPath("platform").Child("azure"))...)
 	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic.Azure)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, validateAzureStackDiskType(client, ic)...)
 	}
-	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
+	allErrs = append(allErrs, validateInstanceTypes(client, meta, ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud && ic.Azure.ClusterOSImage != "" {
 		StorageEndpointSuffix, err := client.GetStorageEndpointSuffix(context.TODO())
 		if err != nil {
@@ -69,8 +69,9 @@ func Validate(client API, ic *types.InstallConfig) error {
 		}
 		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
-	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
+	allErrs = append(allErrs, validateMarketplaceImages(client, meta, ic)...)
 	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
+	allErrs = append(allErrs, validateCustomSubnets(client, field.NewPath("platform").Child("azure").Child("subnetSpec"), ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -78,19 +79,27 @@ func Validate(client API, ic *types.InstallConfig) error {
 func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	clusterRegion := ic.Platform.Azure.Region
+
 	if ic.Platform.Azure.DefaultMachinePlatform != nil && ic.Platform.Azure.DefaultMachinePlatform.OSDisk.DiskEncryptionSet != nil {
 		diskEncryptionSet := ic.Platform.Azure.DefaultMachinePlatform.OSDisk.DiskEncryptionSet
-		_, err := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
+		desFieldPath := field.NewPath("platform").Child("azure", "defaultMachinePlatform", "osDisk", "diskEncryptionSet")
+		des, err := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("azure", "defaultMachinePlatform", "osDisk", "diskEncryptionSet"), diskEncryptionSet, err.Error()))
+			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
+		} else if des != nil && des.Location != nil && !strings.EqualFold(*des.Location, clusterRegion) {
+			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, fmt.Sprintf("disk encryption set is in %s, but the cluster region is %s", *des.Location, clusterRegion)))
 		}
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil && ic.ControlPlane.Platform.Azure.OSDisk.DiskEncryptionSet != nil {
 		diskEncryptionSet := ic.ControlPlane.Platform.Azure.OSDisk.DiskEncryptionSet
-		_, err := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
+		desFieldPath := field.NewPath("platform").Child("azure", "osDisk", "diskEncryptionSet")
+		des, err := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("azure", "osDisk", "diskEncryptionSet"), diskEncryptionSet, err.Error()))
+			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
+		} else if des != nil && des.Location != nil && !strings.EqualFold(*des.Location, clusterRegion) {
+			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, fmt.Sprintf("disk encryption set is in %s, but the cluster region is %s", *des.Location, clusterRegion)))
 		}
 	}
 
@@ -98,9 +107,12 @@ func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorL
 		fieldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.Azure != nil && compute.Platform.Azure.OSDisk.DiskEncryptionSet != nil {
 			diskEncryptionSet := compute.Platform.Azure.OSDisk.DiskEncryptionSet
-			_, err := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
+			desFieldPath := fieldPath.Child("platform", "azure", "osDisk", "diskEncryptionSet")
+			des, err := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 			if err != nil {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "azure", "osDisk", "diskEncryptionSet"), diskEncryptionSet, err.Error()))
+				allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
+			} else if des != nil && des.Location != nil && !strings.EqualFold(*des.Location, clusterRegion) {
+				allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, fmt.Sprintf("disk encryption set is in %s, but the cluster region is %s", *des.Location, clusterRegion)))
 			}
 		}
 	}
@@ -108,12 +120,15 @@ func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorL
 	return allErrs
 }
 
-func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztypes.DiskEncryptionSet, desFieldPath *field.Path) error {
+func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztypes.DiskEncryptionSet, desFieldPath *field.Path, clusterRegion string) error {
 	resp, requestErr := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 	if requestErr != nil {
 		return requestErr
 	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.ConfidentialVMEncryptedWithCustomerKey {
 		return fmt.Errorf("the disk encryption set should be created with type %s", azenc.ConfidentialVMEncryptedWithCustomerKey)
+	}
+	if resp.Location != nil && !strings.EqualFold(*resp.Location, clusterRegion) {
+		return fmt.Errorf("disk encryption set is in %s, but the cluster region is %s", *resp.Location, clusterRegion)
 	}
 	return nil
 }
@@ -121,13 +136,14 @@ func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztype
 // ValidateSecurityProfileDiskEncryptionSet ensures the security profile disk encryption set exists and is valid.
 func ValidateSecurityProfileDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+	clusterRegion := ic.Platform.Azure.Region
 
 	if ic.Platform.Azure.DefaultMachinePlatform != nil &&
 		ic.Platform.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile != nil &&
 		ic.Platform.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
 		desFieldPath := field.NewPath("platform").Child("azure", "defaultMachinePlatform", "osDisk", "securityProfile", "diskEncryptionSet")
 		diskEncryptionSet := ic.Platform.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile.DiskEncryptionSet
-		err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath)
+		err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath, clusterRegion)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
 		}
@@ -139,7 +155,7 @@ func ValidateSecurityProfileDiskEncryptionSet(client API, ic *types.InstallConfi
 		ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
 		desFieldPath := field.NewPath("platform").Child("azure", "osDisk", "securityProfile", "diskEncryptionSet")
 		diskEncryptionSet := ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet
-		err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath)
+		err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath, clusterRegion)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
 		}
@@ -152,7 +168,7 @@ func ValidateSecurityProfileDiskEncryptionSet(client API, ic *types.InstallConfi
 			compute.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
 			desFieldPath := fieldPath.Child("platform", "azure", "osDisk", "securityProfile", "diskEncryptionSet")
 			diskEncryptionSet := compute.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet
-			err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath)
+			err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath, clusterRegion)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
 			}
@@ -352,12 +368,15 @@ func validateUltraSSD(client API, fieldPath *field.Path, icZones []string, regio
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu, Memory, and a valid family type.
-func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, icZones []string, architecture types.Architecture, securityType aztypes.SecurityTypes) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, icZones []string, architecture types.Architecture, securityType aztypes.SecurityTypes, capabilities map[string]string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	capabilities, err := client.GetVMCapabilities(context.TODO(), instanceType, region)
-	if err != nil {
-		return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+	var err error
+	if capabilities == nil {
+		capabilities, err = client.GetVMCapabilities(context.TODO(), instanceType, region)
+		if err != nil {
+			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+		}
 	}
 
 	allErrs = append(allErrs, validateMininumRequirements(fieldPath.Child("type"), req, instanceType, capabilities)...)
@@ -385,7 +404,7 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 }
 
 // validateInstanceTypes checks that the user-provided instance types are valid.
-func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
+func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	var securityType aztypes.SecurityTypes
@@ -450,7 +469,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			zones = defaultZones
 		}
 		ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType, zones, architecture, securityType)...)
+		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType, zones, architecture, securityType, meta.controlPlaneCapabilities)...)
 	}
 
 	for idx, compute := range ic.Compute {
@@ -487,7 +506,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
-				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType, zones, architecture, securityType)...)
+				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType, zones, architecture, securityType, meta.computeCapabilities)...)
 		}
 	}
 
@@ -506,42 +525,17 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		fieldPath := field.NewPath("platform", "azure", "defaultMachinePlatform")
 		ultraSSDEnabled := strings.EqualFold(defaultUltraSSDCapability, "Enabled")
 		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath,
-			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture, securityType)...)
+			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture, securityType, nil)...)
 	}
-	return allErrs
-}
-
-// validateNetworks checks that the user-provided VNet and subnets are valid.
-func validateNetworks(client API, p *aztypes.Platform, machineNetworks []types.MachineNetworkEntry, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if p.VirtualNetwork != "" {
-		_, err := client.GetVirtualNetwork(context.TODO(), p.NetworkResourceGroupName, p.VirtualNetwork)
-		if err != nil {
-			return append(allErrs, field.Invalid(fieldPath.Child("virtualNetwork"), p.VirtualNetwork, err.Error()))
-		}
-
-		computeSubnet, err := client.GetComputeSubnet(context.TODO(), p.NetworkResourceGroupName, p.VirtualNetwork, p.ComputeSubnet)
-		if err != nil {
-			return append(allErrs, field.Invalid(fieldPath.Child("computeSubnet"), p.ComputeSubnet, "failed to retrieve compute subnet"))
-		}
-
-		allErrs = append(allErrs, validateSubnet(client, fieldPath.Child("computeSubnet"), computeSubnet, p.ComputeSubnet, machineNetworks)...)
-
-		controlPlaneSubnet, err := client.GetControlPlaneSubnet(context.TODO(), p.NetworkResourceGroupName, p.VirtualNetwork, p.ControlPlaneSubnet)
-		if err != nil {
-			return append(allErrs, field.Invalid(fieldPath.Child("controlPlaneSubnet"), p.ControlPlaneSubnet, "failed to retrieve control plane subnet"))
-		}
-
-		allErrs = append(allErrs, validateSubnet(client, fieldPath.Child("controlPlaneSubnet"), controlPlaneSubnet, p.ControlPlaneSubnet, machineNetworks)...)
-	}
-
 	return allErrs
 }
 
 // validateSubnet checks that the subnet is in the same network as the machine CIDR
 func validateSubnet(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
+	if subnet == nil || subnet.SubnetPropertiesFormat == nil {
+		return append(allErrs, field.Invalid(fieldPath, subnetName, "cannot get subnet information"))
+	}
 
 	var addressPrefix string
 	switch {
@@ -571,6 +565,35 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 		}
 	}
 	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet %s address prefix is outside of the specified machine networks", ip))}
+}
+
+// validateNetworks checks that the user-provided VNet and subnets are valid.
+func validateNetworks(client API, p *aztypes.Platform, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if p.VirtualNetwork != "" {
+		_, err := client.GetVirtualNetwork(context.TODO(), p.NetworkResourceGroupName, p.VirtualNetwork)
+		if err != nil {
+			return append(allErrs, field.Invalid(fieldPath.Child("virtualNetwork"), p.VirtualNetwork, err.Error()))
+		}
+
+		var computeSubnetName string
+		var controlPlaneSubnetName string
+		for _, subnet := range p.Subnets {
+			if subnet.Role == capz.SubnetControlPlane && controlPlaneSubnetName == "" {
+				controlPlaneSubnetName = subnet.Name
+			} else if subnet.Role == capz.SubnetNode && computeSubnetName == "" {
+				computeSubnetName = subnet.Name
+			}
+		}
+		if computeSubnetName == "" {
+			return append(allErrs, field.Invalid(fieldPath.Child("virtualNetwork"), p.VirtualNetwork, "must provide a compute subnet"))
+		}
+		if controlPlaneSubnetName == "" {
+			return append(allErrs, field.Invalid(fieldPath.Child("virtualNetwork"), p.VirtualNetwork, "must provide a control plane subnet"))
+		}
+	}
+
+	return allErrs
 }
 
 // validateRegion checks that the desired region is valid and available to the user
@@ -651,52 +674,80 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	return nil
 }
 
+// ValidateUserAssignedIdentities ensures the user-assigned identities exist and are valid.
+func ValidateUserAssignedIdentities(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Validate default machine platform identities
+	if ic.Platform.Azure.DefaultMachinePlatform != nil &&
+		ic.Platform.Azure.DefaultMachinePlatform.Identity != nil &&
+		ic.Platform.Azure.DefaultMachinePlatform.Identity.Type == capz.VMIdentityUserAssigned {
+		for idx, identity := range ic.Platform.Azure.DefaultMachinePlatform.Identity.UserAssignedIdentities {
+			fieldPath := field.NewPath("platform").Child("azure", "defaultMachinePlatform", "identity", "userAssignedIdentities").Index(idx)
+			if err := validateUserAssignedIdentity(client, &identity, fieldPath); err != nil {
+				allErrs = append(allErrs, err)
+			}
+		}
+	}
+
+	// Validate control plane identities
+	if ic.ControlPlane != nil &&
+		ic.ControlPlane.Platform.Azure != nil &&
+		ic.ControlPlane.Platform.Azure.Identity != nil &&
+		ic.ControlPlane.Platform.Azure.Identity.Type == capz.VMIdentityUserAssigned {
+		for idx, identity := range ic.ControlPlane.Platform.Azure.Identity.UserAssignedIdentities {
+			fieldPath := field.NewPath("controlPlane").Child("platform", "azure", "identity", "userAssignedIdentities").Index(idx)
+			if err := validateUserAssignedIdentity(client, &identity, fieldPath); err != nil {
+				allErrs = append(allErrs, err)
+			}
+		}
+	}
+
+	// Validate compute pool identities
+	for compIdx, compute := range ic.Compute {
+		if compute.Platform.Azure != nil &&
+			compute.Platform.Azure.Identity != nil &&
+			compute.Platform.Azure.Identity.Type == capz.VMIdentityUserAssigned {
+			for idIdx, identity := range compute.Platform.Azure.Identity.UserAssignedIdentities {
+				fieldPath := field.NewPath("compute").Index(compIdx).Child("platform", "azure", "identity", "userAssignedIdentities").Index(idIdx)
+				if err := validateUserAssignedIdentity(client, &identity, fieldPath); err != nil {
+					allErrs = append(allErrs, err)
+				}
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func validateUserAssignedIdentity(client API, identity *aztypes.UserAssignedIdentity, fieldPath *field.Path) *field.Error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err := client.GetUserAssignedIdentity(ctx, identity.Subscription, identity.ResourceGroup, identity.Name)
+	if err != nil {
+		errMsg := fmt.Sprintf("failed to validate user-assigned identity '%s' in resource group '%s': %v",
+			identity.Name, identity.ResourceGroup, err)
+		return field.Invalid(fieldPath, identity.Name, errMsg)
+	}
+	return nil
+}
+
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
 	allErrs = append(allErrs, ValidateDiskEncryptionSet(client, ic)...)
 	allErrs = append(allErrs, ValidateSecurityProfileDiskEncryptionSet(client, ic)...)
-	allErrs = append(allErrs, validateSkipImageUpload(field.NewPath("image"), ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
+
+	allErrs = append(allErrs, ValidateUserAssignedIdentities(client, ic)...)
+
 	return allErrs.ToAggregate()
 }
 
-func validateSkipImageUpload(fieldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
-	defaultOSImage := aztypes.OSImage{}
-	if ic.Azure.DefaultMachinePlatform != nil {
-		defaultOSImage = aztypes.OSImage{
-			Plan:      ic.Azure.DefaultMachinePlatform.OSImage.Plan,
-			Publisher: ic.Azure.DefaultMachinePlatform.OSImage.Publisher,
-			SKU:       ic.Azure.DefaultMachinePlatform.OSImage.SKU,
-			Version:   ic.Azure.DefaultMachinePlatform.OSImage.Version,
-			Offer:     ic.Azure.DefaultMachinePlatform.OSImage.Offer,
-		}
-	}
-	controlPlaneOSImage := defaultOSImage
-	if ic.ControlPlane.Platform.Azure != nil {
-		controlPlaneOSImage = ic.ControlPlane.Platform.Azure.OSImage
-	}
-	allErrs = append(allErrs, validateOSImage(fieldPath.Child("controlplane"), controlPlaneOSImage)...)
-	computeOSImage := defaultOSImage
-	if len(ic.Compute) > 0 && ic.Compute[0].Platform.Azure != nil {
-		computeOSImage = ic.Compute[0].Platform.Azure.OSImage
-	}
-	allErrs = append(allErrs, validateOSImage(fieldPath.Child("compute"), computeOSImage)...)
-	return allErrs
-}
-func validateOSImage(fieldPath *field.Path, osImage aztypes.OSImage) field.ErrorList {
-	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); ok {
-		if len(osImage.SKU) > 0 {
-			return nil
-		}
-		return field.ErrorList{field.Invalid(fieldPath, "image", "cannot skip image upload without marketplace image specified")}
-	}
-	return nil
-}
 func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.Platform) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(platform.ResourceGroupName) == 0 {
@@ -761,7 +812,7 @@ func validateAzureStackClusterOSImage(StorageEndpointSuffix string, ClusterOSIma
 	return allErrs
 }
 
-func validateMarketplaceImages(client API, installConfig *types.InstallConfig) field.ErrorList {
+func validateMarketplaceImages(client API, meta *Metadata, installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
 	region := installConfig.Azure.Region
@@ -791,7 +842,7 @@ func validateMarketplaceImages(client API, installConfig *types.InstallConfig) f
 			instanceType = defaults.ControlPlaneInstanceType(cloudName, region, installConfig.ControlPlane.Architecture)
 		}
 
-		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, region)
+		capabilities, err := meta.ControlPlaneCapabilities()
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
 		}
@@ -833,7 +884,7 @@ func validateMarketplaceImages(client API, installConfig *types.InstallConfig) f
 			instanceType = defaults.ComputeInstanceType(cloudName, region, compute.Architecture)
 		}
 
-		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, region)
+		capabilities, err := meta.ComputeCapabilities()
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
 			continue
@@ -994,4 +1045,67 @@ func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region s
 		return fmt.Errorf(missingErrorMessage, errorField[:len(errorField)-2])
 	}
 	return nil
+}
+
+// validateSubnetNatGateway checks whether a NAT Gateway is already attached to a compute subnet.
+func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, outboundType aztypes.OutboundType, role capz.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
+	var allErrs field.ErrorList
+	if outboundType != aztypes.NATGatewayMultiZoneOutboundType && outboundType != aztypes.NATGatewaySingleZoneOutboundType {
+		return allErrs
+	}
+	if virtualNetwork == "" || resourceGroup == "" {
+		return allErrs
+	}
+	hasNatGateway, err := client.CheckSubnetNatgateway(context.TODO(), resourceGroup, virtualNetwork, *subnet.Name)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("subnets"), *subnet.Name, fmt.Sprintf("unable to check for existing NAT gateway: %s", err)))
+	}
+	if hasNatGateway {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("subnets"), *subnet.Name, "cannot create NAT gateway for byo subnet, another NAT gateway is attached"))
+	}
+	return allErrs
+}
+
+func validateCustomSubnets(client API, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	subnetSpec := ic.Azure.Subnets
+	virtualNetwork := ic.Azure.VirtualNetwork
+	networkResourceGroupName := ic.Azure.NetworkResourceGroupName
+
+	vnetSubnetList := map[string]*aznetwork.Subnet{}
+	if virtualNetwork != "" {
+		existingVnet, err := client.GetVirtualNetwork(context.TODO(), networkResourceGroupName, virtualNetwork)
+		if err != nil || existingVnet == nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("virtualNetwork"), virtualNetwork, "unable to get virtual network"))
+			return allErrs
+		}
+		if existingVnet.Location != nil && *existingVnet.Location != ic.Azure.Region {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("virtualNetwork"), virtualNetwork,
+				fmt.Sprintf("virtual network in region %s not in the same region as resource group %s mentioned", *existingVnet.Location, ic.Azure.Region)))
+			return allErrs
+		}
+		if existingVnet.VirtualNetworkPropertiesFormat != nil && existingVnet.Subnets != nil {
+			for _, subnet := range *existingVnet.Subnets {
+				vnetSubnetList[*subnet.Name] = &subnet
+			}
+		}
+	}
+	for _, subnet := range subnetSpec {
+		if value, ok := vnetSubnetList[subnet.Name]; !ok {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("subnets"), subnet.Name, "subnet does not exist in the vnet"))
+		} else {
+			allErrs = append(allErrs, validateSubnet(client, fldPath.Child("subnets"), value, subnet.Name, ic.MachineNetwork)...)
+			allErrs = append(allErrs, validateSubnetNatGateway(client, fldPath, value, ic.Azure.OutboundType, subnet.Role, networkResourceGroupName, virtualNetwork)...)
+		}
+	}
+	if ic.Azure.OutboundType == aztypes.NATGatewayMultiZoneOutboundType {
+		numZones, err := client.GetRegionAvailabilityZones(context.TODO(), ic.Azure.Region)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("subnets"), ic.Azure.Region, fmt.Sprintf("failed to get region availability zones: %s", err.Error())))
+		} else if len(numZones) == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("subnets"), ic.Azure.Region, "region does not support multiple availability zones"))
+		}
+	}
+
+	return allErrs
 }
