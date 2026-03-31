@@ -1,6 +1,8 @@
 # This Dockerfile is used by CI to test using OpenShift Installer against an OpenStack cloud.
 # It builds an image containing the openshift-install command as well as the openstack cli.
 
+# TEST - DO NOT MERGE
+
 # We copy from the -artifacts images because they are statically linked
 FROM registry.ci.openshift.org/ocp/4.17:installer-kube-apiserver-artifacts AS kas-artifacts
 FROM registry.ci.openshift.org/ocp/4.17:installer-etcd-artifacts AS etcd-artifacts
