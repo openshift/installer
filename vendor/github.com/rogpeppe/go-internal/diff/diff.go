@@ -76,7 +76,7 @@ func Diff(oldName string, old []byte, newName string, new []byte) []byte {
 
 		// Expand matching lines as far possible,
 		// establishing that x[start.x:end.x] == y[start.y:end.y].
-		// Note that on the first (or last) iteration we may (or definitey do)
+		// Note that on the first (or last) iteration we may (or definitely do)
 		// have an empty match: start.x==end.x and start.y==end.y.
 		start := m
 		for start.x > done.x && start.y > done.y && x[start.x-1] == y[start.y-1] {
@@ -116,10 +116,7 @@ func Diff(oldName string, old []byte, newName string, new []byte) []byte {
 
 		// End chunk with common lines for context.
 		if len(ctext) > 0 {
-			n := end.x - start.x
-			if n > C {
-				n = C
-			}
+			n := min(end.x-start.x, C)
 			for _, s := range x[start.x : start.x+n] {
 				ctext = append(ctext, " "+s)
 				count.x++
@@ -234,7 +231,7 @@ func tgs(x, y []string) []pair {
 	for i := range T {
 		T[i] = n + 1
 	}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		k := sort.Search(n, func(k int) bool {
 			return T[k] >= J[i]
 		})

@@ -6,7 +6,6 @@ package imports
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,14 +14,14 @@ import (
 )
 
 func ScanDir(dir string, tags map[string]bool) ([]string, []string, error) {
-	infos, err := ioutil.ReadDir(dir)
+	infos, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, nil, err
 	}
 	var files []string
 	for _, info := range infos {
 		name := info.Name()
-		if info.Mode().IsRegular() && !strings.HasPrefix(name, "_") && strings.HasSuffix(name, ".go") && MatchFile(name, tags) {
+		if info.Type().IsRegular() && !strings.HasPrefix(name, "_") && strings.HasSuffix(name, ".go") && MatchFile(name, tags) {
 			files = append(files, filepath.Join(dir, name))
 		}
 	}
@@ -86,6 +85,7 @@ Files:
 
 var ErrNoGo = fmt.Errorf("no Go source files")
 
+// TODO: replace with maps.Keys from go1.23
 func keys(m map[string]bool) []string {
 	var list []string
 	for k := range m {
