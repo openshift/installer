@@ -618,6 +618,7 @@ type OIDCClientReference struct {
 // +openshift:validation:FeatureGateAwareXValidation:featureGate=ExternalOIDC,rule="has(self.claim)",message="claim is required"
 // +openshift:validation:FeatureGateAwareXValidation:featureGate=ExternalOIDCWithUIDAndExtraClaimMappings,rule="has(self.claim)",message="claim is required"
 // +openshift:validation:FeatureGateAwareXValidation:featureGate=ExternalOIDCWithUpstreamParity,rule="has(self.claim) ? !has(self.expression) : has(self.expression)",message="precisely one of claim or expression must be set"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=ExternalOIDCWithUpstreamParity,rule="has(self.expression) && size(self.expression) > 0 ? !has(self.prefixPolicy) || self.prefixPolicy != 'Prefix' : true",message="prefixPolicy must not be set to 'Prefix' when expression is set"
 type UsernameClaimMapping struct {
 	// claim is an optional field that configures the JWT token claim whose value is assigned to the cluster identity field associated with this mapping.
 	// claim is required when the ExternalOIDCWithUpstreamParity feature gate is not enabled.
@@ -650,11 +651,9 @@ type UsernameClaimMapping struct {
 	// Allowed values are 'Prefix', 'NoPrefix', and omitted (not provided or an empty string).
 	//
 	// When set to 'Prefix', the value specified in the prefix field will be prepended to the value of the JWT claim.
-	//
 	// The prefix field must be set when prefixPolicy is 'Prefix'.
-	//
+	// Must not be set to 'Prefix' when expression is set.
 	// When set to 'NoPrefix', no prefix will be prepended to the value of the JWT claim.
-	//
 	// When omitted, this means no opinion and the platform is left to choose any prefixes that are applied which is subject to change over time.
 	// Currently, the platform prepends `{issuerURL}#` to the value of the JWT claim when the claim is not 'email'.
 	//
@@ -710,12 +709,14 @@ type UsernamePrefix struct {
 
 // PrefixedClaimMapping configures a claim mapping
 // that allows for an optional prefix.
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=ExternalOIDCWithUpstreamParity,rule="has(self.expression) && size(self.expression) > 0 ? (!has(self.prefix) || size(self.prefix) == 0) : true",message="prefix must not be set to a non-empty value when expression is set"
 type PrefixedClaimMapping struct {
 	TokenClaimMapping `json:",inline"`
 
 	// prefix is an optional field that configures the prefix that will be applied to the cluster identity attribute during the process of mapping JWT claims to cluster identity attributes.
 	//
-	// When omitted (""), no prefix is applied to the cluster identity attribute.
+	// When omitted or set to an empty string (""), no prefix is applied to the cluster identity attribute.
+	// Must not be set to a non-empty value when expression is set.
 	//
 	// Example: if `prefix` is set to "myoidc:" and the `claim` in JWT contains an array of strings "a", "b" and "c", the mapping will result in an array of string "myoidc:a", "myoidc:b" and "myoidc:c".
 	//

@@ -115,6 +115,7 @@ type MachineConfigNodeStatus struct {
 	// and PinnedImageSetsDegraded.
 	// The following types are only available when the ImageModeStatusReporting feature gate is enabled: ImagePulledFromRegistry,
 	// AppliedOSImage, AppliedFiles
+	// The following types are only available when the NoRegistryClusterInstall feature gate is enabled: InternalReleaseImageDegraded
 	// +listType=map
 	// +listMapKey=type
 	// +kubebuilder:validation:MaxItems=20
@@ -417,4 +418,6 @@ const (
 	MachineConfigNodePinnedImageSetsProgressing StateProgress = "PinnedImageSetsProgressing"
 	// MachineConfigNodePinnedImageSetsDegraded describes a machine that has failed to progress to the desired pinned image sets
 	MachineConfigNodePinnedImageSetsDegraded StateProgress = "PinnedImageSetsDegraded"
+	// MachineConfigNodeInternalReleaseImageDegraded describes a machine where the local InternalReleaseImage registry is not properly working
+	MachineConfigNodeInternalReleaseImageDegraded StateProgress = "InternalReleaseImageDegraded"
 )
