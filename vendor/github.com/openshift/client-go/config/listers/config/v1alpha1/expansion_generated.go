@@ -10,21 +10,9 @@ type BackupListerExpansion interface{}
 // CRIOCredentialProviderConfigLister.
 type CRIOCredentialProviderConfigListerExpansion interface{}
 
-// ClusterImagePolicyListerExpansion allows custom methods to be added to
-// ClusterImagePolicyLister.
-type ClusterImagePolicyListerExpansion interface{}
-
 // ClusterMonitoringListerExpansion allows custom methods to be added to
 // ClusterMonitoringLister.
 type ClusterMonitoringListerExpansion interface{}
-
-// ImagePolicyListerExpansion allows custom methods to be added to
-// ImagePolicyLister.
-type ImagePolicyListerExpansion interface{}
-
-// ImagePolicyNamespaceListerExpansion allows custom methods to be added to
-// ImagePolicyNamespaceLister.
-type ImagePolicyNamespaceListerExpansion interface{}
 
 // InsightsDataGatherListerExpansion allows custom methods to be added to
 // InsightsDataGatherLister.

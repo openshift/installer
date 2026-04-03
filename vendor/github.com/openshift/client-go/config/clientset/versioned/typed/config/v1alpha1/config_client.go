@@ -14,9 +14,7 @@ type ConfigV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	BackupsGetter
 	CRIOCredentialProviderConfigsGetter
-	ClusterImagePoliciesGetter
 	ClusterMonitoringsGetter
-	ImagePoliciesGetter
 	InsightsDataGathersGetter
 	PKIsGetter
 }
@@ -34,16 +32,8 @@ func (c *ConfigV1alpha1Client) CRIOCredentialProviderConfigs() CRIOCredentialPro
 	return newCRIOCredentialProviderConfigs(c)
 }
 
-func (c *ConfigV1alpha1Client) ClusterImagePolicies() ClusterImagePolicyInterface {
-	return newClusterImagePolicies(c)
-}
-
 func (c *ConfigV1alpha1Client) ClusterMonitorings() ClusterMonitoringInterface {
 	return newClusterMonitorings(c)
-}
-
-func (c *ConfigV1alpha1Client) ImagePolicies(namespace string) ImagePolicyInterface {
-	return newImagePolicies(c, namespace)
 }
 
 func (c *ConfigV1alpha1Client) InsightsDataGathers() InsightsDataGatherInterface {

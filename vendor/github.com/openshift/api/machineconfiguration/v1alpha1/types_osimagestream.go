@@ -74,6 +74,7 @@ type OSImageStreamStatus struct {
 }
 
 // OSImageStreamSpec defines the desired state of a OSImageStream.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.defaultStream) || has(self.defaultStream)",message="spec.defaultStream cannot be removed once set"
 type OSImageStreamSpec struct {
 	// defaultStream is the desired name of the stream that should be used as the
 	// default when no specific stream is requested by a MachineConfigPool.
@@ -94,6 +95,7 @@ type OSImageStreamSpec struct {
 	// valid value is accepted.
 	//
 	// When omitted, the operator determines the default stream automatically.
+	// Once set, this field cannot be removed.
 	//
 	// It must be a valid RFC 1123 subdomain between 1 and 253 characters in length,
 	// consisting of lowercase alphanumeric characters, hyphens ('-'), and periods ('.').

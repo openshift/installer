@@ -446,7 +446,6 @@ type MachineConfigPoolSpec struct {
 	// Resolving these failures is the responsibility of the user. The admin
 	// should be proactive in ensuring adequate storage and proper image
 	// authentication exists in advance.
-	// +openshift:enable:FeatureGate=PinnedImages
 	// +optional
 	// +listType=map
 	// +listMapKey=name
@@ -489,7 +488,6 @@ type PinnedImageSetRef struct {
 	// consists of alphanumeric characters and hyphens (-), must begin and end
 	// with an alphanumeric character, and is at most 63 characters in length.
 	// The total length of the name must not exceed 253 characters.
-	// +openshift:enable:FeatureGate=PinnedImages
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`
@@ -540,7 +538,6 @@ type MachineConfigPoolStatus struct {
 	CertExpirys []CertExpiry `json:"certExpirys"`
 
 	// poolSynchronizersStatus is the status of the machines managed by the pool synchronizers.
-	// +openshift:enable:FeatureGate=PinnedImages
 	// +listType=map
 	// +listMapKey=poolSynchronizerType
 	// +optional
@@ -676,11 +673,9 @@ const (
 	MachineConfigPoolImageBuildDegraded MachineConfigPoolConditionType = "ImageBuildDegraded"
 
 	// MachineConfigPoolPinnedImageSetsDegraded means the pinned image sets for the pool cannot be populated because of an error
-	// +openshift:enable:FeatureGate=PinnedImages
 	MachineConfigPoolPinnedImageSetsDegraded MachineConfigPoolConditionType = "PinnedImageSetsDegraded"
 
 	// MachineConfigPoolSynchronizerDegraded means the pool synchronizer can not be updated because of an error
-	// +openshift:enable:FeatureGate=PinnedImages
 	MachineConfigPoolSynchronizerDegraded MachineConfigPoolConditionType = "PoolSynchronizerDegraded"
 
 	// MachineConfigPoolDegraded is the overall status of the pool based, today, on whether we fail with NodeDegraded, RenderDegraded, or ImageBuildDegraded

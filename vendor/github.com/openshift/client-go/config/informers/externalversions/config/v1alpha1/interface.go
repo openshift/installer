@@ -12,12 +12,8 @@ type Interface interface {
 	Backups() BackupInformer
 	// CRIOCredentialProviderConfigs returns a CRIOCredentialProviderConfigInformer.
 	CRIOCredentialProviderConfigs() CRIOCredentialProviderConfigInformer
-	// ClusterImagePolicies returns a ClusterImagePolicyInformer.
-	ClusterImagePolicies() ClusterImagePolicyInformer
 	// ClusterMonitorings returns a ClusterMonitoringInformer.
 	ClusterMonitorings() ClusterMonitoringInformer
-	// ImagePolicies returns a ImagePolicyInformer.
-	ImagePolicies() ImagePolicyInformer
 	// InsightsDataGathers returns a InsightsDataGatherInformer.
 	InsightsDataGathers() InsightsDataGatherInformer
 	// PKIs returns a PKIInformer.
@@ -45,19 +41,9 @@ func (v *version) CRIOCredentialProviderConfigs() CRIOCredentialProviderConfigIn
 	return &cRIOCredentialProviderConfigInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
-// ClusterImagePolicies returns a ClusterImagePolicyInformer.
-func (v *version) ClusterImagePolicies() ClusterImagePolicyInformer {
-	return &clusterImagePolicyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
 // ClusterMonitorings returns a ClusterMonitoringInformer.
 func (v *version) ClusterMonitorings() ClusterMonitoringInformer {
 	return &clusterMonitoringInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// ImagePolicies returns a ImagePolicyInformer.
-func (v *version) ImagePolicies() ImagePolicyInformer {
-	return &imagePolicyInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // InsightsDataGathers returns a InsightsDataGatherInformer.
