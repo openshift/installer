@@ -10,43 +10,26 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
 )
 
 // PrivateKeyToPem converts a private key (RSA or ECDSA) to PEM format.
+//
+// Deprecated: Use libcrypto.EncodeKey directly for new code.
 func PrivateKeyToPem(key crypto.PrivateKey) ([]byte, error) {
-	var block *pem.Block
-
-	switch k := key.(type) {
-	case *rsa.PrivateKey:
-		block = &pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(k),
-		}
-	case *ecdsa.PrivateKey:
-		bytes, err := x509.MarshalECPrivateKey(k)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal ECDSA private key: %w", err)
-		}
-		block = &pem.Block{
-			Type:  "EC PRIVATE KEY",
-			Bytes: bytes,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported private key type: %T", key)
-	}
-
-	return pem.EncodeToMemory(block), nil
+	return libcrypto.EncodeKey(key)
 }
 
-// CertToPem converts an x509.Certificate object to a pem string
+// CertToPem converts an x509.Certificate object to a pem string.
+//
+// Deprecated: Use libcrypto.EncodeCertificates directly for new code.
 func CertToPem(cert *x509.Certificate) []byte {
-	certInPem := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: cert.Raw,
-		},
-	)
-	return certInPem
+	b, err := libcrypto.EncodeCertificates(cert)
+	if err != nil {
+		return nil
+	}
+	return b
 }
 
 // CSRToPem converts an x509.CertificateRequest to a pem string
@@ -77,6 +60,8 @@ func PublicKeyToPem(key *rsa.PublicKey) ([]byte, error) {
 }
 
 // PemToPrivateKey converts a PEM data block to a private key (RSA or ECDSA).
+//
+// Deprecated: Use libcrypto.GetCAFromBytes or libcrypto.GetTLSCertificateConfigFromBytes for new code.
 func PemToPrivateKey(data []byte) (crypto.PrivateKey, error) {
 	block, _ := pem.Decode(data)
 	if block == nil {
@@ -122,6 +107,8 @@ func PemToPublicKey(data []byte) (*rsa.PublicKey, error) {
 }
 
 // PemToCertificate converts a data block to x509.Certificate.
+//
+// Deprecated: Use libcrypto.GetCAFromBytes or libcrypto.GetTLSCertificateConfigFromBytes for new code.
 func PemToCertificate(data []byte) (*x509.Certificate, error) {
 	block, _ := pem.Decode(data)
 	if block == nil {
