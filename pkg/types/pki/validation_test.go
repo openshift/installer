@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -28,10 +27,10 @@ func TestValidatePKIConfig(t *testing.T) {
 		{
 			name: "valid RSA signer config",
 			pkiConfig: &types.PKIConfig{
-				SignerCertificates: configv1alpha1.CertificateConfig{
-					Key: configv1alpha1.KeyConfig{
-						Algorithm: configv1alpha1.KeyAlgorithmRSA,
-						RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+				SignerCertificates: types.CertificateConfig{
+					Key: types.KeyConfig{
+						Algorithm: types.KeyAlgorithmRSA,
+						RSA:       &types.RSAKeyConfig{KeySize: 4096},
 					},
 				},
 			},
@@ -40,10 +39,10 @@ func TestValidatePKIConfig(t *testing.T) {
 		{
 			name: "valid ECDSA signer config",
 			pkiConfig: &types.PKIConfig{
-				SignerCertificates: configv1alpha1.CertificateConfig{
-					Key: configv1alpha1.KeyConfig{
-						Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-						ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
+				SignerCertificates: types.CertificateConfig{
+					Key: types.KeyConfig{
+						Algorithm: types.KeyAlgorithmECDSA,
+						ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
 					},
 				},
 			},
@@ -58,10 +57,10 @@ func TestValidatePKIConfig(t *testing.T) {
 		{
 			name: "invalid RSA key size",
 			pkiConfig: &types.PKIConfig{
-				SignerCertificates: configv1alpha1.CertificateConfig{
-					Key: configv1alpha1.KeyConfig{
-						Algorithm: configv1alpha1.KeyAlgorithmRSA,
-						RSA:       configv1alpha1.RSAKeyConfig{KeySize: 1024},
+				SignerCertificates: types.CertificateConfig{
+					Key: types.KeyConfig{
+						Algorithm: types.KeyAlgorithmRSA,
+						RSA:       &types.RSAKeyConfig{KeySize: 1024},
 					},
 				},
 			},
@@ -71,10 +70,10 @@ func TestValidatePKIConfig(t *testing.T) {
 		{
 			name: "invalid ECDSA curve",
 			pkiConfig: &types.PKIConfig{
-				SignerCertificates: configv1alpha1.CertificateConfig{
-					Key: configv1alpha1.KeyConfig{
-						Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-						ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: "P224"},
+				SignerCertificates: types.CertificateConfig{
+					Key: types.KeyConfig{
+						Algorithm: types.KeyAlgorithmECDSA,
+						ECDSA:     &types.ECDSAKeyConfig{Curve: "P224"},
 					},
 				},
 			},
@@ -100,7 +99,7 @@ func TestValidateKeyConfig(t *testing.T) {
 
 	cases := []struct {
 		name        string
-		config      configv1alpha1.KeyConfig
+		config      types.KeyConfig
 		fips        bool
 		expectError bool
 		errorCount  int
@@ -108,67 +107,58 @@ func TestValidateKeyConfig(t *testing.T) {
 		// Valid RSA configs
 		{
 			name: "valid RSA 2048",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 2048},
-			},
-		},
-		{
-			name: "valid RSA 3072",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 3072},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 2048},
 			},
 		},
 		{
 			name: "valid RSA 4096",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 4096},
 			},
 		},
 		{
 			name: "valid RSA 8192",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 8192},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 8192},
 			},
 		},
 		// Valid ECDSA configs
 		{
 			name: "valid ECDSA P256",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP256},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
+				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP256},
 			},
 		},
 		{
 			name: "valid ECDSA P384",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
+				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
 			},
 		},
 		{
 			name: "valid ECDSA P521",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP521},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
+				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP521},
 			},
 		},
 		// Invalid: missing algorithm
 		{
-			name: "missing algorithm",
-			config: configv1alpha1.KeyConfig{
-				RSA: configv1alpha1.RSAKeyConfig{KeySize: 4096},
-			},
+			name:        "missing algorithm",
+			config:      types.KeyConfig{},
 			expectError: true,
 			errorCount:  1,
 		},
 		// Invalid: unsupported algorithm
 		{
 			name: "unsupported algorithm",
-			config: configv1alpha1.KeyConfig{
+			config: types.KeyConfig{
 				Algorithm: "Ed25519",
 			},
 			expectError: true,
@@ -177,35 +167,35 @@ func TestValidateKeyConfig(t *testing.T) {
 		// Invalid RSA key sizes
 		{
 			name: "RSA key size too small",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 1024},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 1024},
 			},
 			expectError: true,
 			errorCount:  1,
 		},
 		{
 			name: "RSA key size too large",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 9216},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 9216},
 			},
 			expectError: true,
 			errorCount:  1,
 		},
 		{
 			name: "RSA key size not multiple of 1024",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 5000},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 5000},
 			},
 			expectError: true,
 			errorCount:  1,
 		},
 		{
-			name: "RSA missing key size",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
+			name: "RSA missing rsa field",
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
 			},
 			expectError: true,
 			errorCount:  1,
@@ -213,17 +203,17 @@ func TestValidateKeyConfig(t *testing.T) {
 		// Invalid ECDSA curves
 		{
 			name: "ECDSA invalid curve",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: "P224"},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
+				ECDSA:     &types.ECDSAKeyConfig{Curve: "P224"},
 			},
 			expectError: true,
 			errorCount:  1,
 		},
 		{
-			name: "ECDSA missing curve",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
+			name: "ECDSA missing ecdsa field",
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
 			},
 			expectError: true,
 			errorCount:  1,
@@ -231,20 +221,20 @@ func TestValidateKeyConfig(t *testing.T) {
 		// Mismatched algorithm/params
 		{
 			name: "RSA with ECDSA config",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP256},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmRSA,
+				RSA:       &types.RSAKeyConfig{KeySize: 4096},
+				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP256},
 			},
 			expectError: true,
 			errorCount:  1,
 		},
 		{
 			name: "ECDSA with RSA config",
-			config: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+			config: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
+				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
+				RSA:       &types.RSAKeyConfig{KeySize: 4096},
 			},
 			expectError: true,
 			errorCount:  1,

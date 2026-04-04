@@ -12,7 +12,8 @@ import (
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
+	"github.com/openshift/installer/pkg/types"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 var pkiCfgFilename = path.Join(manifestDir, "cluster-pki-02-config.yaml")
@@ -47,11 +48,11 @@ func (p *PKIConfiguration) Generate(_ context.Context, dependencies asset.Parent
 		return nil
 	}
 
-	profile := pkidefaults.DefaultPKIProfile()
+	profile := libpki.DefaultPKIProfile()
 
 	// Overlay user's signerCertificates if specified in install-config
 	if installConfig.Config.PKI != nil {
-		profile.SignerCertificates = installConfig.Config.PKI.SignerCertificates
+		profile.SignerCertificates = toAPICertificateConfig(installConfig.Config.PKI.SignerCertificates)
 	}
 
 	config := &configv1alpha1.PKI{
@@ -96,4 +97,18 @@ func (p *PKIConfiguration) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (p *PKIConfiguration) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// toAPICertificateConfig converts installer-local CertificateConfig to the upstream API type.
+func toAPICertificateConfig(local types.CertificateConfig) configv1alpha1.CertificateConfig {
+	apiKey := configv1alpha1.KeyConfig{
+		Algorithm: configv1alpha1.KeyAlgorithm(local.Key.Algorithm),
+	}
+	if local.Key.RSA != nil {
+		apiKey.RSA = configv1alpha1.RSAKeyConfig{KeySize: local.Key.RSA.KeySize}
+	}
+	if local.Key.ECDSA != nil {
+		apiKey.ECDSA = configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurve(local.Key.ECDSA.Curve)}
+	}
+	return configv1alpha1.CertificateConfig{Key: apiKey}
 }

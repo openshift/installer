@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func TestPrivateKeyToPemRoundtrip(t *testing.T) {
@@ -26,14 +26,14 @@ func TestPrivateKeyToPemRoundtrip(t *testing.T) {
 		{
 			name: "ECDSA P256 key",
 			genFunc: func() (interface{}, error) {
-				return GenerateECDSAPrivateKey(configv1alpha1.ECDSACurveP256)
+				return GenerateECDSAPrivateKey(types.ECDSACurveP256)
 			},
 			expectType: &ecdsa.PrivateKey{},
 		},
 		{
 			name: "ECDSA P384 key",
 			genFunc: func() (interface{}, error) {
-				return GenerateECDSAPrivateKey(configv1alpha1.ECDSACurveP384)
+				return GenerateECDSAPrivateKey(types.ECDSACurveP384)
 			},
 			expectType: &ecdsa.PrivateKey{},
 		},
@@ -79,7 +79,7 @@ func TestPemToPrivateKeyFormats(t *testing.T) {
 	})
 
 	t.Run("EC PEM block", func(t *testing.T) {
-		key, err := GenerateECDSAPrivateKey(configv1alpha1.ECDSACurveP256)
+		key, err := GenerateECDSAPrivateKey(types.ECDSACurveP256)
 		assert.NoError(t, err)
 		pemBytes, pemErr := PrivateKeyToPem(key)
 		assert.NoError(t, pemErr)

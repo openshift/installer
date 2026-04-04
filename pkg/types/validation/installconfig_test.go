@@ -13,7 +13,6 @@ import (
 	utilsslice "k8s.io/utils/strings/slices"
 
 	configv1 "github.com/openshift/api/config/v1"
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -3050,10 +3049,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
 				c.PKI = &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmECDSA,
+							ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
 						},
 					},
 				}
@@ -3065,8 +3064,8 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.PKI = &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
 							Algorithm: "EdDSA",
 						},
 					},
@@ -3080,10 +3079,10 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.PKI = &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmRSA,
-							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 1024},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmRSA,
+							RSA:       &types.RSAKeyConfig{KeySize: 1024},
 						},
 					},
 				}

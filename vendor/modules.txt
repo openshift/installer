@@ -1446,6 +1446,7 @@ github.com/openshift/library-go/pkg/config/clusterstatus
 github.com/openshift/library-go/pkg/config/leaderelection
 github.com/openshift/library-go/pkg/crypto
 github.com/openshift/library-go/pkg/image/dockerv1client
+github.com/openshift/library-go/pkg/pki
 github.com/openshift/library-go/pkg/route/routeapihelpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20251110092458-e0af0f3f44b8
 ## explicit; go 1.24.0

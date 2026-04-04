@@ -49,10 +49,10 @@ func TestPKIConfigurationGenerate(t *testing.T) {
 			installConfig: &types.InstallConfig{
 				FeatureSet: configv1.TechPreviewNoUpgrade,
 				PKI: &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmRSA,
-							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmRSA,
+							RSA:       &types.RSAKeyConfig{KeySize: 4096},
 						},
 					},
 				},
@@ -68,10 +68,10 @@ func TestPKIConfigurationGenerate(t *testing.T) {
 			installConfig: &types.InstallConfig{
 				FeatureSet: configv1.TechPreviewNoUpgrade,
 				PKI: &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmECDSA,
+							ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
 						},
 					},
 				},
@@ -87,10 +87,10 @@ func TestPKIConfigurationGenerate(t *testing.T) {
 			installConfig: &types.InstallConfig{
 				FeatureSet: configv1.TechPreviewNoUpgrade,
 				PKI: &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmRSA,
-							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 2048},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmRSA,
+							RSA:       &types.RSAKeyConfig{KeySize: 2048},
 						},
 					},
 				},

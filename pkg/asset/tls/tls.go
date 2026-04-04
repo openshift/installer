@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -29,14 +28,14 @@ const (
 	// DefaultRSAKeySize is the default RSA key size used when PKI config is not specified.
 	DefaultRSAKeySize int32 = 2048
 	// DefaultKeyAlgorithm is the default key algorithm used when PKI config is not specified.
-	DefaultKeyAlgorithm = configv1alpha1.KeyAlgorithmRSA
+	DefaultKeyAlgorithm types.KeyAlgorithm = types.KeyAlgorithmRSA
 )
 
 // PrivateKeyParams specifies parameters for private key generation.
 type PrivateKeyParams struct {
-	Algorithm  configv1alpha1.KeyAlgorithm
+	Algorithm  types.KeyAlgorithm
 	RSAKeySize int32
-	ECDSACurve configv1alpha1.ECDSACurve
+	ECDSACurve types.ECDSACurve
 }
 
 // PKIConfigToKeyParams converts PKI config to key generation parameters.
@@ -55,10 +54,14 @@ func PKIConfigToKeyParams(pkiConfig *types.PKIConfig) PrivateKeyParams {
 	}
 
 	switch keyConfig.Algorithm {
-	case configv1alpha1.KeyAlgorithmRSA:
-		params.RSAKeySize = keyConfig.RSA.KeySize
-	case configv1alpha1.KeyAlgorithmECDSA:
-		params.ECDSACurve = keyConfig.ECDSA.Curve
+	case types.KeyAlgorithmRSA:
+		if keyConfig.RSA != nil {
+			params.RSAKeySize = keyConfig.RSA.KeySize
+		}
+	case types.KeyAlgorithmECDSA:
+		if keyConfig.ECDSA != nil {
+			params.ECDSACurve = keyConfig.ECDSA.Curve
+		}
 	}
 
 	return params
@@ -67,9 +70,9 @@ func PKIConfigToKeyParams(pkiConfig *types.PKIConfig) PrivateKeyParams {
 // GeneratePrivateKeyWithParams generates a private key with the specified parameters.
 func GeneratePrivateKeyWithParams(params PrivateKeyParams) (crypto.PrivateKey, error) {
 	switch params.Algorithm {
-	case configv1alpha1.KeyAlgorithmRSA:
+	case types.KeyAlgorithmRSA:
 		return GenerateRSAPrivateKey(params.RSAKeySize)
-	case configv1alpha1.KeyAlgorithmECDSA:
+	case types.KeyAlgorithmECDSA:
 		return GenerateECDSAPrivateKey(params.ECDSACurve)
 	default:
 		return nil, fmt.Errorf("unsupported algorithm: %s", params.Algorithm)
@@ -86,15 +89,15 @@ func GenerateRSAPrivateKey(keySize int32) (*rsa.PrivateKey, error) {
 }
 
 // GenerateECDSAPrivateKey generates an ECDSA private key with the specified curve.
-func GenerateECDSAPrivateKey(curve configv1alpha1.ECDSACurve) (*ecdsa.PrivateKey, error) {
+func GenerateECDSAPrivateKey(curve types.ECDSACurve) (*ecdsa.PrivateKey, error) {
 	var c elliptic.Curve
 
 	switch curve {
-	case configv1alpha1.ECDSACurveP256:
+	case types.ECDSACurveP256:
 		c = elliptic.P256()
-	case configv1alpha1.ECDSACurveP384:
+	case types.ECDSACurveP384:
 		c = elliptic.P384()
-	case configv1alpha1.ECDSACurveP521:
+	case types.ECDSACurveP521:
 		c = elliptic.P521()
 	default:
 		return nil, fmt.Errorf("unsupported ECDSA curve: %s", curve)
@@ -110,9 +113,9 @@ func GenerateECDSAPrivateKey(curve configv1alpha1.ECDSACurve) (*ecdsa.PrivateKey
 // keyUsageForAlgorithm returns appropriate x509.KeyUsage flags for the given algorithm.
 // ECDSA keys can only perform digital signatures — they cannot perform key encipherment.
 // RSA keys support both digital signatures and key encipherment.
-func keyUsageForAlgorithm(algorithm configv1alpha1.KeyAlgorithm) x509.KeyUsage {
+func keyUsageForAlgorithm(algorithm types.KeyAlgorithm) x509.KeyUsage {
 	switch algorithm {
-	case configv1alpha1.KeyAlgorithmECDSA:
+	case types.KeyAlgorithmECDSA:
 		return x509.KeyUsageDigitalSignature
 	default: // RSA
 		return x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature

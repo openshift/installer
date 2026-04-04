@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func TestSelfSignedCertificate(t *testing.T) {
@@ -135,13 +135,13 @@ func TestGenerateRSAPrivateKey(t *testing.T) {
 func TestGenerateECDSAPrivateKey(t *testing.T) {
 	cases := []struct {
 		name      string
-		curve     configv1alpha1.ECDSACurve
+		curve     types.ECDSACurve
 		expected  elliptic.Curve
 		expectErr bool
 	}{
-		{"P256", configv1alpha1.ECDSACurveP256, elliptic.P256(), false},
-		{"P384", configv1alpha1.ECDSACurveP384, elliptic.P384(), false},
-		{"P521", configv1alpha1.ECDSACurveP521, elliptic.P521(), false},
+		{"P256", types.ECDSACurveP256, elliptic.P256(), false},
+		{"P384", types.ECDSACurveP384, elliptic.P384(), false},
+		{"P521", types.ECDSACurveP521, elliptic.P521(), false},
 		{"invalid", "P224", nil, true},
 	}
 
@@ -169,7 +169,7 @@ func TestGenerateSelfSignedCertificateWithParams(t *testing.T) {
 		{
 			name: "RSA 4096 CA",
 			params: PrivateKeyParams{
-				Algorithm:  configv1alpha1.KeyAlgorithmRSA,
+				Algorithm:  types.KeyAlgorithmRSA,
 				RSAKeySize: 4096,
 			},
 			expectKeyType:   &rsa.PrivateKey{},
@@ -178,8 +178,8 @@ func TestGenerateSelfSignedCertificateWithParams(t *testing.T) {
 		{
 			name: "ECDSA P384 CA",
 			params: PrivateKeyParams{
-				Algorithm:  configv1alpha1.KeyAlgorithmECDSA,
-				ECDSACurve: configv1alpha1.ECDSACurveP384,
+				Algorithm:  types.KeyAlgorithmECDSA,
+				ECDSACurve: types.ECDSACurveP384,
 			},
 			expectKeyType:   &ecdsa.PrivateKey{},
 			expectPubKeyAlg: x509.ECDSA,
@@ -187,7 +187,7 @@ func TestGenerateSelfSignedCertificateWithParams(t *testing.T) {
 		{
 			name: "RSA 2048 CA (default)",
 			params: PrivateKeyParams{
-				Algorithm:  configv1alpha1.KeyAlgorithmRSA,
+				Algorithm:  types.KeyAlgorithmRSA,
 				RSAKeySize: 2048,
 			},
 			expectKeyType:   &rsa.PrivateKey{},
@@ -221,27 +221,27 @@ func TestKeyUsageForAlgorithm(t *testing.T) {
 	}{
 		{
 			name:      "RSA signer",
-			params:    PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmRSA, RSAKeySize: 2048},
+			params:    PrivateKeyParams{Algorithm: types.KeyAlgorithmRSA, RSAKeySize: 2048},
 			isCA:      true,
 			wantUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign,
 		},
 		{
 			name:      "ECDSA signer",
-			params:    PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmECDSA, ECDSACurve: configv1alpha1.ECDSACurveP256},
+			params:    PrivateKeyParams{Algorithm: types.KeyAlgorithmECDSA, ECDSACurve: types.ECDSACurveP256},
 			isCA:      true,
 			wantUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 			notUsage:  x509.KeyUsageKeyEncipherment,
 		},
 		{
 			name:      "RSA non-CA",
-			params:    PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmRSA, RSAKeySize: 2048},
+			params:    PrivateKeyParams{Algorithm: types.KeyAlgorithmRSA, RSAKeySize: 2048},
 			isCA:      false,
 			wantUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 			notUsage:  x509.KeyUsageCertSign,
 		},
 		{
 			name:      "ECDSA non-CA",
-			params:    PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmECDSA, ECDSACurve: configv1alpha1.ECDSACurveP384},
+			params:    PrivateKeyParams{Algorithm: types.KeyAlgorithmECDSA, ECDSACurve: types.ECDSACurveP384},
 			isCA:      false,
 			wantUsage: x509.KeyUsageDigitalSignature,
 			notUsage:  x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign,
@@ -273,22 +273,22 @@ func TestSignatureAlgorithmAutoDetection(t *testing.T) {
 	}{
 		{
 			name:     "RSA",
-			params:   PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmRSA, RSAKeySize: 2048},
+			params:   PrivateKeyParams{Algorithm: types.KeyAlgorithmRSA, RSAKeySize: 2048},
 			expected: x509.SHA256WithRSA,
 		},
 		{
 			name:     "ECDSA P256",
-			params:   PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmECDSA, ECDSACurve: configv1alpha1.ECDSACurveP256},
+			params:   PrivateKeyParams{Algorithm: types.KeyAlgorithmECDSA, ECDSACurve: types.ECDSACurveP256},
 			expected: x509.ECDSAWithSHA256,
 		},
 		{
 			name:     "ECDSA P384",
-			params:   PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmECDSA, ECDSACurve: configv1alpha1.ECDSACurveP384},
+			params:   PrivateKeyParams{Algorithm: types.KeyAlgorithmECDSA, ECDSACurve: types.ECDSACurveP384},
 			expected: x509.ECDSAWithSHA384,
 		},
 		{
 			name:     "ECDSA P521",
-			params:   PrivateKeyParams{Algorithm: configv1alpha1.KeyAlgorithmECDSA, ECDSACurve: configv1alpha1.ECDSACurveP521},
+			params:   PrivateKeyParams{Algorithm: types.KeyAlgorithmECDSA, ECDSACurve: types.ECDSACurveP521},
 			expected: x509.ECDSAWithSHA512,
 		},
 	}

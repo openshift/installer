@@ -4940,13 +4940,10 @@ spec:
                   signerCertificates specifies key parameters for all installer-generated
                   certificate authority (CA) certificates.
                   When set, all signer certificates use the specified algorithm and parameters.
-                minProperties: 1
                 properties:
                   key:
-                    description: |-
-                      key specifies the cryptographic parameters for the certificate's key pair.
-                      Currently this is the only configurable parameter. When omitted in an
-                      overrides entry, the key configuration from defaults is used.
+                    description: key specifies the cryptographic parameters for the
+                      certificate's key pair.
                     properties:
                       algorithm:
                         description: |-
@@ -5017,6 +5014,8 @@ spec:
                         otherwise
                       rule: 'has(self.algorithm) && self.algorithm == ''ECDSA'' ?  has(self.ecdsa)
                         : !has(self.ecdsa)'
+                required:
+                - key
                 type: object
             required:
             - signerCertificates

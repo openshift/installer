@@ -3,13 +3,11 @@ package pki
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/types"
 )
 
 // ValidatePKIConfig validates the PKI configuration.
 // When pkiConfig is non-nil, signerCertificates must be fully specified.
-// NOTE: All fields are value types (not pointers). Use zero-value checks.
 func ValidatePKIConfig(pkiConfig *types.PKIConfig, fldPath *field.Path, fips bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -31,9 +29,7 @@ func ValidatePKIConfig(pkiConfig *types.PKIConfig, fldPath *field.Path, fips boo
 }
 
 // ValidateKeyConfig validates the KeyConfig structure.
-// KeyConfig fields are value types: RSA is RSAKeyConfig, ECDSA is ECDSAKeyConfig.
-// Use zero-value checks (KeySize == 0, Curve == "") instead of nil checks.
-func ValidateKeyConfig(config configv1alpha1.KeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
+func ValidateKeyConfig(config types.KeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if config.Algorithm == "" {
@@ -42,35 +38,35 @@ func ValidateKeyConfig(config configv1alpha1.KeyConfig, fldPath *field.Path, fip
 		return allErrs
 	}
 
-	if config.Algorithm != configv1alpha1.KeyAlgorithmRSA && config.Algorithm != configv1alpha1.KeyAlgorithmECDSA {
+	if config.Algorithm != types.KeyAlgorithmRSA && config.Algorithm != types.KeyAlgorithmECDSA {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("algorithm"),
-			config.Algorithm, []string{string(configv1alpha1.KeyAlgorithmRSA), string(configv1alpha1.KeyAlgorithmECDSA)}))
+			config.Algorithm, []string{string(types.KeyAlgorithmRSA), string(types.KeyAlgorithmECDSA)}))
 		return allErrs
 	}
 
-	if config.Algorithm == configv1alpha1.KeyAlgorithmRSA {
-		if config.RSA.KeySize == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Child("rsa", "keySize"),
-				"keySize must be specified when algorithm is RSA"))
+	if config.Algorithm == types.KeyAlgorithmRSA {
+		if config.RSA == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("rsa"),
+				"rsa must be specified when algorithm is RSA"))
 		} else {
-			allErrs = append(allErrs, validateRSAKeyConfig(config.RSA, fldPath.Child("rsa"), fips)...)
+			allErrs = append(allErrs, validateRSAKeyConfig(*config.RSA, fldPath.Child("rsa"), fips)...)
 		}
 
-		if config.ECDSA.Curve != "" {
+		if config.ECDSA != nil {
 			allErrs = append(allErrs, field.Forbidden(fldPath.Child("ecdsa"),
 				"ecdsa must not be set when algorithm is RSA"))
 		}
 	}
 
-	if config.Algorithm == configv1alpha1.KeyAlgorithmECDSA {
-		if config.ECDSA.Curve == "" {
-			allErrs = append(allErrs, field.Required(fldPath.Child("ecdsa", "curve"),
-				"curve must be specified when algorithm is ECDSA"))
+	if config.Algorithm == types.KeyAlgorithmECDSA {
+		if config.ECDSA == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("ecdsa"),
+				"ecdsa must be specified when algorithm is ECDSA"))
 		} else {
-			allErrs = append(allErrs, validateECDSAKeyConfig(config.ECDSA, fldPath.Child("ecdsa"), fips)...)
+			allErrs = append(allErrs, validateECDSAKeyConfig(*config.ECDSA, fldPath.Child("ecdsa"), fips)...)
 		}
 
-		if config.RSA.KeySize != 0 {
+		if config.RSA != nil {
 			allErrs = append(allErrs, field.Forbidden(fldPath.Child("rsa"),
 				"rsa must not be set when algorithm is ECDSA"))
 		}
@@ -79,11 +75,9 @@ func ValidateKeyConfig(config configv1alpha1.KeyConfig, fldPath *field.Path, fip
 	return allErrs
 }
 
-func validateRSAKeyConfig(config configv1alpha1.RSAKeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
+func validateRSAKeyConfig(config types.RSAKeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	// Validate key size — aligned with API kubebuilder validation:
-	// multiples of 1024 from 2048 to 8192
 	if config.KeySize < 2048 || config.KeySize > 8192 || config.KeySize%1024 != 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("keySize"), config.KeySize,
 			"must be a multiple of 1024 from 2048 to 8192"))
@@ -92,13 +86,13 @@ func validateRSAKeyConfig(config configv1alpha1.RSAKeyConfig, fldPath *field.Pat
 	return allErrs
 }
 
-func validateECDSAKeyConfig(config configv1alpha1.ECDSAKeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
+func validateECDSAKeyConfig(config types.ECDSAKeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	validCurves := []configv1alpha1.ECDSACurve{
-		configv1alpha1.ECDSACurveP256,
-		configv1alpha1.ECDSACurveP384,
-		configv1alpha1.ECDSACurveP521,
+	validCurves := []types.ECDSACurve{
+		types.ECDSACurveP256,
+		types.ECDSACurveP384,
+		types.ECDSACurveP521,
 	}
 	valid := false
 	for _, curve := range validCurves {
