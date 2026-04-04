@@ -6,6 +6,8 @@ import (
 	"crypto/x509/pkix"
 	"net"
 
+	libpki "github.com/openshift/library-go/pkg/pki"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -30,6 +32,7 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&RootCA{},
 		&installconfig.InstallConfig{},
+		&SignerPKIConfig{},
 	}
 }
 
@@ -37,14 +40,21 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &RootCA{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerPKIConfig{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
 	hostname := internalAPIAddress(installConfig.Config)
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "machine-config-operator.machine-config-server-serving")
+	if err != nil {
+		return err
+	}
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:     ValidityTenYears(),
+		CertType:     libpki.CertificateTypeServing,
 	}
 
 	var vips []string
@@ -68,7 +78,7 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		cfg.DNSNames = append(cfg.DNSNames, vip)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

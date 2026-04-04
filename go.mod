@@ -340,7 +340,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
-	k8s.io/apiserver v0.35.1 // indirect
+	k8s.io/apiserver v0.35.1
 	k8s.io/cli-runtime v0.35.1 // indirect
 	k8s.io/cluster-bootstrap v0.33.3 // indirect
 	k8s.io/component-base v0.35.1 // indirect

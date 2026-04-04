@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	libpki "github.com/openshift/library-go/pkg/pki"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -187,22 +189,29 @@ var _ asset.Asset = (*KubeletClientCertKey)(nil)
 func (a *KubeletClientCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeletBootstrapCertSigner{},
+		&SignerPKIConfig{},
 	}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *KubeletClientCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeletBootstrapCertSigner{}
-	dependencies.Get(ca)
+	pkiCfg := &SignerPKIConfig{}
+	dependencies.Get(ca, pkiCfg)
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "installer.kubelet-client")
+	if err != nil {
+		return err
+	}
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper", Organization: []string{"system:serviceaccounts:openshift-machine-config-operator", "system:serviceaccounts"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears(),
+		CertType:     libpki.CertificateTypeClient,
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kubelet-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kubelet-client", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

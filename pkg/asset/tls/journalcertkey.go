@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	libpki "github.com/openshift/library-go/pkg/pki"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -22,22 +24,29 @@ var _ asset.WritableAsset = (*JournalCertKey)(nil)
 func (a *JournalCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&RootCA{},
+		&SignerPKIConfig{},
 	}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &RootCA{}
-	dependencies.Get(ca)
+	pkiCfg := &SignerPKIConfig{}
+	dependencies.Get(ca, pkiCfg)
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "installer.journal-gateway")
+	if err != nil {
+		return err
+	}
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "journal-gatewayd", Organization: []string{"OpenShift Bootstrap"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears(),
+		CertType:     libpki.CertificateTypeClient,
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

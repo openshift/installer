@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	libcrypto "github.com/openshift/library-go/pkg/crypto"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 func TestSignedCertKeyGenerate(t *testing.T) {
@@ -24,24 +25,26 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 		errString    string
 	}{
 		{
-			name: "simple ca",
+			name: "simple serving cert",
 			certCfg: &CertCfg{
-				Subject:   pkix.Name{CommonName: "test0-ca", OrganizationalUnit: []string{"openshift"}},
-				KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-				Validity:  ValidityTenYears(),
-				DNSNames:  []string{"test.openshift.io"},
+				Subject:      pkix.Name{CommonName: "test0-ca", OrganizationalUnit: []string{"openshift"}},
+				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+				Validity:     ValidityTenYears(),
+				DNSNames:     []string{"test.openshift.io"},
+				CertType:     libpki.CertificateTypeServing,
 			},
 			filenameBase: "test0-ca",
 			appendParent: DoNotAppendParent,
 		},
 		{
-			name: "more complicated ca",
+			name: "serving cert with IPs and append parent",
 			certCfg: &CertCfg{
-				Subject:     pkix.Name{CommonName: "test1-ca", OrganizationalUnit: []string{"openshift"}},
-				KeyUsages:   x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-				Validity:    ValidityTenYears(),
-				DNSNames:    []string{"test.openshift.io"},
-				IPAddresses: []net.IP{net.ParseIP("10.0.0.1")},
+				Subject:      pkix.Name{CommonName: "test1-ca", OrganizationalUnit: []string{"openshift"}},
+				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+				Validity:     ValidityTenYears(),
+				DNSNames:     []string{"test.openshift.io"},
+				IPAddresses:  []net.IP{net.ParseIP("10.0.0.1")},
+				CertType:     libpki.CertificateTypeServing,
 			},
 			filenameBase: "test1-ca",
 			appendParent: AppendParent,
@@ -61,7 +64,7 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 			assert.NoError(t, err, "failed to generate root CA")
 
 			certKey := &SignedCertKey{}
-			err = certKey.Generate(context.Background(), tt.certCfg, rootCA, tt.filenameBase, tt.appendParent)
+			err = certKey.Generate(context.Background(), tt.certCfg, rootCA, tt.filenameBase, tt.appendParent, nil)
 			if err != nil {
 				assert.EqualErrorf(t, err, tt.errString, tt.name)
 				return
@@ -164,13 +167,14 @@ func TestCrossAlgorithmCertificateSigning(t *testing.T) {
 
 	// Generate RSA leaf signed by ECDSA CA
 	leafCfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "leaf-cert", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		Validity:  ValidityTenYears(),
-		DNSNames:  []string{"test.openshift.io"},
+		Subject:      pkix.Name{CommonName: "leaf-cert", OrganizationalUnit: []string{"openshift"}},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		Validity:     ValidityTenYears(),
+		DNSNames:     []string{"test.openshift.io"},
+		CertType:     libpki.CertificateTypeServing,
 	}
 	certKey := &SignedCertKey{}
-	err = certKey.Generate(context.Background(), leafCfg, rootCA, "cross-algo-leaf", DoNotAppendParent)
+	err = certKey.Generate(context.Background(), leafCfg, rootCA, "cross-algo-leaf", DoNotAppendParent, nil)
 	assert.NoError(t, err)
 
 	// Verify leaf key is RSA (SignedCertKey always generates RSA leaf keys)

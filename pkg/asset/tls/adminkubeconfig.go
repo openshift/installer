@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	libpki "github.com/openshift/library-go/pkg/pki"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -92,22 +94,29 @@ var _ asset.WritableAsset = (*AdminKubeConfigClientCertKey)(nil)
 func (a *AdminKubeConfigClientCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AdminKubeConfigSignerCertKey{},
+		&SignerPKIConfig{},
 	}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *AdminKubeConfigClientCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &AdminKubeConfigSignerCertKey{}
-	dependencies.Get(ca)
+	pkiCfg := &SignerPKIConfig{}
+	dependencies.Get(ca, pkiCfg)
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "installer.admin-kubeconfig-client")
+	if err != nil {
+		return err
+	}
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears(),
+		CertType:     libpki.CertificateTypeClient,
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "admin-kubeconfig-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "admin-kubeconfig-client", DoNotAppendParent, keyGen)
 }
 
 // Load reads the asset files from disk.

@@ -20,6 +20,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	features "github.com/openshift/api/features"
+	libpki "github.com/openshift/library-go/pkg/pki"
+
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -131,6 +133,7 @@ type CertCfg struct {
 	Subject      pkix.Name
 	Validity     time.Duration
 	IsCA         bool
+	CertType     libpki.CertificateType
 }
 
 // rsaPublicKey reflects the ASN.1 structure of a PKCS#1 public key.
