@@ -5,9 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // JournalCertKey is the asset that generates the key/cert pair that is used to

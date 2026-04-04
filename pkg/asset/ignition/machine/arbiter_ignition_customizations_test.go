@@ -13,9 +13,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/ipnet"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // TestArbiterIgnitionCustomizationsGenerate tests generating the arbiter ignition check asset.

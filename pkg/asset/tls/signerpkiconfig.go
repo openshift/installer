@@ -5,7 +5,6 @@ import (
 
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	features "github.com/openshift/api/features"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	pkidefaults "github.com/openshift/installer/pkg/types/pki"

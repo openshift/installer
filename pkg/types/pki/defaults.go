@@ -3,9 +3,8 @@ package pki
 import (
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	features "github.com/openshift/api/features"
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/types"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // EffectiveSignerPKIProfile returns the resolved PKI profile for certificate generation.

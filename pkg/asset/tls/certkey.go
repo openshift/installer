@@ -11,11 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authentication/user"
 
-	libcrypto "github.com/openshift/library-go/pkg/crypto"
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // CertInterface contains cert.

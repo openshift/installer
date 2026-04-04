@@ -8,10 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // KubeAPIServerToKubeletSignerCertKey is a key/cert pair that signs the kube-apiserver to kubelet client certs.

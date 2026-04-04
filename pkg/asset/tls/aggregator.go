@@ -5,10 +5,9 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // AggregatorCA is the asset that generates the aggregator-ca key/cert pair.

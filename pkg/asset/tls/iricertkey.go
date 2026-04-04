@@ -7,14 +7,13 @@ import (
 	"net"
 
 	features "github.com/openshift/api/features"
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // IRICertKey is the asset that generates the InternalReleaseImage registry key/cert pair.

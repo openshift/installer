@@ -6,8 +6,6 @@ import (
 	"crypto/x509/pkix"
 	"net"
 
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -16,6 +14,7 @@ import (
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // MCSCertKey is the asset that generates the MCS key/cert pair.

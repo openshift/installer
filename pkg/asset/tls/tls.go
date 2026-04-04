@@ -20,10 +20,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	features "github.com/openshift/api/features"
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 const (

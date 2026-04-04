@@ -5,9 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
-	libpki "github.com/openshift/library-go/pkg/pki"
-
 	"github.com/openshift/installer/pkg/asset"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // AdminKubeConfigSignerCertKey is a key/cert pair that signs the admin kubeconfig client certs.
