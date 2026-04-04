@@ -10,94 +10,95 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-func TestDefaultPKIProfile(t *testing.T) {
-	profile := DefaultPKIProfile()
-
-	assert.Equal(t, configv1alpha1.KeyAlgorithmECDSA, profile.Defaults.Key.Algorithm)
-	assert.Equal(t, configv1alpha1.ECDSACurveP256, profile.Defaults.Key.ECDSA.Curve)
-	assert.Equal(t, configv1alpha1.KeyAlgorithmECDSA, profile.SignerCertificates.Key.Algorithm)
-	assert.Equal(t, configv1alpha1.ECDSACurveP384, profile.SignerCertificates.Key.ECDSA.Curve)
-}
-
-func TestEffectiveSignerPKIConfig(t *testing.T) {
+func TestEffectiveSignerPKIProfile(t *testing.T) {
 	cases := []struct {
-		name        string
-		ic          *types.InstallConfig
-		expectNil   bool
-		expectAlgo  configv1alpha1.KeyAlgorithm
-		expectSize  int32
-		expectCurve configv1alpha1.ECDSACurve
+		name                string
+		ic                  *types.InstallConfig
+		expectSignerAlgo    configv1alpha1.KeyAlgorithm
+		expectSignerRSA     int32
+		expectSignerCurve   configv1alpha1.ECDSACurve
+		expectDefaultsAlgo  configv1alpha1.KeyAlgorithm
+		expectDefaultsRSA   int32
+		expectDefaultsCurve configv1alpha1.ECDSACurve
 	}{
 		{
-			name: "feature gate off, pki nil",
+			name: "feature gate off - RSA 2048 legacy",
 			ic: &types.InstallConfig{
 				FeatureSet: configv1.Default,
 			},
-			expectNil: true,
+			expectSignerAlgo:   configv1alpha1.KeyAlgorithmRSA,
+			expectSignerRSA:    2048,
+			expectDefaultsAlgo: configv1alpha1.KeyAlgorithmRSA,
+			expectDefaultsRSA:  2048,
 		},
 		{
-			name: "feature gate on, pki nil - returns ECDSA P-384 from DefaultPKIProfile",
+			name: "feature gate on, pki nil - DefaultPKIProfile",
 			ic: &types.InstallConfig{
 				FeatureSet: configv1.TechPreviewNoUpgrade,
 			},
-			expectNil:   false,
-			expectAlgo:  configv1alpha1.KeyAlgorithmECDSA,
-			expectCurve: configv1alpha1.ECDSACurveP384,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmECDSA,
+			expectSignerCurve:   configv1alpha1.ECDSACurveP384,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
 		{
-			name: "feature gate on, pki specified - returns user config",
+			name: "feature gate on, pki RSA 4096 - overlay signer only",
 			ic: &types.InstallConfig{
 				FeatureSet: configv1.TechPreviewNoUpgrade,
 				PKI: &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmRSA,
+							RSA:       &types.RSAKeyConfig{KeySize: 4096},
 						},
 					},
 				},
 			},
-			expectNil: false,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmRSA,
+			expectSignerRSA:     4096,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
 		{
-			name: "feature gate off, pki specified - returns user config",
+			name: "feature gate on, pki ECDSA P-384",
 			ic: &types.InstallConfig{
-				FeatureSet: configv1.Default,
+				FeatureSet: configv1.TechPreviewNoUpgrade,
 				PKI: &types.PKIConfig{
-					SignerCertificates: configv1alpha1.CertificateConfig{
-						Key: configv1alpha1.KeyConfig{
-							Algorithm: configv1alpha1.KeyAlgorithmRSA,
-							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmECDSA,
+							ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
 						},
 					},
 				},
 			},
-			expectNil: false,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmECDSA,
+			expectSignerCurve:   configv1alpha1.ECDSACurveP384,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := EffectiveSignerPKIConfig(tc.ic)
+			profile := EffectiveSignerPKIProfile(tc.ic)
 
-			if tc.expectNil {
-				assert.Nil(t, result)
-				return
+			// Verify signer config
+			assert.Equal(t, tc.expectSignerAlgo, profile.SignerCertificates.Key.Algorithm)
+			if tc.expectSignerAlgo == configv1alpha1.KeyAlgorithmRSA {
+				assert.Equal(t, tc.expectSignerRSA, profile.SignerCertificates.Key.RSA.KeySize)
+			}
+			if tc.expectSignerAlgo == configv1alpha1.KeyAlgorithmECDSA {
+				assert.Equal(t, tc.expectSignerCurve, profile.SignerCertificates.Key.ECDSA.Curve)
 			}
 
-			assert.NotNil(t, result)
-
-			if tc.ic.PKI != nil {
-				// Should return user's config unchanged
-				assert.Equal(t, tc.ic.PKI, result)
-			} else {
-				// Should return synthesized config from DefaultPKIProfile
-				assert.Equal(t, tc.expectAlgo, result.SignerCertificates.Key.Algorithm)
-				if tc.expectAlgo == configv1alpha1.KeyAlgorithmECDSA {
-					assert.Equal(t, tc.expectCurve, result.SignerCertificates.Key.ECDSA.Curve)
-				} else {
-					assert.Equal(t, tc.expectSize, result.SignerCertificates.Key.RSA.KeySize)
-				}
+			// Verify defaults
+			assert.Equal(t, tc.expectDefaultsAlgo, profile.Defaults.Key.Algorithm)
+			if tc.expectDefaultsAlgo == configv1alpha1.KeyAlgorithmRSA {
+				assert.Equal(t, tc.expectDefaultsRSA, profile.Defaults.Key.RSA.KeySize)
+			}
+			if tc.expectDefaultsAlgo == configv1alpha1.KeyAlgorithmECDSA {
+				assert.Equal(t, tc.expectDefaultsCurve, profile.Defaults.Key.ECDSA.Curve)
 			}
 		})
 	}
