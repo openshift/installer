@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/ipnet"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
@@ -85,8 +86,10 @@ func TestArbiterIgnitionCustomizationsGenerate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			pkiCfg := &tls.SignerPKIConfig{}
+			pkiCfg.Profile = pkidefaults.EffectiveSignerPKIProfile(tc.installConfig.Config)
 			rootCAParents := asset.Parents{}
-			rootCAParents.Add(tc.installConfig)
+			rootCAParents.Add(tc.installConfig, pkiCfg)
 			rootCA := &tls.RootCA{}
 			err := rootCA.Generate(context.Background(), rootCAParents)
 			assert.NoError(t, err, "unexpected error generating root CA")

@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -165,14 +167,52 @@ type SelfSignedCertKey struct {
 	CertKey
 }
 
-// Generate generates a self-signed cert/key pair using the specified PKI profile.
+// Generate generates a self-signed cert/key pair.
+// For CA certs (cfg.IsCA == true), it delegates to library-go's NewSigningCertificate.
+// For non-CA certs, it falls back to the legacy generation path.
+// The keyGen parameter specifies the key generation algorithm. If nil, RSA 2048 is used.
 func (c *SelfSignedCertKey) Generate(_ context.Context,
 	cfg *CertCfg,
 	filenameBase string,
-	pkiConfig *types.PKIConfig,
+	keyGen libcrypto.KeyPairGenerator,
 ) error {
-	params := PKIConfigToKeyParams(pkiConfig)
+	if keyGen == nil {
+		keyGen = libcrypto.RSAKeyPairGenerator{Bits: int(DefaultRSAKeySize)}
+	}
 
+	if cfg.IsCA {
+		return c.generateSigningCert(cfg, filenameBase, keyGen)
+	}
+	return c.generateSelfSignedCert(cfg, filenameBase, keyGen)
+}
+
+// generateSigningCert generates a CA cert using library-go's NewSigningCertificate.
+func (c *SelfSignedCertKey) generateSigningCert(cfg *CertCfg, filenameBase string, keyGen libcrypto.KeyPairGenerator) error {
+	tlsCfg, err := libcrypto.NewSigningCertificate(
+		cfg.Subject.CommonName,
+		keyGen,
+		libcrypto.WithLifetime(cfg.Validity),
+		libcrypto.WithSubject(cfg.Subject),
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to generate signing certificate")
+	}
+
+	certPEM, keyPEM, err := tlsCfg.GetPEMBytes()
+	if err != nil {
+		return errors.Wrap(err, "failed to encode signing certificate to PEM")
+	}
+
+	c.CertRaw = certPEM
+	c.KeyRaw = keyPEM
+	c.generateFiles(filenameBase)
+	return nil
+}
+
+// generateSelfSignedCert generates a non-CA self-signed cert (e.g., IronicTLSCert)
+// using the legacy generation path.
+func (c *SelfSignedCertKey) generateSelfSignedCert(cfg *CertCfg, filenameBase string, keyGen libcrypto.KeyPairGenerator) error {
+	params := keyGenToParams(keyGen)
 	key, crt, err := GenerateSelfSignedCertificate(cfg, params)
 	if err != nil {
 		return errors.Wrap(err, "failed to generate self-signed cert/key pair")
@@ -185,8 +225,28 @@ func (c *SelfSignedCertKey) Generate(_ context.Context,
 	c.CertRaw = CertToPem(crt)
 
 	c.generateFiles(filenameBase)
-
 	return nil
+}
+
+// keyGenToParams converts a KeyPairGenerator to PrivateKeyParams for the legacy path.
+func keyGenToParams(keyGen libcrypto.KeyPairGenerator) PrivateKeyParams {
+	switch g := keyGen.(type) {
+	case libcrypto.RSAKeyPairGenerator:
+		return PrivateKeyParams{
+			Algorithm:  types.KeyAlgorithmRSA,
+			RSAKeySize: int32(g.Bits),
+		}
+	case libcrypto.ECDSAKeyPairGenerator:
+		return PrivateKeyParams{
+			Algorithm:  types.KeyAlgorithmECDSA,
+			ECDSACurve: types.ECDSACurve(g.Curve),
+		}
+	default:
+		return PrivateKeyParams{
+			Algorithm:  types.KeyAlgorithmRSA,
+			RSAKeySize: DefaultRSAKeySize,
+		}
+	}
 }
 
 // RegenerateSignedCertKey regenerates a cert/key pair signed by the specified parent CA.

@@ -7,7 +7,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeletCSRSignerCertKey is a key/cert pair that signs the kubelet client certs.
@@ -19,21 +18,27 @@ var _ asset.WritableAsset = (*KubeletCSRSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeletCSRSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerPKIConfig{}, &installconfig.InstallConfig{}}
 }
 
-// Generate generates the root-ca key and cert pair.
+// Generate generates the kubelet-signer key and cert pair.
 func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	pkiCfg := &SignerPKIConfig{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	parents.Get(pkiCfg, installConfig)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "installer.kubelet-csr-signer")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityOneDay(installConfig),
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -111,21 +116,26 @@ var _ asset.WritableAsset = (*KubeletBootstrapCertSigner)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeletBootstrapCertSigner) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerPKIConfig{}}
 }
 
-// Generate generates the root-ca key and cert pair.
+// Generate generates the kubelet-bootstrap-kubeconfig-signer key and cert pair.
 func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	pkiCfg := &SignerPKIConfig{}
+	parents.Get(pkiCfg)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "installer.kubelet-bootstrap-kubeconfig-signer")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

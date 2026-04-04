@@ -11,8 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
-	"github.com/openshift/installer/pkg/types"
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
 )
 
 func TestSignedCertKeyGenerate(t *testing.T) {
@@ -102,36 +101,22 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 	}
 }
 
-func TestSelfSignedCertKeyGenerateWithPKIConfig(t *testing.T) {
+func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
 	cases := []struct {
 		name            string
-		pkiConfig       *types.PKIConfig
+		keyGen          libcrypto.KeyPairGenerator
 		expectKeyType   interface{}
 		expectPubKeyAlg x509.PublicKeyAlgorithm
 	}{
 		{
-			name: "RSA 4096",
-			pkiConfig: &types.PKIConfig{
-				SignerCertificates: configv1alpha1.CertificateConfig{
-					Key: configv1alpha1.KeyConfig{
-						Algorithm: configv1alpha1.KeyAlgorithmRSA,
-						RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
-					},
-				},
-			},
+			name:            "RSA 4096",
+			keyGen:          libcrypto.RSAKeyPairGenerator{Bits: 4096},
 			expectKeyType:   &rsa.PrivateKey{},
 			expectPubKeyAlg: x509.RSA,
 		},
 		{
-			name: "ECDSA P384",
-			pkiConfig: &types.PKIConfig{
-				SignerCertificates: configv1alpha1.CertificateConfig{
-					Key: configv1alpha1.KeyConfig{
-						Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-						ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
-					},
-				},
-			},
+			name:            "ECDSA P384",
+			keyGen:          libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
 			expectKeyType:   &ecdsa.PrivateKey{},
 			expectPubKeyAlg: x509.ECDSA,
 		},
@@ -146,7 +131,7 @@ func TestSelfSignedCertKeyGenerateWithPKIConfig(t *testing.T) {
 			}
 
 			ca := &SelfSignedCertKey{}
-			err := ca.Generate(context.Background(), cfg, "test-pki-ca", tc.pkiConfig)
+			err := ca.Generate(context.Background(), cfg, "test-pki-ca", tc.keyGen)
 			assert.NoError(t, err)
 
 			key, err := PemToPrivateKey(ca.Key())
@@ -163,21 +148,13 @@ func TestSelfSignedCertKeyGenerateWithPKIConfig(t *testing.T) {
 
 func TestCrossAlgorithmCertificateSigning(t *testing.T) {
 	// Generate ECDSA P384 CA
-	ecdsaPKI := &types.PKIConfig{
-		SignerCertificates: configv1alpha1.CertificateConfig{
-			Key: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmECDSA,
-				ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
-			},
-		},
-	}
 	rootCA := &SelfSignedCertKey{}
 	rootCACfg := &CertCfg{
 		Subject:  pkix.Name{CommonName: "ecdsa-ca", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
-	err := rootCA.Generate(context.Background(), rootCACfg, "ecdsa-ca", ecdsaPKI)
+	err := rootCA.Generate(context.Background(), rootCACfg, "ecdsa-ca", libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384})
 	assert.NoError(t, err)
 
 	// Verify CA key is ECDSA

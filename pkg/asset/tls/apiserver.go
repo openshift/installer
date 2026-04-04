@@ -10,7 +10,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeAPIServerToKubeletSignerCertKey is a key/cert pair that signs the kube-apiserver to kubelet client certs.
@@ -22,21 +21,27 @@ var _ asset.WritableAsset = (*KubeAPIServerToKubeletSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeAPIServerToKubeletSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerPKIConfig{}, &installconfig.InstallConfig{}}
 }
 
-// Generate generates the root-ca key and cert pair.
+// Generate generates the kube-apiserver-to-kubelet-signer key and cert pair.
 func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	pkiCfg := &SignerPKIConfig{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	parents.Get(pkiCfg, installConfig)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "kube-apiserver.kubelet-client-signer")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityOneYear(installConfig),
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -119,21 +124,26 @@ var _ asset.WritableAsset = (*KubeAPIServerLocalhostSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeAPIServerLocalhostSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerPKIConfig{}}
 }
 
-// Generate generates the root-ca key and cert pair.
+// Generate generates the kube-apiserver-localhost-signer key and cert pair.
 func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	pkiCfg := &SignerPKIConfig{}
+	parents.Get(pkiCfg)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "kube-apiserver.localhost-serving-signer")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", keyGen)
 }
 
 // Load reads the asset files from disk.
@@ -225,21 +235,26 @@ var _ asset.WritableAsset = (*KubeAPIServerServiceNetworkSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeAPIServerServiceNetworkSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerPKIConfig{}}
 }
 
-// Generate generates the root-ca key and cert pair.
+// Generate generates the kube-apiserver-service-network-signer key and cert pair.
 func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	pkiCfg := &SignerPKIConfig{}
+	parents.Get(pkiCfg)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "kube-apiserver.service-network-serving-signer")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", keyGen)
 }
 
 // Load reads the asset files from disk.
@@ -340,21 +355,26 @@ var _ asset.WritableAsset = (*KubeAPIServerLBSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeAPIServerLBSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerPKIConfig{}}
 }
 
-// Generate generates the root-ca key and cert pair.
+// Generate generates the kube-apiserver-lb-signer key and cert pair.
 func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	pkiCfg := &SignerPKIConfig{}
+	parents.Get(pkiCfg)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "kube-apiserver.loadbalancer-serving-signer")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", keyGen)
 }
 
 // Load reads the asset files from disk.

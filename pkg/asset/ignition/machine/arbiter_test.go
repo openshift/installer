@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // TestArbiterGenerate tests generating the arbiter asset.
@@ -70,8 +71,10 @@ func TestArbiterGenerate(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
+			pkiCfg := &tls.SignerPKIConfig{}
+			pkiCfg.Profile = pkidefaults.EffectiveSignerPKIProfile(tc.installConfig.Config)
 			rootCAParents := asset.Parents{}
-			rootCAParents.Add(tc.installConfig)
+			rootCAParents.Add(tc.installConfig, pkiCfg)
 			rootCA := &tls.RootCA{}
 			err := rootCA.Generate(context.Background(), rootCAParents)
 			assert.NoError(t, err, "unexpected error generating root CA")
