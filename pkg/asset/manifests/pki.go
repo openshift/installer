@@ -9,11 +9,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
-	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types"
-	libpki "github.com/openshift/library-go/pkg/pki"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 var pkiCfgFilename = path.Join(manifestDir, "cluster-pki-02-config.yaml")
@@ -34,25 +31,18 @@ func (*PKIConfiguration) Name() string {
 // the asset.
 func (*PKIConfiguration) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
+		&tls.SignerPKIConfig{},
 	}
 }
 
 // Generate generates the PKI custom resource manifest.
 // The manifest is only generated when the ConfigurablePKI feature gate is enabled.
 func (p *PKIConfiguration) Generate(_ context.Context, dependencies asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	pkiCfg := &tls.SignerPKIConfig{}
+	dependencies.Get(pkiCfg)
 
-	if !installConfig.Config.Enabled(features.FeatureGateConfigurablePKI) {
+	if !pkiCfg.ConfigurablePKIEnabled {
 		return nil
-	}
-
-	profile := libpki.DefaultPKIProfile()
-
-	// Overlay user's signerCertificates if specified in install-config
-	if installConfig.Config.PKI != nil {
-		profile.SignerCertificates = toAPICertificateConfig(installConfig.Config.PKI.SignerCertificates)
 	}
 
 	config := &configv1alpha1.PKI{
@@ -65,10 +55,9 @@ func (p *PKIConfiguration) Generate(_ context.Context, dependencies asset.Parent
 		},
 		Spec: configv1alpha1.PKISpec{
 			CertificateManagement: configv1alpha1.PKICertificateManagement{
-				// TODO(htariq): Should this be Default if PKI is unset in the install config?
 				Mode: configv1alpha1.PKICertificateManagementModeCustom,
 				Custom: configv1alpha1.CustomPKIPolicy{
-					PKIProfile: profile,
+					PKIProfile: pkiCfg.Profile,
 				},
 			},
 		},
@@ -97,18 +86,4 @@ func (p *PKIConfiguration) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (p *PKIConfiguration) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
-}
-
-// toAPICertificateConfig converts installer-local CertificateConfig to the upstream API type.
-func toAPICertificateConfig(local types.CertificateConfig) configv1alpha1.CertificateConfig {
-	apiKey := configv1alpha1.KeyConfig{
-		Algorithm: configv1alpha1.KeyAlgorithm(local.Key.Algorithm),
-	}
-	if local.Key.RSA != nil {
-		apiKey.RSA = configv1alpha1.RSAKeyConfig{KeySize: local.Key.RSA.KeySize}
-	}
-	if local.Key.ECDSA != nil {
-		apiKey.ECDSA = configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurve(local.Key.ECDSA.Curve)}
-	}
-	return configv1alpha1.CertificateConfig{Key: apiKey}
 }

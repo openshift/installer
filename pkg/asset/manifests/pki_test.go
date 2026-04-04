@@ -9,9 +9,11 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 func TestPKIConfigurationGenerate(t *testing.T) {
@@ -82,31 +84,18 @@ func TestPKIConfigurationGenerate(t *testing.T) {
 			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
 			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
-		{
-			name: "feature gate enabled, pki RSA-2048 explicit",
-			installConfig: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				PKI: &types.PKIConfig{
-					SignerCertificates: types.CertificateConfig{
-						Key: types.KeyConfig{
-							Algorithm: types.KeyAlgorithmRSA,
-							RSA:       &types.RSAKeyConfig{KeySize: 2048},
-						},
-					},
-				},
-			},
-			expectEmpty:         false,
-			expectSignerAlgo:    configv1alpha1.KeyAlgorithmRSA,
-			expectSignerRSA:     2048,
-			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
-			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
-		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Build SignerPKIConfig from the install config
+			pkiCfg := &tls.SignerPKIConfig{
+				Profile:                pkidefaults.EffectiveSignerPKIProfile(tc.installConfig),
+				ConfigurablePKIEnabled: tc.installConfig.Enabled(features.FeatureGateConfigurablePKI),
+			}
+
 			parents := asset.Parents{}
-			parents.Add(installconfig.MakeAsset(tc.installConfig))
+			parents.Add(pkiCfg)
 
 			pkiAsset := &PKIConfiguration{}
 			err := pkiAsset.Generate(context.Background(), parents)
