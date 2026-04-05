@@ -41,6 +41,9 @@ type Subnet struct {
 	// CIDR is the subnet's CIDR block.
 	CIDR string
 
+	// IPv6CIDR is the subnet's associated IPv6 CIDR block.
+	IPv6CIDR string
+
 	// Public is the flag to define the subnet public.
 	Public bool
 
@@ -118,15 +121,26 @@ func subnets(ctx context.Context, client *ec2.Client, subnetIDs []string, vpcID 
 				return fmt.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, subnetGroups.VpcID)
 			}
 
+			// We currently can only handle subnets with one associated IPv6 CIDR
+			// Reference: https://github.com/kubernetes-sigs/cluster-api-provider-aws/blob/f7f5cb236fa50b0a7c234d776ebaf27a94476930/pkg/cloud/services/network/subnets.go#L713-L717
+			var ipv6CIDR string
+			for _, snAssoc := range subnet.Ipv6CidrBlockAssociationSet {
+				if snAssoc.Ipv6CidrBlock != nil &&
+					snAssoc.Ipv6CidrBlockState != nil && snAssoc.Ipv6CidrBlockState.State == ec2types.SubnetCidrBlockStateCodeAssociated {
+					ipv6CIDR = aws.ToString(snAssoc.Ipv6CidrBlock)
+				}
+			}
+
 			// At this point, we should be safe to dereference these fields.
 			metas[*subnet.SubnetId] = Subnet{
-				ID:     *subnet.SubnetId,
-				ARN:    *subnet.SubnetArn,
-				Zone:   &Zone{Name: *subnet.AvailabilityZone},
-				CIDR:   ptr.Deref(subnet.CidrBlock, ""),
-				Public: false,
-				Tags:   FromAWSTags(subnet.Tags),
-				VPCID:  *subnet.VpcId,
+				ID:       *subnet.SubnetId,
+				ARN:      *subnet.SubnetArn,
+				Zone:     &Zone{Name: *subnet.AvailabilityZone},
+				CIDR:     aws.ToString(subnet.CidrBlock),
+				IPv6CIDR: ipv6CIDR,
+				Public:   false,
+				Tags:     FromAWSTags(subnet.Tags),
+				VPCID:    *subnet.VpcId,
 			}
 			zoneNames = append(zoneNames, *subnet.AvailabilityZone)
 		}

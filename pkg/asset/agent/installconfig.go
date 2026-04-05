@@ -256,14 +256,6 @@ func (a *OptionalInstallConfig) validateTNAConfiguration(installConfig *types.In
 		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Arbiter.Replicas,
 			"TNA (Two Node with Arbiter) configuration requires exactly 1 arbiter replica"))
 	}
-	// At this point we know: 2 replicas + arbiter configured
-	// Check if TNA feature gate is enabled
-	if !installConfig.Enabled(features.FeatureGateHighlyAvailableArbiter) {
-		fieldPath := field.NewPath("arbiter")
-		allErrs = append(allErrs, field.Invalid(fieldPath, "configured",
-			"arbiter configuration requires FeatureGateHighlyAvailableArbiter to be enabled"))
-	}
-
 	return allErrs
 }
 
@@ -302,10 +294,7 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 		// Basic boundary check for control plane replicas
 		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 {
 			fieldPath = field.NewPath("controlPlane", "replicas")
-			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
-			if installConfig.Enabled(features.FeatureGateHighlyAvailableArbiter) {
-				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with arbiter)")
-			}
+			supportedControlPlaneRange := []string{"3", "1", "4", "5", "2 (with arbiter)"}
 			if installConfig.Enabled(features.FeatureGateDualReplica) {
 				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with fencing)")
 			}

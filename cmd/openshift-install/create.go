@@ -396,10 +396,12 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	}
 
 	var platformName string
+	var installConfig *installconfig.InstallConfig
 
 	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
-		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
-			platformName = installConfig.(*installconfig.InstallConfig).Config.Platform.Name()
+		if ic, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && ic != nil {
+			installConfig = ic.(*installconfig.InstallConfig)
+			platformName = installConfig.Config.Platform.Name()
 		}
 	}
 
@@ -408,6 +410,11 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	// Wait longer for baremetal, VSphere due to length of time it takes to boot
 	if platformName == baremetal.Name || platformName == vsphere.Name {
 		timeout = 60 * time.Minute
+	}
+	// For AWS, only increase timeout when UserProvisionedDNS is enabled
+	if platformName == aws.Name && installConfig != nil && installConfig.Config.AWS != nil && installConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+		timeout = 60 * time.Minute
+		logrus.Infof("Increasing bootstrapping timeout on AWS to %v since UserProvisionedDNS is enabled", timeout)
 	}
 
 	untilTime = time.Now().Add(timeout)

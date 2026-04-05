@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -87,18 +87,19 @@ type download struct {
 
 type handler struct {
 	sync.Mutex
-	Map         *simulator.Registry
-	ServeMux    *http.ServeMux
-	URL         url.URL
-	Category    map[string]*tags.Category
-	Tag         map[string]*tags.Tag
-	Association map[string]map[internal.AssociatedObject]bool
-	Session     map[string]*rest.Session
-	Library     map[string]*content
-	Update      map[string]update
-	Download    map[string]download
-	Policies    []library.ContentSecurityPoliciesInfo
-	Trust       map[string]library.TrustedCertificate
+	Map          *simulator.Registry
+	ServeMux     *http.ServeMux
+	URL          url.URL
+	Category     map[string]*tags.Category
+	Tag          map[string]*tags.Tag
+	Association  map[string]map[internal.AssociatedObject]bool
+	Session      map[string]*rest.Session
+	Library      map[string]*content
+	Update       map[string]update
+	Download     map[string]download
+	Policies     []library.ContentSecurityPoliciesInfo
+	Trust        map[string]library.TrustedCertificate
+	LibraryUsage map[string]map[string]library.Usage
 }
 
 func init() {
@@ -165,6 +166,8 @@ func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 		{internal.LibraryItemFileData + "/", s.libraryItemFileData},
 		{internal.LibraryItemFilePath, s.libraryItemFile},
 		{internal.LibraryItemFilePath + "/", s.libraryItemFileID},
+		{fmt.Sprintf("%s/{library}/%s", internal.APILibraryPath, internal.LibraryUsages), s.libraryUsages},
+		{fmt.Sprintf("%s/{library}/%s/{usage}", internal.APILibraryPath, internal.LibraryUsages), s.libraryUsageID},
 		{internal.VCenterOVFLibraryItem, s.libraryItemOVF},
 		{internal.VCenterOVFLibraryItem + "/", s.libraryItemOVFID},
 		{internal.VCenterVMTXLibraryItem, s.libraryItemCreateTemplate},
@@ -319,9 +322,18 @@ func (s *handler) findTag(e vim.VslmTagEntry) *tags.Tag {
 	return nil
 }
 
+func (s *handler) findTagByID(tagID string) *tags.Tag {
+	for _, t := range s.Tag {
+		if t.ID == tagID {
+			return t
+		}
+	}
+	return nil
+}
+
 // AttachedObjects is meant for internal use via simulator.Registry.tagManager
-func (s *handler) AttachedObjects(tag vim.VslmTagEntry) ([]vim.ManagedObjectReference, vim.BaseMethodFault) {
-	t := s.findTag(tag)
+func (s *handler) AttachedObjects(tagID string) ([]vim.ManagedObjectReference, vim.BaseMethodFault) {
+	t := s.findTagByID(tagID)
 	if t == nil {
 		return nil, new(vim.NotFound)
 	}
@@ -338,28 +350,23 @@ func (s *handler) AttachedObjects(tag vim.VslmTagEntry) ([]vim.ManagedObjectRefe
 }
 
 // AttachedTags is meant for internal use via simulator.Registry.tagManager
-func (s *handler) AttachedTags(ref vim.ManagedObjectReference) ([]vim.VslmTagEntry, vim.BaseMethodFault) {
+func (s *handler) AttachedTags(ref vim.ManagedObjectReference) ([]string, vim.BaseMethodFault) {
 	oid := internal.AssociatedObject{
 		Type:  ref.Type,
 		Value: ref.Value,
 	}
-	var tags []vim.VslmTagEntry
+	var tags []string
 	for id, objs := range s.Association {
 		if objs[oid] {
-			tag := s.Tag[id]
-			cat := s.Category[tag.CategoryID]
-			tags = append(tags, vim.VslmTagEntry{
-				TagName:            tag.Name,
-				ParentCategoryName: cat.Name,
-			})
+			tags = append(tags, id)
 		}
 	}
 	return tags, nil
 }
 
 // AttachTag is meant for internal use via simulator.Registry.tagManager
-func (s *handler) AttachTag(ref vim.ManagedObjectReference, tag vim.VslmTagEntry) vim.BaseMethodFault {
-	t := s.findTag(tag)
+func (s *handler) AttachTag(ref vim.ManagedObjectReference, tagID string) vim.BaseMethodFault {
+	t := s.findTagByID(tagID)
 	if t == nil {
 		return new(vim.NotFound)
 	}
@@ -371,8 +378,8 @@ func (s *handler) AttachTag(ref vim.ManagedObjectReference, tag vim.VslmTagEntry
 }
 
 // DetachTag is meant for internal use via simulator.Registry.tagManager
-func (s *handler) DetachTag(id vim.ManagedObjectReference, tag vim.VslmTagEntry) vim.BaseMethodFault {
-	t := s.findTag(tag)
+func (s *handler) DetachTag(id vim.ManagedObjectReference, tagID string) vim.BaseMethodFault {
+	t := s.findTagByID(tagID)
 	if t == nil {
 		return new(vim.NotFound)
 	}
@@ -381,6 +388,27 @@ func (s *handler) DetachTag(id vim.ManagedObjectReference, tag vim.VslmTagEntry)
 		Value: id.Value,
 	})
 	return nil
+}
+
+// GetTagByCategoryAndName is meant for internal use via simulator.Registry.tagManager
+func (s *handler) GetTagByCategoryAndName(category, name string) (string, vim.BaseMethodFault) {
+	t := s.findTag(vim.VslmTagEntry{
+		ParentCategoryName: category,
+		TagName:            name,
+	})
+	if t == nil {
+		return "", new(vim.NotFound)
+	}
+	return t.ID, nil
+}
+
+// GetTagCategoryAndName is meant for internal use via simulator.Registry.tagManager
+func (s *handler) GetTagCategoryAndName(tagID string) (string, string, vim.BaseMethodFault) {
+	t := s.findTagByID(tagID)
+	if t == nil {
+		return "", "", new(vim.NotFound)
+	}
+	return t.CategoryID, t.Name, nil
 }
 
 // StatusOK responds with http.StatusOK and encodes val, if specified, to JSON
@@ -1491,6 +1519,11 @@ func (s *handler) libraryID(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodDelete:
+		action := s.action(r)
+		if _, usageExists := s.LibraryUsage[id]; action != "force-delete" && usageExists {
+			s.error(w, fmt.Errorf("library is in use"))
+			return
+		}
 		p := s.libraryPath(l.Library, "")
 		if err := os.RemoveAll(p); err != nil {
 			s.error(w, err)
@@ -1500,6 +1533,7 @@ func (s *handler) libraryID(w http.ResponseWriter, r *http.Request) {
 			s.deleteVM(item.Template)
 		}
 		delete(s.Library, id)
+		delete(s.LibraryUsage, id)
 		OK(w)
 	case http.MethodPatch:
 		var spec struct {
@@ -1635,6 +1669,246 @@ func (s *handler) subscriptionsID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *handler) usages(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		log.Printf(" === usages: method not allowed")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := r.URL.Query().Get("library")
+	_, ok := s.Library[id]
+	if !ok {
+		log.Printf("library not found: %s", id)
+		http.NotFound(w, r)
+		return
+	}
+
+	var res library.UsageList
+
+	for _, val := range s.LibraryUsage[id] {
+		res.LibraryUsageList = append(res.LibraryUsageList, library.UsageSummary{ID: val.ID, ResourceUrn: val.ResourceUrn})
+	}
+	OK(w, res)
+}
+
+type LibUsagePathSegs struct {
+	LibraryID string
+	UsageID   string
+}
+
+func (s *handler) getLibUsagePathSegs(url *url.URL) LibUsagePathSegs {
+	var pathSegs LibUsagePathSegs
+
+	pathAfterTrim := strings.TrimPrefix(url.Path, internal.APILibraryPath)
+	pathSegments := strings.Split(pathAfterTrim, "/")
+	var filteredData []string
+	for _, s := range pathSegments {
+		// Check if the string is not empty after trimming whitespace
+		if strings.TrimSpace(s) != "" {
+			filteredData = append(filteredData, s)
+		}
+	}
+	log.Printf("filteredData: %+v", filteredData)
+	pathSegs.LibraryID = filteredData[0]
+	if len(filteredData) == 3 {
+		pathSegs.UsageID = filteredData[2]
+	}
+	return pathSegs
+
+}
+
+// libraryUsages handles the incoming post requests on the url path
+// /api/content/library/{librryID}/usages.
+func (s *handler) libraryUsages(w http.ResponseWriter, r *http.Request) {
+	parsedURL, err := url.Parse(r.URL.Path)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	pathSegs := s.getLibUsagePathSegs(parsedURL)
+
+	switch r.Method {
+	case http.MethodPost:
+		// add library usage requested through
+		// - /api/content/library/{librryID}/usages with AddUsage body
+		var spec library.AddUsage
+		if !s.decode(r, w, &spec) {
+			return
+		}
+		usageID := uuid.New().String()
+		s.addUsage(pathSegs.LibraryID, usageID, spec)
+		StatusOK(w, usageID)
+	case http.MethodGet:
+		// List usages on a library requested through
+		// - /api/content/library/{librryID}/usages
+		var res library.UsageList
+		for _, val := range s.LibraryUsage[pathSegs.LibraryID] {
+			res.LibraryUsageList = append(res.LibraryUsageList, library.UsageSummary{ID: val.ID, ResourceUrn: val.ResourceUrn})
+		}
+		log.Printf("list usage: res = %+v", res)
+		StatusOK(w, res)
+	}
+	log.Printf("usagesEx: %+v", r)
+}
+
+func (s *handler) libraryUsageID(w http.ResponseWriter, r *http.Request) {
+	parsedURL, err := url.Parse(r.URL.Path)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	pathSegs := s.getLibUsagePathSegs(parsedURL)
+
+	switch r.Method {
+	case http.MethodGet:
+		// Get specific usage information requested through
+		// - /api/content/library/{librryID}/usages/{usageID}
+		if len(pathSegs.UsageID) > 0 {
+			usage := s.findUsage(pathSegs.LibraryID, pathSegs.UsageID)
+			if usage == nil {
+				http.NotFound(w, r)
+				return
+			}
+			StatusOK(w, *usage)
+		}
+
+	case http.MethodDelete:
+		if len(pathSegs.UsageID) == 0 {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		s.removeUsage(pathSegs.LibraryID, pathSegs.UsageID)
+		OK(w)
+	}
+}
+
+func (s *handler) usagesID(w http.ResponseWriter, r *http.Request) {
+	log.Printf("usagesID: %+v %s %s", r.Method, s.action(r), r.URL.Path)
+
+	libraryID := s.id(r)
+	_, ok := s.Library[libraryID]
+	if !ok {
+		log.Printf("library not found: %s", libraryID)
+		http.NotFound(w, r)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPost:
+		switch s.action(r) {
+		case "get":
+			var dst internal.LibraryUsageDestination
+			if !s.decode(r, w, &dst) {
+				return
+			}
+			usage := s.findUsage(libraryID, dst.ID)
+			if usage == nil {
+				http.NotFound(w, r)
+				return
+			}
+			OK(w, *usage)
+		case "add":
+			var spec library.AddUsage
+			if !s.decode(r, w, &spec) {
+				return
+			}
+			usageID := uuid.New().String()
+			s.addUsage(libraryID, usageID, spec)
+			// log.Fatalf("added usages: %+v", s.LibraryUsage)
+
+			OK(w, usageID)
+		case "remove":
+			var dst internal.LibraryUsageDestination
+			if !s.decode(r, w, &dst) {
+				return
+			}
+			usageID := dst.ID
+			usage := s.findUsage(libraryID, usageID)
+			if usage == nil {
+				log.Printf("library usage not found: %s %s", libraryID, usageID)
+				http.NotFound(w, r)
+				return
+			}
+			s.removeUsage(libraryID, usageID)
+			OK(w)
+		default:
+			log.Fatalf("action: '%+v' not implemented. Request: %+v", s.action(r), r)
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+}
+
+func (s *handler) findUsage(libraryID, usageID string) *library.Usage {
+	_, ok := s.LibraryUsage[libraryID]
+	if !ok {
+		log.Printf("library not found: %s", libraryID)
+		return nil
+	}
+
+	usage, exists := s.LibraryUsage[libraryID][usageID]
+	if !exists {
+		log.Printf("library usage not found: %s  %s", libraryID, usageID)
+		return nil
+	}
+
+	return &usage
+}
+
+func (s *handler) removeUsage(libraryID, usageID string) {
+	_, ok := s.LibraryUsage[libraryID]
+	if !ok {
+		log.Printf("library not found: %s", libraryID)
+		return
+	}
+
+	_, exists := s.LibraryUsage[libraryID][usageID]
+	if !exists {
+		log.Printf("library usage not found:%s  %s", libraryID, usageID)
+		return
+	}
+
+	delete(s.LibraryUsage[libraryID], usageID)
+}
+
+func (s *handler) addUsage(libraryID, usageID string, addUsage library.AddUsage) {
+	if s.LibraryUsage == nil {
+		s.LibraryUsage = make(map[string]map[string]library.Usage)
+	}
+	if _, ok := s.LibraryUsage[libraryID][usageID]; !ok {
+		s.LibraryUsage[libraryID] = make(map[string]library.Usage)
+
+	}
+
+	_, ok := s.LibraryUsage[libraryID]
+	if !ok {
+		log.Printf("library not found: %s", libraryID)
+		return
+	}
+
+	timeNow := time.Now()
+	s.LibraryUsage[libraryID][usageID] = library.Usage{
+		ID:           usageID,
+		ResourceUrn:  addUsage.ResourceUrn,
+		AdditionTime: &timeNow,
+	}
+
+}
+
+func isApplyUsageOnItemsConfigured(libraryObj *library.Library) bool {
+	if libraryObj == nil {
+		return false
+	}
+	return libraryObj.Configuration != nil &&
+		libraryObj.Configuration.ApplyLibraryUsageToItems != nil &&
+		*libraryObj.Configuration.ApplyLibraryUsageToItems
+}
+
 func (s *handler) libraryItem(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -1756,6 +2030,11 @@ func (s *handler) libraryItemID(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodDelete:
+		// library usage exists and applied on items.
+		if _, usageExists := s.LibraryUsage[lid]; usageExists && isApplyUsageOnItemsConfigured(l.Library) {
+			s.error(w, fmt.Errorf("library is in use"))
+			return
+		}
 		p := s.libraryPath(l.Library, id)
 		if err := os.RemoveAll(p); err != nil {
 			s.error(w, err)

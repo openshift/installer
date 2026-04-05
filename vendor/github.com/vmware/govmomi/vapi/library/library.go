@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package library
@@ -40,6 +40,7 @@ type Library struct {
 	UnsetSecurityPolicyID bool             `json:"unset_security_policy_id,omitempty"`
 	ServerGUID            string           `json:"server_guid,omitempty"`
 	StateInfo             *StateInfo       `json:"state_info,omitempty"`
+	Configuration         *Configuration   `json:"configuration_info,omitempty"`
 }
 
 // StateInfo provides the state info of a content library.
@@ -121,6 +122,9 @@ func (l *Library) Patch(src *Library) {
 	}
 	if src.Version != "" {
 		l.Version = src.Version
+	}
+	if src.Configuration != nil {
+		l.Configuration = src.Configuration
 	}
 }
 
@@ -216,8 +220,9 @@ func (c *Manager) UpdateLibrary(ctx context.Context, l *Library) error {
 		Library `json:"update_spec"`
 	}{
 		Library{
-			Name:        l.Name,
-			Description: l.Description,
+			Name:          l.Name,
+			Description:   l.Description,
+			Configuration: l.Configuration,
 		},
 	}
 	url := c.Resource(internal.LibraryPath).WithID(l.ID)
@@ -231,6 +236,16 @@ func (c *Manager) DeleteLibrary(ctx context.Context, library *Library) error {
 		path = internal.SubscribedLibraryPath
 	}
 	url := c.Resource(path).WithID(library.ID)
+	return c.Do(ctx, url.Request(http.MethodDelete), nil)
+}
+
+// ForceDeleteLibrary Force deletes the specified library by skipping the usage check.
+func (c *Manager) ForceDeleteLibrary(ctx context.Context, library *Library) error {
+	path := internal.LocalLibraryPath
+	if library.Type == "SUBSCRIBED" {
+		path = internal.SubscribedLibraryPath
+	}
+	url := c.Resource(path).WithID(library.ID).WithAction("force-delete")
 	return c.Do(ctx, url.Request(http.MethodDelete), nil)
 }
 

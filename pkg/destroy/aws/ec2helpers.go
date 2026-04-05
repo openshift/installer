@@ -162,6 +162,8 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, arn arn.ARN, logger 
 		return deleteEC2VPCEndpointService(ctx, o.EC2Client, id, logger)
 	case "egress-only-internet-gateway":
 		return deleteEgressOnlyInternetGateway(ctx, o.EC2Client, id, logger)
+	case "dedicated-host":
+		return deleteEC2DedicatedHost(ctx, o.EC2Client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -960,5 +962,29 @@ func deleteEgressOnlyInternetGateway(ctx context.Context, client *ec2v2.Client, 
 	}
 
 	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2DedicatedHost(ctx context.Context, client *ec2v2.Client, id string, logger logrus.FieldLogger) error {
+	// Release the host
+	_, err := client.ReleaseHosts(ctx, &ec2v2.ReleaseHostsInput{
+		HostIds: []string{id},
+	})
+	if err != nil {
+		errCode := HandleErrorCode(err)
+		switch errCode {
+		case "InvalidHostID.NotFound":
+			// Host doesn't exist, nothing to do
+			return nil
+		case "UnauthorizedOperation", "AccessDenied":
+			// User doesn't have permission to release dedicated hosts
+			// This is expected when dedicated host permissions are not configured
+			logger.Warn("User does not have permission to release dedicated hosts, skipping")
+			return nil
+		}
+		return fmt.Errorf("failed to release dedicated host %s: %w", id, err)
+	}
+
+	logger.Info("Released")
 	return nil
 }

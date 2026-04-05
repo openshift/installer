@@ -483,7 +483,6 @@ func (b icBuildNamespace) withAzureUserProvisionedDNS(enabled string) icOption {
 		b.forAzure()(ic)
 		if enabled == "Enabled" {
 			ic.Platform.Azure.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
-			ic.FeatureGates = []string{"AzureClusterHostedDNSInstall=true"}
 		}
 	}
 }

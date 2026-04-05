@@ -1669,6 +1669,16 @@ func (AdditionalRoutingCapabilities) SwaggerDoc() map[string]string {
 	return map_AdditionalRoutingCapabilities
 }
 
+var map_BGPManagedConfig = map[string]string{
+	"":            "BGPManagedConfig contains configuration options for BGP when routing is \"Managed\".",
+	"asNumber":    "asNumber is the 2-byte or 4-byte Autonomous System Number (ASN) to be used in the generated FRR configuration. Valid values are 1 to 4294967295. When omitted, this defaults to 64512.",
+	"bgpTopology": "bgpTopology defines the BGP topology to be used. Allowed values are \"FullMesh\". When set to \"FullMesh\", every node peers directly with every other node via BGP. This field is required when BGPManagedConfig is specified.",
+}
+
+func (BGPManagedConfig) SwaggerDoc() map[string]string {
+	return map_BGPManagedConfig
+}
+
 var map_ClusterNetworkEntry = map[string]string{
 	"": "ClusterNetworkEntry is a subnet from which to allocate PodIPs. A network of size HostPrefix (in CIDR notation) will be allocated when nodes join the cluster. If the HostPrefix field is not used by the plugin, it can be left unset. Not all network providers support multiple ClusterNetworks",
 }
@@ -1896,6 +1906,16 @@ func (NetworkStatus) SwaggerDoc() map[string]string {
 	return map_NetworkStatus
 }
 
+var map_NoOverlayConfig = map[string]string{
+	"":             "NoOverlayConfig contains configuration options for networks operating in no-overlay mode.",
+	"outboundSNAT": "outboundSNAT defines the SNAT behavior for outbound traffic from pods. Allowed values are \"Enabled\" and \"Disabled\". When set to \"Enabled\", SNAT is performed on outbound traffic from pods. When set to \"Disabled\", SNAT is not performed and pod IPs are preserved in outbound traffic. This field is required when the network operates in no-overlay mode. This field can be set to any value at installation time and can be changed afterwards.",
+	"routing":      "routing specifies whether the pod network routing is managed by OVN-Kubernetes or users. Allowed values are \"Managed\" and \"Unmanaged\". When set to \"Managed\", OVN-Kubernetes manages the pod network routing configuration through BGP. When set to \"Unmanaged\", users are responsible for configuring the pod network routing. This field is required when the network operates in no-overlay mode. This field is immutable once set.",
+}
+
+func (NoOverlayConfig) SwaggerDoc() map[string]string {
+	return map_NoOverlayConfig
+}
+
 var map_OVNKubernetesConfig = map[string]string{
 	"":                    "ovnKubernetesConfig contains the configuration parameters for networks using the ovn-kubernetes network project",
 	"mtu":                 "mtu is the MTU to use for the tunnel interface. This must be 100 bytes smaller than the uplink mtu. Default is 1400",
@@ -1910,6 +1930,9 @@ var map_OVNKubernetesConfig = map[string]string{
 	"ipv4":                "ipv4 allows users to configure IP settings for IPv4 connections. When ommitted, this means no opinions and the default configuration is used. Check individual fields within ipv4 for details of default values.",
 	"ipv6":                "ipv6 allows users to configure IP settings for IPv6 connections. When ommitted, this means no opinions and the default configuration is used. Check individual fields within ipv4 for details of default values.",
 	"routeAdvertisements": "routeAdvertisements determines if the functionality to advertise cluster network routes through a dynamic routing protocol, such as BGP, is enabled or not. This functionality is configured through the ovn-kubernetes RouteAdvertisements CRD. Requires the 'FRR' routing capability provider to be enabled as an additional routing capability. Allowed values are \"Enabled\", \"Disabled\" and ommited. When omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time. The current default is \"Disabled\".",
+	"transport":           "transport sets the transport mode for pods on the default network. Allowed values are \"NoOverlay\" and \"Geneve\". \"NoOverlay\" avoids tunnel encapsulation, routing pod traffic directly between nodes. \"Geneve\" encapsulates pod traffic using Geneve tunnels between nodes. When omitted, this means the user has no opinion and the platform chooses a reasonable default which is subject to change over time. The current default is \"Geneve\". \"NoOverlay\" can only be set at installation time and cannot be changed afterwards. \"Geneve\" may be set explicitly at any time to lock in the current default.",
+	"noOverlayConfig":     "noOverlayConfig contains configuration for no-overlay mode. This configuration applies to the default network only. It is required when transport is \"NoOverlay\". When omitted, this means the user does not configure no-overlay mode options.",
+	"bgpManagedConfig":    "bgpManagedConfig configures the BGP properties for networks (default network or CUDNs) in no-overlay mode that specify routing=\"Managed\" in their noOverlayConfig. It is required when noOverlayConfig.routing is set to \"Managed\". When omitted, this means the user does not configure BGP for managed routing. This field can be set at installation time or on day 2, and can be modified at any time.",
 }
 
 func (OVNKubernetesConfig) SwaggerDoc() map[string]string {

@@ -49,7 +49,7 @@ const maxIopsThroughputRatio = 4
 const gp3DefaultIOPS int32 = 3000
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for i, zone := range p.Zones {
 		if !strings.HasPrefix(zone, platform.Region) {
@@ -69,6 +69,57 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 
 	allErrs = append(allErrs, validateSecurityGroups(platform, p, fldPath)...)
 	allErrs = append(allErrs, ValidateCPUOptions(p, fldPath)...)
+	allErrs = append(allErrs, validateHostPlacement(p, poolName, fldPath.Child("hostPlacement"))...)
+
+	return allErrs
+}
+
+func validateHostPlacement(p *aws.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// No HostPlacement, so lets just return
+	if p.HostPlacement == nil {
+		return allErrs
+	}
+
+	// Dedicated hosts are only supported on worker (compute) pools
+	if poolName != "" && poolName != types.MachinePoolComputeRoleName {
+		errMsg := fmt.Sprintf("dedicated hosts are only supported on %s pools, not on %s pools", types.MachinePoolComputeRoleName, poolName)
+		allErrs = append(allErrs, field.Invalid(fldPath, p.HostPlacement, errMsg))
+		return allErrs
+	}
+
+	// Control plane pools cannot use dedicated hosts
+	if poolName == "" {
+		errMsg := "dedicated hosts are not supported on control plane pools"
+		allErrs = append(allErrs, field.Invalid(fldPath, p.HostPlacement, errMsg))
+		return allErrs
+	}
+
+	if p.HostPlacement.Affinity == nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("affinity"), "affinity is required when hostPlacement is configured"))
+		return allErrs // Can't validate further without affinity
+	}
+
+	switch *p.HostPlacement.Affinity {
+	case aws.HostAffinityAnyAvailable:
+		if len(p.HostPlacement.DedicatedHost) > 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("dedicatedHost"), "dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise"))
+		}
+	case aws.HostAffinityDedicatedHost:
+		if len(p.HostPlacement.DedicatedHost) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("dedicatedHost"), "dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise"))
+		} else {
+			for index, host := range p.HostPlacement.DedicatedHost {
+				hostPath := fldPath.Child("dedicatedHost").Index(index)
+				if len(host.ID) == 0 {
+					allErrs = append(allErrs, field.Required(hostPath.Child("id"), "a hostID must be specified when configuring 'dedicatedHost'"))
+				}
+			}
+		}
+	default:
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("affinity"), p.HostPlacement.Affinity, []aws.HostAffinity{aws.HostAffinityAnyAvailable, aws.HostAffinityDedicatedHost}))
+	}
 
 	return allErrs
 }

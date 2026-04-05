@@ -21,4 +21,13 @@ func SetMachinePoolDefaults(platform *types.Platform, pool *gcp.MachinePool) {
 			}
 		}
 	}
+
+	// Set the default Disk Type for the Instance type when the instance type is provided
+	// by the user and the Disk type is not.
+	if pool.InstanceType != "" && pool.OSDisk.DiskType == "" {
+		family := gcp.GetGCPInstanceFamily(pool.InstanceType)
+		if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; ok {
+			pool.OSDisk.DiskType = gcp.DefaultDiskTypeForInstance(pool.InstanceType)
+		}
+	}
 }

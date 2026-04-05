@@ -141,6 +141,43 @@ func TestSetPlatformDefaults(t *testing.T) {
 				LBType:   "",
 			},
 		},
+		{
+			name: "EUSC region should set default service endpoints",
+			platform: &aws.Platform{
+				Region: aws.EuscDeEast1RegionID,
+			},
+			expected: &aws.Platform{
+				Region:           aws.EuscDeEast1RegionID,
+				IPFamily:         network.IPv4,
+				ServiceEndpoints: defaultServiceEndpoints[aws.EuscDeEast1RegionID],
+			},
+		},
+		{
+			name: "non-EUSC region should not set default service endpoints",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+			},
+			expected: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: network.IPv4,
+			},
+		},
+		{
+			name: "EUSC region with existing service endpoints should not set defaults",
+			platform: &aws.Platform{
+				Region: aws.EuscDeEast1RegionID,
+				ServiceEndpoints: []aws.ServiceEndpoint{
+					{Name: "ec2", URL: "https://custom.ec2.endpoint"},
+				},
+			},
+			expected: &aws.Platform{
+				Region:   aws.EuscDeEast1RegionID,
+				IPFamily: network.IPv4,
+				ServiceEndpoints: []aws.ServiceEndpoint{
+					{Name: "ec2", URL: "https://custom.ec2.endpoint"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -148,6 +185,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			SetPlatformDefaults(tc.platform)
 			assert.Equal(t, tc.expected.IPFamily, tc.platform.IPFamily)
 			assert.Equal(t, tc.expected.LBType, tc.platform.LBType)
+			assert.Equal(t, tc.expected.ServiceEndpoints, tc.platform.ServiceEndpoints)
 		})
 	}
 }

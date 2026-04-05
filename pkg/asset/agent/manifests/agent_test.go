@@ -51,8 +51,10 @@ func TestAgentManifests_Generate(t *testing.T) {
 					},
 				},
 				&NMStateConfig{
-					StaticNetworkConfig: fakeStaticNetworkConfig,
-					Config:              fakeNMStatConfig,
+					NMStateConfigFile: NMStateConfigFile{
+						StaticNetworkConfig: fakeStaticNetworkConfig,
+						Config:              fakeNMStatConfig,
+					},
 				},
 				&AgentClusterInstall{Config: fakeAgentClusterInstall},
 				&ClusterDeployment{Config: fakeClusterDeployment},
@@ -83,8 +85,10 @@ func TestAgentManifests_Generate(t *testing.T) {
 						},
 					}},
 				&NMStateConfig{
-					StaticNetworkConfig: fakeStaticNetworkConfig,
-					Config:              fakeNMStatConfig,
+					NMStateConfigFile: NMStateConfigFile{
+						StaticNetworkConfig: fakeStaticNetworkConfig,
+						Config:              fakeNMStatConfig,
+					},
 				},
 				&AgentClusterInstall{},
 				&ClusterDeployment{},

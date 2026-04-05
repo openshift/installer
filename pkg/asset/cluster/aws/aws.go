@@ -44,6 +44,10 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		return err
 	}
 
+	if err := tagSharedDedicatedHosts(ctx, clusterID, installConfig); err != nil {
+		return err
+	}
+
 	if err := tagSharedIAMRoles(ctx, clusterID, installConfig); err != nil {
 		return err
 	}
@@ -239,6 +243,50 @@ func tagSharedIAMProfiles(ctx context.Context, clusterID string, installConfig *
 		}); err != nil {
 			return fmt.Errorf("could not tag %q instance profile: %w", name, err)
 		}
+	}
+
+	return nil
+}
+
+// tagSharedDedicatedHosts tags users BYO dedicated hosts so they are not destroyed by the Installer.
+func tagSharedDedicatedHosts(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+	var dhNames []string
+
+	// DH is only allowed to be created in "worker" pool at this time. No need to check default platform.
+	for _, compute := range installConfig.Config.Compute {
+		if compute.Name == "worker" {
+			mpool := awstypes.MachinePool{}
+			mpool.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+			mpool.Set(compute.Platform.AWS)
+			if mpool.HostPlacement != nil && mpool.HostPlacement.DedicatedHost != nil {
+				for _, name := range mpool.HostPlacement.DedicatedHost {
+					dhNames = append(dhNames, name.ID)
+				}
+			}
+		}
+	}
+
+	if len(dhNames) == 0 {
+		return nil
+	}
+
+	logrus.Debugf("Tagging shared dedicated hosts: %v", dhNames)
+
+	tagKey, tagValue := sharedTag(clusterID)
+
+	ec2Client, err := awsconfig.NewEC2Client(ctx, awsconfig.EndpointOptions{
+		Region:    installConfig.Config.Platform.AWS.Region,
+		Endpoints: installConfig.Config.Platform.AWS.ServiceEndpoints,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create EC2 client: %w", err)
+	}
+
+	if _, err = ec2Client.CreateTags(ctx, &ec2.CreateTagsInput{
+		Resources: dhNames,
+		Tags:      []ec2types.Tag{{Key: &tagKey, Value: &tagValue}},
+	}); err != nil {
+		return errors.Wrap(err, "could not add tags to dedicated host")
 	}
 
 	return nil

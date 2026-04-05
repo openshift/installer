@@ -61,6 +61,7 @@ type ClusterUninstaller struct {
 	Filters        []Filter // filter(s) we will be searching for
 	Logger         logrus.FieldLogger
 	Region         string
+	PartitionID    string
 	ClusterID      string
 	ClusterDomain  string
 	HostedZoneRole string
@@ -148,6 +149,21 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		EFSClient:      efsClient,
 		Route53Client:  route53Client,
 	}, nil
+}
+
+// GetPartitionID returns the partition ID for the install region.
+func (o *ClusterUninstaller) GetPartitionID(ctx context.Context) (string, error) {
+	if len(o.PartitionID) > 0 {
+		return o.PartitionID, nil
+	}
+
+	partitionID, err := awssession.GetPartitionIDForRegion(ctx, o.Region)
+	if err != nil {
+		return "", err
+	}
+
+	o.PartitionID = partitionID
+	return o.PartitionID, nil
 }
 
 // validate runs before the uninstall process to ensure that
@@ -250,10 +266,30 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	tagClients := []*resourcegroupstaggingapi.Client{baseTaggingClient}
 
 	if o.HostedZoneRole != "" {
+		partitionID, err := o.GetPartitionID(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get partition ID for region %s: %w", o.Region, err)
+		}
+
+		// This tagging client is specifically for finding route53 zone, so it needs to use the "global" region, depending on the partition ID
+		tagRegion := o.Region
+		switch partitionID {
+		case awstypes.AwsEuscPartitionID:
+			// For AWS EU Sovereign Cloud, use "eusc-de-east-1"
+			tagRegion = awstypes.EuscDeEast1RegionID
+		case awstypes.AwsUsGovPartitionID:
+			// For AWS Government Cloud, use "us-gov-west-1"
+			tagRegion = awstypes.UsGovWest1RegionID
+		case awstypes.AwsPartitionID:
+			// For AWS standard, use "us-east-1"
+			tagRegion = awstypes.UsEast1RegionID
+		default:
+			// For other partitions, use the install region
+		}
+
 		// Create tagging client with assumed role credentials for cross-account hosted zone access.
-		// This client is specifically for finding route53 zones in the us-east-1 region.
 		assumedRoleTagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
-			Region:    awstypes.UsEast1RegionID,
+			Region:    tagRegion,
 			Endpoints: o.endpoints,
 		}, o.HostedZoneRole, resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 		if err != nil {
@@ -263,10 +299,9 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	}
 
 	switch o.Region {
+	case awstypes.EuscDeEast1RegionID:
 	case awstypes.CnNorth1RegionID, awstypes.CnNorthwest1RegionID:
-		break
 	case awstypes.UsIsoEast1RegionID, awstypes.UsIsoWest1RegionID, awstypes.UsIsoBEast1RegionID:
-		break
 	case awstypes.UsGovEast1RegionID, awstypes.UsGovWest1RegionID:
 		if o.Region != awstypes.UsGovWest1RegionID {
 			tagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{

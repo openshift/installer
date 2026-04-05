@@ -51,6 +51,13 @@ type Platform struct {
 	// +optional
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
 
+	// AllowSharedKeyAccess specifies if shared access key should be enabled for the storage account.
+	// Default value is true.
+	// Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+	//
+	// +optional
+	AllowSharedKeyAccess *bool `json:"allowSharedKeyAccess,omitempty"`
+
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on Azure for machine pools which do not define their own
 	// platform configuration.

@@ -407,7 +407,7 @@ func (c *Client) GetCnsVolumes(ctx context.Context, infraID string) ([]cnstypes.
 
 	for _, v := range volumes.Volumes {
 		// This must be called to retrieve the ClusterId
-		result, err := c.cnsClient.QueryVolume(ctx, cnstypes.CnsQueryFilter{VolumeIds: []cnstypes.CnsVolumeId{v.VolumeId}})
+		result, err := c.cnsClient.QueryVolume(ctx, &cnstypes.CnsQueryFilter{VolumeIds: []cnstypes.CnsVolumeId{v.VolumeId}})
 		if err != nil {
 			return nil, err
 		}

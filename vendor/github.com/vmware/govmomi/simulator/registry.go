@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package simulator
@@ -46,6 +46,11 @@ func Map(ctx context.Context) *Registry {
 	return ctx.(*Context).Map
 }
 
+// ServiceFromContext returns the simulator Service from the given ctx
+func ServiceFromContext(ctx context.Context) *Service {
+	return ctx.(*Context).svc
+}
+
 // RegisterObject interface supports callbacks when objects are created, updated and deleted from the Registry
 type RegisterObject interface {
 	mo.Reference
@@ -72,10 +77,12 @@ type Registry struct {
 
 // tagManager is an interface to simplify internal interaction with the vapi tag manager simulator.
 type tagManager interface {
-	AttachedObjects(types.VslmTagEntry) ([]types.ManagedObjectReference, types.BaseMethodFault)
-	AttachedTags(id types.ManagedObjectReference) ([]types.VslmTagEntry, types.BaseMethodFault)
-	AttachTag(types.ManagedObjectReference, types.VslmTagEntry) types.BaseMethodFault
-	DetachTag(types.ManagedObjectReference, types.VslmTagEntry) types.BaseMethodFault
+	AttachedObjects(string) ([]types.ManagedObjectReference, types.BaseMethodFault)
+	AttachedTags(id types.ManagedObjectReference) ([]string, types.BaseMethodFault)
+	AttachTag(types.ManagedObjectReference, string) types.BaseMethodFault
+	DetachTag(types.ManagedObjectReference, string) types.BaseMethodFault
+	GetTagByCategoryAndName(string, string) (string, types.BaseMethodFault)
+	GetTagCategoryAndName(string) (string, string, types.BaseMethodFault)
 }
 
 // NewRegistry creates a new instances of Registry

@@ -15,8 +15,8 @@ import (
 // knownPublicRegions is the subset of public AWS regions where RHEL CoreOS images are published.
 // This subset does not include supported regions which are found in other partitions, such as us-gov-east-1.
 // Returns: a list of region names.
-func knownPublicRegions(architecture types.Architecture) ([]string, error) {
-	required := rhcos.AMIRegions(architecture)
+func knownPublicRegions(architecture types.Architecture, osImageStream types.OSImageStream) ([]string, error) {
+	required := rhcos.AMIRegions(architecture, osImageStream)
 
 	ctx := context.Background()
 	client, err := NewEC2Client(ctx, EndpointOptions{
@@ -45,8 +45,8 @@ func knownPublicRegions(architecture types.Architecture) ([]string, error) {
 
 // IsKnownPublicRegion returns true if a specified region is Known to the installer.
 // A known region is the subset of public AWS regions where RHEL CoreOS images are published.
-func IsKnownPublicRegion(region string, architecture types.Architecture) (bool, error) {
-	publicRegions, err := knownPublicRegions(architecture)
+func IsKnownPublicRegion(region string, architecture types.Architecture, osImageStream types.OSImageStream) (bool, error) {
+	publicRegions, err := knownPublicRegions(architecture, osImageStream)
 	if err != nil {
 		return false, err
 	}

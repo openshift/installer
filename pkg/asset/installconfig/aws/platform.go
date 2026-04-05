@@ -10,6 +10,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -17,7 +18,7 @@ import (
 // Platform collects AWS-specific configuration.
 func Platform(ctx context.Context) (*aws.Platform, error) {
 	architecture := version.DefaultArch()
-	regions, err := knownPublicRegions(architecture)
+	regions, err := knownPublicRegions(architecture, rhcos.DefaultOSImageStream)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AWS public regions: %w", err)
 	}
@@ -43,7 +44,7 @@ func Platform(ctx context.Context) (*aws.Platform, error) {
 	}
 
 	defaultRegion := "us-east-1"
-	if found, err := IsKnownPublicRegion(defaultRegion, architecture); !found || err != nil {
+	if found, err := IsKnownPublicRegion(defaultRegion, architecture, rhcos.DefaultOSImageStream); !found || err != nil {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
@@ -53,7 +54,7 @@ func Platform(ctx context.Context) (*aws.Platform, error) {
 	}
 
 	if config.Region != "" {
-		found, err := IsKnownPublicRegion(config.Region, architecture)
+		found, err := IsKnownPublicRegion(config.Region, architecture, rhcos.DefaultOSImageStream)
 		if err != nil {
 			return nil, fmt.Errorf("failed to determine if region is public: %w", err)
 		}

@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package esx
@@ -788,13 +788,13 @@ var HostConfigInfo = types.HostConfigInfo{
 		IpRouteConfigSupported:     true,
 		DnsConfigSupported:         true,
 		DhcpOnVnicSupported:        true,
-		IpV6Supported:              types.NewBool(true),
+		IpV6Supported:              true,
 	},
 	DatastoreCapabilities: &types.HostDatastoreSystemCapabilities{
 		NfsMountCreationRequired:     true,
 		NfsMountCreationSupported:    true,
 		LocalDatastoreSupported:      false,
-		VmfsExtentExpansionSupported: types.NewBool(true),
+		VmfsExtentExpansionSupported: true,
 	},
 	OffloadCapabilities: &types.HostNetOffloadCapabilities{
 		CsumOffload:     types.NewBool(true),

@@ -30,15 +30,34 @@ func TestFeatureGates(t *testing.T) {
 			expected: `^platform.aws.userProvisionedDNS: Forbidden: this field is protected by the AWSClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
-			name: "Azure UserProvisionedDNS is not allowed without Feature Gates",
+			name: "AWS Sovereign Cloud is not allowed without Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.AWS = nil // validInstallConfig defaults to AWS
-				c.Azure = &azure.Platform{}
-				c.Azure.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+				c.AWS = validAWSPlatform()
+				c.AWS.Region = "eusc-de-east-1"
 				return c
 			}(),
-			expected: `^platform.azure.userProvisionedDNS: Forbidden: this field is protected by the AzureClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^platform.aws.region: Forbidden: this field is protected by the AWSEuropeanSovereignCloudInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "AWS Sovereign Cloud is allowed with TechPreview Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.AWS.Region = "eusc-de-east-1"
+				return c
+			}(),
+		},
+		{
+			name: "AWS Sovereign Cloud is allowed with DevPreview Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.AWS.Region = "eusc-de-east-1"
+				return c
+			}(),
 		},
 		{
 			name: "vSphere hosts is allowed with Feature Gates enabled",

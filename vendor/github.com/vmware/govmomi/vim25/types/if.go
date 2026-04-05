@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package types
@@ -3532,6 +3532,16 @@ type BaseVmMigratedEvent interface {
 
 func init() {
 	t["BaseVmMigratedEvent"] = reflect.TypeOf((*VmMigratedEvent)(nil)).Elem()
+}
+
+func (b *VmPlacementPolicy) GetVmPlacementPolicy() *VmPlacementPolicy { return b }
+
+type BaseVmPlacementPolicy interface {
+	GetVmPlacementPolicy() *VmPlacementPolicy
+}
+
+func init() {
+	t["BaseVmPlacementPolicy"] = reflect.TypeOf((*VmPlacementPolicy)(nil)).Elem()
 }
 
 func (b *VmPoweredOffEvent) GetVmPoweredOffEvent() *VmPoweredOffEvent { return b }

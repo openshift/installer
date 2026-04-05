@@ -3,7 +3,7 @@
 set -x
 
 if [ "$IS_CONTAINER" != "" ]; then
-  if [ ! "$(command -v gosec >/dev/null)" ]; then
+  if ! command -v gosec >/dev/null 2>&1; then
       go get github.com/securego/gosec/cmd/gosec
   fi
   gosec -severity high -confidence high -exclude G304 ./cmd/... ./data/... ./pkg/... "${@}"

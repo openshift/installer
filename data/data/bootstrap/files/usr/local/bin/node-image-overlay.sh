@@ -16,3 +16,6 @@ rsync -a "${ostree_checkout}/usr/etc/" /etc
 # reload the new policy
 echo "Reloading SELinux policy"
 semodule -R
+
+# handle upgrade of sshd between RHEL 9.6 and 9.8
+systemctl --no-block try-restart sshd.service

@@ -5,10 +5,7 @@ set -euo pipefail
 . /usr/local/bin/release-image.sh
 
 # yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
-coreos_img=rhel-coreos
-{{ if .IsOKD }}
-coreos_img=stream-coreos
-{{ end }}
+coreos_img={{.StreamTag}}
 until COREOS_IMAGE=$(image_for ${coreos_img}); do
     echo 'Failed to query release image; retrying...'
     sleep 10

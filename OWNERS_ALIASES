@@ -28,6 +28,8 @@ aliases:
     - mandre
     - stephenfin
   openstack-reviewers:
+    - dlaw4608
+    - eshulman2
     - gryf
     - mandre
     - stephenfin

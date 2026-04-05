@@ -33,7 +33,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/dns"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
@@ -89,10 +91,18 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config, assetst
 	// TODO revert this value back to 30 minutes.  It's currently at the end of 4.6 and we're trying to see if the
 	timeout := 40 * time.Minute
 
-	// Wait longer for baremetal, due to length of time it takes to boot
 	if installConfig, err := assetstore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
-		if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
+		switch installConfig.(*installconfig.InstallConfig).Config.Platform.Name() {
+		case baremetal.Name:
+			// Wait longer for baremetal, due to length of time it takes to boot
 			timeout = 60 * time.Minute
+		case aws.Name:
+			// Wait longer for AWS with userProvisionedDNS enabled.
+			// Tests show that with this feature enabled, MCO needs additional time to complete tasks
+			if installConfig.(*installconfig.InstallConfig).Config.AWS != nil &&
+				installConfig.(*installconfig.InstallConfig).Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+				timeout = 60 * time.Minute
+			}
 		}
 	}
 

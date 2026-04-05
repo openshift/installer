@@ -16,10 +16,6 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-var (
-	defaultCoreOSStreamGetter = rhcos.FetchCoreOSBuild
-)
-
 // BaseIso generates the base ISO file for the image.
 type BaseIso struct {
 	File *asset.File
@@ -29,6 +25,10 @@ type BaseIso struct {
 
 // CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
 type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
+
+func defaultCoreOSStreamGetter(ctx context.Context) (*stream.Stream, error) {
+	return rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+}
 
 var _ asset.WritableAsset = (*BaseIso)(nil)
 

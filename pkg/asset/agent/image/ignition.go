@@ -84,7 +84,6 @@ type agentTemplateData struct {
 	AgentAuthToken            string
 	UserAuthToken             string
 	WatcherAuthToken          string
-	TokenExpiry               string
 	AuthType                  string
 	CaBundleMount             string
 	DisableImagePolicy        bool
@@ -291,7 +290,6 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		authConfig.AgentAuthToken,
 		authConfig.UserAuthToken,
 		authConfig.WatcherAuthToken,
-		authConfig.AuthTokenExpiry,
 		caBundleMount,
 		len(registriesConfig.MirrorConfig) > 0,
 		numMasters, numArbiters, numWorkers,
@@ -305,7 +303,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	}
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
-		"root", 0644,
+		"root", 0600,
 		getRendezvousHostEnv(agentTemplateData, a.RendezvousIP, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
@@ -437,7 +435,7 @@ func shouldDisableImagePolicy() bool {
 }
 
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
-	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, tokenExpiry, caBundleMount string,
+	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, caBundleMount string,
 	haveMirrorConfig bool,
 	numMasters, numArbiters, numWorkers int,
 	osImage *models.OsImage,
@@ -463,7 +461,6 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 		AgentAuthToken:            agentAuthToken,
 		UserAuthToken:             userAuthToken,
 		WatcherAuthToken:          watcherAuthToken,
-		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
 		DisableImagePolicy:        shouldDisableImagePolicy(),
 	}

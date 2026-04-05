@@ -212,6 +212,17 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	}
 	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
+	if enableIPv6 {
+		awsCluster.Spec.NetworkSpec.CNI.CNIIngressRules = append(awsCluster.Spec.NetworkSpec.CNI.CNIIngressRules,
+			capa.CNIIngressRule{
+				Description: "ICMPv6",
+				Protocol:    capa.SecurityGroupProtocolICMPv6,
+				FromPort:    -1,
+				ToPort:      -1,
+			},
+		)
+	}
+
 	// Create a ingress rule to allow acccess to the API LB.
 	apiLBIngressRule := capa.IngressRule{
 		Description: "Kubernetes API Server traffic",

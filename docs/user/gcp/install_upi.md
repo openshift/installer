@@ -1,20 +1,23 @@
-# Install: User-Provided Infrastructure
-The steps for performing a user-provided infrastructure install are outlined here. Several
-[Deployment Manager][deploymentmanager] templates are provided to assist in
+# Install: User-Provisioned Infrastructure
+The steps for performing a user-provisioned infrastructure install are outlined here. Several
+[Infrastructure Manager][inframanager] templates are provided to assist in
 completing these steps or to help model your own. You are also free to create
 the required resources through other methods; the templates are just an
 example.
 
 ## Prerequisites
 * all prerequisites from [README](README.md)
+* deployment manager to Infrastructure Manager [migration guide](https://docs.cloud.google.com/deployment-manager/docs/dm-convert/convert)
 * the following binaries installed and in $PATH:
   * gcloud
-  * gsutil
+  * python
+* Python Packages
+  * PyYAML
 * gcloud authenticated to an account with [additional](iam.md) roles:
-  * Deployment Manager Editor
+  * Cloud Infrastructure Manager Admin
   * Service Account Key Admin
 * the following API Services enabled:
-  * Cloud Deployment Manager V2 API (deploymentmanager.googleapis.com)
+  * Cloud Infrastructure Manager API (config.googleapis.com)
 
 ## Create Ignition configs
 The machines will be started manually. Therefore, it is required to generate
@@ -26,7 +29,6 @@ Create an install configuration as for [the usual approach](install.md#create-co
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 skip this step and create the `install-config.yaml` manually using the documentation references/examples.
-The installer will not be able to access the public DNS zone in the host project for the base domain prompt.
 
 ```console
 $ openshift-install create install-config
@@ -42,7 +44,7 @@ $ openshift-install create install-config
 ### Empty the compute pool (optional)
 If you do not want the cluster to provision compute machines, edit the resulting `install-config.yaml` to set `replicas` to 0 for the `compute` pool.
 
-```sh
+```console
 python -c '
 import yaml;
 path = "install-config.yaml";
@@ -63,12 +65,8 @@ compute:
 ### Enable private cluster setting (optional)
 If you want to provision a private cluster, edit the resulting `install-config.yaml` to set `publish` to `Internal`.
 
-If you are installing into a [Shared VPC (XPN)][sharedvpc],
-`publish` must be set to `Internal`.
-The installer will not be able to access the public DNS zone for the the base domain in the host project, which is required for External clusters.
-This can be reversed in a step [below](enable-external-ingress-optional).
 
-```sh
+```console
 python -c '
 import yaml;
 path = "install-config.yaml";
@@ -79,6 +77,12 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 
 ```console
 publish: Internal
+```
+
+### Export the publish policy
+
+```console
+export PUBLISH=$(yq -r .publish install-config.yaml)
 ```
 
 ### Create manifests
@@ -106,7 +110,7 @@ rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
 
 ### Make control-plane nodes unschedulable
-Currently [emptying the compute pools](#empty-compute-pools) makes control-plane nodes schedulable.
+Currently [emptying the compute pools](#empty-the-compute-pool-optional) makes control-plane nodes schedulable.
 But due to a [Kubernetes limitation][kubernetes-service-load-balancers-exclude-masters], router pods running on control-plane nodes will not be reachable by the ingress load balancer.
 Update the scheduler configuration to keep router pods and other workloads off the control-plane nodes:
 
@@ -246,49 +250,49 @@ export CLUSTER_NAME=$(jq -r .clusterName metadata.json)
 export INFRA_ID=$(jq -r .infraID metadata.json)
 export PROJECT_NAME=$(jq -r .gcp.projectID metadata.json)
 export REGION=$(jq -r .gcp.region metadata.json)
-export ZONE_0=$(gcloud compute regions describe ${REGION} --format=json | jq -r .zones[0] | cut -d "/" -f9)
-export ZONE_1=$(gcloud compute regions describe ${REGION} --format=json | jq -r .zones[1] | cut -d "/" -f9)
-export ZONE_2=$(gcloud compute regions describe ${REGION} --format=json | jq -r .zones[2] | cut -d "/" -f9)
+export ZONE_0=$(gcloud compute regions describe ${REGION} --format=json | jq -r '.zones[0]' | cut -d "/" -f9)
+export ZONE_1=$(gcloud compute regions describe ${REGION} --format=json | jq -r '.zones[1]' | cut -d "/" -f9)
+export ZONE_2=$(gcloud compute regions describe ${REGION} --format=json | jq -r '.zones[2]' | cut -d "/" -f9)
 
 export MASTER_IGNITION=$(cat master.ign)
 export WORKER_IGNITION=$(cat worker.ign)
+
+# Fill in your service account email used for the installation. This may be the service account
+# found in the osServiceAccounts.json file or it could be another service account found in the IAM
+# section of the google cloud web console.
+SERVICE_ACCOUNT_EMAIL=""
+export INSTALL_SERVICE_ACCOUNT="projects/${PROJECT_NAME}/serviceAccounts/${SERVICE_ACCOUNT_EMAIL}"
+
+export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 ```
 
 ## Create the VPC
 Create the VPC, network, and subnets for the cluster.
 This step can be skipped if installing into a pre-existing VPC, such as a [Shared VPC (XPN)][sharedvpc].
 
-Copy [`01_vpc.py`](../../../upi/gcp/01_vpc.py) locally.
-
-Create a resource definition file: `01_vpc.yaml`
-
-```console
-$ cat <<EOF >01_vpc.yaml
-imports:
-- path: 01_vpc.py
-resources:
-- name: cluster-vpc
-  type: 01_vpc.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    master_subnet_cidr: '${MASTER_SUBNET_CIDR}'
-    worker_subnet_cidr: '${WORKER_SUBNET_CIDR}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/17)
-- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.128.0/17)
+Copy [`01_vpc`](../../../upi/gcp/01_vpc) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-vpc --config 01_vpc.yaml
+```console
+gcloud infra-manager deployments apply upi-network \
+--location=${REGION} \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},master_subnet_cidr=${MASTER_SUBNET_CIDR},worker_subnet_cidr=${WORKER_SUBNET_CIDR} \
+--project=${PROJECT_NAME} \
+--local-source=./01_vpc \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
 ```
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/17)
+- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.128.0/17)
+- `service-account`: Service account used for gcloud infrastructure creation
+
+**Note**: You may add the `--async` option to immediately apply and allow processing to continue in the background.
 
 ## Configure VPC variables
-Configure the variables based on the VPC created with `01_vpc.yaml`.
+Configure the variables based on the VPC created above through terraform.
 If you are using a pre-existing VPC, such as a [Shared VPC (XPN)][sharedvpc], set these to the `.selfLink` of the targeted resources.
 
 ```sh
@@ -297,66 +301,71 @@ export CONTROL_SUBNET=$(gcloud compute networks subnets describe ${INFRA_ID}-mas
 export COMPUTE_SUBNET=$(gcloud compute networks subnets describe ${INFRA_ID}-worker-subnet --region=${REGION} --format json | jq -r .selfLink)
 ```
 
-## Create DNS entries and load balancers
+## Create DNS entries
 Create the DNS zone and load balancers for the cluster.
-You can exclude the DNS zone or external load balancer by removing their associated section(s) from the `02_infra.yaml`.
+You can exclude the DNS zone or external load balancer by removing section from `02_dns` and the file `02_lb_ext`.
 If you choose to exclude the DNS zone, you will need to create it some other way and ensure it is populated with the necessary records as documented below.
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 exclude the DNS section as it must be created in the host project.
 
-Copy [`02_dns.py`](../../../upi/gcp/02_dns.py) locally.
-Copy [`02_lb_ext.py`](../../../upi/gcp/02_lb_ext.py) locally.
-Copy [`02_lb_int.py`](../../../upi/gcp/02_lb_int.py) locally.
-
-Create a resource definition file: `02_infra.yaml`
-
-```console
-$ cat <<EOF >02_infra.yaml
-imports:
-- path: 02_dns.py
-- path: 02_lb_ext.py
-- path: 02_lb_int.py
-resources:
-- name: cluster-dns
-  type: 02_dns.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    cluster_domain: '${CLUSTER_NAME}.${BASE_DOMAIN}'
-    cluster_network: '${CLUSTER_NETWORK}'
-- name: cluster-lb-ext
-  type: 02_lb_ext.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-- name: cluster-lb-int
-  type: 02_lb_int.py
-  properties:
-    cluster_network: '${CLUSTER_NETWORK}'
-    control_subnet: '${CONTROL_SUBNET}'
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    zones:
-    - '${ZONE_0}'
-    - '${ZONE_1}'
-    - '${ZONE_2}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
-- `cluster_network`: the URI to the cluster network
-- `control_subnet`: the URI to the control subnet
-- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
+Copy [`02_dns`](../../../upi/gcp/02_dns) locally. The directory contains the terraform source file for creating the dns zone during this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-infra --config 02_infra.yaml
+```console
+gcloud infra-manager deployments apply upi-dns \
+--location=${REGION} \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},cluster_domain=${CLUSTER_DOMAIN},cluster_network=${CLUSTER_NETWORK} \
+--project=${PROJECT_NAME} \
+--local-source=./02_dns \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
 ```
 
+- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
+- `cluster_network`: the URI to the cluster network
+
+## Create the external load balancer
+**If you are installing a private cluster the following section should be skipped.**
+Copy [`02_lb_ext`](../../../upi/gcp/02_lb_ext) locally. The directory contains the terraform source file for creating the external load balancer.
+
+Create the deployment using gcloud.
+
+```console
+gcloud infra-manager deployments apply upi-lb-ext \
+--location=${REGION} \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./02_lb_ext\
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+
+## Create the internal load balancer
+
+Copy [`02_lb_int`](../../../upi/gcp/02_lb_int) locally. The directory contains the terraform source file for creating the internal load balancer.
+
+Create the deployment using gcloud.
+
+```console
+gcloud infra-manager deployments apply upi-lb-int \
+--location=${REGION} \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},cluster_network=${CLUSTER_NETWORK},control_subnet=${CONTROL_SUBNET},zone_0=${ZONE_0},zone_1=${ZONE_1},zone_2=${ZONE_2} \
+--project=${PROJECT_NAME} \
+--local-source=./02_lb_int \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+
+- `cluster_network`: the URI to the cluster network
+- `control_subnet`: the URI to the control subnet
+- `zone_0`: the first zone to deploy the control plane instances into (for example us-east1-b)
+- `zone_1`: the second zone to deploy the control plane instances into (for example us-east1-c)
+- `zone_2`: the third zone to deploy the control plane instances into (for example us-east1-d)
+
+**Note**: Terraform accepts lists, but the infra-manager will only accept scalar values. If you would like to alter the number
+of zones, please edit the terraform file.
+
 ## Configure infra variables
-If you excluded the `cluster-lb-ext` section above, then skip `CLUSTER_PUBLIC_IP`.
+If you did not create a public load balancer (excluded the `02-lb-ext` section) above, then skip creating/exporting `CLUSTER_PUBLIC_IP`.
 
 ```sh
 export CLUSTER_IP=$(gcloud compute addresses describe ${INFRA_ID}-cluster-ip --region=${REGION} --format json | jq -r .address)
@@ -364,8 +373,6 @@ export CLUSTER_PUBLIC_IP=$(gcloud compute addresses describe ${INFRA_ID}-cluster
 ```
 
 ## Add DNS entries
-The templates do not create DNS entries due to limitations of Deployment Manager, so we must create them manually.
-
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 use the `--account` and `--project` parameters to perform these actions in the host project.
 
@@ -380,7 +387,7 @@ gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
 ```
 
 ### Add external DNS entries (optional)
-If you deployed external load balancers with `02_infra.yaml`, you can deploy external DNS entries.
+If you deployed external load balancers with `02_lb_ext.tf`, you can deploy external DNS entries.
 
 ```sh
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
@@ -391,51 +398,28 @@ gcloud dns record-sets transaction execute --zone ${BASE_DOMAIN_ZONE_NAME}
 
 ## Create firewall rules and IAM roles
 Create the firewall rules and IAM roles for the cluster.
-You can exclude either of these by removing their associated section(s) from the `02_infra.yaml`.
-If you choose to do so, you will need to create the required resources some other way.
-Details about these resources can be found in the imported python templates.
 
-If you are installing into a [Shared VPC (XPN)][sharedvpc],
-exclude the firewall section as they must be created in the host project.
+If you are installing into a [Shared VPC (XPN)][sharedvpc], skip the deployment of the firewall rules and IAM service accounts.
 
-Copy [`03_firewall.py`](../../../upi/gcp/03_firewall.py) locally.
-Copy [`03_iam.py`](../../../upi/gcp/03_iam.py) locally.
-
-Create a resource definition file: `03_security.yaml`
-
-```console
-$ cat <<EOF >03_security.yaml
-imports:
-- path: 03_firewall.py
-- path: 03_iam.py
-resources:
-- name: cluster-firewall
-  type: 03_firewall.py
-  properties:
-    allowed_external_cidr: '0.0.0.0/0'
-    infra_id: '${INFRA_ID}'
-    cluster_network: '${CLUSTER_NETWORK}'
-    network_cidr: '${NETWORK_CIDR}'
-- name: cluster-iam
-  type: 03_iam.py
-  properties:
-    infra_id: '${INFRA_ID}'
-EOF
-```
-- `allowed_external_cidr`: limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_network`: the URI to the cluster network
-- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
+Copy [`03_security`](../../../upi/gcp/03_security) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-security --config 03_security.yaml
+```console
+gcloud infra-manager deployments apply upi-security \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./03_security \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},cluster_network=${CLUSTER_NETWORK},network_cidr=${NETWORK_CIDR} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
 ```
 
+- `cluster_network`: the URI to the cluster network
+- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
+- `allowed_external_cidr`: [optional] limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
+
 ## Configure security variables
-Configure the variables based on the `03_security.yaml` deployment.
+Configure the variables based on the `03_security.tf` deployment.
 If you excluded the IAM section, ensure these are set to the `.email` of their associated resources.
 
 ```sh
@@ -444,7 +428,7 @@ export WORKER_SERVICE_ACCOUNT=$(gcloud iam service-accounts list --filter "email
 ```
 
 ## Add required roles to IAM service accounts
-The templates do not create the policy bindings due to limitations of Deployment Manager, so we must create them manually.
+The templates do not create the policy bindings, but we do it manually below.
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 ensure these service accounts have `roles/compute.networkUser` access to each of the host project subnets used by the cluster so the instances can use the networks.
@@ -471,82 +455,81 @@ gcloud iam service-accounts keys create service-account-key.json --iam-account=$
 Locate the RHCOS image source and create a cluster image.
 
 ```sh
-export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/coreos/rhcos.json | jq -r '.architecture.x86_64.images.gcp')
-export IMAGE_NAME=$(echo "${IMAGE_SOURCE}" | jq -r '.name')
-export IMAGE_PROJECT=$(echo "${IMAGE_SOURCE}" | jq -r '.project')
-export CLUSTER_IMAGE=$(gcloud compute images describe ${IMAGE_NAME} --project ${IMAGE_PROJECT} --format json | jq -r .selfLink)
+if openshift-install coreos print-stream-json 2>/tmp/err.txt >coreos.json; then
+  # Note: for OSX users, set environment variable OCP_ARCH.
+ jq '.architectures.'"$(echo "$OCP_ARCH" | sed 's/amd64/x86_64/;s/arm64/aarch64/')"'.images.gcp' < coreos.json > gcp.json
+  source_image="$(jq -r .name < gcp.json)"
+  source_project="$(jq -r .project < gcp.json)"
+  rm -f coreos.json gcp.json
+  gcloud compute images create "${INFRA_ID}-rhcos-image" --source-image="${source_image}" --source-image-project="${source_project}"
+  export CLUSTER_IMAGE=(`gcloud compute images describe ${INFRA_ID}-rhcos-image --format json | jq -r .selfLink`)
+else
+  export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/refs/heads/main/data/data/coreos/coreos-rhel-10.json | jq -r '.architectures.x86_64.images.gcp')
+  export IMAGE_NAME=$(echo "${IMAGE_SOURCE}" | jq -r '.name')
+  export IMAGE_PROJECT=$(echo "${IMAGE_SOURCE}" | jq -r '.project')
+  export CLUSTER_IMAGE=$(gcloud compute images describe ${IMAGE_NAME} --project ${IMAGE_PROJECT} --format json | jq -r .selfLink)
+fi
 ```
 
 ## Upload the bootstrap.ign to a new bucket
 Create a bucket and upload the bootstrap.ign file.
 
 ```sh
-gsutil mb gs://${INFRA_ID}-bootstrap-ignition
-gsutil cp bootstrap.ign gs://${INFRA_ID}-bootstrap-ignition/
+gcloud storage buckets create "gs://${INFRA_ID}-bootstrap-ignition"
+gcloud storage cp bootstrap.ign "gs://${INFRA_ID}-bootstrap-ignition/"
+gcloud storage ls "gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign"
 ```
 
 Create a signed URL for the bootstrap instance to use to access the Ignition
 config. Export the URL from the output as a variable.
 
 ```sh
-export BOOTSTRAP_IGN=$(gsutil signurl -d 1h service-account-key.json gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign | grep "^gs:" | awk '{print $5}')
+BOOTSTRAP_IGN="$(gcloud storage sign-url --duration=1h --private-key-file=service-account-key.json "gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign" | grep "^signed_url:" | awk '{print $2}')"
 ```
 
 ## Launch temporary bootstrap resources
 
-Copy [`04_bootstrap.py`](../../../upi/gcp/04_bootstrap.py) locally.
-
-Create a resource definition file: `04_bootstrap.yaml`
-
-```console
-$ cat <<EOF >04_bootstrap.yaml
-imports:
-- path: 04_bootstrap.py
-resources:
-- name: cluster-bootstrap
-  type: 04_bootstrap.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    zone: '${ZONE_0}'
-    cluster_network: '${CLUSTER_NETWORK}'
-    control_subnet: '${CONTROL_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    bootstrap_ign: '${BOOTSTRAP_IGN}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `zone`: the zone to deploy the bootstrap instance into (for example us-east1-b)
-- `cluster_network`: the URI to the cluster network
-- `control_subnet`: the URI to the control subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: the machine type of the instance (for example n1-standard-4)
-- `bootstrap_ign`: the URL output when creating a signed URL above.
-
-You can add custom tags to `04_bootstrap.py` as needed
-
-```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-master',
-                    context.properties['infra_id'] + '-bootstrap',
-                    'my-custom-tag-example'
-                ]
-            },
-```
+Copy [`04_bootstrap`](../../../upi/gcp/04_bootstrap) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
+### Determine publish policy
 ```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-bootstrap --config 04_bootstrap.yaml
+public_cluster=true
+if [[ "${PUBLISH}" == "Internal" ]]; then
+public_cluster=false
+fi
+```
+
+```console
+gcloud infra-manager deployments apply upi-bootstrap \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./04_bootstrap \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},zone=${ZONE_0},cluster_network=${CLUSTER_NETWORK},subnet=${CONTROL_SUBNET},image=${CLUSTER_IMAGE},bootstrap_ign="${BOOTSTRAP_IGN}",is_public_cluster=${public_cluster} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+- `zone`: the zone to deploy the bootstrap instance into (for example us-east1-b)
+- `cluster_network`: the URI to the cluster network
+- `subnet`: the URI to the control subnet
+- `image`: the URI to the RHCOS image
+- `machine_type`: [optional] the machine type of the instance (for example n1-standard-4)
+- `root_volume_size`: [optional] the size (in GB) for the instance (for example 128)
+- `bootstrap_ign`: the URL output when creating a signed URL above.
+- `is_public_cluster`: boolean value for creating public clusters.
+
+You can add custom tags to `04_bootstrap.tf` as needed
+
+```console
+  tags = [
+    "${var.infra_id}-master",
+    "${var.infra_id}-bootstrap",
+    "custom-tag-example"
+  ]
 ```
 
 ## Add the bootstrap instance to the load balancers
-The templates do not manage load balancer membership due to limitations of Deployment
-Manager, so we must add the bootstrap node manually.
+Add the bootstrap node manually.
 
 ### Add bootstrap instance to internal load balancer instance group
 
@@ -562,60 +545,56 @@ gcloud compute backend-services add-backend ${INFRA_ID}-api-internal --region=${
 
 ## Launch permanent control plane
 
-Copy [`05_control_plane.py`](../../../upi/gcp/05_control_plane.py) locally.
-
-Create a resource definition file: `05_control_plane.yaml`
-
-```console
-$ cat <<EOF >05_control_plane.yaml
-imports:
-- path: 05_control_plane.py
-resources:
-- name: cluster-control-plane
-  type: 05_control_plane.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zones:
-    - '${ZONE_0}'
-    - '${ZONE_1}'
-    - '${ZONE_2}'
-    control_subnet: '${CONTROL_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${MASTER_SERVICE_ACCOUNT}'
-    ignition: '${MASTER_IGNITION}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
-- `control_subnet`: the URI to the control subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: the machine type of the instance (for example n1-standard-4)
-- `service_account_email`: the email address for the master service account created above
-- `ignition`: the contents of the master.ign file
-
-You can add custom tags to `05_control_plane.py` as needed
+### Copy the ignition file
+The ignition data cannot be passed through the infra-manager `input-values`. The data is read from the `master.ign` file.
+The file must be present in the same location as the `.tf` file.
 
 ```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-master',
-                    'my-custom-tag-example'
-                ]
-            },
+cp master.ign 05_control_plane/master.ign
 ```
+
+Copy [`05_control_plane`](../../../upi/gcp/05_control_plane) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-control-plane --config 05_control_plane.yaml
+```console
+gcloud infra-manager deployments apply upi-control-plane \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./05_control_plane \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},zone_0=${ZONE_0},zone_1=${ZONE_1},zone_2=${ZONE_2},subnet=${CONTROL_SUBNET},image=${CLUSTER_IMAGE},service_account_email=${MASTER_SERVICE_ACCOUNT} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+- `zone_0`: the first zone to deploy the control plane instances into (for example us-east1-b)
+- `zone_1`: the second zone to deploy the control plane instances into (for example us-east1-c)
+- `zone_2`: the third zone to deploy the control plane instances into (for example us-east1-d)
+- `subnet`: the URI to the control subnet
+- `image`: the URI to the RHCOS image
+- `machine_type`: [optional] the machine type of the instance (for example n1-standard-4)
+- `disk_size`: [optional] the size (in GB) for the instance (for example 128)
+- `disk_type`: [optional] the type of storage disk (for example pd-ssd)
+- `service_account_email`: the email address for the master service account created above
+
+**Note**: Terraform accepts lists, but the infra-manager will only accept scalar values. If you would like to alter the number
+of zones, please edit the terraform file.
+
+You can add custom tags to `05_control_plane.tf` as needed
+
+```console
+  tags = [
+    "${var.infra_id}-master",
+    "custom-tag-example"
+  ]
+```
+
+### Remove the temporary ignition file
+
+```console
+rm 05_control_plane/master.ign
 ```
 
 ## Add control plane instances to load balancers
-The templates do not manage load balancer membership due to limitations of Deployment
-Manager, so we must add the control plane nodes manually.
+Add the control plane nodes manually.
 
 ### Add control plane instances to internal load balancer instance groups
 
@@ -626,7 +605,7 @@ gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE
 ```
 
 ### Add control plane instances to external load balancer target pools (optional)
-If you deployed external load balancers with `02_infra.yaml`, add the control plane instances to the target pool.
+If you deployed external load balancers with `02_lb_ext.tf`, add the control plane instances to the target pool.
 
 ```sh
 gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-master-0
@@ -637,68 +616,57 @@ gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instance
 ## Launch additional compute nodes
 You may create compute nodes by launching individual instances discretely
 or by automated processes outside the cluster (e.g. Auto Scaling Groups). You
-can also take advantage of the built in cluster scaling mechanisms and the
+can also take advantage of the built-in cluster scaling mechanisms and the
 machine API in OpenShift, as mentioned [above](#create-ignition-configs). In
-this example, we'll manually launch one instance via the Deployment Manager
-template. Additional instances can be launched by including additional
-resources of type 06_worker.py in the file.
+this example, we'll manually launch two worker instances via the Infrastructure Manager
+template. The number of compute instances can be adjusted by increasing/decreasing the
+number of `google_compute_instance` resources in `06_worker.tf`.
 
-Copy [`06_worker.py`](../../../upi/gcp/06_worker.py) locally.
-
-Create a resource definition file: `06_worker.yaml`
-```console
-$ cat <<EOF >06_worker.yaml
-imports:
-- path: 06_worker.py
-resources:
-- name: 'worker-0'
-  type: 06_worker.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zone: '${ZONE_0}'
-    compute_subnet: '${COMPUTE_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${WORKER_SERVICE_ACCOUNT}'
-    ignition: '${WORKER_IGNITION}'
-- name: 'worker-1'
-  type: 06_worker.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zone: '${ZONE_1}'
-    compute_subnet: '${COMPUTE_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${WORKER_SERVICE_ACCOUNT}'
-    ignition: '${WORKER_IGNITION}'
-EOF
-```
-- `name`: the name of the compute node (for example worker-0)
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `zone`: the zone to deploy the worker node into (for example us-east1-b)
-- `compute_subnet`: the URI to the compute subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: The machine type of the instance (for example n1-standard-4)
-- `service_account_email`: the email address for the worker service account created above
-- `ignition`: the contents of the worker.ign file
-
-You can add custom tags to `06_worker.py` as needed
+### Copy the ignition file
+The ignition data cannot be passed through the infra-manager `input-values`. The data is read from the `worker.ign` file.
+The file must be present in the same location as the `.tf` file.
 
 ```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-worker',
-                    'my-custom-tag-example'
-                ]
-            },
+cp worker.ign 06_worker/worker.ign
 ```
+
+Copy [`06_worker`](../../../upi/gcp/06_worker) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-worker --config 06_worker.yaml
+```console
+gcloud infra-manager deployments apply upi-worker \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./06_worker \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},zone_0=${ZONE_0},zone_1=${ZONE_1},subnet=${COMPUTE_SUBNET},image=${CLUSTER_IMAGE},service_account_email=${WORKER_SERVICE_ACCOUNT} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+- `zone_0`: the first zone to deploy the compute instances into (for example us-east1-b)
+- `zone_1`: the second zone to deploy the compute instances into (for example us-east1-c)
+- `subnet`: the URI to the compute subnet
+- `image`: the URI to the RHCOS image
+- `machine_type`: [optional] the machine type of the instance (for example n1-standard-4)
+- `disk_size`: [optional] the size (in GB) for the instance (for example 128)
+- `disk_type`: [optional] the type of storage disk (for example pd-ssd)
+- `service_account_email`: the email address for the worker service account created above
+
+**Note**: Terraform accepts lists, but the infra-manager will only accept scalar values. If you would like to alter the number
+of zones, please edit the terraform file.
+
+You can add custom tags to `06_worker.tf` as needed
+
+```console
+  tags = [
+    "${var.infra_id}-worker",
+    "custom-tag-example"
+  ]
+```
+
+### Remove the temporary ignition file
+
+```console
+rm 06_worker/worker.ign
 ```
 
 ## Monitor for `bootstrap-complete`
@@ -717,10 +685,10 @@ If you are installing into a [Shared VPC (XPN)][sharedvpc],
 it is safe to remove any bootstrap-specific firewall rules at this time.
 
 ```sh
-gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
-gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
-gsutil rb gs://${INFRA_ID}-bootstrap-ignition
-gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap
+gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-ig --instance-group-zone=${ZONE_0}
+gcloud storage rm "gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign"
+gcloud storage buckets delete "gs://${INFRA_ID}-bootstrap-ignition"
+gcloud infra-manager deployments delete --project=${PROJECT_NAME} --location=${REGION} upi-bootstrap
 ```
 
 ## Approving the CSR requests for nodes
@@ -774,6 +742,7 @@ gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
 ```
 
 ### Add the external *.apps DNS record (optional)
+If you deployed external load balancers with `02_lb_ext.tf`, you can deploy external DNS entries.
 
 ```sh
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
@@ -813,7 +782,7 @@ Firewall change required by security admin: `gcloud compute firewall-rules creat
 Create the firewall rules as instructed.
 
 ### Add a cluster-wide health check firewall rule. (option B)
-Add a single firewall rule to allow the gce health checks to access all of the services.
+Add a single firewall rule to allow the gce health checks to access all the services.
 This enables the ingress load balancers to determine the health status of their instances.
 
 ```sh
@@ -840,58 +809,65 @@ Also, you can observe the running state of your cluster pods:
 
 ```console
 $ oc get clusterversion
-NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version             False       True          24m     Working towards 4.2.0-0.okd-2019-08-05-204819: 99% complete
+NAME      VERSION                                    AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.21.0-0.nightly-multi-2026-03-25-233540   True        False         101m    Cluster version is 4.21.0-0.nightly-multi-2026-03-25-233540
 
 $ oc get clusteroperators
-NAME                                       VERSION                         AVAILABLE   PROGRESSING   DEGRADED   SINCE
-authentication                             4.2.0-0.okd-2019-08-05-204819   True        False         False      6m18s
-cloud-credential                           4.2.0-0.okd-2019-08-05-204819   True        False         False      17m
-cluster-autoscaler                         4.2.0-0.okd-2019-08-05-204819   True        False         False      80s
-console                                    4.2.0-0.okd-2019-08-05-204819   True        False         False      3m57s
-dns                                        4.2.0-0.okd-2019-08-05-204819   True        False         False      22m
-image-registry                             4.2.0-0.okd-2019-08-05-204819   True        False         False      5m4s
-ingress                                    4.2.0-0.okd-2019-08-05-204819   True        False         False      4m38s
-insights                                   4.2.0-0.okd-2019-08-05-204819   True        False         False      21m
-kube-apiserver                             4.2.0-0.okd-2019-08-05-204819   True        False         False      12m
-kube-controller-manager                    4.2.0-0.okd-2019-08-05-204819   True        False         False      12m
-kube-scheduler                             4.2.0-0.okd-2019-08-05-204819   True        False         False      11m
-machine-api                                4.2.0-0.okd-2019-08-05-204819   True        False         False      18m
-machine-config                             4.2.0-0.okd-2019-08-05-204819   True        False         False      22m
-marketplace                                4.2.0-0.okd-2019-08-05-204819   True        False         False      5m38s
-monitoring                                 4.2.0-0.okd-2019-08-05-204819   True        False         False      86s
-network                                    4.2.0-0.okd-2019-08-05-204819   True        False         False      14m
-node-tuning                                4.2.0-0.okd-2019-08-05-204819   True        False         False      6m8s
-openshift-apiserver                        4.2.0-0.okd-2019-08-05-204819   True        False         False      6m48s
-openshift-controller-manager               4.2.0-0.okd-2019-08-05-204819   True        False         False      12m
-openshift-samples                          4.2.0-0.okd-2019-08-05-204819   True        False         False      67s
-operator-lifecycle-manager                 4.2.0-0.okd-2019-08-05-204819   True        False         False      15m
-operator-lifecycle-manager-catalog         4.2.0-0.okd-2019-08-05-204819   True        False         False      15m
-operator-lifecycle-manager-packageserver   4.2.0-0.okd-2019-08-05-204819   True        False         False      6m48s
-service-ca                                 4.2.0-0.okd-2019-08-05-204819   True        False         False      17m
-service-catalog-apiserver                  4.2.0-0.okd-2019-08-05-204819   True        False         False      6m18s
-service-catalog-controller-manager         4.2.0-0.okd-2019-08-05-204819   True        False         False      6m19s
-storage                                    4.2.0-0.okd-2019-08-05-204819   True        False         False      6m20s
+NAME                                       VERSION                                    AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+authentication                             4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h31m   
+baremetal                                  4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+cloud-controller-manager                   4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h58m   
+cloud-credential                           4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h59m   
+cluster-autoscaler                         4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+config-operator                            4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h56m   
+console                                    4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h37m   
+control-plane-machine-set                  4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+csi-snapshot-controller                    4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+dns                                        4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h54m   
+etcd                                       4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h53m   
+image-registry                             4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h43m   
+ingress                                    4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      30m     
+insights                                   4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+kube-apiserver                             4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h49m   
+kube-controller-manager                    4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h50m   
+kube-scheduler                             4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h53m   
+kube-storage-version-migrator              4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      108m    
+machine-api                                4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h51m   
+machine-approver                           4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+machine-config                             4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h56m   
+marketplace                                4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+monitoring                                 4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h36m   
+network                                    4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h57m   
+node-tuning                                4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      139m    
+olm                                        4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      107m    
+openshift-apiserver                        4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h44m   
+openshift-controller-manager               4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h44m   
+openshift-samples                          4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h44m   
+operator-lifecycle-manager                 4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+operator-lifecycle-manager-catalog         4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h55m   
+operator-lifecycle-manager-packageserver   4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h44m   
+service-ca                                 4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h56m   
+storage                                    4.21.0-0.nightly-multi-2026-03-25-233540   True        False         False      4h54m 
 
 $ oc get pods --all-namespaces
-NAMESPACE                                               NAME                                                                READY     STATUS      RESTARTS   AGE
-kube-system                                             etcd-member-ip-10-0-3-111.us-east-2.compute.internal                1/1       Running     0          35m
-kube-system                                             etcd-member-ip-10-0-3-239.us-east-2.compute.internal                1/1       Running     0          37m
-kube-system                                             etcd-member-ip-10-0-3-24.us-east-2.compute.internal                 1/1       Running     0          35m
-openshift-apiserver-operator                            openshift-apiserver-operator-6d6674f4f4-h7t2t                       1/1       Running     1          37m
-openshift-apiserver                                     apiserver-fm48r                                                     1/1       Running     0          30m
-openshift-apiserver                                     apiserver-fxkvv                                                     1/1       Running     0          29m
-openshift-apiserver                                     apiserver-q85nm                                                     1/1       Running     0          29m
+NAMESPACE                                          NAME                                                                 READY   STATUS             RESTARTS         AGE
+cert-manager-operator                              cert-manager-operator-controller-manager-664c6bd4-jjzpb              1/1     Running            0                30m
+cert-manager-operator                              konflux-fbc-cert-manager-r2v6b                                       1/1     Running            0                30m
+cert-manager                                       cert-manager-cainjector-5db4d8c596-gwg6g                             1/1     Running            0                30m
+cert-manager                                       cert-manager-ccbf7b774-tthzs                                         1/1     Running            0                30m
+cert-manager                                       cert-manager-webhook-54965d9794-2xsn7                                1/1     Running            0                30m
+external-secrets-operator                          external-secrets-operator-controller-manager-6fb7f5f866-9x6c8        1/1     Running            0                30m
+external-secrets-operator                          konflux-fbc-eso-5qmgr                                                1/1     Running            0                30m
 ...
-openshift-service-ca-operator                           openshift-service-ca-operator-66ff6dc6cd-9r257                      1/1       Running     0          37m
-openshift-service-ca                                    apiservice-cabundle-injector-695b6bcbc-cl5hm                        1/1       Running     0          35m
-openshift-service-ca                                    configmap-cabundle-injector-8498544d7-25qn6                         1/1       Running     0          35m
-openshift-service-ca                                    service-serving-cert-signer-6445fc9c6-wqdqn                         1/1       Running     0          35m
-openshift-service-catalog-apiserver-operator            openshift-service-catalog-apiserver-operator-549f44668b-b5q2w       1/1       Running     0          32m
-openshift-service-catalog-controller-manager-operator   openshift-service-catalog-controller-manager-operator-b78cr2lnm     1/1       Running     0          31m
+openshift-ovn-kubernetes                           ovnkube-node-zwzsj                                                   8/8     Running            9 (115m ago)     123m
+openshift-route-controller-manager                 route-controller-manager-6dfdd544f6-5qx2t                            1/1     Running            0                108m
+openshift-route-controller-manager                 route-controller-manager-6dfdd544f6-j7smc                            1/1     Running            0                120m
+openshift-route-controller-manager                 route-controller-manager-6dfdd544f6-pkhd7                            1/1     Running            0                114m
+openshift-service-ca-operator                      service-ca-operator-777dd59695-spq5f                                 1/1     Running            0                114m
+openshift-service-ca                               service-ca-56c867b864-chftf                                          1/1     Running            0                108m
 ```
 
-[deploymentmanager]: https://cloud.google.com/deployment-manager/docs
+[inframanager]: https://docs.cloud.google.com/infrastructure-manager/docs
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [kubernetes-service-load-balancers-exclude-masters]: https://github.com/kubernetes/kubernetes/issues/65618
 [machine-api-operator]: https://github.com/openshift/machine-api-operator

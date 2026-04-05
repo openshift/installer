@@ -6,11 +6,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -126,38 +127,40 @@ spec:
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			parents := asset.Parents{}
+			cfg := &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				SSHKey:     tc.key,
+				BaseDomain: "test-domain",
+				Platform: types.Platform{
+					AWS: &awstypes.Platform{
+						Region: "us-east-1",
+					},
+				},
+				Compute: []types.MachinePool{
+					{
+						Replicas:       ptr.To(int64(1)),
+						Hyperthreading: tc.hyperthreading,
+						Platform: types.MachinePoolPlatform{
+							AWS: &awstypes.MachinePool{
+								Zones:        []string{"us-east-1a"},
+								InstanceType: "m5.large",
+							},
+						},
+					},
+				},
+			}
+			icAsset := installconfig.MakeAsset(cfg)
+			icAsset.AWS = icaws.NewMetadata(cfg.Platform.AWS.Region, cfg.Platform.AWS.VPC.Subnets, nil)
 			parents.Add(
 				&installconfig.ClusterID{
 					UUID:    "test-uuid",
 					InfraID: "test-infra-id",
 				},
-				installconfig.MakeAsset(
-					&types.InstallConfig{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "test-cluster",
-						},
-						SSHKey:     tc.key,
-						BaseDomain: "test-domain",
-						Platform: types.Platform{
-							AWS: &awstypes.Platform{
-								Region: "us-east-1",
-							},
-						},
-						Compute: []types.MachinePool{
-							{
-								Replicas:       pointer.Int64Ptr(1),
-								Hyperthreading: tc.hyperthreading,
-								Platform: types.MachinePoolPlatform{
-									AWS: &awstypes.MachinePool{
-										Zones:        []string{"us-east-1a"},
-										InstanceType: "m5.large",
-									},
-								},
-							},
-						},
-					}),
+				icAsset,
 				rhcos.MakeAsset("test-image"),
-				(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
+				(*rhcos.Release)(ptr.To("412.86.202208101040-0")),
 				&machine.Worker{
 					File: &asset.File{
 						Filename: "worker-ignition",
@@ -183,34 +186,35 @@ spec:
 
 func TestComputeIsNotModified(t *testing.T) {
 	parents := asset.Parents{}
-	installConfig := installconfig.MakeAsset(
-		&types.InstallConfig{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-cluster",
+	cfg := &types.InstallConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		SSHKey:     "ssh-rsa: dummy-key",
+		BaseDomain: "test-domain",
+		Platform: types.Platform{
+			AWS: &awstypes.Platform{
+				Region: "us-east-1",
+				DefaultMachinePlatform: &awstypes.MachinePool{
+					InstanceType: "TEST_INSTANCE_TYPE",
+				},
 			},
-			SSHKey:     "ssh-rsa: dummy-key",
-			BaseDomain: "test-domain",
-			Platform: types.Platform{
-				AWS: &awstypes.Platform{
-					Region: "us-east-1",
-					DefaultMachinePlatform: &awstypes.MachinePool{
-						InstanceType: "TEST_INSTANCE_TYPE",
+		},
+		Compute: []types.MachinePool{
+			{
+				Replicas:       ptr.To(int64(1)),
+				Hyperthreading: types.HyperthreadingDisabled,
+				Platform: types.MachinePoolPlatform{
+					AWS: &awstypes.MachinePool{
+						Zones:        []string{"us-east-1a"},
+						InstanceType: "",
 					},
 				},
 			},
-			Compute: []types.MachinePool{
-				{
-					Replicas:       pointer.Int64Ptr(1),
-					Hyperthreading: types.HyperthreadingDisabled,
-					Platform: types.MachinePoolPlatform{
-						AWS: &awstypes.MachinePool{
-							Zones:        []string{"us-east-1a"},
-							InstanceType: "",
-						},
-					},
-				},
-			},
-		})
+		},
+	}
+	installConfig := installconfig.MakeAsset(cfg)
+	installConfig.AWS = icaws.NewMetadata(cfg.Platform.AWS.Region, cfg.Platform.AWS.VPC.Subnets, nil)
 
 	parents.Add(
 		&installconfig.ClusterID{
@@ -219,7 +223,7 @@ func TestComputeIsNotModified(t *testing.T) {
 		},
 		installConfig,
 		rhcos.MakeAsset("test-image"),
-		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
+		(*rhcos.Release)(ptr.To("412.86.202208101040-0")),
 		&machine.Worker{
 			File: &asset.File{
 				Filename: "worker-ignition",

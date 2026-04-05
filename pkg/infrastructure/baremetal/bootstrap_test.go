@@ -22,6 +22,11 @@ func TestNewDomain(t *testing.T) {
 	assert.NotEmpty(t, dom.Devices.RNGs, "RNG device should be configured")
 	assert.NotEmpty(t, dom.Devices.Graphics, "graphics should be configured")
 	assert.NotEmpty(t, dom.Devices.Consoles, "console should be configured")
+	assert.NotEmpty(t, dom.Devices.Serials, "serial device should be configured")
+	assert.NotNil(t, dom.Devices.Serials[0].Log, "serial device should have a log file configured")
+	assert.Equal(t, "/var/log/libvirt/qemu/test-bootstrap-serial0.log", dom.Devices.Serials[0].Log.File)
+	assert.Equal(t, "on", dom.Devices.Serials[0].Log.Append)
+	assert.Nil(t, dom.Devices.Serials[0].Target, "serial target should not be set by newDomain")
 }
 
 func TestConfigureDomainArch(t *testing.T) {
@@ -76,6 +81,8 @@ func TestConfigureDomainArch(t *testing.T) {
 			} else {
 				assert.Nil(t, dom.Devices.Graphics, "graphics should be removed for %s", tc.arch)
 			}
+
+			assert.NotEmpty(t, dom.Devices.Serials, "serial device should be present for %s", tc.arch)
 		})
 	}
 }
