@@ -41,8 +41,9 @@ func EffectiveSignerPKIProfile(ic *types.InstallConfig) configv1alpha1.PKIProfil
 }
 
 // EffectiveSignerPKIConfig returns the effective PKI config for signer certificate generation.
-// Deprecated: Use EffectiveSignerPKIProfile via the SignerPKIConfig asset instead.
 // This function is retained temporarily for callers that have not yet been migrated.
+//
+// Deprecated: Use EffectiveSignerPKIProfile via the SignerPKIConfig asset instead.
 func EffectiveSignerPKIConfig(ic *types.InstallConfig) *types.PKIConfig {
 	if ic.PKI != nil {
 		return ic.PKI
