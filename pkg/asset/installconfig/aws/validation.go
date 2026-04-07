@@ -673,6 +673,7 @@ func validateSubnetCIDRs(fldPath *field.Path, subnetDataGroup map[string]subnetD
 		}
 
 		// If dualstack is enabled, the subnet must also have an IPv6 CIDR
+		// no-op: trigger CI for dualstack
 		if ic.AWS.IPFamily.DualStackEnabled() {
 			if len(subnetData.IPv6CIDR) == 0 {
 				allErrs = append(allErrs, field.Required(fp, "subnet does not have an associated IPv6 CIDR block"))
