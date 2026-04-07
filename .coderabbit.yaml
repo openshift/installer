@@ -1,0 +1,137 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+tone_instructions: >-
+  Be concise and direct. Focus on correctness, security, and backward
+  compatibility. This is infrastructure software that provisions cloud
+  resources — mistakes can be costly and hard to reverse.
+
+reviews:
+  profile: chill
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  review_status: true
+  commit_status: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: false
+  estimate_code_review_effort: true
+  request_changes_workflow: false
+  poem: false
+  suggested_labels:
+    - platform/aws
+    - platform/openstack
+    - kind/bug
+    - kind/feature
+    - kind/cleanup
+    - kind/documentation
+  suggested_reviewers: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - WIP
+      - DO NOT MERGE
+      - DNM
+    base_branches:
+      - main
+      - "release-4.*"
+  path_filters:
+    # Exclude vendored dependencies — reviewed separately
+    - "!vendor/**"
+    - "!**/vendor/**"
+    # Exclude generated CRD manifests (auto-generated)
+    - "!data/data/install.openshift.io_installconfigs.yaml"
+  path_instructions:
+    - path: "pkg/types/**/validation/**"
+      instructions: >-
+        This is install-config validation code. Ensure validation errors are
+        clear and actionable for the end user. Check that new validations do
+        not break existing valid configs (backward compatibility). Verify
+        error field paths match the YAML/JSON structure users provide.
+    - path: "pkg/types/**/defaults/**"
+      instructions: >-
+        This is defaulting logic for install-config fields. Ensure defaults
+        are only applied when the field is zero-valued. Verify platform-
+        specific defaults don't conflict with cross-platform defaults.
+    - path: "pkg/asset/**"
+      instructions: >-
+        This code follows the asset dependency-graph architecture. Verify
+        that Dependencies() returns all required assets and that Generate()
+        properly consumes them. Check that file names and paths are correct
+        for the target output.
+    - path: "pkg/destroy/**"
+      instructions: >-
+        This is cluster teardown code. Be extra careful — bugs here can
+        leave orphaned cloud resources that cost money. Verify proper error
+        handling and that all resources created during install are cleaned up.
+    - path: "pkg/infrastructure/**"
+      instructions: >-
+        Infrastructure provisioning code. Verify cloud API calls handle
+        errors and retries properly. Check for resource leaks on failure
+        paths. Ensure tags/labels are applied consistently.
+    - path: "cluster-api/providers/**"
+      instructions: >-
+        Cluster API infrastructure providers. Ensure changes are compatible
+        with the CAPI contract and that controller reconciliation is
+        idempotent.
+    - path: "data/data/**"
+      instructions: >-
+        Static data files embedded in the installer binary. For bootimage
+        metadata (rhcos.json), verify URLs and SHA256 digests. For manifests,
+        ensure YAML is valid and API versions are correct.
+    - path: "hack/**"
+      instructions: >-
+        Build and CI scripts. Ensure scripts are POSIX-compatible where
+        possible, use set -e, and handle errors. Check for hardcoded paths
+        that may not work in all environments.
+    - path: "upi/**"
+      instructions: >-
+        User-Provisioned Infrastructure templates (ARM, CloudFormation, etc.).
+        These are used directly by customers. Ensure backward compatibility
+        and that parameter defaults are sensible.
+    - path: "**/*_test.go"
+      instructions: >-
+        Test files. Verify edge cases are covered, especially for validation
+        and defaulting logic. Check that test names follow Go conventions
+        and are descriptive. Ensure mocks are used appropriately.
+    - path: "images/**"
+      instructions: >-
+        Container image definitions. Check for pinned base image versions
+        and unnecessary layers. Verify multi-stage builds minimize final
+        image size.
+    - path: "docs/**"
+      instructions: >-
+        User-facing documentation. Ensure accuracy, check for broken links,
+        and verify command examples actually work. Flag outdated platform
+        references.
+
+tools:
+  golangci-lint:
+    enabled: true
+  shellcheck:
+    enabled: true
+  yamllint:
+    enabled: true
+  hadolint:
+    enabled: true
+  gitleaks:
+    enabled: true
+  semgrep:
+    enabled: true
+  checkov:
+    enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    filePatterns:
+      - "docs/*-guidelines.md"
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
