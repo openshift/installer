@@ -592,7 +592,7 @@ func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (
 		if err != nil || controlPlaneSubnet == nil {
 			return "", fmt.Errorf("failed to get azure control plane subnet: %w", err)
 		} else if controlPlaneSubnet.Properties == nil || (controlPlaneSubnet.Properties.AddressPrefixes == nil && controlPlaneSubnet.Properties.AddressPrefix == nil) {
-			return "", fmt.Errorf("failed to get azure control plane subnet addresses: %w", err)
+			return "", fmt.Errorf("failed to get azure control plane subnet addresses")
 		}
 		subnetList := []*net.IPNet{}
 		if controlPlaneSubnet.Properties.AddressPrefixes != nil {
@@ -648,7 +648,7 @@ func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.Subne
 		return nil, fmt.Errorf("failed to get subnet")
 	}
 	if subnet.Properties == nil || (subnet.Properties.AddressPrefixes == nil && subnet.Properties.AddressPrefix == nil) {
-		return nil, fmt.Errorf("failed to get subnet addresses: %w", err)
+		return nil, fmt.Errorf("failed to get subnet addresses")
 	}
 	return subnet, nil
 }
@@ -737,7 +737,7 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 			return "", fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
 		if controlPlane.Properties == nil || (controlPlane.Properties.AddressPrefix == nil && controlPlane.Properties.AddressPrefixes == nil) {
-			return "", fmt.Errorf("failed to get control plane subnet addresses: %w", err)
+			return "", fmt.Errorf("failed to get control plane subnet addresses")
 		}
 		prefixes := []*ipnet.IPNet{}
 		if controlPlane.Properties.AddressPrefixes != nil {
