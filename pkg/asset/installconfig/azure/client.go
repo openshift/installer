@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/marketplaceordering/armmarketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
@@ -445,21 +445,28 @@ func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, off
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
 func (c *Client) AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error) {
-	client := azmarketplace.NewMarketplaceAgreementsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armmarketplaceordering.NewMarketplaceAgreementsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return false, fmt.Errorf("failed to create marketplace agreements client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	terms, err := client.Get(ctx, publisher, offer, sku)
+	resp, err := client.Get(ctx, armmarketplaceordering.OfferTypeVirtualmachine, publisher, offer, sku, nil)
 	if err != nil {
 		return false, err
 	}
 
-	if terms.AgreementProperties == nil {
+	if resp.Properties == nil {
 		return false, errors.New("no agreement properties for image")
 	}
 
-	return terms.AgreementProperties.Accepted != nil && *terms.AgreementProperties.Accepted, nil
+	return resp.Properties.Accepted != nil && *resp.Properties.Accepted, nil
 }
 
 // GetAvailabilityZones retrieves a list of availability zones for the given region, and instance type.
