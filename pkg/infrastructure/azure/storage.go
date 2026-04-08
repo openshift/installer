@@ -28,6 +28,11 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
+// AzureStackStorageAPIVersion is the API version required for Azure Stack Hub
+// storage management operations. Azure Stack Hub doesn't support the latest
+// API versions that the V2 SDK defaults to.
+const AzureStackStorageAPIVersion = "2019-06-01"
+
 var (
 	vaultsClient *armkeyvault.VaultsClient
 	keysClient   *armkeyvault.KeysClient
@@ -47,6 +52,9 @@ type CreateStorageAccountInput struct {
 	CloudName            aztypes.CloudEnvironment
 	TokenCredential      azcore.TokenCredential
 	ClientOpts           *arm.ClientOptions
+	// APIVersion overrides the default API version for storage operations.
+	// Use "2019-06-01" for Azure Stack Hub compatibility.
+	APIVersion string
 }
 
 // CreateStorageAccountOutput contains the return values after creating a
@@ -74,11 +82,8 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 
 	opts := &arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
-			Cloud: in.ClientOpts.Cloud,
-			// Override is not supported in v1.6.0 of the sdk
-			// so we use legacy SDKs to achieve this same functionality
-			// in a separate code path for Azure Stack.
-			//APIVersion: "2019-06-01",
+			Cloud:      in.ClientOpts.Cloud,
+			APIVersion: in.APIVersion,
 		},
 	}
 	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, opts)
@@ -578,7 +583,8 @@ func createAccountOnStack(ctx context.Context, in *CreateBlockBlobInput) error {
 		in.TokenCredential,
 		&arm.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud: in.Session.CloudConfig,
+				Cloud:      in.Session.CloudConfig,
+				APIVersion: AzureStackStorageAPIVersion,
 			},
 		},
 	)
@@ -612,7 +618,8 @@ func getStorageAccountKey(ctx context.Context, in *CreateBlockBlobInput) (string
 		in.TokenCredential,
 		&arm.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
-				Cloud: in.Session.CloudConfig,
+				Cloud:      in.Session.CloudConfig,
+				APIVersion: AzureStackStorageAPIVersion,
 			},
 		},
 	)
