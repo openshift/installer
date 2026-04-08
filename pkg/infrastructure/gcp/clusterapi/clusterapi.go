@@ -32,7 +32,7 @@ var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
-var _ clusterapi.BootstrapDestroyer = (*Provider)(nil)
+var _ clusterapi.PostDestroyer = (*Provider)(nil)
 
 // Name returns the name for the platform.
 func (p Provider) Name() string {
@@ -197,10 +197,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		logrus.Debugf("publish strategy is set to external but api address is empty")
 	}
 
-	if err := createBootstrapFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
-		return fmt.Errorf("failed to add bootstrap firewall rule: %w", err)
-	}
-
 	client, err := icgcp.NewClient(context.TODO(), in.InstallConfig.Config.GCP.Endpoint)
 	if err != nil {
 		return err
@@ -235,12 +231,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("could not find master subnet %s in subnets %v", masterSubnetName, subnets)
 	}
 
-	// The firewall for masters, aka control-plane, is created by CAPG
-	// Create the ones needed for worker to master communication
-	if err = createFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
-		return fmt.Errorf("failed to add firewall rules: %w", err)
-	}
-
 	if in.InstallConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 		// Get the network from the GCP Cluster. The network is used to create the private managed zone.
 		if gcpCluster.Status.Network.SelfLink == nil {
@@ -266,8 +256,10 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	return nil
 }
 
-// DestroyBootstrap destroys the temporary bootstrap resources.
-func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
+// PostDestroy destroys the temporary bootstrap resources after they are no longer needed. The
+// resources will remain until the cluster-api controllers have shutdown to ensure that the
+// resources are not re-created by the CAPG reconciler.
+func (p Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
 	logrus.Warnf("Destroying GCP Bootstrap Resources")
 	storageOpts := []option.ClientOption{}
 	endpoint := in.Metadata.GCP.Endpoint
@@ -284,6 +276,7 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	}
 
 	if in.Metadata.GCP.FirewallRulesManagement == gcptypes.UnmanagedFirewallRules {
+		// cluster does not manage firewall rules, skip the deletion of the bootstrap firewall rule(s).
 		return nil
 	}
 
@@ -293,15 +286,6 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	}
 	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID, in.Metadata.GCP.Endpoint); err != nil {
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
-	}
-
-	if in.Metadata.GCP.NetworkProjectID == "" {
-		// Remove the overly permissive firewall rules created by CAPG that are redundant with those created by installer
-		// These are not created in a shared VPC installation
-		logrus.Infof("Removing firewall rules created by cluster-api-provider-gcp")
-		if err := removeCAPGFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID, in.Metadata.GCP.Endpoint); err != nil {
-			return fmt.Errorf("failed to remove firewall rules created by cluster-api-provider-gcp: %w", err)
-		}
 	}
 
 	return nil

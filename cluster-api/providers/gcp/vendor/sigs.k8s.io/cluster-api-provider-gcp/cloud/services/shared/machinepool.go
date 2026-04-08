@@ -21,14 +21,14 @@ import (
 	"fmt"
 	"strings"
 
-	clusterv1exp "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 )
 
 // ManagedMachinePoolPreflightCheck will perform checks against the machine pool before its created.
-func ManagedMachinePoolPreflightCheck(managedPool *infrav1exp.GCPManagedMachinePool, machinePool *clusterv1exp.MachinePool, location string) error {
+func ManagedMachinePoolPreflightCheck(managedPool *infrav1exp.GCPManagedMachinePool, machinePool *clusterv1.MachinePool, location string) error {
 	if machinePool.Spec.Template.Spec.InfrastructureRef.Name != managedPool.Name {
 		return fmt.Errorf("expect machinepool infraref (%s) to match managed machine pool name (%s)", machinePool.Spec.Template.Spec.InfrastructureRef.Name, managedPool.Name)
 	}
@@ -49,7 +49,7 @@ func ManagedMachinePoolPreflightCheck(managedPool *infrav1exp.GCPManagedMachineP
 }
 
 // ManagedMachinePoolsPreflightCheck will perform checks against a slice of machine pool before they are created.
-func ManagedMachinePoolsPreflightCheck(managedPools []infrav1exp.GCPManagedMachinePool, machinePools []clusterv1exp.MachinePool, location string) error {
+func ManagedMachinePoolsPreflightCheck(managedPools []infrav1exp.GCPManagedMachinePool, machinePools []clusterv1.MachinePool, location string) error {
 	if len(machinePools) != len(managedPools) {
 		return errors.New("each machinepool must have a matching gcpmanagedmachinepool")
 	}

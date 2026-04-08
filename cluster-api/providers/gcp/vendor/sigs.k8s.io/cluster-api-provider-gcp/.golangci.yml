@@ -77,6 +77,14 @@ linters:
           alias: kerrors
         - pkg: sigs.k8s.io/controller-runtime
           alias: ctrl
+        - pkg: "sigs.k8s.io/cluster-api/api/core/v1beta2"
+          alias: clusterv1
+        - pkg: "sigs.k8s.io/cluster-api/api/core/v1beta1"
+          alias: clusterv1beta1
+        - pkg: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+          alias: v1beta1patch
+        - pkg: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+          alias: v1beta1conditions
       no-unaliased: true
   exclusions:
     generated: lax

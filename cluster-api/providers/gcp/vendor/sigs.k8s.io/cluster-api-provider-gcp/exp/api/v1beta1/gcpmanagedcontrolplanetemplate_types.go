@@ -26,7 +26,7 @@ type GCPManagedControlPlaneTemplateSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:path=gcpmanagedcontrolplanetemplates,scope=Namespaced,categories=cluster-api,shortName=amcpt
+// +kubebuilder:resource:path=gcpmanagedcontrolplanetemplates,scope=Namespaced,categories=cluster-api,shortName=gcpmcpt
 // +kubebuilder:storageversion
 
 // GCPManagedControlPlaneTemplate is the Schema for the GCPManagedControlPlaneTemplates API.
