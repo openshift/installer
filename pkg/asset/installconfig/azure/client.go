@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/marketplaceordering/armmarketplaceordering"
@@ -48,7 +46,9 @@ type API interface {
 	GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error
 }
 
-// APIVersion describes to the version to use for Azure API calls that support both azure and azurestack.
+// APIVersion describes the version to use for Azure API calls that support both azure and azurestack.
+// Deprecated: Use ClientConfig.ClientOptions(ServiceNetwork) which automatically applies the correct
+// API version based on the cloud environment. This constant is retained for backward compatibility.
 const APIVersion = "2019-11-01"
 
 // Client makes calls to the Azure API.
@@ -130,12 +130,7 @@ func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, v
 
 // getVnetsClient sets up a new client to retrieve vnets
 func (c *Client) getVirtualNetworksClient() (*armnetwork.VirtualNetworksClient, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	return armnetwork.NewVirtualNetworksClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	return armnetwork.NewVirtualNetworksClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // GetStorageEndpointSuffix retrieves the StorageEndpointSuffix from the
@@ -146,12 +141,7 @@ func (c *Client) GetStorageEndpointSuffix(ctx context.Context) (string, error) {
 
 // getSubnetsClient sets up a new client to retrieve a subnet
 func (c *Client) getSubnetsClient() (*armnetwork.SubnetsClient, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	return armnetwork.NewSubnetsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	return armnetwork.NewSubnetsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // ListLocations lists the Azure regions dir the given subscription
@@ -179,12 +169,7 @@ func (c *Client) ListLocations(ctx context.Context) ([]*armsubscriptions.Locatio
 
 // getSubscriptionsClient sets up a new client to retrieve subscription data
 func (c *Client) getSubscriptionsClient() (*armsubscriptions.Client, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	return armsubscriptions.NewClient(c.ssn.TokenCreds, clientOpts)
+	return armsubscriptions.NewClient(c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 }
 
 // GetResourcesProvider gets the Azure resource provider
@@ -207,22 +192,12 @@ func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNames
 
 // getProvidersClient sets up a new client to retrieve providers data
 func (c *Client) getProvidersClient() (*armresources.ProvidersClient, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	return armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	return armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
 func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]*armcompute.ResourceSKU, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
 	}
@@ -262,12 +237,7 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]*armcompute.
 
 // GetGroup returns resource group for the groupName.
 func (c *Client) GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armresources.NewResourceGroupsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armresources.NewResourceGroupsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource groups client: %w", err)
 	}
@@ -283,12 +253,7 @@ func (c *Client) GetGroup(ctx context.Context, groupName string) (*armresources.
 
 // ListResourceIDsByGroup returns a list of resource IDs for resource group groupName.
 func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armresources.NewClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armresources.NewClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resources client: %w", err)
 	}
@@ -313,12 +278,7 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 
 // GetVirtualMachineSku retrieves the resource SKU of a specified virtual machine SKU in the specified region.
 func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*armcompute.ResourceSKU, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
 	}
@@ -365,12 +325,7 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 	if !strings.EqualFold(c.ssn.Credentials.SubscriptionID, subscriptionID) {
 		return nil, fmt.Errorf("different subscription from resource group subscription. Azure does not support cross subscription encryption sets")
 	}
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armcompute.NewDiskEncryptionSetsClient(subscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armcompute.NewDiskEncryptionSetsClient(subscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create disk encryption sets client: %w", err)
 	}
@@ -424,12 +379,7 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 
 // GetMarketplaceImage get the specified marketplace VM image.
 func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (*armcompute.VirtualMachineImage, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armcompute.NewVirtualMachineImagesClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armcompute.NewVirtualMachineImagesClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create virtual machine images client: %w", err)
 	}
@@ -445,12 +395,7 @@ func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, off
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
 func (c *Client) AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armmarketplaceordering.NewMarketplaceAgreementsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armmarketplaceordering.NewMarketplaceAgreementsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 	if err != nil {
 		return false, fmt.Errorf("failed to create marketplace agreements client: %w", err)
 	}
@@ -490,12 +435,7 @@ func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instan
 
 // GetLocationInfo retrieves the location info associated with the instance type in region
 func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*armcompute.ResourceSKULocationInfo, error) {
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
 	}
@@ -530,14 +470,7 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 // CheckIfExistsStorageAccount checks if the storage account provided already exists for diagnostics
 // purposes.
 func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName, region string) error {
-	accountClientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: "2019-04-01",
-			Cloud:      c.ssn.CloudConfig,
-		},
-	}
-	storageClient, err := azstorage.NewAccountsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &accountClientOptions)
+	storageClient, err := azstorage.NewAccountsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceStorage))
 	if err != nil {
 		return err
 	}
@@ -558,14 +491,7 @@ func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup,
 
 // GetRegionAvailabilityZones checks if a given region has availabililty zones for the nat gateways to use.
 func (c *Client) GetRegionAvailabilityZones(ctx context.Context, region string) ([]string, error) {
-	clientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: APIVersion,
-			Cloud:      c.ssn.CloudConfig,
-		},
-	}
-	providersClient, err := armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &clientOptions)
+	providersClient, err := armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create providers client: %w", err)
 	}
@@ -625,14 +551,7 @@ func getZoneMappings(zm *armresources.ZoneMapping, region string) []string {
 
 // CheckSubnetNatgateway checks if there is an existing NAT gateway in a subnet.
 func (c *Client) CheckSubnetNatgateway(ctx context.Context, resourceGroup, virtualNetwork, subnet string) (bool, error) {
-	clientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: APIVersion,
-			Cloud:      c.ssn.CloudConfig,
-		},
-	}
-	clientFactory, err := armnetwork.NewClientFactory(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &clientOptions)
+	clientFactory, err := armnetwork.NewClientFactory(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 	if err != nil {
 		return false, fmt.Errorf("failed to create client factory: %w", err)
 	}
@@ -662,15 +581,9 @@ func (c *Client) GetUserAssignedIdentity(ctx context.Context, subscriptionID, re
 		subID = c.ssn.Credentials.SubscriptionID
 	}
 
-	clientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// Don't override APIVersion for managed identities - let SDK use the default
-			// API version which supports user-assigned identities. The generic APIVersion
-			// constant (2019-11-01) doesn't support the managed identity API.
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armmsi.NewUserAssignedIdentitiesClient(subID, c.ssn.TokenCreds, &clientOptions)
+	// Don't override APIVersion for managed identities - let SDK use the default
+	// API version which supports user-assigned identities.
+	client, err := armmsi.NewUserAssignedIdentitiesClient(subID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 	if err != nil {
 		return fmt.Errorf("failed to create user-assigned identities client: %w", err)
 	}

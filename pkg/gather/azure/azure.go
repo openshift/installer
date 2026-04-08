@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
@@ -54,26 +52,13 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 		return nil, err
 	}
 
-	accountClientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: "2019-04-01",
-			Cloud:      session.CloudConfig,
-		},
-	}
-	accountsClient, err := armstorage.NewAccountsClient(session.Credentials.SubscriptionID, session.TokenCreds, &accountClientOptions)
+	// Use ClientConfig which handles API version overrides for Azure Stack Hub automatically
+	accountsClient, err := armstorage.NewAccountsClient(session.Credentials.SubscriptionID, session.TokenCreds, session.ClientConfig.ClientOptions(azuresession.ServiceStorage))
 	if err != nil {
 		return nil, err
 	}
 
-	vmClientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must both support AzureStack and BootDignosticsData
-			APIVersion: "2020-06-01",
-			Cloud:      session.CloudConfig,
-		},
-	}
-	virtualMachinesClient, err := armcompute.NewVirtualMachinesClient(session.Credentials.SubscriptionID, session.TokenCreds, &vmClientOptions)
+	virtualMachinesClient, err := armcompute.NewVirtualMachinesClient(session.Credentials.SubscriptionID, session.TokenCreds, session.ClientConfig.ClientOptions(azuresession.ServiceCompute))
 	if err != nil {
 		return nil, err
 	}

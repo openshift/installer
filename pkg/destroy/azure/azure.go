@@ -64,35 +64,34 @@ type ClusterUninstaller struct {
 func (o *ClusterUninstaller) configureClients() error {
 	subscriptionID := o.Session.Credentials.SubscriptionID
 
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: azcore.ClientOptions{
-			Cloud: o.Session.CloudConfig,
-		},
-	}
+	// Use ClientConfig which handles API version overrides for different Azure environments
+	defaultOpts := o.Session.ClientConfig.DefaultClientOptions()
+	dnsOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceDNS)
+	networkOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceNetwork)
 
 	var err error
 
-	o.resourceGroupsClient, err = armresources.NewResourceGroupsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.resourceGroupsClient, err = armresources.NewResourceGroupsClient(subscriptionID, o.Session.TokenCreds, defaultOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create resource groups client: %w", err)
 	}
 
-	o.zonesClient, err = armdns.NewZonesClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.zonesClient, err = armdns.NewZonesClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create zones client: %w", err)
 	}
 
-	o.recordsClient, err = armdns.NewRecordSetsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.recordsClient, err = armdns.NewRecordSetsClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create record sets client: %w", err)
 	}
 
-	o.privateZonesClient, err = armprivatedns.NewPrivateZonesClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.privateZonesClient, err = armprivatedns.NewPrivateZonesClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create private zones client: %w", err)
 	}
 
-	o.privateRecordSetsClient, err = armprivatedns.NewRecordSetsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.privateRecordSetsClient, err = armprivatedns.NewRecordSetsClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create private record sets client: %w", err)
 	}
@@ -113,22 +112,22 @@ func (o *ClusterUninstaller) configureClients() error {
 	}
 	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
-	o.resourceGraphClient, err = armresourcegraph.NewClient(o.Session.TokenCreds, clientOpts)
+	o.resourceGraphClient, err = armresourcegraph.NewClient(o.Session.TokenCreds, defaultOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create resource graph client: %w", err)
 	}
 
-	o.tagsClient, err = armresources.NewTagsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.tagsClient, err = armresources.NewTagsClient(subscriptionID, o.Session.TokenCreds, defaultOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create tags client: %w", err)
 	}
 
-	o.vnetClient, err = armnetwork.NewVirtualNetworksClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.vnetClient, err = armnetwork.NewVirtualNetworksClient(subscriptionID, o.Session.TokenCreds, networkOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create vnet client: %w", err)
 	}
 
-	o.subnetClient, err = armnetwork.NewSubnetsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.subnetClient, err = armnetwork.NewSubnetsClient(subscriptionID, o.Session.TokenCreds, networkOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create subnet client: %w", err)
 	}
