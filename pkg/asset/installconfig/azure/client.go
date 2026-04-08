@@ -9,7 +9,6 @@ import (
 
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
@@ -26,10 +25,10 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
-	GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*aznetwork.VirtualNetwork, error)
-	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error)
-	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
-	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
+	GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*armnetwork.VirtualNetwork, error)
+	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*armnetwork.IPAddressAvailabilityResult, error)
+	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
+	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
 	GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error)
@@ -67,74 +66,77 @@ func NewClient(ssn *Session) *Client {
 }
 
 // GetVirtualNetwork gets an Azure virtual network by name
-func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*aznetwork.VirtualNetwork, error) {
+func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*armnetwork.VirtualNetwork, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	vnetClient, err := c.getVirtualNetworksClient()
 	if err != nil {
 		return nil, err
 	}
 
-	vnet, err := vnetClient.Get(ctx, resourceGroupName, virtualNetwork, "")
+	resp, err := vnetClient.Get(ctx, resourceGroupName, virtualNetwork, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get virtual network %s: %w", virtualNetwork, err)
 	}
 
-	return &vnet, nil
+	return &resp.VirtualNetwork, nil
 }
 
 // CheckIPAddressAvailability checks availability of an IP address in an Azure virtual network.
-func (c *Client) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error) {
+func (c *Client) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*armnetwork.IPAddressAvailabilityResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	vnetClient, err := c.getVirtualNetworksClient()
 	if err != nil {
 		return nil, err
 	}
 
-	availability, err := vnetClient.CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr)
+	resp, err := vnetClient.CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get azure ip availability: %w", err)
 	}
 
-	return &availability, nil
+	return &resp.IPAddressAvailabilityResult, nil
 }
 
 // getSubnet gets an Azure subnet by name
-func (c *Client) getSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*aznetwork.Subnet, error) {
+func (c *Client) getSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*armnetwork.Subnet, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	subnetsClient, err := c.getSubnetsClient(ctx)
+	subnetsClient, err := c.getSubnetsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	subnet, err := subnetsClient.Get(ctx, resourceGroupName, virtualNetwork, subNetwork, "")
+	resp, err := subnetsClient.Get(ctx, resourceGroupName, virtualNetwork, subNetwork, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get subnet %s: %w", subNetwork, err)
 	}
 
-	return &subnet, nil
+	return &resp.Subnet, nil
 }
 
 // GetComputeSubnet gets the Azure compute subnet
-func (c *Client) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*aznetwork.Subnet, error) {
+func (c *Client) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*armnetwork.Subnet, error) {
 	return c.getSubnet(ctx, resourceGroupName, virtualNetwork, subNetwork)
 }
 
 // GetControlPlaneSubnet gets the Azure control plane subnet
-func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*aznetwork.Subnet, error) {
+func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*armnetwork.Subnet, error) {
 	return c.getSubnet(ctx, resourceGroupName, virtualNetwork, subNetwork)
 }
 
 // getVnetsClient sets up a new client to retrieve vnets
-func (c *Client) getVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
-	vnetsClient := aznetwork.NewVirtualNetworksClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	vnetsClient.Authorizer = c.ssn.Authorizer
-	return &vnetsClient, nil
+func (c *Client) getVirtualNetworksClient() (*armnetwork.VirtualNetworksClient, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	return armnetwork.NewVirtualNetworksClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
 }
 
 // GetStorageEndpointSuffix retrieves the StorageEndpointSuffix from the
@@ -144,10 +146,13 @@ func (c *Client) GetStorageEndpointSuffix(ctx context.Context) (string, error) {
 }
 
 // getSubnetsClient sets up a new client to retrieve a subnet
-func (c *Client) getSubnetsClient(ctx context.Context) (*aznetwork.SubnetsClient, error) {
-	subnetClient := aznetwork.NewSubnetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	subnetClient.Authorizer = c.ssn.Authorizer
-	return &subnetClient, nil
+func (c *Client) getSubnetsClient() (*armnetwork.SubnetsClient, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	return armnetwork.NewSubnetsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
 }
 
 // ListLocations lists the Azure regions dir the given subscription

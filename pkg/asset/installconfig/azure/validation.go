@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -531,20 +531,20 @@ func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) 
 }
 
 // validateSubnet checks that the subnet is in the same network as the machine CIDR
-func validateSubnet(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
+func validateSubnet(client API, fieldPath *field.Path, subnet *armnetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if subnet == nil || subnet.SubnetPropertiesFormat == nil {
+	if subnet == nil || subnet.Properties == nil {
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "cannot get subnet information"))
 	}
 
 	var addressPrefix string
 	switch {
-	case subnet.AddressPrefix != nil:
-		addressPrefix = *subnet.AddressPrefix
+	case subnet.Properties.AddressPrefix != nil:
+		addressPrefix = *subnet.Properties.AddressPrefix
 	// NOTE: if the subscription has the `AllowMultipleAddressPrefixesOnSubnet` feature, the Azure API will return a
 	// `addressPrefixes` field with a slice of addresses instead of a single value via `addressPrefix`.
-	case subnet.AddressPrefixes != nil && len(*subnet.AddressPrefixes) > 0:
-		addressPrefix = (*subnet.AddressPrefixes)[0]
+	case subnet.Properties.AddressPrefixes != nil && len(subnet.Properties.AddressPrefixes) > 0:
+		addressPrefix = *subnet.Properties.AddressPrefixes[0]
 	default:
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "subnet does not have an address prefix"))
 	}
@@ -1048,7 +1048,7 @@ func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region s
 }
 
 // validateSubnetNatGateway checks whether a NAT Gateway is already attached to a compute subnet.
-func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, outboundType aztypes.OutboundType, role capz.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
+func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *armnetwork.Subnet, outboundType aztypes.OutboundType, role capz.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
 	var allErrs field.ErrorList
 	if outboundType != aztypes.NATGatewayMultiZoneOutboundType && outboundType != aztypes.NATGatewaySingleZoneOutboundType {
 		return allErrs
@@ -1072,7 +1072,7 @@ func validateCustomSubnets(client API, fldPath *field.Path, ic *types.InstallCon
 	virtualNetwork := ic.Azure.VirtualNetwork
 	networkResourceGroupName := ic.Azure.NetworkResourceGroupName
 
-	vnetSubnetList := map[string]*aznetwork.Subnet{}
+	vnetSubnetList := map[string]*armnetwork.Subnet{}
 	if virtualNetwork != "" {
 		existingVnet, err := client.GetVirtualNetwork(context.TODO(), networkResourceGroupName, virtualNetwork)
 		if err != nil || existingVnet == nil {
@@ -1084,9 +1084,11 @@ func validateCustomSubnets(client API, fldPath *field.Path, ic *types.InstallCon
 				fmt.Sprintf("virtual network in region %s not in the same region as resource group %s mentioned", *existingVnet.Location, ic.Azure.Region)))
 			return allErrs
 		}
-		if existingVnet.VirtualNetworkPropertiesFormat != nil && existingVnet.Subnets != nil {
-			for _, subnet := range *existingVnet.Subnets {
-				vnetSubnetList[*subnet.Name] = &subnet
+		if existingVnet.Properties != nil && existingVnet.Properties.Subnets != nil {
+			for _, subnet := range existingVnet.Properties.Subnets {
+				if subnet.Name != nil {
+					vnetSubnetList[*subnet.Name] = subnet
+				}
 			}
 		}
 	}

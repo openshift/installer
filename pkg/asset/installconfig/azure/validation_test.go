@@ -7,8 +7,8 @@ import (
 
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -195,31 +195,31 @@ var (
 		ic.Compute[0].Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
 	}
 
-	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
+	virtualNetworkAPIResult = &armnetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
-		VirtualNetworkPropertiesFormat: &aznetwork.VirtualNetworkPropertiesFormat{
-			Subnets: &[]aznetwork.Subnet{{
+		Properties: &armnetwork.VirtualNetworkPropertiesFormat{
+			Subnets: []*armnetwork.Subnet{{
 				Name: &validComputeSubnet,
-				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+				Properties: &armnetwork.SubnetPropertiesFormat{
 					AddressPrefix: to.StringPtr("10.0.0.0/24"),
 				},
 			}, {
 				Name: &validControlPlaneSubnet,
-				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+				Properties: &armnetwork.SubnetPropertiesFormat{
 					AddressPrefix: to.StringPtr("10.0.1.0/24"),
 				},
 			}},
 		},
 	}
-	computeSubnetAPIResult = &aznetwork.Subnet{
+	computeSubnetAPIResult = &armnetwork.Subnet{
 		Name: &validComputeSubnet,
-		SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+		Properties: &armnetwork.SubnetPropertiesFormat{
 			AddressPrefix: &validComputeSubnetCIDR,
 		},
 	}
-	controlPlaneSubnetAPIResult = &aznetwork.Subnet{
+	controlPlaneSubnetAPIResult = &armnetwork.Subnet{
 		Name: &validControlPlaneSubnet,
-		SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+		Properties: &armnetwork.SubnetPropertiesFormat{
 			AddressPrefix: &validControlPlaneSubnetCIDR,
 		},
 	}
@@ -746,20 +746,20 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 
 	// VirtualNetwork
 	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork).Return(virtualNetworkAPIResult, nil).AnyTimes()
-	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), gomock.Not(validNetworkResourceGroup), gomock.Not(validVirtualNetwork)).Return(&aznetwork.VirtualNetwork{}, fmt.Errorf("invalid network resource group")).AnyTimes()
-	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, gomock.Not(validVirtualNetwork)).Return(&aznetwork.VirtualNetwork{}, fmt.Errorf("invalid virtual network")).AnyTimes()
+	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), gomock.Not(validNetworkResourceGroup), gomock.Not(validVirtualNetwork)).Return(&armnetwork.VirtualNetwork{}, fmt.Errorf("invalid network resource group")).AnyTimes()
+	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, gomock.Not(validVirtualNetwork)).Return(&armnetwork.VirtualNetwork{}, fmt.Errorf("invalid virtual network")).AnyTimes()
 
 	// ComputeSubnet
 	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, validComputeSubnet).Return(computeSubnetAPIResult, nil).AnyTimes()
-	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), gomock.Not(validNetworkResourceGroup), validVirtualNetwork, validComputeSubnet).Return(&aznetwork.Subnet{}, fmt.Errorf("invalid network resource group")).AnyTimes()
-	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), validNetworkResourceGroup, gomock.Not(validVirtualNetwork), validComputeSubnet).Return(&aznetwork.Subnet{}, fmt.Errorf("invalid virtual network")).AnyTimes()
-	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, gomock.Not(validComputeSubnet)).Return(&aznetwork.Subnet{}, fmt.Errorf("invalid compute subnet")).AnyTimes()
+	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), gomock.Not(validNetworkResourceGroup), validVirtualNetwork, validComputeSubnet).Return(&armnetwork.Subnet{}, fmt.Errorf("invalid network resource group")).AnyTimes()
+	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), validNetworkResourceGroup, gomock.Not(validVirtualNetwork), validComputeSubnet).Return(&armnetwork.Subnet{}, fmt.Errorf("invalid virtual network")).AnyTimes()
+	azureClient.EXPECT().GetComputeSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, gomock.Not(validComputeSubnet)).Return(&armnetwork.Subnet{}, fmt.Errorf("invalid compute subnet")).AnyTimes()
 
 	// ControlPlaneSubnet
 	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, validControlPlaneSubnet).Return(controlPlaneSubnetAPIResult, nil).AnyTimes()
-	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), gomock.Not(validNetworkResourceGroup), validVirtualNetwork, validControlPlaneSubnet).Return(&aznetwork.Subnet{}, fmt.Errorf("invalid network resource group")).AnyTimes()
-	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, gomock.Not(validVirtualNetwork), validControlPlaneSubnet).Return(&aznetwork.Subnet{}, fmt.Errorf("invalid virtual network")).AnyTimes()
-	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, gomock.Not(validControlPlaneSubnet)).Return(&aznetwork.Subnet{}, fmt.Errorf("invalid control plane subnet")).AnyTimes()
+	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), gomock.Not(validNetworkResourceGroup), validVirtualNetwork, validControlPlaneSubnet).Return(&armnetwork.Subnet{}, fmt.Errorf("invalid network resource group")).AnyTimes()
+	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, gomock.Not(validVirtualNetwork), validControlPlaneSubnet).Return(&armnetwork.Subnet{}, fmt.Errorf("invalid virtual network")).AnyTimes()
+	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, gomock.Not(validControlPlaneSubnet)).Return(&armnetwork.Subnet{}, fmt.Errorf("invalid control plane subnet")).AnyTimes()
 
 	// Location
 	azureClient.EXPECT().ListLocations(gomock.Any()).Return(locationsAPIResult, nil).AnyTimes()
