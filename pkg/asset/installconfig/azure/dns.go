@@ -7,8 +7,10 @@ import (
 	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
-	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 )
 
 // DNSConfig exposes functions to choose the DNS settings
@@ -23,12 +25,12 @@ type ZonesGetter interface {
 
 // ZonesClient wraps the azure ZonesClient internal
 type ZonesClient struct {
-	azureClient azdns.ZonesClient
+	azureClient *armdns.ZonesClient
 }
 
 // RecordSetsClient wraps the azure RecordSetsClient internal
 type RecordSetsClient struct {
-	azureClient azdns.RecordSetsClient
+	azureClient *armdns.RecordSetsClient
 }
 
 // Zone represents an Azure DNS Zone
@@ -64,8 +66,14 @@ func (config DNSConfig) GetPrivateDNSZoneID(rgName string, zoneName string) stri
 // GetDNSZone returns a DNS zone selected by survey
 func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	//call azure api using the session to retrieve available base domain
-	zonesClient := newZonesClient(config.session)
-	allZones, _ := zonesClient.GetAllPublicZones()
+	zonesClient, err := newZonesClient(config.session)
+	if err != nil {
+		return nil, err
+	}
+	allZones, err := zonesClient.GetAllPublicZones()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public zones: %w", err)
+	}
 	if len(allZones) == 0 {
 		return nil, errors.New("no public dns zone found in your subscription")
 	}
@@ -75,7 +83,7 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	}
 
 	var zoneName string
-	err := survey.Ask([]*survey.Question{
+	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Select{
 				Message: "Base Domain",
@@ -96,8 +104,11 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 }
 
 // GetDNSRecordSet gets a record set for the zone identified by publicZoneID
-func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relativeRecordSetName string, recordType azdns.RecordType) (*azdns.RecordSet, error) {
-	recordsetsClient := newRecordSetsClient(config.session)
+func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relativeRecordSetName string, recordType armdns.RecordType) (*armdns.RecordSet, error) {
+	recordsetsClient, err := newRecordSetsClient(config.session)
+	if err != nil {
+		return nil, err
+	}
 	return recordsetsClient.GetRecordSet(rgName, zoneName, relativeRecordSetName, recordType)
 }
 
@@ -108,16 +119,30 @@ func NewDNSConfig(ssn *Session) *DNSConfig {
 	return &DNSConfig{session: ssn}
 }
 
-func newZonesClient(session *Session) ZonesGetter {
-	azureClient := azdns.NewZonesClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
-	azureClient.Authorizer = session.Authorizer
-	return &ZonesClient{azureClient: azureClient}
+func newZonesClient(session *Session) (ZonesGetter, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: session.CloudConfig,
+		},
+	}
+	azureClient, err := armdns.NewZonesClient(session.Credentials.SubscriptionID, session.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zones client: %w", err)
+	}
+	return &ZonesClient{azureClient: azureClient}, nil
 }
 
-func newRecordSetsClient(session *Session) *RecordSetsClient {
-	azureClient := azdns.NewRecordSetsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
-	azureClient.Authorizer = session.Authorizer
-	return &RecordSetsClient{azureClient: azureClient}
+func newRecordSetsClient(session *Session) (*RecordSetsClient, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: session.CloudConfig,
+		},
+	}
+	azureClient, err := armdns.NewRecordSetsClient(session.Credentials.SubscriptionID, session.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create record sets client: %w", err)
+	}
+	return &RecordSetsClient{azureClient: azureClient}, nil
 }
 
 // GetAllPublicZones get all public zones from the current subscription
@@ -125,29 +150,30 @@ func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 	allZones := map[string]string{}
-	for zonesPage, err := client.azureClient.List(ctx, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
+	pager := client.azureClient.NewListPager(&armdns.ZonesClientListOptions{Top: to.Ptr(int32(100))})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, err
 		}
-		//TODO: filter out private zone and show only public zones.
-		//the property is present in the REST api response, but not mapped yet in the stable SDK (present in preview)
-		//https://github.com/Azure/azure-sdk-for-go/blob/07f918ba2d513bbc5b75bc4caac845e10f27449e/services/preview/dns/mgmt/2018-03-01-preview/dns/models.go#L857
-		for _, zone := range zonesPage.Values() {
-			allZones[to.String(zone.Name)] = to.String(zone.ID)
+		for _, zone := range page.Value {
+			if zone.Name != nil && zone.ID != nil {
+				allZones[*zone.Name] = *zone.ID
+			}
 		}
 	}
 	return allZones, nil
 }
 
 // GetRecordSet gets an Azure DNS recordset by zone, name and recordset type
-func (client *RecordSetsClient) GetRecordSet(rgName string, zoneName string, relativeRecordSetName string, recordType azdns.RecordType) (*azdns.RecordSet, error) {
+func (client *RecordSetsClient) GetRecordSet(rgName string, zoneName string, relativeRecordSetName string, recordType armdns.RecordType) (*armdns.RecordSet, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
-	recordset, err := client.azureClient.Get(ctx, rgName, zoneName, relativeRecordSetName, recordType)
+	resp, err := client.azureClient.Get(ctx, rgName, zoneName, relativeRecordSetName, recordType, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return &recordset, nil
+	return &resp.RecordSet, nil
 }

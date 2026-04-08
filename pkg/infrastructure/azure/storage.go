@@ -575,8 +575,19 @@ func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (stri
 }
 
 func createAccountOnStack(ctx context.Context, in *CreateBlockBlobInput) error {
-	cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
-	cl.Authorizer = in.Session.Authorizer
+	cl, err := armstorage.NewAccountsClient(in.Session.Credentials.SubscriptionID,
+		in.TokenCredential,
+		&arm.ClientOptions{
+			APIVersion: "2020-09-01",
+			Cloud:      nil,
+		},
+	)
+	//TokenCredential      azcore.TokenCredential
+
+	/*
+		cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
+		cl.Authorizer = in.Session.Authorizer
+	*/
 
 	parameters := account.AccountCreateParameters{
 		Location: &in.Region,

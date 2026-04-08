@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -654,21 +654,21 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"
 
 	// Look for an existing CNAME first
-	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
-	if err == nil && rs.CnameRecord != nil {
-		return fmt.Errorf(fmtStr, zoneName, azdns.CNAME, clusterName)
+	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, armdns.RecordTypeCNAME)
+	if err == nil && rs.Properties != nil && rs.Properties.CnameRecord != nil {
+		return fmt.Errorf(fmtStr, zoneName, armdns.RecordTypeCNAME, clusterName)
 	}
 
 	// Look for an A record
-	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.A)
-	if err == nil && rs.ARecords != nil && len(*rs.ARecords) > 0 {
-		return fmt.Errorf(fmtStr, zoneName, azdns.A, clusterName)
+	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, armdns.RecordTypeA)
+	if err == nil && rs.Properties != nil && rs.Properties.ARecords != nil && len(rs.Properties.ARecords) > 0 {
+		return fmt.Errorf(fmtStr, zoneName, armdns.RecordTypeA, clusterName)
 	}
 
 	// Look for an AAAA record
-	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.AAAA)
-	if err == nil && rs.AaaaRecords != nil && len(*rs.AaaaRecords) > 0 {
-		return fmt.Errorf(fmtStr, zoneName, azdns.AAAA, clusterName)
+	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, armdns.RecordTypeAAAA)
+	if err == nil && rs.Properties != nil && rs.Properties.AaaaRecords != nil && len(rs.Properties.AaaaRecords) > 0 {
+		return fmt.Errorf(fmtStr, zoneName, armdns.RecordTypeAAAA, clusterName)
 	}
 
 	return nil
