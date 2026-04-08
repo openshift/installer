@@ -556,7 +556,7 @@ func deletePublicRecords(ctx context.Context, dnsClient *armdns.ZonesClient, rec
 
 func deletePublicRecordsForZone(ctx context.Context, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
 	// collect all the records from the zoneName
-	allPrivateRecords := sets.NewString()
+	allPrivateRecords := sets.New[string]()
 	recordPager := recordsClient.NewListByDNSZonePager(zoneGroup, zoneName, &armdns.RecordSetsClientListByDNSZoneOptions{
 		Top: to.Ptr(int32(100)),
 	})
@@ -587,7 +587,7 @@ func deletePublicRecordsForZone(ctx context.Context, dnsClient *armdns.ZonesClie
 
 func deletePublicRecordsForPrivateZone(ctx context.Context, privateRecordsClient *armprivatedns.RecordSetsClient, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
 	// collect all the records from the zoneName
-	allPrivateRecords := sets.NewString()
+	allPrivateRecords := sets.New[string]()
 	recordPager := privateRecordsClient.NewListPager(zoneGroup, zoneName, &armprivatedns.RecordSetsClientListOptions{
 		Top: to.Ptr(int32(100)),
 	})
@@ -616,7 +616,7 @@ func deletePublicRecordsForPrivateZone(ctx context.Context, privateRecordsClient
 	return deletePublicRecordsMatchingZoneName(ctx, dnsClient, recordsClient, logger, allPrivateRecords, zoneName)
 }
 
-func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, privateRecords sets.String, zoneName string) error {
+func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, privateRecords sets.Set[string], zoneName string) error {
 	sharedZones, err := getSharedDNSZones(ctx, dnsClient, zoneName)
 	if err != nil {
 		return fmt.Errorf("failed to find shared zone for %s: %w", zoneName, err)

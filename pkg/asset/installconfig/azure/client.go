@@ -46,9 +46,9 @@ type API interface {
 	GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error
 }
 
-// APIVersion describes the version to use for Azure API calls that support both azure and azurestack.
 // Deprecated: Use ClientConfig.ClientOptions(ServiceNetwork) which automatically applies the correct
 // API version based on the cloud environment. This constant is retained for backward compatibility.
+// APIVersion describes the version to use for Azure API calls that support both azure and azurestack.
 const APIVersion = "2019-11-01"
 
 // Client makes calls to the Azure API.
@@ -457,7 +457,7 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 				continue
 			}
 			if resSku.Name != nil && strings.EqualFold(*resSku.Name, instanceType) {
-				if resSku.LocationInfo != nil && len(resSku.LocationInfo) > 0 {
+				if len(resSku.LocationInfo) > 0 {
 					return resSku.LocationInfo[0], nil
 				}
 			}

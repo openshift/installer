@@ -559,7 +559,7 @@ func validateSubnet(client API, fieldPath *field.Path, subnet *armnetwork.Subnet
 		addressPrefix = *subnet.Properties.AddressPrefix
 	// NOTE: if the subscription has the `AllowMultipleAddressPrefixesOnSubnet` feature, the Azure API will return a
 	// `addressPrefixes` field with a slice of addresses instead of a single value via `addressPrefix`.
-	case subnet.Properties.AddressPrefixes != nil && len(subnet.Properties.AddressPrefixes) > 0:
+	case len(subnet.Properties.AddressPrefixes) > 0:
 		addressPrefix = *subnet.Properties.AddressPrefixes[0]
 	default:
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "subnet does not have an address prefix"))
@@ -790,7 +790,7 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 	if group.Location != nil {
 		location = *group.Location
 	}
-	normalizedRegion := strings.Replace(strings.ToLower(location), " ", "", -1)
+	normalizedRegion := strings.ReplaceAll(strings.ToLower(location), " ", "")
 	if !strings.EqualFold(normalizedRegion, platform.Region) {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("expected to in region %s, but found it to be in %s", platform.Region, normalizedRegion)))
 	}
