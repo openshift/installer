@@ -170,7 +170,7 @@ func (c *Client) ListLocations(ctx context.Context) ([]*armsubscriptions.Locatio
 
 // getSubscriptionsClient sets up a new client to retrieve subscription data
 func (c *Client) getSubscriptionsClient() (*armsubscriptions.Client, error) {
-	return armsubscriptions.NewClient(c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
+	return armsubscriptions.NewClient(c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // GetResourcesProvider gets the Azure resource provider
@@ -193,7 +193,7 @@ func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNames
 
 // getProvidersClient sets up a new client to retrieve providers data
 func (c *Client) getProvidersClient() (*armresources.ProvidersClient, error) {
-	return armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
+	return armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
@@ -238,7 +238,7 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]*armcompute.
 
 // GetGroup returns resource group for the groupName.
 func (c *Client) GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error) {
-	client, err := armresources.NewResourceGroupsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
+	client, err := armresources.NewResourceGroupsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource groups client: %w", err)
 	}
@@ -254,7 +254,7 @@ func (c *Client) GetGroup(ctx context.Context, groupName string) (*armresources.
 
 // ListResourceIDsByGroup returns a list of resource IDs for resource group groupName.
 func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error) {
-	client, err := armresources.NewClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
+	client, err := armresources.NewClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resources client: %w", err)
 	}

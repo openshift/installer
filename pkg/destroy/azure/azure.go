@@ -68,7 +68,8 @@ func (o *ClusterUninstaller) configureClients() error {
 	subscriptionID := o.Session.Credentials.SubscriptionID
 
 	// Use ClientConfig which handles API version overrides for different Azure environments
-	defaultOpts := o.Session.ClientConfig.DefaultClientOptions()
+	// defaultOpts := o.Session.ClientConfig.DefaultClientOptions()
+	defaultOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceNetwork)
 	dnsOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceDNS)
 	networkOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceNetwork)
 

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
@@ -57,11 +55,7 @@ func tagVNet(ctx context.Context, clusterID string, installConfig *installconfig
 	}
 
 	resourceGroupName := installConfig.Config.Azure.NetworkResourceGroupName
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: azcore.ClientOptions{
-			Cloud: session.CloudConfig,
-		},
-	}
+	clientOpts := session.ClientConfig.ClientOptions(icazure.ServiceNetwork)
 
 	vnetClient, err := armnetwork.NewVirtualNetworksClient(session.Credentials.SubscriptionID, session.TokenCreds, clientOpts)
 	if err != nil {
@@ -98,12 +92,7 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 	if len(installConfig.Config.Azure.ResourceGroupName) == 0 {
 		return nil
 	}
-
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: azcore.ClientOptions{
-			Cloud: session.CloudConfig,
-		},
-	}
+	clientOpts := session.ClientConfig.ClientOptions(icazure.ServiceNetwork)
 
 	client, err := armresources.NewResourceGroupsClient(session.Credentials.SubscriptionID, session.TokenCreds, clientOpts)
 	if err != nil {
