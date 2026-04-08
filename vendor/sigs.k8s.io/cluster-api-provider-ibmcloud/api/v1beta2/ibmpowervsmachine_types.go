@@ -48,8 +48,9 @@ type IBMPowerVSMachineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// ServiceInstanceID is the id of the power cloud instance where the vsi instance will get deployed.
 	// Deprecated: use ServiceInstance instead
+	//
+	// ServiceInstanceID is the id of the power cloud instance where the vsi instance will get deployed.
 	ServiceInstanceID string `json:"serviceInstanceID"`
 
 	// serviceInstance is the reference to the Power VS workspace on which the server instance(VM) will be created.
@@ -77,11 +78,11 @@ type IBMPowerVSMachineSpec struct {
 
 	// systemType is the System type used to host the instance.
 	// systemType determines the number of cores and memory that is available.
-	// Few of the supported SystemTypes are s922,e980,s1022,e1050,e1080.
+	// Few of the supported SystemTypes are s922,e980,s1022,e1050,e1080,s1122.
 	// When omitted, this means that the user has no opinion and the platform is left to choose a
 	// reasonable default, which is subject to change over time. The current default is s922 which is generally available.
 	// + This is not an enum because we expect other values to be added later which should be supported implicitly.
-	// +kubebuilder:validation:Enum:="s922";"e980";"s1022";"e1050";"e1080";""
+	// +kubebuilder:validation:Enum:="s922";"e980";"s1022";"e1050";"e1080";"s1122";""
 	// +optional
 	SystemType string `json:"systemType,omitempty"`
 

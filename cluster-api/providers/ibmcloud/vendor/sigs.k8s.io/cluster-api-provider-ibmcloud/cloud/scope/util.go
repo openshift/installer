@@ -24,12 +24,12 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	infrav1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 )
 
 // GetClusterByName finds and return a Cluster object using the specified params.
-func GetClusterByName(ctx context.Context, c client.Client, namespace, name string) (*infrav1beta2.IBMPowerVSCluster, error) {
-	cluster := &infrav1beta2.IBMPowerVSCluster{}
+func GetClusterByName(ctx context.Context, c client.Client, namespace, name string) (*infrav1.IBMPowerVSCluster, error) {
+	cluster := &infrav1.IBMPowerVSCluster{}
 	key := client.ObjectKey{
 		Namespace: namespace,
 		Name:      name,
@@ -43,12 +43,12 @@ func GetClusterByName(ctx context.Context, c client.Client, namespace, name stri
 }
 
 // CheckCreateInfraAnnotation checks for annotations set on IBMPowerVSCluster object to determine cluster creation workflow.
-func CheckCreateInfraAnnotation(cluster infrav1beta2.IBMPowerVSCluster) bool {
+func CheckCreateInfraAnnotation(cluster infrav1.IBMPowerVSCluster) bool {
 	annotations := cluster.GetAnnotations()
 	if len(annotations) == 0 {
 		return false
 	}
-	value, found := annotations[infrav1beta2.CreateInfrastructureAnnotation]
+	value, found := annotations[infrav1.CreateInfrastructureAnnotation]
 	if !found {
 		return false
 	}

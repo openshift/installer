@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -113,11 +114,15 @@ func (m *StoragePool) validateOverrideThresholds(formats strfmt.Registry) error 
 
 	if m.OverrideThresholds != nil {
 		if err := m.OverrideThresholds.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("overrideThresholds")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("overrideThresholds")
 			}
+
 			return err
 		}
 	}
@@ -125,7 +130,7 @@ func (m *StoragePool) validateOverrideThresholds(formats strfmt.Registry) error 
 	return nil
 }
 
-var storagePoolTypeStatePropEnum []interface{}
+var storagePoolTypeStatePropEnum []any
 
 func init() {
 	var res []string
@@ -200,11 +205,15 @@ func (m *StoragePool) contextValidateOverrideThresholds(ctx context.Context, for
 		}
 
 		if err := m.OverrideThresholds.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("overrideThresholds")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("overrideThresholds")
 			}
+
 			return err
 		}
 	}

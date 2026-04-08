@@ -1106,7 +1106,7 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/common/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
-# sigs.k8s.io/cluster-api v1.11.3
+# sigs.k8s.io/cluster-api v1.12.0-beta.1
 ## explicit; go 1.24.0
 sigs.k8s.io/cluster-api
 sigs.k8s.io/cluster-api/api/addons/v1beta1
@@ -1129,20 +1129,11 @@ sigs.k8s.io/cluster-api/controllers/external
 sigs.k8s.io/cluster-api/controllers/noderefutil
 sigs.k8s.io/cluster-api/controllers/remote
 sigs.k8s.io/cluster-api/errors
-sigs.k8s.io/cluster-api/exp/controllers
-sigs.k8s.io/cluster-api/exp/internal/controllers
-sigs.k8s.io/cluster-api/exp/internal/webhooks
-sigs.k8s.io/cluster-api/exp/ipam/internal/webhooks
-sigs.k8s.io/cluster-api/exp/ipam/webhooks
 sigs.k8s.io/cluster-api/exp/runtime/catalog
 sigs.k8s.io/cluster-api/exp/runtime/client
-sigs.k8s.io/cluster-api/exp/runtime/controllers
-sigs.k8s.io/cluster-api/exp/runtime/internal/controllers
 sigs.k8s.io/cluster-api/exp/runtime/topologymutation
 sigs.k8s.io/cluster-api/exp/topology/desiredstate
 sigs.k8s.io/cluster-api/exp/topology/scope
-sigs.k8s.io/cluster-api/exp/util
-sigs.k8s.io/cluster-api/exp/webhooks
 sigs.k8s.io/cluster-api/feature
 sigs.k8s.io/cluster-api/internal/api/addons/v1alpha3
 sigs.k8s.io/cluster-api/internal/api/addons/v1alpha4
@@ -1154,11 +1145,13 @@ sigs.k8s.io/cluster-api/internal/controllers/clusterclass
 sigs.k8s.io/cluster-api/internal/controllers/clusterresourceset
 sigs.k8s.io/cluster-api/internal/controllers/clusterresourceset/predicates
 sigs.k8s.io/cluster-api/internal/controllers/clusterresourcesetbinding
+sigs.k8s.io/cluster-api/internal/controllers/extensionconfig
 sigs.k8s.io/cluster-api/internal/controllers/machine
 sigs.k8s.io/cluster-api/internal/controllers/machine/drain
 sigs.k8s.io/cluster-api/internal/controllers/machinedeployment
 sigs.k8s.io/cluster-api/internal/controllers/machinedeployment/mdutil
 sigs.k8s.io/cluster-api/internal/controllers/machinehealthcheck
+sigs.k8s.io/cluster-api/internal/controllers/machinepool
 sigs.k8s.io/cluster-api/internal/controllers/machineset
 sigs.k8s.io/cluster-api/internal/controllers/topology/cluster
 sigs.k8s.io/cluster-api/internal/controllers/topology/cluster/patches
@@ -1179,12 +1172,14 @@ sigs.k8s.io/cluster-api/internal/topology/names
 sigs.k8s.io/cluster-api/internal/topology/ownerrefs
 sigs.k8s.io/cluster-api/internal/topology/selectors
 sigs.k8s.io/cluster-api/internal/topology/variables
+sigs.k8s.io/cluster-api/internal/util/client
 sigs.k8s.io/cluster-api/internal/util/compare
 sigs.k8s.io/cluster-api/internal/util/hash
+sigs.k8s.io/cluster-api/internal/util/inplace
+sigs.k8s.io/cluster-api/internal/util/patch
 sigs.k8s.io/cluster-api/internal/util/ssa
 sigs.k8s.io/cluster-api/internal/util/taints
 sigs.k8s.io/cluster-api/internal/webhooks
-sigs.k8s.io/cluster-api/internal/webhooks/runtime
 sigs.k8s.io/cluster-api/util
 sigs.k8s.io/cluster-api/util/annotations
 sigs.k8s.io/cluster-api/util/apiwarnings

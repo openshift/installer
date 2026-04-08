@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -96,11 +97,15 @@ func (m *VolumeGroup) validateStatusDescription(formats strfmt.Registry) error {
 
 	if m.StatusDescription != nil {
 		if err := m.StatusDescription.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("statusDescription")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("statusDescription")
 			}
+
 			return err
 		}
 	}
@@ -131,11 +136,15 @@ func (m *VolumeGroup) contextValidateStatusDescription(ctx context.Context, form
 		}
 
 		if err := m.StatusDescription.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("statusDescription")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("statusDescription")
 			}
+
 			return err
 		}
 	}

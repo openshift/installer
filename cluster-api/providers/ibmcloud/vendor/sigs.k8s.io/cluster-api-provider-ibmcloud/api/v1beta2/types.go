@@ -56,14 +56,17 @@ var (
 	// PowerVSImageStateACTIVE is the string representing an image in a active state.
 	PowerVSImageStateACTIVE = PowerVSImageState("active")
 
-	// PowerVSImageStateQue is the string representing an image in a queued state.
-	PowerVSImageStateQue = PowerVSImageState("queued")
+	// PowerVSImageStateQueued is the string representing an image in a queued state.
+	PowerVSImageStateQueued = PowerVSImageState("queued")
 
 	// PowerVSImageStateFailed is the string representing an image in a failed state.
 	PowerVSImageStateFailed = PowerVSImageState("failed")
 
 	// PowerVSImageStateImporting is the string representing an image in a failed state.
 	PowerVSImageStateImporting = PowerVSImageState("importing")
+
+	// PowerVSImageStateCompleted is the string representing an image in a completed state.
+	PowerVSImageStateCompleted = PowerVSImageState("completed")
 )
 
 // ServiceInstanceState describes the state of a service instance.
@@ -560,8 +563,9 @@ type Subnet struct {
 // VPCEndpoint describes a VPCEndpoint.
 type VPCEndpoint struct {
 	Address *string `json:"address"`
-	// +optional
 	// Deprecated: This field has no function and is going to be removed in the next release.
+	//
+	// +optional
 	FIPID *string `json:"floatingIPID,omitempty"`
 	// +optional
 	LBID *string `json:"loadBalancerIPID,omitempty"`

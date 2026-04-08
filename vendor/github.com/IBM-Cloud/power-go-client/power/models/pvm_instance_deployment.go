@@ -49,7 +49,7 @@ func (m *PvmInstanceDeployment) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var pvmInstanceDeploymentTypeProcessorModePropEnum []interface{}
+var pvmInstanceDeploymentTypeProcessorModePropEnum []any
 
 func init() {
 	var res []string

@@ -18,7 +18,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/vincent-petithory/dataurl"
 
 	"github.com/coreos/ignition/v2/config/shared/errors"

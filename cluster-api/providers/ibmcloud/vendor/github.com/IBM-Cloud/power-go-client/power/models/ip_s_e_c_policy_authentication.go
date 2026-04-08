@@ -42,7 +42,7 @@ const (
 )
 
 // for schema
-var ipSECPolicyAuthenticationEnum []interface{}
+var ipSECPolicyAuthenticationEnum []any
 
 func init() {
 	var res []IPSECPolicyAuthentication

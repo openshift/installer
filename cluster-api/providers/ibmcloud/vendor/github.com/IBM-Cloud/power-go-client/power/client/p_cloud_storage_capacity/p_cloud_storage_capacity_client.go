@@ -71,7 +71,7 @@ type ClientService interface {
 PcloudStoragecapacityPoolsGet storages capacity for a storage pool in a region
 */
 func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityPoolsGetParams()
 	}
@@ -91,17 +91,22 @@ func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPool
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudStoragecapacityPoolsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.pools.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -110,7 +115,7 @@ func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPool
 PcloudStoragecapacityPoolsGetall storages capacity for all available storage pools in a region
 */
 func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityPoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityPoolsGetallParams()
 	}
@@ -130,17 +135,22 @@ func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityP
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudStoragecapacityPoolsGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.pools.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -149,7 +159,7 @@ func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityP
 PcloudStoragecapacityTypesGet storages capacity for a storage type in a region
 */
 func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityTypesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityTypesGetParams()
 	}
@@ -169,17 +179,22 @@ func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityType
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudStoragecapacityTypesGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.types.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -188,7 +203,7 @@ func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityType
 PcloudStoragecapacityTypesGetall storages capacity for all available storage types in a region
 */
 func (a *Client) PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityTypesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudStoragecapacityTypesGetallParams()
 	}
@@ -208,17 +223,22 @@ func (a *Client) PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityT
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudStoragecapacityTypesGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.storagecapacity.types.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

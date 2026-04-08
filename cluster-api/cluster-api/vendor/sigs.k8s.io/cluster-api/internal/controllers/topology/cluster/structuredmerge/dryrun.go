@@ -54,7 +54,7 @@ func dryRunSSAPatch(ctx context.Context, dryRunCtx *dryRunSSAPatchInput) (bool, 
 	// The identifier consists of: gvk, namespace, name and resourceVersion of originalUnstructured
 	// and a hash of modifiedUnstructured.
 	// This ensures that we re-run the request as soon as either original or modified changes.
-	requestIdentifier, err := ssa.ComputeRequestIdentifier(dryRunCtx.client.Scheme(), dryRunCtx.originalUnstructured, dryRunCtx.modifiedUnstructured)
+	requestIdentifier, err := ssa.ComputeRequestIdentifier(dryRunCtx.client.Scheme(), dryRunCtx.originalUnstructured.GetResourceVersion(), dryRunCtx.modifiedUnstructured)
 	if err != nil {
 		return false, false, nil, err
 	}
@@ -68,9 +68,8 @@ func dryRunSSAPatch(ctx context.Context, dryRunCtx *dryRunSSAPatchInput) (bool, 
 	// For dry run we use the same options as for the intent but with adding metadata.managedFields
 	// to ensure that changes to ownership are detected.
 	filterObjectInput := &ssa.FilterObjectInput{
-		AllowedPaths:          append(dryRunCtx.helperOptions.AllowedPaths, []string{"metadata", "managedFields"}),
-		IgnorePaths:           dryRunCtx.helperOptions.IgnorePaths,
-		DropEmptyStructAndNil: dryRunCtx.helperOptions.DropEmptyStructAndNil,
+		AllowedPaths: append(dryRunCtx.helperOptions.AllowedPaths, []string{"metadata", "managedFields"}),
+		IgnorePaths:  dryRunCtx.helperOptions.IgnorePaths,
 	}
 
 	// Add TopologyDryRunAnnotation to notify validation webhooks to skip immutability checks.
@@ -82,7 +81,7 @@ func dryRunSSAPatch(ctx context.Context, dryRunCtx *dryRunSSAPatchInput) (bool, 
 	}
 
 	// Do a server-side apply dry-run with modifiedUnstructured to get the updated object.
-	err = dryRunCtx.client.Patch(ctx, dryRunCtx.modifiedUnstructured, client.Apply, client.DryRunAll, client.FieldOwner(TopologyManagerName), client.ForceOwnership)
+	err = dryRunCtx.client.Apply(ctx, client.ApplyConfigurationFromUnstructured(dryRunCtx.modifiedUnstructured), client.DryRunAll, client.FieldOwner(TopologyManagerName), client.ForceOwnership)
 	if err != nil {
 		// This catches errors like metadata.uid changes.
 		return false, false, nil, errors.Wrap(err, "server side apply dry-run failed for modified object")
@@ -108,7 +107,7 @@ func dryRunSSAPatch(ctx context.Context, dryRunCtx *dryRunSSAPatchInput) (bool, 
 	// Note: Otherwise we would get the following error:
 	// "failed to request dry-run server side apply: metadata.managedFields must be nil"
 	dryRunCtx.originalUnstructured.SetManagedFields(nil)
-	err = dryRunCtx.client.Patch(ctx, dryRunCtx.originalUnstructured, client.Apply, client.DryRunAll, client.FieldOwner(TopologyManagerName), client.ForceOwnership)
+	err = dryRunCtx.client.Apply(ctx, client.ApplyConfigurationFromUnstructured(dryRunCtx.originalUnstructured), client.DryRunAll, client.FieldOwner(TopologyManagerName), client.ForceOwnership)
 	if err != nil {
 		return false, false, nil, errors.Wrap(err, "server side apply dry-run failed for original object")
 	}

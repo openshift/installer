@@ -28,6 +28,7 @@ const (
 
 var (
 	// PowerVSProviderIDFormat is used to identify the Provider ID format for Power VS Machine.
+	//
 	// Deprecated: Instead use ProviderIDFormat.
 	PowerVSProviderIDFormat string
 	// ProviderIDFormat is used to identify the Provider ID format for Machine.

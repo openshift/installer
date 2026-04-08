@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -67,11 +68,15 @@ func (m *HostGroupCreate) validateHosts(formats strfmt.Registry) error {
 
 		if m.Hosts[i] != nil {
 			if err := m.Hosts[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("hosts" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("hosts" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -102,11 +107,15 @@ func (m *HostGroupCreate) validateSecondaries(formats strfmt.Registry) error {
 
 		if m.Secondaries[i] != nil {
 			if err := m.Secondaries[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("secondaries" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("secondaries" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -145,11 +154,15 @@ func (m *HostGroupCreate) contextValidateHosts(ctx context.Context, formats strf
 			}
 
 			if err := m.Hosts[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("hosts" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("hosts" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -170,11 +183,15 @@ func (m *HostGroupCreate) contextValidateSecondaries(ctx context.Context, format
 			}
 
 			if err := m.Secondaries[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("secondaries" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("secondaries" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

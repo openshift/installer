@@ -21,7 +21,7 @@ type ServiceInstanceUpdate struct {
 	DashboardURL string `json:"dashboard_url,omitempty"`
 
 	// extensions
-	Extensions interface{} `json:"extensions,omitempty"`
+	Extensions any `json:"extensions,omitempty"`
 }
 
 // Validate validates this service instance update

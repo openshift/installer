@@ -45,11 +45,11 @@ cluster on IBM Cloud.
 
 This provider's versions are compatible with the following versions of Cluster API:
 
-|                                         |Cluster API v1alpha4 (v0.4) |Cluster API v1beta1 (v1.x) |
-|:----------------------------------------|:---------------:|:--------------:|
-| CAPIBM v1alpha4 (v0.1.x)                | ✓               |                |
-| CAPIBM v1beta1 (v0.2.x, v0.3.x)         |                 | ✓              |
-| CAPIBM v1beta2 (v0.[4-10].x, main)      |                 | ✓              |
+|                                         |Cluster API v1alpha4 (v0.4) |Cluster API v1beta1 (v1.[0-11].x) |Cluster API v1beta2 (v1.11.x) |
+|:----------------------------------------|:---------------:|:--------------:|:--------------:|
+| CAPIBM v1alpha4 (v0.1.x)                | ✓               |                |                |
+| CAPIBM v1beta1 (v0.2.x, v0.3.x)         |                 | ✓              |                |
+| CAPIBM v1beta2 (v0.[4-12].x, main)      |                 | ✓              |                |
 
 
 (See [Kubernetes support matrix][cluster-api-supported-v] of Cluster API versions).

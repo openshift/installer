@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -91,11 +92,15 @@ func (m *Datacenter) validateCapabilitiesDetails(formats strfmt.Registry) error 
 
 	if m.CapabilitiesDetails != nil {
 		if err := m.CapabilitiesDetails.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("capabilitiesDetails")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("capabilitiesDetails")
 			}
+
 			return err
 		}
 	}
@@ -111,11 +116,15 @@ func (m *Datacenter) validateLocation(formats strfmt.Registry) error {
 
 	if m.Location != nil {
 		if err := m.Location.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("location")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("location")
 			}
+
 			return err
 		}
 	}
@@ -123,7 +132,7 @@ func (m *Datacenter) validateLocation(formats strfmt.Registry) error {
 	return nil
 }
 
-var datacenterTypeStatusPropEnum []interface{}
+var datacenterTypeStatusPropEnum []any
 
 func init() {
 	var res []string
@@ -169,7 +178,7 @@ func (m *Datacenter) validateStatus(formats strfmt.Registry) error {
 	return nil
 }
 
-var datacenterTypeTypePropEnum []interface{}
+var datacenterTypeTypePropEnum []any
 
 func init() {
 	var res []string
@@ -239,11 +248,15 @@ func (m *Datacenter) contextValidateCapabilitiesDetails(ctx context.Context, for
 		}
 
 		if err := m.CapabilitiesDetails.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("capabilitiesDetails")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("capabilitiesDetails")
 			}
+
 			return err
 		}
 	}
@@ -256,11 +269,15 @@ func (m *Datacenter) contextValidateLocation(ctx context.Context, formats strfmt
 	if m.Location != nil {
 
 		if err := m.Location.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("location")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("location")
 			}
+
 			return err
 		}
 	}

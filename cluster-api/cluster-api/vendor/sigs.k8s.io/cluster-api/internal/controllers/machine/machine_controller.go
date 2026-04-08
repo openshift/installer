@@ -52,6 +52,7 @@ import (
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/controllers/noderefutil"
+	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/contract"
 	"sigs.k8s.io/cluster-api/internal/controllers/machine/drain"
@@ -93,9 +94,10 @@ var (
 
 // Reconciler reconciles a Machine object.
 type Reconciler struct {
-	Client       client.Client
-	APIReader    client.Reader
-	ClusterCache clustercache.ClusterCache
+	Client        client.Client
+	APIReader     client.Reader
+	ClusterCache  clustercache.ClusterCache
+	RuntimeClient runtimeclient.Client
 
 	// WatchFilterValue is the label value used to filter events prior to reconciliation.
 	WatchFilterValue string
@@ -128,6 +130,9 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		// connection. There might be some additional delays in health checking under high load. So we use 2m as a minimum
 		// to have some buffer.
 		return errors.New("Client, APIReader and ClusterCache must not be nil and RemoteConditionsGracePeriod must not be < 2m")
+	}
+	if feature.Gates.Enabled(feature.InPlaceUpdates) && r.RuntimeClient == nil {
+		return errors.New("RuntimeClient must not be nil when InPlaceUpdates feature gate is enabled")
 	}
 
 	r.predicateLog = ptr.To(ctrl.LoggerFrom(ctx).WithValues("controller", "machine"))
@@ -190,7 +195,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	return nil
 }
 
-func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ctrl.Result, reterr error) {
 	// Fetch the Machine instance
 	m := &clusterv1.Machine{}
 	if err := r.Client.Get(ctx, req.NamespacedName, m); err != nil {
@@ -249,8 +254,21 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		machine: m,
 	}
 
+	//  If the Machine is controlled by a MachineSet, read it.
+	s.owningMachineSet, err = r.getOwnerMachineSet(ctx, s.machine)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	//  If the MachineSet is controlled by a MachineDeployment, get it as well.
+	s.owningMachineDeployment, err = r.getOwnerMachineDeployment(ctx, s.owningMachineSet)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	defer func() {
-		r.updateStatus(ctx, s)
+		updateRes := r.updateStatus(ctx, s)
+		retres = util.LowestNonZeroResult(retres, updateRes)
 
 		// Always attempt to patch the object and status after each reconciliation.
 		// Patch ObservedGeneration only if the reconciliation completed successfully
@@ -282,7 +300,41 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	}
 
 	// Handle normal reconciliation loop.
-	return doReconcile(ctx, alwaysReconcile, s)
+	reconcileNormal := append(
+		alwaysReconcile,
+		r.reconcileInPlaceUpdate,
+	)
+
+	return doReconcile(ctx, reconcileNormal, s)
+}
+
+func (r *Reconciler) getOwnerMachineSet(ctx context.Context, m *clusterv1.Machine) (*clusterv1.MachineSet, error) {
+	machineSetKey, notFound, err := getOwnerMachineSetObjectKey(m.ObjectMeta)
+	if err != nil || notFound || machineSetKey == nil {
+		return nil, err
+	}
+	ms := &clusterv1.MachineSet{}
+	if err := r.Client.Get(ctx, *machineSetKey, ms); err != nil {
+		return nil, fmt.Errorf("failed to retrieve owner MachineSet for Machine %s: %w", klog.KObj(m), err)
+	}
+	return ms, nil
+}
+
+func (r *Reconciler) getOwnerMachineDeployment(ctx context.Context, ms *clusterv1.MachineSet) (*clusterv1.MachineDeployment, error) {
+	if ms == nil {
+		return nil, nil
+	}
+
+	mdName := ms.Labels[clusterv1.MachineDeploymentNameLabel]
+	if mdName == "" {
+		return nil, nil
+	}
+
+	md := &clusterv1.MachineDeployment{}
+	if err := r.Client.Get(ctx, client.ObjectKey{Namespace: ms.Namespace, Name: mdName}, md); err != nil {
+		return nil, fmt.Errorf("failed to retrieve owner MachineDeployment for MachineSet %s: %w", klog.KObj(ms), err)
+	}
+	return md, nil
 }
 
 func patchMachine(ctx context.Context, patchHelper *patch.Helper, machine *clusterv1.Machine, options ...patch.Option) error {
@@ -326,6 +378,7 @@ func patchMachine(ctx context.Context, patchHelper *patch.Helper, machine *clust
 			clusterv1.MachineNodeReadyCondition,
 			clusterv1.MachineNodeHealthyCondition,
 			clusterv1.MachineDeletingCondition,
+			clusterv1.MachineUpdatingCondition,
 		}},
 	)
 
@@ -366,6 +419,14 @@ type scope struct {
 	// of the reconcile function.
 	machine *clusterv1.Machine
 
+	// owningMachineSet return the MachineSet owning this machine.
+	// Note: The value will be nil in case of stand-alone machines.
+	owningMachineSet *clusterv1.MachineSet
+
+	// owningMachineDeployment return the MachineDeployment controlling the MachineSet owning this machine.
+	// Note: The value will be nil in case of stand-alone Machines or in case of stand-alone MachineSet.
+	owningMachineDeployment *clusterv1.MachineDeployment
+
 	// infraMachine is the Infrastructure Machine object that is referenced by the
 	// Machine. It is set after reconcileInfrastructure is called.
 	infraMachine *unstructured.Unstructured
@@ -397,6 +458,12 @@ type scope struct {
 
 	// deletingMessage is the message that should be used when setting the Deleting condition.
 	deletingMessage string
+
+	// updatingReason is the reason that should be used when setting the Updating condition.
+	updatingReason string
+
+	// updatingMessage is the message that should be used when setting the Updating condition.
+	updatingMessage string
 }
 
 func (r *Reconciler) reconcileMachineOwnerAndLabels(_ context.Context, s *scope) (ctrl.Result, error) {
@@ -601,7 +668,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (ctrl.Result
 	// We only delete the node after the underlying infrastructure is gone.
 	// https://github.com/kubernetes-sigs/cluster-api/issues/2565
 	if isDeleteNodeAllowed {
-		log.Info("Deleting node", "Node", klog.KRef("", m.Status.NodeRef.Name))
+		log.Info("Deleting Node", "Node", klog.KRef("", m.Status.NodeRef.Name))
 
 		var deleteNodeErr error
 		waitErr := wait.PollUntilContextTimeout(ctx, 2*time.Second, r.nodeDeletionRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -611,9 +678,9 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (ctrl.Result
 			return true, nil
 		})
 		if waitErr != nil {
-			log.Error(deleteNodeErr, "Timed out deleting node", "Node", klog.KRef("", m.Status.NodeRef.Name))
+			log.Error(deleteNodeErr, "Timed out deleting Node", "Node", klog.KRef("", m.Status.NodeRef.Name))
 			v1beta1conditions.MarkFalse(m, clusterv1.MachineNodeHealthyV1Beta1Condition, clusterv1.DeletionFailedV1Beta1Reason, clusterv1.ConditionSeverityWarning, "")
-			r.recorder.Eventf(m, corev1.EventTypeWarning, "FailedDeleteNode", "error deleting Machine's node: %v", deleteNodeErr)
+			r.recorder.Eventf(m, corev1.EventTypeWarning, "FailedDeleteNode", "error deleting Machine's Node: %v", deleteNodeErr)
 
 			// If the node deletion timeout is not expired yet, requeue the Machine for reconciliation.
 			if m.Spec.Deletion.NodeDeletionTimeoutSeconds == nil || *m.Spec.Deletion.NodeDeletionTimeoutSeconds == 0 || m.DeletionTimestamp.Add(time.Duration(*m.Spec.Deletion.NodeDeletionTimeoutSeconds)*time.Second).After(time.Now()) {

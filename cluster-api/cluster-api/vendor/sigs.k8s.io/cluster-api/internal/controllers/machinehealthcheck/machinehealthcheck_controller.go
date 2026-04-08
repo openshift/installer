@@ -211,7 +211,6 @@ func (r *Reconciler) reconcile(ctx context.Context, logger logr.Logger, cluster 
 		var err error
 		remoteClient, err = r.ClusterCache.GetClient(ctx, util.ObjectKey(cluster))
 		if err != nil {
-			logger.Error(err, "Error creating remote cluster cache")
 			return ctrl.Result{}, err
 		}
 
@@ -224,8 +223,7 @@ func (r *Reconciler) reconcile(ctx context.Context, logger logr.Logger, cluster 
 	logger.V(3).Info("Finding targets")
 	targets, err := r.getTargetsFromMHC(ctx, logger, remoteClient, cluster, m)
 	if err != nil {
-		logger.Error(err, "Failed to fetch targets from MachineHealthCheck")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.Wrapf(err, "failed to fetch targets from MachineHealthCheck")
 	}
 	totalTargets := len(targets)
 	m.Status.ExpectedMachines = ptr.To(int32(totalTargets))
@@ -326,7 +324,7 @@ func (r *Reconciler) reconcile(ctx context.Context, logger logr.Logger, cluster 
 		if len(errList) > 0 {
 			return ctrl.Result{}, kerrors.NewAggregate(errList)
 		}
-		return reconcile.Result{Requeue: true}, nil
+		return reconcile.Result{}, nil
 	}
 
 	if m.Spec.Remediation.TriggerIf.UnhealthyInRange == "" {

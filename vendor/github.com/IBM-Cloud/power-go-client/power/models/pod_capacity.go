@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -57,11 +58,15 @@ func (m *PodCapacity) validatePodData(formats strfmt.Registry) error {
 
 	if m.PodData != nil {
 		if err := m.PodData.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("PodData")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("PodData")
 			}
+
 			return err
 		}
 	}
@@ -76,11 +81,15 @@ func (m *PodCapacity) validateStorageControllers(formats strfmt.Registry) error 
 
 	if m.StorageControllers != nil {
 		if err := m.StorageControllers.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("StorageControllers")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("StorageControllers")
 			}
+
 			return err
 		}
 	}
@@ -95,11 +104,15 @@ func (m *PodCapacity) validateSystemPools(formats strfmt.Registry) error {
 
 	if m.SystemPools != nil {
 		if err := m.SystemPools.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("SystemPools")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("SystemPools")
 			}
+
 			return err
 		}
 	}
@@ -138,11 +151,15 @@ func (m *PodCapacity) contextValidatePodData(ctx context.Context, formats strfmt
 		}
 
 		if err := m.PodData.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("PodData")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("PodData")
 			}
+
 			return err
 		}
 	}
@@ -157,11 +174,15 @@ func (m *PodCapacity) contextValidateStorageControllers(ctx context.Context, for
 	}
 
 	if err := m.StorageControllers.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("StorageControllers")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("StorageControllers")
 		}
+
 		return err
 	}
 
@@ -175,11 +196,15 @@ func (m *PodCapacity) contextValidateSystemPools(ctx context.Context, formats st
 	}
 
 	if err := m.SystemPools.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("SystemPools")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("SystemPools")
 		}
+
 		return err
 	}
 

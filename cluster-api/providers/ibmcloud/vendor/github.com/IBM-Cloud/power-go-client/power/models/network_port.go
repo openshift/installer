@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -126,11 +127,15 @@ func (m *NetworkPort) validatePvmInstance(formats strfmt.Registry) error {
 
 	if m.PvmInstance != nil {
 		if err := m.PvmInstance.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("pvmInstance")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("pvmInstance")
 			}
+
 			return err
 		}
 	}
@@ -170,11 +175,15 @@ func (m *NetworkPort) contextValidatePvmInstance(ctx context.Context, formats st
 		}
 
 		if err := m.PvmInstance.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("pvmInstance")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("pvmInstance")
 			}
+
 			return err
 		}
 	}

@@ -23,6 +23,7 @@ linters:
     - ginkgolinter # ginkgo and gomega
     - gocritic # bugs, performance, style (we could add custom ones to this one)
     - godot # checks that comments end in a period
+    - godox # block FIXMEs
     - goprintffuncname # printft-like functions should be named with f at the end
     - gosec # potential security problems
     - govet # basically 'go vet'
@@ -83,6 +84,9 @@ linters:
         - ^ \+.*
         - ^ ANCHOR.*
         - '^ (alpha|beta|GA): v.*'
+    godox:
+      keywords:
+        - FIXME # FIXME's should be removed before merging PRs
     gosec:
       excludes:
       # integer overflow conversion int -> int32
@@ -174,6 +178,8 @@ linters:
           alias: ""
         - pkg: sigs.k8s.io/cluster-api/internal/topology/names
           alias: topologynames
+        - pkg: sigs.k8s.io/cluster-api/internal/util/client
+          alias: "clientutil"
         # CAPD
         - pkg: sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1alpha3
           alias: infrav1alpha3
@@ -257,10 +263,6 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: (clusterv1alpha3.*|clusterv1alpha4.*) is deprecated: This type will be removed in one of the next releases.'
-        # Specific exclude rules for deprecated feature flags
-      - linters:
-          - staticcheck
-        text: 'SA1019: feature.ClusterResourceSet is deprecated: ClusterResourceSet feature is now GA and the corresponding feature flag will be removed in 1.12 release.'
         # v1Beta1 deprecated fields
       - linters:
           - staticcheck
@@ -269,7 +271,9 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: .*(res|result|i|j)\.Requeue is deprecated: Use `RequeueAfter` instead'
-      # TODO: var-naming: avoid meaningless package names by revive  
+        # TODO: Remove Requeue step by step
+        path: internal/controllers/(extensionconfig|machinepool)|util/util.go
+      # TODO: var-naming: avoid meaningless package names by revive
       #   * test/infrastructure/docker/internal/docker/types/
       #   * bootstrap/kubeadm/types/
       #   * internal/webhooks/util/

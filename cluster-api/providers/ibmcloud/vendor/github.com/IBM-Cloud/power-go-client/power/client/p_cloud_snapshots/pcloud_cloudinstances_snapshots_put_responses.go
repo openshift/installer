@@ -7,6 +7,7 @@ package p_cloud_snapshots
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 
@@ -22,7 +23,7 @@ type PcloudCloudinstancesSnapshotsPutReader struct {
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *PcloudCloudinstancesSnapshotsPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *PcloudCloudinstancesSnapshotsPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
 	switch response.Code() {
 	case 200:
 		result := NewPcloudCloudinstancesSnapshotsPutOK()
@@ -76,7 +77,7 @@ PcloudCloudinstancesSnapshotsPutOK describes a response with status code 200, wi
 OK
 */
 type PcloudCloudinstancesSnapshotsPutOK struct {
-	Payload models.Object
+	Payload *models.Snapshot
 }
 
 // IsSuccess returns true when this pcloud cloudinstances snapshots put o k response has a 2xx status code
@@ -119,14 +120,16 @@ func (o *PcloudCloudinstancesSnapshotsPutOK) String() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots/{snapshot_id}][%d] pcloudCloudinstancesSnapshotsPutOK %s", 200, payload)
 }
 
-func (o *PcloudCloudinstancesSnapshotsPutOK) GetPayload() models.Object {
+func (o *PcloudCloudinstancesSnapshotsPutOK) GetPayload() *models.Snapshot {
 	return o.Payload
 }
 
 func (o *PcloudCloudinstancesSnapshotsPutOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
+	o.Payload = new(models.Snapshot)
+
 	// response payload
-	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -196,7 +199,7 @@ func (o *PcloudCloudinstancesSnapshotsPutBadRequest) readResponse(response runti
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -266,7 +269,7 @@ func (o *PcloudCloudinstancesSnapshotsPutUnauthorized) readResponse(response run
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -336,7 +339,7 @@ func (o *PcloudCloudinstancesSnapshotsPutForbidden) readResponse(response runtim
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -406,7 +409,7 @@ func (o *PcloudCloudinstancesSnapshotsPutNotFound) readResponse(response runtime
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -476,7 +479,7 @@ func (o *PcloudCloudinstancesSnapshotsPutInternalServerError) readResponse(respo
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 

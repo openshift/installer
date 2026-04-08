@@ -21,20 +21,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-logr/logr"
-
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 
-	"k8s.io/klog/v2"
-
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/cluster-api/util/patch"
-
-	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	infrav1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/resourcecontroller"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
@@ -44,28 +39,30 @@ import (
 // BucketAccess indicates if the bucket has public or private access public access.
 const BucketAccess = "public"
 
+var (
+	// ErrServiceInsanceNotInActiveState indicates error if serviceInstance is inactive.
+	ErrServiceInsanceNotInActiveState = errors.New("service instance is not in active state")
+)
+
 // PowerVSImageScopeParams defines the input parameters used to create a new PowerVSImageScope.
 type PowerVSImageScopeParams struct {
 	Client          client.Client
-	Logger          logr.Logger
-	IBMPowerVSImage *infrav1beta2.IBMPowerVSImage
+	IBMPowerVSImage *infrav1.IBMPowerVSImage
 	ServiceEndpoint []endpoints.ServiceEndpoint
 	Zone            *string
 }
 
 // PowerVSImageScope defines a scope defined around a Power VS Cluster.
 type PowerVSImageScope struct {
-	logr.Logger
-	Client      client.Client
-	patchHelper *patch.Helper
-
+	Client           client.Client
 	IBMPowerVSClient powervs.PowerVS
-	IBMPowerVSImage  *infrav1beta2.IBMPowerVSImage
+	IBMPowerVSImage  *infrav1.IBMPowerVSImage
 	ServiceEndpoint  []endpoints.ServiceEndpoint
 }
 
 // NewPowerVSImageScope creates a new PowerVSImageScope from the supplied parameters.
-func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageScope, err error) {
+func NewPowerVSImageScope(ctx context.Context, params PowerVSImageScopeParams) (scope *PowerVSImageScope, err error) {
+	log := ctrl.LoggerFrom(ctx)
 	scope = &PowerVSImageScope{}
 
 	if params.Client == nil {
@@ -80,25 +77,13 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 	}
 	scope.IBMPowerVSImage = params.IBMPowerVSImage
 
-	if params.Logger == (logr.Logger{}) {
-		params.Logger = klog.Background()
-	}
-	scope.Logger = params.Logger
-
-	helper, err := patch.NewHelper(params.IBMPowerVSImage, params.Client)
-	if err != nil {
-		err = fmt.Errorf("failed to init patch helper: %w", err)
-		return nil, err
-	}
-	scope.patchHelper = helper
-
 	// Create Resource Controller client.
 	var serviceOption resourcecontroller.ServiceOptions
 	// Fetch the resource controller endpoint.
 	rcEndpoint := endpoints.FetchEndpoints(string(endpoints.RC), params.ServiceEndpoint)
 	if rcEndpoint != "" {
 		serviceOption.URL = rcEndpoint
-		params.Logger.V(3).Info("Overriding the default resource controller endpoint", "ResourceControllerEndpoint", rcEndpoint)
+		log.V(3).Info("Overriding the default resource controller endpoint", "ResourceControllerEndpoint", rcEndpoint)
 	}
 
 	rc, err := resourcecontroller.NewService(serviceOption)
@@ -119,14 +104,14 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 		}
 		serviceInstance, err := rc.GetServiceInstance("", name, params.Zone)
 		if err != nil {
-			params.Logger.Error(err, "error failed to get service instance id from name", "name", name)
+			log.Error(err, "error failed to get service instance id from name", "name", name)
 			return nil, err
 		}
 		if serviceInstance == nil {
 			return nil, fmt.Errorf("service instance %s is not yet created", name)
 		}
-		if *serviceInstance.State != string(infrav1beta2.ServiceInstanceStateActive) {
-			return nil, fmt.Errorf("service instance %s is not in active state", name)
+		if *serviceInstance.State != string(infrav1.ServiceInstanceStateActive) {
+			return scope, ErrServiceInsanceNotInActiveState
 		}
 		serviceInstanceID = *serviceInstance.GUID
 	}
@@ -142,7 +127,7 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 
 	options := powervs.ServiceOptions{
 		IBMPIOptions: &ibmpisession.IBMPIOptions{
-			Debug: params.Logger.V(DEBUGLEVEL).Enabled(),
+			Debug: log.V(DEBUGLEVEL).Enabled(),
 			Zone:  *res.RegionID,
 		},
 	}
@@ -150,7 +135,7 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 	// Fetch the service endpoint.
 	if svcEndpoint := endpoints.FetchPVSEndpoint(endpoints.ConstructRegionFromZone(*res.RegionID), params.ServiceEndpoint); svcEndpoint != "" {
 		options.IBMPIOptions.URL = svcEndpoint
-		scope.Logger.V(3).Info("overriding the default powervs service endpoint")
+		log.V(3).Info("Overriding the default PowerVS service endpoint", "serviceEndpoint", svcEndpoint)
 	}
 
 	c, err := powervs.NewService(options)
@@ -179,8 +164,9 @@ func (i *PowerVSImageScope) ensureImageUnique(imageName string) (*models.ImageRe
 }
 
 // CreateImageCOSBucket creates a power vs image.
-func (i *PowerVSImageScope) CreateImageCOSBucket() (*models.ImageReference, *models.JobReference, error) {
-	s := i.IBMPowerVSImage.Spec
+func (i *PowerVSImageScope) CreateImageCOSBucket(ctx context.Context) (*models.ImageReference, *models.JobReference, error) {
+	log := ctrl.LoggerFrom(ctx)
+	imageSpec := i.IBMPowerVSImage.Spec
 	m := i.IBMPowerVSImage.ObjectMeta
 
 	imageReply, err := i.ensureImageUnique(m.Name)
@@ -188,45 +174,35 @@ func (i *PowerVSImageScope) CreateImageCOSBucket() (*models.ImageReference, *mod
 		record.Warnf(i.IBMPowerVSImage, "FailedRetrieveImage", "Failed to retrieve image %q", m.Name)
 		return nil, nil, err
 	} else if imageReply != nil {
-		i.Info("Image already exists")
+		log.Info("Image already exists", "imageName", m.Name)
 		return imageReply, nil, nil
 	}
 
 	if lastJob, _ := i.GetImportJob(); lastJob != nil {
-		if *lastJob.Status.State != "completed" && *lastJob.Status.State != "failed" {
-			i.Info("Previous import job not yet finished", "state", *lastJob.Status.State)
+		if *lastJob.Status.State != string(infrav1.PowerVSImageStateCompleted) && *lastJob.Status.State != string(infrav1.PowerVSImageStateFailed) {
+			log.Info("Previous import job not yet finished", "state", *lastJob.Status.State)
 			return nil, nil, nil
 		}
 	}
 
 	body := &models.CreateCosImageImportJob{
 		ImageName:     &m.Name,
-		BucketName:    s.Bucket,
+		BucketName:    imageSpec.Bucket,
 		BucketAccess:  core.StringPtr(BucketAccess),
-		Region:        s.Region,
-		ImageFilename: s.Object,
-		StorageType:   s.StorageType,
+		Region:        imageSpec.Region,
+		ImageFilename: imageSpec.Object,
+		StorageType:   imageSpec.StorageType,
 	}
 
 	jobRef, err := i.IBMPowerVSClient.CreateCosImage(body)
 	if err != nil {
-		i.Info("Unable to create new import job request")
+		log.Info("Unable to create new import job request")
 		record.Warnf(i.IBMPowerVSImage, "FailedCreateImageImportJob", "Failed image import job creation - %v", err)
 		return nil, nil, err
 	}
-	i.Info("New import job request created")
+	log.Info("New import job request created")
 	record.Eventf(i.IBMPowerVSImage, "SuccessfulCreateImageImportJob", "Created image import job %q", *jobRef.ID)
 	return nil, jobRef, nil
-}
-
-// PatchObject persists the cluster configuration and status.
-func (i *PowerVSImageScope) PatchObject() error {
-	return i.patchHelper.Patch(context.TODO(), i.IBMPowerVSImage)
-}
-
-// Close closes the current scope persisting the cluster configuration and status.
-func (i *PowerVSImageScope) Close() error {
-	return i.PatchObject()
 }
 
 // DeleteImage will delete the image.
@@ -283,11 +259,11 @@ func (i *PowerVSImageScope) GetImageID() string {
 
 // SetImageState will set the state for the image.
 func (i *PowerVSImageScope) SetImageState(status string) {
-	i.IBMPowerVSImage.Status.ImageState = infrav1beta2.PowerVSImageState(status)
+	i.IBMPowerVSImage.Status.ImageState = infrav1.PowerVSImageState(status)
 }
 
 // GetImageState will get the state for the image.
-func (i *PowerVSImageScope) GetImageState() infrav1beta2.PowerVSImageState {
+func (i *PowerVSImageScope) GetImageState() infrav1.PowerVSImageState {
 	return i.IBMPowerVSImage.Status.ImageState
 }
 

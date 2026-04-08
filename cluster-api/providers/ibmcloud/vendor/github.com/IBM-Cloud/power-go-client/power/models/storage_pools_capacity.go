@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -51,11 +52,15 @@ func (m *StoragePoolsCapacity) validateMaximumStorageAllocation(formats strfmt.R
 
 	if m.MaximumStorageAllocation != nil {
 		if err := m.MaximumStorageAllocation.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("maximumStorageAllocation")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("maximumStorageAllocation")
 			}
+
 			return err
 		}
 	}
@@ -75,11 +80,15 @@ func (m *StoragePoolsCapacity) validateStoragePoolsCapacity(formats strfmt.Regis
 
 		if m.StoragePoolsCapacity[i] != nil {
 			if err := m.StoragePoolsCapacity[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("storagePoolsCapacity" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("storagePoolsCapacity" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -116,11 +125,15 @@ func (m *StoragePoolsCapacity) contextValidateMaximumStorageAllocation(ctx conte
 		}
 
 		if err := m.MaximumStorageAllocation.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("maximumStorageAllocation")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("maximumStorageAllocation")
 			}
+
 			return err
 		}
 	}
@@ -139,11 +152,15 @@ func (m *StoragePoolsCapacity) contextValidateStoragePoolsCapacity(ctx context.C
 			}
 
 			if err := m.StoragePoolsCapacity[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("storagePoolsCapacity" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("storagePoolsCapacity" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

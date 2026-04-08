@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -41,9 +42,11 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/transport"
+	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
 	runtimev1 "sigs.k8s.io/cluster-api/api/runtime/v1beta2"
@@ -120,11 +123,9 @@ func (c *client) Discover(ctx context.Context, extensionConfig *runtimev1.Extens
 		return nil, errors.Wrapf(err, "failed to discover extension %q", extensionConfig.Name)
 	}
 
-	// Check to see if the response is a failure and handle the failure accordingly.
-	if response.GetStatus() == runtimehooksv1.ResponseStatusFailure {
-		log.Info(fmt.Sprintf("Failed to discover extension %q: got failure response with message %v", extensionConfig.Name, response.GetMessage()))
-		// Don't add the message to the error as it is may be unique causing too many reconciliations. Ref: https://github.com/kubernetes-sigs/cluster-api/issues/6921
-		return nil, errors.Errorf("failed to discover extension %q: got failure response, please check controller logs for errors", extensionConfig.Name)
+	// Check to see if the response is not a success and handle the failure accordingly.
+	if err := validateResponseStatus(log, response, "discover extension", extensionConfig.Name); err != nil {
+		return nil, err
 	}
 
 	// Check to see if the response is valid.
@@ -172,12 +173,49 @@ func (c *client) Unregister(extensionConfig *runtimev1.ExtensionConfig) error {
 	return nil
 }
 
+func (c *client) GetAllExtensions(ctx context.Context, hook runtimecatalog.Hook, forObject ctrlclient.Object) ([]string, error) {
+	hookName := runtimecatalog.HookName(hook)
+	log := ctrl.LoggerFrom(ctx).WithValues("hook", hookName)
+	ctx = ctrl.LoggerInto(ctx, log)
+	gvh, err := c.catalog.GroupVersionHook(hook)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get extension handlers for hook %q: failed to compute GroupVersionHook", hookName)
+	}
+	forObjectGVK, err := apiutil.GVKForObject(forObject, c.client.Scheme())
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get extension handlers for hook %q: failed to get GroupVersionKind for the object the hook is executed for", hookName)
+	}
+
+	registrations, err := c.registry.List(gvh.GroupHook())
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get extension handlers for hook %q", gvh.GroupHook())
+	}
+
+	log.V(4).Info(fmt.Sprintf("Getting all extensions of hook %q for %s %s", hookName, forObjectGVK.Kind, klog.KObj(forObject)))
+	matchingRegistrations := []string{}
+	for _, registration := range registrations {
+		// Compute whether the object the get is being made for matches the namespaceSelector
+		namespaceMatches, err := c.matchNamespace(ctx, registration.NamespaceSelector, forObject.GetNamespace())
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get extension handlers for hook %q: failed to get extension handler %q", gvh.GroupHook(), registration.Name)
+		}
+		// If the object namespace isn't matched by the registration NamespaceSelector don't return it.
+		if !namespaceMatches {
+			log.V(5).Info(fmt.Sprintf("skipping extension handler %q as object '%s/%s' does not match selector %q of ExtensionConfig", registration.Name, forObject.GetNamespace(), forObject.GetName(), registration.NamespaceSelector))
+			continue
+		}
+		matchingRegistrations = append(matchingRegistrations, registration.Name)
+	}
+
+	return matchingRegistrations, nil
+}
+
 // CallAllExtensions calls all the ExtensionHandlers registered for the hook.
 // The ExtensionHandlers are called sequentially. The function exits immediately after any of the ExtensionHandlers return an error.
 // This ensures we don't end up waiting for timeout from multiple unreachable Extensions.
 // See CallExtension for more details on when an ExtensionHandler returns an error.
 // The aggregated result of the ExtensionHandlers is updated into the response object passed to the function.
-func (c *client) CallAllExtensions(ctx context.Context, hook runtimecatalog.Hook, forObject metav1.Object, request runtimehooksv1.RequestObject, response runtimehooksv1.ResponseObject) error {
+func (c *client) CallAllExtensions(ctx context.Context, hook runtimecatalog.Hook, forObject ctrlclient.Object, request runtimehooksv1.RequestObject, response runtimehooksv1.ResponseObject) error {
 	hookName := runtimecatalog.HookName(hook)
 	log := ctrl.LoggerFrom(ctx).WithValues("hook", hookName)
 	ctx = ctrl.LoggerInto(ctx, log)
@@ -194,33 +232,22 @@ func (c *client) CallAllExtensions(ctx context.Context, hook runtimecatalog.Hook
 		return errors.Wrapf(err, "failed to call extension handlers for hook %q: response object is invalid for hook", gvh.GroupHook())
 	}
 
-	registrations, err := c.registry.List(gvh.GroupHook())
+	// Get all matching extension handlers for this hook and object.
+	matchingHandlers, err := c.GetAllExtensions(ctx, hook, forObject)
 	if err != nil {
 		return errors.Wrapf(err, "failed to call extension handlers for hook %q", gvh.GroupHook())
 	}
 
-	log.V(4).Info(fmt.Sprintf("Calling all extensions of hook %q", hookName))
 	responses := []runtimehooksv1.ResponseObject{}
-	for _, registration := range registrations {
+	for _, handlerName := range matchingHandlers {
 		// Creates a new instance of the response parameter.
 		responseObject, err := c.catalog.NewResponse(gvh)
 		if err != nil {
-			return errors.Wrapf(err, "failed to call extension handlers for hook %q: failed to call extension handler %q", gvh.GroupHook(), registration.Name)
+			return errors.Wrapf(err, "failed to call extension handlers for hook %q: failed to call extension handler %q", gvh.GroupHook(), handlerName)
 		}
 		tmpResponse := responseObject.(runtimehooksv1.ResponseObject)
 
-		// Compute whether the object the call is being made for matches the namespaceSelector
-		namespaceMatches, err := c.matchNamespace(ctx, registration.NamespaceSelector, forObject.GetNamespace())
-		if err != nil {
-			return errors.Wrapf(err, "failed to call extension handlers for hook %q: failed to call extension handler %q", gvh.GroupHook(), registration.Name)
-		}
-		// If the object namespace isn't matched by the registration NamespaceSelector skip the call.
-		if !namespaceMatches {
-			log.V(5).Info(fmt.Sprintf("skipping extension handler %q as object '%s/%s' does not match selector %q of ExtensionConfig", registration.Name, forObject.GetNamespace(), forObject.GetName(), registration.NamespaceSelector))
-			continue
-		}
-
-		err = c.CallExtension(ctx, hook, forObject, registration.Name, request, tmpResponse)
+		err = c.CallExtension(ctx, hook, forObject, handlerName, request, tmpResponse)
 		// If one of the extension handlers fails lets short-circuit here and return early.
 		if err != nil {
 			log.Error(err, "failed to call extension handlers")
@@ -271,7 +298,7 @@ func aggregateSuccessfulResponses(aggregatedResponse runtimehooksv1.ResponseObje
 // Nb. FailurePolicy does not affect the following kinds of errors:
 // - Internal errors. Examples: hooks is incompatible with ExtensionHandler, ExtensionHandler information is missing.
 // - Error when ExtensionHandler returns a response with `Status` set to `Failure`.
-func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, forObject metav1.Object, name string, request runtimehooksv1.RequestObject, response runtimehooksv1.ResponseObject, opts ...runtimeclient.CallExtensionOption) error {
+func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, forObject ctrlclient.Object, name string, request runtimehooksv1.RequestObject, response runtimehooksv1.ResponseObject, opts ...runtimeclient.CallExtensionOption) error {
 	// Calculate the options.
 	options := &runtimeclient.CallExtensionOptions{}
 	for _, opt := range opts {
@@ -362,15 +389,13 @@ func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, fo
 		return errors.Wrapf(err, "failed to call extension handler %q", name)
 	}
 
-	// If the received response is a failure then return an error.
-	if response.GetStatus() == runtimehooksv1.ResponseStatusFailure {
-		log.Info(fmt.Sprintf("Failed to call extension handler %q: got failure response with message %v", name, response.GetMessage()))
-		// Don't add the message to the error as it is may be unique causing too many reconciliations. Ref: https://github.com/kubernetes-sigs/cluster-api/issues/6921
-		return errors.Errorf("failed to call extension handler %q: got failure response, please check controller logs for errors", name)
+	// If the received response is not a success then return an error.
+	if err := validateResponseStatus(log, response, "call extension handler", name); err != nil {
+		return err
 	}
 
 	if retryResponse, ok := response.(runtimehooksv1.RetryResponseObject); ok && retryResponse.GetRetryAfterSeconds() != 0 {
-		log.Info(fmt.Sprintf("Extension handler returned blocking response with retryAfterSeconds of %d", retryResponse.GetRetryAfterSeconds()))
+		log.V(4).Info(fmt.Sprintf("Extension handler returned blocking response with retryAfterSeconds of %d", retryResponse.GetRetryAfterSeconds()))
 	} else {
 		log.V(4).Info("Extension handler returned success response")
 	}
@@ -694,4 +719,20 @@ func ExtensionNameFromHandlerName(registeredHandlerName string) (string, error) 
 		return "", errors.Errorf("registered handler name %s was not in the expected format (`HANDLER_NAME.EXTENSION_NAME)", registeredHandlerName)
 	}
 	return parts[1], nil
+}
+
+// validateResponseStatus checks if the response status is successful and returns an error otherwise.
+// It logs appropriate messages for failure and unknown statuses.
+func validateResponseStatus(log logr.Logger, response runtimehooksv1.ResponseObject, operationName, targetName string) error {
+	if response.GetStatus() != runtimehooksv1.ResponseStatusSuccess {
+		if response.GetStatus() == runtimehooksv1.ResponseStatusFailure {
+			log.Info(fmt.Sprintf("Failed to %s %q: got failure response with message %v", operationName, targetName, response.GetMessage()))
+			// Don't add the message to the error as it is may be unique causing too many reconciliations. Ref: https://github.com/kubernetes-sigs/cluster-api/issues/6921
+			return errors.Errorf("failed to %s %q: got failure response, please check controller logs for errors", operationName, targetName)
+		}
+		// Handle unknown status.
+		log.Info(fmt.Sprintf("Failed to %s %q: got unknown response status %q with message %v", operationName, targetName, response.GetStatus(), response.GetMessage()))
+		return errors.Errorf("failed to %s %q: got unknown response status %q, please check controller logs for errors", operationName, targetName, response.GetStatus())
+	}
+	return nil
 }

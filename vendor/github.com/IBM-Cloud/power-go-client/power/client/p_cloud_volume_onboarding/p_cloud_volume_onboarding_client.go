@@ -69,7 +69,7 @@ type ClientService interface {
 PcloudVolumeOnboardingGet gets the information of volume onboarding operation
 */
 func (a *Client) PcloudVolumeOnboardingGet(params *PcloudVolumeOnboardingGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumeOnboardingGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumeOnboardingGetParams()
 	}
@@ -89,17 +89,22 @@ func (a *Client) PcloudVolumeOnboardingGet(params *PcloudVolumeOnboardingGetPara
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumeOnboardingGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volume.onboarding.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -108,7 +113,7 @@ func (a *Client) PcloudVolumeOnboardingGet(params *PcloudVolumeOnboardingGetPara
 PcloudVolumeOnboardingGetall lists all volume onboardings for this cloud instance
 */
 func (a *Client) PcloudVolumeOnboardingGetall(params *PcloudVolumeOnboardingGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumeOnboardingGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumeOnboardingGetallParams()
 	}
@@ -128,17 +133,22 @@ func (a *Client) PcloudVolumeOnboardingGetall(params *PcloudVolumeOnboardingGeta
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumeOnboardingGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volume.onboarding.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -147,7 +157,7 @@ func (a *Client) PcloudVolumeOnboardingGetall(params *PcloudVolumeOnboardingGeta
 PcloudVolumeOnboardingPost onboards auxiliary volumes to target site
 */
 func (a *Client) PcloudVolumeOnboardingPost(params *PcloudVolumeOnboardingPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumeOnboardingPostAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumeOnboardingPostParams()
 	}
@@ -167,17 +177,22 @@ func (a *Client) PcloudVolumeOnboardingPost(params *PcloudVolumeOnboardingPostPa
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumeOnboardingPostAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volume.onboarding.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
