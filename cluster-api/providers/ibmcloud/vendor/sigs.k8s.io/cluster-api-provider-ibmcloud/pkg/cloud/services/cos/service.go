@@ -90,8 +90,16 @@ func (s *Service) PutPublicAccessBlock(input *s3.PutPublicAccessBlockInput) (*s3
 	return s.client.PutPublicAccessBlock(input)
 }
 
+// NewServiceFunc is a variable that will hold the function reference.
+var NewServiceFunc = NewService // Default to the original function
+
+// NewServiceWrapper returns a new service for the IBM Cloud COS api client, useful in unit testing.
+func NewServiceWrapper(options ServiceOptions, apikey, serviceInstance string) (Cos, error) {
+	return NewServiceFunc(options, apikey, serviceInstance)
+}
+
 // NewService returns a new service for the IBM Cloud Resource Controller api client.
-func NewService(options ServiceOptions, apikey, serviceInstance string) (*Service, error) {
+func NewService(options ServiceOptions, apikey, serviceInstance string) (Cos, error) {
 	if options.Options == nil {
 		options.Options = &cosSession.Options{}
 	}

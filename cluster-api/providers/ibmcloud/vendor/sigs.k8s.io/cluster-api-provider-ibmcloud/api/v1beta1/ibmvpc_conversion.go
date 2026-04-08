@@ -23,54 +23,54 @@ import (
 
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 
-	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	infrav1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 )
 
 func (src *IBMVPCCluster) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta2.IBMVPCCluster)
+	dst := dstRaw.(*infrav1.IBMVPCCluster)
 
 	return Convert_v1beta1_IBMVPCCluster_To_v1beta2_IBMVPCCluster(src, dst, nil)
 }
 
 func (dst *IBMVPCCluster) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta2.IBMVPCCluster)
+	src := srcRaw.(*infrav1.IBMVPCCluster)
 
 	return Convert_v1beta2_IBMVPCCluster_To_v1beta1_IBMVPCCluster(src, dst, nil)
 }
 
 func (src *IBMVPCClusterList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta2.IBMVPCClusterList)
+	dst := dstRaw.(*infrav1.IBMVPCClusterList)
 
 	return Convert_v1beta1_IBMVPCClusterList_To_v1beta2_IBMVPCClusterList(src, dst, nil)
 }
 
 func (dst *IBMVPCClusterList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta2.IBMVPCClusterList)
+	src := srcRaw.(*infrav1.IBMVPCClusterList)
 
 	return Convert_v1beta2_IBMVPCClusterList_To_v1beta1_IBMVPCClusterList(src, dst, nil)
 }
 
 func (src *IBMVPCMachine) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta2.IBMVPCMachine)
+	dst := dstRaw.(*infrav1.IBMVPCMachine)
 
 	if err := Convert_v1beta1_IBMVPCMachine_To_v1beta2_IBMVPCMachine(src, dst, nil); err != nil {
 		return err
 	}
 
 	if src.Spec.Image != "" {
-		dst.Spec.Image = &infrav1beta2.IBMVPCResourceReference{
+		dst.Spec.Image = &infrav1.IBMVPCResourceReference{
 			ID: &src.Spec.Image,
 		}
 	}
 
 	if src.Spec.ImageName != "" {
-		dst.Spec.Image = &infrav1beta2.IBMVPCResourceReference{
+		dst.Spec.Image = &infrav1.IBMVPCResourceReference{
 			Name: &src.Spec.ImageName,
 		}
 	}
 
 	for _, sshKey := range src.Spec.SSHKeyNames {
-		dst.Spec.SSHKeys = append(dst.Spec.SSHKeys, &infrav1beta2.IBMVPCResourceReference{
+		dst.Spec.SSHKeys = append(dst.Spec.SSHKeys, &infrav1.IBMVPCResourceReference{
 			Name: sshKey,
 		})
 	}
@@ -79,7 +79,7 @@ func (src *IBMVPCMachine) ConvertTo(dstRaw conversion.Hub) error {
 }
 
 func (dst *IBMVPCMachine) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta2.IBMVPCMachine)
+	src := srcRaw.(*infrav1.IBMVPCMachine)
 
 	if err := Convert_v1beta2_IBMVPCMachine_To_v1beta1_IBMVPCMachine(src, dst, nil); err != nil {
 		return err
@@ -108,38 +108,38 @@ func (dst *IBMVPCMachine) ConvertFrom(srcRaw conversion.Hub) error {
 }
 
 func (src *IBMVPCMachineList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta2.IBMVPCMachineList)
+	dst := dstRaw.(*infrav1.IBMVPCMachineList)
 
 	return Convert_v1beta1_IBMVPCMachineList_To_v1beta2_IBMVPCMachineList(src, dst, nil)
 }
 
 func (dst *IBMVPCMachineList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta2.IBMVPCMachineList)
+	src := srcRaw.(*infrav1.IBMVPCMachineList)
 
 	return Convert_v1beta2_IBMVPCMachineList_To_v1beta1_IBMVPCMachineList(src, dst, nil)
 }
 
 func (src *IBMVPCMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta2.IBMVPCMachineTemplate)
+	dst := dstRaw.(*infrav1.IBMVPCMachineTemplate)
 
 	if err := Convert_v1beta1_IBMVPCMachineTemplate_To_v1beta2_IBMVPCMachineTemplate(src, dst, nil); err != nil {
 		return err
 	}
 
 	if src.Spec.Template.Spec.Image != "" {
-		dst.Spec.Template.Spec.Image = &infrav1beta2.IBMVPCResourceReference{
+		dst.Spec.Template.Spec.Image = &infrav1.IBMVPCResourceReference{
 			ID: &src.Spec.Template.Spec.Image,
 		}
 	}
 
 	if src.Spec.Template.Spec.ImageName != "" {
-		dst.Spec.Template.Spec.Image = &infrav1beta2.IBMVPCResourceReference{
+		dst.Spec.Template.Spec.Image = &infrav1.IBMVPCResourceReference{
 			Name: &src.Spec.Template.Spec.ImageName,
 		}
 	}
 
 	for _, sshKey := range src.Spec.Template.Spec.SSHKeyNames {
-		dst.Spec.Template.Spec.SSHKeys = append(dst.Spec.Template.Spec.SSHKeys, &infrav1beta2.IBMVPCResourceReference{
+		dst.Spec.Template.Spec.SSHKeys = append(dst.Spec.Template.Spec.SSHKeys, &infrav1.IBMVPCResourceReference{
 			Name: sshKey,
 		})
 	}
@@ -148,7 +148,7 @@ func (src *IBMVPCMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 }
 
 func (dst *IBMVPCMachineTemplate) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta2.IBMVPCMachineTemplate)
+	src := srcRaw.(*infrav1.IBMVPCMachineTemplate)
 
 	if err := Convert_v1beta2_IBMVPCMachineTemplate_To_v1beta1_IBMVPCMachineTemplate(src, dst, nil); err != nil {
 		return err
@@ -177,39 +177,39 @@ func (dst *IBMVPCMachineTemplate) ConvertFrom(srcRaw conversion.Hub) error {
 }
 
 func (src *IBMVPCMachineTemplateList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta2.IBMVPCMachineTemplateList)
+	dst := dstRaw.(*infrav1.IBMVPCMachineTemplateList)
 
 	return Convert_v1beta1_IBMVPCMachineTemplateList_To_v1beta2_IBMVPCMachineTemplateList(src, dst, nil)
 }
 
 func (dst *IBMVPCMachineTemplateList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta2.IBMVPCMachineTemplateList)
+	src := srcRaw.(*infrav1.IBMVPCMachineTemplateList)
 
 	return Convert_v1beta2_IBMVPCMachineTemplateList_To_v1beta1_IBMVPCMachineTemplateList(src, dst, nil)
 }
 
-func Convert_v1beta1_IBMVPCMachineSpec_To_v1beta2_IBMVPCMachineSpec(in *IBMVPCMachineSpec, out *infrav1beta2.IBMVPCMachineSpec, s apiconversion.Scope) error {
+func Convert_v1beta1_IBMVPCMachineSpec_To_v1beta2_IBMVPCMachineSpec(in *IBMVPCMachineSpec, out *infrav1.IBMVPCMachineSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_IBMVPCMachineSpec_To_v1beta2_IBMVPCMachineSpec(in, out, s)
 }
 
-func Convert_v1beta2_IBMVPCMachineSpec_To_v1beta1_IBMVPCMachineSpec(in *infrav1beta2.IBMVPCMachineSpec, out *IBMVPCMachineSpec, s apiconversion.Scope) error {
+func Convert_v1beta2_IBMVPCMachineSpec_To_v1beta1_IBMVPCMachineSpec(in *infrav1.IBMVPCMachineSpec, out *IBMVPCMachineSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_IBMVPCMachineSpec_To_v1beta1_IBMVPCMachineSpec(in, out, s)
 }
 
-func Convert_v1beta2_IBMVPCMachineTemplateStatus_To_v1beta1_IBMVPCMachineTemplateStatus(in *infrav1beta2.IBMVPCMachineTemplateStatus, out *IBMVPCMachineTemplateStatus, s apiconversion.Scope) error {
+func Convert_v1beta2_IBMVPCMachineTemplateStatus_To_v1beta1_IBMVPCMachineTemplateStatus(in *infrav1.IBMVPCMachineTemplateStatus, out *IBMVPCMachineTemplateStatus, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_IBMVPCMachineTemplateStatus_To_v1beta1_IBMVPCMachineTemplateStatus(in, out, s)
 }
 
-func Convert_Slice_Pointer_string_To_Slice_Pointer_v1beta2_IBMVPCResourceReference(in *[]*string, out *[]*infrav1beta2.IBMVPCResourceReference, _ apiconversion.Scope) error {
+func Convert_Slice_Pointer_string_To_Slice_Pointer_v1beta2_IBMVPCResourceReference(in *[]*string, out *[]*infrav1.IBMVPCResourceReference, _ apiconversion.Scope) error {
 	for _, sshKey := range *in {
-		*out = append(*out, &infrav1beta2.IBMVPCResourceReference{
+		*out = append(*out, &infrav1.IBMVPCResourceReference{
 			ID: sshKey,
 		})
 	}
 	return nil
 }
 
-func Convert_Slice_Pointer_v1beta2_IBMVPCResourceReference_To_Slice_Pointer_string(in *[]*infrav1beta2.IBMVPCResourceReference, out *[]*string, _ apiconversion.Scope) error {
+func Convert_Slice_Pointer_v1beta2_IBMVPCResourceReference_To_Slice_Pointer_string(in *[]*infrav1.IBMVPCResourceReference, out *[]*string, _ apiconversion.Scope) error {
 	if in != nil {
 		for _, sshKey := range *in {
 			if sshKey.ID != nil {
@@ -220,22 +220,22 @@ func Convert_Slice_Pointer_v1beta2_IBMVPCResourceReference_To_Slice_Pointer_stri
 	return nil
 }
 
-func Convert_v1beta2_VPCLoadBalancerSpec_To_v1beta1_VPCLoadBalancerSpec(in *infrav1beta2.VPCLoadBalancerSpec, out *VPCLoadBalancerSpec, s apiconversion.Scope) error {
+func Convert_v1beta2_VPCLoadBalancerSpec_To_v1beta1_VPCLoadBalancerSpec(in *infrav1.VPCLoadBalancerSpec, out *VPCLoadBalancerSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_VPCLoadBalancerSpec_To_v1beta1_VPCLoadBalancerSpec(in, out, s)
 }
 
-func Convert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *infrav1beta2.IBMVPCClusterSpec, out *IBMVPCClusterSpec, s apiconversion.Scope) error {
+func Convert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *infrav1.IBMVPCClusterSpec, out *IBMVPCClusterSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in, out, s)
 }
 
-func Convert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in *infrav1beta2.IBMVPCClusterStatus, out *IBMVPCClusterStatus, s apiconversion.Scope) error {
+func Convert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in *infrav1.IBMVPCClusterStatus, out *IBMVPCClusterStatus, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in, out, s)
 }
 
-func Convert_v1beta2_IBMVPCMachineStatus_To_v1beta1_IBMVPCMachineStatus(in *infrav1beta2.IBMVPCMachineStatus, out *IBMVPCMachineStatus, s apiconversion.Scope) error {
+func Convert_v1beta2_IBMVPCMachineStatus_To_v1beta1_IBMVPCMachineStatus(in *infrav1.IBMVPCMachineStatus, out *IBMVPCMachineStatus, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_IBMVPCMachineStatus_To_v1beta1_IBMVPCMachineStatus(in, out, s)
 }
 
-func Convert_v1beta2_NetworkInterface_To_v1beta1_NetworkInterface(in *infrav1beta2.NetworkInterface, out *NetworkInterface, s apiconversion.Scope) error {
+func Convert_v1beta2_NetworkInterface_To_v1beta1_NetworkInterface(in *infrav1.NetworkInterface, out *NetworkInterface, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_NetworkInterface_To_v1beta1_NetworkInterface(in, out, s)
 }

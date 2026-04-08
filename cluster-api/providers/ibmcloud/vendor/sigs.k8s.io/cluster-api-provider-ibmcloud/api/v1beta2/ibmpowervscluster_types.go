@@ -19,7 +19,7 @@ package v1beta2
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -42,7 +42,7 @@ type IBMPowerVSClusterSpec struct {
 	// 1. in the case of DHCPServer.Name is not set the name will be DHCPSERVER<CLUSTER_NAME>_Private.
 	// 2. if DHCPServer.Name is set the name will be DHCPSERVER<DHCPServer.Name>_Private.
 	// when Network.ID is set, its expected that there exist a network in PowerVS workspace with id or else system will give error.
-	// when Network.Name is set, system will first check for network with Name in PowerVS workspace, if not exist network will be created by DHCP service.
+	// when Network.Name is set, system will first check for network with Name in PowerVS workspace, if not exist system will check DHCP network with given Network.name, if that also not exist, it will create a new DHCP service and name will be DHCPSERVER<Network.Name>_Private.
 	// Network.RegEx is not yet supported and system will ignore the value.
 	Network IBMPowerVSResourceReference `json:"network"`
 
@@ -54,7 +54,7 @@ type IBMPowerVSClusterSpec struct {
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint capiv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// serviceInstance is the reference to the Power VS server workspace on which the server instance(VM) will be created.
 	// Power VS server workspace is a container for all Power VS instances at a specific geographic region.
@@ -231,7 +231,22 @@ type IBMPowerVSClusterStatus struct {
 	LoadBalancers map[string]VPCLoadBalancerStatus `json:"loadBalancers,omitempty"`
 
 	// Conditions defines current service state of the IBMPowerVSCluster.
-	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in IBMPowerVSCluster's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *IBMPowerVSClusterV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// IBMPowerVSClusterV1Beta2Status groups all the fields that will be added or modified in IBMPowerVSCluster with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type IBMPowerVSClusterV1Beta2Status struct {
+	// conditions represents the observations of a DevCluster's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -320,13 +335,29 @@ type CosInstance struct {
 }
 
 // GetConditions returns the observations of the operational state of the IBMPowerVSCluster resource.
-func (r *IBMPowerVSCluster) GetConditions() capiv1beta1.Conditions {
+func (r *IBMPowerVSCluster) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the IBMPowerVSCluster to the predescribed clusterv1.Conditions.
-func (r *IBMPowerVSCluster) SetConditions(conditions capiv1beta1.Conditions) {
+// SetConditions sets the underlying service state of the IBMPowerVSCluster to the predescribed clusterv1beta1.Conditions.
+func (r *IBMPowerVSCluster) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (r *IBMPowerVSCluster) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (r *IBMPowerVSCluster) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &IBMPowerVSClusterV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
 }
 
 // Set sets the details of the resource.
@@ -338,5 +369,5 @@ func (rf *ResourceReference) Set(resource ResourceReference) {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMPowerVSCluster{}, &IBMPowerVSClusterList{})
+	objectTypes = append(objectTypes, &IBMPowerVSCluster{}, &IBMPowerVSClusterList{})
 }

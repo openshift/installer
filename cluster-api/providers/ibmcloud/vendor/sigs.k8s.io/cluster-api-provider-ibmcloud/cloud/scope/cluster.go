@@ -28,15 +28,16 @@ import (
 
 	"k8s.io/klog/v2"
 
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/patch"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch" //nolint:staticcheck
 
-	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
+	infrav1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/vpc"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/pagingutils"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
 )
 
@@ -47,8 +48,8 @@ type ClusterScopeParams struct {
 	IBMVPCClient    vpc.Vpc
 	Client          client.Client
 	Logger          logr.Logger
-	Cluster         *capiv1beta1.Cluster
-	IBMVPCCluster   *infrav1beta2.IBMVPCCluster
+	Cluster         *clusterv1.Cluster
+	IBMVPCCluster   *infrav1.IBMVPCCluster
 	ServiceEndpoint []endpoints.ServiceEndpoint
 }
 
@@ -56,11 +57,11 @@ type ClusterScopeParams struct {
 type ClusterScope struct {
 	logr.Logger
 	Client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	IBMVPCClient    vpc.Vpc
-	Cluster         *capiv1beta1.Cluster
-	IBMVPCCluster   *infrav1beta2.IBMVPCCluster
+	Cluster         *clusterv1.Cluster
+	IBMVPCCluster   *infrav1.IBMVPCCluster
 	ServiceEndpoint []endpoints.ServiceEndpoint
 }
 
@@ -77,7 +78,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 		params.Logger = klog.Background()
 	}
 
-	helper, err := patch.NewHelper(params.IBMVPCCluster, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.IBMVPCCluster, params.Client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init patch helper: %w", err)
 	}
@@ -180,7 +181,7 @@ func (s *ClusterScope) ensureVPCUnique(vpcName string) (*vpcv1.VPC, error) {
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -285,7 +286,7 @@ func (s *ClusterScope) getSubnetAddrPrefix(vpcID, zone string) (string, error) {
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return "", err
 	}
 
@@ -326,7 +327,7 @@ func (s *ClusterScope) ensureSubnetUnique(subnetName string) (*vpcv1.Subnet, err
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -334,7 +335,8 @@ func (s *ClusterScope) ensureSubnetUnique(subnetName string) (*vpcv1.Subnet, err
 }
 
 // DeleteSubnet deletes a subnet associated with subnet id.
-func (s *ClusterScope) DeleteSubnet() error {
+func (s *ClusterScope) DeleteSubnet(ctx context.Context) error {
+	log := ctrl.LoggerFrom(ctx)
 	if s.IBMVPCCluster.Status.Subnet.ID == nil {
 		return nil
 	}
@@ -372,12 +374,12 @@ func (s *ClusterScope) DeleteSubnet() error {
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return err
 	}
 
 	if !found {
-		s.Logger.V(3).Info("No subnets found with ID", "Subnet ID", subnetID)
+		log.V(3).Info("No subnets found with ID", "subnetID", subnetID)
 		return nil
 	}
 
@@ -554,7 +556,7 @@ func (s *ClusterScope) getLoadBalancerByHostname(loadBalancerHostname string) (*
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -592,7 +594,7 @@ func (s *ClusterScope) ensureLoadBalancerUnique(loadBalancerName string) (*vpcv1
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -622,7 +624,7 @@ func (s *ClusterScope) DeleteLoadBalancer() (bool, error) {
 			for _, lb := range loadBalancersList.LoadBalancers {
 				if (*lb.ID) == lbipID {
 					deleted = true
-					if *lb.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateDeletePending) {
+					if *lb.ProvisioningStatus != string(infrav1.VPCLoadBalancerStateDeletePending) {
 						deleteLoadBalancerOption := &vpcv1.DeleteLoadBalancerOptions{}
 						deleteLoadBalancerOption.SetID(lbipID)
 						_, err := s.IBMVPCClient.DeleteLoadBalancer(deleteLoadBalancerOption)
@@ -640,7 +642,7 @@ func (s *ClusterScope) DeleteLoadBalancer() (bool, error) {
 			return true, "", nil
 		}
 
-		if err := utils.PagingHelper(f); err != nil {
+		if err := pagingutils.PagingHelper(f); err != nil {
 			return false, err
 		}
 	}
@@ -664,11 +666,11 @@ func (s *ClusterScope) IsReady() bool {
 
 // SetLoadBalancerState will set the state for the load balancer.
 func (s *ClusterScope) SetLoadBalancerState(status string) {
-	s.IBMVPCCluster.Status.ControlPlaneLoadBalancerState = infrav1beta2.VPCLoadBalancerState(status)
+	s.IBMVPCCluster.Status.ControlPlaneLoadBalancerState = infrav1.VPCLoadBalancerState(status)
 }
 
 // GetLoadBalancerState will get the state for the load balancer.
-func (s *ClusterScope) GetLoadBalancerState() infrav1beta2.VPCLoadBalancerState {
+func (s *ClusterScope) GetLoadBalancerState() infrav1.VPCLoadBalancerState {
 	return s.IBMVPCCluster.Status.ControlPlaneLoadBalancerState
 }
 
@@ -712,8 +714,8 @@ func (s *ClusterScope) Close() error {
 
 // APIServerPort returns the APIServerPort to use when creating the ControlPlaneEndpoint.
 func (s *ClusterScope) APIServerPort() int32 {
-	if s.Cluster.Spec.ClusterNetwork != nil && s.Cluster.Spec.ClusterNetwork.APIServerPort != nil {
-		return *s.Cluster.Spec.ClusterNetwork.APIServerPort
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort > 0 {
+		return s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
-	return infrav1beta2.DefaultAPIServerPort
+	return infrav1.DefaultAPIServerPort
 }
