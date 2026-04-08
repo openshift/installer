@@ -8,7 +8,6 @@ import (
 	"time"
 
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
-	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
@@ -16,6 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	azstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/go-autorest/autorest/to"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -29,7 +29,7 @@ type API interface {
 	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*armnetwork.IPAddressAvailabilityResult, error)
 	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
-	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
+	ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
 	GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error)
 	GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error)
@@ -156,28 +156,36 @@ func (c *Client) getSubnetsClient() (*armnetwork.SubnetsClient, error) {
 }
 
 // ListLocations lists the Azure regions dir the given subscription
-func (c *Client) ListLocations(ctx context.Context) (*[]azsubs.Location, error) {
+func (c *Client) ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	subsClient, err := c.getSubscriptionsClient(ctx)
+	subsClient, err := c.getSubscriptionsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	locations, err := subsClient.ListLocations(ctx, c.ssn.Credentials.SubscriptionID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list locations: %w", err)
+	var locations []*armsubscriptions.Location
+	pager := subsClient.NewListLocationsPager(c.ssn.Credentials.SubscriptionID, nil)
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list locations: %w", err)
+		}
+		locations = append(locations, page.Value...)
 	}
 
-	return locations.Value, nil
+	return locations, nil
 }
 
 // getSubscriptionsClient sets up a new client to retrieve subscription data
-func (c *Client) getSubscriptionsClient(ctx context.Context) (azsubs.Client, error) {
-	client := azsubs.NewClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint)
-	client.Authorizer = c.ssn.Authorizer
-	return client, nil
+func (c *Client) getSubscriptionsClient() (*armsubscriptions.Client, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	return armsubscriptions.NewClient(c.ssn.TokenCreds, clientOpts)
 }
 
 // GetResourcesProvider gets the Azure resource provider

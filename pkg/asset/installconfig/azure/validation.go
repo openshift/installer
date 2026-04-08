@@ -604,7 +604,7 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 	}
 
 	availableRegions := map[string]string{}
-	for _, location := range *locations {
+	for _, location := range locations {
 		availableRegions[to.String(location.Name)] = to.String(location.DisplayName)
 	}
 

@@ -14,9 +14,9 @@ import (
 	reflect "reflect"
 
 	resources "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
-	subscriptions "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	compute "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	armnetwork "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	armsubscriptions "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -343,10 +343,10 @@ func (mr *MockAPIMockRecorder) GetVirtualNetwork(ctx, resourceGroupName, virtual
 }
 
 // ListLocations mocks base method.
-func (m *MockAPI) ListLocations(ctx context.Context) (*[]subscriptions.Location, error) {
+func (m *MockAPI) ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListLocations", ctx)
-	ret0, _ := ret[0].(*[]subscriptions.Location)
+	ret0, _ := ret[0].([]*armsubscriptions.Location)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

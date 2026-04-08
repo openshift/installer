@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
-	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -223,15 +223,15 @@ var (
 			AddressPrefix: &validControlPlaneSubnetCIDR,
 		},
 	}
-	locationsAPIResult = func() *[]azsubs.Location {
-		r := []azsubs.Location{}
+	locationsAPIResult = func() []*armsubscriptions.Location {
+		r := []*armsubscriptions.Location{}
 		for i := 0; i < len(validRegionsList); i++ {
-			r = append(r, azsubs.Location{
+			r = append(r, &armsubscriptions.Location{
 				Name:        &validRegionsList[i],
 				DisplayName: &validRegionsList[i],
 			})
 		}
-		return &r
+		return r
 	}()
 
 	marketplaceImageAPIResult = azenc.VirtualMachineImage{
@@ -1342,12 +1342,12 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 	azureClient.EXPECT().GetControlPlaneSubnet(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork, validControlPlaneSubnet).Return(controlPlaneSubnetAPIResult, nil).AnyTimes()
 
 	validRegionList := []string{"centralus", "northcentralus", "francecentral", "azurestack"}
-	locationsAPIResult = func() *[]azsubs.Location {
-		r := []azsubs.Location{}
+	locationsAPIResult = func() []*armsubscriptions.Location {
+		r := []*armsubscriptions.Location{}
 		for i := 0; i < len(validRegionList); i++ {
-			r = append(r, azsubs.Location{Name: to.StringPtr(validRegionList[i]), DisplayName: to.StringPtr(validRegionList[i])})
+			r = append(r, &armsubscriptions.Location{Name: to.StringPtr(validRegionList[i]), DisplayName: to.StringPtr(validRegionList[i])})
 		}
-		return &r
+		return r
 	}()
 	// Location
 	azureClient.EXPECT().ListLocations(gomock.Any()).Return(locationsAPIResult, nil).AnyTimes()

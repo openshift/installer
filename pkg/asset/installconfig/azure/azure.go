@@ -105,7 +105,7 @@ func getRegions(ctx context.Context, client API) (map[string]string, error) {
 	}
 
 	allLocations := map[string]string{}
-	for _, location := range *locations {
+	for _, location := range locations {
 		allLocations[to.String(location.Name)] = to.String(location.DisplayName)
 	}
 	return allLocations, nil
