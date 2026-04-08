@@ -5,9 +5,9 @@ import (
 	"net"
 	"testing"
 
-	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/stretchr/testify/assert"
@@ -249,12 +249,12 @@ var (
 		},
 	}
 
-	resourcesProviderAPIResult = &azres.Provider{
+	resourcesProviderAPIResult = &armresources.Provider{
 		Namespace: &validResourceGroupNamespace,
-		ResourceTypes: &[]azres.ProviderResourceType{
+		ResourceTypes: []*armresources.ProviderResourceType{
 			{
 				ResourceType: &validResourceGroupResourceType,
-				Locations:    &resourcesCapableRegionsList,
+				Locations:    toStringPtrSlice(resourcesCapableRegionsList),
 			},
 		},
 	}
@@ -505,6 +505,15 @@ var (
 		}
 	}
 )
+
+// toStringPtrSlice converts a slice of strings to a slice of string pointers
+func toStringPtrSlice(s []string) []*string {
+	result := make([]*string, len(s))
+	for i := range s {
+		result[i] = &s[i]
+	}
+	return result
+}
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
@@ -795,17 +804,17 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	}
 }
 
-var validGroupResult = &azres.Group{
+var validGroupResult = &armresources.ResourceGroup{
 	ID:       to.StringPtr("valid-resource-group"),
 	Location: to.StringPtr("centralus"),
 }
 
-var invalidGroupOutsideRegionResult = &azres.Group{
+var invalidGroupOutsideRegionResult = &armresources.ResourceGroup{
 	ID:       to.StringPtr("invalid-resource-group-useast2"),
 	Location: to.StringPtr("useast2"),
 }
 
-var validGroupWithTagsResult = &azres.Group{
+var validGroupWithTagsResult = &armresources.ResourceGroup{
 	ID:       to.StringPtr("valid-resource-group-tags"),
 	Location: to.StringPtr("centralus"),
 	Tags: map[string]*string{
@@ -813,7 +822,7 @@ var validGroupWithTagsResult = &azres.Group{
 	},
 }
 
-var validGroupWithConflictinsTagsResult = &azres.Group{
+var validGroupWithConflictinsTagsResult = &armresources.ResourceGroup{
 	ID:       to.StringPtr("valid-resource-group-conf-tags"),
 	Location: to.StringPtr("centralus"),
 	Tags: map[string]*string{
@@ -1352,12 +1361,12 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 	// Location
 	azureClient.EXPECT().ListLocations(gomock.Any()).Return(locationsAPIResult, nil).AnyTimes()
 
-	resourcesProviderAPIResult = &azres.Provider{
+	resourcesProviderAPIResult = &armresources.Provider{
 		Namespace: to.StringPtr(validResourceGroupNamespace),
-		ResourceTypes: &[]azres.ProviderResourceType{
+		ResourceTypes: []*armresources.ProviderResourceType{
 			{
 				ResourceType: &validResourceGroupResourceType,
-				Locations:    &validRegionList,
+				Locations:    toStringPtrSlice(validRegionList),
 			},
 		},
 	}

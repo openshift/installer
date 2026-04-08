@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
@@ -30,11 +29,11 @@ type API interface {
 	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
 	ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error)
-	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
+	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*armresources.Provider, error)
 	GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error)
 	GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error)
 	GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error)
-	GetGroup(ctx context.Context, groupName string) (*azres.Group, error)
+	GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
@@ -189,28 +188,31 @@ func (c *Client) getSubscriptionsClient() (*armsubscriptions.Client, error) {
 }
 
 // GetResourcesProvider gets the Azure resource provider
-func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error) {
+func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*armresources.Provider, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	providersClient, err := c.getProvidersClient(ctx)
+	providersClient, err := c.getProvidersClient()
 	if err != nil {
 		return nil, err
 	}
 
-	provider, err := providersClient.Get(ctx, resourceProviderNamespace, "")
+	resp, err := providersClient.Get(ctx, resourceProviderNamespace, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resource provider %s: %w", resourceProviderNamespace, err)
 	}
 
-	return &provider, nil
+	return &resp.Provider, nil
 }
 
 // getProvidersClient sets up a new client to retrieve providers data
-func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient, error) {
-	client := azres.NewProvidersClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
-	return client, nil
+func (c *Client) getProvidersClient() (*armresources.ProvidersClient, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	return armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
@@ -251,37 +253,51 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azenc.Resour
 }
 
 // GetGroup returns resource group for the groupName.
-func (c *Client) GetGroup(ctx context.Context, groupName string) (*azres.Group, error) {
-	client := azres.NewGroupsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armresources.NewResourceGroupsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource groups client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	res, err := client.Get(ctx, groupName)
+	resp, err := client.Get(ctx, groupName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resource group: %w", err)
 	}
-	return &res, nil
+	return &resp.ResourceGroup, nil
 }
 
 // ListResourceIDsByGroup returns a list of resource IDs for resource group groupName.
 func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error) {
-	client := azres.NewClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armresources.NewClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resources client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var res []string
-	resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list resources: %w", err)
-	}
-	for ; resPage.NotDone(); err = resPage.NextWithContext(ctx) {
+	pager := client.NewListByResourceGroupPager(groupName, nil)
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching resource pages: %w", err)
 		}
-		for _, page := range resPage.Values() {
-			res = append(res, to.String(page.ID))
+		for _, resource := range page.Value {
+			if resource.ID != nil {
+				res = append(res, *resource.ID)
+			}
 		}
 	}
 	return res, nil

@@ -13,9 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	resources "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	compute "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	armnetwork "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	armresources "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	armsubscriptions "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -179,10 +179,10 @@ func (mr *MockAPIMockRecorder) GetDiskSkus(ctx, region any) *gomock.Call {
 }
 
 // GetGroup mocks base method.
-func (m *MockAPI) GetGroup(ctx context.Context, groupName string) (*resources.Group, error) {
+func (m *MockAPI) GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGroup", ctx, groupName)
-	ret0, _ := ret[0].(*resources.Group)
+	ret0, _ := ret[0].(*armresources.ResourceGroup)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -239,10 +239,10 @@ func (mr *MockAPIMockRecorder) GetRegionAvailabilityZones(ctx, region any) *gomo
 }
 
 // GetResourcesProvider mocks base method.
-func (m *MockAPI) GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*resources.Provider, error) {
+func (m *MockAPI) GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*armresources.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResourcesProvider", ctx, resourceProviderNamespace)
-	ret0, _ := ret[0].(*resources.Provider)
+	ret0, _ := ret[0].(*armresources.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

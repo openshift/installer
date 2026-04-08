@@ -626,10 +626,14 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("failed to retrieve resource capable regions: %w", err))}
 	}
 
-	for _, resType := range *provider.ResourceTypes {
-		if *resType.ResourceType == "resourceGroups" {
-			for _, resourceCapableRegion := range *resType.Locations {
-				if resourceCapableRegion == displayName {
+	if provider.ResourceTypes == nil {
+		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("no resource types found in Microsoft.Resources provider"))}
+	}
+
+	for _, resType := range provider.ResourceTypes {
+		if resType.ResourceType != nil && *resType.ResourceType == "resourceGroups" {
+			for _, resourceCapableRegion := range resType.Locations {
+				if resourceCapableRegion != nil && *resourceCapableRegion == displayName {
 					return field.ErrorList{}
 				}
 			}
@@ -758,7 +762,11 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to get resource group: %w", err)))
 	}
 
-	normalizedRegion := strings.Replace(strings.ToLower(to.String(group.Location)), " ", "", -1)
+	var location string
+	if group.Location != nil {
+		location = *group.Location
+	}
+	normalizedRegion := strings.Replace(strings.ToLower(location), " ", "", -1)
 	if !strings.EqualFold(normalizedRegion, platform.Region) {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("expected to in region %s, but found it to be in %s", platform.Region, normalizedRegion)))
 	}
