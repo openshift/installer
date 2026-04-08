@@ -793,7 +793,7 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 			}
 		}
 	}
-	if ipAvail.AvailableIPAddresses == nil || len(ipAvail.AvailableIPAddresses) == 0 {
+	if len(ipAvail.AvailableIPAddresses) == 0 {
 		return "", fmt.Errorf("failed to get an available IP in given virtual network for LB: this error may be caused by lack of necessary permissions")
 	}
 	for _, ip := range ipAvail.AvailableIPAddresses {

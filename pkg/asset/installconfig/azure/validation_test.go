@@ -510,7 +510,7 @@ var (
 	}
 )
 
-// toStringPtrSlice converts a slice of strings to a slice of string pointers
+// toStringPtrSlice converts a slice of strings to a slice of string pointers.
 func toStringPtrSlice(s []string) []*string {
 	result := make([]*string, len(s))
 	for i := range s {

@@ -46,9 +46,10 @@ type API interface {
 	GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error
 }
 
-// Deprecated: Use ClientConfig.ClientOptions(ServiceNetwork) which automatically applies the correct
-// API version based on the cloud environment. This constant is retained for backward compatibility.
 // APIVersion describes the version to use for Azure API calls that support both azure and azurestack.
+// API version based on the cloud environment. This constant is retained for backward compatibility.
+//
+// Deprecated: Use ClientConfig.ClientOptions(ServiceNetwork) which automatically applies the correct version.
 const APIVersion = "2019-11-01"
 
 // Client makes calls to the Azure API.
@@ -440,6 +441,10 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
 	}
 
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
 	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
@@ -491,7 +496,7 @@ func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup,
 
 // GetRegionAvailabilityZones checks if a given region has availabililty zones for the nat gateways to use.
 func (c *Client) GetRegionAvailabilityZones(ctx context.Context, region string) ([]string, error) {
-	providersClient, err := armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
+	providersClient, err := c.getProvidersClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create providers client: %w", err)
 	}
