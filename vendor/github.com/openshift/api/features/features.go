@@ -1020,4 +1020,12 @@ var (
 				enhancementPR("https://github.com/openshift/enhancements/pull/1910").
 				enable(inDevPreviewNoUpgrade(), inTechPreviewNoUpgrade()).
 				mustRegister()
+
+	FeatureGateNetworkObservabilityInstall = newFeatureGate("NetworkObservabilityInstall").
+					reportProblemsToJiraComponent("netobserv").
+					contactPerson("jtakvori").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1908").
+					enable(inDevPreviewNoUpgrade(), inTechPreviewNoUpgrade()).
+					mustRegister()
 )

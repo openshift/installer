@@ -5001,6 +5001,25 @@ spec:
                   - cidr
                   type: object
                 type: array
+              networkObservability:
+                description: |-
+                  NetworkObservability is an optional field that configures network observability installation
+                  during cluster deployment (day-0).
+                  When omitted, network observability will be installed unless this is a SNO cluster.
+                properties:
+                  installationPolicy:
+                    description: |-
+                      InstallationPolicy controls whether network observability is installed during cluster deployment.
+                      Valid values are "", "InstallAndEnable" and "DoNotInstall".
+                      When set to "", network observability will be installed unless this is a SNO cluster.
+                      When set to "InstallAndEnable", network observability will be installed and enabled.
+                      When set to "DoNotInstall", network observability will not be installed.
+                    enum:
+                    - ""
+                    - InstallAndEnable
+                    - DoNotInstall
+                    type: string
+                type: object
               networkType:
                 default: OVNKubernetes
                 description: |-
