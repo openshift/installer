@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -249,8 +249,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		apiServerLB.FrontendIPs[0].FrontendIPClass = capz.FrontendIPClass{
 			PrivateIPAddress: lbip4,
 		}
-		if virtualNetwork.AddressSpace != nil && virtualNetwork.AddressSpace.AddressPrefixes != nil {
-			virtualNetworkAddressPrefixes = append(virtualNetworkAddressPrefixes, *virtualNetwork.AddressSpace.AddressPrefixes...)
+		if virtualNetwork.Properties != nil && virtualNetwork.Properties.AddressSpace != nil && virtualNetwork.Properties.AddressSpace.AddressPrefixes != nil {
+			for _, prefix := range virtualNetwork.Properties.AddressSpace.AddressPrefixes {
+				if prefix != nil {
+					virtualNetworkAddressPrefixes = append(virtualNetworkAddressPrefixes, *prefix)
+				}
+			}
 		}
 	}
 
@@ -587,13 +591,13 @@ func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (
 		controlPlaneSubnet, err := client.GetControlPlaneSubnet(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, controlPlaneSub)
 		if err != nil || controlPlaneSubnet == nil {
 			return "", fmt.Errorf("failed to get azure control plane subnet: %w", err)
-		} else if controlPlaneSubnet.AddressPrefixes == nil && controlPlaneSubnet.AddressPrefix == nil {
+		} else if controlPlaneSubnet.Properties == nil || (controlPlaneSubnet.Properties.AddressPrefixes == nil && controlPlaneSubnet.Properties.AddressPrefix == nil) {
 			return "", fmt.Errorf("failed to get azure control plane subnet addresses: %w", err)
 		}
 		subnetList := []*net.IPNet{}
-		if controlPlaneSubnet.AddressPrefixes != nil {
-			for _, sub := range *controlPlaneSubnet.AddressPrefixes {
-				_, ipnet, err := net.ParseCIDR(sub)
+		if controlPlaneSubnet.Properties.AddressPrefixes != nil {
+			for _, sub := range controlPlaneSubnet.Properties.AddressPrefixes {
+				_, ipnet, err := net.ParseCIDR(*sub)
 				if err != nil {
 					return "", fmt.Errorf("failed to get translate azure control plane subnet addresses: %w", err)
 				}
@@ -601,8 +605,8 @@ func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (
 			}
 		}
 
-		if controlPlaneSubnet.AddressPrefix != nil {
-			_, ipnet, err := net.ParseCIDR(*controlPlaneSubnet.AddressPrefix)
+		if controlPlaneSubnet.Properties.AddressPrefix != nil {
+			_, ipnet, err := net.ParseCIDR(*controlPlaneSubnet.Properties.AddressPrefix)
 			if err != nil {
 				return "", fmt.Errorf("failed to get translate azure control plane subnet address prefix: %w", err)
 			}
@@ -613,8 +617,8 @@ func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (
 	return lbip, nil
 }
 
-func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.SubnetRole, subnetName string) (*aznetwork.Subnet, error) {
-	var subnet *aznetwork.Subnet
+func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.SubnetRole, subnetName string) (*armnetwork.Subnet, error) {
+	var subnet *armnetwork.Subnet
 
 	azClient, err := installConfig.Azure.Client()
 	if err != nil {
@@ -643,25 +647,25 @@ func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.Subne
 	if subnet == nil {
 		return nil, fmt.Errorf("failed to get subnet")
 	}
-	if subnet.AddressPrefixes == nil && subnet.AddressPrefix == nil {
+	if subnet.Properties == nil || (subnet.Properties.AddressPrefixes == nil && subnet.Properties.AddressPrefix == nil) {
 		return nil, fmt.Errorf("failed to get subnet addresses: %w", err)
 	}
 	return subnet, nil
 }
 
-func getSubnetAddressPrefixes(subnet *aznetwork.Subnet) ([]*net.IPNet, error) {
+func getSubnetAddressPrefixes(subnet *armnetwork.Subnet) ([]*net.IPNet, error) {
 	subnetList := []*net.IPNet{}
-	if subnet.AddressPrefixes != nil {
-		for _, sub := range *subnet.AddressPrefixes {
-			_, ipnet, err := net.ParseCIDR(sub)
+	if subnet.Properties != nil && subnet.Properties.AddressPrefixes != nil {
+		for _, sub := range subnet.Properties.AddressPrefixes {
+			_, ipnet, err := net.ParseCIDR(*sub)
 			if err != nil {
 				return subnetList, fmt.Errorf("failed to get translate azure subnet addresses: %w", err)
 			}
 			subnetList = append(subnetList, ipnet)
 		}
 	}
-	if subnet.AddressPrefix != nil {
-		_, ipnet, err := net.ParseCIDR(*subnet.AddressPrefix)
+	if subnet.Properties != nil && subnet.Properties.AddressPrefix != nil {
+		_, ipnet, err := net.ParseCIDR(*subnet.Properties.AddressPrefix)
 		if err != nil {
 			return subnetList, fmt.Errorf("failed to get translate azure subnet address prefix: %w", err)
 		}
@@ -732,13 +736,13 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 		if err != nil {
 			return "", fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
-		if controlPlane.AddressPrefix == nil && controlPlane.AddressPrefixes == nil {
+		if controlPlane.Properties == nil || (controlPlane.Properties.AddressPrefix == nil && controlPlane.Properties.AddressPrefixes == nil) {
 			return "", fmt.Errorf("failed to get control plane subnet addresses: %w", err)
 		}
 		prefixes := []*ipnet.IPNet{}
-		if controlPlane.AddressPrefixes != nil {
-			for _, sub := range *controlPlane.AddressPrefixes {
-				ipnet, err := ipnet.ParseCIDR(sub)
+		if controlPlane.Properties.AddressPrefixes != nil {
+			for _, sub := range controlPlane.Properties.AddressPrefixes {
+				ipnet, err := ipnet.ParseCIDR(*sub)
 				if err != nil {
 					return "", fmt.Errorf("failed to get translate azure control plane subnet addresses: %w", err)
 				}
@@ -746,8 +750,8 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 			}
 		}
 
-		if controlPlane.AddressPrefix != nil {
-			ipnet, err := ipnet.ParseCIDR(*controlPlane.AddressPrefix)
+		if controlPlane.Properties.AddressPrefix != nil {
+			ipnet, err := ipnet.ParseCIDR(*controlPlane.Properties.AddressPrefix)
 			if err != nil {
 				return "", fmt.Errorf("failed to get translate azure control plane subnet address prefix: %w", err)
 			}
@@ -789,13 +793,16 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 			}
 		}
 	}
-	if ipAvail.AvailableIPAddresses == nil || len(*ipAvail.AvailableIPAddresses) == 0 {
+	if ipAvail.AvailableIPAddresses == nil || len(ipAvail.AvailableIPAddresses) == 0 {
 		return "", fmt.Errorf("failed to get an available IP in given virtual network for LB: this error may be caused by lack of necessary permissions")
 	}
-	for _, ip := range *ipAvail.AvailableIPAddresses {
+	for _, ip := range ipAvail.AvailableIPAddresses {
+		if ip == nil {
+			continue
+		}
 		for _, cidrRange := range machineCidr {
-			if cidrRange.CIDR.Contains(net.ParseIP(ip)) {
-				return ip, nil
+			if cidrRange.CIDR.Contains(net.ParseIP(*ip)) {
+				return *ip, nil
 			}
 		}
 	}

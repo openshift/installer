@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	account "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/storage/mgmt/storage"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -578,51 +577,54 @@ func createAccountOnStack(ctx context.Context, in *CreateBlockBlobInput) error {
 	cl, err := armstorage.NewAccountsClient(in.Session.Credentials.SubscriptionID,
 		in.TokenCredential,
 		&arm.ClientOptions{
-			APIVersion: "2020-09-01",
-			Cloud:      nil,
+			ClientOptions: azcore.ClientOptions{
+				Cloud: in.Session.CloudConfig,
+			},
 		},
 	)
-	//TokenCredential      azcore.TokenCredential
-
-	/*
-		cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
-		cl.Authorizer = in.Session.Authorizer
-	*/
-
-	parameters := account.AccountCreateParameters{
-		Location: &in.Region,
-		Sku: &account.Sku{
-			Name: account.PremiumLRS,
-		},
-		Tags: in.Tags,
-		Kind: account.Storage,
+	if err != nil {
+		return fmt.Errorf("error creating storage accounts client: %w", err)
 	}
 
-	future, err := cl.Create(ctx, in.ResourceGroupName, in.StorageAccountName, parameters)
+	parameters := armstorage.AccountCreateParameters{
+		Location: &in.Region,
+		SKU: &armstorage.SKU{
+			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
+		},
+		Tags: in.Tags,
+		Kind: to.Ptr(armstorage.KindStorage),
+	}
+
+	poller, err := cl.BeginCreate(ctx, in.ResourceGroupName, in.StorageAccountName, parameters, nil)
 	if err != nil {
 		return fmt.Errorf("error creating storage account creation request: %w", err)
 	}
-	if err = future.WaitForCompletionRef(ctx, cl.Client); err != nil {
-		return fmt.Errorf("error waiting for stack storage account to provision: %w", err)
-	}
-	acct, err := future.Result(cl)
+	acct, err := poller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error fetching storage account: %w", err)
+		return fmt.Errorf("error waiting for stack storage account to provision: %w", err)
 	}
 	logrus.Debugf("Created storage account %s", *acct.ID)
 	return nil
 }
 
 func getStorageAccountKey(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
-	cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
-	cl.Authorizer = in.Session.Authorizer
-	res, err := cl.ListKeys(ctx, in.ResourceGroupName, in.StorageAccountName)
+	cl, err := armstorage.NewAccountsClient(in.Session.Credentials.SubscriptionID,
+		in.TokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud: in.Session.CloudConfig,
+			},
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("error creating storage accounts client: %w", err)
+	}
+	res, err := cl.ListKeys(ctx, in.ResourceGroupName, in.StorageAccountName, nil)
 	if err != nil {
 		return "", fmt.Errorf("error listing stack storage account keys: %w", err)
 	}
-	keys := *res.Keys
-	if len(keys) > 0 {
-		return *keys[0].Value, nil
+	if res.Keys != nil && len(res.Keys) > 0 && res.Keys[0].Value != nil {
+		return *res.Keys[0].Value, nil
 	}
 	return "", fmt.Errorf("no storage account key found")
 }

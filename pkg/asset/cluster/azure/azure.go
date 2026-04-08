@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -99,18 +99,28 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 		return nil
 	}
 
-	client := resources.NewGroupsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
-	client.Authorizer = session.Authorizer
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: session.CloudConfig,
+		},
+	}
+
+	client, err := armresources.NewResourceGroupsClient(session.Credentials.SubscriptionID, session.TokenCreds, clientOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create resource groups client: %w", err)
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	group, err := client.Get(ctx, installConfig.Config.Azure.ResourceGroupName)
+	resp, err := client.Get(ctx, installConfig.Config.Azure.ResourceGroupName, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get the resource group: %w", err)
 	}
 
-	if group.Tags == nil {
-		group.Tags = map[string]*string{}
+	tags := resp.Tags
+	if tags == nil {
+		tags = map[string]*string{}
 	}
 
 	// The cluster resource group when created by the installer is tagged with `kubernetes.io_cluster_<infraID>=owned` tag.
@@ -122,22 +132,22 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 	//
 	// We read existing tags from the resource group and add `kubernetes.io_cluster_<infraID>=owned` to it when sending an update for the resource group.
 	tagKey, tagValue := ownedTag(clusterID)
-	group.Tags[tagKey] = tagValue
+	tags[tagKey] = tagValue
 	logrus.Debugf("Tagging resource group %s with %s: %s", installConfig.Config.Azure.ResourceGroupName, tagKey, *tagValue)
 
 	// Save metadata needed to destroy cluster into tags
 	config := installConfig.Config.Azure
-	group.Tags[azure.TagMetadataRegion] = to.StringPtr(config.Region)
+	tags[azure.TagMetadataRegion] = to.Ptr(config.Region)
 	if len(config.BaseDomainResourceGroupName) > 0 {
-		group.Tags[azure.TagMetadataBaseDomainRG] = to.StringPtr(config.BaseDomainResourceGroupName)
+		tags[azure.TagMetadataBaseDomainRG] = to.Ptr(config.BaseDomainResourceGroupName)
 	}
 	if len(config.NetworkResourceGroupName) > 0 {
-		group.Tags[azure.TagMetadataNetworkRG] = to.StringPtr(config.NetworkResourceGroupName)
+		tags[azure.TagMetadataNetworkRG] = to.Ptr(config.NetworkResourceGroupName)
 	}
 
-	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, resources.GroupPatchable{
-		Tags: group.Tags,
-	})
+	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, armresources.ResourceGroupPatchable{
+		Tags: tags,
+	}, nil)
 	if err != nil {
 		return fmt.Errorf("failed to tag the resource group %q: %w", installConfig.Config.Azure.ResourceGroupName, err)
 	}
@@ -145,9 +155,9 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 }
 
 func sharedTag(clusterID string) (string, *string) {
-	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.StringPtr("shared")
+	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.Ptr("shared")
 }
 
 func ownedTag(clusterID string) (string, *string) {
-	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.StringPtr("owned")
+	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.Ptr("owned")
 }
