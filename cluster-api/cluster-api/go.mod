@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/core
 
 go 1.24.0
 
-require sigs.k8s.io/cluster-api v1.11.3
+require sigs.k8s.io/cluster-api v1.12.0-beta.1
 
 require (
 	cel.dev/expr v0.25.1 // indirect
