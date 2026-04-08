@@ -11,10 +11,9 @@ import (
 	"strings"
 	"time"
 
-	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -124,8 +123,8 @@ func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztype
 	resp, requestErr := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 	if requestErr != nil {
 		return requestErr
-	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.ConfidentialVMEncryptedWithCustomerKey {
-		return fmt.Errorf("the disk encryption set should be created with type %s", azenc.ConfidentialVMEncryptedWithCustomerKey)
+	} else if resp == nil || resp.Properties == nil || resp.Properties.EncryptionType == nil || *resp.Properties.EncryptionType != armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey {
+		return fmt.Errorf("the disk encryption set should be created with type %s", armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey)
 	}
 	if resp.Location != nil && !strings.EqualFold(*resp.Location, clusterRegion) {
 		return fmt.Errorf("disk encryption set is in %s, but the cluster region is %s", *resp.Location, clusterRegion)
@@ -327,35 +326,52 @@ func validateUltraSSD(client API, fieldPath *field.Path, icZones []string, regio
 		return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
 	}
 	// If Availability Zones not supported
-	if locationInfo == nil || len(to.StringSlice(locationInfo.Zones)) == 0 {
+	if locationInfo == nil || locationInfo.Zones == nil || len(locationInfo.Zones) == 0 {
 		errMsg := fmt.Sprintf("UltraSSD capability is not compatible with Availability Sets which are used because region %s does not support Availability Zones", region)
 		return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
 	}
-	allZones := to.StringSlice(locationInfo.Zones)
+	allZones := make([]string, 0, len(locationInfo.Zones))
+	for _, z := range locationInfo.Zones {
+		if z != nil {
+			allZones = append(allZones, *z)
+		}
+	}
 
 	// The UltraSSDAvailable capability might not be present at all, in which case it must assumed to be false
 	ultraSSDAvailable := false
 	if val, ok := capabilities["UltraSSDAvailable"]; ok {
 		ultraSSDAvailable = strings.EqualFold(val, "True")
 	}
-	for _, zoneDetails := range *locationInfo.ZoneDetails {
-		for _, capability := range *zoneDetails.Capabilities {
-			if !strings.EqualFold(to.String(capability.Name), "UltraSSDAvailable") {
+	if locationInfo.ZoneDetails != nil {
+		for _, zoneDetails := range locationInfo.ZoneDetails {
+			if zoneDetails == nil || zoneDetails.Capabilities == nil {
 				continue
 			}
-			if strings.EqualFold(to.String(capability.Value), "True") {
-				zones := icZones
-				// If no zones are configured in the install config, then all available zones in the region are used
-				if len(zones) == 0 {
-					zones = allZones
+			for _, capability := range zoneDetails.Capabilities {
+				if capability == nil || capability.Name == nil || !strings.EqualFold(*capability.Name, "UltraSSDAvailable") {
+					continue
 				}
-				capZones := to.StringSlice(zoneDetails.Name)
-				ultraSSDZones := sets.NewString(capZones...)
-				if !ultraSSDZones.HasAll(zones...) {
-					errMsg := fmt.Sprintf("UltraSSD capability only supported in zones %v for this instance type in the %s region", capZones, region)
-					return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+				if capability.Value != nil && strings.EqualFold(*capability.Value, "True") {
+					zones := icZones
+					// If no zones are configured in the install config, then all available zones in the region are used
+					if len(zones) == 0 {
+						zones = allZones
+					}
+					capZones := make([]string, 0)
+					if zoneDetails.Name != nil {
+						for _, n := range zoneDetails.Name {
+							if n != nil {
+								capZones = append(capZones, *n)
+							}
+						}
+					}
+					ultraSSDZones := sets.NewString(capZones...)
+					if !ultraSSDZones.HasAll(zones...) {
+						errMsg := fmt.Sprintf("UltraSSD capability only supported in zones %v for this instance type in the %s region", capZones, region)
+						return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+					}
+					ultraSSDAvailable = true
 				}
-				ultraSSDAvailable = true
 			}
 		}
 	}
@@ -605,7 +621,15 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 
 	availableRegions := map[string]string{}
 	for _, location := range locations {
-		availableRegions[to.String(location.Name)] = to.String(location.DisplayName)
+		name := ""
+		displayName := ""
+		if location.Name != nil {
+			name = *location.Name
+		}
+		if location.DisplayName != nil {
+			displayName = *location.DisplayName
+		}
+		availableRegions[name] = displayName
 	}
 
 	displayName, ok := availableRegions[p.Region]
@@ -939,7 +963,13 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 	if err != nil {
 		return field.Invalid(osImageFieldPath, osImage, err.Error())
 	}
-	imageHyperVGen := string(vmImage.HyperVGeneration)
+	if vmImage == nil || vmImage.Properties == nil {
+		return field.Invalid(osImageFieldPath, osImage, "could not retrieve marketplace image properties")
+	}
+	imageHyperVGen := ""
+	if vmImage.Properties.HyperVGeneration != nil {
+		imageHyperVGen = string(*vmImage.Properties.HyperVGeneration)
+	}
 	if !instanceHyperVGenSet.Has(imageHyperVGen) {
 		errMsg := fmt.Sprintf("instance type supports HyperVGenerations %v but the specified image is for HyperVGeneration %s; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU", instanceHyperVGenSet.UnsortedList(), imageHyperVGen)
 		return field.Invalid(osImageFieldPath, osImage.SKU, errMsg)
@@ -951,7 +981,7 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 		// Use the default if not set in the install-config
 		osImagePlan = aztypes.ImageWithPurchasePlan
 	}
-	if plan := vmImage.Plan; plan != nil {
+	if plan := vmImage.Properties.Plan; plan != nil {
 		if osImagePlan == aztypes.ImageNoPurchasePlan {
 			return field.Invalid(osImageFieldPath, osImage, "marketplace image requires license terms to be accepted")
 		}

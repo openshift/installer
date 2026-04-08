@@ -5,11 +5,11 @@ import (
 	"net"
 	"testing"
 
-	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -55,17 +55,17 @@ var (
 		"Standard_DC8s_v3":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SGX"},
 	}
 
-	instanceTypeSku = func() []*azenc.ResourceSku {
-		instances := make([]*azenc.ResourceSku, 0, len(vmCapabilities))
+	instanceTypeSku = func() []*armcompute.ResourceSKU {
+		instances := make([]*armcompute.ResourceSKU, 0, len(vmCapabilities))
 		for typeName, capsMap := range vmCapabilities {
-			capabilities := make([]azenc.ResourceSkuCapabilities, 0, len(capsMap))
+			capabilities := make([]*armcompute.ResourceSKUCapabilities, 0, len(capsMap))
 			for name, value := range capsMap {
-				capabilities = append(capabilities, azenc.ResourceSkuCapabilities{
-					Name: to.StringPtr(name), Value: to.StringPtr(value),
+				capabilities = append(capabilities, &armcompute.ResourceSKUCapabilities{
+					Name: to.Ptr(name), Value: to.Ptr(value),
 				})
 			}
-			instances = append(instances, &azenc.ResourceSku{
-				Name: to.StringPtr(typeName), Capabilities: &capabilities,
+			instances = append(instances, &armcompute.ResourceSKU{
+				Name: to.Ptr(typeName), Capabilities: capabilities,
 			})
 		}
 		return instances
@@ -201,12 +201,12 @@ var (
 			Subnets: []*armnetwork.Subnet{{
 				Name: &validComputeSubnet,
 				Properties: &armnetwork.SubnetPropertiesFormat{
-					AddressPrefix: to.StringPtr("10.0.0.0/24"),
+					AddressPrefix: to.Ptr("10.0.0.0/24"),
 				},
 			}, {
 				Name: &validControlPlaneSubnet,
 				Properties: &armnetwork.SubnetPropertiesFormat{
-					AddressPrefix: to.StringPtr("10.0.1.0/24"),
+					AddressPrefix: to.Ptr("10.0.1.0/24"),
 				},
 			}},
 		},
@@ -234,18 +234,18 @@ var (
 		return r
 	}()
 
-	marketplaceImageAPIResult = azenc.VirtualMachineImage{
-		Name: to.StringPtr("VMImage"),
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV1,
-			Plan:             &azenc.PurchasePlan{},
+	marketplaceImageAPIResult = &armcompute.VirtualMachineImage{
+		Name: to.Ptr("VMImage"),
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
+			Plan:             &armcompute.PurchasePlan{},
 		},
 	}
 
-	marketplaceImageAPIResultNoPlan = azenc.VirtualMachineImage{
-		Name: to.StringPtr("VMImage"),
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV1,
+	marketplaceImageAPIResultNoPlan = &armcompute.VirtualMachineImage{
+		Name: to.Ptr("VMImage"),
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
 		},
 	}
 
@@ -264,31 +264,35 @@ var (
 	diskEncryptionSetType        = "test-encryption-set-type"
 	diskEncryptionSetLocation    = validRegion
 	wrongDiskEncryptionSetRegion = "westus"
-	validDiskEncryptionSetResult = &azenc.DiskEncryptionSet{
-		ID:       to.StringPtr(diskEncryptionSetID),
-		Name:     to.StringPtr(diskEncryptionSetName),
-		Type:     to.StringPtr(diskEncryptionSetType),
-		Location: to.StringPtr(diskEncryptionSetLocation),
+	validDiskEncryptionSetResult = &armcompute.DiskEncryptionSet{
+		ID:       to.Ptr(diskEncryptionSetID),
+		Name:     to.Ptr(diskEncryptionSetName),
+		Type:     to.Ptr(diskEncryptionSetType),
+		Location: to.Ptr(diskEncryptionSetLocation),
 	}
-	wrongRegionDiskEncryptionSetResult = &azenc.DiskEncryptionSet{
-		ID:       to.StringPtr(diskEncryptionSetID),
-		Name:     to.StringPtr(diskEncryptionSetName),
-		Type:     to.StringPtr(diskEncryptionSetType),
-		Location: to.StringPtr(wrongDiskEncryptionSetRegion),
+	wrongRegionDiskEncryptionSetResult = &armcompute.DiskEncryptionSet{
+		ID:       to.Ptr(diskEncryptionSetID),
+		Name:     to.Ptr(diskEncryptionSetName),
+		Type:     to.Ptr(diskEncryptionSetType),
+		Location: to.Ptr(wrongDiskEncryptionSetRegion),
 	}
-	validConfidentialVMDiskEncryptionSetResult = &azenc.DiskEncryptionSet{
-		ID:                      to.StringPtr(diskEncryptionSetID),
-		Name:                    to.StringPtr(diskEncryptionSetName),
-		Type:                    to.StringPtr(diskEncryptionSetType),
-		Location:                to.StringPtr(diskEncryptionSetLocation),
-		EncryptionSetProperties: &azenc.EncryptionSetProperties{EncryptionType: azenc.ConfidentialVMEncryptedWithCustomerKey},
+	validConfidentialVMDiskEncryptionSetResult = &armcompute.DiskEncryptionSet{
+		ID:       to.Ptr(diskEncryptionSetID),
+		Name:     to.Ptr(diskEncryptionSetName),
+		Type:     to.Ptr(diskEncryptionSetType),
+		Location: to.Ptr(diskEncryptionSetLocation),
+		Properties: &armcompute.EncryptionSetProperties{
+			EncryptionType: to.Ptr(armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
+		},
 	}
-	wrongRegionConfidentialVMDiskEncryptionSetResult = &azenc.DiskEncryptionSet{
-		ID:                      to.StringPtr(diskEncryptionSetID),
-		Name:                    to.StringPtr(diskEncryptionSetName),
-		Type:                    to.StringPtr(diskEncryptionSetType),
-		Location:                to.StringPtr(wrongDiskEncryptionSetRegion),
-		EncryptionSetProperties: &azenc.EncryptionSetProperties{EncryptionType: azenc.ConfidentialVMEncryptedWithCustomerKey},
+	wrongRegionConfidentialVMDiskEncryptionSetResult = &armcompute.DiskEncryptionSet{
+		ID:       to.Ptr(diskEncryptionSetID),
+		Name:     to.Ptr(diskEncryptionSetName),
+		Type:     to.Ptr(diskEncryptionSetType),
+		Location: to.Ptr(wrongDiskEncryptionSetRegion),
+		Properties: &armcompute.EncryptionSetProperties{
+			EncryptionType: to.Ptr(armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
+		},
 	}
 
 	validDiskEncryptionSetSubscriptionID = "test-encryption-set-subscription-id"
@@ -743,7 +747,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 
 	// InstanceType
 	for _, value := range instanceTypeSku {
-		azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), to.String(value.Name), gomock.Any()).Return(value, nil).AnyTimes()
+		azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), *value.Name, gomock.Any()).Return(value, nil).AnyTimes()
 	}
 	azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 
@@ -805,28 +809,28 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 }
 
 var validGroupResult = &armresources.ResourceGroup{
-	ID:       to.StringPtr("valid-resource-group"),
-	Location: to.StringPtr("centralus"),
+	ID:       to.Ptr("valid-resource-group"),
+	Location: to.Ptr("centralus"),
 }
 
 var invalidGroupOutsideRegionResult = &armresources.ResourceGroup{
-	ID:       to.StringPtr("invalid-resource-group-useast2"),
-	Location: to.StringPtr("useast2"),
+	ID:       to.Ptr("invalid-resource-group-useast2"),
+	Location: to.Ptr("useast2"),
 }
 
 var validGroupWithTagsResult = &armresources.ResourceGroup{
-	ID:       to.StringPtr("valid-resource-group-tags"),
-	Location: to.StringPtr("centralus"),
+	ID:       to.Ptr("valid-resource-group-tags"),
+	Location: to.Ptr("centralus"),
 	Tags: map[string]*string{
-		"key": to.StringPtr("value"),
+		"key": to.Ptr("value"),
 	},
 }
 
 var validGroupWithConflictinsTagsResult = &armresources.ResourceGroup{
-	ID:       to.StringPtr("valid-resource-group-conf-tags"),
-	Location: to.StringPtr("centralus"),
+	ID:       to.Ptr("valid-resource-group-conf-tags"),
+	Location: to.Ptr("centralus"),
 	Tags: map[string]*string{
-		"kubernetes.io_cluster.test-cluster-12345": to.StringPtr("owned"),
+		"kubernetes.io_cluster.test-cluster-12345": to.Ptr("owned"),
 	},
 }
 
@@ -1030,7 +1034,7 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for default pool",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Valid security profile disk encryption set for control-plane",
@@ -1045,7 +1049,7 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for control-plane",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Valid security profile disk encryption set for compute",
@@ -1060,7 +1064,7 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for compute",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Wrong region security profile disk encryption set for default pool",
@@ -1108,49 +1112,49 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 }
 
 func TestAzureUltraSSDCapability(t *testing.T) {
-	locationInfoFull := &azenc.ResourceSkuLocationInfo{
-		Location: to.StringPtr("centralus"),
-		ZoneDetails: &[]azenc.ResourceSkuZoneDetails{
+	locationInfoFull := &armcompute.ResourceSKULocationInfo{
+		Location: to.Ptr("centralus"),
+		ZoneDetails: []*armcompute.ResourceSKUZoneDetails{
 			{
-				Name: to.StringSlicePtr([]string{"1", "3", "2"}),
-				Capabilities: &[]azenc.ResourceSkuCapabilities{
-					{Name: to.StringPtr("UltraSSDAvailable"), Value: to.StringPtr("True")},
+				Name: []*string{to.Ptr("1"), to.Ptr("3"), to.Ptr("2")},
+				Capabilities: []*armcompute.ResourceSKUCapabilities{
+					{Name: to.Ptr("UltraSSDAvailable"), Value: to.Ptr("True")},
 				},
 			},
 		},
-		Zones: to.StringSlicePtr([]string{"1", "2", "3"}),
+		Zones: []*string{to.Ptr("1"), to.Ptr("2"), to.Ptr("3")},
 	}
-	locationInfoNoSSD := &azenc.ResourceSkuLocationInfo{
-		Location: to.StringPtr("centralus"),
-		ZoneDetails: &[]azenc.ResourceSkuZoneDetails{
+	locationInfoNoSSD := &armcompute.ResourceSKULocationInfo{
+		Location: to.Ptr("centralus"),
+		ZoneDetails: []*armcompute.ResourceSKUZoneDetails{
 			{
-				Name:         to.StringSlicePtr([]string{"1", "3", "2"}),
-				Capabilities: &[]azenc.ResourceSkuCapabilities{},
+				Name:         []*string{to.Ptr("1"), to.Ptr("3"), to.Ptr("2")},
+				Capabilities: []*armcompute.ResourceSKUCapabilities{},
 			},
 		},
-		Zones: to.StringSlicePtr([]string{"1", "2", "3"}),
+		Zones: []*string{to.Ptr("1"), to.Ptr("2"), to.Ptr("3")},
 	}
-	locationInfoPartial := &azenc.ResourceSkuLocationInfo{
-		Location: to.StringPtr("francecentral"),
-		ZoneDetails: &[]azenc.ResourceSkuZoneDetails{
+	locationInfoPartial := &armcompute.ResourceSKULocationInfo{
+		Location: to.Ptr("francecentral"),
+		ZoneDetails: []*armcompute.ResourceSKUZoneDetails{
 			{
-				Name: to.StringSlicePtr([]string{"2", "3"}),
-				Capabilities: &[]azenc.ResourceSkuCapabilities{
-					{Name: to.StringPtr("UltraSSDAvailable"), Value: to.StringPtr("True")},
+				Name: []*string{to.Ptr("2"), to.Ptr("3")},
+				Capabilities: []*armcompute.ResourceSKUCapabilities{
+					{Name: to.Ptr("UltraSSDAvailable"), Value: to.Ptr("True")},
 				},
 			},
 		},
-		Zones: to.StringSlicePtr([]string{"1", "2", "3"}),
+		Zones: []*string{to.Ptr("1"), to.Ptr("2"), to.Ptr("3")},
 	}
-	locationInfoSingle := &azenc.ResourceSkuLocationInfo{
-		Location:    to.StringPtr("northcentralus"),
-		ZoneDetails: &[]azenc.ResourceSkuZoneDetails{},
-		Zones:       to.StringSlicePtr(nil),
+	locationInfoSingle := &armcompute.ResourceSKULocationInfo{
+		Location:    to.Ptr("northcentralus"),
+		ZoneDetails: []*armcompute.ResourceSKUZoneDetails{},
+		Zones:       nil,
 	}
-	locationInfoEmpty := &azenc.ResourceSkuLocationInfo{
-		Location:    to.StringPtr("azurestack"),
+	locationInfoEmpty := &armcompute.ResourceSKULocationInfo{
+		Location:    to.Ptr("azurestack"),
 		ZoneDetails: nil,
-		Zones:       to.StringSlicePtr(nil),
+		Zones:       nil,
 	}
 
 	ultraSSDSupportedInstanceTypes := func(ic *types.InstallConfig) {
@@ -1354,7 +1358,7 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 	locationsAPIResult = func() []*armsubscriptions.Location {
 		r := []*armsubscriptions.Location{}
 		for i := 0; i < len(validRegionList); i++ {
-			r = append(r, &armsubscriptions.Location{Name: to.StringPtr(validRegionList[i]), DisplayName: to.StringPtr(validRegionList[i])})
+			r = append(r, &armsubscriptions.Location{Name: to.Ptr(validRegionList[i]), DisplayName: to.Ptr(validRegionList[i])})
 		}
 		return r
 	}()
@@ -1362,7 +1366,7 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 	azureClient.EXPECT().ListLocations(gomock.Any()).Return(locationsAPIResult, nil).AnyTimes()
 
 	resourcesProviderAPIResult = &armresources.Provider{
-		Namespace: to.StringPtr(validResourceGroupNamespace),
+		Namespace: to.Ptr(validResourceGroupNamespace),
 		ResourceTypes: []*armresources.ProviderResourceType{
 			{
 				ResourceType: &validResourceGroupResourceType,
@@ -1483,9 +1487,9 @@ func TestAzureMarketplaceImage(t *testing.T) {
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringLicenseTermsOSImageSKU).Return(false, fmt.Errorf("error")).AnyTimes()
 	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU, validOSImageVersion).Return(marketplaceImageAPIResult, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU).Return(false, nil).AnyTimes()
-	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(azenc.VirtualMachineImage{
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV2,
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(&armcompute.VirtualMachineImage{
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV2),
 		},
 	}, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringOSImageSKU).Return(true, nil).AnyTimes()
@@ -1673,9 +1677,9 @@ func TestAzureMarketplaceImages(t *testing.T) {
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringLicenseTermsOSImageSKU).Return(false, fmt.Errorf("error")).AnyTimes()
 	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU, validOSImageVersion).Return(marketplaceImageAPIResult, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU).Return(false, nil).AnyTimes()
-	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(azenc.VirtualMachineImage{
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV2,
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(&armcompute.VirtualMachineImage{
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV2),
 		},
 	}, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringOSImageSKU).Return(true, nil).AnyTimes()

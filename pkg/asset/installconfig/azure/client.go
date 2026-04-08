@@ -7,16 +7,16 @@ import (
 	"strings"
 	"time"
 
-	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	azstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/Azure/go-autorest/autorest/to"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -30,18 +30,18 @@ type API interface {
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
 	ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*armresources.Provider, error)
-	GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error)
+	GetVirtualMachineSku(ctx context.Context, name, region string) (*armcompute.ResourceSKU, error)
 	GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error)
-	GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error)
+	GetDiskSkus(ctx context.Context, region string) ([]*armcompute.ResourceSKU, error)
 	GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
-	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
-	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
+	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*armcompute.DiskEncryptionSet, error)
+	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (*armcompute.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
-	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
+	GetLocationInfo(ctx context.Context, region string, instanceType string) (*armcompute.ResourceSKULocationInfo, error)
 	CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName, region string) error
 	GetRegionAvailabilityZones(ctx context.Context, region string) ([]string, error)
 	CheckSubnetNatgateway(ctx context.Context, resourceGroup, virtualNetwork, subnet string) (bool, error)
@@ -216,37 +216,45 @@ func (c *Client) getProvidersClient() (*armresources.ProvidersClient, error) {
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
-func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error) {
-	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]*armcompute.ResourceSKU, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
+	}
 	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	var sku []azenc.ResourceSku
+	var skus []*armcompute.ResourceSKU
 	filter := fmt.Sprintf("location eq '%s'", region)
-	// This has to be initialized outside the `for` because we need access to
-	// `err`. If initialized in the loop and the API call fails right away,
-	// `page.NotDone()` will return `false` and we'll never check for the error
-	skuPage, err := client.List(ctx, filter, "false")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
-	}
-	for ; skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
+	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
+		Filter:                   &filter,
+		IncludeExtendedLocations: to.Ptr("false"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
-		for _, page := range skuPage.Values() {
-			for _, diskRegion := range to.StringSlice(page.Locations) {
-				if strings.EqualFold(diskRegion, region) {
-					sku = append(sku, page)
+		for _, sku := range page.Value {
+			if sku.Locations != nil {
+				for _, diskRegion := range sku.Locations {
+					if diskRegion != nil && strings.EqualFold(*diskRegion, region) {
+						skus = append(skus, sku)
+						break
+					}
 				}
 			}
 		}
 	}
 
-	if len(sku) != 0 {
-		return sku, nil
+	if len(skus) != 0 {
+		return skus, nil
 	}
 
 	return nil, fmt.Errorf("no disks for specified subscription in region %s", region)
@@ -304,39 +312,46 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 }
 
 // GetVirtualMachineSku retrieves the resource SKU of a specified virtual machine SKU in the specified region.
-func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error) {
-	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*armcompute.ResourceSKU, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
+	}
 
-	// See https://issues.redhat.com/browse/OCPBUGS-29469 before chaging this timeout
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	filter := fmt.Sprintf("location eq '%s'", region)
-	// This has to be initialized outside the `for` because we need access to
-	// `err`. If initialized in the loop and the API call fails right away,
-	// `page.NotDone()` will return `false` and we'll never check for the error
-	page, err := client.List(ctx, filter, "false")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
-	}
-	for ; page.NotDone(); err = page.NextWithContext(ctx) {
+	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
+		Filter:                   &filter,
+		IncludeExtendedLocations: to.Ptr("false"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
-		for _, sku := range page.Values() {
+		for _, sku := range page.Value {
 			// Filter out resources that are not virtualMachines
-			if !strings.EqualFold("virtualMachines", *sku.ResourceType) {
+			if sku.ResourceType == nil || !strings.EqualFold("virtualMachines", *sku.ResourceType) {
 				continue
 			}
 			// Filter out resources that do not match the provided name
-			if !strings.EqualFold(name, *sku.Name) {
+			if sku.Name == nil || !strings.EqualFold(name, *sku.Name) {
 				continue
 			}
 			// Return the resource from the provided region
-			for _, location := range to.StringSlice(sku.Locations) {
-				if strings.EqualFold(location, region) {
-					return &sku, nil
+			if sku.Locations != nil {
+				for _, location := range sku.Locations {
+					if location != nil && strings.EqualFold(*location, region) {
+						return sku, nil
+					}
 				}
 			}
 		}
@@ -346,20 +361,27 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 }
 
 // GetDiskEncryptionSet retrieves the specified disk encryption set.
-func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error) {
+func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*armcompute.DiskEncryptionSet, error) {
 	if !strings.EqualFold(c.ssn.Credentials.SubscriptionID, subscriptionID) {
 		return nil, fmt.Errorf("different subscription from resource group subscription. Azure does not support cross subscription encryption sets")
 	}
-	client := azenc.NewDiskEncryptionSetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, subscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armcompute.NewDiskEncryptionSetsClient(subscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create disk encryption sets client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	diskEncryptionSet, err := client.Get(ctx, groupName, diskEncryptionSetName)
+	resp, err := client.Get(ctx, groupName, diskEncryptionSetName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get disk encryption set: %w", err)
 	}
-	return &diskEncryptionSet, nil
+	return &resp.DiskEncryptionSet, nil
 }
 
 // GetVirtualMachineFamily retrieves the VM family of an instance type.
@@ -375,7 +397,7 @@ func (c *Client) GetVirtualMachineFamily(ctx context.Context, name, region strin
 		return "", fmt.Errorf("error getting resource family")
 	}
 
-	return to.String(typeMeta.Family), nil
+	return *typeMeta.Family, nil
 }
 
 // GetVMCapabilities retrieves the capabilities of an instant type in a specific region. Returns these values
@@ -389,25 +411,36 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 		return nil, fmt.Errorf("not found in region %s", region)
 	}
 	capabilities := make(map[string]string)
-	for _, capability := range *typeMeta.Capabilities {
-		capabilities[to.String(capability.Name)] = to.String(capability.Value)
+	if typeMeta.Capabilities != nil {
+		for _, capability := range typeMeta.Capabilities {
+			if capability.Name != nil && capability.Value != nil {
+				capabilities[*capability.Name] = *capability.Value
+			}
+		}
 	}
 
 	return capabilities, nil
 }
 
 // GetMarketplaceImage get the specified marketplace VM image.
-func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error) {
-	client := azenc.NewVirtualMachineImagesClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (*armcompute.VirtualMachineImage, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armcompute.NewVirtualMachineImagesClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create virtual machine images client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	image, err := client.Get(ctx, region, publisher, offer, sku, version)
+	resp, err := client.Get(ctx, region, publisher, offer, sku, version, nil)
 	if err != nil {
-		return image, fmt.Errorf("could not get marketplace image: %w", err)
+		return nil, fmt.Errorf("could not get marketplace image: %w", err)
 	}
-	return image, nil
+	return &resp.VirtualMachineImage, nil
 }
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
@@ -435,36 +468,50 @@ func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instan
 	if err != nil {
 		return nil, err
 	}
-	if locationInfo != nil {
-		return to.StringSlice(locationInfo.Zones), nil
+	if locationInfo != nil && locationInfo.Zones != nil {
+		zones := make([]string, 0, len(locationInfo.Zones))
+		for _, z := range locationInfo.Zones {
+			if z != nil {
+				zones = append(zones, *z)
+			}
+		}
+		return zones, nil
 	}
 
 	return nil, fmt.Errorf("error retrieving availability zones for %s in %s", instanceType, region)
 }
 
 // GetLocationInfo retrieves the location info associated with the instance type in region
-func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error) {
-	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*armcompute.ResourceSKULocationInfo, error) {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, clientOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
+	}
 
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
-	res, err := client.List(ctx, filter, "false")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
-	}
-	for ; res.NotDone(); err = res.NextWithContext(ctx) {
+	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
+		Filter:                   &filter,
+		IncludeExtendedLocations: to.Ptr("false"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, resSku := range res.Values() {
-			if !strings.EqualFold(to.String(resSku.ResourceType), "virtualMachines") {
+		for _, resSku := range page.Value {
+			if resSku.ResourceType == nil || !strings.EqualFold(*resSku.ResourceType, "virtualMachines") {
 				continue
 			}
-			if strings.EqualFold(to.String(resSku.Name), instanceType) {
-				for _, locationInfo := range *resSku.LocationInfo {
-					return &locationInfo, nil
+			if resSku.Name != nil && strings.EqualFold(*resSku.Name, instanceType) {
+				if resSku.LocationInfo != nil && len(resSku.LocationInfo) > 0 {
+					return resSku.LocationInfo[0], nil
 				}
 			}
 		}
