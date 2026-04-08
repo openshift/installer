@@ -62,6 +62,9 @@ type ClusterUninstaller struct {
 }
 
 func (o *ClusterUninstaller) configureClients() error {
+	if o.Session.ClientConfig == nil {
+		return fmt.Errorf("session ClientConfig is not initialized")
+	}
 	subscriptionID := o.Session.Credentials.SubscriptionID
 
 	// Use ClientConfig which handles API version overrides for different Azure environments
