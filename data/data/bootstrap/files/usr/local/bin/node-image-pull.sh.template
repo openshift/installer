@@ -12,12 +12,35 @@ done
 
 # Create temporary directory for binary extraction
 TEMP_DIR=$(mktemp -d)
+
+MCO_CONTAINER_ID=
+
+cleanup_mco() {
+    # Ensure that the MCO container is removed.
+    if [[ -n "${MCO_CONTAINER_ID}" ]]; then
+        podman container rm -f "${MCO_CONTAINER_ID}" >/dev/null 2>&1 || true
+        MCO_CONTAINER_ID=
+    fi
+
+    # Delete the MCO container image to conserve memory.
+    if [[ -n "${MCO_IMAGE}" ]]; then
+        podman image rm -f "${MCO_IMAGE}" >/dev/null 2>&1 || true
+        MCO_IMAGE=
+    fi
+
+    # Delete the tempdir.
+    if [[ -n "${TEMP_DIR}" ]]; then
+        rm -rf "${TEMP_DIR}"
+        TEMP_DIR=
+    fi
+}
+trap cleanup_mco EXIT
+
 echo "Extracting machine-config-osimagestream binary to ${TEMP_DIR}"
 
+MCO_CONTAINER_ID="$(podman create "${MCO_IMAGE}")"
 # Extract the machine-config-osimagestream binary from the MCO image. This avoids having to munge podman args, paths, env vars, etc.
-podman create --name mco-osimagestream "${MCO_IMAGE}"
-podman cp mco-osimagestream:/usr/bin/machine-config-osimagestream "${TEMP_DIR}/machine-config-osimagestream"
-podman rm mco-osimagestream
+podman cp "${MCO_CONTAINER_ID}":/usr/bin/machine-config-osimagestream "${TEMP_DIR}/machine-config-osimagestream"
 
 # Execute the binary to get the CoreOS image pullspec
 # Note: Proxy environment variables (HTTP_PROXY, HTTPS_PROXY, NO_PROXY) are
@@ -34,8 +57,8 @@ until COREOS_IMAGE=$("${TEMP_DIR}/machine-config-osimagestream" \
     sleep 10
 done
 
-# Clean up temporary directory
-rm -rf "${TEMP_DIR}"
+# Clean up the MCO container, image, and temp dir now that we have the pullspec.
+cleanup_mco
 
 # need to use rpm-ostree here since `bootc status` doesn't work in the live ISO currently
 # https://github.com/containers/bootc/issues/1043
