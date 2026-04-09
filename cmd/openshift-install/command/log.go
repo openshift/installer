@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,9 @@ var (
 		Dir      string
 		LogLevel string
 	}
+
+	// logCmdOnce logs the invoked openshift-install command details once.
+	logCmdOnce sync.Once
 )
 
 type fileHook struct {
@@ -82,6 +86,40 @@ func (h *fileHook) Fire(entry *logrus.Entry) error {
 	return nil
 }
 
+// redactCommandArgs returns a copy of args with sensitive flag values redacted.
+// It handles both "--flag value" and "--flag=value" forms.
+func redactCommandArgs(args []string) []string {
+	// Flags whose values should be redacted
+	sensitiveFlags := map[string]bool{
+		"--key":    true,
+		"--master": true,
+	}
+
+	redacted := make([]string, len(args))
+	copy(redacted, args)
+
+	for i := 0; i < len(redacted); i++ {
+		arg := redacted[i]
+
+		// Handle --flag=value form
+		if strings.Contains(arg, "=") {
+			parts := strings.SplitN(arg, "=", 2)
+			if len(parts) == 2 && sensitiveFlags[parts[0]] {
+				redacted[i] = parts[0] + "=<redacted>"
+			}
+			continue
+		}
+
+		// Handle --flag value form
+		if sensitiveFlags[arg] && i+1 < len(redacted) {
+			redacted[i+1] = "<redacted>"
+			i++ // skip the next argument since we just redacted it
+		}
+	}
+
+	return redacted
+}
+
 // SetupFileHook creates the base log directory and configures logrus options.
 func SetupFileHook(baseDir string) func() {
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
@@ -104,14 +142,17 @@ func SetupFileHook(baseDir string) func() {
 		DisableLevelTruncation: false,
 	}))
 
-	versionString, err := version.String()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	logrus.Debugf("%s", versionString)
-	if version.Commit != "" {
-		logrus.Debugf("Built from commit %s", version.Commit)
-	}
+	logCmdOnce.Do(func() {
+		logrus.Debugf("Running: %s", strings.Join(redactCommandArgs(os.Args), " "))
+		versionString, err := version.String()
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		logrus.Debugf("%s", versionString)
+		if version.Commit != "" {
+			logrus.Debugf("Built from commit %s", version.Commit)
+		}
+	})
 
 	return func() {
 		logfile.Close()
