@@ -69,3 +69,22 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 		p.DNSRecordsType = configv1.DNSRecordsTypeInternal
 	}
 }
+
+// BootstrapFlavorName resolves the effective flavor for the bootstrap machine.
+// The resolution follows this fallback order:
+//  1. platform.BootstrapFlavor if non-empty
+//  2. controlPlane.FlavorName if controlPlane is non-nil and FlavorName is non-empty
+//  3. platform.DefaultMachinePlatform.FlavorName if DefaultMachinePlatform is non-nil and FlavorName is non-empty
+//  4. Empty string if no flavor can be resolved (validation will catch this case)
+func BootstrapFlavorName(platform *openstack.Platform, controlPlane *openstack.MachinePool) string {
+	if platform.BootstrapFlavor != "" {
+		return platform.BootstrapFlavor
+	}
+	if controlPlane != nil && controlPlane.FlavorName != "" {
+		return controlPlane.FlavorName
+	}
+	if platform.DefaultMachinePlatform != nil && platform.DefaultMachinePlatform.FlavorName != "" {
+		return platform.DefaultMachinePlatform.FlavorName
+	}
+	return ""
+}

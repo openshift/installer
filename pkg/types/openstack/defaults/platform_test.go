@@ -118,3 +118,90 @@ func TestSetPlatformDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestBootstrapFlavorName(t *testing.T) {
+	cases := []struct {
+		name           string
+		platform       *openstack.Platform
+		controlPlane   *openstack.MachinePool
+		expectedFlavor string
+	}{
+		{
+			name: "BootstrapFlavor is set",
+			platform: &openstack.Platform{
+				BootstrapFlavor: "bootstrap-flavor",
+				DefaultMachinePlatform: &openstack.MachinePool{
+					FlavorName: "default-flavor",
+				},
+			},
+			controlPlane: &openstack.MachinePool{
+				FlavorName: "control-plane-flavor",
+			},
+			expectedFlavor: "bootstrap-flavor",
+		},
+		{
+			name: "BootstrapFlavor empty, use controlPlane flavor",
+			platform: &openstack.Platform{
+				DefaultMachinePlatform: &openstack.MachinePool{
+					FlavorName: "default-flavor",
+				},
+			},
+			controlPlane: &openstack.MachinePool{
+				FlavorName: "control-plane-flavor",
+			},
+			expectedFlavor: "control-plane-flavor",
+		},
+		{
+			name: "BootstrapFlavor and controlPlane empty, use DefaultMachinePlatform flavor",
+			platform: &openstack.Platform{
+				DefaultMachinePlatform: &openstack.MachinePool{
+					FlavorName: "default-flavor",
+				},
+			},
+			controlPlane:   nil,
+			expectedFlavor: "default-flavor",
+		},
+		{
+			name: "controlPlane with empty FlavorName, use DefaultMachinePlatform flavor",
+			platform: &openstack.Platform{
+				DefaultMachinePlatform: &openstack.MachinePool{
+					FlavorName: "default-flavor",
+				},
+			},
+			controlPlane: &openstack.MachinePool{
+				FlavorName: "",
+			},
+			expectedFlavor: "default-flavor",
+		},
+		{
+			name:           "No flavor configured anywhere",
+			platform:       &openstack.Platform{},
+			controlPlane:   nil,
+			expectedFlavor: "",
+		},
+		{
+			name: "DefaultMachinePlatform is nil, controlPlane is nil",
+			platform: &openstack.Platform{
+				DefaultMachinePlatform: nil,
+			},
+			controlPlane:   nil,
+			expectedFlavor: "",
+		},
+		{
+			name: "DefaultMachinePlatform with empty FlavorName",
+			platform: &openstack.Platform{
+				DefaultMachinePlatform: &openstack.MachinePool{
+					FlavorName: "",
+				},
+			},
+			controlPlane:   nil,
+			expectedFlavor: "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := BootstrapFlavorName(tc.platform, tc.controlPlane)
+			assert.Equal(t, tc.expectedFlavor, result, "unexpected bootstrap flavor")
+		})
+	}
+}
