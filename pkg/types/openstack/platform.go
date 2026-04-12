@@ -63,6 +63,11 @@ type Platform struct {
 	// +optional
 	DeprecatedOctaviaSupport string `json:"octaviaSupport,omitempty"`
 
+	// BootstrapFlavor is the name of the OpenStack Nova flavor to use for bootstrap node.
+	// When not specified, the bootstrap node will use the same flavor as the control plane.
+	// +optional
+	BootstrapFlavor string `json:"bootstrapFlavor,omitempty"`
+
 	// ClusterOSImage is either a URL with `http(s)` or `file` scheme to override
 	// the default OS image for cluster nodes, or an existing Glance image name.
 	// +optional
