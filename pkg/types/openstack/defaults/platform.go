@@ -68,4 +68,16 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 	if p.DNSRecordsType == "" {
 		p.DNSRecordsType = configv1.DNSRecordsTypeInternal
 	}
+
+	// Set BootstrapFlavor default using inheritance from DefaultMachinePlatform.
+	// The inheritance order is:
+	//   1. If BootstrapFlavor is already set, use that value (user explicitly specified it)
+	//   2. Otherwise, inherit from DefaultMachinePlatform.FlavorName if available
+	// If neither is set, BootstrapFlavor remains empty and will be handled elsewhere
+	// (e.g., validation or at deployment time).
+	if p.BootstrapFlavor == "" {
+		if p.DefaultMachinePlatform != nil && p.DefaultMachinePlatform.FlavorName != "" {
+			p.BootstrapFlavor = p.DefaultMachinePlatform.FlavorName
+		}
+	}
 }

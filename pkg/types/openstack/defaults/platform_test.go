@@ -118,3 +118,61 @@ func TestSetPlatformDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestSetPlatformDefaults_BootstrapFlavor(t *testing.T) {
+	cases := []struct {
+		name                    string
+		platform                *openstack.Platform
+		expectedBootstrapFlavor string
+	}{
+		{
+			name: "BootstrapFlavor already set",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "m1.custom"
+				p.DefaultMachinePlatform = &openstack.MachinePool{
+					FlavorName: "m1.large",
+				}
+				return p
+			}(),
+			expectedBootstrapFlavor: "m1.custom",
+		},
+		{
+			name: "BootstrapFlavor empty, inherit from DefaultMachinePlatform.FlavorName",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.DefaultMachinePlatform = &openstack.MachinePool{
+					FlavorName: "m1.large",
+				}
+				return p
+			}(),
+			expectedBootstrapFlavor: "m1.large",
+		},
+		{
+			name: "BootstrapFlavor empty, DefaultMachinePlatform is nil",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.DefaultMachinePlatform = nil
+				return p
+			}(),
+			expectedBootstrapFlavor: "",
+		},
+		{
+			name: "BootstrapFlavor empty, DefaultMachinePlatform.FlavorName is empty",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.DefaultMachinePlatform = &openstack.MachinePool{
+					FlavorName: "",
+				}
+				return p
+			}(),
+			expectedBootstrapFlavor: "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			SetPlatformDefaults(tc.platform, validNetworking())
+			assert.Equal(t, tc.expectedBootstrapFlavor, tc.platform.BootstrapFlavor, "unexpected BootstrapFlavor")
+		})
+	}
+}
