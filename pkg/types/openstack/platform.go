@@ -30,6 +30,11 @@ type Platform struct {
 	// +optional
 	DeprecatedFlavorName string `json:"computeFlavor,omitempty"`
 
+	// BootstrapFlavor is the name of the flavor to use for the bootstrap instance.
+	// If not provided, the flavor from DefaultMachinePlatform will be used.
+	// +optional
+	BootstrapFlavor string `json:"bootstrapFlavor,omitempty"`
+
 	// LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
 	// to associate with the OpenShift load balancer.
 	// Deprecated: this value has been renamed to apiFloatingIP.
