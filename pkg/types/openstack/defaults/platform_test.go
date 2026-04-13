@@ -29,13 +29,14 @@ func validNetworking() *types.Networking {
 
 func TestSetPlatformDefaults(t *testing.T) {
 	cases := []struct {
-		name                string
-		platform            *openstack.Platform
-		config              *types.InstallConfig
-		networking          *types.Networking
-		expectedLB          configv1.PlatformLoadBalancerType
-		expectedAPIVIPs     []string
-		expectedIngressVIPs []string
+		name                    string
+		platform                *openstack.Platform
+		config                  *types.InstallConfig
+		networking              *types.Networking
+		expectedLB              configv1.PlatformLoadBalancerType
+		expectedAPIVIPs         []string
+		expectedIngressVIPs     []string
+		expectedBootstrapFlavor string
 	}{
 		{
 			name: "No load balancer provided",
@@ -108,6 +109,53 @@ func TestSetPlatformDefaults(t *testing.T) {
 			expectedIngressVIPs: []string(nil),
 			expectedLB:          "UserManaged",
 		},
+		{
+			name: "Bootstrap flavor is defaulted from DefaultMachinePlatform",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.DefaultMachinePlatform = &openstack.MachinePool{
+					FlavorName: "m1.large",
+				}
+				return p
+			}(),
+			networking:              validNetworking(),
+			expectedBootstrapFlavor: "m1.large",
+			expectedAPIVIPs:         []string{"10.0.0.5"},
+			expectedIngressVIPs:     []string{"10.0.0.7"},
+			expectedLB:              "OpenShiftManagedDefault",
+		},
+		{
+			name: "Bootstrap flavor is not defaulted if already set",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "m1.xlarge"
+				p.DefaultMachinePlatform = &openstack.MachinePool{
+					FlavorName: "m1.large",
+				}
+				return p
+			}(),
+			networking:              validNetworking(),
+			expectedBootstrapFlavor: "m1.xlarge",
+			expectedAPIVIPs:         []string{"10.0.0.5"},
+			expectedIngressVIPs:     []string{"10.0.0.7"},
+			expectedLB:              "OpenShiftManagedDefault",
+		},
+		{
+			name: "Bootstrap flavor is defaulted from DefaultMachinePlatform when it contains only whitespaces",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "    "
+				p.DefaultMachinePlatform = &openstack.MachinePool{
+					FlavorName: "m1.large",
+				}
+				return p
+			}(),
+			networking:              validNetworking(),
+			expectedBootstrapFlavor: "m1.large",
+			expectedAPIVIPs:         []string{"10.0.0.5"},
+			expectedIngressVIPs:     []string{"10.0.0.7"},
+			expectedLB:              "OpenShiftManagedDefault",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -115,6 +163,9 @@ func TestSetPlatformDefaults(t *testing.T) {
 			assert.Equal(t, tc.expectedLB, tc.platform.LoadBalancer.Type, "unexpected loadbalancer")
 			assert.Equal(t, tc.expectedAPIVIPs, tc.platform.APIVIPs, "unexpected APIVIPs")
 			assert.Equal(t, tc.expectedIngressVIPs, tc.platform.IngressVIPs, "unexpected IngressVIPs")
+			if tc.expectedBootstrapFlavor != "" {
+				assert.Equal(t, tc.expectedBootstrapFlavor, tc.platform.BootstrapFlavor, "unexpected bootstrap flavor")
+			}
 		})
 	}
 }

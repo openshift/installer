@@ -71,6 +71,6 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 	}
 
 	if strings.TrimSpace(p.BootstrapFlavor) == "" && p.DefaultMachinePlatform != nil {
-		p.BootstrapFlavor = p.DefaultMachinePlatform.Flavor
+		p.BootstrapFlavor = p.DefaultMachinePlatform.FlavorName
 	}
 }
