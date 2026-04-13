@@ -144,6 +144,10 @@ type Platform struct {
 	// +openshift:enable:FeatureGate=OnPremDNSRecords
 	// +optional
 	DNSRecordsType configv1.DNSRecordsType `json:"dnsRecordsType,omitempty"`
+
+	// Bootstrap defines the server that will be used to bootstrap the cluster.
+	// +optional
+	Bootstrap *BootstrapConfig `json:"bootstrap,omitempty"`
 }
 
 // BootstrapConfig contains configuration for the bootstrap machine.
