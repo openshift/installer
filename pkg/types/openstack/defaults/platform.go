@@ -3,6 +3,7 @@ package defaults
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 
@@ -58,14 +59,18 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 			vip, err := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 7)
 			if err != nil {
 				// This will fail validation and abort the install
-				p.IngressVIPs = []string{fmt.Sprintf("could not derive Ingress VIP from machine networks: %s", err.Error())}
+					p.IngressVIPs = []string{fmt.Sprintf("could not derive Ingress VIP from machine networks: %s", err.Error())}
 			} else {
-				p.IngressVIPs = []string{vip.String()}
+					p.IngressVIPs = []string{vip.String()}
 			}
 		}
 	}
 
 	if p.DNSRecordsType == "" {
 		p.DNSRecordsType = configv1.DNSRecordsTypeInternal
+	}
+
+	if strings.TrimSpace(p.BootstrapFlavor) == "" && p.DefaultMachinePlatform != nil {
+		p.BootstrapFlavor = p.DefaultMachinePlatform.Flavor
 	}
 }
