@@ -2,6 +2,7 @@ package openstack
 
 import (
 	configv1 "github.com/openshift/api/config/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Platform stores all the global configuration that all
@@ -143,4 +144,17 @@ type Platform struct {
 	// +openshift:enable:FeatureGate=OnPremDNSRecords
 	// +optional
 	DNSRecordsType configv1.DNSRecordsType `json:"dnsRecordsType,omitempty"`
+}
+
+// BootstrapConfig contains configuration for the bootstrap machine.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type BootstrapConfig struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Flavor is the flavor to use for the bootstrap machine.
+	//
+	// +optional
+	Flavor string `json:"flavor,omitempty"`
 }
