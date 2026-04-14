@@ -120,6 +120,13 @@ function gather_bootstrap_status() {
 		mkdir -p "${ARTIFACTS_DIR}/var/log/"
 		cp -a /var/log/openshift "${ARTIFACTS_DIR}/var/log/"
 	fi
+	( >&2 echo -n ".")
+	if [ -f /usr/local/bin/installer-gather.sh ]; then
+		local bs_gather="${ARTIFACTS_DIR}/bootstrap-gather.tar.gz"
+		TAR_FILE="${bs_gather}" /usr/local/bin/installer-gather.sh --id "$(date '+%Y%m%d%H%M%S')" >/dev/null
+		( >&2 echo -n ".")
+		[ -f "${bs_gather}" ] && gunzip "${bs_gather}"
+	fi
 	( >&2 echo " Done")
 }
 
