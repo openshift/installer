@@ -23,11 +23,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
-	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
-	"github.com/microsoftgraph/msgraph-sdk-go/applications"
-	"github.com/microsoftgraph/msgraph-sdk-go/models"
-	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
-	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -56,7 +51,7 @@ type ClusterUninstaller struct {
 	recordsClient           dns.RecordSetsClient
 	privateRecordSetsClient privatedns.RecordSetsClient
 	privateZonesClient      privatedns.PrivateZonesClient
-	msgraphClient           *msgraphsdk.GraphServiceClient
+	msgraphClient           *azureDestroyerClient
 	resourceGraphClient     *armresourcegraph.Client
 	tagsClient              *armresources.TagsClient
 	vnetClient              *armnetwork.VirtualNetworksClient
@@ -82,21 +77,9 @@ func (o *ClusterUninstaller) configureClients() error {
 	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(endpoint, subscriptionID)
 	o.privateRecordSetsClient.Authorizer = o.Session.Authorizer
 
-	adapter, err := msgraphsdk.NewGraphRequestAdapter(o.Session.AuthProvider)
-	if err != nil {
-		return err
+	o.msgraphClient = &azureDestroyerClient{
+		NewMSGraphClient(o.Session.Environment.MicrosoftGraphEndpoint, o.Session.TokenCreds),
 	}
-	// This can be empty for StackCloud
-	if o.Session.Environment.MicrosoftGraphEndpoint != "" {
-		// Set the service root to the Microsoft Graph for the appropriate
-		// cloud endpoint (e.g, GovCloud). Failing to do so results in an
-		// unhelpful `context deadline exceeded` error.
-		// NOTE: The API version must be included in the URL
-		// See https://issues.redhat.com/browse/OCPBUGS-4549
-		// See https://learn.microsoft.com/en-us/graph/sdks/national-clouds?tabs=go
-		adapter.SetBaseUrl(fmt.Sprintf("%s/v1.0", o.Session.Environment.MicrosoftGraphEndpoint))
-	}
-	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
 	clientOpts := &arm.ClientOptions{
 		ClientOptions: azcore.ClientOptions{
@@ -284,10 +267,9 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			o.Logger.Debugf("deleting application registrations")
 			err = deleteApplicationRegistrations(ctx, o.msgraphClient, o.Logger, o.InfraID)
 			if err != nil {
-				oDataErr := extractODataError(err)
-				o.Logger.Debug(oDataErr)
+				o.Logger.Debug(err)
 				if isAuthError(err) {
-					errs = append(errs, fmt.Errorf("unable to authenticate when deleting application registrations and their service principals: %w", oDataErr))
+					errs = append(errs, fmt.Errorf("unable to authenticate when deleting application registrations and their service principals: %w", err))
 					return true, err
 				}
 				return false, nil
@@ -711,6 +693,13 @@ func isAuthError(err error) bool {
 		}
 	}
 
+	var graphErr *MSGraphError
+	if errors.As(err, &graphErr) {
+		if graphErr.StatusCode >= 400 && graphErr.StatusCode <= 403 {
+			return true
+		}
+	}
+
 	// https://github.com/Azure/azure-sdk-for-go/issues/16736
 	// https://github.com/Azure/azure-sdk-for-go/blob/sdk/azidentity/v1.1.0/sdk/azidentity/errors.go#L36
 	var authErr *azidentity.AuthenticationFailedError
@@ -745,82 +734,46 @@ func isResourceGroupBlockedError(err error) bool {
 	return false
 }
 
-// Errors returned by the new Azure SDK are not very helpful. They just say
-// "error status code received from the API". This function unwraps the
-// ODataErr, if possible, and returns a new error with a more friendly "code:
-// message" format.
-func extractODataError(err error) error {
-	var oDataErr *odataerrors.ODataError
-	if errors.As(err, &oDataErr) {
-		if typed := oDataErr.GetError(); typed != nil {
-			return fmt.Errorf("%s: %s", *typed.GetCode(), *typed.GetMessage())
-		}
+func deleteApplicationRegistrations(ctx context.Context, graphClient *azureDestroyerClient, logger logrus.FieldLogger, infraID string) error {
+	if !graphClient.MsGraphClient.IsAvailable() {
+		logger.Debug("MSGraph client not configured (StackCloud), skipping application registration cleanup")
+		return nil
 	}
-	return err
-}
 
-func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, logger logrus.FieldLogger, infraID string) error {
 	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
-	servicePrincipals, err := getServicePrincipalsByTag(ctx, graphClient, tag, infraID)
+	filter := fmt.Sprintf("startswith(displayName, '%s') and tags/any(s:s eq '%s')", infraID, tag)
+	servicePrincipals, err := graphClient.listServicePrincipals(ctx, filter)
 	if err != nil {
 		return fmt.Errorf("failed to gather list of Service Principals by tag: %w", err)
-	}
-	// msgraphsdk can return a `nil` response even if no errors occurred
-	if servicePrincipals == nil {
-		logger.Debug("Empty response from API when listing Service Principals by tag")
-		return nil
 	}
 
 	var errorList []error
 	for _, sp := range servicePrincipals {
-		appID := *sp.GetAppId()
-		logger := logger.WithField("appID", appID)
+		logger := logger.WithField("appID", sp.AppID)
 
-		filter := fmt.Sprintf("appId eq '%s'", appID)
-		listQuery := applications.ApplicationsRequestBuilderGetRequestConfiguration{
-			QueryParameters: &applications.ApplicationsRequestBuilderGetQueryParameters{
-				Filter: &filter,
-			},
-		}
-
-		resp, err := graphClient.Applications().Get(ctx, &listQuery)
+		appFilter := fmt.Sprintf("appId eq '%s'", sp.AppID)
+		apps, err := graphClient.listApplications(ctx, appFilter)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
 		}
-		// msgraphsdk can return a `nil` response even if no errors occurred
-		if resp == nil {
-			logger.Debugf("Empty response getting Application from Service Principal %s", *sp.GetDisplayName())
+		if len(apps) == 0 {
+			logger.Debugf("Empty response getting Application from Service Principal %s", sp.DisplayName)
 			continue
 		}
-		apps := resp.GetValue()
 		if len(apps) != 1 {
-			err = fmt.Errorf("should have received only a single matching AppID, received %d instead", len(apps))
-			errorList = append(errorList, err)
+			errorList = append(errorList, fmt.Errorf("expected 1 application for appId %s, got %d", sp.AppID, len(apps)))
+			continue
 		}
 
-		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)
-		if err != nil {
+		if err := graphClient.deleteApplication(ctx, apps[0].ID); err != nil {
 			errorList = append(errorList, err)
+			continue
 		}
 		logger.Info("Deleted")
 	}
 
 	return utilerrors.NewAggregate(errorList)
-}
-
-func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, matchTag, infraID string) ([]models.ServicePrincipalable, error) {
-	filter := fmt.Sprintf("startswith(displayName, '%s') and tags/any(s:s eq '%s')", infraID, matchTag)
-	listQuery := serviceprincipals.ServicePrincipalsRequestBuilderGetRequestConfiguration{
-		QueryParameters: &serviceprincipals.ServicePrincipalsRequestBuilderGetQueryParameters{
-			Filter: &filter,
-		},
-	}
-	resp, err := graphClient.ServicePrincipals().Get(ctx, &listQuery)
-	if err != nil || resp == nil {
-		return nil, err
-	}
-	return resp.GetValue(), nil
 }
 
 func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.VirtualNetworksClient, subnetsClient *armnetwork.SubnetsClient, logger logrus.FieldLogger, resourceGroupName, infraID string) error {
