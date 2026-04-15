@@ -21,6 +21,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 ## Cluster-scoped properties
 
 * `cloud` (required string): The name of the OpenStack cloud to use from `clouds.yaml`.
+* `bootstrapFlavor` (optional string): The OpenStack flavor to use for the bootstrap machine. When not specified, inherits from `controlPlane.type` (see [Machine pools](#machine-pools)).
 * `computeFlavor` (deprecated string): The OpenStack flavor to use for compute and control-plane machines.
 * `externalDNS` (optional list of strings): The IP addresses of DNS servers to be used for the DNS resolution of all instances in the cluster. The total number of dns servers supported by an instance is three. That total includes any dns server provided by the underlying openstack infrastructure.
 * `externalNetwork` (optional string): Name of external network the installer will use to provide access to the cluster. If defined, a floating IP from this network will be created and associated with the bootstrap node to facilitate debugging and connection to the bootstrap node during installation. The `apiFloatingIP` property is a floating IP address selected from this network.
@@ -56,7 +57,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
 > **Note**
-> The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
+> The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool. The bootstrap flavor (`type`) can be overridden independently using the cluster-scoped [`bootstrapFlavor`](#cluster-scoped-properties) field.
 
 > **Note**
 > Note when deploying the control-plane machines with `rootVolume`, it is highly suggested to use an [additional ephemeral disk dedicated to etcd](./etcd-ephemeral-disk.md).
