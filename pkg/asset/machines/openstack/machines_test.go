@@ -2,10 +2,17 @@ package openstack
 
 import (
 	"fmt"
+	"net"
 	"strings"
 	"testing"
 
 	machinev1 "github.com/openshift/api/machine/v1"
+	"k8s.io/utils/ptr"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	"sigs.k8s.io/yaml"
+
+	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -279,6 +286,355 @@ func TestFailureDomains(t *testing.T) {
 			for _, check := range tc.checks {
 				if err := check(failureDomains, recoveredPanic); err != nil {
 					t.Error(err)
+				}
+			}
+		})
+	}
+}
+
+// installConfigYAML is the structure used to parse the relevant subset of the
+// install-config YAML for the integration tests below.
+type installConfigYAML struct {
+	Platform struct {
+		OpenStack struct {
+			Cloud           string   `yaml:"cloud"`
+			BootstrapFlavor string   `yaml:"bootstrapFlavor,omitempty"`
+			APIVIPs         []string `yaml:"apiVIPs,omitempty"`
+			IngressVIPs     []string `yaml:"ingressVIPs,omitempty"`
+		} `yaml:"openstack"`
+	} `yaml:"platform"`
+	ControlPlane struct {
+		Platform struct {
+			OpenStack struct {
+				Type string `yaml:"type"`
+			} `yaml:"openstack"`
+		} `yaml:"platform"`
+		Replicas *int64 `yaml:"replicas,omitempty"`
+	} `yaml:"controlPlane"`
+}
+
+// parseInstallConfigFromYAML parses a subset install-config YAML into the Go
+// types used by GenerateMachines, simulating the YAML-to-struct path that the
+// real installer follows.
+func parseInstallConfigFromYAML(t *testing.T, raw string) (*types.InstallConfig, *types.MachinePool) {
+	t.Helper()
+
+	var cfg installConfigYAML
+	if err := yaml.Unmarshal([]byte(raw), &cfg); err != nil {
+		t.Fatalf("failed to unmarshal install-config YAML: %v", err)
+	}
+
+	ic := &types.InstallConfig{
+		Networking: &types.Networking{
+			MachineNetwork: []types.MachineNetworkEntry{
+				{
+					CIDR: ipnet.IPNet{
+						IPNet: net.IPNet{
+							IP:   net.ParseIP("10.0.0.0"),
+							Mask: net.CIDRMask(16, 32),
+						},
+					},
+				},
+			},
+		},
+		Platform: types.Platform{
+			OpenStack: &openstack.Platform{
+				Cloud:           cfg.Platform.OpenStack.Cloud,
+				BootstrapFlavor: cfg.Platform.OpenStack.BootstrapFlavor,
+				APIVIPs:         cfg.Platform.OpenStack.APIVIPs,
+				IngressVIPs:     cfg.Platform.OpenStack.IngressVIPs,
+			},
+		},
+	}
+
+	replicas := int64(1)
+	if cfg.ControlPlane.Replicas != nil {
+		replicas = *cfg.ControlPlane.Replicas
+	}
+
+	pool := &types.MachinePool{
+		Name:     "master",
+		Replicas: ptr.To(replicas),
+		Platform: types.MachinePoolPlatform{
+			OpenStack: &openstack.MachinePool{
+				FlavorName: cfg.ControlPlane.Platform.OpenStack.Type,
+			},
+		},
+	}
+
+	return ic, pool
+}
+
+// TestBootstrapFlavorIntegration is an end-to-end integration test that
+// simulates the complete flow from install-config.yaml parsing through machine
+// manifest generation. It verifies that:
+//
+//   - A bootstrap OpenStackMachine receives the explicitly configured
+//     bootstrapFlavor from the install-config.
+//   - Control plane OpenStackMachines are not affected and continue to use the
+//     control plane pool flavor.
+//   - The serialized YAML representation of each manifest contains the expected
+//     flavor string.
+func TestBootstrapFlavorIntegration(t *testing.T) {
+	const (
+		clusterID = "integration-test-cluster"
+		osImage   = "rhcos-4.14"
+	)
+
+	tests := []struct {
+		name                string
+		installConfigYAML   string
+		wantBootstrapFlavor string
+		wantCPFlavor        string
+	}{
+		{
+			name: "custom bootstrap flavor propagates to bootstrap manifest",
+			installConfigYAML: `
+platform:
+  openstack:
+    cloud: mycloud
+    bootstrapFlavor: m1.xlarge
+    apiVIPs:
+      - 10.0.0.5
+    ingressVIPs:
+      - 10.0.0.7
+controlPlane:
+  replicas: 3
+  platform:
+    openstack:
+      type: m1.large
+`,
+			wantBootstrapFlavor: "m1.xlarge",
+			wantCPFlavor:        "m1.large",
+		},
+		{
+			name: "bootstrap flavor with spaces in name is preserved",
+			installConfigYAML: `
+platform:
+  openstack:
+    cloud: mycloud
+    bootstrapFlavor: "my bootstrap flavor"
+    apiVIPs:
+      - 10.0.0.5
+    ingressVIPs:
+      - 10.0.0.7
+controlPlane:
+  replicas: 1
+  platform:
+    openstack:
+      type: m1.large
+`,
+			wantBootstrapFlavor: "my bootstrap flavor",
+			wantCPFlavor:        "m1.large",
+		},
+		{
+			name: "bootstrap flavor with mixed case is preserved",
+			installConfigYAML: `
+platform:
+  openstack:
+    cloud: mycloud
+    bootstrapFlavor: Bootstrap-Flavor-XLarge
+    apiVIPs:
+      - 10.0.0.5
+    ingressVIPs:
+      - 10.0.0.7
+controlPlane:
+  replicas: 1
+  platform:
+    openstack:
+      type: m1.large
+`,
+			wantBootstrapFlavor: "Bootstrap-Flavor-XLarge",
+			wantCPFlavor:        "m1.large",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ic, pool := parseInstallConfigFromYAML(t, tt.installConfigYAML)
+
+			// --- Bootstrap machine ---
+			bootstrapFiles, err := GenerateMachines(clusterID, ic, pool, osImage, bootstrapRole)
+			if err != nil {
+				t.Fatalf("GenerateMachines(bootstrap) unexpected error: %v", err)
+			}
+			if len(bootstrapFiles) == 0 {
+				t.Fatal("GenerateMachines(bootstrap) returned no files")
+			}
+
+			bootstrapMachine, ok := bootstrapFiles[0].Object.(*capo.OpenStackMachine)
+			if !ok {
+				t.Fatalf("bootstrap file[0]: expected *capo.OpenStackMachine, got %T", bootstrapFiles[0].Object)
+			}
+			if bootstrapMachine.Spec.Flavor == nil {
+				t.Fatal("bootstrap OpenStackMachine.Spec.Flavor is nil")
+			}
+			if got := *bootstrapMachine.Spec.Flavor; got != tt.wantBootstrapFlavor {
+				t.Errorf("bootstrap machine flavor = %q, want %q", got, tt.wantBootstrapFlavor)
+			}
+
+			// Verify the YAML serialization of the bootstrap manifest contains
+			// the expected flavor string — this tests the "generated YAML structure
+			// is correct" acceptance criterion.
+			bootstrapYAML, err := yaml.Marshal(bootstrapMachine)
+			if err != nil {
+				t.Fatalf("failed to marshal bootstrap OpenStackMachine to YAML: %v", err)
+			}
+			bootstrapYAMLStr := string(bootstrapYAML)
+			if !strings.Contains(bootstrapYAMLStr, tt.wantBootstrapFlavor) {
+				t.Errorf("bootstrap machine YAML does not contain flavor %q:\n%s", tt.wantBootstrapFlavor, bootstrapYAMLStr)
+			}
+
+			// --- Control plane machines ---
+			cpFiles, err := GenerateMachines(clusterID, ic, pool, osImage, masterRole)
+			if err != nil {
+				t.Fatalf("GenerateMachines(master) unexpected error: %v", err)
+			}
+
+			replicas := *pool.Replicas
+			expectedCPFiles := int(replicas) * 2 // OpenStackMachine + CAPI Machine per replica
+			if len(cpFiles) != expectedCPFiles {
+				t.Fatalf("expected %d CP files (replicas=%d), got %d", expectedCPFiles, replicas, len(cpFiles))
+			}
+
+			for i := int64(0); i < replicas; i++ {
+				fileIdx := i * 2
+				cpMachine, ok := cpFiles[fileIdx].Object.(*capo.OpenStackMachine)
+				if !ok {
+					t.Errorf("CP file[%d]: expected *capo.OpenStackMachine, got %T", fileIdx, cpFiles[fileIdx].Object)
+					continue
+				}
+				if cpMachine.Spec.Flavor == nil {
+					t.Errorf("CP file[%d]: OpenStackMachine.Spec.Flavor is nil", fileIdx)
+					continue
+				}
+				if got := *cpMachine.Spec.Flavor; got != tt.wantCPFlavor {
+					t.Errorf("CP file[%d] flavor = %q, want %q", fileIdx, got, tt.wantCPFlavor)
+				}
+
+				// Verify YAML serialization for each control plane machine.
+				cpYAML, err := yaml.Marshal(cpMachine)
+				if err != nil {
+					t.Fatalf("failed to marshal CP OpenStackMachine[%d] to YAML: %v", i, err)
+				}
+				if !strings.Contains(string(cpYAML), tt.wantCPFlavor) {
+					t.Errorf("CP machine[%d] YAML does not contain flavor %q:\n%s", i, tt.wantCPFlavor, string(cpYAML))
+				}
+			}
+		})
+	}
+}
+
+// TestBootstrapFlavorBackwardCompatibility verifies that when bootstrapFlavor
+// is not specified in the install-config, the bootstrap machine inherits the
+// control plane flavor — preserving backward-compatible behavior for existing
+// clusters that do not set bootstrapFlavor.
+func TestBootstrapFlavorBackwardCompatibility(t *testing.T) {
+	const (
+		clusterID = "compat-test-cluster"
+		osImage   = "rhcos-4.14"
+	)
+
+	tests := []struct {
+		name                string
+		installConfigYAML   string
+		wantBootstrapFlavor string
+		wantCPFlavor        string
+	}{
+		{
+			name: "no bootstrapFlavor: bootstrap inherits control plane flavor",
+			installConfigYAML: `
+platform:
+  openstack:
+    cloud: mycloud
+    apiVIPs:
+      - 10.0.0.5
+    ingressVIPs:
+      - 10.0.0.7
+controlPlane:
+  replicas: 3
+  platform:
+    openstack:
+      type: m1.large
+`,
+			wantBootstrapFlavor: "m1.large",
+			wantCPFlavor:        "m1.large",
+		},
+		{
+			name: "empty bootstrapFlavor string: bootstrap inherits control plane flavor",
+			installConfigYAML: `
+platform:
+  openstack:
+    cloud: mycloud
+    bootstrapFlavor: ""
+    apiVIPs:
+      - 10.0.0.5
+    ingressVIPs:
+      - 10.0.0.7
+controlPlane:
+  replicas: 1
+  platform:
+    openstack:
+      type: m1.xlarge
+`,
+			wantBootstrapFlavor: "m1.xlarge",
+			wantCPFlavor:        "m1.xlarge",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ic, pool := parseInstallConfigFromYAML(t, tt.installConfigYAML)
+
+			// Bootstrap machine must use the control plane flavor as fallback.
+			bootstrapFiles, err := GenerateMachines(clusterID, ic, pool, osImage, bootstrapRole)
+			if err != nil {
+				t.Fatalf("GenerateMachines(bootstrap) unexpected error: %v", err)
+			}
+			if len(bootstrapFiles) == 0 {
+				t.Fatal("GenerateMachines(bootstrap) returned no files")
+			}
+
+			bootstrapMachine, ok := bootstrapFiles[0].Object.(*capo.OpenStackMachine)
+			if !ok {
+				t.Fatalf("bootstrap file[0]: expected *capo.OpenStackMachine, got %T", bootstrapFiles[0].Object)
+			}
+			if bootstrapMachine.Spec.Flavor == nil {
+				t.Fatal("bootstrap OpenStackMachine.Spec.Flavor is nil")
+			}
+			if got := *bootstrapMachine.Spec.Flavor; got != tt.wantBootstrapFlavor {
+				t.Errorf("bootstrap machine flavor = %q, want %q (should inherit CP flavor when bootstrapFlavor unset)", got, tt.wantBootstrapFlavor)
+			}
+
+			// Verify YAML serialization.
+			bootstrapYAML, err := yaml.Marshal(bootstrapMachine)
+			if err != nil {
+				t.Fatalf("failed to marshal bootstrap OpenStackMachine to YAML: %v", err)
+			}
+			if !strings.Contains(string(bootstrapYAML), tt.wantBootstrapFlavor) {
+				t.Errorf("bootstrap machine YAML does not contain expected flavor %q:\n%s", tt.wantBootstrapFlavor, string(bootstrapYAML))
+			}
+
+			// Control plane machines must use the pool flavor.
+			cpFiles, err := GenerateMachines(clusterID, ic, pool, osImage, masterRole)
+			if err != nil {
+				t.Fatalf("GenerateMachines(master) unexpected error: %v", err)
+			}
+
+			replicas := *pool.Replicas
+			for i := int64(0); i < replicas; i++ {
+				fileIdx := i * 2
+				cpMachine, ok := cpFiles[fileIdx].Object.(*capo.OpenStackMachine)
+				if !ok {
+					t.Errorf("CP file[%d]: expected *capo.OpenStackMachine, got %T", fileIdx, cpFiles[fileIdx].Object)
+					continue
+				}
+				if cpMachine.Spec.Flavor == nil {
+					t.Errorf("CP file[%d]: OpenStackMachine.Spec.Flavor is nil", fileIdx)
+					continue
+				}
+				if got := *cpMachine.Spec.Flavor; got != tt.wantCPFlavor {
+					t.Errorf("CP machine[%d] flavor = %q, want %q", i, got, tt.wantCPFlavor)
 				}
 			}
 		})
