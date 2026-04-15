@@ -207,15 +207,14 @@ func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (al
 	return allErrs
 }
 
-// validateBootstrapFlavor validates that the bootstrap flavor exists in OpenStack when specified.
+// validateBootstrapFlavor validates that the bootstrap flavor exists in OpenStack when specified
+// and that it meets the minimum control plane resource requirements.
 func validateBootstrapFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
 	if p.BootstrapFlavor == "" {
 		return allErrs
 	}
 
-	if _, ok := ci.Flavors[p.BootstrapFlavor]; !ok {
-		allErrs = append(allErrs, field.NotFound(fldPath.Child("bootstrapFlavor"), p.BootstrapFlavor))
-	}
+	allErrs = append(allErrs, validateFlavor(p.BootstrapFlavor, ci, ctrlPlaneFlavorMinimums, fldPath.Child("bootstrapFlavor"), true)...)
 
 	return allErrs
 }

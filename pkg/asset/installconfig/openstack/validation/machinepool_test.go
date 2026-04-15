@@ -431,3 +431,46 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 		})
 	}
 }
+
+// TestBootstrapFlavorUsesControlPlaneRequirements verifies that bootstrap flavor
+// validation uses the same minimum resource requirements as the control plane.
+// A flavor that meets compute minimums but not control plane minimums should be
+// rejected by bootstrap validation (which applies control plane requirements).
+func TestBootstrapFlavorUsesControlPlaneRequirements(t *testing.T) {
+	// This flavor meets compute minimums (RAM=8192, VCPUs=2, Disk=25)
+	// but does NOT meet control plane minimums (RAM=16384, VCPUs=4, Disk=25).
+	flavorMeetsComputeNotControlPlane := flavors.Flavor{
+		Name:  "medium-flavor",
+		RAM:   8192,
+		VCPUs: 2,
+		Disk:  100,
+	}
+
+	ci := validMpoolCloudInfo()
+	ci.Flavors["medium-flavor"] = Flavor{Flavor: flavorMeetsComputeNotControlPlane}
+
+	// Compute pool with this flavor: valid (meets compute minimums)
+	computePool := &openstack.MachinePool{
+		FlavorName: "medium-flavor",
+		Zones:      []string{""},
+	}
+	computePath := field.NewPath("compute").Index(0).Child("platform", "openstack")
+	computeErrs := ValidateMachinePool(computePool, ci, false, computePath).ToAggregate()
+	assert.NoError(t, computeErrs, "flavor meeting compute minimums should pass compute pool validation")
+
+	// Control plane pool with this flavor: invalid (does not meet control plane minimums)
+	ctrlPlanePool := &openstack.MachinePool{
+		FlavorName: "medium-flavor",
+		Zones:      []string{""},
+	}
+	ctrlPlanePath := field.NewPath("controlPlane", "platform", "openstack")
+	ctrlPlaneErrs := ValidateMachinePool(ctrlPlanePool, ci, true, ctrlPlanePath).ToAggregate()
+	assert.Error(t, ctrlPlaneErrs, "flavor not meeting control plane minimums should fail control plane pool validation")
+	assert.Regexp(t, `controlPlane.platform.openstack.type: Invalid value: "medium-flavor": Flavor did not meet the following minimum requirements`, ctrlPlaneErrs)
+
+	// Bootstrap flavor validation (in platform validation) applies control plane requirements.
+	// A flavor that is insufficient for control plane should also be rejected for bootstrap.
+	// This is tested in TestBootstrapFlavorValidation in platform_test.go
+	// (the "bootstrap flavor with insufficient resources" case), which uses RAM=8192, VCPUs=2
+	// to confirm bootstrap validation rejects flavors below control plane minimums.
+}

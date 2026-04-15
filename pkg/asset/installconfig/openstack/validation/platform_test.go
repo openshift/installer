@@ -441,6 +441,56 @@ func TestBootstrapFlavorValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: `platform.openstack.bootstrapFlavor: Not found: "nonexistent-flavor"`,
 		},
+		{
+			name: "bootstrap flavor with insufficient resources",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "small-flavor"
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.Flavors = map[string]Flavor{
+					"small-flavor": {
+						Flavor: flavors.Flavor{
+							Name:  "small-flavor",
+							RAM:   8192, // too low (minimum is 16384)
+							VCPUs: 2,    // too low (minimum is 4)
+							Disk:  100,
+						},
+					},
+				}
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.bootstrapFlavor: Invalid value: "small-flavor": Flavor did not meet the following minimum requirements`,
+		},
+		{
+			name: "bootstrap flavor with baremetal flag skips resource validation",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "baremetal-bootstrap-flavor"
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.Flavors = map[string]Flavor{
+					"baremetal-bootstrap-flavor": {
+						Flavor: flavors.Flavor{
+							Name:  "baremetal-bootstrap-flavor",
+							RAM:   8192, // too low, but baremetal skips validation
+							VCPUs: 2,    // too low, but baremetal skips validation
+							Disk:  10,   // too low, but baremetal skips validation
+						},
+						Baremetal: true,
+					},
+				}
+				return ci
+			}(),
+			networking:    validNetworking(),
+			expectedError: false,
+		},
 	}
 
 	for _, tc := range cases {
