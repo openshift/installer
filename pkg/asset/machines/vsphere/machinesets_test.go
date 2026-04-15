@@ -282,3 +282,39 @@ func TestConfigMachinesets(t *testing.T) {
 		})
 	}
 }
+
+func TestMachineSetTopologyLabels(t *testing.T) {
+	clusterID := "test"
+	installConfig, err := parseInstallConfig()
+	if err != nil {
+		t.Fatalf("unable to parse sample install config: %v", err)
+	}
+
+	machineSets, err := MachineSets(clusterID, installConfig, &machineComputePoolValidZones, "worker", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedLabels := []struct {
+		zone   string
+		region string
+	}{
+		{zone: "us-east-1a", region: "us-east"},
+		{zone: "us-east-2a", region: "us-east"},
+		{zone: "us-east-3a", region: "us-east"},
+	}
+
+	if len(machineSets) != len(expectedLabels) {
+		t.Fatalf("expected %d machinesets, got %d", len(expectedLabels), len(machineSets))
+	}
+
+	for i, ms := range machineSets {
+		labels := ms.Spec.Template.ObjectMeta.Labels
+		if labels["topology.kubernetes.io/zone"] != expectedLabels[i].zone {
+			t.Errorf("machineset %d: expected zone label %q, got %q", i, expectedLabels[i].zone, labels["topology.kubernetes.io/zone"])
+		}
+		if labels["topology.kubernetes.io/region"] != expectedLabels[i].region {
+			t.Errorf("machineset %d: expected region label %q, got %q", i, expectedLabels[i].region, labels["topology.kubernetes.io/region"])
+		}
+	}
+}

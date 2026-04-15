@@ -82,6 +82,8 @@ func getMachineSetWithPlatform(
 						"machine.openshift.io/cluster-api-cluster":      clusterID,
 						"machine.openshift.io/cluster-api-machine-role": role,
 						"machine.openshift.io/cluster-api-machine-type": role,
+						"topology.kubernetes.io/zone":                   failureDomain.Zone,
+						"topology.kubernetes.io/region":                 failureDomain.Region,
 					},
 				},
 				Spec: machineapi.MachineSpec{
