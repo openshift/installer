@@ -193,6 +193,19 @@ func (ci *CloudInfo) collectInfo(ctx context.Context, ic *types.InstallConfig) e
 			}
 		}
 	}
+
+	if flavorName := ic.Platform.OpenStack.BootstrapFlavor; flavorName != "" {
+		if _, seen := ci.Flavors[flavorName]; !seen {
+			flavor, err := ci.getFlavor(ctx, flavorName)
+			if !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+				if err != nil {
+					return err
+				}
+				ci.Flavors[flavorName] = flavor
+			}
+		}
+	}
+
 	if ic.OpenStack.ControlPlanePort != nil {
 		controlPlanePort := ic.OpenStack.ControlPlanePort
 		ci.ControlPlanePortSubnets, err = ci.getSubnets(ctx, controlPlanePort)
