@@ -139,6 +139,10 @@ The bootstrap node is a temporary node that is responsible for standing up the c
 openstack flavor create --ram 16384 --disk 128 --vcpu 4 okd-cluster
 ```
 
+By default, the bootstrap node uses the same flavor as the control plane nodes. You can optionally configure an independent flavor for the bootstrap node using the `bootstrapFlavor` field in the platform configuration. Because the bootstrap node is temporary (existing only for the duration of the installation process, typically 15–30 minutes), it does not need to match the production-grade flavor used for permanent control plane nodes, which can reduce infrastructure costs during installation.
+
+For detailed configuration options and examples, see [Customizing your install](customization.md#cluster-scoped-properties).
+
 ### Image Registry Requirements
 
 If Swift is available in the cloud where the installation is being performed, it is used as the default backend for the OpenShift image registry. At the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
