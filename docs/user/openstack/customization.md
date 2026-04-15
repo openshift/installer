@@ -11,6 +11,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   - [Examples](#examples)
     - [Minimal](#minimal)
     - [Custom machine pools](#custom-machine-pools)
+    - [Bootstrap flavor](#bootstrap-flavor)
   - [Image Overrides](#image-overrides)
   - [Custom Subnets](#custom-subnets)
   - [Additional Networks](#additional-networks)
@@ -119,6 +120,81 @@ platform:
     defaultMachinePlatform:
       type: m1.s2.xlarge
     externalNetwork: external
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+### Bootstrap flavor
+
+The `bootstrapFlavor` field allows you to use a different (typically smaller) OpenStack flavor
+for the temporary bootstrap machine, which is only needed during cluster installation and is
+destroyed once the cluster is self-hosting. This lets you optimize resource usage and costs by
+running the bootstrap node on a cheaper flavor while keeping the control plane nodes on a
+larger, production-grade flavor.
+
+#### With explicit bootstrapFlavor (cost-optimized)
+
+The following example configures `m1.xlarge` for control plane machines and uses the smaller
+`m1.medium` flavor for the bootstrap machine. Since the bootstrap node is temporary and hosts
+lighter workloads than production control plane nodes, a smaller flavor is sufficient:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+controlPlane:
+  name: master
+  platform:
+    openstack:
+      type: m1.xlarge  # Production-grade flavor for persistent control plane nodes
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      type: m1.large
+  replicas: 3
+metadata:
+  name: test-cluster
+platform:
+  openstack:
+    cloud: mycloud
+    externalNetwork: external
+    apiFloatingIP: 128.0.0.1
+    bootstrapFlavor: m1.medium  # Smaller flavor for the temporary bootstrap node
+                                # Reduces cost since bootstrap is destroyed after install
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+#### Without bootstrapFlavor (inheritance behavior)
+
+When `bootstrapFlavor` is not specified, the bootstrap node inherits its flavor from
+`controlPlane.platform.openstack.type` (or `defaultMachinePlatform.type` if the control
+plane does not define its own flavor). This is the default behavior:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+controlPlane:
+  name: master
+  platform:
+    openstack:
+      type: m1.xlarge  # Bootstrap node will also use m1.xlarge (inherited)
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      type: m1.large
+  replicas: 3
+metadata:
+  name: test-cluster
+platform:
+  openstack:
+    cloud: mycloud
+    externalNetwork: external
+    apiFloatingIP: 128.0.0.1
+    # bootstrapFlavor is not set — bootstrap node inherits controlPlane.platform.openstack.type
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
