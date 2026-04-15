@@ -36,6 +36,10 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 		total = *pool.Replicas
 	}
 
+	// Resolve the bootstrap flavor once: use the explicitly configured
+	// bootstrapFlavor when set, otherwise fall back to the control plane flavor.
+	bootstrapFlavor := ResolveBootstrapFlavor(config.Platform.OpenStack, mpool.FlavorName)
+
 	// Only enable config drive when using single stack IPv6
 	configDrive := isSingleStackIPv6(config.Networking.MachineNetwork)
 
@@ -43,6 +47,14 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	failureDomains := failureDomainsFromSpec(*mpool)
 	for idx := int64(0); idx < total; idx++ {
 		failureDomain := failureDomains[uint(idx)%uint(len(failureDomains))]
+
+		// Bootstrap machines use the resolved bootstrap flavor; all other
+		// machines (control plane, compute) use the pool's flavor as-is.
+		flavorOverride := ""
+		if role == bootstrapRole {
+			flavorOverride = bootstrapFlavor
+		}
+
 		machineSpec, err := generateMachineSpec(
 			clusterID,
 			config,
@@ -51,6 +63,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			role,
 			failureDomain,
 			&configDrive,
+			flavorOverride,
 		)
 		if err != nil {
 			return nil, err
@@ -117,8 +130,16 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	return result, nil
 }
 
-func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*capo.OpenStackMachineSpec, error) {
+func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool, flavorOverride string) (*capo.OpenStackMachineSpec, error) {
 	platform := config.Platform.OpenStack
+
+	// Determine the effective flavor for this machine. A non-empty
+	// flavorOverride (set for bootstrap machines) takes precedence over the
+	// pool's FlavorName.
+	flavor := mpool.FlavorName
+	if flavorOverride != "" {
+		flavor = flavorOverride
+	}
 
 	port := capo.PortOpts{}
 
@@ -196,7 +217,7 @@ func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *o
 	}
 
 	spec := capo.OpenStackMachineSpec{
-		Flavor: ptr.To(mpool.FlavorName),
+		Flavor: ptr.To(flavor),
 		IdentityRef: &capo.OpenStackIdentityReference{
 			Name:      clusterID + "-cloud-config",
 			CloudName: CloudName,
