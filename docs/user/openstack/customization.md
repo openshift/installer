@@ -8,6 +8,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   - [Table of Contents](#table-of-contents)
   - [Cluster-scoped properties](#cluster-scoped-properties)
   - [Machine pools](#machine-pools)
+  - [Bootstrap Flavor Optimization](#bootstrap-flavor-optimization)
   - [Examples](#examples)
     - [Minimal](#minimal)
     - [Custom machine pools](#custom-machine-pools)
@@ -62,6 +63,56 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 > **Note**
 > Note when deploying the control-plane machines with `rootVolume`, it is highly suggested to use an [additional ephemeral disk dedicated to etcd](./etcd-ephemeral-disk.md).
+
+## Bootstrap Flavor Optimization
+
+The bootstrap machine is a **temporary** instance that exists only during cluster installation. Understanding its lifecycle and resource requirements allows operators to select a smaller, cheaper flavor for it, reducing infrastructure costs during the installation phase.
+
+### Bootstrap Machine Lifecycle
+
+The bootstrap machine goes through the following lifecycle:
+
+1. **Created** at the start of `openshift-install create cluster`
+2. **Hosts** the temporary Kubernetes control plane and serves Ignition configs to control plane nodes
+3. **Forms** the initial etcd cluster with the control plane nodes
+4. **Transfers** control to the production control plane once it becomes self-hosting
+5. **Destroyed** automatically once the control plane is fully operational (typically 15–30 minutes after installation begins)
+
+Because the bootstrap machine exists only for the duration of the installation process, it does not need to match the production-grade flavor used for permanent control plane nodes.
+
+### Cost Optimization Benefits
+
+By specifying a smaller flavor for the bootstrap machine via the `bootstrapFlavor` field, operators can reduce the cost of the bootstrap phase by **30–50%** compared to using the same flavor as the control plane:
+
+- Control plane nodes run indefinitely and require production-grade resources for etcd, the API server, and other components.
+- The bootstrap machine runs a temporary, lightweight workload and is active for only 15–30 minutes.
+- Using a right-sized bootstrap flavor avoids paying for idle compute capacity on an oversized instance during installation.
+
+For example, if the control plane uses a flavor with 16 vCPUs and 64 GB RAM, specifying a 4 vCPU / 16 GB RAM bootstrap flavor can reduce the per-hour cost of the bootstrap instance by more than 50%, resulting in meaningful savings especially in environments where installations are performed frequently (e.g., CI/CD pipelines, automated cluster provisioning).
+
+### Minimum Recommended Resources for Bootstrap
+
+The bootstrap machine must have enough resources to run the temporary control plane services. The minimum recommended resources are:
+
+| Resource | Minimum |
+|----------|---------|
+| vCPUs    | 4       |
+| RAM      | 16 GB   |
+| Disk     | 100 GB  |
+
+> **Note**
+> These are the **minimum** recommended values. Using a flavor that does not meet these requirements may cause the bootstrap process to fail or time out. The installer validates that the specified `bootstrapFlavor` meets at least the control plane flavor requirements.
+
+### Choosing a Bootstrap Flavor
+
+When selecting a bootstrap flavor, consider the following guidance:
+
+- **Do** use a flavor that meets the minimum requirements above (4 vCPU, 16 GB RAM, 100 GB disk).
+- **Do** choose a smaller flavor than your control plane nodes to reduce cost during installation.
+- **Do not** use a baremetal flavor for the bootstrap machine unless your environment requires it — virtual flavors are sufficient and more cost-effective.
+- **Do not** reduce the bootstrap flavor below the minimums, as this can cause installation failures due to resource exhaustion during the bootstrapping phase.
+
+To configure a bootstrap flavor, set the `bootstrapFlavor` field in the cluster-scoped platform properties. See the [Bootstrap flavor](#bootstrap-flavor) example for a complete `install-config.yaml`.
 
 ## Examples
 
