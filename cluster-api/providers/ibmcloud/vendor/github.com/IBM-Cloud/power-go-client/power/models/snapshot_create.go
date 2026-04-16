@@ -24,6 +24,8 @@ type SnapshotCreate struct {
 
 	// Name of the PVM instance snapshot to create
 	// Required: true
+	// Max Length: 120
+	// Pattern: ^[a-zA-Z0-9_.-]+$
 	Name *string `json:"name"`
 
 	// user tags
@@ -54,6 +56,14 @@ func (m *SnapshotCreate) Validate(formats strfmt.Registry) error {
 func (m *SnapshotCreate) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("name", "body", *m.Name, 120); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", *m.Name, `^[a-zA-Z0-9_.-]+$`); err != nil {
 		return err
 	}
 

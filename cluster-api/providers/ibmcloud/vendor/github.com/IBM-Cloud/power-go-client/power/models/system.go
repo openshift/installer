@@ -29,6 +29,9 @@ type System struct {
 	// Required: true
 	Cores *float64 `json:"cores"`
 
+	// The host MTMS name
+	HostMTMSName string `json:"hostMTMSName,omitempty"`
+
 	// The host identifier
 	ID int64 `json:"id,omitempty"`
 
