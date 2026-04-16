@@ -312,5 +312,5 @@ func (m *AzureMachine) SetFutures(futures Futures) {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureMachine{}, &AzureMachineList{})
+	objectTypes = append(objectTypes, &AzureMachine{}, &AzureMachineList{})
 }

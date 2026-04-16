@@ -4,10 +4,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.6.1]
 ### Added
+- Add transparent Basic authentication via API keys in prism-go-client
+
+## [v0.6.0]
+### Added
+- Add methods for Idempotence Identifiers API in v3
+- API key based authentication support in v3
+- Add client method to fetch kubeconfig in Karbon
+- Add converged client as utility wrapper for v4
+### Changed
+- Update the underlying struct used for Cluster to swagger-generated in v3
+- Switch to go-swagger generated structs for recovery plan
+- Change the underlying API/Client used for StorageContainers in v4
+- Add defensive code to avoid panics
+- Move ClientOptions to environment/types
+### Removed
+- Remove clients for fc & foundation
+- Remove utils package
+
+## [v0.5.5]
+### Fixed
+- Bugfix: Remove pagination handling in ListAllHost as endpoint doesn't support pagination
+
+## [v0.5.4]
+### Fixed
+- Bugfix: Add defensive validation in v3 and v4 cache GetOrCreate to prevent panics when ManagementEndpoint has nil Address or empty required fields
+
+## [v0.5.3]
+### Added
+- Added support for authenticating using API key based authentication.
+
+## [v0.5.2]
+### Added
+- Added support for creating, deleting, and listing idempotence identifiers.
+- added the new v4 storage container client from clustermgmt namespace as it is based on the v4 beta APIs.
+- Added support for authenticating using API key based authentication.  
 
 ### Changed
+- Update the v3 VM structs to include VM vTPM configuration.
+
+### Removed
+- Removed the v4 storage container client from storage namespace as it was based on the v4 alpha APIs which are no longer supported.
+
+## [v0.5.1] - 2024-08-09
+### Changed
+- Updated the v3 Subnet spec struct to match latest swagger spec
+
 ## [v0.5.0] - 2024-07-29
 ### Added
 - Added v4 Categories beta APIs to v4 client

@@ -11,8 +11,10 @@ const (
 	CategoriesKey = "categories"
 )
 
-// ErrNotFound is returned by Get() for missing keys
-var ErrNotFound = fmt.Errorf("environment key not found")
+var (
+	// ErrNotFound is returned by Get() for missing keys
+	ErrNotFound = fmt.Errorf("environment key not found")
+)
 
 // ApiCredentials is set of identifiers and secrets used to authenticate with
 // the underlying infrastructure.

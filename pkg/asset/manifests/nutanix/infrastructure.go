@@ -35,7 +35,7 @@ func GetInfrastructureNutanixPlatformSpec(ic *installconfig.InstallConfig) (*con
 		if err != nil {
 			return nil, fmt.Errorf("fail to find the Prism Element (cluster) with uuid %s: %w", nutanixPlatform.PrismElements[0].UUID, err)
 		}
-		peName = *pe.Spec.Name
+		peName = pe.Spec.Name
 	} else {
 		peName = nutanixPlatform.PrismElements[0].Name
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewV2ListBundlesParams creates a new V2ListBundlesParams object,
@@ -60,6 +61,39 @@ V2ListBundlesParams contains all the parameters to send to the API endpoint
 	Typically these are written to a http.Request.
 */
 type V2ListBundlesParams struct {
+
+	/* CPUArchitecture.
+
+	   The CPU architecture of the image (x86_64/arm64/etc). openshift_version must be set.
+
+	   Default: "x86_64"
+	*/
+	CPUArchitecture *string
+
+	/* ExternalPlatformName.
+
+	   External platform name when platform type is set to external. The value of this parameter will be ignored if platform_type is not external or if openshift_version is not set.
+	*/
+	ExternalPlatformName *string
+
+	/* FeatureIds.
+
+	   Array of feature IDs that affect bundle composition (e.g., ["SNO"] for Single Node OpenShift).
+	*/
+	FeatureIds []string
+
+	/* OpenshiftVersion.
+
+	   Version of the OpenShift cluster. If the parameter is not specified, no filtering is applied.
+	*/
+	OpenshiftVersion *string
+
+	/* PlatformType.
+
+	   The provider platform type. openshift_version must be set.
+	*/
+	PlatformType *string
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -77,7 +111,18 @@ func (o *V2ListBundlesParams) WithDefaults() *V2ListBundlesParams {
 //
 // All values with no default are reset to their zero value.
 func (o *V2ListBundlesParams) SetDefaults() {
-	// no default values defined for this parameter
+	var (
+		cPUArchitectureDefault = string("x86_64")
+	)
+
+	val := V2ListBundlesParams{
+		CPUArchitecture: &cPUArchitectureDefault,
+	}
+
+	val.timeout = o.timeout
+	val.Context = o.Context
+	val.HTTPClient = o.HTTPClient
+	*o = val
 }
 
 // WithTimeout adds the timeout to the v2 list bundles params
@@ -113,6 +158,61 @@ func (o *V2ListBundlesParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithCPUArchitecture adds the cPUArchitecture to the v2 list bundles params
+func (o *V2ListBundlesParams) WithCPUArchitecture(cPUArchitecture *string) *V2ListBundlesParams {
+	o.SetCPUArchitecture(cPUArchitecture)
+	return o
+}
+
+// SetCPUArchitecture adds the cpuArchitecture to the v2 list bundles params
+func (o *V2ListBundlesParams) SetCPUArchitecture(cPUArchitecture *string) {
+	o.CPUArchitecture = cPUArchitecture
+}
+
+// WithExternalPlatformName adds the externalPlatformName to the v2 list bundles params
+func (o *V2ListBundlesParams) WithExternalPlatformName(externalPlatformName *string) *V2ListBundlesParams {
+	o.SetExternalPlatformName(externalPlatformName)
+	return o
+}
+
+// SetExternalPlatformName adds the externalPlatformName to the v2 list bundles params
+func (o *V2ListBundlesParams) SetExternalPlatformName(externalPlatformName *string) {
+	o.ExternalPlatformName = externalPlatformName
+}
+
+// WithFeatureIds adds the featureIds to the v2 list bundles params
+func (o *V2ListBundlesParams) WithFeatureIds(featureIds []string) *V2ListBundlesParams {
+	o.SetFeatureIds(featureIds)
+	return o
+}
+
+// SetFeatureIds adds the featureIds to the v2 list bundles params
+func (o *V2ListBundlesParams) SetFeatureIds(featureIds []string) {
+	o.FeatureIds = featureIds
+}
+
+// WithOpenshiftVersion adds the openshiftVersion to the v2 list bundles params
+func (o *V2ListBundlesParams) WithOpenshiftVersion(openshiftVersion *string) *V2ListBundlesParams {
+	o.SetOpenshiftVersion(openshiftVersion)
+	return o
+}
+
+// SetOpenshiftVersion adds the openshiftVersion to the v2 list bundles params
+func (o *V2ListBundlesParams) SetOpenshiftVersion(openshiftVersion *string) {
+	o.OpenshiftVersion = openshiftVersion
+}
+
+// WithPlatformType adds the platformType to the v2 list bundles params
+func (o *V2ListBundlesParams) WithPlatformType(platformType *string) *V2ListBundlesParams {
+	o.SetPlatformType(platformType)
+	return o
+}
+
+// SetPlatformType adds the platformType to the v2 list bundles params
+func (o *V2ListBundlesParams) SetPlatformType(platformType *string) {
+	o.PlatformType = platformType
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *V2ListBundlesParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -121,8 +221,104 @@ func (o *V2ListBundlesParams) WriteToRequest(r runtime.ClientRequest, reg strfmt
 	}
 	var res []error
 
+	if o.CPUArchitecture != nil {
+
+		// query param cpu_architecture
+		var qrCPUArchitecture string
+
+		if o.CPUArchitecture != nil {
+			qrCPUArchitecture = *o.CPUArchitecture
+		}
+		qCPUArchitecture := qrCPUArchitecture
+		if qCPUArchitecture != "" {
+
+			if err := r.SetQueryParam("cpu_architecture", qCPUArchitecture); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.ExternalPlatformName != nil {
+
+		// query param external_platform_name
+		var qrExternalPlatformName string
+
+		if o.ExternalPlatformName != nil {
+			qrExternalPlatformName = *o.ExternalPlatformName
+		}
+		qExternalPlatformName := qrExternalPlatformName
+		if qExternalPlatformName != "" {
+
+			if err := r.SetQueryParam("external_platform_name", qExternalPlatformName); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.FeatureIds != nil {
+
+		// binding items for feature_ids
+		joinedFeatureIds := o.bindParamFeatureIds(reg)
+
+		// query array param feature_ids
+		if err := r.SetQueryParam("feature_ids", joinedFeatureIds...); err != nil {
+			return err
+		}
+	}
+
+	if o.OpenshiftVersion != nil {
+
+		// query param openshift_version
+		var qrOpenshiftVersion string
+
+		if o.OpenshiftVersion != nil {
+			qrOpenshiftVersion = *o.OpenshiftVersion
+		}
+		qOpenshiftVersion := qrOpenshiftVersion
+		if qOpenshiftVersion != "" {
+
+			if err := r.SetQueryParam("openshift_version", qOpenshiftVersion); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.PlatformType != nil {
+
+		// query param platform_type
+		var qrPlatformType string
+
+		if o.PlatformType != nil {
+			qrPlatformType = *o.PlatformType
+		}
+		qPlatformType := qrPlatformType
+		if qPlatformType != "" {
+
+			if err := r.SetQueryParam("platform_type", qPlatformType); err != nil {
+				return err
+			}
+		}
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
 	return nil
+}
+
+// bindParamV2ListBundles binds the parameter feature_ids
+func (o *V2ListBundlesParams) bindParamFeatureIds(formats strfmt.Registry) []string {
+	featureIdsIR := o.FeatureIds
+
+	var featureIdsIC []string
+	for _, featureIdsIIR := range featureIdsIR { // explode []string
+
+		featureIdsIIV := featureIdsIIR // string as string
+		featureIdsIC = append(featureIdsIC, featureIdsIIV)
+	}
+
+	// items.CollectionFormat: "multi"
+	featureIdsIS := swag.JoinByFormat(featureIdsIC, "multi")
+
+	return featureIdsIS
 }

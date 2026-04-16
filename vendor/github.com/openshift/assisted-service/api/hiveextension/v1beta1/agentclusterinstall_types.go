@@ -337,7 +337,7 @@ type Networking struct {
 	//NetworkType is the Container Network Interface (CNI) plug-in to install
 	//The default value is OpenShiftSDN for IPv4, and OVNKubernetes for IPv6 or SNO
 	//
-	// +kubebuilder:validation:Enum=OpenShiftSDN;OVNKubernetes
+	// +kubebuilder:validation:Enum=OpenShiftSDN;OVNKubernetes;CiscoACI;Cilium;Calico;None
 	// +optional
 	NetworkType string `json:"networkType,omitempty"`
 
@@ -552,7 +552,7 @@ const (
 )
 
 func init() {
-	SchemeBuilder.Register(&AgentClusterInstall{}, &AgentClusterInstallList{})
+	objectTypes = append(objectTypes, &AgentClusterInstall{}, &AgentClusterInstallList{})
 }
 
 // MirrorRegistryConfigMapReference contains reference to a ConfigMap for mirror registry

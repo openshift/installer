@@ -20,10 +20,16 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"fmt"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
+	"github.com/go-logr/logr"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher/metrics"
 	logf "sigs.k8s.io/controller-runtime/pkg/internal/log"
 )
@@ -40,7 +46,9 @@ type CertWatcher struct {
 	sync.RWMutex
 
 	currentCert *tls.Certificate
+	watcher     *fsnotify.Watcher
 	interval    time.Duration
+	log         logr.Logger
 
 	certPath string
 	keyPath  string
@@ -53,13 +61,26 @@ type CertWatcher struct {
 
 // New returns a new CertWatcher watching the given certificate and key.
 func New(certPath, keyPath string) (*CertWatcher, error) {
+	var err error
+
 	cw := &CertWatcher{
 		certPath: certPath,
 		keyPath:  keyPath,
 		interval: defaultWatchInterval,
+		log:      log.WithValues("cert", certPath, "key", keyPath),
 	}
 
-	return cw, cw.ReadCertificate()
+	// Initial read of certificate and key.
+	if err := cw.ReadCertificate(); err != nil {
+		return nil, err
+	}
+
+	cw.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
+
+	return cw, nil
 }
 
 // WithWatchInterval sets the watch interval and returns the CertWatcher pointer
@@ -88,27 +109,63 @@ func (cw *CertWatcher) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certificate,
 
 // Start starts the watch on the certificate and key files.
 func (cw *CertWatcher) Start(ctx context.Context) error {
+	files := sets.New(cw.certPath, cw.keyPath)
+
+	{
+		var watchErr error
+		if err := wait.PollUntilContextTimeout(ctx, 1*time.Second, 10*time.Second, true, func(ctx context.Context) (done bool, err error) {
+			for _, f := range files.UnsortedList() {
+				if err := cw.watcher.Add(f); err != nil {
+					watchErr = err
+					return false, nil //nolint:nilerr // We want to keep trying.
+				}
+				// We've added the watch, remove it from the set.
+				files.Delete(f)
+			}
+			return true, nil
+		}); err != nil {
+			return fmt.Errorf("failed to add watches: %w", kerrors.NewAggregate([]error{err, watchErr}))
+		}
+	}
+
+	go cw.Watch()
+
 	ticker := time.NewTicker(cw.interval)
 	defer ticker.Stop()
 
-	log.Info("Starting certificate watcher")
+	cw.log.Info("Starting certificate poll+watcher", "interval", cw.interval)
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return cw.watcher.Close()
 		case <-ticker.C:
 			if err := cw.ReadCertificate(); err != nil {
-				log.Error(err, "failed read certificate")
+				cw.log.Error(err, "failed read certificate")
 			}
 		}
 	}
 }
 
-// Watch used to read events from the watcher's channel and reacts to changes,
-// it has currently no function and it's left here for backward compatibility until a future release.
-//
-// Deprecated: fsnotify has been removed and Start() is now polling instead.
+// Watch reads events from the watcher's channel and reacts to changes.
 func (cw *CertWatcher) Watch() {
+	for {
+		select {
+		case event, ok := <-cw.watcher.Events:
+			// Channel is closed.
+			if !ok {
+				return
+			}
+
+			cw.handleEvent(event)
+		case err, ok := <-cw.watcher.Errors:
+			// Channel is closed.
+			if !ok {
+				return
+			}
+
+			cw.log.Error(err, "certificate watch error")
+		}
+	}
 }
 
 // updateCachedCertificate checks if the new certificate differs from the cache,
@@ -120,7 +177,7 @@ func (cw *CertWatcher) updateCachedCertificate(cert *tls.Certificate, keyPEMBloc
 	if cw.currentCert != nil &&
 		bytes.Equal(cw.currentCert.Certificate[0], cert.Certificate[0]) &&
 		bytes.Equal(cw.cachedKeyPEMBlock, keyPEMBlock) {
-		log.V(7).Info("certificate already cached")
+		cw.log.V(7).Info("certificate already cached")
 		return false
 	}
 	cw.currentCert = cert
@@ -154,7 +211,7 @@ func (cw *CertWatcher) ReadCertificate() error {
 		return nil
 	}
 
-	log.Info("Updated current TLS certificate")
+	cw.log.Info("Updated current TLS certificate")
 
 	// If a callback is registered, invoke it with the new certificate.
 	cw.RLock()
@@ -165,4 +222,30 @@ func (cw *CertWatcher) ReadCertificate() error {
 		}()
 	}
 	return nil
+}
+
+func (cw *CertWatcher) handleEvent(event fsnotify.Event) {
+	// Only care about events which may modify the contents of the file.
+	switch {
+	case event.Op.Has(fsnotify.Write):
+	case event.Op.Has(fsnotify.Create):
+	case event.Op.Has(fsnotify.Chmod), event.Op.Has(fsnotify.Remove):
+		// If the file was removed or renamed, re-add the watch to the previous name
+		if err := cw.watcher.Add(event.Name); err != nil {
+			cw.log.Error(err, "error re-watching file")
+		}
+	default:
+		return
+	}
+
+	cw.log.V(1).Info("certificate event", "event", event)
+	if err := cw.ReadCertificate(); err != nil {
+		cw.log.Error(err, "error re-reading certificate")
+	}
+}
+
+// NeedLeaderElection indicates that the cert-manager
+// does not need leader election.
+func (cw *CertWatcher) NeedLeaderElection() bool {
+	return false
 }

@@ -29,6 +29,12 @@ func (o *V2ListBundlesReader) ReadResponse(response runtime.ClientResponse, cons
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewV2ListBundlesBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewV2ListBundlesInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -95,6 +101,69 @@ func (o *V2ListBundlesOK) readResponse(response runtime.ClientResponse, consumer
 
 	// response payload
 	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewV2ListBundlesBadRequest creates a V2ListBundlesBadRequest with default headers values
+func NewV2ListBundlesBadRequest() *V2ListBundlesBadRequest {
+	return &V2ListBundlesBadRequest{}
+}
+
+/*
+V2ListBundlesBadRequest describes a response with status code 400, with default header values.
+
+Error.
+*/
+type V2ListBundlesBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this v2 list bundles bad request response has a 2xx status code
+func (o *V2ListBundlesBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list bundles bad request response has a 3xx status code
+func (o *V2ListBundlesBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list bundles bad request response has a 4xx status code
+func (o *V2ListBundlesBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list bundles bad request response has a 5xx status code
+func (o *V2ListBundlesBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list bundles bad request response a status code equal to that given
+func (o *V2ListBundlesBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+func (o *V2ListBundlesBadRequest) Error() string {
+	return fmt.Sprintf("[GET /v2/operators/bundles][%d] v2ListBundlesBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *V2ListBundlesBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/operators/bundles][%d] v2ListBundlesBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *V2ListBundlesBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *V2ListBundlesBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

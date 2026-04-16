@@ -19,7 +19,7 @@ import (
 type VerifyVip struct {
 
 	// vip
-	Vip IP `json:"vip,omitempty" gorm:"primaryKey"`
+	Vip IP `json:"vip,omitempty" gorm:"primaryKey;type:inet"`
 
 	// vip type
 	VipType VipType `json:"vip_type,omitempty"`

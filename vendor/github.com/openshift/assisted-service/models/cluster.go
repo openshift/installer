@@ -195,7 +195,14 @@ type Cluster struct {
 	Name string `json:"name,omitempty"`
 
 	// The desired network type used.
-	// Enum: [OpenShiftSDN OVNKubernetes]
+	// - OVNKubernetes: Default CNI for OpenShift (recommended)
+	// - OpenShiftSDN: Legacy SDN (deprecated in newer versions)
+	// - CiscoACI: Cisco ACI CNI (requires custom manifests)
+	// - Cilium: Isovalent Cilium CNI (requires custom manifests)
+	// - Calico: Tigera Calico CNI (requires custom manifests)
+	// - None: No CNI - user must provide custom CNI manifests
+	//
+	// Enum: [OpenShiftSDN OVNKubernetes CiscoACI Cilium Calico None]
 	NetworkType *string `json:"network_type,omitempty"`
 
 	// A comma-separated list of destination domain names, domains, IP addresses, or other network CIDRs to exclude from proxying.
@@ -1081,7 +1088,7 @@ var clusterTypeNetworkTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes","CiscoACI","Cilium","Calico","None"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -1096,6 +1103,18 @@ const (
 
 	// ClusterNetworkTypeOVNKubernetes captures enum value "OVNKubernetes"
 	ClusterNetworkTypeOVNKubernetes string = "OVNKubernetes"
+
+	// ClusterNetworkTypeCiscoACI captures enum value "CiscoACI"
+	ClusterNetworkTypeCiscoACI string = "CiscoACI"
+
+	// ClusterNetworkTypeCilium captures enum value "Cilium"
+	ClusterNetworkTypeCilium string = "Cilium"
+
+	// ClusterNetworkTypeCalico captures enum value "Calico"
+	ClusterNetworkTypeCalico string = "Calico"
+
+	// ClusterNetworkTypeNone captures enum value "None"
+	ClusterNetworkTypeNone string = "None"
 )
 
 // prop value enum
