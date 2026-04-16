@@ -2,7 +2,6 @@ package tls
 
 import (
 	"context"
-	"crypto/x509"
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -22,21 +21,28 @@ type RootCA struct {
 
 var _ asset.WritableAsset = (*RootCA)(nil)
 
-// Dependencies returns nothing.
+// Dependencies returns the dependencies.
 func (c *RootCA) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerPKIConfig{}}
 }
 
 // Generate generates the MCS/Ignition CA.
 func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
-	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+	pkiCfg := &SignerPKIConfig{}
+	parents.Get(pkiCfg)
+
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "machine-config-operator.machine-config-server-signer")
+	if err != nil {
+		return err
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca")
+	cfg := &CertCfg{
+		Subject:  pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
+		Validity: ValidityTenYears(),
+		IsCA:     true,
+	}
+
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

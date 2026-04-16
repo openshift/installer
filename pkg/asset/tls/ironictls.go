@@ -56,7 +56,7 @@ func (a *IronicTLSCert) Generate(ctx context.Context, dependencies asset.Parents
 	cfg.DNSNames = []string{hostname}
 
 	logrus.Debugf("Generating TLS certificate for ironic (virtual media)")
-	return a.SelfSignedCertKey.Generate(ctx, cfg, "ironic/tls")
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "ironic/tls", nil)
 }
 
 // Name returns the human-friendly name of the asset.

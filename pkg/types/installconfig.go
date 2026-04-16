@@ -231,6 +231,115 @@ type InstallConfig struct {
 	// OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
 	// +optional
 	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
+
+	// PKI configures cryptographic parameters for installer-generated
+	// signer certificates. When specified, all signer certificates use the
+	// algorithm and parameters from signerCertificates.
+	// Feature gated by ConfigurablePKI.
+	// +openshift:enable:FeatureGate=ConfigurablePKI
+	// +optional
+	PKI *PKIConfig `json:"pki,omitempty"`
+}
+
+// PKIConfig configures cryptographic parameters for installer-generated
+// signer certificates. When pki is present in the install config,
+// signerCertificates must be fully specified with algorithm and key parameters.
+type PKIConfig struct {
+	// signerCertificates specifies key parameters for all installer-generated
+	// certificate authority (CA) certificates.
+	// When set, all signer certificates use the specified algorithm and parameters.
+	// +required
+	SignerCertificates CertificateConfig `json:"signerCertificates"`
+}
+
+// CertificateConfig specifies the cryptographic parameters for a certificate's key pair.
+// This is an installer-local type that mirrors the subset of
+// config.openshift.io/v1alpha1.CertificateConfig fields the installer supports.
+type CertificateConfig struct {
+	// key specifies the cryptographic parameters for the certificate's key pair.
+	// +required
+	Key KeyConfig `json:"key"`
+}
+
+// KeyAlgorithm specifies the cryptographic algorithm used for key generation.
+type KeyAlgorithm string
+
+const (
+	// KeyAlgorithmRSA specifies the RSA algorithm for key generation.
+	KeyAlgorithmRSA KeyAlgorithm = "RSA"
+	// KeyAlgorithmECDSA specifies the ECDSA algorithm for key generation.
+	KeyAlgorithmECDSA KeyAlgorithm = "ECDSA"
+)
+
+// KeyConfig specifies cryptographic parameters for key generation.
+//
+// +kubebuilder:validation:XValidation:rule="has(self.algorithm) && self.algorithm == 'RSA' ?  has(self.rsa) : !has(self.rsa)",message="rsa is required when algorithm is RSA, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="has(self.algorithm) && self.algorithm == 'ECDSA' ?  has(self.ecdsa) : !has(self.ecdsa)",message="ecdsa is required when algorithm is ECDSA, and forbidden otherwise"
+type KeyConfig struct {
+	// algorithm specifies the key generation algorithm.
+	// Valid values are "RSA" and "ECDSA".
+	//
+	// When set to RSA, the rsa field must be specified and the generated key
+	// will be an RSA key with the configured key size.
+	//
+	// When set to ECDSA, the ecdsa field must be specified and the generated key
+	// will be an ECDSA key using the configured elliptic curve.
+	//
+	// +kubebuilder:validation:Enum=RSA;ECDSA
+	// +required
+	Algorithm KeyAlgorithm `json:"algorithm"`
+
+	// rsa specifies RSA key parameters.
+	// Required when algorithm is RSA, and forbidden otherwise.
+	// +optional
+	RSA *RSAKeyConfig `json:"rsa,omitempty"`
+
+	// ecdsa specifies ECDSA key parameters.
+	// Required when algorithm is ECDSA, and forbidden otherwise.
+	// +optional
+	ECDSA *ECDSAKeyConfig `json:"ecdsa,omitempty"`
+}
+
+// RSAKeyConfig specifies parameters for RSA key generation.
+type RSAKeyConfig struct {
+	// keySize specifies the size of RSA keys in bits.
+	// Valid values are multiples of 1024 from 2048 to 8192.
+	// +kubebuilder:validation:Minimum=2048
+	// +kubebuilder:validation:Maximum=8192
+	// +kubebuilder:validation:MultipleOf=1024
+	// +required
+	KeySize int32 `json:"keySize"`
+}
+
+// ECDSACurve specifies the elliptic curve used for ECDSA key generation.
+type ECDSACurve string
+
+const (
+	// ECDSACurveP256 specifies the NIST P-256 curve (secp256r1), providing 128-bit security.
+	ECDSACurveP256 ECDSACurve = "P256"
+	// ECDSACurveP384 specifies the NIST P-384 curve (secp384r1), providing 192-bit security.
+	ECDSACurveP384 ECDSACurve = "P384"
+	// ECDSACurveP521 specifies the NIST P-521 curve (secp521r1), providing 256-bit security.
+	ECDSACurveP521 ECDSACurve = "P521"
+)
+
+// ECDSAKeyConfig specifies parameters for ECDSA key generation.
+type ECDSAKeyConfig struct {
+	// curve specifies the NIST elliptic curve for ECDSA keys.
+	// Valid values are "P256", "P384", and "P521".
+	//
+	// When set to P256, the NIST P-256 curve (also known as secp256r1) is used,
+	// providing 128-bit security.
+	//
+	// When set to P384, the NIST P-384 curve (also known as secp384r1) is used,
+	// providing 192-bit security.
+	//
+	// When set to P521, the NIST P-521 curve (also known as secp521r1) is used,
+	// providing 256-bit security.
+	//
+	// +kubebuilder:validation:Enum=P256;P384;P521
+	// +required
+	Curve ECDSACurve `json:"curve"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.

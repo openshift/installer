@@ -1,0 +1,111 @@
+package pki
+
+import (
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types"
+)
+
+// ValidatePKIConfig validates the PKI configuration.
+// When pkiConfig is non-nil, signerCertificates must be fully specified.
+func ValidatePKIConfig(pkiConfig *types.PKIConfig, fldPath *field.Path, fips bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if pkiConfig == nil {
+		return allErrs
+	}
+
+	// signerCertificates.key must be fully specified when pki is present
+	if pkiConfig.SignerCertificates.Key.Algorithm == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("signerCertificates", "key"),
+			"signerCertificates.key is required when pki is specified"))
+		return allErrs
+	}
+
+	allErrs = append(allErrs, ValidateKeyConfig(pkiConfig.SignerCertificates.Key,
+		fldPath.Child("signerCertificates", "key"), fips)...)
+
+	return allErrs
+}
+
+// ValidateKeyConfig validates the KeyConfig structure.
+func ValidateKeyConfig(config types.KeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if config.Algorithm == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("algorithm"),
+			"algorithm must be specified"))
+		return allErrs
+	}
+
+	if config.Algorithm != types.KeyAlgorithmRSA && config.Algorithm != types.KeyAlgorithmECDSA {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("algorithm"),
+			config.Algorithm, []string{string(types.KeyAlgorithmRSA), string(types.KeyAlgorithmECDSA)}))
+		return allErrs
+	}
+
+	if config.Algorithm == types.KeyAlgorithmRSA {
+		if config.RSA == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("rsa"),
+				"rsa must be specified when algorithm is RSA"))
+		} else {
+			allErrs = append(allErrs, validateRSAKeyConfig(*config.RSA, fldPath.Child("rsa"), fips)...)
+		}
+
+		if config.ECDSA != nil {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("ecdsa"),
+				"ecdsa must not be set when algorithm is RSA"))
+		}
+	}
+
+	if config.Algorithm == types.KeyAlgorithmECDSA {
+		if config.ECDSA == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("ecdsa"),
+				"ecdsa must be specified when algorithm is ECDSA"))
+		} else {
+			allErrs = append(allErrs, validateECDSAKeyConfig(*config.ECDSA, fldPath.Child("ecdsa"), fips)...)
+		}
+
+		if config.RSA != nil {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("rsa"),
+				"rsa must not be set when algorithm is ECDSA"))
+		}
+	}
+
+	return allErrs
+}
+
+func validateRSAKeyConfig(config types.RSAKeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if config.KeySize < 2048 || config.KeySize > 8192 || config.KeySize%1024 != 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("keySize"), config.KeySize,
+			"must be a multiple of 1024 from 2048 to 8192"))
+	}
+
+	return allErrs
+}
+
+func validateECDSAKeyConfig(config types.ECDSAKeyConfig, fldPath *field.Path, fips bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	validCurves := []types.ECDSACurve{
+		types.ECDSACurveP256,
+		types.ECDSACurveP384,
+		types.ECDSACurveP521,
+	}
+	valid := false
+	for _, curve := range validCurves {
+		if config.Curve == curve {
+			valid = true
+			break
+		}
+	}
+
+	if !valid {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("curve"), config.Curve,
+			"must be P256, P384, or P521"))
+	}
+
+	return allErrs
+}

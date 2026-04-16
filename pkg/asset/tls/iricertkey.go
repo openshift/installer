@@ -13,6 +13,7 @@ import (
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // IRICertKey is the asset that generates the InternalReleaseImage registry key/cert pair.
@@ -30,6 +31,7 @@ func (a *IRICertKey) Dependencies() []asset.Asset {
 		&RootCA{},
 		&installconfig.InstallConfig{},
 		&manifests.InternalReleaseImage{},
+		&SignerPKIConfig{},
 	}
 }
 
@@ -38,7 +40,8 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 	ca := &RootCA{}
 	installConfig := &installconfig.InstallConfig{}
 	iri := &manifests.InternalReleaseImage{}
-	dependencies.Get(ca, installConfig, iri)
+	pkiCfg := &SignerPKIConfig{}
+	dependencies.Get(ca, installConfig, iri, pkiCfg)
 
 	if !installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
 		return nil
@@ -51,10 +54,16 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 
 	apiInt := internalAPIAddress(installConfig.Config)
 
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "installer.ingress-router-initial")
+	if err != nil {
+		return err
+	}
+
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:internal-release-image"},
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:     ValidityTenYears(),
+		CertType:     libpki.CertificateTypeServing,
 	}
 
 	var vips []string
@@ -86,7 +95,7 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "internal-release-image", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "internal-release-image", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

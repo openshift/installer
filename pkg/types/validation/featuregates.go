@@ -50,5 +50,10 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 			Condition:       len(c.Compute) > 0 && c.Compute[0].Management == types.ClusterAPI,
 			Field:           field.NewPath("compute", "management"),
 		},
+		{
+			FeatureGateName: features.FeatureGateConfigurablePKI,
+			Condition:       c.PKI != nil,
+			Field:           field.NewPath("pki"),
+		},
 	}
 }

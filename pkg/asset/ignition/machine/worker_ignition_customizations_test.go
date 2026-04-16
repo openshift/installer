@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // TestWorkerIgnitionCustomizationsGenerate tests generating the worker ignition check asset.
@@ -48,8 +49,12 @@ func TestWorkerIgnitionCustomizationsGenerate(t *testing.T) {
 					},
 				})
 
+			pkiCfg := &tls.SignerPKIConfig{}
+			pkiCfg.Profile = pkidefaults.EffectiveSignerPKIProfile(installConfig.Config)
+			rootCAParents := asset.Parents{}
+			rootCAParents.Add(installConfig, pkiCfg)
 			rootCA := &tls.RootCA{}
-			err := rootCA.Generate(context.Background(), nil)
+			err := rootCA.Generate(context.Background(), rootCAParents)
 			assert.NoError(t, err, "unexpected error generating root CA")
 
 			parents := asset.Parents{}
