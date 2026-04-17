@@ -23,7 +23,7 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/pagingutils"
 )
 
 // SecurityGroupByNameNotFound represents an error when security group is not found by name.
@@ -92,7 +92,7 @@ func (s *Service) GetDedicatedHostByName(dHostName string) (*vpcv1.DedicatedHost
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -199,6 +199,11 @@ func (s *Service) ListLoadBalancerPoolMembers(options *vpcv1.ListLoadBalancerPoo
 	return s.vpcService.ListLoadBalancerPoolMembers(options)
 }
 
+// GetLoadBalancerListener returns the associated listeners of a load balancer.
+func (s *Service) GetLoadBalancerListener(options *vpcv1.GetLoadBalancerListenerOptions) (*vpcv1.LoadBalancerListener, *core.DetailedResponse, error) {
+	return s.vpcService.GetLoadBalancerListener(options)
+}
+
 // ListKeys returns list of keys in a region.
 func (s *Service) ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListKeys(options)
@@ -261,7 +266,7 @@ func (s *Service) GetVPCByName(vpcName string) (*vpcv1.VPC, error) {
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -300,7 +305,7 @@ func (s *Service) GetImageByName(imageName string) (*vpcv1.Image, error) {
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -339,7 +344,7 @@ func (s *Service) GetVPCPublicGatewayByName(publicGatewayName string, resourceGr
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -383,7 +388,7 @@ func (s *Service) GetVPCSubnetByName(subnetName string) (*vpcv1.Subnet, error) {
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
@@ -443,7 +448,7 @@ func (s *Service) GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBal
 		return true, "", nil
 	}
 
-	if err := utils.PagingHelper(f); err != nil {
+	if err := pagingutils.PagingHelper(f); err != nil {
 		return nil, err
 	}
 
