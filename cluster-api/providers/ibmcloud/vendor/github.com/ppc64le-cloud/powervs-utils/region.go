@@ -8,7 +8,7 @@ import (
 // SysTypes denotes the available system types against individual zones
 // The system types against each zone can be fetched using either of the following:
 // 1. ibmcloud cli command
-//    `ibmcloud pi datacenter ls --json | jq -r '.datacenters[] | "\(.location.region),\(.capabilitiesDetails.supportedSystems.general[])"' | sort -u`
+//    `ibmcloud pi datacenter ls --json | jq -r '.datacenters[] | "\(.location.region),\(.capabilitiesDetails.supportedSystems.general[])"' | awk -F, '{if($1 in m){m[$1]=m[$1]", \""$2"\""}else{m[$1]="\"" $2 "\""}} END{for(k in m) print "\""k"\": {" m[k] "}"}' | sort`
 // 2. https://cloud.ibm.com/apidocs/power-cloud#v1-datacenters-getall (the above command uses this api underneath).
 
 type SysTypes []string
@@ -16,34 +16,34 @@ type SysTypes []string
 func GetRegion(zone string) (region string, err error) {
 	err = nil
 	switch {
-	case strings.HasPrefix(zone, "us-south"):
-		region = "us-south"
+	case strings.HasPrefix(zone, "che"):
+		region = "che"
 	case strings.HasPrefix(zone, "dal"):
 		region = "dal"
-	case strings.HasPrefix(zone, "sao"):
-		region = "sao"
-	case strings.HasPrefix(zone, "us-east"):
-		region = "us-east"
 	case strings.HasPrefix(zone, "eu-de-"):
 		region = "eu-de"
 	case strings.HasPrefix(zone, "lon"):
 		region = "lon"
+	case strings.HasPrefix(zone, "mad"):
+		region = "mad"
+	case strings.HasPrefix(zone, "mon"):
+		region = "mon"
+	case strings.HasPrefix(zone, "osa"):
+		region = "osa"
+	case strings.HasPrefix(zone, "sao"):
+		region = "sao"
 	case strings.HasPrefix(zone, "syd"):
 		region = "syd"
 	case strings.HasPrefix(zone, "tok"):
 		region = "tok"
-	case strings.HasPrefix(zone, "osa"):
-		region = "osa"
-	case strings.HasPrefix(zone, "mon"):
-		region = "mon"
-	case strings.HasPrefix(zone, "mad"):
-		region = "mad"
-	case strings.HasPrefix(zone, "wdc"):
-		region = "wdc"
 	case strings.HasPrefix(zone, "tor"):
 		region = "tor"
-	case strings.HasPrefix(zone, "che"):
-		region = "che"
+	case strings.HasPrefix(zone, "us-east"):
+		region = "us-east"
+	case strings.HasPrefix(zone, "us-south"):
+		region = "us-south"
+	case strings.HasPrefix(zone, "wdc"):
+		region = "wdc"
 	default:
 		return "", fmt.Errorf("region not found for the zone, talk to the developer to add the support into the tool: %s", zone)
 	}
@@ -61,14 +61,23 @@ type Region struct {
 
 // regions provides a mapping between Power VS and IBM Cloud VPC and IBM COS regions.
 var regions = map[string]Region{
+	"che": {
+		Description: "Chennai, India",
+		VPCRegion:   "",
+		COSRegion:   "",
+		Zones: map[string]SysTypes{
+			"che01": {"e980", "s922"},
+		},
+		VPCZones: []string{},
+	},
 	"dal": {
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
 		COSRegion:   "us-south",
 		Zones: map[string]SysTypes{
 			"dal10": {"e1080", "e980", "s1022", "s922"},
-			"dal12": {"e980", "s922"},
-			"dal14": {"e1050", "e1080", "s1022"},
+			"dal12": {"e1080", "e1050", "e980", "s1022", "s922"},
+			"dal14": {"e1050", "e1080", "s1122", "s1022"},
 		},
 		VPCZones: []string{"us-south-1", "us-south-2", "us-south-3"},
 	},
@@ -77,7 +86,7 @@ var regions = map[string]Region{
 		VPCRegion:   "eu-de",
 		COSRegion:   "eu-de",
 		Zones: map[string]SysTypes{
-			"eu-de-1": {"e1080", "e1050", "e980", "s1022", "s922"},
+			"eu-de-1": {"e1080", "e1050", "e980", "s1122", "s1022", "s922"},
 			"eu-de-2": {"e980", "s1022", "s922"},
 		},
 		VPCZones: []string{"eu-de-1", "eu-de-2", "eu-de-3"},
@@ -97,8 +106,8 @@ var regions = map[string]Region{
 		VPCRegion:   "eu-es",
 		COSRegion:   "eu-de", // @HACK - PowerVS says COS not supported in this region
 		Zones: map[string]SysTypes{
-			"mad02": {"e1050", "e1080", "e980", "s1022", "s922"},
-			"mad04": {"e980", "s1022"},
+			"mad02": {"e1050", "e1080", "e980", "s1122", "s1022", "s922"},
+			"mad04": {"e1050", "e1080", "e980", "s1022"},
 		},
 		VPCZones: []string{"eu-es-1", "eu-es-2", "eu-es-3"},
 	},
@@ -126,7 +135,7 @@ var regions = map[string]Region{
 		COSRegion:   "br-sao",
 		Zones: map[string]SysTypes{
 			"sao01": {"e980", "s1022", "s922"},
-			"sao04": {"e980", "s1022", "s922"},
+			"sao04": {"e1050", "e1080", "e980", "s1022", "s922"},
 		},
 		VPCZones: []string{"br-sao-1", "br-sao-2", "br-sao-3"},
 	},
@@ -172,7 +181,7 @@ var regions = map[string]Region{
 		VPCRegion:   "us-south",
 		COSRegion:   "us-south",
 		Zones: map[string]SysTypes{
-			"us-south": {"e980", "s922"},
+			"us-south": {"e980", "s1022", "s922"},
 		},
 		VPCZones: []string{"us-south-1", "us-south-2", "us-south-3"},
 	},
@@ -181,19 +190,10 @@ var regions = map[string]Region{
 		VPCRegion:   "us-east",
 		COSRegion:   "us-east",
 		Zones: map[string]SysTypes{
-			"wdc06": {"e980", "s1022", "s922"},
+			"wdc06": {"e1050", "e1080", "e980", "s1122", "s1022", "s922"},
 			"wdc07": {"e1050", "e1080", "e980", "s1022", "s922"},
 		},
 		VPCZones: []string{"us-east-1", "us-east-2", "us-east-3"},
-	},
-	"che": {
-		Description: "Chennai, India",
-		VPCRegion:   "",
-		COSRegion:   "",
-		Zones: map[string]SysTypes{
-			"che01": {"e980", "s922"},
-		},
-		VPCZones: []string{},
 	},
 }
 

@@ -389,8 +389,8 @@ github.com/opentracing/opentracing-go/log
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/ppc64le-cloud/powervs-utils v0.0.0-20250403153021-219b161805db
-## explicit; go 1.21
+# github.com/ppc64le-cloud/powervs-utils v0.0.0-20260320143638-bc9d769bbbfc
+## explicit; go 1.25.8
 github.com/ppc64le-cloud/powervs-utils
 # github.com/prometheus/client_golang v1.22.0
 ## explicit; go 1.22
