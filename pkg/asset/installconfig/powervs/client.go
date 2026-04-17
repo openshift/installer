@@ -1122,12 +1122,15 @@ func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region strin
 			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterSupportedSystems: %w", err)
 		}
 	}
-	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
-	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
+
+	// Use the global datacenter endpoint for accurate, non-cached data (other code uses a bulk endpoint)
+	datacenterClient := instance.NewIBMPIDatacenterClient(ctx, c.BXCli.PISession, "")
+	datacenter, err := datacenterClient.Get(region)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get datacenter supported systems: %w", err)
 	}
-	return getOk.Payload.CapabilitiesDetails.SupportedSystems.General, nil
+
+	return datacenter.CapabilitiesDetails.SupportedSystems.General, nil
 }
 
 // TransitGatewayNameToID checks to see if the name is an existing transit gateway name.
