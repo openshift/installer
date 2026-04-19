@@ -7428,6 +7428,11 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
+                  bootstrapFlavor:
+                    description: |-
+                      BootstrapFlavor is the name of the flavor used for the bootstrap instance.
+                      When not specified, the bootstrap machine will use the control plane flavor.
+                    type: string
                   cloud:
                     description: Cloud is the name of OpenStack cloud to use from
                       clouds.yaml.
