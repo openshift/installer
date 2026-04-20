@@ -52,7 +52,7 @@ Currently only used for quota check failures. `Reason` must be a single CamelCas
 
 The asset store (`pkg/asset/store/store.go`) propagates errors with dependency context automatically:
 
-```
+```text
 failed to generate asset "Cluster" -> failed to fetch dependency of "Cluster" -> ...
 ```
 

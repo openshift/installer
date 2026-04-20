@@ -153,7 +153,7 @@ Agent and image-based integration tests use `github.com/rogpeppe/go-internal/tes
 
 ### testscript file structure
 
-```
+```text
 # Comment describing the test
 exec openshift-install agent create image --dir $WORK
 stderr 'expected output regex'

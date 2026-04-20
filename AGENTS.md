@@ -39,7 +39,7 @@ When adding a new import that conflicts with an existing package name, follow th
 
 ### Package Documentation
 
-Every package should have a `doc.go` file with a package comment. Platform type packages also define their platform `Name` constant in `doc.go`:
+Every package should have a `doc.go` file with a package comment. Platform-type packages also define their platform `Name` constant in `doc.go`:
 
 ```go
 // Package aws contains AWS-specific structures for installer
@@ -140,7 +140,7 @@ The codebase uses build tags for conditional compilation:
 
 ### Commit Format
 
-```
+```text
 <subsystem>: <what changed>
 
 <why this change was made>
