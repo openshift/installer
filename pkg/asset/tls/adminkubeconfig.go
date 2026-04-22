@@ -6,8 +6,6 @@ import (
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // AdminKubeConfigSignerCertKey is a key/cert pair that signs the admin kubeconfig client certs.
@@ -19,13 +17,13 @@ var _ asset.WritableAsset = (*AdminKubeConfigSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *AdminKubeConfigSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "admin-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -33,7 +31,7 @@ func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents ass
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", signerKeyParams.PKIConfig)
 }
 
 // Load reads the asset files from disk.
