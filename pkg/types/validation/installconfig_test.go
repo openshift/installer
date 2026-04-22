@@ -3476,8 +3476,8 @@ func TestValidateTNF(t *testing.T) {
 				MachinePoolCP(machinePool().
 					Credential(c1().HostName(""), c2())).
 				CpReplicas(2).build(),
-			name:     "fencing_credential_host_name_required",
-			expected: "controlPlane.fencing.credentials\\[0\\].hostName: Required value: missing HostName",
+			name:     "fencing_credential_host_name_and_mac_address_required",
+			expected: "at least one of hostname or macaddress must be provided",
 		},
 		{
 			config: installConfig().
@@ -3489,6 +3489,44 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:     "fencing_credential_various_redfish_addresses",
 			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().HostName("").MACAddress("AA:BB:CC:DD:EE:01"), c2().HostName("").MACAddress("AA:BB:CC:DD:EE:02"))).
+				CpReplicas(2).build(),
+			name:     "valid_credential_with_mac_address_only",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().MACAddress("AA:BB:CC:DD:EE:01"), c2().MACAddress("AA:BB:CC:DD:EE:02"))).
+				CpReplicas(2).build(),
+			name:     "valid_credential_with_hostname_and_mac_address",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().HostName("").MACAddress("AA:BB:CC:DD:EE:01"),
+						c2().HostName("").MACAddress("AA:BB:CC:DD:EE:01"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_mac_address_not_unique",
+			expected: "Duplicate value",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().HostName("").MACAddress("not-a-mac"), c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_invalid_mac_address",
+			expected: `controlPlane.fencing.credentials\[0\].macAddress: Invalid value: "not-a-mac"`,
 		},
 		{
 			config: installConfig().
@@ -3798,6 +3836,11 @@ func (hb *credentialBuilder) FencingCredentialPassword(value string) *credential
 
 func (hb *credentialBuilder) CertificateVerification(value types.CertificateVerificationPolicy) *credentialBuilder {
 	hb.Credential.CertificateVerification = value
+	return hb
+}
+
+func (hb *credentialBuilder) MACAddress(value string) *credentialBuilder {
+	hb.Credential.MACAddress = value
 	return hb
 }
 

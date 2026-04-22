@@ -638,7 +638,7 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 }
 
 // addFencingCredentials adds the fencing credentials file to the ignition config.
-// Fencing credentials are host-scoped (matched by hostname), so they go under /etc/assisted/hostconfig/
+// Fencing credentials are host-scoped, so they go under /etc/assisted/hostconfig/
 // rather than /etc/assisted/manifests/ which is for cluster-scoped manifests.
 func addFencingCredentials(config *igntypes.Config, fencingCredentials *agentconfig.FencingCredentials) {
 	if fencingCredentials == nil || fencingCredentials.File == nil {

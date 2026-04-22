@@ -2,7 +2,10 @@ package machines
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -747,15 +750,38 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 func gatherFencingCredentials(credentials []*types.Credential) ([]corev1.Secret, error) {
 	secrets := []corev1.Secret{}
 
-	for _, credential := range credentials {
+	for i, credential := range credentials {
+		var name string
+		var annotations map[string]string
+		switch {
+		case credential.HostName != "":
+			name = credential.HostName
+			annotations = map[string]string{
+				"openshift.io/fencing-credentials": "hostname",
+			}
+		case credential.MACAddress != "":
+			parsedMAC, err := net.ParseMAC(credential.MACAddress)
+			if err != nil {
+				return nil, fmt.Errorf("credential at index %d has invalid MAC address: %w", i, err)
+			}
+			mac := strings.ReplaceAll(strings.ToLower(parsedMAC.String()), ":", "")
+			hash := sha256.Sum256([]byte(mac))
+			name = hex.EncodeToString(hash[:])
+			annotations = map[string]string{
+				"openshift.io/fencing-credentials": "mac-address",
+			}
+		default:
+			return nil, fmt.Errorf("cannot generate fencing secret for credential at index %d: no hostName or macAddress provided", i)
+		}
 		secret := &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("fencing-credentials-%s", credential.HostName),
-				Namespace: "openshift-etcd",
+				Name:        fmt.Sprintf("fencing-credentials-%s", name),
+				Namespace:   "openshift-etcd",
+				Annotations: annotations,
 			},
 			Data: map[string][]byte{
 				"username":                []byte(credential.Username),

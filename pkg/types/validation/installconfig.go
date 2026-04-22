@@ -1766,10 +1766,20 @@ func validateFencingCredentialsAndPlatform(installConfig *types.InstallConfig) (
 	fencingCredentials := installConfig.ControlPlane.Fencing
 	allErrs := field.ErrorList{}
 	if fencingCredentials != nil {
+
 		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath.Child("credentials"), func([]byte) bool { return false })...)
 		allErrs = append(allErrs, validateFencingForPlatform(installConfig, fldPath)...)
 
 		for i, credential := range fencingCredentials.Credentials {
+			credPath := fldPath.Child("credentials").Index(i)
+			if credential.HostName == "" && credential.MACAddress == "" {
+				allErrs = append(allErrs, field.Required(credPath, "at least one of hostname or macaddress must be provided"))
+			}
+			if credential.MACAddress != "" {
+				if err := validate.MAC(credential.MACAddress); err != nil {
+					allErrs = append(allErrs, field.Invalid(credPath.Child("macAddress"), credential.MACAddress, err.Error()))
+				}
+			}
 			if len(credential.CertificateVerification) > 0 && credential.CertificateVerification != types.CertificateVerificationDisabled && credential.CertificateVerification != types.CertificateVerificationEnabled {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("credentials").Index(i).Key("CertificateVerification"), installConfig.ControlPlane.Fencing.Credentials[i].CertificateVerification, fmt.Sprintf("invalid certificate verification; %q should set to one of the following: ['Enabled' (default), 'Disabled']", credential.CertificateVerification)))
 			}
