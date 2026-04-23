@@ -112,6 +112,7 @@ rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ### Make control-plane nodes unschedulable
 Currently [emptying the compute pools](#empty-the-compute-pool-optional) makes control-plane nodes schedulable.
 But due to a [Kubernetes limitation][kubernetes-service-load-balancers-exclude-masters], router pods running on control-plane nodes will not be reachable by the ingress load balancer.
+This causes the ingress operator to report `Degraded=True` with `connection refused` errors when health-checking routes like `oauth-openshift.apps.*` and `console-openshift-console.apps.*`.
 Update the scheduler configuration to keep router pods and other workloads off the control-plane nodes:
 
 ```sh
@@ -235,6 +236,16 @@ An example of a way to get this is below:
 $ jq -r .infraID metadata.json
 openshift-vw9j6
 ```
+
+> **Warning**: Do not regenerate manifests or ignition configs after this point.
+> Each invocation of `openshift-install create manifests` generates a new random
+> infrastructure name suffix. If you have already created GCP resources using the
+> original `INFRA_ID`, regenerating will produce a different ID, causing mismatches
+> between the GCP resources (e.g., DNS zone `cluster-OLDID-private-zone`) and the
+> cluster-internal configuration (which expects `cluster-NEWID-private-zone`).
+> This will cause the ingress operator to fail to create DNS records.
+> If you need to change the install config, restore from backup and start over
+> with fresh infrastructure.
 
 ## Export variables to be used in examples below.
 
@@ -484,12 +495,21 @@ Create a signed URL for the bootstrap instance to use to access the Ignition
 config. Export the URL from the output as a variable.
 
 ```sh
-BOOTSTRAP_IGN="$(gcloud storage sign-url --duration=1h --private-key-file=service-account-key.json "gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign" | grep "^signed_url:" | awk '{print $2}')"
+BOOTSTRAP_IGN="$(gcloud storage sign-url --duration=2h --private-key-file=service-account-key.json "gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign" | grep "^signed_url:" | awk '{print $2}')"
 ```
 
 ## Launch temporary bootstrap resources
 
 Copy [`04_bootstrap`](../../../upi/gcp/04_bootstrap) locally. The directory contains the terraform source file for this stage.
+
+> **Note**: If a zone does not have sufficient capacity for `n1-standard-4` instances,
+> you can try a different zone or add `machine_type=e2-standard-4` to the `--input-values`
+> parameter for better availability.
+
+> **Warning**: If you need to redeploy the bootstrap (e.g., after regenerating a signed URL),
+> you must delete the existing bootstrap VM first. Infrastructure Manager only updates VM
+> metadata in-place, but Ignition only runs on first boot. A metadata-only update will not
+> cause the VM to re-fetch the ignition config.
 
 Create the deployment using gcloud.
 
@@ -714,6 +734,22 @@ CSRs can be approved by name, for example:
 oc adm certificate approve csr-bfd72
 ```
 
+To approve all pending CSRs at once:
+
+```sh
+oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs -r oc adm certificate approve
+```
+
+Each node submits two CSRs (client and server certificates), so you may need to run the approval
+command multiple times as new CSRs appear. You can run a background approval loop:
+
+```sh
+while true; do
+  oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs -r oc adm certificate approve 2>/dev/null
+  sleep 30
+done
+```
+
 ## Add the Ingress DNS Records
 If you removed the DNS Zone configuration [earlier](#remove-dns-zones), you'll need to manually create some DNS records pointing at the ingress load balancer.
 You can create either a wildcard `*.apps.{baseDomain}.` or specific records (more on the specific records below).
@@ -865,6 +901,49 @@ openshift-route-controller-manager                 route-controller-manager-6dfd
 openshift-route-controller-manager                 route-controller-manager-6dfdd544f6-pkhd7                            1/1     Running            0                114m
 openshift-service-ca-operator                      service-ca-operator-777dd59695-spq5f                                 1/1     Running            0                114m
 openshift-service-ca                               service-ca-56c867b864-chftf                                          1/1     Running            0                108m
+```
+
+## Troubleshooting
+
+### Signed URL expired
+
+If the bootstrap VM boots but no OpenShift services start, the signed URL for `bootstrap.ign`
+may have expired. Check the bootstrap serial console for Ignition activity. If Ignition fetched
+but the config was empty or stale, regenerate the signed URL, delete the bootstrap VM, and
+redeploy the bootstrap deployment.
+
+### Zone capacity errors
+
+Infrastructure Manager may fail with "does not have enough resources available to fulfill
+the request" for a given zone. Try deploying to a different zone by changing the `zone`
+parameter, or use `machine_type=e2-standard-4` which typically has better availability than
+`n1-standard-4`.
+
+### Infrastructure Manager does not recreate VMs
+
+When reapplying a deployment with changed metadata (e.g., a new signed URL), Infrastructure
+Manager updates the metadata in-place but does not recreate the VM. Since Ignition only runs
+on first boot, the new configuration is not applied. To force recreation, delete the VM
+manually with `gcloud compute instances delete` before reapplying the deployment.
+
+### Debugging nodes without public IPs
+
+Master and worker nodes do not have public IP addresses. To SSH into them for debugging,
+create an IAP tunnel firewall rule:
+
+```sh
+gcloud compute firewall-rules create ${INFRA_ID}-allow-iap-ssh \
+  --network=${INFRA_ID}-network \
+  --allow=tcp:22 \
+  --source-ranges=35.235.240.0/20 \
+  --target-tags=${INFRA_ID}-master,${INFRA_ID}-worker \
+  --project=${PROJECT_NAME}
+```
+
+Then connect via:
+
+```sh
+gcloud compute ssh core@${INFRA_ID}-master-0 --zone=${ZONE_0} --project=${PROJECT_NAME} --tunnel-through-iap
 ```
 
 [inframanager]: https://docs.cloud.google.com/infrastructure-manager/docs
