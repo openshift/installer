@@ -187,7 +187,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 		}
 
 		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain && failureDomain.Topology.HostGroup == "" {
-			allErrs = append(allErrs, field.Required(fldPath.Child("hostGroup"), "must not be empty if zoneType is HostGroup"))
+			allErrs = append(allErrs, field.Required(topologyFld.Child("hostGroup"), "must not be empty if zoneType is HostGroup"))
 		}
 
 		if failureDomain.RegionType == vsphere.ComputeClusterFailureDomain {

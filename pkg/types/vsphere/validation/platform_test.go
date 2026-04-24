@@ -372,6 +372,21 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 		},
 		{
+			name: "Resources in customized folders",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+
+				for i := range p.FailureDomains {
+					p.FailureDomains[i].Topology.ComputeCluster = "/test-datacenter/host/HostClusterFolder/test-cluster"
+					p.FailureDomains[i].Topology.ResourcePool = "/test-datacenter/host/HostClusterFolder/test-cluster/Resources/test-resourcepool"
+					p.FailureDomains[i].Topology.Datastore = "/test-datacenter/datastore/StorageFolder/test-datastore"
+					p.FailureDomains[i].Topology.Folder = "/test-datacenter/vm/VMFolder/test-folder"
+				}
+
+				return p
+			}(),
+		},
+		{
 			name: "Additional invalid tag IDs provided",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
@@ -423,6 +438,15 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `(.*)test-path\.vcenters\[0].server: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
+		},
+		{
+			name: "Multi-zone platform special characters in vCenter",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenters[0].Server = "44&236-21-251.vmwarevmc.com"
+				return p
+			}(),
+			expectedError: `test-path\.vcenters\[0].server: Invalid value: "44&236-21-251.vmwarevmc.com": must be the domain name or IP address of the vCenter`,
 		},
 		{
 			name: "Multi-zone missing username",
@@ -538,6 +562,104 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.zone: Required value: must specify zone tag value`,
 		},
 		{
+			name: "Valid datastore path within a datastore cluster",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Datastore = "/test-datacenter/datastore/DatastoreCluster-NFS/Datastore-NFS-19"
+				return p
+			}(),
+		},
+		{
+			name: "Multi-zone platform failureDomain topology missing datacenter",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Datacenter = ""
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Required value: must specify a datacenter$`,
+		},
+		{
+			name: "Multi-zone platform failureDomain topology missing computeCluster",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.ComputeCluster = ""
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.computeCluster: Required value: must specify a computeCluster$`,
+		},
+		{
+			name: "Multi-zone platform failureDomain topology missing datastore",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Datastore = ""
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.datastore: Required value: must specify a datastore$`,
+		},
+		{
+			name: "Multi-zone platform failureDomain folder as name not path",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Folder = "test-folder"
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.folder: Invalid value: "test-folder": full path of folder must be provided in format /<datacenter>/vm/<folder>$`,
+		},
+		{
+			name: "Multi-zone platform failureDomain folder in wrong datacenter",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Folder = "/other-datacenter/vm/test-folder"
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.folder: Invalid value: "/other-datacenter/vm/test-folder": the folder defined does not exist in the correct datacenter$`,
+		},
+		{
+			name: "Valid HostGroup failure domain",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[0].Topology.HostGroup = "host-group-a"
+				p.FailureDomains[1].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[1].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[1].Topology.HostGroup = "host-group-b"
+				return p
+			}(),
+		},
+		{
+			name: "HostGroup regionType is not allowed",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[0].Topology.HostGroup = "host-group-a"
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\.regionType: Required value: region type cannot be used for host group failure domains`,
+		},
+		{
+			name: "HostGroup zoneType requires hostGroup topology field",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.HostGroupFailureDomain
+				// intentionally leave HostGroup empty
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\.topology\.hostGroup: Required value: must not be empty if zoneType is HostGroup`,
+		},
+		{
+			name: "ComputeCluster regionType requires HostGroup zoneType",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.ComputeClusterFailureDomain
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\.regionType: Required value: zoneType must be HostGroup`,
+		},
+		{
 			name:     "allowed load balancer field with OpenShift managed default",
 			platform: validPlatform(),
 			config: &types.InstallConfig{
@@ -585,6 +707,38 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
+		},
+		{
+			name: "external DNS records with user-managed load balancer",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.DNSRecordsType = configv1.DNSRecordsTypeExternal
+				p.LoadBalancer = &configv1.VSpherePlatformLoadBalancer{
+					Type: configv1.LoadBalancerTypeUserManaged,
+				}
+				return p
+			}(),
+		},
+		{
+			name: "external DNS records without load balancer",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.DNSRecordsType = configv1.DNSRecordsTypeExternal
+				return p
+			}(),
+			expectedError: `^test-path\.dnsRecordsType: Invalid value: "External": external DNS records can only be configured with user-managed loadbalancers$`,
+		},
+		{
+			name: "external DNS records with OpenShift managed load balancer",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.DNSRecordsType = configv1.DNSRecordsTypeExternal
+				p.LoadBalancer = &configv1.VSpherePlatformLoadBalancer{
+					Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+				}
+				return p
+			}(),
+			expectedError: `^test-path\.dnsRecordsType: Invalid value: "External": external DNS records can only be configured with user-managed loadbalancers$`,
 		},
 		{
 			name: "Static IP - valid",
