@@ -505,7 +505,7 @@ Copy [`04_bootstrap`](../../../upi/gcp/04_bootstrap) locally. The directory cont
 > **Note**: If a zone does not have sufficient capacity for `n1-standard-4` instances,
 > you can try a different zone or add `machine_type=e2-standard-4` to the `--input-values`
 > parameter for better availability.
-
+>
 > **Warning**: If you need to redeploy the bootstrap (e.g., after regenerating a signed URL),
 > you must delete the existing bootstrap VM first. Infrastructure Manager only updates VM
 > metadata in-place, but Ignition only runs on first boot. A metadata-only update will not
@@ -734,10 +734,18 @@ CSRs can be approved by name, for example:
 oc adm certificate approve csr-bfd72
 ```
 
-To approve all pending CSRs at once:
+To approve all pending CSRs from known node requestors at once:
 
 ```sh
-oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs -r oc adm certificate approve
+oc get csr -o json | jq -r '
+  .items[]
+  | select((.status.conditions // []) | length == 0)
+  | select(
+      .spec.username == "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper"
+      or (.spec.username | startswith("system:node:"))
+    )
+  | .metadata.name
+' | xargs -r oc adm certificate approve
 ```
 
 Each node submits two CSRs (client and server certificates), so you may need to run the approval
@@ -745,7 +753,15 @@ command multiple times as new CSRs appear. You can run a background approval loo
 
 ```sh
 while true; do
-  oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs -r oc adm certificate approve 2>/dev/null
+  oc get csr -o json | jq -r '
+    .items[]
+    | select((.status.conditions // []) | length == 0)
+    | select(
+        .spec.username == "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper"
+        or (.spec.username | startswith("system:node:"))
+      )
+    | .metadata.name
+  ' | xargs -r oc adm certificate approve 2>/dev/null
   sleep 30
 done
 ```
