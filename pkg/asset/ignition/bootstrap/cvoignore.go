@@ -159,3 +159,12 @@ func getClusterVersionOperatorOverrides() []interface{} {
 
 	return overrides
 }
+
+// IsImagePolicyDisabled returns true when OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY
+// is set non-empty, indicating that sigstore image signature verification should be skipped.
+func IsImagePolicyDisabled() bool {
+	if v, ok := os.LookupEnv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY"); ok && v != "" {
+		return true
+	}
+	return false
+}

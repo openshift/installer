@@ -229,6 +229,10 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 
 	a.addParentFiles(dependencies)
 
+	if IsImagePolicyDisabled() {
+		addRegistriesDOverrides(a.Config)
+	}
+
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
 		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
@@ -817,4 +821,30 @@ func warnIfCertificatesExpired(config *igntypes.Config) error {
 		return fmt.Errorf("%d certificates expired", expiredCerts)
 	}
 	return nil
+}
+
+// addRegistriesDOverrides replaces the RHEL-shipped registries.d sigstore
+// configuration files with empty versions. Without this, skopeo attempts
+// sigstore lookups via the registries.d endpoints even when policy.json is
+// set to insecureAcceptAnything, which can cause deadlocks in older skopeo
+// versions (pre-1.22.2) when pulling multi-arch images.
+func addRegistriesDOverrides(config *igntypes.Config) {
+	logrus.Info("Overriding registries.d sigstore configs (OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY is set)")
+
+	minimalDefault := []byte("default-docker:\n")
+	emptyYaml := []byte("{}\n")
+
+	overrides := []struct {
+		path     string
+		contents []byte
+	}{
+		{"/etc/containers/registries.d/default.yaml", minimalDefault},
+		{"/etc/containers/registries.d/registry.access.redhat.com.yaml", emptyYaml},
+		{"/etc/containers/registries.d/registry.redhat.io.yaml", emptyYaml},
+	}
+
+	for _, o := range overrides {
+		file := ignition.FileFromBytes(o.path, "root", 0644, o.contents)
+		config.Storage.Files = replaceOrAppend(config.Storage.Files, file)
+	}
 }
