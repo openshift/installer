@@ -1,3 +1,4 @@
+//nolint:revive // package name matches the directory; renaming would break test access to internals
 package tls
 
 import (
