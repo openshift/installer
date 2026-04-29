@@ -64,8 +64,8 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		}
 
 		if pe.Endpoint.Port < 1 || pe.Endpoint.Port > 65535 {
-			allErrs = append(allErrs, field.Required(fldPath.Child("prismElements").Child("endpoint").Child("port"),
-				"The Prism Element endpoint port is invalid, must be in the range of 1 to 65535"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("prismElements").Child("endpoint").Child("port"),
+				pe.Endpoint.Port, "The Prism Element endpoint port is invalid, must be in the range of 1 to 65535"))
 		}
 	}
 
