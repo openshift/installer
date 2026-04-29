@@ -976,6 +976,30 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^platform\.vsphere\.failureDomains\.topology\.resourcePool: Invalid value: "my-resource-pool": full path of resource pool must be provided in format /<datacenter>/host/<cluster>/\.\.\.$`,
 		},
 		{
+			name: "vsphere cluster name with dot",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.ObjectMeta.Name = "jima.test"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "jima.test": cluster name must not contain '\.'$`,
+		},
+		{
+			name: "vsphere vCenter with special characters",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.VCenters[0].Server = "44&236-21-251.vmwarevmc.com"
+				return c
+			}(),
+			expectedError: `platform\.vsphere\.vcenters\[0\]\.server: Invalid value: "44&236-21-251\.vmwarevmc\.com": must be the domain name or IP address of the vCenter`,
+		},
+		{
 			name: "empty proxy settings",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
