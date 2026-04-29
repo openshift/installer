@@ -407,14 +407,24 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 
 	timeout := 45 * time.Minute
 
-	// Wait longer for baremetal, VSphere due to length of time it takes to boot
-	if platformName == baremetal.Name || platformName == vsphere.Name {
+	switch platformName {
+	case baremetal.Name, vsphere.Name:
+		// Wait longer for baremetal, VSphere due to length of time it takes to boot
 		timeout = 60 * time.Minute
-	}
-	// For AWS, only increase timeout when UserProvisionedDNS is enabled
-	if platformName == aws.Name && installConfig != nil && installConfig.Config.AWS != nil && installConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
-		timeout = 60 * time.Minute
-		logrus.Infof("Increasing bootstrapping timeout on AWS to %v since UserProvisionedDNS is enabled", timeout)
+	case aws.Name:
+		// Wait longer for AWS with userProvisionedDNS enabled.
+		// Tests show that with this feature enabled, MCO needs additional time to complete tasks
+		if installConfig != nil && installConfig.Config.AWS != nil && installConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+			timeout = 60 * time.Minute
+			logrus.Infof("Increasing bootstrapping timeout on AWS to %v since UserProvisionedDNS is enabled", timeout)
+		}
+	case gcp.Name:
+		// Wait longer for GCP with userProvisionedDNS enabled.
+		// Tests show that with this feature enabled, MCO needs additional time to complete tasks
+		if installConfig != nil && installConfig.Config.GCP != nil && installConfig.Config.GCP.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+			timeout = 60 * time.Minute
+			logrus.Infof("Increasing bootstrapping timeout on GCP to %v since UserProvisionedDNS is enabled", timeout)
+		}
 	}
 
 	untilTime = time.Now().Add(timeout)

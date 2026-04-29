@@ -36,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/gcp"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
@@ -102,6 +103,15 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config, assetst
 			if installConfig.(*installconfig.InstallConfig).Config.AWS != nil &&
 				installConfig.(*installconfig.InstallConfig).Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
 				timeout = 60 * time.Minute
+				logrus.Infof("Increasing cluster creation timeout on AWS to %v since UserProvisionedDNS is enabled", timeout)
+			}
+		case gcp.Name:
+			// Wait longer for GCP with userProvisionedDNS enabled.
+			// Tests show that with this feature enabled, MCO needs additional time to complete tasks
+			if installConfig.(*installconfig.InstallConfig).Config.GCP != nil &&
+				installConfig.(*installconfig.InstallConfig).Config.GCP.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+				timeout = 60 * time.Minute
+				logrus.Infof("Increasing cluster creation timeout on GCP to %v since UserProvisionedDNS is enabled", timeout)
 			}
 		}
 	}
