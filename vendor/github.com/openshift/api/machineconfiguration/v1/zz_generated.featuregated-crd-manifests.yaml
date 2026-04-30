@@ -40,6 +40,7 @@ controllerconfigs.machineconfiguration.openshift.io:
   - OnPremDNSRecords
   - VSphereHostVMGroupZonal
   - VSphereMultiNetworks
+  - VSphereMultiVCenterDay2
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"

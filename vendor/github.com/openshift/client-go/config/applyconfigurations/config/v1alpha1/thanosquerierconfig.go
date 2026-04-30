@@ -3,28 +3,17 @@
 package v1alpha1
 
 import (
-	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 )
 
-// PrometheusOperatorConfigApplyConfiguration represents a declarative configuration of the PrometheusOperatorConfig type for use
+// ThanosQuerierConfigApplyConfiguration represents a declarative configuration of the ThanosQuerierConfig type for use
 // with apply.
 //
-// PrometheusOperatorConfig provides configuration options for the Prometheus Operator instance
-// Use this configuration to control how the Prometheus Operator instance is deployed, how it logs, and how its pods are scheduled.
-type PrometheusOperatorConfigApplyConfiguration struct {
-	// logLevel defines the verbosity of logs emitted by Prometheus Operator.
-	// This field allows users to control the amount and severity of logs generated, which can be useful
-	// for debugging issues or reducing noise in production environments.
-	// Allowed values are Error, Warn, Info, and Debug.
-	// When set to Error, only errors will be logged.
-	// When set to Warn, both warnings and errors will be logged.
-	// When set to Info, general information, warnings, and errors will all be logged.
-	// When set to Debug, detailed debugging information will be logged.
-	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
-	// The current default value is `Info`.
-	LogLevel *configv1alpha1.LogLevel `json:"logLevel,omitempty"`
-	// nodeSelector defines the nodes on which the Pods are scheduled
+// ThanosQuerierConfig provides configuration options for the Thanos Querier component
+// that runs in the `openshift-monitoring` namespace.
+// At least one field must be specified; an empty thanosQuerierConfig object is not allowed.
+type ThanosQuerierConfigApplyConfiguration struct {
+	// nodeSelector defines the nodes on which the Pods are scheduled.
 	// nodeSelector is optional.
 	//
 	// When omitted, this means the user has no opinion and the platform is left
@@ -32,20 +21,20 @@ type PrometheusOperatorConfigApplyConfiguration struct {
 	// The current default value is `kubernetes.io/os: linux`.
 	// When specified, nodeSelector must contain at least 1 entry and must not contain more than 10 entries.
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-	// resources defines the compute resource requests and limits for the Prometheus Operator container.
-	// This includes CPU, memory and HugePages constraints to help control scheduling and resource usage.
-	// When not specified, defaults are used by the platform. Requests cannot exceed limits.
-	// This field is optional.
+	// resources defines the compute resource requests and limits for the Thanos Querier container.
+	// resources is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// Requests cannot exceed limits.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// This is a simplified API that maps to Kubernetes ResourceRequirements.
 	// The current default values are:
 	// resources:
 	// - name: cpu
-	// request: 4m
-	// limit: null
+	// request: 5m
 	// - name: memory
-	// request: 40Mi
-	// limit: null
+	// request: 12Mi
 	// Maximum length for this list is 5.
 	// Minimum length for this list is 1.
 	// Each resource name must be unique within this list.
@@ -59,7 +48,7 @@ type PrometheusOperatorConfigApplyConfiguration struct {
 	// Maximum length for this list is 10.
 	// Minimum length for this list is 1.
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
-	// topologySpreadConstraints defines rules for how Prometheus Operator Pods should be distributed
+	// topologySpreadConstraints defines rules for how Thanos Querier Pods should be distributed
 	// across topology domains such as zones, nodes, or other user-defined labels.
 	// topologySpreadConstraints is optional.
 	// This helps improve high availability and resource efficiency by avoiding placing
@@ -67,32 +56,24 @@ type PrometheusOperatorConfigApplyConfiguration struct {
 	//
 	// When omitted, this means no opinion and the platform is left to choose a default, which is subject to change over time.
 	// This field maps directly to the `topologySpreadConstraints` field in the Pod spec.
-	// Default is empty list.
+	// Defaults are empty/unset.
 	// Maximum length for this list is 10.
 	// Minimum length for this list is 1.
 	// Entries must have unique topologyKey and whenUnsatisfiable pairs.
 	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 }
 
-// PrometheusOperatorConfigApplyConfiguration constructs a declarative configuration of the PrometheusOperatorConfig type for use with
+// ThanosQuerierConfigApplyConfiguration constructs a declarative configuration of the ThanosQuerierConfig type for use with
 // apply.
-func PrometheusOperatorConfig() *PrometheusOperatorConfigApplyConfiguration {
-	return &PrometheusOperatorConfigApplyConfiguration{}
-}
-
-// WithLogLevel sets the LogLevel field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the LogLevel field is set to the value of the last call.
-func (b *PrometheusOperatorConfigApplyConfiguration) WithLogLevel(value configv1alpha1.LogLevel) *PrometheusOperatorConfigApplyConfiguration {
-	b.LogLevel = &value
-	return b
+func ThanosQuerierConfig() *ThanosQuerierConfigApplyConfiguration {
+	return &ThanosQuerierConfigApplyConfiguration{}
 }
 
 // WithNodeSelector puts the entries into the NodeSelector field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, the entries provided by each call will be put on the NodeSelector field,
 // overwriting an existing map entries in NodeSelector field with the same key.
-func (b *PrometheusOperatorConfigApplyConfiguration) WithNodeSelector(entries map[string]string) *PrometheusOperatorConfigApplyConfiguration {
+func (b *ThanosQuerierConfigApplyConfiguration) WithNodeSelector(entries map[string]string) *ThanosQuerierConfigApplyConfiguration {
 	if b.NodeSelector == nil && len(entries) > 0 {
 		b.NodeSelector = make(map[string]string, len(entries))
 	}
@@ -105,7 +86,7 @@ func (b *PrometheusOperatorConfigApplyConfiguration) WithNodeSelector(entries ma
 // WithResources adds the given value to the Resources field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Resources field.
-func (b *PrometheusOperatorConfigApplyConfiguration) WithResources(values ...*ContainerResourceApplyConfiguration) *PrometheusOperatorConfigApplyConfiguration {
+func (b *ThanosQuerierConfigApplyConfiguration) WithResources(values ...*ContainerResourceApplyConfiguration) *ThanosQuerierConfigApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithResources")
@@ -118,7 +99,7 @@ func (b *PrometheusOperatorConfigApplyConfiguration) WithResources(values ...*Co
 // WithTolerations adds the given value to the Tolerations field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Tolerations field.
-func (b *PrometheusOperatorConfigApplyConfiguration) WithTolerations(values ...v1.Toleration) *PrometheusOperatorConfigApplyConfiguration {
+func (b *ThanosQuerierConfigApplyConfiguration) WithTolerations(values ...v1.Toleration) *ThanosQuerierConfigApplyConfiguration {
 	for i := range values {
 		b.Tolerations = append(b.Tolerations, values[i])
 	}
@@ -128,7 +109,7 @@ func (b *PrometheusOperatorConfigApplyConfiguration) WithTolerations(values ...v
 // WithTopologySpreadConstraints adds the given value to the TopologySpreadConstraints field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the TopologySpreadConstraints field.
-func (b *PrometheusOperatorConfigApplyConfiguration) WithTopologySpreadConstraints(values ...v1.TopologySpreadConstraint) *PrometheusOperatorConfigApplyConfiguration {
+func (b *ThanosQuerierConfigApplyConfiguration) WithTopologySpreadConstraints(values ...v1.TopologySpreadConstraint) *ThanosQuerierConfigApplyConfiguration {
 	for i := range values {
 		b.TopologySpreadConstraints = append(b.TopologySpreadConstraints, values[i])
 	}
