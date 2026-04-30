@@ -31,6 +31,9 @@ class Version {
 	// each image belongs to only a single group.
 	ChannelGroup String
 
+	// AvailableChannels is the list of channels in which this version is present
+	AvailableChannels []String
+
 	// ROSAEnabled indicates whether this version can be used to create ROSA clusters.
 	ROSAEnabled Boolean
 

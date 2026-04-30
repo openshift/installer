@@ -39,19 +39,14 @@ const ControlPlaneUpgradePolicyNilKind = "ControlPlaneUpgradePolicyNil"
 //
 // Representation of an upgrade policy that can be set for a cluster.
 type ControlPlaneUpgradePolicy struct {
-	fieldSet_                  []bool
-	id                         string
-	href                       string
-	clusterID                  string
-	creationTimestamp          time.Time
-	lastUpdateTimestamp        time.Time
-	nextRun                    time.Time
-	schedule                   string
-	scheduleType               ScheduleType
-	state                      *UpgradePolicyState
-	upgradeType                UpgradeType
-	version                    string
-	enableMinorVersionUpgrades bool
+	fieldSet_           []bool
+	id                  string
+	href                string
+	clusterID           string
+	creationTimestamp   time.Time
+	lastUpdateTimestamp time.Time
+	state               *UpgradePolicyState
+	version             string
 }
 
 // Kind returns the name of the type of the object.
@@ -167,35 +162,12 @@ func (o *ControlPlaneUpgradePolicy) GetCreationTimestamp() (value time.Time, ok 
 	return
 }
 
-// EnableMinorVersionUpgrades returns the value of the 'enable_minor_version_upgrades' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Indicates if minor version upgrades are allowed for automatic upgrades (for manual it's always allowed).
-func (o *ControlPlaneUpgradePolicy) EnableMinorVersionUpgrades() bool {
-	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
-		return o.enableMinorVersionUpgrades
-	}
-	return false
-}
-
-// GetEnableMinorVersionUpgrades returns the value of the 'enable_minor_version_upgrades' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Indicates if minor version upgrades are allowed for automatic upgrades (for manual it's always allowed).
-func (o *ControlPlaneUpgradePolicy) GetEnableMinorVersionUpgrades() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
-	if ok {
-		value = o.enableMinorVersionUpgrades
-	}
-	return
-}
-
 // LastUpdateTimestamp returns the value of the 'last_update_timestamp' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Timestamp for last update that happened to resource.
 func (o *ControlPlaneUpgradePolicy) LastUpdateTimestamp() time.Time {
-	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.lastUpdateTimestamp
 	}
 	return time.Time{}
@@ -206,78 +178,9 @@ func (o *ControlPlaneUpgradePolicy) LastUpdateTimestamp() time.Time {
 //
 // Timestamp for last update that happened to resource.
 func (o *ControlPlaneUpgradePolicy) GetLastUpdateTimestamp() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.lastUpdateTimestamp
-	}
-	return
-}
-
-// NextRun returns the value of the 'next_run' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Next time the upgrade should run.
-func (o *ControlPlaneUpgradePolicy) NextRun() time.Time {
-	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
-		return o.nextRun
-	}
-	return time.Time{}
-}
-
-// GetNextRun returns the value of the 'next_run' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Next time the upgrade should run.
-func (o *ControlPlaneUpgradePolicy) GetNextRun() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
-	if ok {
-		value = o.nextRun
-	}
-	return
-}
-
-// Schedule returns the value of the 'schedule' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Schedule cron expression that defines automatic upgrade scheduling.
-func (o *ControlPlaneUpgradePolicy) Schedule() string {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
-		return o.schedule
-	}
-	return ""
-}
-
-// GetSchedule returns the value of the 'schedule' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Schedule cron expression that defines automatic upgrade scheduling.
-func (o *ControlPlaneUpgradePolicy) GetSchedule() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
-	if ok {
-		value = o.schedule
-	}
-	return
-}
-
-// ScheduleType returns the value of the 'schedule_type' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Schedule type of the control plane upgrade.
-func (o *ControlPlaneUpgradePolicy) ScheduleType() ScheduleType {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
-		return o.scheduleType
-	}
-	return ScheduleType("")
-}
-
-// GetScheduleType returns the value of the 'schedule_type' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Schedule type of the control plane upgrade.
-func (o *ControlPlaneUpgradePolicy) GetScheduleType() (value ScheduleType, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
-	if ok {
-		value = o.scheduleType
 	}
 	return
 }
@@ -287,7 +190,7 @@ func (o *ControlPlaneUpgradePolicy) GetScheduleType() (value ScheduleType, ok bo
 //
 // State of the upgrade policy for the hosted control plane.
 func (o *ControlPlaneUpgradePolicy) State() *UpgradePolicyState {
-	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
 		return o.state
 	}
 	return nil
@@ -298,32 +201,9 @@ func (o *ControlPlaneUpgradePolicy) State() *UpgradePolicyState {
 //
 // State of the upgrade policy for the hosted control plane.
 func (o *ControlPlaneUpgradePolicy) GetState() (value *UpgradePolicyState, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
 	if ok {
 		value = o.state
-	}
-	return
-}
-
-// UpgradeType returns the value of the 'upgrade_type' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Upgrade type of the control plane.
-func (o *ControlPlaneUpgradePolicy) UpgradeType() UpgradeType {
-	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
-		return o.upgradeType
-	}
-	return UpgradeType("")
-}
-
-// GetUpgradeType returns the value of the 'upgrade_type' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Upgrade type of the control plane.
-func (o *ControlPlaneUpgradePolicy) GetUpgradeType() (value UpgradeType, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
-	if ok {
-		value = o.upgradeType
 	}
 	return
 }
@@ -333,7 +213,7 @@ func (o *ControlPlaneUpgradePolicy) GetUpgradeType() (value UpgradeType, ok bool
 //
 // Version is the desired upgrade version.
 func (o *ControlPlaneUpgradePolicy) Version() string {
-	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
+	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.version
 	}
 	return ""
@@ -344,7 +224,7 @@ func (o *ControlPlaneUpgradePolicy) Version() string {
 //
 // Version is the desired upgrade version.
 func (o *ControlPlaneUpgradePolicy) GetVersion() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
+	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.version
 	}

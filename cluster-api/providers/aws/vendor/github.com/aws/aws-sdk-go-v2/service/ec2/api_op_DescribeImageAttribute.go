@@ -39,7 +39,7 @@ type DescribeImageAttributeInput struct {
 	//
 	// Note: The blockDeviceMapping attribute is deprecated. Using this attribute
 	// returns the Client.AuthFailure error. To get information about the block device
-	// mappings for an AMI, use the DescribeImagesaction.
+	// mappings for an AMI, describe the image instead.
 	//
 	// This member is required.
 	Attribute types.ImageAttributeName
@@ -216,16 +216,13 @@ func (c *Client) addOperationDescribeImageAttributeMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

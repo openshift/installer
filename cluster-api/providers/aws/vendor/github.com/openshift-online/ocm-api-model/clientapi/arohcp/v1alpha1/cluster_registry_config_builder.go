@@ -40,6 +40,7 @@ type ClusterRegistryConfigBuilder struct {
 	fieldSet_                  []bool
 	additionalTrustedCa        map[string]string
 	allowedRegistriesForImport []*RegistryLocationBuilder
+	imageDigestMirrors         []*ImageMirrorBuilder
 	platformAllowlist          *RegistryAllowlistBuilder
 	registrySources            *RegistrySourcesBuilder
 }
@@ -47,7 +48,7 @@ type ClusterRegistryConfigBuilder struct {
 // NewClusterRegistryConfig creates a new builder of 'cluster_registry_config' objects.
 func NewClusterRegistryConfig() *ClusterRegistryConfigBuilder {
 	return &ClusterRegistryConfigBuilder{
-		fieldSet_: make([]bool, 4),
+		fieldSet_: make([]bool, 5),
 	}
 }
 
@@ -67,7 +68,7 @@ func (b *ClusterRegistryConfigBuilder) Empty() bool {
 // AdditionalTrustedCa sets the value of the 'additional_trusted_ca' attribute to the given value.
 func (b *ClusterRegistryConfigBuilder) AdditionalTrustedCa(value map[string]string) *ClusterRegistryConfigBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 4)
+		b.fieldSet_ = make([]bool, 5)
 	}
 	b.additionalTrustedCa = value
 	if value != nil {
@@ -81,11 +82,22 @@ func (b *ClusterRegistryConfigBuilder) AdditionalTrustedCa(value map[string]stri
 // AllowedRegistriesForImport sets the value of the 'allowed_registries_for_import' attribute to the given values.
 func (b *ClusterRegistryConfigBuilder) AllowedRegistriesForImport(values ...*RegistryLocationBuilder) *ClusterRegistryConfigBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 4)
+		b.fieldSet_ = make([]bool, 5)
 	}
 	b.allowedRegistriesForImport = make([]*RegistryLocationBuilder, len(values))
 	copy(b.allowedRegistriesForImport, values)
 	b.fieldSet_[1] = true
+	return b
+}
+
+// ImageDigestMirrors sets the value of the 'image_digest_mirrors' attribute to the given values.
+func (b *ClusterRegistryConfigBuilder) ImageDigestMirrors(values ...*ImageMirrorBuilder) *ClusterRegistryConfigBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 5)
+	}
+	b.imageDigestMirrors = make([]*ImageMirrorBuilder, len(values))
+	copy(b.imageDigestMirrors, values)
+	b.fieldSet_[2] = true
 	return b
 }
 
@@ -94,13 +106,13 @@ func (b *ClusterRegistryConfigBuilder) AllowedRegistriesForImport(values ...*Reg
 // RegistryAllowlist represents a single registry allowlist.
 func (b *ClusterRegistryConfigBuilder) PlatformAllowlist(value *RegistryAllowlistBuilder) *ClusterRegistryConfigBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 4)
+		b.fieldSet_ = make([]bool, 5)
 	}
 	b.platformAllowlist = value
 	if value != nil {
-		b.fieldSet_[2] = true
+		b.fieldSet_[3] = true
 	} else {
-		b.fieldSet_[2] = false
+		b.fieldSet_[3] = false
 	}
 	return b
 }
@@ -112,13 +124,13 @@ func (b *ClusterRegistryConfigBuilder) PlatformAllowlist(value *RegistryAllowlis
 // It does not contain configuration for the internal cluster registry.
 func (b *ClusterRegistryConfigBuilder) RegistrySources(value *RegistrySourcesBuilder) *ClusterRegistryConfigBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 4)
+		b.fieldSet_ = make([]bool, 5)
 	}
 	b.registrySources = value
 	if value != nil {
-		b.fieldSet_[3] = true
+		b.fieldSet_[4] = true
 	} else {
-		b.fieldSet_[3] = false
+		b.fieldSet_[4] = false
 	}
 	return b
 }
@@ -147,6 +159,14 @@ func (b *ClusterRegistryConfigBuilder) Copy(object *ClusterRegistryConfig) *Clus
 		}
 	} else {
 		b.allowedRegistriesForImport = nil
+	}
+	if object.imageDigestMirrors != nil {
+		b.imageDigestMirrors = make([]*ImageMirrorBuilder, len(object.imageDigestMirrors))
+		for i, v := range object.imageDigestMirrors {
+			b.imageDigestMirrors[i] = NewImageMirror().Copy(v)
+		}
+	} else {
+		b.imageDigestMirrors = nil
 	}
 	if object.platformAllowlist != nil {
 		b.platformAllowlist = NewRegistryAllowlist().Copy(object.platformAllowlist)
@@ -178,6 +198,15 @@ func (b *ClusterRegistryConfigBuilder) Build() (object *ClusterRegistryConfig, e
 		object.allowedRegistriesForImport = make([]*RegistryLocation, len(b.allowedRegistriesForImport))
 		for i, v := range b.allowedRegistriesForImport {
 			object.allowedRegistriesForImport[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
+	if b.imageDigestMirrors != nil {
+		object.imageDigestMirrors = make([]*ImageMirror, len(b.imageDigestMirrors))
+		for i, v := range b.imageDigestMirrors {
+			object.imageDigestMirrors[i], err = v.Build()
 			if err != nil {
 				return
 			}

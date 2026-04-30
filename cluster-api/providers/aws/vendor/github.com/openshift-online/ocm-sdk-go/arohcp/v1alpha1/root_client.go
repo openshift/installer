@@ -68,6 +68,16 @@ func (c *Client) ManagedIdentitiesRequirements() *ManagedIdentitiesRequirementsC
 	)
 }
 
+// ProvisionShards returns the target 'provision_shards' resource.
+//
+// Reference to the resource that manages the collection of provision shards.
+func (c *Client) ProvisionShards() *ProvisionShardsClient {
+	return NewProvisionShardsClient(
+		c.transport,
+		path.Join(c.path, "provision_shards"),
+	)
+}
+
 // Versions returns the target 'versions' resource.
 //
 // Reference to the resource that manage the collection of versions.

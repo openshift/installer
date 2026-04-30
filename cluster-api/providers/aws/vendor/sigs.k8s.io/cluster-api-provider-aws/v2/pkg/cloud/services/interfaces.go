@@ -41,6 +41,31 @@ const (
 	NAT64CidrBlock = "64:ff9b::/96"
 )
 
+// LaunchTemplateNeedsUpdateReason describes why a launch template needs to be updated. Only the first found difference
+// is shown, not all reasons.
+type LaunchTemplateNeedsUpdateReason string
+
+const (
+	// LaunchTemplateNeedsUpdateReasonNone means no update reason was found (no relevant differences).
+	LaunchTemplateNeedsUpdateReasonNone LaunchTemplateNeedsUpdateReason = ""
+	// LaunchTemplateNeedsUpdateReasonIamInstanceProfile means a difference in the IAM instance profile was found.
+	LaunchTemplateNeedsUpdateReasonIamInstanceProfile LaunchTemplateNeedsUpdateReason = "IamInstanceProfile"
+	// LaunchTemplateNeedsUpdateReasonInstanceType means a difference in the instance type was found.
+	LaunchTemplateNeedsUpdateReasonInstanceType LaunchTemplateNeedsUpdateReason = "InstanceType"
+	// LaunchTemplateNeedsUpdateReasonInstanceMetadataOptions means a difference in the instance metadata options was found.
+	LaunchTemplateNeedsUpdateReasonInstanceMetadataOptions LaunchTemplateNeedsUpdateReason = "InstanceMetadataOptions"
+	// LaunchTemplateNeedsUpdateReasonSpotMarketOptions means a difference in the spot market options was found.
+	LaunchTemplateNeedsUpdateReasonSpotMarketOptions LaunchTemplateNeedsUpdateReason = "SpotMarketOptions"
+	// LaunchTemplateNeedsUpdateReasonCapacityReservationID means a difference in the capacity reservation ID was found.
+	LaunchTemplateNeedsUpdateReasonCapacityReservationID LaunchTemplateNeedsUpdateReason = "CapacityReservationID"
+	// LaunchTemplateNeedsUpdateReasonPrivateDNSName means a difference in the private DNS name was found.
+	LaunchTemplateNeedsUpdateReasonPrivateDNSName LaunchTemplateNeedsUpdateReason = "PrivateDNSName"
+	// LaunchTemplateNeedsUpdateReasonSSHKeyName means a difference in the SSH key name was found.
+	LaunchTemplateNeedsUpdateReasonSSHKeyName LaunchTemplateNeedsUpdateReason = "SSHKeyName"
+	// LaunchTemplateNeedsUpdateReasonAdditionalSecurityGroupIDs means a difference in the additional security group IDs was found.
+	LaunchTemplateNeedsUpdateReasonAdditionalSecurityGroupIDs LaunchTemplateNeedsUpdateReason = "AdditionalSecurityGroupIDs"
+)
+
 // ASGInterface encapsulates the methods exposed to the machinepool
 // actuator.
 type ASGInterface interface {
@@ -88,7 +113,7 @@ type EC2Interface interface {
 	CreateLaunchTemplateVersion(id string, scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte, bootstrapDataHash string) error
 	PruneLaunchTemplateVersions(id string) (*ec2types.LaunchTemplateVersion, error)
 	DeleteLaunchTemplate(id string) error
-	LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, incoming *expinfrav1.AWSLaunchTemplate, existing *expinfrav1.AWSLaunchTemplate) (bool, error)
+	LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, incoming *expinfrav1.AWSLaunchTemplate, existing *expinfrav1.AWSLaunchTemplate) (bool, LaunchTemplateNeedsUpdateReason, error)
 	DeleteBastion() error
 	ReconcileBastion() error
 	// ReconcileElasticIPFromPublicPool reconciles the elastic IP from a custom Public IPv4 Pool.

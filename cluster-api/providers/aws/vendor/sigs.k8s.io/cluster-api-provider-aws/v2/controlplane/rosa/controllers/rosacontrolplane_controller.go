@@ -630,6 +630,10 @@ func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.RO
 
 		if cluster.Version() != nil {
 			rosaScope.ControlPlane.Status.AvailableUpgrades = cluster.Version().AvailableUpgrades()
+			versionID := rosa.CreateVersionID(rosaScope.ControlPlane.Spec.Version, string(rosaScope.ControlPlane.Spec.ChannelGroup), rosaScope.ControlPlane.Spec.Channel)
+			if availableChannels, err := ocmClient.GetAvailableChannels(versionID); err == nil && availableChannels != nil {
+				rosaScope.ControlPlane.Status.AvailableChannels = availableChannels
+			}
 		}
 
 		// Set the version gate to WaitForAcknowledge as the previous upgrade is applied.
@@ -758,12 +762,18 @@ func (r *ROSAControlPlaneReconciler) updateOCMClusterSpec(rosaControlPlane *rosa
 		updated = true
 	}
 
-	if rosaControlPlane.Spec.ChannelGroup != "" {
-		channelGroup := string(rosaControlPlane.Spec.ChannelGroup)
-		if cluster.Version() == nil || cluster.Version().ChannelGroup() != channelGroup {
-			ocmClusterSpec.ChannelGroup = channelGroup
+	// Handle channel and channelGroup updates.
+	// If neither is set, OCM will set the channel and channelGroup based on cluster version.
+	if rosaControlPlane.Spec.Channel != "" {
+		// Channel takes priority over channelGroup
+		if cluster.Channel() != rosaControlPlane.Spec.Channel {
+			ocmClusterSpec.Channel = rosaControlPlane.Spec.Channel
 			updated = true
 		}
+	} else if rosaControlPlane.Spec.ChannelGroup != "" && cluster.Version() != nil && cluster.Version().ChannelGroup() != string(rosaControlPlane.Spec.ChannelGroup) {
+		// Set channelGroup (legacy field)
+		ocmClusterSpec.ChannelGroup = string(rosaControlPlane.Spec.ChannelGroup)
+		updated = true
 	}
 
 	if rosaControlPlane.Spec.AutoNode != nil {
@@ -1113,6 +1123,7 @@ func (r *ROSAControlPlaneReconciler) reconcileClusterAdminPassword(ctx context.C
 func validateControlPlaneSpec(ocmClient rosa.OCMClient, rosaControlPlane *rosacontrolplanev1.ROSAControlPlane) (string, error) {
 	version := rosaControlPlane.Spec.Version
 	channelGroup := string(rosaControlPlane.Spec.ChannelGroup)
+
 	valid, err := ocmClient.ValidateHypershiftVersion(version, channelGroup)
 	if err != nil {
 		return "", fmt.Errorf("error validating version in this channelGroup : %w", err)
@@ -1163,14 +1174,13 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		DomainPrefix:              controlPlaneSpec.DomainPrefix,
 		Region:                    controlPlaneSpec.Region,
 		MultiAZ:                   true,
-		Version:                   ocm.CreateVersionID(controlPlaneSpec.Version, string(controlPlaneSpec.ChannelGroup)),
-		ChannelGroup:              string(controlPlaneSpec.ChannelGroup),
+		Version:                   rosa.CreateVersionID(controlPlaneSpec.Version, string(controlPlaneSpec.ChannelGroup), controlPlaneSpec.Channel),
 		DisableWorkloadMonitoring: ptr.To(true),
 		DefaultIngress:            ocm.NewDefaultIngressSpec(), // n.b. this is a no-op when it's set to the default value
 		ComputeMachineType:        controlPlaneSpec.DefaultMachinePoolSpec.InstanceType,
 		AvailabilityZones:         availabilityZones,
 		Tags:                      controlPlaneSpec.AdditionalTags,
-		EtcdEncryption:            controlPlaneSpec.EtcdEncryptionKMSARN != "",
+		EtcdEncryption:            controlPlaneSpec.EtcdEncryptionKMSARN != "" || controlPlaneSpec.FIPS == rosacontrolplanev1.FIPSEnabled,
 		EtcdEncryptionKMSArn:      controlPlaneSpec.EtcdEncryptionKMSARN,
 
 		SubnetIds:        subnetIDs,
@@ -1188,6 +1198,7 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		AWSCreator:                   creator,
 		AuditLogRoleARN:              ptr.To(controlPlaneSpec.AuditLogRoleARN),
 		ExternalAuthProvidersEnabled: controlPlaneSpec.EnableExternalAuthProviders,
+		FIPS:                         controlPlaneSpec.FIPS == rosacontrolplanev1.FIPSEnabled,
 	}
 
 	if controlPlaneSpec.EndpointAccess == rosacontrolplanev1.Private {
@@ -1291,6 +1302,17 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 			S3ConfigBucketPrefix: controlPlaneSpec.S3LogForwarder.S3ConfigBucketPrefix,
 		}
 	}
+
+	// Handle channel and channelGroup.
+	// If neither is set, OCM will set the channel and channelGroup based on cluster version.
+	if controlPlaneSpec.Channel != "" {
+		// Set channel and ignore channelGroup
+		ocmClusterSpec.Channel = controlPlaneSpec.Channel
+	} else if controlPlaneSpec.ChannelGroup != "" {
+		// Set channelGroup (legacy field)
+		ocmClusterSpec.ChannelGroup = string(controlPlaneSpec.ChannelGroup)
+	}
+
 	return ocmClusterSpec, nil
 }
 

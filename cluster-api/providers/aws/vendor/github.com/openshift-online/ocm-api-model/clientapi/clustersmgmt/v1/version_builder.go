@@ -28,6 +28,7 @@ type VersionBuilder struct {
 	fieldSet_                 []bool
 	id                        string
 	href                      string
+	availableChannels         []string
 	availableUpgrades         []string
 	channelGroup              string
 	endOfLifeTimestamp        time.Time
@@ -47,14 +48,14 @@ type VersionBuilder struct {
 // NewVersion creates a new builder of 'version' objects.
 func NewVersion() *VersionBuilder {
 	return &VersionBuilder{
-		fieldSet_: make([]bool, 17),
+		fieldSet_: make([]bool, 18),
 	}
 }
 
 // Link sets the flag that indicates if this is a link.
 func (b *VersionBuilder) Link(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.fieldSet_[0] = true
 	return b
@@ -63,7 +64,7 @@ func (b *VersionBuilder) Link(value bool) *VersionBuilder {
 // ID sets the identifier of the object.
 func (b *VersionBuilder) ID(value string) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.id = value
 	b.fieldSet_[1] = true
@@ -73,7 +74,7 @@ func (b *VersionBuilder) ID(value string) *VersionBuilder {
 // HREF sets the link to the object.
 func (b *VersionBuilder) HREF(value string) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.href = value
 	b.fieldSet_[2] = true
@@ -97,7 +98,7 @@ func (b *VersionBuilder) Empty() bool {
 // GCPMarketplaceEnabled sets the value of the 'GCP_marketplace_enabled' attribute to the given value.
 func (b *VersionBuilder) GCPMarketplaceEnabled(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.gcpMarketplaceEnabled = value
 	b.fieldSet_[3] = true
@@ -107,81 +108,92 @@ func (b *VersionBuilder) GCPMarketplaceEnabled(value bool) *VersionBuilder {
 // ROSAEnabled sets the value of the 'ROSA_enabled' attribute to the given value.
 func (b *VersionBuilder) ROSAEnabled(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.rosaEnabled = value
 	b.fieldSet_[4] = true
 	return b
 }
 
+// AvailableChannels sets the value of the 'available_channels' attribute to the given values.
+func (b *VersionBuilder) AvailableChannels(values ...string) *VersionBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 18)
+	}
+	b.availableChannels = make([]string, len(values))
+	copy(b.availableChannels, values)
+	b.fieldSet_[5] = true
+	return b
+}
+
 // AvailableUpgrades sets the value of the 'available_upgrades' attribute to the given values.
 func (b *VersionBuilder) AvailableUpgrades(values ...string) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.availableUpgrades = make([]string, len(values))
 	copy(b.availableUpgrades, values)
-	b.fieldSet_[5] = true
+	b.fieldSet_[6] = true
 	return b
 }
 
 // ChannelGroup sets the value of the 'channel_group' attribute to the given value.
 func (b *VersionBuilder) ChannelGroup(value string) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.channelGroup = value
-	b.fieldSet_[6] = true
+	b.fieldSet_[7] = true
 	return b
 }
 
 // Default sets the value of the 'default' attribute to the given value.
 func (b *VersionBuilder) Default(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.default_ = value
-	b.fieldSet_[7] = true
+	b.fieldSet_[8] = true
 	return b
 }
 
 // Enabled sets the value of the 'enabled' attribute to the given value.
 func (b *VersionBuilder) Enabled(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.enabled = value
-	b.fieldSet_[8] = true
+	b.fieldSet_[9] = true
 	return b
 }
 
 // EndOfLifeTimestamp sets the value of the 'end_of_life_timestamp' attribute to the given value.
 func (b *VersionBuilder) EndOfLifeTimestamp(value time.Time) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.endOfLifeTimestamp = value
-	b.fieldSet_[9] = true
+	b.fieldSet_[10] = true
 	return b
 }
 
 // HostedControlPlaneDefault sets the value of the 'hosted_control_plane_default' attribute to the given value.
 func (b *VersionBuilder) HostedControlPlaneDefault(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.hostedControlPlaneDefault = value
-	b.fieldSet_[10] = true
+	b.fieldSet_[11] = true
 	return b
 }
 
 // HostedControlPlaneEnabled sets the value of the 'hosted_control_plane_enabled' attribute to the given value.
 func (b *VersionBuilder) HostedControlPlaneEnabled(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.hostedControlPlaneEnabled = value
-	b.fieldSet_[11] = true
+	b.fieldSet_[12] = true
 	return b
 }
 
@@ -190,13 +202,13 @@ func (b *VersionBuilder) HostedControlPlaneEnabled(value bool) *VersionBuilder {
 // ImageOverrides holds the lists of available images per cloud provider.
 func (b *VersionBuilder) ImageOverrides(value *ImageOverridesBuilder) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.imageOverrides = value
 	if value != nil {
-		b.fieldSet_[12] = true
+		b.fieldSet_[13] = true
 	} else {
-		b.fieldSet_[12] = false
+		b.fieldSet_[13] = false
 	}
 	return b
 }
@@ -204,33 +216,33 @@ func (b *VersionBuilder) ImageOverrides(value *ImageOverridesBuilder) *VersionBu
 // RawID sets the value of the 'raw_ID' attribute to the given value.
 func (b *VersionBuilder) RawID(value string) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.rawID = value
-	b.fieldSet_[13] = true
+	b.fieldSet_[14] = true
 	return b
 }
 
 // ReleaseImage sets the value of the 'release_image' attribute to the given value.
 func (b *VersionBuilder) ReleaseImage(value string) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.releaseImage = value
-	b.fieldSet_[14] = true
+	b.fieldSet_[15] = true
 	return b
 }
 
 // ReleaseImages sets the value of the 'release_images' attribute to the given value.
 func (b *VersionBuilder) ReleaseImages(value *ReleaseImagesBuilder) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.releaseImages = value
 	if value != nil {
-		b.fieldSet_[15] = true
+		b.fieldSet_[16] = true
 	} else {
-		b.fieldSet_[15] = false
+		b.fieldSet_[16] = false
 	}
 	return b
 }
@@ -238,10 +250,10 @@ func (b *VersionBuilder) ReleaseImages(value *ReleaseImagesBuilder) *VersionBuil
 // WifEnabled sets the value of the 'wif_enabled' attribute to the given value.
 func (b *VersionBuilder) WifEnabled(value bool) *VersionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 17)
+		b.fieldSet_ = make([]bool, 18)
 	}
 	b.wifEnabled = value
-	b.fieldSet_[16] = true
+	b.fieldSet_[17] = true
 	return b
 }
 
@@ -258,6 +270,12 @@ func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	b.href = object.href
 	b.gcpMarketplaceEnabled = object.gcpMarketplaceEnabled
 	b.rosaEnabled = object.rosaEnabled
+	if object.availableChannels != nil {
+		b.availableChannels = make([]string, len(object.availableChannels))
+		copy(b.availableChannels, object.availableChannels)
+	} else {
+		b.availableChannels = nil
+	}
 	if object.availableUpgrades != nil {
 		b.availableUpgrades = make([]string, len(object.availableUpgrades))
 		copy(b.availableUpgrades, object.availableUpgrades)
@@ -297,6 +315,10 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 	}
 	object.gcpMarketplaceEnabled = b.gcpMarketplaceEnabled
 	object.rosaEnabled = b.rosaEnabled
+	if b.availableChannels != nil {
+		object.availableChannels = make([]string, len(b.availableChannels))
+		copy(object.availableChannels, b.availableChannels)
+	}
 	if b.availableUpgrades != nil {
 		object.availableUpgrades = make([]string, len(b.availableUpgrades))
 		copy(object.availableUpgrades, b.availableUpgrades)

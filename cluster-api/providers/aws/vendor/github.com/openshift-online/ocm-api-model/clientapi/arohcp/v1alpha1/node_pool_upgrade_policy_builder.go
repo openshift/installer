@@ -25,33 +25,28 @@ import (
 
 // Representation of an upgrade policy that can be set for a node pool.
 type NodePoolUpgradePolicyBuilder struct {
-	fieldSet_                  []bool
-	id                         string
-	href                       string
-	clusterID                  string
-	creationTimestamp          time.Time
-	lastUpdateTimestamp        time.Time
-	nextRun                    time.Time
-	nodePoolID                 string
-	schedule                   string
-	scheduleType               ScheduleType
-	state                      *UpgradePolicyStateBuilder
-	upgradeType                UpgradeType
-	version                    string
-	enableMinorVersionUpgrades bool
+	fieldSet_           []bool
+	id                  string
+	href                string
+	clusterID           string
+	creationTimestamp   time.Time
+	lastUpdateTimestamp time.Time
+	nodePoolID          string
+	state               *UpgradePolicyStateBuilder
+	version             string
 }
 
 // NewNodePoolUpgradePolicy creates a new builder of 'node_pool_upgrade_policy' objects.
 func NewNodePoolUpgradePolicy() *NodePoolUpgradePolicyBuilder {
 	return &NodePoolUpgradePolicyBuilder{
-		fieldSet_: make([]bool, 14),
+		fieldSet_: make([]bool, 9),
 	}
 }
 
 // Link sets the flag that indicates if this is a link.
 func (b *NodePoolUpgradePolicyBuilder) Link(value bool) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.fieldSet_[0] = true
 	return b
@@ -60,7 +55,7 @@ func (b *NodePoolUpgradePolicyBuilder) Link(value bool) *NodePoolUpgradePolicyBu
 // ID sets the identifier of the object.
 func (b *NodePoolUpgradePolicyBuilder) ID(value string) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.id = value
 	b.fieldSet_[1] = true
@@ -70,7 +65,7 @@ func (b *NodePoolUpgradePolicyBuilder) ID(value string) *NodePoolUpgradePolicyBu
 // HREF sets the link to the object.
 func (b *NodePoolUpgradePolicyBuilder) HREF(value string) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.href = value
 	b.fieldSet_[2] = true
@@ -94,7 +89,7 @@ func (b *NodePoolUpgradePolicyBuilder) Empty() bool {
 // ClusterID sets the value of the 'cluster_ID' attribute to the given value.
 func (b *NodePoolUpgradePolicyBuilder) ClusterID(value string) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.clusterID = value
 	b.fieldSet_[3] = true
@@ -104,72 +99,30 @@ func (b *NodePoolUpgradePolicyBuilder) ClusterID(value string) *NodePoolUpgradeP
 // CreationTimestamp sets the value of the 'creation_timestamp' attribute to the given value.
 func (b *NodePoolUpgradePolicyBuilder) CreationTimestamp(value time.Time) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.creationTimestamp = value
 	b.fieldSet_[4] = true
 	return b
 }
 
-// EnableMinorVersionUpgrades sets the value of the 'enable_minor_version_upgrades' attribute to the given value.
-func (b *NodePoolUpgradePolicyBuilder) EnableMinorVersionUpgrades(value bool) *NodePoolUpgradePolicyBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
-	}
-	b.enableMinorVersionUpgrades = value
-	b.fieldSet_[5] = true
-	return b
-}
-
 // LastUpdateTimestamp sets the value of the 'last_update_timestamp' attribute to the given value.
 func (b *NodePoolUpgradePolicyBuilder) LastUpdateTimestamp(value time.Time) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.lastUpdateTimestamp = value
-	b.fieldSet_[6] = true
-	return b
-}
-
-// NextRun sets the value of the 'next_run' attribute to the given value.
-func (b *NodePoolUpgradePolicyBuilder) NextRun(value time.Time) *NodePoolUpgradePolicyBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
-	}
-	b.nextRun = value
-	b.fieldSet_[7] = true
+	b.fieldSet_[5] = true
 	return b
 }
 
 // NodePoolID sets the value of the 'node_pool_ID' attribute to the given value.
 func (b *NodePoolUpgradePolicyBuilder) NodePoolID(value string) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.nodePoolID = value
-	b.fieldSet_[8] = true
-	return b
-}
-
-// Schedule sets the value of the 'schedule' attribute to the given value.
-func (b *NodePoolUpgradePolicyBuilder) Schedule(value string) *NodePoolUpgradePolicyBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
-	}
-	b.schedule = value
-	b.fieldSet_[9] = true
-	return b
-}
-
-// ScheduleType sets the value of the 'schedule_type' attribute to the given value.
-//
-// ScheduleType defines which type of scheduling should be used for the upgrade policy.
-func (b *NodePoolUpgradePolicyBuilder) ScheduleType(value ScheduleType) *NodePoolUpgradePolicyBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
-	}
-	b.scheduleType = value
-	b.fieldSet_[10] = true
+	b.fieldSet_[6] = true
 	return b
 }
 
@@ -178,36 +131,24 @@ func (b *NodePoolUpgradePolicyBuilder) ScheduleType(value ScheduleType) *NodePoo
 // Representation of an upgrade policy state that that is set for a cluster.
 func (b *NodePoolUpgradePolicyBuilder) State(value *UpgradePolicyStateBuilder) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.state = value
 	if value != nil {
-		b.fieldSet_[11] = true
+		b.fieldSet_[7] = true
 	} else {
-		b.fieldSet_[11] = false
+		b.fieldSet_[7] = false
 	}
-	return b
-}
-
-// UpgradeType sets the value of the 'upgrade_type' attribute to the given value.
-//
-// UpgradeType defines which type of upgrade should be used.
-func (b *NodePoolUpgradePolicyBuilder) UpgradeType(value UpgradeType) *NodePoolUpgradePolicyBuilder {
-	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
-	}
-	b.upgradeType = value
-	b.fieldSet_[12] = true
 	return b
 }
 
 // Version sets the value of the 'version' attribute to the given value.
 func (b *NodePoolUpgradePolicyBuilder) Version(value string) *NodePoolUpgradePolicyBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 9)
 	}
 	b.version = value
-	b.fieldSet_[13] = true
+	b.fieldSet_[8] = true
 	return b
 }
 
@@ -224,18 +165,13 @@ func (b *NodePoolUpgradePolicyBuilder) Copy(object *NodePoolUpgradePolicy) *Node
 	b.href = object.href
 	b.clusterID = object.clusterID
 	b.creationTimestamp = object.creationTimestamp
-	b.enableMinorVersionUpgrades = object.enableMinorVersionUpgrades
 	b.lastUpdateTimestamp = object.lastUpdateTimestamp
-	b.nextRun = object.nextRun
 	b.nodePoolID = object.nodePoolID
-	b.schedule = object.schedule
-	b.scheduleType = object.scheduleType
 	if object.state != nil {
 		b.state = NewUpgradePolicyState().Copy(object.state)
 	} else {
 		b.state = nil
 	}
-	b.upgradeType = object.upgradeType
 	b.version = object.version
 	return b
 }
@@ -251,19 +187,14 @@ func (b *NodePoolUpgradePolicyBuilder) Build() (object *NodePoolUpgradePolicy, e
 	}
 	object.clusterID = b.clusterID
 	object.creationTimestamp = b.creationTimestamp
-	object.enableMinorVersionUpgrades = b.enableMinorVersionUpgrades
 	object.lastUpdateTimestamp = b.lastUpdateTimestamp
-	object.nextRun = b.nextRun
 	object.nodePoolID = b.nodePoolID
-	object.schedule = b.schedule
-	object.scheduleType = b.scheduleType
 	if b.state != nil {
 		object.state, err = b.state.Build()
 		if err != nil {
 			return
 		}
 	}
-	object.upgradeType = b.upgradeType
 	object.version = b.version
 	return
 }

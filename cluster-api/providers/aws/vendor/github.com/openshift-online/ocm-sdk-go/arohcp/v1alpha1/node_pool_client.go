@@ -89,6 +89,16 @@ func (c *NodePoolClient) Status() *NodePoolStatusClient {
 	)
 }
 
+// UpgradePolicies returns the target 'node_pool_upgrade_policies' resource.
+//
+// Reference to the resource that manages the collection of upgrade policies for the node pool.
+func (c *NodePoolClient) UpgradePolicies() *NodePoolUpgradePoliciesClient {
+	return NewNodePoolUpgradePoliciesClient(
+		c.transport,
+		path.Join(c.path, "upgrade_policies"),
+	)
+}
+
 // NodePoolPollRequest is the request for the Poll method.
 type NodePoolPollRequest struct {
 	request    *NodePoolGetRequest

@@ -12,7 +12,8 @@ import (
 )
 
 // Describes the specified attribute of the specified instance. You can specify
-// only one attribute at a time.
+// only one attribute at a time. Available attributes include SQL license exemption
+// configuration for instances registered with the SQL LE service.
 func (c *Client) DescribeInstanceAttribute(ctx context.Context, params *DescribeInstanceAttributeInput, optFns ...func(*Options)) (*DescribeInstanceAttributeOutput, error) {
 	if params == nil {
 		params = &DescribeInstanceAttributeInput{}
@@ -204,16 +205,13 @@ func (c *Client) addOperationDescribeInstanceAttributeMiddlewares(stack *middlew
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

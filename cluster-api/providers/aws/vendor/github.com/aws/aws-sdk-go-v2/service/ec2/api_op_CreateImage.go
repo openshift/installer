@@ -73,7 +73,8 @@ type CreateImageInput struct {
 	//   - You can't modify the encryption status of existing volumes or snapshots. To
 	//   create an AMI with volumes or snapshots that have a different encryption status
 	//   (for example, where the source volume and snapshots are unencrypted, and you
-	//   want to create an AMI with encrypted volumes or snapshots), use the CopyImageaction.
+	//   want to create an AMI with encrypted volumes or snapshots), copy the image
+	//   instead.
 	//
 	//   - The only option that can be changed for existing mappings or snapshots is
 	//   DeleteOnTermination .
@@ -237,16 +238,13 @@ func (c *Client) addOperationCreateImageMiddlewares(stack *middleware.Stack, opt
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

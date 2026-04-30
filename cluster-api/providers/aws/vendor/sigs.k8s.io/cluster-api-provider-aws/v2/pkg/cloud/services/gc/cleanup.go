@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	rgapi "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	rgapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/annotations"
@@ -109,29 +110,33 @@ func (s *Service) defaultGetResources(ctx context.Context) ([]*AWSResource, erro
 		},
 	}
 
-	awsOutput, err := s.resourceTaggingClient.GetResources(ctx, &awsInput)
+	resources := []*AWSResource{}
+	var errs []error
+	err := s.resourceTaggingClient.GetResourcesPages(ctx, &awsInput, func(awsOutput *rgapi.GetResourcesOutput) {
+		for i := range awsOutput.ResourceTagMappingList {
+			mapping := awsOutput.ResourceTagMappingList[i]
+			parsedArn, err := arn.Parse(*mapping.ResourceARN)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("parsing resource arn %s: %w", *mapping.ResourceARN, err))
+				continue
+			}
+
+			tags := map[string]string{}
+			for _, rgTag := range mapping.Tags {
+				tags[*rgTag.Key] = *rgTag.Value
+			}
+
+			resources = append(resources, &AWSResource{
+				ARN:  &parsedArn,
+				Tags: tags,
+			})
+		}
+	})
 	if err != nil {
 		return nil, fmt.Errorf("getting tagged resources: %w", err)
 	}
-
-	resources := []*AWSResource{}
-
-	for i := range awsOutput.ResourceTagMappingList {
-		mapping := awsOutput.ResourceTagMappingList[i]
-		parsedArn, err := arn.Parse(*mapping.ResourceARN)
-		if err != nil {
-			return nil, fmt.Errorf("parsing resource arn %s: %w", *mapping.ResourceARN, err)
-		}
-
-		tags := map[string]string{}
-		for _, rgTag := range mapping.Tags {
-			tags[*rgTag.Key] = *rgTag.Value
-		}
-
-		resources = append(resources, &AWSResource{
-			ARN:  &parsedArn,
-			Tags: tags,
-		})
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("getting tagged resources: %w", kerrors.NewAggregate(errs))
 	}
 
 	return resources, nil

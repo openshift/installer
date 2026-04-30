@@ -19,4 +19,9 @@ struct AzureKmsEncryption {
 	// The details of the active key
 	// Required during creation.
 	ActiveKey  AzureKmsKey
+
+	// visibility defines the visibility of the Azure Key Vault.
+	// Accepted values are `public` and `private`.
+	// Defaults to `public` if not set.
+	Visibility AzureKmsEncryptionVisibility
 }

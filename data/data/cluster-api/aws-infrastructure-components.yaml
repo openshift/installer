@@ -2887,6 +2887,15 @@ spec:
                         - Disabled
                         - AMDEncryptedVirtualizationNestedPaging
                         type: string
+                      nestedVirtualization:
+                        description: |-
+                          NestedVirtualization specifies whether to enable nested virtualization on the instance.
+                          Nested virtualization is supported on C8i, M8i, and R8i instance types.
+                          Valid values are: enabled, disabled
+                        enum:
+                        - enabled
+                        - disabled
+                        type: string
                     type: object
                   dynamicHostAllocation:
                     description: |-
@@ -8498,6 +8507,15 @@ spec:
                     - Disabled
                     - AMDEncryptedVirtualizationNestedPaging
                     type: string
+                  nestedVirtualization:
+                    description: |-
+                      NestedVirtualization specifies whether to enable nested virtualization on the instance.
+                      Nested virtualization is supported on C8i, M8i, and R8i instance types.
+                      Valid values are: enabled, disabled
+                    enum:
+                    - enabled
+                    - disabled
+                    type: string
                 type: object
               dynamicHostAllocation:
                 description: |-
@@ -9820,6 +9838,15 @@ spec:
                             enum:
                             - Disabled
                             - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                          nestedVirtualization:
+                            description: |-
+                              NestedVirtualization specifies whether to enable nested virtualization on the instance.
+                              Nested virtualization is supported on C8i, M8i, and R8i instance types.
+                              Valid values are: enabled, disabled
+                            enum:
+                            - enabled
+                            - disabled
                             type: string
                         type: object
                       dynamicHostAllocation:
@@ -11977,6 +12004,15 @@ spec:
                         enum:
                         - Disabled
                         - AMDEncryptedVirtualizationNestedPaging
+                        type: string
+                      nestedVirtualization:
+                        description: |-
+                          NestedVirtualization specifies whether to enable nested virtualization on the instance.
+                          Nested virtualization is supported on C8i, M8i, and R8i instance types.
+                          Valid values are: enabled, disabled
+                        enum:
+                        - enabled
+                        - disabled
                         type: string
                     type: object
                   dynamicHostAllocation:
@@ -14389,6 +14425,15 @@ spec:
                         enum:
                         - Disabled
                         - AMDEncryptedVirtualizationNestedPaging
+                        type: string
+                      nestedVirtualization:
+                        description: |-
+                          NestedVirtualization specifies whether to enable nested virtualization on the instance.
+                          Nested virtualization is supported on C8i, M8i, and R8i instance types.
+                          Valid values are: enabled, disabled
+                        enum:
+                        - enabled
+                        - disabled
                         type: string
                     type: object
                   dynamicHostAllocation:
@@ -18194,8 +18239,12 @@ spec:
     name: v1beta2
     schema:
       openAPIV3Schema:
-        description: EKSConfig is the schema for the Amazon EKS Machine Bootstrap
-          Configuration API.
+        description: |-
+          EKSConfig is the schema for the Amazon EKS Machine Bootstrap Configuration API.
+
+          Deprecated: EKSConfig is deprecated and will be removed in a future release.
+          Amazon Linux 2 (AL2) reaches end-of-life in June 2026 see: https://aws.amazon.com/amazon-linux-2/faqs/
+          Please use NodeadmConfig with Amazon Linux 2023 (AL2023) instead.
         properties:
           apiVersion:
             description: |-
@@ -19070,6 +19119,760 @@ metadata:
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
+  name: nodeadmconfigs.bootstrap.cluster.x-k8s.io
+spec:
+  group: bootstrap.cluster.x-k8s.io
+  names:
+    kind: NodeadmConfig
+    listKind: NodeadmConfigList
+    plural: nodeadmconfigs
+    singular: nodeadmconfig
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    schema:
+      openAPIV3Schema:
+        description: NodeadmConfig is the Schema for the nodeadmconfigs API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NodeadmConfigSpec defines the desired state of NodeadmConfig.
+            properties:
+              containerd:
+                description: Containerd contains options for containerd.
+                properties:
+                  baseRuntimeSpec:
+                    description: BaseRuntimeSpec is the OCI runtime specification
+                      upon which all containers will be based.
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  config:
+                    description: Config is an inline containerd configuration TOML
+                      that will be merged with the defaults.
+                    type: string
+                type: object
+              diskSetup:
+                description: DiskSetup specifies options for the creation of partition
+                  tables and file systems on devices.
+                properties:
+                  filesystems:
+                    description: Filesystems specifies the list of file systems to
+                      setup.
+                    items:
+                      description: Filesystem defines the file systems to be created.
+                      properties:
+                        device:
+                          description: Device specifies the device name
+                          type: string
+                        extraOpts:
+                          description: ExtraOpts defined extra options to add to the
+                            command for creating the file system.
+                          items:
+                            type: string
+                          type: array
+                        filesystem:
+                          description: Filesystem specifies the file system type.
+                          type: string
+                        label:
+                          description: Label specifies the file system label to be
+                            used. If set to None, no label is used.
+                          type: string
+                        overwrite:
+                          description: |-
+                            Overwrite defines whether or not to overwrite any existing filesystem.
+                            If true, any pre-existing file system will be destroyed. Use with Caution.
+                          type: boolean
+                        partition:
+                          description: 'Partition specifies the partition to use.
+                            The valid options are: "auto|any", "auto", "any", "none",
+                            and <NUM>, where NUM is the actual partition number.'
+                          type: string
+                      required:
+                      - device
+                      - filesystem
+                      - label
+                      type: object
+                    type: array
+                  partitions:
+                    description: Partitions specifies the list of the partitions to
+                      setup.
+                    items:
+                      description: Partition defines how to create and layout a partition.
+                      properties:
+                        device:
+                          description: Device is the name of the device.
+                          type: string
+                        layout:
+                          description: |-
+                            Layout specifies the device layout.
+                            If it is true, a single partition will be created for the entire device.
+                            When layout is false, it means don't partition or ignore existing partitioning.
+                          type: boolean
+                        overwrite:
+                          description: |-
+                            Overwrite describes whether to skip checks and create the partition if a partition or filesystem is found on the device.
+                            Use with caution. Default is 'false'.
+                          type: boolean
+                        tableType:
+                          description: |-
+                            TableType specifies the tupe of partition table. The following are supported:
+                            'mbr': default and setups a MS-DOS partition table
+                            'gpt': setups a GPT partition table
+                          type: string
+                      required:
+                      - device
+                      - layout
+                      type: object
+                    type: array
+                type: object
+              featureGates:
+                additionalProperties:
+                  type: boolean
+                description: FeatureGates holds key-value pairs to enable or disable
+                  application features.
+                type: object
+              files:
+                description: Files specifies extra files to be passed to user_data
+                  upon creation.
+                items:
+                  description: File defines the input for generating write_files in
+                    cloud-init.
+                  properties:
+                    append:
+                      description: Append specifies whether to append Content to existing
+                        file if Path exists.
+                      type: boolean
+                    content:
+                      description: Content is the actual content of the file.
+                      type: string
+                    contentFrom:
+                      description: ContentFrom is a referenced source of content to
+                        populate the file.
+                      properties:
+                        secret:
+                          description: Secret represents a secret that should populate
+                            this file.
+                          properties:
+                            key:
+                              description: Key is the key in the secret's data map
+                                for this value.
+                              type: string
+                            name:
+                              description: Name of the secret in the KubeadmBootstrapConfig's
+                                namespace to use.
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                      required:
+                      - secret
+                      type: object
+                    encoding:
+                      description: Encoding specifies the encoding of the file contents.
+                      enum:
+                      - base64
+                      - gzip
+                      - gzip+base64
+                      type: string
+                    owner:
+                      description: Owner specifies the ownership of the file, e.g.
+                        "root:root".
+                      type: string
+                    path:
+                      description: Path specifies the full path on disk where to store
+                        the file.
+                      type: string
+                    permissions:
+                      description: Permissions specifies the permissions to assign
+                        to the file, e.g. "0640".
+                      type: string
+                  required:
+                  - path
+                  type: object
+                type: array
+              kubelet:
+                description: Kubelet contains options for kubelet.
+                properties:
+                  config:
+                    description: Config is a KubeletConfiguration that will be merged
+                      with the defaults.
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  flags:
+                    description: Flags are command-line kubelet arguments that will
+                      be appended to the defaults.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              mounts:
+                description: Mounts specifies a list of mount points to be setup.
+                items:
+                  description: MountPoints defines input for generated mounts in cloud-init.
+                  items:
+                    type: string
+                  type: array
+                type: array
+              ntp:
+                description: NTP specifies NTP configuration.
+                properties:
+                  enabled:
+                    description: Enabled specifies whether NTP should be enabled
+                    type: boolean
+                  servers:
+                    description: Servers specifies which NTP servers to use
+                    items:
+                      type: string
+                    type: array
+                type: object
+              preNodeadmCommands:
+                description: PreNodeadmCommands specifies extra commands to run before
+                  bootstrapping nodes.
+                items:
+                  type: string
+                type: array
+              users:
+                description: Users specifies extra users to add.
+                items:
+                  description: User defines the input for a generated user in cloud-init.
+                  properties:
+                    gecos:
+                      description: Gecos specifies the gecos to use for the user
+                      type: string
+                    groups:
+                      description: Groups specifies the additional groups for the
+                        user
+                      type: string
+                    homeDir:
+                      description: HomeDir specifies the home directory to use for
+                        the user
+                      type: string
+                    inactive:
+                      description: Inactive specifies whether to mark the user as
+                        inactive
+                      type: boolean
+                    lockPassword:
+                      description: LockPassword specifies if password login should
+                        be disabled
+                      type: boolean
+                    name:
+                      description: Name specifies the username
+                      type: string
+                    passwd:
+                      description: Passwd specifies a hashed password for the user
+                      type: string
+                    passwdFrom:
+                      description: PasswdFrom is a referenced source of passwd to
+                        populate the passwd.
+                      properties:
+                        secret:
+                          description: Secret represents a secret that should populate
+                            this password.
+                          properties:
+                            key:
+                              description: Key is the key in the secret's data map
+                                for this value.
+                              type: string
+                            name:
+                              description: Name of the secret in the KubeadmBootstrapConfig's
+                                namespace to use.
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                      required:
+                      - secret
+                      type: object
+                    primaryGroup:
+                      description: PrimaryGroup specifies the primary group for the
+                        user
+                      type: string
+                    shell:
+                      description: Shell specifies the user's shell
+                      type: string
+                    sshAuthorizedKeys:
+                      description: SSHAuthorizedKeys specifies a list of ssh authorized
+                        keys for the user
+                      items:
+                        type: string
+                      type: array
+                    sudo:
+                      description: Sudo specifies a sudo role for the user
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            type: object
+          status:
+            description: NodeadmConfigStatus defines the observed state of NodeadmConfig.
+            properties:
+              conditions:
+                description: Conditions defines current service state of the NodeadmConfig.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              dataSecretName:
+                description: DataSecretName is the name of the secret that stores
+                  the bootstrap data script.
+                type: string
+              failureMessage:
+                description: FailureMessage will be set on non-retryable errors.
+                type: string
+              failureReason:
+                description: FailureReason will be set on non-retryable errors.
+                type: string
+              initialization:
+                description: |-
+                  Initialization provides observations of the NodeadmConfig initialization process.
+                  NOTE: Fields in this struct are part of the Cluster API contract and are used to orchestrate initial Machine provisioning.
+                properties:
+                  dataSecretCreated:
+                    description: |-
+                      DataSecretCreated is true when the Machine's bootstrap secret is created.
+                      NOTE: This field is part of the Cluster API contract, and it is used to orchestrate initial Machine provisioning.
+                    type: boolean
+                type: object
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              ready:
+                description: |-
+                  Deprecated: This field will be removed with the CAPI v1beta2 transition
+                  Ready indicates the BootstrapData secret is ready to be consumed.
+                type: boolean
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws
+    cluster.x-k8s.io/v1alpha3: v1alpha3
+    cluster.x-k8s.io/v1alpha4: v1alpha4
+    cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
+  name: nodeadmconfigtemplates.bootstrap.cluster.x-k8s.io
+spec:
+  group: bootstrap.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: NodeadmConfigTemplate
+    listKind: NodeadmConfigTemplateList
+    plural: nodeadmconfigtemplates
+    shortNames:
+    - nodeadmct
+    singular: nodeadmconfigtemplate
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    schema:
+      openAPIV3Schema:
+        description: NodeadmConfigTemplate is the Amazon EKS Bootstrap Configuration
+          Template API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NodeadmConfigTemplateSpec defines the desired state of templated
+              NodeadmConfig Amazon EKS Configuration resources.
+            properties:
+              template:
+                description: NodeadmConfigTemplateResource defines the Template structure.
+                properties:
+                  spec:
+                    description: |-
+                      Spec represents the NodeadmConfig each object created from the template will become.
+                      We are setting nullable to avoid this issue:
+                      https://github.com/kubernetes/kubernetes/issues/117447#issuecomment-2127733969
+                      where we cannot remove all fields with an SSA patch if they were previously set.
+                    nullable: true
+                    properties:
+                      containerd:
+                        description: Containerd contains options for containerd.
+                        properties:
+                          baseRuntimeSpec:
+                            description: BaseRuntimeSpec is the OCI runtime specification
+                              upon which all containers will be based.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                          config:
+                            description: Config is an inline containerd configuration
+                              TOML that will be merged with the defaults.
+                            type: string
+                        type: object
+                      diskSetup:
+                        description: DiskSetup specifies options for the creation
+                          of partition tables and file systems on devices.
+                        properties:
+                          filesystems:
+                            description: Filesystems specifies the list of file systems
+                              to setup.
+                            items:
+                              description: Filesystem defines the file systems to
+                                be created.
+                              properties:
+                                device:
+                                  description: Device specifies the device name
+                                  type: string
+                                extraOpts:
+                                  description: ExtraOpts defined extra options to
+                                    add to the command for creating the file system.
+                                  items:
+                                    type: string
+                                  type: array
+                                filesystem:
+                                  description: Filesystem specifies the file system
+                                    type.
+                                  type: string
+                                label:
+                                  description: Label specifies the file system label
+                                    to be used. If set to None, no label is used.
+                                  type: string
+                                overwrite:
+                                  description: |-
+                                    Overwrite defines whether or not to overwrite any existing filesystem.
+                                    If true, any pre-existing file system will be destroyed. Use with Caution.
+                                  type: boolean
+                                partition:
+                                  description: 'Partition specifies the partition
+                                    to use. The valid options are: "auto|any", "auto",
+                                    "any", "none", and <NUM>, where NUM is the actual
+                                    partition number.'
+                                  type: string
+                              required:
+                              - device
+                              - filesystem
+                              - label
+                              type: object
+                            type: array
+                          partitions:
+                            description: Partitions specifies the list of the partitions
+                              to setup.
+                            items:
+                              description: Partition defines how to create and layout
+                                a partition.
+                              properties:
+                                device:
+                                  description: Device is the name of the device.
+                                  type: string
+                                layout:
+                                  description: |-
+                                    Layout specifies the device layout.
+                                    If it is true, a single partition will be created for the entire device.
+                                    When layout is false, it means don't partition or ignore existing partitioning.
+                                  type: boolean
+                                overwrite:
+                                  description: |-
+                                    Overwrite describes whether to skip checks and create the partition if a partition or filesystem is found on the device.
+                                    Use with caution. Default is 'false'.
+                                  type: boolean
+                                tableType:
+                                  description: |-
+                                    TableType specifies the tupe of partition table. The following are supported:
+                                    'mbr': default and setups a MS-DOS partition table
+                                    'gpt': setups a GPT partition table
+                                  type: string
+                              required:
+                              - device
+                              - layout
+                              type: object
+                            type: array
+                        type: object
+                      featureGates:
+                        additionalProperties:
+                          type: boolean
+                        description: FeatureGates holds key-value pairs to enable
+                          or disable application features.
+                        type: object
+                      files:
+                        description: Files specifies extra files to be passed to user_data
+                          upon creation.
+                        items:
+                          description: File defines the input for generating write_files
+                            in cloud-init.
+                          properties:
+                            append:
+                              description: Append specifies whether to append Content
+                                to existing file if Path exists.
+                              type: boolean
+                            content:
+                              description: Content is the actual content of the file.
+                              type: string
+                            contentFrom:
+                              description: ContentFrom is a referenced source of content
+                                to populate the file.
+                              properties:
+                                secret:
+                                  description: Secret represents a secret that should
+                                    populate this file.
+                                  properties:
+                                    key:
+                                      description: Key is the key in the secret's
+                                        data map for this value.
+                                      type: string
+                                    name:
+                                      description: Name of the secret in the KubeadmBootstrapConfig's
+                                        namespace to use.
+                                      type: string
+                                  required:
+                                  - key
+                                  - name
+                                  type: object
+                              required:
+                              - secret
+                              type: object
+                            encoding:
+                              description: Encoding specifies the encoding of the
+                                file contents.
+                              enum:
+                              - base64
+                              - gzip
+                              - gzip+base64
+                              type: string
+                            owner:
+                              description: Owner specifies the ownership of the file,
+                                e.g. "root:root".
+                              type: string
+                            path:
+                              description: Path specifies the full path on disk where
+                                to store the file.
+                              type: string
+                            permissions:
+                              description: Permissions specifies the permissions to
+                                assign to the file, e.g. "0640".
+                              type: string
+                          required:
+                          - path
+                          type: object
+                        type: array
+                      kubelet:
+                        description: Kubelet contains options for kubelet.
+                        properties:
+                          config:
+                            description: Config is a KubeletConfiguration that will
+                              be merged with the defaults.
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                          flags:
+                            description: Flags are command-line kubelet arguments
+                              that will be appended to the defaults.
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      mounts:
+                        description: Mounts specifies a list of mount points to be
+                          setup.
+                        items:
+                          description: MountPoints defines input for generated mounts
+                            in cloud-init.
+                          items:
+                            type: string
+                          type: array
+                        type: array
+                      ntp:
+                        description: NTP specifies NTP configuration.
+                        properties:
+                          enabled:
+                            description: Enabled specifies whether NTP should be enabled
+                            type: boolean
+                          servers:
+                            description: Servers specifies which NTP servers to use
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      preNodeadmCommands:
+                        description: PreNodeadmCommands specifies extra commands to
+                          run before bootstrapping nodes.
+                        items:
+                          type: string
+                        type: array
+                      users:
+                        description: Users specifies extra users to add.
+                        items:
+                          description: User defines the input for a generated user
+                            in cloud-init.
+                          properties:
+                            gecos:
+                              description: Gecos specifies the gecos to use for the
+                                user
+                              type: string
+                            groups:
+                              description: Groups specifies the additional groups
+                                for the user
+                              type: string
+                            homeDir:
+                              description: HomeDir specifies the home directory to
+                                use for the user
+                              type: string
+                            inactive:
+                              description: Inactive specifies whether to mark the
+                                user as inactive
+                              type: boolean
+                            lockPassword:
+                              description: LockPassword specifies if password login
+                                should be disabled
+                              type: boolean
+                            name:
+                              description: Name specifies the username
+                              type: string
+                            passwd:
+                              description: Passwd specifies a hashed password for
+                                the user
+                              type: string
+                            passwdFrom:
+                              description: PasswdFrom is a referenced source of passwd
+                                to populate the passwd.
+                              properties:
+                                secret:
+                                  description: Secret represents a secret that should
+                                    populate this password.
+                                  properties:
+                                    key:
+                                      description: Key is the key in the secret's
+                                        data map for this value.
+                                      type: string
+                                    name:
+                                      description: Name of the secret in the KubeadmBootstrapConfig's
+                                        namespace to use.
+                                      type: string
+                                  required:
+                                  - key
+                                  - name
+                                  type: object
+                              required:
+                              - secret
+                              type: object
+                            primaryGroup:
+                              description: PrimaryGroup specifies the primary group
+                                for the user
+                              type: string
+                            shell:
+                              description: Shell specifies the user's shell
+                              type: string
+                            sshAuthorizedKeys:
+                              description: SSHAuthorizedKeys specifies a list of ssh
+                                authorized keys for the user
+                              items:
+                                type: string
+                              type: array
+                            sudo:
+                              description: Sudo specifies a sudo role for the user
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                    type: object
+                type: object
+            required:
+            - template
+            type: object
+        type: object
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws
+    cluster.x-k8s.io/v1alpha3: v1alpha3
+    cluster.x-k8s.io/v1alpha4: v1alpha4
+    cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
   name: rosaclusters.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -19332,9 +20135,19 @@ spec:
                   rule: self == oldSelf
                 - message: billingAccount must be a valid AWS account ID
                   rule: self.matches('^[0-9]{12}$')
+              channel:
+                description: |-
+                  Channel is the Y-stream OpenShift channel to use for this cluster, for example "stable-4.16" or "eus-4.16".
+                  This determines which Y-stream versions are available for upgrades.
+                  When not specified, OCM will determine the appropriate channel based on the cluster version.
+                  If Channel is set, ChannelGroup will be ignored.
+                pattern: ^(stable|eus|fast|candidate|nightly)-[0-9]+\.[0-9]+$
+                type: string
               channelGroup:
-                default: stable
-                description: OpenShift version channel group, default is stable.
+                description: |-
+                  OpenShift version channel group.
+                  When not specified, OCM will determine the appropriate channel group based on the cluster version.
+                  This field will be deprecated in a future release in favor of the Channel field.
                 enum:
                 - stable
                 - eus
@@ -19779,6 +20592,25 @@ spec:
                 x-kubernetes-list-map-keys:
                 - name
                 x-kubernetes-list-type: map
+              fips:
+                default: Disabled
+                description: |-
+                  FIPS configures FIPS-validated / Modules in Process cryptographic libraries.
+                  FIPS (Federal Information Processing Standard) 140-2 is a U.S. government standard
+                  that validates cryptographic modules used to protect sensitive information.
+
+                  When set to "Enabled", the cluster will use FIPS 140-2 validated cryptographic modules.
+                  This setting is immutable and cannot be changed after cluster creation.
+
+                  IMPORTANT: When FIPS is enabled, etcdEncryptionKMSARN must be provided.
+                  The KMS key must be tagged with 'red-hat:true'.
+                enum:
+                - Enabled
+                - Disabled
+                type: string
+                x-kubernetes-validations:
+                - message: fips is immutable
+                  rule: self == oldSelf
               identityRef:
                 description: |-
                   IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
@@ -20147,7 +20979,6 @@ spec:
                   Required if RosaRoleConfigRef is not specified.
                 type: string
             required:
-            - channelGroup
             - region
             - rosaClusterName
             - version
@@ -20156,6 +20987,11 @@ spec:
           status:
             description: RosaControlPlaneStatus defines the observed state of ROSAControlPlane.
             properties:
+              availableChannels:
+                description: Available channels for the ROSA hosted control plane.
+                items:
+                  type: string
+                type: array
               availableUpgrades:
                 description: Available upgrades for the ROSA hosted control plane.
                 items:
@@ -21432,10 +22268,23 @@ rules:
   - bootstrap.cluster.x-k8s.io
   resources:
   - eksconfigs/status
+  - nodeadmconfigs/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - bootstrap.cluster.x-k8s.io
+  resources:
+  - nodeadmconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - cluster.x-k8s.io
   resources:

@@ -215,6 +215,19 @@ func (c *Client) GetAvailableUpgrades(versionID string) ([]string, error) {
 	return availableUpgrades, nil
 }
 
+func (c *Client) GetAvailableChannels(versionID string) ([]string, error) {
+	resp, err := c.ocm.ClustersMgmt().V1().Versions().Version(versionID).Get().Send()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch version '%s' by ID: %w", versionID, err)
+	}
+	if body, ok := resp.GetBody(); ok {
+		if channels, ok := body.GetAvailableChannels(); ok {
+			return channels, nil
+		}
+	}
+	return nil, nil
+}
+
 func GetAvailableUpgradesByCluster(cluster *cmv1.Cluster) []string {
 	if cluster == nil {
 		return []string{}
@@ -250,7 +263,7 @@ func GetRawVersionId(versionId string) string {
 func GetVersionMinorList(ocmClient *Client) (versionList []string, err error) {
 	vs, err := ocmClient.GetVersions("", false)
 	if err != nil {
-		err = fmt.Errorf("Failed to retrieve versions: %s", err)
+		err = fmt.Errorf("failed to retrieve versions: %s", err)
 		return
 	}
 
@@ -297,7 +310,7 @@ func (c *Client) getFirstVersion(channelGroup string, defaultFirst bool) (versio
 		}
 
 	}
-	return "", fmt.Errorf("There are no OpenShift versions available")
+	return "", fmt.Errorf("there are no OpenShift versions available")
 }
 
 func IsValidVersion(userRequestedVersion string, supportedVersion string, clusterVersion string) (bool, error) {
@@ -436,7 +449,7 @@ func (c *Client) IsVersionCloseToEol(daysAwayToCheck int, version string, channe
 		ocmVersion.EndOfLifeTimestamp().Compare(
 			now.Add(time.Duration(daysAwayToCheck)*OneDayHourDuration*time.Hour)) <= 0 {
 		return fmt.Errorf(
-			"The version of Red Hat OpenShift Service on AWS that you are installing will no longer be supported after '%s'."+
+			"the version of Red Hat OpenShift Service on AWS that you are installing will no longer be supported after '%s'."+
 				" Red Hat recommends selecting a newer version. For more information,"+
 				" see https://docs.openshift.com/rosa/rosa_policy/rosa-life-cycle.html",
 			ocmVersion.EndOfLifeTimestamp().Format(time.DateOnly),
@@ -460,16 +473,16 @@ func (c *Client) ValidateVersion(version string, versionList []string, channelGr
 	}
 	if !hasVersion {
 		allVersions := strings.Join(versionList, " ")
-		err := fmt.Errorf("A valid version number must be specified\nValid versions: %s", allVersions)
+		err := fmt.Errorf("a valid version number must be specified\nValid versions: %s", allVersions)
 		return version, err
 	}
 
 	if isSTS && !HasSTSSupport(version, channelGroup) {
-		err := fmt.Errorf("Version '%s' is not supported for STS clusters", version)
+		err := fmt.Errorf("version '%s' is not supported for STS clusters", version)
 		return version, err
 	}
 	if !HasSTSSupportMinor(version) {
-		err := fmt.Errorf("Version '%s' is not supported for STS clusters", version)
+		err := fmt.Errorf("version '%s' is not supported for STS clusters", version)
 		return version, err
 	}
 

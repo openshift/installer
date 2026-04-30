@@ -27,6 +27,9 @@ import (
 type ProvisionShardTopology = api_v1alpha1.ProvisionShardTopology
 
 const (
-	// Provision shard for hosted clusters is configured in a "dedicated" topology.
-	ProvisionShardTopologyDedicated ProvisionShardTopology = api_v1alpha1.ProvisionShardTopologyDedicated
+	// Represents a provision shard with shared topology. In this topology, all
+	// ARO-HCP Clusters share a common pool of K8s Nodes for control plane
+	// request serving workloads, rather than using a different set of
+	// dedicated K8s Nodes per ARO-HCP cluster.
+	ProvisionShardTopologyShared ProvisionShardTopology = api_v1alpha1.ProvisionShardTopologyShared
 )

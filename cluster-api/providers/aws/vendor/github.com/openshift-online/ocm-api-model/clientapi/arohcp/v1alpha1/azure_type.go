@@ -23,17 +23,19 @@ package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v
 //
 // Microsoft Azure settings of a cluster.
 type Azure struct {
-	fieldSet_                      []bool
-	etcdEncryption                 *AzureEtcdEncryption
-	managedResourceGroupName       string
-	networkSecurityGroupResourceID string
-	nodesOutboundConnectivity      *AzureNodesOutboundConnectivity
-	operatorsAuthentication        *AzureOperatorsAuthentication
-	resourceGroupName              string
-	resourceName                   string
-	subnetResourceID               string
-	subscriptionID                 string
-	tenantID                       string
+	fieldSet_                       []bool
+	etcdEncryption                  *AzureEtcdEncryption
+	managedResourceGroupName        string
+	networkSecurityGroupResourceID  string
+	nodesOutboundConnectivity       *AzureNodesOutboundConnectivity
+	oidcIssuerUrl                   string
+	operatorsAuthentication         *AzureOperatorsAuthentication
+	resourceGroupName               string
+	resourceName                    string
+	subnetResourceID                string
+	subscriptionID                  string
+	tenantID                        string
+	vnetIntegrationSubnetResourceID string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -211,6 +213,33 @@ func (o *Azure) GetNodesOutboundConnectivity() (value *AzureNodesOutboundConnect
 	return
 }
 
+// OidcIssuerUrl returns the value of the 'oidc_issuer_url' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The OIDC issuer URL for workload identity federation
+// This URL is used by Azure managed identities to establish trust with cluster.
+// Readonly
+func (o *Azure) OidcIssuerUrl() string {
+	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
+		return o.oidcIssuerUrl
+	}
+	return ""
+}
+
+// GetOidcIssuerUrl returns the value of the 'oidc_issuer_url' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The OIDC issuer URL for workload identity federation
+// This URL is used by Azure managed identities to establish trust with cluster.
+// Readonly
+func (o *Azure) GetOidcIssuerUrl() (value string, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
+	if ok {
+		value = o.oidcIssuerUrl
+	}
+	return
+}
+
 // OperatorsAuthentication returns the value of the 'operators_authentication' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -218,7 +247,7 @@ func (o *Azure) GetNodesOutboundConnectivity() (value *AzureNodesOutboundConnect
 // Required during creation.
 // Immutable.
 func (o *Azure) OperatorsAuthentication() *AzureOperatorsAuthentication {
-	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.operatorsAuthentication
 	}
 	return nil
@@ -231,7 +260,7 @@ func (o *Azure) OperatorsAuthentication() *AzureOperatorsAuthentication {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetOperatorsAuthentication() (value *AzureOperatorsAuthentication, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.operatorsAuthentication
 	}
@@ -249,7 +278,7 @@ func (o *Azure) GetOperatorsAuthentication() (value *AzureOperatorsAuthenticatio
 // Required during creation.
 // Immutable.
 func (o *Azure) ResourceGroupName() string {
-	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
 		return o.resourceGroupName
 	}
 	return ""
@@ -266,7 +295,7 @@ func (o *Azure) ResourceGroupName() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetResourceGroupName() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
 	if ok {
 		value = o.resourceGroupName
 	}
@@ -282,7 +311,7 @@ func (o *Azure) GetResourceGroupName() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) ResourceName() string {
-	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.resourceName
 	}
 	return ""
@@ -297,7 +326,7 @@ func (o *Azure) ResourceName() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetResourceName() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.resourceName
 	}
@@ -324,7 +353,7 @@ func (o *Azure) GetResourceName() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) SubnetResourceID() string {
-	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
 		return o.subnetResourceID
 	}
 	return ""
@@ -350,7 +379,7 @@ func (o *Azure) SubnetResourceID() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetSubnetResourceID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
 	if ok {
 		value = o.subnetResourceID
 	}
@@ -365,7 +394,7 @@ func (o *Azure) GetSubnetResourceID() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) SubscriptionID() string {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.subscriptionID
 	}
 	return ""
@@ -379,7 +408,7 @@ func (o *Azure) SubscriptionID() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetSubscriptionID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.subscriptionID
 	}
@@ -393,7 +422,7 @@ func (o *Azure) GetSubscriptionID() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) TenantID() string {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
+	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
 		return o.tenantID
 	}
 	return ""
@@ -406,9 +435,50 @@ func (o *Azure) TenantID() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetTenantID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
+	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
 	if ok {
 		value = o.tenantID
+	}
+	return
+}
+
+// VnetIntegrationSubnetResourceID returns the value of the 'vnet_integration_subnet_resource_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Vnet Integration Subnet Resource ID is the Azure Resource ID of a pre-existing Azure
+// Subnet used for SWIFT networking (Azure Container Networking Interface).
+// This subnet is delegated to Microsoft.RedHatOpenShift/hcpOpenShiftClusters
+// via a Service Association Link and is used for pod networking in the cluster.
+// Vnet Integration Subnet Resource ID must be located in the same Azure location as the
+// cluster's region and in the same VNet as Subnet Resource ID.
+// The Azure Subscription specified as part of the Vnet Integration Subnet Resource ID must
+// be located in the same Azure Subscription as Subscription ID.
+// This field is optional - if not specified, SWIFT networking will not be enabled.
+// Immutable.
+func (o *Azure) VnetIntegrationSubnetResourceID() string {
+	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
+		return o.vnetIntegrationSubnetResourceID
+	}
+	return ""
+}
+
+// GetVnetIntegrationSubnetResourceID returns the value of the 'vnet_integration_subnet_resource_ID' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Vnet Integration Subnet Resource ID is the Azure Resource ID of a pre-existing Azure
+// Subnet used for SWIFT networking (Azure Container Networking Interface).
+// This subnet is delegated to Microsoft.RedHatOpenShift/hcpOpenShiftClusters
+// via a Service Association Link and is used for pod networking in the cluster.
+// Vnet Integration Subnet Resource ID must be located in the same Azure location as the
+// cluster's region and in the same VNet as Subnet Resource ID.
+// The Azure Subscription specified as part of the Vnet Integration Subnet Resource ID must
+// be located in the same Azure Subscription as Subscription ID.
+// This field is optional - if not specified, SWIFT networking will not be enabled.
+// Immutable.
+func (o *Azure) GetVnetIntegrationSubnetResourceID() (value string, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
+	if ok {
+		value = o.vnetIntegrationSubnetResourceID
 	}
 	return
 }

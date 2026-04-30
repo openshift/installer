@@ -233,7 +233,7 @@ func (s *Service) ReconcileLaunchTemplate(
 	// Check if the instance tags were changed. If they were, create a new LaunchTemplate.
 	tagsChanged, _, _, _ := tagsChanged(annotation, scope.AdditionalTags()) //nolint:dogsled
 
-	needsUpdate, err := ec2svc.LaunchTemplateNeedsUpdate(scope, scope.GetLaunchTemplate(), launchTemplate)
+	needsUpdate, needsUpdateReason, err := ec2svc.LaunchTemplateNeedsUpdate(scope, scope.GetLaunchTemplate(), launchTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (s *Service) ReconcileLaunchTemplate(
 	// Create a new launch template version if there's a difference in configuration, tags,
 	// userdata, OR we've discovered a new AMI ID.
 	if needsUpdate || tagsChanged || amiChanged || userDataHashChanged || userDataSecretKeyChanged || launchTemplateNeedsUserDataSecretKeyTag {
-		scope.Info("creating new version for launch template", "existing", launchTemplate, "incoming", scope.GetLaunchTemplate(), "needsUpdate", needsUpdate, "tagsChanged", tagsChanged, "amiChanged", amiChanged, "userDataHashChanged", userDataHashChanged, "userDataSecretKeyChanged", userDataSecretKeyChanged)
+		scope.Info("creating new version for launch template", "existing", launchTemplate, "incoming", scope.GetLaunchTemplate(), "needsUpdate", needsUpdate, "needsUpdateReason", needsUpdateReason, "tagsChanged", tagsChanged, "amiChanged", amiChanged, "userDataHashChanged", userDataHashChanged, "userDataSecretKeyChanged", userDataSecretKeyChanged)
 
 		// There is a limit to the number of Launch Template Versions.
 		// We ensure that the number of versions does not grow without bound by following a simple rule: Before we create a new version, we delete one old version, if there is at least one old version that is not in use.
@@ -1003,58 +1003,59 @@ func (s *Service) SDKToLaunchTemplate(d types.LaunchTemplateVersion) (*expinfrav
 //
 // FIXME(dlipovetsky): This check should account for changed userdata, but does not yet do so.
 // Although userdata is stored in an EC2 Launch Template, it is not a field of AWSLaunchTemplate.
-func (s *Service) LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, incoming *expinfrav1.AWSLaunchTemplate, existing *expinfrav1.AWSLaunchTemplate) (bool, error) {
+func (s *Service) LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, incoming *expinfrav1.AWSLaunchTemplate, existing *expinfrav1.AWSLaunchTemplate) (bool, services.LaunchTemplateNeedsUpdateReason, error) {
 	if incoming.IamInstanceProfile != existing.IamInstanceProfile {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonIamInstanceProfile, nil
 	}
 
 	if incoming.InstanceType != existing.InstanceType {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonInstanceType, nil
 	}
 
 	if !cmp.Equal(incoming.InstanceMetadataOptions, existing.InstanceMetadataOptions) {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonInstanceMetadataOptions, nil
 	}
 
 	if !cmp.Equal(incoming.SpotMarketOptions, existing.SpotMarketOptions) {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonSpotMarketOptions, nil
 	}
 
 	if !cmp.Equal(incoming.CapacityReservationID, existing.CapacityReservationID) {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonCapacityReservationID, nil
 	}
 
 	if !cmp.Equal(incoming.PrivateDNSName, existing.PrivateDNSName) {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonPrivateDNSName, nil
 	}
 
-	if !cmp.Equal(incoming.SSHKeyName, existing.SSHKeyName) {
-		return true, nil
+	// We treat nil and empty string the same (see `createLaunchTemplateData`)
+	if !cmp.Equal(ptr.Deref(incoming.SSHKeyName, ""), ptr.Deref(existing.SSHKeyName, "")) {
+		return true, services.LaunchTemplateNeedsUpdateReasonSSHKeyName, nil
 	}
 
 	incomingIDs, err := s.GetAdditionalSecurityGroupsIDs(incoming.AdditionalSecurityGroups)
 	if err != nil {
-		return false, err
+		return false, services.LaunchTemplateNeedsUpdateReasonNone, err
 	}
 
 	coreIDs, err := s.GetCoreNodeSecurityGroups(scope)
 	if err != nil {
-		return false, err
+		return false, services.LaunchTemplateNeedsUpdateReasonNone, err
 	}
 
 	incomingIDs = append(incomingIDs, coreIDs...)
 	existingIDs, err := s.GetAdditionalSecurityGroupsIDs(existing.AdditionalSecurityGroups)
 	if err != nil {
-		return false, err
+		return false, services.LaunchTemplateNeedsUpdateReasonNone, err
 	}
 	sort.Strings(incomingIDs)
 	sort.Strings(existingIDs)
 
 	if !cmp.Equal(incomingIDs, existingIDs) {
-		return true, nil
+		return true, services.LaunchTemplateNeedsUpdateReasonAdditionalSecurityGroupIDs, nil
 	}
 
-	return false, nil
+	return false, services.LaunchTemplateNeedsUpdateReasonNone, nil
 }
 
 // DiscoverLaunchTemplateAMI will discover the AMI launch template.

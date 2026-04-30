@@ -249,7 +249,7 @@ func run(cmd *cobra.Command, argv []string) {
 		}
 	}
 
-	if isManagedSet && env == ocm.Production {
+	if roles.ClassicManagedPoliciesUnsupportedInEnv(isManagedSet, args.managed, env) {
 		r.Reporter.Errorf("Classic ROSA managed policies are not supported in this environment")
 		os.Exit(1)
 	}

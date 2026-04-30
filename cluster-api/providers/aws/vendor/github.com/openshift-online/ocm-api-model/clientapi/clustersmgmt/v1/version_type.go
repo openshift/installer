@@ -42,6 +42,7 @@ type Version struct {
 	fieldSet_                 []bool
 	id                        string
 	href                      string
+	availableChannels         []string
 	availableUpgrades         []string
 	channelGroup              string
 	endOfLifeTimestamp        time.Time
@@ -171,12 +172,35 @@ func (o *Version) GetROSAEnabled() (value bool, ok bool) {
 	return
 }
 
+// AvailableChannels returns the value of the 'available_channels' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// AvailableChannels is the list of channels in which this version is present
+func (o *Version) AvailableChannels() []string {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
+		return o.availableChannels
+	}
+	return nil
+}
+
+// GetAvailableChannels returns the value of the 'available_channels' attribute and
+// a flag indicating if the attribute has a value.
+//
+// AvailableChannels is the list of channels in which this version is present
+func (o *Version) GetAvailableChannels() (value []string, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
+	if ok {
+		value = o.availableChannels
+	}
+	return
+}
+
 // AvailableUpgrades returns the value of the 'available_upgrades' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // AvailableUpgrades is the list of versions this version can be upgraded to.
 func (o *Version) AvailableUpgrades() []string {
-	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
 		return o.availableUpgrades
 	}
 	return nil
@@ -187,7 +211,7 @@ func (o *Version) AvailableUpgrades() []string {
 //
 // AvailableUpgrades is the list of versions this version can be upgraded to.
 func (o *Version) GetAvailableUpgrades() (value []string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
 	if ok {
 		value = o.availableUpgrades
 	}
@@ -201,7 +225,7 @@ func (o *Version) GetAvailableUpgrades() (value []string, ok bool) {
 // ChannelGroup is a mechanism to partition the images to different groups,
 // each image belongs to only a single group.
 func (o *Version) ChannelGroup() string {
-	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.channelGroup
 	}
 	return ""
@@ -214,7 +238,7 @@ func (o *Version) ChannelGroup() string {
 // ChannelGroup is a mechanism to partition the images to different groups,
 // each image belongs to only a single group.
 func (o *Version) GetChannelGroup() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.channelGroup
 	}
@@ -227,7 +251,7 @@ func (o *Version) GetChannelGroup() (value string, ok bool) {
 // Indicates if this should be selected as the default version when a cluster is created
 // without specifying explicitly the version.
 func (o *Version) Default() bool {
-	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
 		return o.default_
 	}
 	return false
@@ -239,7 +263,7 @@ func (o *Version) Default() bool {
 // Indicates if this should be selected as the default version when a cluster is created
 // without specifying explicitly the version.
 func (o *Version) GetDefault() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
 	if ok {
 		value = o.default_
 	}
@@ -251,7 +275,7 @@ func (o *Version) GetDefault() (value bool, ok bool) {
 //
 // Indicates if this version can be used to create clusters.
 func (o *Version) Enabled() bool {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.enabled
 	}
 	return false
@@ -262,7 +286,7 @@ func (o *Version) Enabled() bool {
 //
 // Indicates if this version can be used to create clusters.
 func (o *Version) GetEnabled() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.enabled
 	}
@@ -275,7 +299,7 @@ func (o *Version) GetEnabled() (value bool, ok bool) {
 // EndOfLifeTimestamp is the date and time when the version will get to End of Life, using the
 // format defined in https://www.ietf.org/rfc/rfc3339.txt[RC3339].
 func (o *Version) EndOfLifeTimestamp() time.Time {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
+	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
 		return o.endOfLifeTimestamp
 	}
 	return time.Time{}
@@ -287,7 +311,7 @@ func (o *Version) EndOfLifeTimestamp() time.Time {
 // EndOfLifeTimestamp is the date and time when the version will get to End of Life, using the
 // format defined in https://www.ietf.org/rfc/rfc3339.txt[RC3339].
 func (o *Version) GetEndOfLifeTimestamp() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
+	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
 	if ok {
 		value = o.endOfLifeTimestamp
 	}
@@ -300,7 +324,7 @@ func (o *Version) GetEndOfLifeTimestamp() (value time.Time, ok bool) {
 // HostedControlPlaneDefault is a flag that indicates if this should be selected as the default version when a
 // HCP cluster is created without specifying explicitly the version.
 func (o *Version) HostedControlPlaneDefault() bool {
-	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
+	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
 		return o.hostedControlPlaneDefault
 	}
 	return false
@@ -312,7 +336,7 @@ func (o *Version) HostedControlPlaneDefault() bool {
 // HostedControlPlaneDefault is a flag that indicates if this should be selected as the default version when a
 // HCP cluster is created without specifying explicitly the version.
 func (o *Version) GetHostedControlPlaneDefault() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
+	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
 	if ok {
 		value = o.hostedControlPlaneDefault
 	}
@@ -324,7 +348,7 @@ func (o *Version) GetHostedControlPlaneDefault() (value bool, ok bool) {
 //
 // HostedControlPlaneEnabled indicates whether this version can be used to create HCP clusters.
 func (o *Version) HostedControlPlaneEnabled() bool {
-	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
+	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
 		return o.hostedControlPlaneEnabled
 	}
 	return false
@@ -335,7 +359,7 @@ func (o *Version) HostedControlPlaneEnabled() bool {
 //
 // HostedControlPlaneEnabled indicates whether this version can be used to create HCP clusters.
 func (o *Version) GetHostedControlPlaneEnabled() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
+	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
 	if ok {
 		value = o.hostedControlPlaneEnabled
 	}
@@ -347,7 +371,7 @@ func (o *Version) GetHostedControlPlaneEnabled() (value bool, ok bool) {
 //
 // ImageOverrides contains the lists of images per cloud provider.
 func (o *Version) ImageOverrides() *ImageOverrides {
-	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
+	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
 		return o.imageOverrides
 	}
 	return nil
@@ -358,7 +382,7 @@ func (o *Version) ImageOverrides() *ImageOverrides {
 //
 // ImageOverrides contains the lists of images per cloud provider.
 func (o *Version) GetImageOverrides() (value *ImageOverrides, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
+	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
 	if ok {
 		value = o.imageOverrides
 	}
@@ -370,7 +394,7 @@ func (o *Version) GetImageOverrides() (value *ImageOverrides, ok bool) {
 //
 // RawID is the id of the version - without channel group and prefix.
 func (o *Version) RawID() string {
-	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
+	if o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14] {
 		return o.rawID
 	}
 	return ""
@@ -381,7 +405,7 @@ func (o *Version) RawID() string {
 //
 // RawID is the id of the version - without channel group and prefix.
 func (o *Version) GetRawID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
+	ok = o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14]
 	if ok {
 		value = o.rawID
 	}
@@ -393,7 +417,7 @@ func (o *Version) GetRawID() (value string, ok bool) {
 //
 // ReleaseImage contains the URI of Openshift release image for amd64 architecture.
 func (o *Version) ReleaseImage() string {
-	if o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14] {
+	if o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15] {
 		return o.releaseImage
 	}
 	return ""
@@ -404,7 +428,7 @@ func (o *Version) ReleaseImage() string {
 //
 // ReleaseImage contains the URI of Openshift release image for amd64 architecture.
 func (o *Version) GetReleaseImage() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14]
+	ok = o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15]
 	if ok {
 		value = o.releaseImage
 	}
@@ -416,7 +440,7 @@ func (o *Version) GetReleaseImage() (value string, ok bool) {
 //
 // ReleaseImages contains the URI of OpenShift release images for arm64 and multi architectures.
 func (o *Version) ReleaseImages() *ReleaseImages {
-	if o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15] {
+	if o != nil && len(o.fieldSet_) > 16 && o.fieldSet_[16] {
 		return o.releaseImages
 	}
 	return nil
@@ -427,7 +451,7 @@ func (o *Version) ReleaseImages() *ReleaseImages {
 //
 // ReleaseImages contains the URI of OpenShift release images for arm64 and multi architectures.
 func (o *Version) GetReleaseImages() (value *ReleaseImages, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15]
+	ok = o != nil && len(o.fieldSet_) > 16 && o.fieldSet_[16]
 	if ok {
 		value = o.releaseImages
 	}
@@ -439,7 +463,7 @@ func (o *Version) GetReleaseImages() (value *ReleaseImages, ok bool) {
 //
 // WifEnabled is a flag that indicates whether this version is enabled for Workload Identity Federation.
 func (o *Version) WifEnabled() bool {
-	if o != nil && len(o.fieldSet_) > 16 && o.fieldSet_[16] {
+	if o != nil && len(o.fieldSet_) > 17 && o.fieldSet_[17] {
 		return o.wifEnabled
 	}
 	return false
@@ -450,7 +474,7 @@ func (o *Version) WifEnabled() bool {
 //
 // WifEnabled is a flag that indicates whether this version is enabled for Workload Identity Federation.
 func (o *Version) GetWifEnabled() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 16 && o.fieldSet_[16]
+	ok = o != nil && len(o.fieldSet_) > 17 && o.fieldSet_[17]
 	if ok {
 		value = o.wifEnabled
 	}
