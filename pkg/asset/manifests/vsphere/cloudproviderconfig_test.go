@@ -35,42 +35,19 @@ zone = "openshift-zone"
 `
 
 	expectedYamlConfig = `global:
-  user: ""
-  password: ""
-  server: ""
-  port: 0
   insecureFlag: true
-  datacenters: []
-  soapRoundtripCount: 0
-  caFile: ""
-  thumbprint: ""
   secretName: vsphere-creds
   secretNamespace: kube-system
-  secretsDirectory: ""
-  apiDisable: false
-  apiBinding: ""
-  ipFamily: []
+labels:
+  region: openshift-region
+  zone: openshift-zone
 vcenter:
   test-vcenter:
-    user: ""
-    password: ""
-    tenantref: ""
-    server: test-vcenter
-    port: 443
-    insecureFlag: true
     datacenters:
     - test-datacenter
     - test-datacenter2
-    soapRoundtripCount: 0
-    caFile: ""
-    thumbprint: ""
-    secretref: ""
-    secretName: ""
-    secretNamespace: ""
-    ipFamily: []
-labels:
-  zone: openshift-zone
-  region: openshift-region
+    port: 443
+    server: test-vcenter
 `
 )
 
