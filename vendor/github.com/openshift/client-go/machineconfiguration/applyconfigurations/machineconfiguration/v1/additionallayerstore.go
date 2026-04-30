@@ -16,9 +16,10 @@ type AdditionalLayerStoreApplyConfiguration struct {
 	// When a container image is requested, layers found at this location will be used instead of
 	// retrieving from the registry.
 	// The path is required and must be between 1 and 256 characters long, begin with a forward slash,
-	// and only contain the characters a-z, A-Z, 0-9, '/', '.', '_', and '-'.
+	// and only contain the characters a-z, A-Z, 0-9, '/', '.', '_', '-', and may end with the ':ref' suffix
+	// for reference-based layer organization (e.g., /var/lib/stargz-store/store:ref for stargz-store).
 	// Consecutive forward slashes are not permitted.
-	Path *machineconfigurationv1.StorePath `json:"path,omitempty"`
+	Path *machineconfigurationv1.LayerStorePath `json:"path,omitempty"`
 }
 
 // AdditionalLayerStoreApplyConfiguration constructs a declarative configuration of the AdditionalLayerStore type for use with
@@ -30,7 +31,7 @@ func AdditionalLayerStore() *AdditionalLayerStoreApplyConfiguration {
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *AdditionalLayerStoreApplyConfiguration) WithPath(value machineconfigurationv1.StorePath) *AdditionalLayerStoreApplyConfiguration {
+func (b *AdditionalLayerStoreApplyConfiguration) WithPath(value machineconfigurationv1.LayerStorePath) *AdditionalLayerStoreApplyConfiguration {
 	b.Path = &value
 	return b
 }
