@@ -104,7 +104,7 @@ var (
 							contactPerson("ibihim").
 							productScope(ocpSpecific).
 							enhancementPR("https://github.com/openshift/enhancements/pull/899").
-							enable(inDefault(), inOKD(), inTechPreviewNoUpgrade(), inDevPreviewNoUpgrade()).
+							enable(inTechPreviewNoUpgrade(), inDevPreviewNoUpgrade()).
 							mustRegister()
 
 	FeatureGateBuildCSIVolumes = newFeatureGate("BuildCSIVolumes").
@@ -215,7 +215,7 @@ var (
 			contactPerson("jcaamano").
 			productScope(ocpSpecific).
 			enhancementPR("https://github.com/openshift/enhancements/pull/1862").
-			enable(inDevPreviewNoUpgrade(), inTechPreviewNoUpgrade()).
+			enable(inDefault(), inOKD(), inDevPreviewNoUpgrade(), inTechPreviewNoUpgrade()).
 			mustRegister()
 
 	FeatureGateOVNObservability = newFeatureGate("OVNObservability").
@@ -805,7 +805,7 @@ var (
 						contactPerson("vr4manta").
 						productScope(ocpSpecific).
 						enhancementPR("https://github.com/openshift/enhancements/pull/1961").
-						enable(inDevPreviewNoUpgrade()).
+						enable(inTechPreviewNoUpgrade(), inDevPreviewNoUpgrade()).
 						mustRegister()
 
 	FeatureGateAWSServiceLBNetworkSecurityGroup = newFeatureGate("AWSServiceLBNetworkSecurityGroup").
@@ -994,7 +994,7 @@ var (
 					contactPerson("miciah").
 					productScope(ocpSpecific).
 					enhancementPR("https://github.com/openshift/enhancements/pull/1933").
-					enable(inDevPreviewNoUpgrade(), inTechPreviewNoUpgrade()).
+					enable(inDefault(), inOKD(), inDevPreviewNoUpgrade(), inTechPreviewNoUpgrade()).
 					mustRegister()
 
 	FeatureGateTLSAdherence = newFeatureGate("TLSAdherence").
