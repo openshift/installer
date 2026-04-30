@@ -41,6 +41,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
+	"github.com/openshift/installer/pkg/asset/machines/machineconfigpool"
 	"github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
@@ -285,12 +286,14 @@ func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []strin
 
 // Worker generates the machinesets for `worker` machine pool.
 type Worker struct {
-	UserDataFile       *asset.File
-	MachineConfigFiles []*asset.File
-	MachineSetFiles    []*asset.File
-	MachineFiles       []*asset.File
-	IPClaimFiles       []*asset.File
-	IPAddrFiles        []*asset.File
+	UserDataFile            *asset.File
+	MachineConfigFiles      []*asset.File
+	MachineSetFiles         []*asset.File
+	MachineFiles            []*asset.File
+	IPClaimFiles            []*asset.File
+	IPAddrFiles             []*asset.File
+	CustomPoolUserDataFiles []*asset.File
+	MachineConfigPoolFiles  []*asset.File
 }
 
 // Name returns a human friendly name for the Worker Asset.
@@ -311,6 +314,7 @@ func (w *Worker) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		new(rhcos.Release),
 		&machine.Worker{},
+		&machine.CustomPool{},
 	}
 }
 
@@ -323,7 +327,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	rhcosImage := new(rhcos.Image)
 	rhcosRelease := new(rhcos.Release)
 	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installConfig, rhcosImage, rhcosRelease, wign)
+	cign := &machine.CustomPool{}
+	dependencies.Get(clusterID, installConfig, rhcosImage, rhcosRelease, wign, cign)
 
 	workerUserDataSecretName := "worker-user-data"
 
@@ -334,8 +339,68 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	var ipAddrs []ipamv1.IPAddress
 	var err error
 	ic := installConfig.Config
+
+	// Pre-pass: sum replica counts across all custom pools for worker balancing,
+	// and determine whether the worker replica count was explicitly set by the user.
+	// We check the raw YAML (pre-defaults) because by Generate() time defaults
+	// have already filled in Replicas for every pool.
+	var customPoolReplicas int64
+	var customPoolNames []string
+	for i := range ic.Compute {
+		if types.IsCustomPool(ic.Compute[i].Name) && ic.Compute[i].Replicas != nil {
+			customPoolReplicas += *ic.Compute[i].Replicas
+			customPoolNames = append(customPoolNames, ic.Compute[i].Name)
+		}
+	}
+	if len(customPoolNames) > 0 {
+		logrus.Infof("[custom-pool] found %d custom pool(s) %v with %d total requested replicas", len(customPoolNames), customPoolNames, customPoolReplicas)
+	} else {
+		logrus.Debugf("[custom-pool] no custom pools found in compute pools, skipping custom pool logic")
+	}
+
+	workerReplicasExplicitlySet := false
+	var rawIC struct {
+		Compute []struct {
+			Name     string `json:"name"`
+			Replicas *int64 `json:"replicas"`
+		} `json:"compute"`
+	}
+	if installConfig.File != nil {
+		if err := yaml.Unmarshal(installConfig.File.Data, &rawIC); err == nil {
+			for _, p := range rawIC.Compute {
+				if p.Name == types.MachinePoolComputeRoleName && p.Replicas != nil {
+					workerReplicasExplicitlySet = true
+					break
+				}
+			}
+		}
+	}
+	logrus.Debugf("[custom-pool] worker replicas explicitly set by user: %v", workerReplicasExplicitlySet)
+
 	for _, pool := range ic.Compute {
 		pool := pool // this makes golint happy... G601: Implicit memory aliasing in for loop. (gosec)
+
+		logrus.Debugf("[custom-pool] processing compute pool %q (replicas=%v, isCustom=%v)", pool.Name, pool.Replicas, types.IsCustomPool(pool.Name))
+
+		// Apply worker balancing: reduce worker replicas by the custom pool count so
+		// that total compute remains constant. Only balance when the user has not
+		// explicitly set a worker replica count — if they did, respect both counts.
+		if pool.Name == types.MachinePoolComputeRoleName && !workerReplicasExplicitlySet && customPoolReplicas > 0 && pool.Replicas != nil {
+			adjusted := *pool.Replicas - customPoolReplicas
+			if adjusted <= 0 {
+				if adjusted < 0 {
+					logrus.Warnf("Custom pool requests %d nodes which exceeds worker pool replicas %d; worker pool will have 0 nodes", customPoolReplicas, *pool.Replicas)
+				}
+				adjusted = 0
+			}
+			logrus.Infof("[custom-pool] worker pool balancing: original=%d custom=%d adjusted-worker=%d", *pool.Replicas, customPoolReplicas, adjusted)
+			pool.Replicas = &adjusted
+		} else if pool.Name == types.MachinePoolComputeRoleName && workerReplicasExplicitlySet && customPoolReplicas > 0 {
+			logrus.Infof("[custom-pool] worker replicas explicitly set to %d; skipping balancing (custom pools total %d)", *pool.Replicas, customPoolReplicas)
+		}
+		// Custom pools inherit MachineConfigs from the worker pool via the MCP's
+		// machineConfigSelector, so we skip per-pool MC generation for them.
+		if !types.IsCustomPool(pool.Name) {
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
 			ignHT, err := machineconfig.ForHyperthreadingDisabled("worker")
 			if err != nil {
@@ -447,6 +512,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 			machineConfigs = append(machineConfigs, ignIPv6)
 		}
+		} // end !types.IsCustomPool
 
 		switch ic.Platform.Name() {
 		case awstypes.Name:
@@ -664,12 +730,54 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName)
+
+			// Custom pools use the worker role so they get standard worker tags,
+			// subnets, and MAPI labels. Only the user-data secret differs, pointing
+			// machines at /config/<poolName> on the MCS instead of /config/worker.
+			gcpRole := types.MachinePoolComputeRoleName
+			gcpUserDataSecret := workerUserDataSecretName
+			if types.IsCustomPool(pool.Name) {
+				gcpUserDataSecret = pool.Name + "-user-data"
+				logrus.Infof("[custom-pool] GCP: pool %q will use user-data secret %q with role %q", pool.Name, gcpUserDataSecret, gcpRole)
+			}
+
+			logrus.Debugf("[custom-pool] GCP: generating MachineSets for pool %q (role=%q, userDataSecret=%q)", pool.Name, gcpRole, gcpUserDataSecret)
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, gcpRole, gcpUserDataSecret)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
+			logrus.Infof("[custom-pool] GCP: generated %d MachineSet(s) for pool %q", len(sets), pool.Name)
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
+			}
+
+			// Generate the MCP and user-data secret for custom pools.
+			if types.IsCustomPool(pool.Name) {
+				ignFile := cign.FilesByPool[pool.Name]
+				logrus.Debugf("[custom-pool] GCP: ignition file found=%v for pool %q", ignFile != nil, pool.Name)
+				if ignFile != nil {
+					logrus.Infof("[custom-pool] GCP: generating MachineConfigPool manifest for pool %q", pool.Name)
+					mcpFile, err := machineconfigpool.Manifest(pool.Name, directory)
+					if err != nil {
+						return errors.Wrapf(err, "failed to create MachineConfigPool manifest for pool %q", pool.Name)
+					}
+					logrus.Debugf("[custom-pool] GCP: MachineConfigPool manifest written to %q", mcpFile.Filename)
+					w.MachineConfigPoolFiles = append(w.MachineConfigPoolFiles, mcpFile)
+
+					logrus.Infof("[custom-pool] GCP: generating user-data secret %q for pool %q", gcpUserDataSecret, pool.Name)
+					secretData, err := UserDataSecret(gcpUserDataSecret, ignFile.Data)
+					if err != nil {
+						return errors.Wrapf(err, "failed to create user-data secret for custom pool %q", pool.Name)
+					}
+					secretFilename := filepath.Join(directory, fmt.Sprintf("99_openshift-cluster-api_%s-user-data-secret.yaml", pool.Name))
+					logrus.Debugf("[custom-pool] GCP: user-data secret written to %q (%d bytes)", secretFilename, len(secretData))
+					w.CustomPoolUserDataFiles = append(w.CustomPoolUserDataFiles, &asset.File{
+						Filename: secretFilename,
+						Data:     secretData,
+					})
+				} else {
+					logrus.Warnf("[custom-pool] GCP: skipping MCP and user-data secret for pool %q because custom pool ignition was not generated", pool.Name)
+				}
 			}
 		case ibmcloudtypes.Name:
 			subnets := map[string]string{}
@@ -870,15 +978,17 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 
 // Files returns the files generated by the asset.
 func (w *Worker) Files() []*asset.File {
-	files := make([]*asset.File, 0, 1+len(w.MachineConfigFiles)+len(w.MachineSetFiles))
+	files := make([]*asset.File, 0, 1+len(w.MachineConfigFiles)+len(w.MachineSetFiles)+len(w.MachineConfigPoolFiles)+1)
 	if w.UserDataFile != nil {
 		files = append(files, w.UserDataFile)
 	}
+	files = append(files, w.CustomPoolUserDataFiles...)
 	files = append(files, w.MachineConfigFiles...)
 	files = append(files, w.MachineSetFiles...)
 	files = append(files, w.MachineFiles...)
 	files = append(files, w.IPClaimFiles...)
 	files = append(files, w.IPAddrFiles...)
+	files = append(files, w.MachineConfigPoolFiles...)
 	return files
 }
 
