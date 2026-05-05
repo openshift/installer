@@ -98,12 +98,6 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 							ToPort:      -1,
 						},
 						{
-							Description: "Port 6441-6442 (TCP) for ovndb",
-							Protocol:    capa.SecurityGroupProtocolTCP,
-							FromPort:    6441,
-							ToPort:      6442,
-						},
-						{
 							Description: "Port 9000-9999 for node ports (TCP)",
 							Protocol:    capa.SecurityGroupProtocolTCP,
 							FromPort:    9000,
