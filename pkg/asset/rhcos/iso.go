@@ -64,6 +64,33 @@ func (i *BaseIso) GetBaseISOFilename(ctx context.Context, arch string) (baseIsoF
 	return
 }
 
+// GetMetalArtifactWithStream returns the CoreOS artifacts for metal for a given arch
+// from a given stream. If the stream is not present, the default one will be used.
+func GetMetalArtifactWithStream(ctx context.Context, archName string, st *stream.Stream) (stream.PlatformArtifacts, error) {
+	var err error
+
+	if st == nil {
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		st, err = rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+		if err != nil {
+			return stream.PlatformArtifacts{}, err
+		}
+	}
+
+	streamArch, err := st.GetArchitecture(archName)
+	if err != nil {
+		return stream.PlatformArtifacts{}, err
+	}
+
+	metal, ok := streamArch.Artifacts["metal"]
+	if !ok {
+		return stream.PlatformArtifacts{}, fmt.Errorf("coreOs stream data not found for 'metal' artifact")
+	}
+
+	return metal, nil
+}
+
 // GetMetalArtifact returns the CoreOS artifacts for metal for a given arch
 // from a given stream.
 func GetMetalArtifact(ctx context.Context, archName string, streamGetter CoreOSBuildFetcher) (stream.PlatformArtifacts, error) {

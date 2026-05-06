@@ -16,6 +16,7 @@ import (
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -269,7 +270,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	infraEnvID := infraEnvAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
-	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, customStreamGetter(agentWorkflow, clusterInfo))
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, clusterInfo.OSImage)
 	if err != nil {
 		return err
 	}
@@ -745,13 +746,13 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	return nil
 }
 
-func getOSImagesInfo(ctx context.Context, cpuArch string, openshiftVersion string, streamGetter rhcos.CoreOSBuildFetcher) (*models.OsImage, error) {
+func getOSImagesInfo(ctx context.Context, cpuArch string, openshiftVersion string, st *stream.Stream) (*models.OsImage, error) {
 	osImage := &models.OsImage{
 		CPUArchitecture: &cpuArch,
 	}
 	osImage.OpenshiftVersion = &openshiftVersion
 
-	artifacts, err := rhcos.GetMetalArtifact(ctx, cpuArch, streamGetter)
+	artifacts, err := rhcos.GetMetalArtifactWithStream(ctx, cpuArch, st)
 	if err != nil {
 		return nil, err
 	}
