@@ -29,7 +29,7 @@ func getIPsFromDNSName(ctx context.Context, dnsName, lbType string) ([]string, e
 		Duration: 1 * time.Second,
 		Factor:   2.0,
 		Jitter:   0.1,
-		Steps:    5,
+		Steps:    10, // ~15 minutes total timeout with exponential backoff
 	}, func(ctx context.Context) (bool, error) {
 		var err error
 		ips, err = resolver.LookupIP(ctx, "ip", dnsName)
