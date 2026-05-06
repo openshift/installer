@@ -72,39 +72,37 @@ func TestBaseIso_Generate(t *testing.T) {
 			}()
 
 			baseIso := &BaseIso{
-				streamGetter: func(ctx context.Context) (*stream.Stream, error) {
-					return &stream.Stream{
-						Architectures: map[string]stream.Arch{
-							"x86_64": {
-								Artifacts: map[string]stream.PlatformArtifacts{
-									"metal": {
-										Release: ocReleaseImage,
-										Formats: map[string]stream.ImageFormat{
-											"iso": {
-												Disk: &stream.Artifact{
-													Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
-												},
-											},
-										},
-									},
-								},
-							},
-							"aarch64": {
-								Artifacts: map[string]stream.PlatformArtifacts{
-									"metal": {
-										Release: ocReleaseImage,
-										Formats: map[string]stream.ImageFormat{
-											"iso": {
-												Disk: &stream.Artifact{
-													Location: fmt.Sprintf("%s/%s-arm64", svr.URL, ocReleaseImage),
-												},
+				st: &stream.Stream{
+					Architectures: map[string]stream.Arch{
+						"x86_64": {
+							Artifacts: map[string]stream.PlatformArtifacts{
+								"metal": {
+									Release: ocReleaseImage,
+									Formats: map[string]stream.ImageFormat{
+										"iso": {
+											Disk: &stream.Artifact{
+												Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
 											},
 										},
 									},
 								},
 							},
 						},
-					}, nil
+						"aarch64": {
+							Artifacts: map[string]stream.PlatformArtifacts{
+								"metal": {
+									Release: ocReleaseImage,
+									Formats: map[string]stream.ImageFormat{
+										"iso": {
+											Disk: &stream.Artifact{
+												Location: fmt.Sprintf("%s/%s-arm64", svr.URL, ocReleaseImage),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			}
 			parents := asset.Parents{}

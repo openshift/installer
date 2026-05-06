@@ -18,16 +18,8 @@ import (
 
 // BaseIso generates the base ISO file for the image.
 type BaseIso struct {
+	st   *stream.Stream
 	File *asset.File
-
-	streamGetter CoreOSBuildFetcher
-}
-
-// CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
-type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
-
-func defaultCoreOSStreamGetter(ctx context.Context) (*stream.Stream, error) {
-	return rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
 }
 
 var _ asset.WritableAsset = (*BaseIso)(nil)
@@ -56,9 +48,6 @@ func (i *BaseIso) Generate(_ context.Context, dependencies asset.Parents) error 
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised.")
 		baseIsoFileName, err = cache.DownloadImageFile(urlOverride, cache.ImageBasedApplicationName)
 	} else {
-		if i.streamGetter == nil {
-			i.streamGetter = defaultCoreOSStreamGetter
-		}
 		architecture := types.ArchitectureAMD64
 		if ibiConfig.Config.Architecture != "" {
 			architecture = ibiConfig.Config.Architecture
@@ -118,9 +107,13 @@ func (i *BaseIso) metalArtifact(archName string) (stream.PlatformArtifacts, erro
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
-	st, err := i.streamGetter(ctx)
-	if err != nil {
-		return stream.PlatformArtifacts{}, err
+	st := i.st
+	var err error
+	if st == nil {
+		st, err = rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+		if err != nil {
+			return stream.PlatformArtifacts{}, err
+		}
 	}
 
 	streamArch, err := st.GetArchitecture(archName)
