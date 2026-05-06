@@ -426,7 +426,7 @@
       }
     }
   },
-  "revision": "20230508",
+  "revision": "20240220",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "AddEnableRulesMetadata": {
@@ -436,19 +436,19 @@
       "type": "object"
     },
     "AddEnableRulesResponse": {
-      "description": "The response message of \"AddEnableRules\" method.",
+      "description": "The response message of `AddEnableRules` method.",
       "id": "AddEnableRulesResponse",
       "properties": {
+        "addedValues": {
+          "description": "The values added to the parent consumer policy.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "parent": {
           "description": "The parent consumer policy. It can be `projects/12345/consumerPolicies/default`, or `folders/12345/consumerPolicies/default`, or `organizations/12345/consumerPolicies/default`.",
           "type": "string"
-        },
-        "values": {
-          "description": "The values added to the parent consumer policy.",
-          "items": {
-            "$ref": "ValueInfo"
-          },
-          "type": "array"
         }
       },
       "type": "object"
@@ -465,7 +465,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": " If this map is nonempty, then this policy applies only to specific values for dimensions defined in the limit unit. For example, an policy on a limit with the unit `1/{project}/{region}` could contain an entry with the key `region` and the value `us-east-1`; the policy is only applied to quota consumed in that region. This map has the following restrictions: * If `region` appears as a key, its value must be a valid Cloud region. * If `zone` appears as a key, its value must be a valid Cloud zone. * Keys other than `region` or `zone` are not valid.",
+          "description": " If this map is nonempty, then this policy applies only to specific values for dimensions defined in the limit unit. For example, a policy on a limit with the unit `1/{project}/{region}` could contain an entry with the key `region` and the value `us-east-1`; the policy is only applied to quota consumed in that region. This map has the following restrictions: * If `region` appears as a key, its value must be a valid Cloud region. * If `zone` appears as a key, its value must be a valid Cloud zone. * Keys other than `region` or `zone` are not valid.",
           "type": "object"
         },
         "metric": {
@@ -674,6 +674,7 @@
           "type": "string"
         },
         "minDeadline": {
+          "deprecated": true,
           "description": "Deprecated, do not use.",
           "format": "double",
           "type": "number"
@@ -922,6 +923,7 @@
           "type": "array"
         },
         "referenceDocsUri": {
+          "deprecated": true,
           "description": "Link to automatically generated reference documentation. Example: https://cloud.google.com/nodejs/docs/reference/asset/latest",
           "type": "string"
         }
@@ -951,7 +953,7 @@
           "type": "string"
         },
         "name": {
-          "description": "Output only. The resource name of the policy. For example, We only allow consumer policy name as \"default\" for now: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`. Legacy format: `projects/12345/consumerPoly`",
+          "description": "Output only. The resource name of the policy. We only allow consumer policy name as `default` for now: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`.",
           "readOnly": true,
           "type": "string"
         },
@@ -1023,6 +1025,13 @@
         "environment": {
           "description": "The service controller environment to use. If empty, no control plane feature (like quota and billing) will be enabled. The recommended value for most services is servicecontrol.googleapis.com",
           "type": "string"
+        },
+        "methodPolicies": {
+          "description": "Defines policies applying to the API methods of the service.",
+          "items": {
+            "$ref": "MethodPolicy"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1138,7 +1147,7 @@
       "type": "object"
     },
     "Documentation": {
-      "description": "`Documentation` provides the information for describing a service. Example: documentation: summary: \u003e The Google Calendar API gives access to most calendar features. pages: - name: Overview content: (== include google/foo/overview.md ==) - name: Tutorial content: (== include google/foo/tutorial.md ==) subpages; - name: Java content: (== include google/foo/tutorial_java.md ==) rules: - selector: google.calendar.Calendar.Get description: \u003e ... - selector: google.calendar.Calendar.Put description: \u003e ... Documentation is provided in markdown syntax. In addition to standard markdown features, definition lists, tables and fenced code blocks are supported. Section headers can be provided and are interpreted relative to the section nesting of the context where a documentation fragment is embedded. Documentation from the IDL is merged with documentation defined via the config at normalization time, where documentation provided by config rules overrides IDL provided. A number of constructs specific to the API platform are supported in documentation text. In order to reference a proto element, the following notation can be used: [fully.qualified.proto.name][] To override the display text used for the link, this can be used: [display text][fully.qualified.proto.name] Text can be excluded from doc using the following notation: (-- internal comment --) A few directives are available in documentation. Note that directives must appear on a single line to be properly identified. The `include` directive includes a markdown file from an external source: (== include path/to/file ==) The `resource_for` directive marks a message to be the resource of a collection in REST view. If it is not specified, tools attempt to infer the resource from the operations in a collection: (== resource_for v1.shelves.books ==) The directive `suppress_warning` does not directly affect documentation and is documented together with service config validation.",
+      "description": "`Documentation` provides the information for describing a service. Example: documentation: summary: \u003e The Google Calendar API gives access to most calendar features. pages: - name: Overview content: (== include google/foo/overview.md ==) - name: Tutorial content: (== include google/foo/tutorial.md ==) subpages: - name: Java content: (== include google/foo/tutorial_java.md ==) rules: - selector: google.calendar.Calendar.Get description: \u003e ... - selector: google.calendar.Calendar.Put description: \u003e ... Documentation is provided in markdown syntax. In addition to standard markdown features, definition lists, tables and fenced code blocks are supported. Section headers can be provided and are interpreted relative to the section nesting of the context where a documentation fragment is embedded. Documentation from the IDL is merged with documentation defined via the config at normalization time, where documentation provided by config rules overrides IDL provided. A number of constructs specific to the API platform are supported in documentation text. In order to reference a proto element, the following notation can be used: [fully.qualified.proto.name][] To override the display text used for the link, this can be used: [display text][fully.qualified.proto.name] Text can be excluded from doc using the following notation: (-- internal comment --) A few directives are available in documentation. Note that directives must appear on a single line to be properly identified. The `include` directive includes a markdown file from an external source: (== include path/to/file ==) The `resource_for` directive marks a message to be the resource of a collection in REST view. If it is not specified, tools attempt to infer the resource from the operations in a collection: (== resource_for v1.shelves.books ==) The directive `suppress_warning` does not directly affect documentation and is documented together with service config validation.",
       "id": "Documentation",
       "properties": {
         "documentationRootUrl": {
@@ -1160,6 +1169,13 @@
           "description": "A list of documentation rules that apply to individual API elements. **NOTE:** All service configuration rules follow \"last one wins\" order.",
           "items": {
             "$ref": "DocumentationRule"
+          },
+          "type": "array"
+        },
+        "sectionOverrides": {
+          "description": "Specifies section and content to override boilerplate content provided by go/api-docgen. Currently overrides following sections: 1. rest.service.client_libraries",
+          "items": {
+            "$ref": "Page"
           },
           "type": "array"
         },
@@ -1285,13 +1301,15 @@
           "type": "string"
         },
         "groups": {
-          "description": "DEPRECATED: Please use field `values`. Service group should have prefix `groups/`. The names of the service groups that are enabled (Not Implemented). go/predefined-service-groups. Example: `groups/googleServices`.",
+          "deprecated": true,
+          "description": "DEPRECATED: Please use field `values`. Service group should have prefix `groups/`. The names of the service groups that are enabled (Not Implemented). Example: `groups/googleServices`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "services": {
+          "deprecated": true,
           "description": "DEPRECATED: Please use field `values`. Service should have prefix `services/`. The names of the services that are enabled. Example: `storage.googleapis.com`.",
           "items": {
             "type": "string"
@@ -1299,7 +1317,7 @@
           "type": "array"
         },
         "values": {
-          "description": "The names of the services or service groups that are enabled. Example: `services/storage.googleapis.com`, groups/googleServices`, groups/allServices`.",
+          "description": "The names of the services or service groups that are enabled. Example: `services/storage.googleapis.com`, `groups/googleServices`, `groups/allServices`.",
           "items": {
             "type": "string"
           },
@@ -1330,6 +1348,7 @@
       "id": "Endpoint",
       "properties": {
         "aliases": {
+          "deprecated": true,
           "description": "Unimplemented. Dot not use. DEPRECATED: This field is no longer supported. Instead of using aliases, please specify multiple google.api.Endpoint for each of the intended aliases. Additional names that this endpoint will be hosted on.",
           "items": {
             "type": "string"
@@ -1522,6 +1541,25 @@
         },
         "typeUrl": {
           "description": "The field type URL, without the scheme, for message or enumeration types. Example: `\"type.googleapis.com/google.protobuf.Timestamp\"`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "FieldPolicy": {
+      "description": "Google API Policy Annotation This message defines a simple API policy annotation that can be used to annotate API request and response message fields with applicable policies. One field may have multiple applicable policies that must all be satisfied before a request can be processed. This policy annotation is used to generate the overall policy that will be used for automatic runtime policy enforcement and documentation generation.",
+      "id": "FieldPolicy",
+      "properties": {
+        "resourcePermission": {
+          "description": "Specifies the required permission(s) for the resource referred to by the field. It requires the field contains a valid resource reference, and the request must pass the permission checks to proceed. For example, \"resourcemanager.projects.get\".",
+          "type": "string"
+        },
+        "resourceType": {
+          "description": "Specifies the resource type for the resource referred to by the field.",
+          "type": "string"
+        },
+        "selector": {
+          "description": "Selects one or more request or response message fields to apply this `FieldPolicy`. When a `FieldPolicy` is used in proto annotation, the selector must be left as empty. The service config generator will automatically fill the correct value. When a `FieldPolicy` is used in service config, the selector must be a comma-separated string with valid request or response field paths, such as \"foo.bar\" or \"foo.bar,foo.baz\".",
           "type": "string"
         }
       },
@@ -1852,15 +1890,67 @@
       },
       "type": "object"
     },
-    "GroupValue": {
-      "description": "Unimplemented. Do not use. GroupValue contains information of a service group.",
-      "id": "GroupValue",
+    "GoogleApiServiceusageV2alphaConsumerPolicy": {
+      "description": "Consumer Policy is a set of rules that define what services or service groups can be used for a cloud resource hierarchy.",
+      "id": "GoogleApiServiceusageV2alphaConsumerPolicy",
       "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. Annotations is an unstructured key-value map stored with a policy that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. [AIP-128](https://google.aip.dev/128#annotations)",
+          "type": "object"
+        },
+        "createTime": {
+          "description": "Output only. The time the policy was created. For singleton policies, this is the first touch of the policy.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "enableRules": {
+          "description": "Enable rules define usable services, groups, and categories. There can currently be at most one `EnableRule`. This restriction will be lifted in later releases.",
+          "items": {
+            "$ref": "GoogleApiServiceusageV2alphaEnableRule"
+          },
+          "type": "array"
+        },
+        "etag": {
+          "description": "Output only. An opaque tag indicating the current version of the policy, used for concurrency control.",
+          "readOnly": true,
+          "type": "string"
+        },
         "name": {
-          "description": "The name of the value. Example: `groups/googleSerivice`.",
+          "description": "Output only. The resource name of the policy. Only the `default` policy is supported: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "updateTime": {
+          "description": "Output only. The time the policy was last updated.",
+          "format": "google-datetime",
+          "readOnly": true,
           "type": "string"
         }
       },
+      "type": "object"
+    },
+    "GoogleApiServiceusageV2alphaEnableRule": {
+      "description": "The consumer policy rule that defines enabled services, groups, and categories.",
+      "id": "GoogleApiServiceusageV2alphaEnableRule",
+      "properties": {
+        "services": {
+          "description": "The names of the services that are enabled. Example: `services/storage.googleapis.com`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata": {
+      "description": "Metadata for the `UpdateConsumerPolicy` method.",
+      "id": "GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata",
+      "properties": {},
       "type": "object"
     },
     "Http": {
@@ -2241,10 +2331,35 @@
       },
       "type": "object"
     },
+    "MethodPolicy": {
+      "description": "Defines policies applying to an RPC method.",
+      "id": "MethodPolicy",
+      "properties": {
+        "requestPolicies": {
+          "description": "Policies that are applicable to the request message.",
+          "items": {
+            "$ref": "FieldPolicy"
+          },
+          "type": "array"
+        },
+        "selector": {
+          "description": "Selects a method to which these policies should be enforced, for example, \"google.pubsub.v1.Subscriber.CreateSubscription\". Refer to selector for syntax details. NOTE: This field must not be set in the proto annotation. It will be automatically filled by the service config compiler .",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "MethodSettings": {
       "description": "Describes the generator configuration for a method.",
       "id": "MethodSettings",
       "properties": {
+        "autoPopulatedFields": {
+          "description": "List of top-level fields of the request message, that should be automatically populated by the client libraries based on their (google.api.field_info).format. Currently supported format: UUID4. Example of a YAML configuration: publishing: method_settings: - selector: google.example.v1.ExampleService.CreateExample auto_populated_fields: - request_id",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "longRunning": {
           "$ref": "LongRunning",
           "description": "Describes settings to use for long-running operations when generating API methods for RPCs. Complements RPCs that use the annotations in google/longrunning/operations.proto. Example of a YAML configuration:: publishing: method_settings: - selector: google.cloud.speech.v2.Speech.BatchRecognize long_running: initial_poll_delay: seconds: 60 # 1 minute poll_delay_multiplier: 1.5 max_poll_delay: seconds: 360 # 6 minutes total_poll_timeout: seconds: 54000 # 90 minutes"
@@ -2373,6 +2488,7 @@
           "type": "string"
         },
         "launchStage": {
+          "deprecated": true,
           "description": "Deprecated. Must use the MetricDescriptor.launch_stage instead.",
           "enum": [
             "LAUNCH_STAGE_UNSPECIFIED",
@@ -2486,7 +2602,7 @@
           "type": "string"
         },
         "type": {
-          "description": "Required. The monitored resource type. For example, the type `\"cloudsql_database\"` represents databases in Google Cloud SQL. For a list of types, see [Monitoring resource types](https://cloud.google.com/monitoring/api/resources) and [Logging resource types](https://cloud.google.com/logging/docs/api/v2/resource-list).",
+          "description": "Required. The monitored resource type. For example, the type `\"cloudsql_database\"` represents databases in Google Cloud SQL. For a list of types, see [Monitored resource types](https://cloud.google.com/monitoring/api/resources) and [Logging resource types](https://cloud.google.com/logging/docs/api/v2/resource-list).",
           "type": "string"
         }
       },
@@ -2582,7 +2698,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -2726,6 +2842,10 @@
         "protoReferenceDocumentationUri": {
           "description": "Optional link to proto reference documentation. Example: https://cloud.google.com/pubsub/lite/docs/reference/rpc",
           "type": "string"
+        },
+        "restReferenceDocumentationUri": {
+          "description": "Optional link to REST reference documentation. Example: https://cloud.google.com/pubsub/lite/docs/reference/rest",
+          "type": "string"
         }
       },
       "type": "object"
@@ -2858,12 +2978,20 @@
       "type": "object"
     },
     "RemoveEnableRulesResponse": {
-      "description": "The response message of \"RemoveEnableRules\" method.",
+      "description": "The response message of `RemoveEnableRules` method.",
       "id": "RemoveEnableRulesResponse",
       "properties": {
         "parent": {
           "description": "The parent consumer policy. It can be `projects/12345/consumerPolicies/default`, or `folders/12345/consumerPolicies/default`, or `organizations/12345/consumerPolicies/default`.",
           "type": "string"
+        },
+        "removedValues": {
+          "deprecated": true,
+          "description": "The values removed from the parent consumer policy.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -2890,32 +3018,6 @@
         "uniqueId": {
           "description": "The unique and stable id of the service account. https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts#ServiceAccount",
           "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "ServiceValue": {
-      "description": "ServiceValue contains information of a service.",
-      "id": "ServiceValue",
-      "properties": {
-        "dnsAddress": {
-          "description": "The DNS address at which this service is available.",
-          "type": "string"
-        },
-        "name": {
-          "description": "The name of the value. Example: `services/storage.googleapis.com`.",
-          "type": "string"
-        },
-        "pricingLink": {
-          "description": "A link to pricing information for the service, such as https://cloud.google.com/bigquery/pricing.",
-          "type": "string"
-        },
-        "tos": {
-          "description": "Terms of Service",
-          "items": {
-            "$ref": "TermsOfService"
-          },
-          "type": "array"
         }
       },
       "type": "object"
@@ -3027,21 +3129,6 @@
       },
       "type": "object"
     },
-    "TermsOfService": {
-      "description": "TermsOfService captures the metadata about a given terms of service",
-      "id": "TermsOfService",
-      "properties": {
-        "title": {
-          "description": "Title of the terms of service.",
-          "type": "string"
-        },
-        "uri": {
-          "description": "URL/URI of the terms of service.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "Type": {
       "description": "A protocol buffer message type.",
       "id": "Type",
@@ -3102,9 +3189,9 @@
       "properties": {},
       "type": "object"
     },
-    "UpdateConsumerPolicyLROMetadata": {
-      "description": "Metadata for the `UpdateConsumerPolicyLRO` method.",
-      "id": "UpdateConsumerPolicyLROMetadata",
+    "UpdateConsumerPolicyMetadata": {
+      "description": "Metadata for the `UpdateConsumerPolicy` method.",
+      "id": "UpdateConsumerPolicyMetadata",
       "properties": {},
       "type": "object"
     },
@@ -3148,33 +3235,6 @@
         "skipServiceControl": {
           "description": "If true, the selected method should skip service control and the control plane features, such as quota and billing, will not be available. This flag is used by Google Cloud Endpoints to bypass checks for internal methods, such as service health check methods.",
           "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "ValueInfo": {
-      "description": "Information about the value field. Only support value type as service now.",
-      "id": "ValueInfo",
-      "properties": {
-        "groupValue": {
-          "$ref": "GroupValue",
-          "description": "The information related to the value if it is a service group."
-        },
-        "learnmoreLink": {
-          "description": "For public services, it must point to the product landing page. For private services, it should point to the internal site. For service group, it is TBD.",
-          "type": "string"
-        },
-        "serviceValue": {
-          "$ref": "ServiceValue",
-          "description": "The information related to the value if it is a service."
-        },
-        "summary": {
-          "description": "The product summary for this value.",
-          "type": "string"
-        },
-        "title": {
-          "description": "The product title for this value.",
-          "type": "string"
         }
       },
       "type": "object"
