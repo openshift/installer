@@ -106,7 +106,7 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 			logrus.Debugf("Using custom rootfs URL: %s", a.rootFSURL)
 		} else {
 			// Default to the URL from the RHCOS streams file
-			defaultRootFSURL, err := baseIso.getRootFSURL(ctx, a.cpuArch, agentWorkflow, clusterInfo)
+			defaultRootFSURL, err := baseIso.getRootFSURL(ctx, a.cpuArch, clusterInfo.OSImage)
 			if err != nil {
 				return err
 			}

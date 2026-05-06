@@ -37,9 +37,8 @@ func (i *BaseIso) Name() string {
 }
 
 // Fetch RootFS URL using the rhcos.json.
-func (i *BaseIso) getRootFSURL(ctx context.Context, archName string, agentWorkflow *workflow.AgentWorkflow, clusterInfo *joiner.ClusterInfo) (string, error) {
-	metal, err := rhcos.GetMetalArtifact(
-		ctx, archName, customStreamGetter(agentWorkflow, clusterInfo))
+func (i *BaseIso) getRootFSURL(ctx context.Context, archName string, agentWorkflow *workflow.AgentWorkflow, st *stream.Stream) (string, error) {
+	metal, err := rhcos.GetMetalArtifactWithStream(ctx, archName, st)
 	if err != nil {
 		return "", err
 	}
