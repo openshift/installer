@@ -77,25 +77,23 @@ func TestBaseIso(t *testing.T) {
 					baseIsoFileName: ocBaseIsoFilename,
 					baseIsoError:    tc.getIsoError,
 				},
-				func(ctx context.Context) (*stream.Stream, error) {
-					return &stream.Stream{
-						Architectures: map[string]stream.Arch{
-							"x86_64": {
-								Artifacts: map[string]stream.PlatformArtifacts{
-									"metal": {
-										Release: ocReleaseImage,
-										Formats: map[string]stream.ImageFormat{
-											"iso": {
-												Disk: &stream.Artifact{
-													Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
-												},
+				&stream.Stream{
+					Architectures: map[string]stream.Arch{
+						"x86_64": {
+							Artifacts: map[string]stream.PlatformArtifacts{
+								"metal": {
+									Release: ocReleaseImage,
+									Formats: map[string]stream.ImageFormat{
+										"iso": {
+											Disk: &stream.Artifact{
+												Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
 											},
 										},
 									},
 								},
 							},
 						},
-					}, nil
+					},
 				})
 			filename, err := fetcher.GetBaseISOFilename(context.Background(), "")
 
