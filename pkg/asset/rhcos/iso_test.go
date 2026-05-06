@@ -113,7 +113,7 @@ type mockRelease struct {
 	baseIsoError    error
 }
 
-func (m *mockRelease) GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error) {
+func (m *mockRelease) GetBaseIso(architecture string, st *stream.Stream) (string, error) {
 	if m.baseIsoError != nil {
 		return "", m.baseIsoError
 	}

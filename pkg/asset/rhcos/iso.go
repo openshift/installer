@@ -26,14 +26,6 @@ type BaseIso struct {
 	ocRelease ReleasePayload
 }
 
-// CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
-type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
-
-// defaultCoreOSStreamGetter uses the pinned metadata.
-var defaultCoreOSStreamGetter = func(ctx context.Context) (*stream.Stream, error) {
-	return rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
-}
-
 // NewBaseISOFetcher returns a struct that can be used to fetch a base ISO using
 // the default method.
 func NewBaseISOFetcher(ocRelease ReleasePayload, st *stream.Stream) *BaseIso {
@@ -146,7 +138,7 @@ func (i *BaseIso) retrieveBaseIso(ctx context.Context, archName string) (string,
 		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOExtract); err != nil {
 			return "", err
 		}
-		baseIsoFileName, err := i.ocRelease.GetBaseIso(archName, func(ctx context.Context) (*stream.Stream, error) { return i.st, nil } /* TODO: temp change */)
+		baseIsoFileName, err := i.ocRelease.GetBaseIso(archName, i.st)
 		if err == nil {
 			if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOVerify); err != nil {
 				return "", err

@@ -22,6 +22,7 @@ import (
 	"github.com/thedevsaddam/retry"
 
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -45,7 +46,7 @@ type ExtractConfig struct {
 
 // ReleasePayload is the interface to use the oc command to the get image info.
 type ReleasePayload interface {
-	GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error)
+	GetBaseIso(architecture string, st *stream.Stream) (string, error)
 	GetBaseIsoVersion(architecture string) (string, error)
 	ExtractFile(image string, filename string, architecture string) ([]string, error)
 }
@@ -93,7 +94,7 @@ func (r *releasePayload) ExtractFile(image string, filename string, architecture
 }
 
 // Get the CoreOS ISO from the releaseImage.
-func (r *releasePayload) GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error) {
+func (r *releasePayload) GetBaseIso(architecture string, st *stream.Stream) (string, error) {
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
 	image, err := r.getImageFromRelease(machineOsImageName, architecture)
 	if err != nil {
@@ -113,7 +114,7 @@ func (r *releasePayload) GetBaseIso(architecture string, streamGetter CoreOSBuil
 	}
 	if cachedFile != "" {
 		logrus.Info("Verifying cached file")
-		valid, err := r.verifyCacheFile(image, cachedFile, architecture, streamGetter)
+		valid, err := r.verifyCacheFile(image, cachedFile, architecture, st)
 		if err != nil {
 			return "", err
 		}
@@ -265,12 +266,15 @@ func (r *releasePayload) extractFileFromImage(image, file, cacheDir string, arch
 }
 
 // Get hash from rhcos.json.
-func (r *releasePayload) getHashFromInstaller(architecture string, streamGetter CoreOSBuildFetcher) (bool, string) {
+func (r *releasePayload) getHashFromInstaller(architecture string, st *stream.Stream) (bool, string) {
 	// Get hash from metadata in the installer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
-	st, err := streamGetter(ctx)
+	var err error
+	if st == nil {
+		st, err = rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+	}
 	if err != nil {
 		return false, ""
 	}
@@ -298,7 +302,7 @@ func matchingHash(imageSha []byte, sha string) bool {
 }
 
 // Check if there is a different base ISO in the release payload.
-func (r *releasePayload) verifyCacheFile(image, file, architecture string, streamGetter CoreOSBuildFetcher) (bool, error) {
+func (r *releasePayload) verifyCacheFile(image, file, architecture string, st *stream.Stream) (bool, error) {
 	// Get hash of cached file
 	f, err := os.Open(file)
 	if err != nil {
@@ -313,7 +317,7 @@ func (r *releasePayload) verifyCacheFile(image, file, architecture string, strea
 	fileSha := h.Sum(nil)
 
 	// Check if the hash of cached file matches hash in rhcos.json
-	found, rhcosSha := r.getHashFromInstaller(architecture, streamGetter)
+	found, rhcosSha := r.getHashFromInstaller(architecture, st)
 	if found && matchingHash(fileSha, rhcosSha) {
 		logrus.Debug("Found matching hash in installer metadata")
 		return true, nil
