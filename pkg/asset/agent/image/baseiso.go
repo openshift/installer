@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -37,9 +36,8 @@ func (i *BaseIso) Name() string {
 }
 
 // Fetch RootFS URL using the rhcos.json.
-func (i *BaseIso) getRootFSURL(ctx context.Context, archName string, agentWorkflow *workflow.AgentWorkflow, clusterInfo *joiner.ClusterInfo) (string, error) {
-	metal, err := rhcos.GetMetalArtifact(
-		ctx, archName, customStreamGetter(agentWorkflow, clusterInfo))
+func (i *BaseIso) getRootFSURL(ctx context.Context, archName string) (string, error) {
+	metal, err := rhcos.GetMetalArtifact(ctx, archName)
 	if err != nil {
 		return "", err
 	}
@@ -72,8 +70,7 @@ func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) erro
 	dependencies.Get(agentManifests, registriesConf, agentWorkflow, clusterInfo)
 
 	baseIsoFileName, err := rhcos.NewBaseISOFetcher(
-		i.getRelease(agentManifests, registriesConf.MirrorConfig),
-		customStreamGetter(agentWorkflow, clusterInfo)).GetBaseISOFilename(ctx, agentManifests.InfraEnv.Spec.CpuArchitecture)
+		i.getRelease(agentManifests, registriesConf.MirrorConfig)).GetBaseISOFilename(ctx, agentManifests.InfraEnv.Spec.CpuArchitecture)
 
 	if err == nil {
 		logrus.Debugf("Using base ISO image %s", baseIsoFileName)
@@ -83,15 +80,6 @@ func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) erro
 	logrus.Debugf("Failed to download base ISO: %s", err)
 
 	return errors.Wrap(err, "failed to get base ISO image")
-}
-
-func customStreamGetter(agentWorkflow *workflow.AgentWorkflow, clusterInfo *joiner.ClusterInfo) rhcos.CoreOSBuildFetcher {
-	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
-		return func(ctx context.Context) (*stream.Stream, error) {
-			return clusterInfo.OSImage, nil
-		}
-	}
-	return nil
 }
 
 func (i *BaseIso) getRelease(agentManifests *manifests.AgentManifests, mirrorConfig types.MirrorConfig) rhcos.ReleasePayload {

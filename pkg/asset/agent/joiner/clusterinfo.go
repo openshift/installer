@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -70,8 +68,6 @@ type ClusterInfo struct {
 	DeprecatedImageContentSources []types.ImageContentSource
 	PlatformType                  hiveext.PlatformType
 	SSHKey                        string
-	OSImage                       *stream.Stream
-	OSImageLocation               string
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
 	Nodes                         *corev1.NodeList
@@ -121,7 +117,6 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 		ci.retrieveArchitecture,
 		ci.retrieveImageDigestMirrorSets,
 		ci.retrieveImageContentSourcePolicies,
-		ci.retrieveOsImage,
 		ci.retrieveIgnitionEndpointWorker,
 		ci.retrievePlatformType,
 		ci.retrieveAPIDNSName,
@@ -475,43 +470,6 @@ func (ci *ClusterInfo) retrieveImageContentSourcePolicies() error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveOsImage() error {
-	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("openshift-machine-config-operator").Get(context.Background(), "coreos-bootimages", metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-	data, ok := clusterConfig.Data["stream"]
-	if !ok {
-		return fmt.Errorf("cannot find stream data")
-	}
-
-	var st stream.Stream
-	if err := json.Unmarshal([]byte(data), &st); err != nil {
-		return fmt.Errorf("failed to parse CoreOS stream metadata: %w", err)
-	}
-	ci.OSImage = &st
-
-	clusterArch := arch.RpmArch(ci.Architecture)
-	streamArch, err := st.GetArchitecture(clusterArch)
-	if err != nil {
-		return err
-	}
-	metal, ok := streamArch.Artifacts["metal"]
-	if !ok {
-		return fmt.Errorf("stream data not found for 'metal' artifact")
-	}
-	format, ok := metal.Formats["iso"]
-	if !ok {
-		return fmt.Errorf("no ISO found to download for %s", clusterArch)
-	}
-	ci.OSImageLocation = format.Disk.Location
-
-	return nil
-}
-
 // This method retrieves, if present, the secured ignition endpoint - along with its ca certificate.
 // These information will be used to configure subsequently the imported Assisted Service cluster,
 // so that the secure port (22623) could be used by the nodes to fetch the worker ignition.
@@ -679,7 +637,6 @@ func (ci *ClusterInfo) reportResult(ctx context.Context) error {
 	results := map[string]string{
 		"Version":      ci.Version,
 		"ReleaseImage": ci.ReleaseImage,
-		"OSImage":      ci.OSImageLocation,
 		"PlatformType": string(ci.PlatformType),
 		"Architecture": ci.Architecture,
 	}

@@ -269,7 +269,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	infraEnvID := infraEnvAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
-	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, customStreamGetter(agentWorkflow, clusterInfo))
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion)
 	if err != nil {
 		return err
 	}
@@ -745,13 +745,13 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	return nil
 }
 
-func getOSImagesInfo(ctx context.Context, cpuArch string, openshiftVersion string, streamGetter rhcos.CoreOSBuildFetcher) (*models.OsImage, error) {
+func getOSImagesInfo(ctx context.Context, cpuArch string, openshiftVersion string) (*models.OsImage, error) {
 	osImage := &models.OsImage{
 		CPUArchitecture: &cpuArch,
 	}
 	osImage.OpenshiftVersion = &openshiftVersion
 
-	artifacts, err := rhcos.GetMetalArtifact(ctx, cpuArch, streamGetter)
+	artifacts, err := rhcos.GetMetalArtifact(ctx, cpuArch)
 	if err != nil {
 		return nil, err
 	}
