@@ -612,6 +612,353 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 	}
 }
 
+func Test_setSubnetsManagedVPC_publicOnly(t *testing.T) {
+	type args struct {
+		in *networkInput
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    capa.NetworkSpec
+	}{
+		{
+			name: "public-only /22 with 3 AZs yields /24 public subnets",
+			args: args{
+				in: &networkInput{
+					ClusterID: stubClusterID(),
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = &types.InstallConfig{
+							Publish: types.ExternalPublishingStrategy,
+							Networking: &types.Networking{
+								MachineNetwork: []types.MachineNetworkEntry{
+									{
+										CIDR: *ipnet.MustParseCIDR("10.0.0.0/22"),
+									},
+								},
+							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{},
+							},
+						}
+						return ic
+					}(),
+					Cluster: &capa.AWSCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "infraId",
+							Namespace: capiutils.Namespace,
+						},
+						Spec: capa.AWSClusterSpec{},
+					},
+					ZonesInRegion: []string{"a", "b", "c"},
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{CidrBlock: "10.0.0.0/22"},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "infra-id-subnet-public-a",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.0/24",
+					},
+					{
+						ID:               "infra-id-subnet-public-b",
+						AvailabilityZone: "b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.1.0/24",
+					},
+					{
+						ID:               "infra-id-subnet-public-c",
+						AvailabilityZone: "c",
+						IsPublic:         true,
+						CidrBlock:        "10.0.2.0/24",
+					},
+				},
+			},
+		},
+		{
+			name: "public-only /22 with 3 AZs and edge zone",
+			args: args{
+				in: &networkInput{
+					ClusterID: stubClusterID(),
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = &types.InstallConfig{
+							Publish: types.ExternalPublishingStrategy,
+							Networking: &types.Networking{
+								MachineNetwork: []types.MachineNetworkEntry{
+									{
+										CIDR: *ipnet.MustParseCIDR("10.0.0.0/22"),
+									},
+								},
+							},
+							Compute: []types.MachinePool{
+								{
+									Name: "edge",
+									Platform: types.MachinePoolPlatform{
+										AWS: &awstypes.MachinePool{
+											Zones: []string{"edge-a"},
+										},
+									},
+								},
+							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{},
+							},
+						}
+						return ic
+					}(),
+					Cluster: &capa.AWSCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "infraId",
+							Namespace: capiutils.Namespace,
+						},
+						Spec: capa.AWSClusterSpec{},
+					},
+					ZonesInRegion: []string{"a", "b", "c"},
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{CidrBlock: "10.0.0.0/22"},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "infra-id-subnet-public-a",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.0/25",
+					},
+					{
+						ID:               "infra-id-subnet-public-b",
+						AvailabilityZone: "b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.128/25",
+					},
+					{
+						ID:               "infra-id-subnet-public-c",
+						AvailabilityZone: "c",
+						IsPublic:         true,
+						CidrBlock:        "10.0.1.0/25",
+					},
+					{
+						ID:               "infra-id-subnet-public-edge-a",
+						AvailabilityZone: "edge-a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.1.128/26",
+					},
+				},
+			},
+		},
+		{
+			name: "public-only /22 with 3 AZs and 2 edge zones",
+			args: args{
+				in: &networkInput{
+					ClusterID: stubClusterID(),
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = &types.InstallConfig{
+							Publish: types.ExternalPublishingStrategy,
+							Networking: &types.Networking{
+								MachineNetwork: []types.MachineNetworkEntry{
+									{
+										CIDR: *ipnet.MustParseCIDR("10.0.0.0/22"),
+									},
+								},
+							},
+							Compute: []types.MachinePool{
+								{
+									Name: "edge",
+									Platform: types.MachinePoolPlatform{
+										AWS: &awstypes.MachinePool{
+											Zones: []string{"edge-a", "edge-b"},
+										},
+									},
+								},
+							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{},
+							},
+						}
+						return ic
+					}(),
+					Cluster: &capa.AWSCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "infraId",
+							Namespace: capiutils.Namespace,
+						},
+						Spec: capa.AWSClusterSpec{},
+					},
+					ZonesInRegion: []string{"a", "b", "c"},
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{CidrBlock: "10.0.0.0/22"},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "infra-id-subnet-public-a",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.0/25",
+					},
+					{
+						ID:               "infra-id-subnet-public-b",
+						AvailabilityZone: "b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.128/25",
+					},
+					{
+						ID:               "infra-id-subnet-public-c",
+						AvailabilityZone: "c",
+						IsPublic:         true,
+						CidrBlock:        "10.0.1.0/25",
+					},
+					{
+						ID:               "infra-id-subnet-public-edge-a",
+						AvailabilityZone: "edge-a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.1.128/27",
+					},
+					{
+						ID:               "infra-id-subnet-public-edge-b",
+						AvailabilityZone: "edge-b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.1.160/27",
+					},
+				},
+			},
+		},
+		{
+			name: "public-only single AZ",
+			args: args{
+				in: &networkInput{
+					ClusterID: stubClusterID(),
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = &types.InstallConfig{
+							Publish: types.ExternalPublishingStrategy,
+							Networking: &types.Networking{
+								MachineNetwork: []types.MachineNetworkEntry{
+									{
+										CIDR: *ipnet.MustParseCIDR("10.0.0.0/22"),
+									},
+								},
+							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{},
+							},
+						}
+						return ic
+					}(),
+					Cluster: &capa.AWSCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "infraId",
+							Namespace: capiutils.Namespace,
+						},
+						Spec: capa.AWSClusterSpec{},
+					},
+					ZonesInRegion: []string{"a"},
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{CidrBlock: "10.0.0.0/22"},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "infra-id-subnet-public-a",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.0/23",
+					},
+				},
+			},
+		},
+		{
+			name: "public-only dualstack",
+			args: args{
+				in: &networkInput{
+					ClusterID: stubClusterID(),
+					InstallConfig: func() *installconfig.InstallConfig {
+						ic := stubInstallConfig()
+						ic.Config = &types.InstallConfig{
+							Publish: types.ExternalPublishingStrategy,
+							Networking: &types.Networking{
+								MachineNetwork: []types.MachineNetworkEntry{
+									{
+										CIDR: *ipnet.MustParseCIDR(stubDefaultCIDR),
+									},
+								},
+							},
+							Platform: types.Platform{
+								AWS: &awstypes.Platform{
+									IPFamily: network.DualStackIPv4Primary,
+								},
+							},
+						}
+						return ic
+					}(),
+					Cluster: &capa.AWSCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "infraId",
+							Namespace: capiutils.Namespace,
+						},
+						Spec: capa.AWSClusterSpec{},
+					},
+					ZonesInRegion: []string{"a", "b"},
+				},
+			},
+			want: capa.NetworkSpec{
+				VPC: capa.VPCSpec{
+					CidrBlock: stubDefaultCIDR,
+					IPv6:      &capa.IPv6{},
+				},
+				Subnets: []capa.SubnetSpec{
+					{
+						ID:               "infra-id-subnet-public-a",
+						AvailabilityZone: "a",
+						IsPublic:         true,
+						CidrBlock:        "10.0.0.0/18",
+						IsIPv6:           true,
+					},
+					{
+						ID:               "infra-id-subnet-public-b",
+						AvailabilityZone: "b",
+						IsPublic:         true,
+						CidrBlock:        "10.0.64.0/18",
+						IsIPv6:           true,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY", "1")
+
+			err := setSubnetsManagedVPC(tt.args.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("setSubnetsManagedVPC() error: %+v, wantErr %+v", err, tt.wantErr)
+			}
+			if tt.args.in == nil && (err == nil) {
+				return
+			}
+			if tt.args.in.Cluster == nil && (err == nil) {
+				return
+			}
+
+			if len(tt.args.in.Cluster.Spec.NetworkSpec.Subnets) == 0 {
+				if !tt.wantErr {
+					t.Errorf("setSubnetsManagedVPC() no subnets, wantErr: %v", tt.wantErr)
+				}
+				return
+			}
+			tt.args.in.Cluster.Spec.NetworkSpec.Subnets = tSortCapaSubnetsByID(tt.args.in.Cluster.Spec.NetworkSpec.Subnets)
+			if got := tt.args.in.Cluster.Spec.NetworkSpec; !cmp.Equal(got, tt.want) {
+				t.Errorf("setSubnetsManagedVPC() NetworkSpec diff: %v", cmp.Diff(got, tt.want))
+			}
+		})
+	}
+}
+
 func Test_setSubnetsBYOVPC(t *testing.T) {
 	type args struct {
 		in *networkInput
