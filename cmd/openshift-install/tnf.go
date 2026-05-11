@@ -4,9 +4,9 @@ import (
 	"context"
 	"path/filepath"
 
+	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 

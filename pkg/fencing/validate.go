@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	"github.com/sirupsen/logrus"
 	gossh "golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +37,7 @@ const (
 
 var (
 	stonithEnabledRe = regexp.MustCompile(`(?i)stonith-enabled\s*[:=]\s*true`)
-	daemonActiveRe   = regexp.MustCompile(`(?i)active.*running|enabled`)
+	daemonActiveRe   = regexp.MustCompile(`(?i)active.*(running|enabled)`)
 )
 
 // NodeInfo holds resolved information about a cluster node.
