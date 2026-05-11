@@ -68,6 +68,25 @@ func Run(client *ssh.Client, command string) error {
 	return sess.Run(command)
 }
 
+// RunOutput executes a command via SSH and returns the captured stdout and stderr.
+// Unlike Run, which pipes output to the logger, RunOutput captures it for programmatic use.
+func RunOutput(client *ssh.Client, command string) (string, string, error) {
+	sess, err := client.NewSession()
+	if err != nil {
+		return "", "", err
+	}
+	defer sess.Close()
+	if err := agent.RequestAgentForwarding(sess); err != nil {
+		return "", "", errors.Wrap(err, "failed to setup request agent forwarding")
+	}
+
+	var stdout, stderr strings.Builder
+	sess.Stdout = &stdout
+	sess.Stderr = &stderr
+	err = sess.Run(command)
+	return stdout.String(), stderr.String(), err
+}
+
 // PullFileTo downloads the file from remote server using SSH connection and writes to localPath.
 func PullFileTo(client *ssh.Client, remotePath, localPath string) error {
 	sc, err := sftp.NewClient(client)
