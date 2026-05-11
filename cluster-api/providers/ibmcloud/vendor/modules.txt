@@ -120,8 +120,8 @@ github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/globaltaggingv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/vpc-go-sdk v0.65.0
-## explicit; go 1.23.0
+# github.com/IBM/vpc-go-sdk v0.64.2
+## explicit; go 1.21
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
 # github.com/NYTimes/gziphandler v1.1.1
@@ -265,9 +265,9 @@ github.com/gobuffalo/flect
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
-# github.com/golang-jwt/jwt v3.2.2+incompatible
-## explicit
-github.com/golang-jwt/jwt
+# github.com/golang-jwt/jwt/v4 v4.5.2
+## explicit; go 1.16
+github.com/golang-jwt/jwt/v4
 # github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 ## explicit
 github.com/golang/groupcache/lru
@@ -1230,7 +1230,7 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/common/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
-# sigs.k8s.io/cluster-api v1.9.5
+# sigs.k8s.io/cluster-api v1.9.9
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api/api/v1beta1
 sigs.k8s.io/cluster-api/errors
@@ -1245,8 +1245,8 @@ sigs.k8s.io/cluster-api/util/labels
 sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20250319131234-d3cc59096981
-## explicit; go 1.23.2
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20260422073953-8064d488f9da
+## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-ibmcloud
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
