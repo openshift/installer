@@ -17,7 +17,7 @@ export CGO_ENABLED=0
 MODE="${MODE:-release}"
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
-GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
+GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty | sed 's/^v\?1\.//')}"
 DEFAULT_ARCH="${DEFAULT_ARCH:-amd64}"
 GOFLAGS="${GOFLAGS:--mod=vendor}"
 GCFLAGS=""
