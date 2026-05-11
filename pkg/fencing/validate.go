@@ -310,7 +310,7 @@ func checkEtcdHealth(client *gossh.Client, nodes []NodeInfo) error {
 // --- Fencing ---
 
 func fenceNode(client *gossh.Client, pcmkName string) error {
-	cmd := fmt.Sprintf("timeout %d pcs stonith fence %s", fenceTimeout, pcmkName)
+	cmd := fmt.Sprintf("timeout %d pcs stonith fence %s", fenceTimeout, shellQuote(pcmkName))
 	_, err := sshRun(client, cmd)
 	return err
 }

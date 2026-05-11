@@ -228,7 +228,8 @@ func TestParseEtcdMembers(t *testing.T) {
 				{"isLearner":false,"clientURLs":["https://10.0.0.1:2379"]},
 				{"isLearner":false,"clientURLs":["https://10.0.0.2:2379"]}
 			]}`,
-			ipA: "10.0.0.1", ipB: "10.0.0.2",
+			ipA:     "10.0.0.1",
+			ipB:     "10.0.0.2",
 			wantErr: false,
 		},
 		{
@@ -237,7 +238,8 @@ func TestParseEtcdMembers(t *testing.T) {
 				{"isLearner":false,"clientURLs":["https://10.0.0.1:2379"]},
 				{"isLearner":true,"clientURLs":["https://10.0.0.2:2379"]}
 			]}`,
-			ipA: "10.0.0.1", ipB: "10.0.0.2",
+			ipA:     "10.0.0.1",
+			ipB:     "10.0.0.2",
 			wantErr: true,
 		},
 		{
@@ -245,13 +247,15 @@ func TestParseEtcdMembers(t *testing.T) {
 			input: `{"members":[
 				{"isLearner":false,"clientURLs":["https://10.0.0.1:2379"]}
 			]}`,
-			ipA: "10.0.0.1", ipB: "10.0.0.2",
+			ipA:     "10.0.0.1",
+			ipB:     "10.0.0.2",
 			wantErr: true,
 		},
 		{
 			name:    "invalid json",
 			input:   `bad`,
-			ipA:     "10.0.0.1", ipB: "10.0.0.2",
+			ipA:     "10.0.0.1",
+			ipB:     "10.0.0.2",
 			wantErr: true,
 		},
 	}
@@ -267,14 +271,23 @@ func TestParseEtcdMembers(t *testing.T) {
 
 func TestFormatEtcdURL(t *testing.T) {
 	tests := []struct {
+		name   string
 		ip     string
 		expect string
 	}{
-		{"10.0.0.1", "https://10.0.0.1:2379"},
-		{"fd00::1", "https://[fd00::1]:2379"},
+		{
+			name:   "IPv4 address",
+			ip:     "10.0.0.1",
+			expect: "https://10.0.0.1:2379",
+		},
+		{
+			name:   "IPv6 address",
+			ip:     "fd00::1",
+			expect: "https://[fd00::1]:2379",
+		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.ip, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			got := formatEtcdURL(tc.ip)
 			if got != tc.expect {
 				t.Errorf("formatEtcdURL(%q) = %q, want %q", tc.ip, got, tc.expect)
