@@ -43,15 +43,13 @@ func (*Proxy) Name() string {
 func (*Proxy) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&Networking{},
 	}
 }
 
 // Generate generates the Proxy config and its CRD.
 func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	network := &Networking{}
-	dependencies.Get(installConfig, network)
+	dependencies.Get(installConfig)
 
 	p.Config = &configv1.Proxy{
 		TypeMeta: metav1.TypeMeta{
@@ -82,7 +80,7 @@ func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 	}
 
 	if p.Config.Spec.HTTPProxy != "" || p.Config.Spec.HTTPSProxy != "" {
-		noProxy, err := createNoProxy(installConfig, network)
+		noProxy, err := createNoProxy(installConfig)
 		if err != nil {
 			return err
 		}
@@ -122,7 +120,7 @@ func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
 // https://cloud.google.com/compute/docs/storing-retrieving-metadata
-func createNoProxy(installConfig *installconfig.InstallConfig, network *Networking) (string, error) {
+func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
 	internalAPIServer, err := url.Parse(getInternalAPIServerURL(installConfig.Config))
 	if err != nil {
 		return "", errors.New("failed parsing internal API server when creating Proxy manifest")
@@ -179,8 +177,8 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		set.Insert(network.CIDR.String())
 	}
 
-	for _, clusterNetwork := range network.Config.Spec.ClusterNetwork {
-		set.Insert(clusterNetwork.CIDR)
+	for _, clusterNetwork := range installConfig.Config.Networking.ClusterNetwork {
+		set.Insert(clusterNetwork.CIDR.String())
 	}
 
 	for _, userValue := range strings.Split(installConfig.Config.Proxy.NoProxy, ",") {
