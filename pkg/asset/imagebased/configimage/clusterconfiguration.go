@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/thoas/go-funk"
 	k8sjson "sigs.k8s.io/json"
@@ -108,7 +109,7 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 		Hostname:              imageBasedConfig.Config.Hostname,
 		InfraID:               clusterID.InfraID,
 		KubeadminPasswordHash: pwdHash,
-		Proxy:                 installConfig.Config.Proxy,
+		Proxy:                 enrichNoProxy(installConfig.Config.Proxy, installConfig.Config.Networking),
 		PullSecret:            installConfig.Config.PullSecret,
 		ReleaseRegistry:       imageBasedConfig.Config.ReleaseRegistry,
 		SSHKey:                installConfig.Config.SSHKey,
@@ -214,6 +215,25 @@ func (cc *ClusterConfiguration) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 	return nil
+}
+
+// enrichNoProxy adds cluster, service, and machine networks to the NoProxy field
+// to ensure internal cluster communication bypasses the proxy.
+func enrichNoProxy(proxy *types.Proxy, networking *types.Networking) *types.Proxy {
+	if proxy == nil {
+		return nil
+	}
+	if proxy.NoProxy == "*" {
+		return proxy
+	}
+
+	set := types.BuildNoProxySet(networking, proxy.NoProxy)
+
+	return &types.Proxy{
+		HTTPProxy:  proxy.HTTPProxy,
+		HTTPSProxy: proxy.HTTPSProxy,
+		NoProxy:    strings.Join(set.List(), ","),
+	}
 }
 
 func chronyConfWithAdditionalNTPSources(sources []string) string {
