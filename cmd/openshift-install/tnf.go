@@ -4,12 +4,12 @@ import (
 	"context"
 	"path/filepath"
 
-	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/fencing"
 	"github.com/openshift/installer/pkg/metrics/timer"
