@@ -236,12 +236,12 @@ func runPreFlight(client *gossh.Client, nodes []NodeInfo) error {
 }
 
 func checkStonith(client *gossh.Client) error {
-	out, err := sshRun(client, "(pcs stonith config || pcs stonith status || pcs stonith show) 2>&1")
-	if err != nil || strings.TrimSpace(out) == "" {
+	out, _ := sshRun(client, "pcs stonith config || pcs stonith status || pcs stonith show")
+	if strings.TrimSpace(out) == "" {
 		return fmt.Errorf("no STONITH devices configured")
 	}
 
-	prop, err := sshRun(client, "pcs property config stonith-enabled 2>&1 || pcs property list stonith-enabled 2>&1 || pcs property show --all stonith-enabled 2>&1")
+	prop, err := sshRun(client, "pcs property config stonith-enabled || pcs property list stonith-enabled || pcs property show --all stonith-enabled")
 	if err != nil {
 		return fmt.Errorf("could not read stonith-enabled property: %w", err)
 	}
@@ -253,7 +253,7 @@ func checkStonith(client *gossh.Client) error {
 }
 
 func checkPacemakerOnline(client *gossh.Client, nodes []NodeInfo) error {
-	out, err := sshRun(client, "pcs status nodes 2>/dev/null || crm_mon -1 2>/dev/null")
+	out, err := sshRun(client, "pcs status nodes || crm_mon -1")
 	if err != nil {
 		return fmt.Errorf("checking pacemaker status: %w", err)
 	}
@@ -269,7 +269,7 @@ func checkPacemakerOnline(client *gossh.Client, nodes []NodeInfo) error {
 }
 
 func checkDaemons(client *gossh.Client) error {
-	out, err := sshRun(client, "pcs status --full 2>/dev/null || pcs status 2>/dev/null")
+	out, err := sshRun(client, "pcs status --full || pcs status")
 	if err != nil {
 		return fmt.Errorf("checking daemon status: %w", err)
 	}
@@ -364,7 +364,7 @@ func pollPacemakerOnline(ctx context.Context, client *gossh.Client, nodes []Node
 	pollCtx, cancel := context.WithTimeout(ctx, pcmkTimeout)
 	defer cancel()
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
-		out, err := sshRun(client, "pcs status nodes 2>/dev/null || crm_mon -1 2>/dev/null")
+		out, err := sshRun(client, "pcs status nodes || crm_mon -1")
 		if err != nil {
 			return false, nil
 		}
@@ -517,7 +517,7 @@ func parseEtcdMembers(output, ipA, ipB string) error {
 }
 
 func resolvePacemakerNames(client *gossh.Client, nodes []NodeInfo) error {
-	out, err := sshRun(client, "pcs status nodes 2>/dev/null || crm_mon -1 2>/dev/null")
+	out, err := sshRun(client, "pcs status nodes || crm_mon -1")
 	if err != nil {
 		return fmt.Errorf("resolving pacemaker node names: %w", err)
 	}

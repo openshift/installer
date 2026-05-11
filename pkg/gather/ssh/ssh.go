@@ -77,7 +77,7 @@ func RunOutput(client *ssh.Client, command string) (string, string, error) {
 	}
 	defer sess.Close()
 	if err := agent.RequestAgentForwarding(sess); err != nil {
-		return "", "", errors.Wrap(err, "failed to setup request agent forwarding")
+		logrus.Debugf("agent forwarding unavailable: %v", err)
 	}
 
 	var stdout, stderr strings.Builder
