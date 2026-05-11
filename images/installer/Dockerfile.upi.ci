@@ -61,7 +61,6 @@ RUN yum update -y && \
       openssl \      
       python3-pip \
       python3-pyyaml \
-      bind-utils \
       util-linux \
       xz \
       qemu-img && \
