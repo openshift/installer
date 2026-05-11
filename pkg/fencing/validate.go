@@ -236,7 +236,10 @@ func runPreFlight(client *gossh.Client, nodes []NodeInfo) error {
 }
 
 func checkStonith(client *gossh.Client) error {
-	out, _ := sshRun(client, "pcs stonith config || pcs stonith status || pcs stonith show")
+	out, err := sshRun(client, "pcs stonith config || pcs stonith status || pcs stonith show")
+	if err != nil && strings.TrimSpace(out) == "" {
+		return fmt.Errorf("no STONITH devices configured: %w", err)
+	}
 	if strings.TrimSpace(out) == "" {
 		return fmt.Errorf("no STONITH devices configured")
 	}
