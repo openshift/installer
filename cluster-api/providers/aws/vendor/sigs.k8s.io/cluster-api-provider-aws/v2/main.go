@@ -53,18 +53,22 @@ import (
 	ekscontrolplanev1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta1"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
 	ekscontrolplanecontrollers "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/controllers"
+	ekswebhooks "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/webhooks"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	rosacontrolplanecontrollers "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/controllers"
+	rosawebhooks "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/webhooks"
 	expinfrav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta1"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/exp/controlleridentitycreator"
 	expcontrollers "sigs.k8s.io/cluster-api-provider-aws/v2/exp/controllers"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/exp/instancestate"
+	expwebhooks "sigs.k8s.io/cluster-api-provider-aws/v2/exp/webhooks"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/endpoints"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/version"
+	capawebhooks "sigs.k8s.io/cluster-api-provider-aws/v2/webhooks"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/flags"
@@ -282,17 +286,17 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := (&rosacontrolplanev1.ROSAControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&rosawebhooks.ROSAControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ROSAControlPlane")
 			os.Exit(1)
 		}
 
-		if err := (&expinfrav1.ROSAMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.ROSAMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ROSAMachinePool")
 			os.Exit(1)
 		}
 
-		if err := (&expinfrav1.ROSANetwork{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.ROSANetwork{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ROSANetwork")
 			os.Exit(1)
 		}
@@ -307,7 +311,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := (&expinfrav1.ROSARoleConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.ROSARoleConfig{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ROSARoleConfig")
 			os.Exit(1)
 		}
@@ -388,7 +392,7 @@ func setupReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager,
 			os.Exit(1)
 		}
 
-		if err := (&expinfrav1.AWSMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.AWSMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AWSMachinePool")
 			os.Exit(1)
 		}
@@ -418,31 +422,31 @@ func setupReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager,
 		}
 	}
 
-	if err := (&infrav1.AWSMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSMachineTemplate")
 		os.Exit(1)
 	}
-	if err := (&infrav1.AWSCluster{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSCluster{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSCluster")
 		os.Exit(1)
 	}
-	if err := (&infrav1.AWSClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSClusterTemplate")
 		os.Exit(1)
 	}
-	if err := (&infrav1.AWSClusterControllerIdentity{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSClusterControllerIdentity{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSClusterControllerIdentity")
 		os.Exit(1)
 	}
-	if err := (&infrav1.AWSClusterRoleIdentity{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSClusterRoleIdentity{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSClusterRoleIdentity")
 		os.Exit(1)
 	}
-	if err := (&infrav1.AWSClusterStaticIdentity{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSClusterStaticIdentity{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSClusterStaticIdentity")
 		os.Exit(1)
 	}
-	if err := (&infrav1.AWSMachine{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&capawebhooks.AWSMachine{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSMachine")
 		os.Exit(1)
 	}
@@ -492,6 +496,14 @@ func setupEKSReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager,
 		os.Exit(1)
 	}
 
+	if err := (&eksbootstrapcontrollers.NodeadmConfigReconciler{
+		Client:           mgr.GetClient(),
+		WatchFilterValue: watchFilterValue,
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NodeadmConfig")
+		os.Exit(1)
+	}
+
 	setupLog.Debug("enabling EKS managed cluster controller")
 	if err := (&controllers.AWSManagedClusterReconciler{
 		Client:           mgr.GetClient(),
@@ -513,7 +525,7 @@ func setupEKSReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager,
 			setupLog.Error(err, "unable to create controller", "controller", "AWSFargateProfile")
 		}
 
-		if err := (&expinfrav1.AWSFargateProfile{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.AWSFargateProfile{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AWSFargateProfile")
 			os.Exit(1)
 		}
@@ -534,18 +546,18 @@ func setupEKSReconcilersAndWebhooks(ctx context.Context, mgr ctrl.Manager,
 			os.Exit(1)
 		}
 
-		if err := (&expinfrav1.AWSManagedMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.AWSManagedMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AWSManagedMachinePool")
 			os.Exit(1)
 		}
 	}
 
-	if err := (&ekscontrolplanev1.AWSManagedControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&ekswebhooks.AWSManagedControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSManagedControlPlane")
 		os.Exit(1)
 	}
 
-	if err := (&ekscontrolplanev1.AWSManagedControlPlaneTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&ekswebhooks.AWSManagedControlPlaneTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AWSManagedControlPlaneTemplate")
 		os.Exit(1)
 	}

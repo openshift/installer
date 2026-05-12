@@ -44,6 +44,7 @@ type OCMClient interface {
 	DeleteCluster(clusterKey string, bestEffort bool, creator *aws.Creator) (*v1.Cluster, error)
 	DeleteNodePool(clusterID string, nodePoolID string) error
 	DeleteUser(clusterID string, group string, username string) error
+	GetAvailableChannels(versionID string) ([]string, error)
 	GetCluster(clusterKey string, creator *aws.Creator) (*v1.Cluster, error)
 	GetControlPlaneUpgradePolicies(clusterID string) (controlPlaneUpgradePolicies []*v1.ControlPlaneUpgradePolicy, err error)
 	GetHTPasswdUserList(clusterID string, htpasswdIDPId string) (*v1.HTPasswdUserList, error)
@@ -124,6 +125,10 @@ func (c *ocmclient) GetNodePools(clusterID string) ([]*v1.NodePool, error) {
 
 func (c *ocmclient) GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error) {
 	return c.ocmClient.GetHypershiftNodePoolUpgrade(clusterID, clusterKey, nodePoolID)
+}
+
+func (c *ocmclient) GetAvailableChannels(versionID string) ([]string, error) {
+	return c.ocmClient.GetAvailableChannels(versionID)
 }
 
 func (c *ocmclient) GetCluster(clusterKey string, creator *aws.Creator) (*v1.Cluster, error) {

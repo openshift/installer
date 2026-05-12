@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 Red Hat, Inc.
+Copyright (c) 2026 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@ limitations under the License.
 */
 
 enum ProvisionShardTopology {
-
-    // Provision shard for hosted clusters is configured in a "dedicated" topology.
-    @json(name = "dedicated")
-    Dedicated
+		// Represents a provision shard with shared topology. In this topology, all
+		// ARO-HCP Clusters share a common pool of K8s Nodes for control plane
+		// request serving workloads, rather than using a different set of
+		// dedicated K8s Nodes per ARO-HCP cluster.
+		@json(name = "shared")
+		Shared
 }

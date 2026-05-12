@@ -22,7 +22,7 @@ package v1beta2
 
 import (
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 	apiv1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
@@ -461,6 +461,11 @@ func (in *RosaControlPlaneStatus) DeepCopyInto(out *RosaControlPlaneStatus) {
 	}
 	if in.AvailableUpgrades != nil {
 		in, out := &in.AvailableUpgrades, &out.AvailableUpgrades
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.AvailableChannels != nil {
+		in, out := &in.AvailableChannels, &out.AvailableChannels
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

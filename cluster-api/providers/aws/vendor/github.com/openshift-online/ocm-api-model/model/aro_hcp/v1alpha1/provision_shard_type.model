@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Red Hat, Inc.
+Copyright (c) 2026 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,45 +14,54 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Contains the properties of the provision shard, including AWS and GCP related configurations
+// Contains the properties of the provision shard
 class ProvisionShard {
-
-	// Contains the configuration for Hive.
-	HiveConfig ServerConfig
-
-	// Contains the configuration for the AWS account operator.
-	AWSAccountOperatorConfig ServerConfig
-
-	// Contains the configuration for the GCP project operator.
-	GCPProjectOperator ServerConfig
-
-	// Contains the AWS base domain.
-	AWSBaseDomain String
-
-	// Contains the GCP base domain.
-	GCPBaseDomain String
-
 	// Contains the cloud-provider region in which the provisioner spins up the cluster.
+	// Required during creation.
+	// Immutable.
 	link Region CloudRegion
 
 	// Contains the cloud provider name.
+	// Required during creation.
+	// Immutable.
 	link CloudProvider CloudProvider
 
-	// Contains the configuration for Hypershift.
-	HypershiftConfig ServerConfig
+	// Topology sets how the control plane workloads that are request serving
+	// (those receiving communication from outside the control plane)
+	// are mapped to Nodes in the control plane K8s Cluster.
+	// Required during creation.
+	Topology String
 
-	// Contains the name of the management cluster for Hypershift clusters that are assigned to this shard.
-	// This field is populated by OCM, and must not be overwritten via API.
-	ManagementCluster String
+	// The Azure related configuration of the Provision Shard.
+	// Required during creation.
+	AzureShard AzureShard
 
-	// Status of the provision shard. Possible values: active/maintenance/offline.
+	// The Maestro related configuration of the Provision Shard.
+	// Required during creation.
+	MaestroConfig ProvisionShardMaestroConfig
+
+	// Status of the provision shard.
+	// Optional. By default it is set to `maintenance`.
+	// During creation the possible values are: `maintenance`.
+	// During update the possible values are: `active`, `maintenance`, `offline`.
+	// Adding a new shard and activating it requires creating it
+	// in `maintenance` status and then perform an aditional update call setting it
+	// to `active` status.
+	// A shard in `active` status is available for selection when a Cluster needs
+	// to be allocated to a shard.
+	// A shard in `maintenance` status is not available for selection when a Cluster
+	// needs to be allocated to a shard.
+	// A shard in `offline` status is not available for selection when a Cluster
+	// needs to be allocated to a shard.
 	Status String
 
 	// Date and time when the provision shard was initially created, using the
 	// format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+	// Readonly.
 	CreationTimestamp Date
 
 	// Date and time when the provision shard was last updated, using the
 	// format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+	// Readonly.
 	LastUpdateTimestamp Date
 }

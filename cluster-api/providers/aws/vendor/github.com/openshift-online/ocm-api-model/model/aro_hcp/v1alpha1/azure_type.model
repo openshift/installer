@@ -112,4 +112,22 @@ struct Azure {
 	// Currently etcd data encryption is only supported with customer managed keys.
 	// Creating a cluster with platform managed keys will result in a failure creating the cluster.
 	EtcdEncryption AzureEtcdEncryption
+
+	// The OIDC issuer URL for workload identity federation
+	// This URL is used by Azure managed identities to establish trust with cluster.
+	// Readonly
+	OidcIssuerUrl String
+
+    // Vnet Integration Subnet Resource ID is the Azure Resource ID of a pre-existing Azure
+    // Subnet used for SWIFT networking (Azure Container Networking Interface).
+    // This subnet is delegated to Microsoft.RedHatOpenShift/hcpOpenShiftClusters
+    // via a Service Association Link and is used for pod networking in the cluster.
+    // Vnet Integration Subnet Resource ID must be located in the same Azure location as the
+    // cluster's region and in the same VNet as Subnet Resource ID.
+    // The Azure Subscription specified as part of the Vnet Integration Subnet Resource ID must
+    // be located in the same Azure Subscription as Subscription ID.
+    // This field is optional - if not specified, SWIFT networking will not be enabled.
+    // Immutable.
+    VnetIntegrationSubnetResourceID string
+
 }

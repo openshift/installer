@@ -130,6 +130,10 @@ type AWSLaunchTemplate struct {
 	// +optional
 	InstanceMetadataOptions *infrav1.InstanceMetadataOptions `json:"instanceMetadataOptions,omitempty"`
 
+	// EnclaveOptions defines the options for Nitro Enclave support on the instance.
+	// +optional
+	EnclaveOptions *infrav1.EnclaveOptions `json:"enclaveOptions,omitempty"`
+
 	// PrivateDNSName is the options for the instance hostname.
 	// +optional
 	PrivateDNSName *infrav1.PrivateDNSName `json:"privateDnsName,omitempty"`

@@ -21,14 +21,15 @@ package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v
 
 // Contains the necessary attributes to support KMS encryption for Azure based clusters.
 type AzureKmsEncryptionBuilder struct {
-	fieldSet_ []bool
-	activeKey *AzureKmsKeyBuilder
+	fieldSet_  []bool
+	activeKey  *AzureKmsKeyBuilder
+	visibility AzureKmsEncryptionVisibility
 }
 
 // NewAzureKmsEncryption creates a new builder of 'azure_kms_encryption' objects.
 func NewAzureKmsEncryption() *AzureKmsEncryptionBuilder {
 	return &AzureKmsEncryptionBuilder{
-		fieldSet_: make([]bool, 1),
+		fieldSet_: make([]bool, 2),
 	}
 }
 
@@ -50,7 +51,7 @@ func (b *AzureKmsEncryptionBuilder) Empty() bool {
 // Contains the necessary attributes to support KMS encryption key for Azure based clusters
 func (b *AzureKmsEncryptionBuilder) ActiveKey(value *AzureKmsKeyBuilder) *AzureKmsEncryptionBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 1)
+		b.fieldSet_ = make([]bool, 2)
 	}
 	b.activeKey = value
 	if value != nil {
@@ -58,6 +59,18 @@ func (b *AzureKmsEncryptionBuilder) ActiveKey(value *AzureKmsKeyBuilder) *AzureK
 	} else {
 		b.fieldSet_[0] = false
 	}
+	return b
+}
+
+// Visibility sets the value of the 'visibility' attribute to the given value.
+//
+// AzureKmsEncryptionVisibility defines the visibility of the Azure KMS key vault.
+func (b *AzureKmsEncryptionBuilder) Visibility(value AzureKmsEncryptionVisibility) *AzureKmsEncryptionBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 2)
+	}
+	b.visibility = value
+	b.fieldSet_[1] = true
 	return b
 }
 
@@ -75,6 +88,7 @@ func (b *AzureKmsEncryptionBuilder) Copy(object *AzureKmsEncryption) *AzureKmsEn
 	} else {
 		b.activeKey = nil
 	}
+	b.visibility = object.visibility
 	return b
 }
 
@@ -91,5 +105,6 @@ func (b *AzureKmsEncryptionBuilder) Build() (object *AzureKmsEncryption, err err
 			return
 		}
 	}
+	object.visibility = b.visibility
 	return
 }

@@ -3,6 +3,71 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+## 0.1.499 Mar 31 2026
+
+- OCM-22967 | fix: removing pgx dependency
+
+## 0.1.498 Mar 11 2026
+
+- Update model to 0.0.453
+  - Add `OidcIssuerUrl` field to ARO-HCP Azure type for workload identity federation
+  - Add `Visibility` field and `AzureKmsEncryptionVisibility` type to `AzureKmsEncryption`
+
+## 0.1.497 Feb 25 2026
+
+- Update model to 0.0.452
+  - Add the `AvailableChannels` method to the Version resource
+
+## 0.1.496 Feb 24 2026
+- Update model to 0.0.451
+  - Add the `GcpDnsDomain` type and include in the `DNSDomain` as a field.
+
+## 0.1.495 Feb 23 2026
+- Update model to 0.0.450
+  - Add `ImageDigestMirrors` field to `ClusterRegistryConfig` for ARO-HCP.
+
+## 0.1.494 Feb 12 2026
+- Update model to 0.0.449
+  - Add ARO-HCP `ControlPlaneUpgradePolicies` resource to manage control plane upgrade policies
+  - Add ARO-HCP `NodePoolUpgradePolicies` resource to manage node pool upgrade policies
+  - Simplify ARO-HCP upgrade policy types by removing scheduling-related fields (`Schedule`, `ScheduleType`, `UpgradeType`, `NextRun`, `EnableMinorVersionUpgrades`)
+
+## 0.1.493 Jan 25 2026
+- Update model to 0.0.448
+  - Add `VnetIntegrationSubnetResourceID` field to ARO-HCP Azure type for SWIFT
+    networking (Azure Container Networking Interface) support
+  - Expose ARO-HCP cluster's provision shard subresource GET endpoint
+  - Expose ARO-HCP provision shard global endpoints
+
+## 0.1.492
+- Update model to 0.0.447
+  - Make `Topology` attribute of ARO-HCP `ProvisionShard` required and restrict
+    its allowed value to `shared`
+  - Expand `EtcdEncryption` attribute description for ROSA-HCP Clusters
+
+## 0.1.491
+- Update model to 0.0.446
+  - Add `AzureShard` and `ProvisionShardMaestroConfig` to ARO-HCP `ProvisionShard`
+    type
+  - Remove `HypershiftConfig`, `ManagementCluster`, `HiveConfig`,
+    `AWSAccountOperatorConfig`, `GCPProjectOperator`, `AWSBaseDomain`, `AWSBaseDomain`
+    from ARO-HCP `ProvisionShard` type
+
+## 0.1.490
+- Update model to 0.0.444
+  - Add `ExcludedNamespaceSelectors` to ingress type
+
+## 0.1.489
+- Update model to 0.0.443
+  - Add `Channel` field to `Cluster` type for Y-stream update channel management
+
+## 0.1.488
+- Update model to 0.0.442
+  - Add DeletedClusters new resource to list deleted clusters and get a deleted cluster by its id
+
+## 0.1.487
+- Add `cloud_provider` field to CS `dns_domains` type
+
 ## 0.1.486
 - Align log forwarding config endpoints with API
 

@@ -32,8 +32,12 @@ resource NodePool {
 		method AsyncDelete {
 		}
 
-		locator Status {
-			target NodePoolStatus
-		}
+	locator Status {
+		target NodePoolStatus
+	}
 
+	// Reference to the resource that manages the collection of upgrade policies for the node pool.
+	locator UpgradePolicies {
+		target NodePoolUpgradePolicies
+	}
 }

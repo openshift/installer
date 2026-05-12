@@ -102,6 +102,11 @@ resource Root {
 		target PendingDeleteClusters
 	}
 
+	// Reference to the resource that manages the collection of deleted clusters.
+    locator DeletedClusters {
+        target DeletedClusters
+    }
+
 	//Reference to the resource that manages dns domains.
 	locator DNSDomains {
 	    target DNSDomains

@@ -22,30 +22,15 @@ class NodePoolUpgradePolicy {
 	// Node Pool ID this upgrade policy is defined for.
 	NodePoolID String
 
-	// Schedule cron expression that defines automatic upgrade scheduling.
-	Schedule String
-
-	// Schedule type of the upgrade.
-	ScheduleType ScheduleType
-
-	// Upgrade type of the node pool.
-	UpgradeType UpgradeType
-
 	// Version is the desired upgrade version.
 	Version String
 
-	// Next time the upgrade should run.
-	NextRun Date
-
-	// Indicates if minor version upgrades are allowed for automatic upgrades (for manual it's always allowed).
-	EnableMinorVersionUpgrades Boolean
+	// State of the upgrade policy for the node pool.
+	State UpgradePolicyState
 
 	// Timestamp for creation of resource.
 	CreationTimestamp Date
 
 	// Timestamp for last update that happened to resource.
 	LastUpdateTimestamp Date
-
-	// State of the upgrade policy for the node pool.
-	State UpgradePolicyState
 }

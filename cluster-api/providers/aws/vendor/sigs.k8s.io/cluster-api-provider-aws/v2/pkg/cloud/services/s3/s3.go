@@ -207,6 +207,7 @@ func (s *Service) Create(ctx context.Context, m *scope.MachineScope, data []byte
 		Bucket:               aws.String(bucket),
 		Key:                  aws.String(key),
 		ServerSideEncryption: s3types.ServerSideEncryptionAwsKms,
+		ChecksumAlgorithm:    s3types.ChecksumAlgorithmCrc32,
 	}); err != nil {
 		return "", errors.Wrap(err, "putting object")
 	}
@@ -258,6 +259,7 @@ func (s *Service) CreateForMachinePool(ctx context.Context, scope scope.LaunchTe
 		Bucket:               aws.String(bucket),
 		Key:                  aws.String(key),
 		ServerSideEncryption: s3types.ServerSideEncryptionAwsKms,
+		ChecksumAlgorithm:    s3types.ChecksumAlgorithmCrc32,
 	}); err != nil {
 		return "", errors.Wrap(err, "putting object for machine pool")
 	}
@@ -424,8 +426,9 @@ func (s *Service) ensureBucketPolicy(ctx context.Context, bucketName string) err
 	}
 
 	input := &s3.PutBucketPolicyInput{
-		Bucket: aws.String(bucketName),
-		Policy: aws.String(bucketPolicy),
+		Bucket:            aws.String(bucketName),
+		Policy:            aws.String(bucketPolicy),
+		ChecksumAlgorithm: s3types.ChecksumAlgorithmCrc32, // The default is CRC32 anyway
 	}
 
 	if _, err := s.S3Client.PutBucketPolicy(ctx, input); err != nil {
@@ -443,7 +446,8 @@ func (s *Service) ensureBucketLifecycleConfiguration(ctx context.Context, bucket
 	}
 
 	input := &s3.PutBucketLifecycleConfigurationInput{
-		Bucket: aws.String(bucketName),
+		Bucket:            aws.String(bucketName),
+		ChecksumAlgorithm: s3types.ChecksumAlgorithmCrc32,
 		LifecycleConfiguration: &s3types.BucketLifecycleConfiguration{
 			Rules: []s3types.LifecycleRule{
 				{
@@ -476,7 +480,8 @@ func (s *Service) ensureBucketLifecycleConfiguration(ctx context.Context, bucket
 
 func (s *Service) tagBucket(ctx context.Context, bucketName string) error {
 	taggingInput := &s3.PutBucketTaggingInput{
-		Bucket: aws.String(bucketName),
+		Bucket:            aws.String(bucketName),
+		ChecksumAlgorithm: s3types.ChecksumAlgorithmCrc32,
 		Tagging: &s3types.Tagging{
 			TagSet: nil,
 		},

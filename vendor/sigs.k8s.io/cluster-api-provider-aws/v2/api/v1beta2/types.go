@@ -405,6 +405,13 @@ const (
 	PrimaryIPv6AssignmentStateDisabled = PrimaryIPv6AssignmentState("disabled")
 )
 
+// EnclaveOptions defines the options for Nitro Enclave support on the instance.
+type EnclaveOptions struct {
+	// Enabled enables the instance for AWS Nitro Enclaves.
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+}
+
 // InstanceMetadataOptions describes metadata options for the EC2 instance.
 type InstanceMetadataOptions struct {
 	// Enables or disables the HTTP metadata endpoint on your instances.
@@ -615,6 +622,17 @@ const (
 	AWSConfidentialComputePolicySEVSNP AWSConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
 )
 
+// NestedVirtualizationPolicy represents the nested virtualization configuration for the instance.
+// +kubebuilder:validation:Enum=enabled;disabled
+type NestedVirtualizationPolicy string
+
+const (
+	// NestedVirtualizationPolicyEnabled enables nested virtualization for the instance.
+	NestedVirtualizationPolicyEnabled NestedVirtualizationPolicy = "enabled"
+	// NestedVirtualizationPolicyDisabled disables nested virtualization for the instance.
+	NestedVirtualizationPolicyDisabled NestedVirtualizationPolicy = "disabled"
+)
+
 // CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
 // +kubebuilder:validation:MinProperties=1
 type CPUOptions struct {
@@ -632,4 +650,10 @@ type CPUOptions struct {
 	// which is subject to change without notice. The current default is Disabled.
 	// +optional
 	ConfidentialCompute AWSConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+
+	// NestedVirtualization specifies whether to enable nested virtualization on the instance.
+	// Nested virtualization is supported on C8i, M8i, and R8i instance types.
+	// Valid values are: enabled, disabled
+	// +optional
+	NestedVirtualization NestedVirtualizationPolicy `json:"nestedVirtualization,omitempty"`
 }

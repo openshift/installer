@@ -2,15 +2,19 @@
 
 ## Sign the CLA
 
-Kubernetes projects require that you sign a Contributor License Agreement (CLA) before we can accept your pull requests.  Please see https://git.k8s.io/community/CLA.md for more info
+Kubernetes projects require that you sign a Contributor License Agreement (CLA) before we can accept your pull requests. Please see https://git.k8s.io/community/CLA.md for more info
+
+### AI Usage
+
+Please ensure you have read the project's [AI policy](./AI_POLICY.md).
 
 ### Contributing A Patch
 
 1. Submit an issue describing your proposed change to the repo in question.
 2. The [repo owners](OWNERS) will respond to your issue promptly.
 3. If your proposed change is accepted, and you haven't already done so, sign a Contributor License Agreement (see details above).
-4. Fork the desired repo, develop and test your code changes. 
-> See the [developer guide](https://cluster-api-aws.sigs.k8s.io/development/development.html) on how to setup your development environment.
+4. Fork the desired repo, develop and test your code changes.
+   > See the [developer guide](https://cluster-api-aws.sigs.k8s.io/development/development.html) on how to setup your development environment.
 5. Submit a pull request.
 
 ### Contributer Ladder
@@ -55,7 +59,7 @@ The steps to add someone as a reviewer are:
 - Announce the change within the CAPA slack channel and as a PSA in the next CAPA office hours
 - After 7 days of lazy consensus or after the next CAPA office hours (whichever is longer) the PR can be merged
 - Open PR to add Github username to **cluster-api-provider-aws-maintainers**
-to https://github.com/kubernetes/org/blob/main/config/kubernetes-sigs/sig-cluster-lifecycle/teams.yaml
+  to https://github.com/kubernetes/org/blob/main/config/kubernetes-sigs/sig-cluster-lifecycle/teams.yaml
 - Open PR to add Github username to https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/cluster-api-provider-aws/OWNERS
 - Open PR to add Github username to https://github.com/kubernetes/k8s.io/blob/main/k8s.gcr.io/images/k8s-staging-cluster-api-aws/OWNERS
 - Open PR to add Google ID to the k8s-infra-staging-cluster-api-aws@kubernetes.io Google group in https://github.com/kubernetes/k8s.io/blob/main/groups/groups.yaml
@@ -73,4 +77,4 @@ The steps to add someone as an admin are:
 - Announce the change within the CAPA slack channel and as a PSA in the next CAPA office hours
 - After 7 days of lazy consensus or after the next CAPA office hours (whichever is longer) the PR can be merged
 - Open PR to add Github username to **cluster-api-provider-aws-admins**
-to https://github.com/kubernetes/org/blob/main/config/kubernetes-sigs/sig-cluster-lifecycle/teams.yaml
+  to https://github.com/kubernetes/org/blob/main/config/kubernetes-sigs/sig-cluster-lifecycle/teams.yaml

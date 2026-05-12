@@ -213,6 +213,17 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 	reconSvc := r.getReconcileService(ec2Scope)
 
 	if machinePoolScope.ManagedMachinePool.Spec.AWSLaunchTemplate != nil {
+		lt := machinePoolScope.ManagedMachinePool.Spec.AWSLaunchTemplate
+		if err := validateEnclaveEdgeZones(
+			lt.EnclaveOptions,
+			machinePoolScope.ControlPlaneSubnets(),
+			machinePoolScope.ManagedMachinePool.Spec.SubnetIDs,
+			machinePoolScope.ManagedMachinePool.Spec.AvailabilityZones,
+		); err != nil {
+			v1beta1conditions.MarkFalse(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNitroEnclaveEdgeZoneReason, clusterv1beta1.ConditionSeverityError, "%s", err.Error())
+			return ctrl.Result{}, err
+		}
+
 		canStartInstanceRefresh := func() (bool, *autoscalingtypes.InstanceRefreshStatus, error) {
 			return true, nil, nil
 		}

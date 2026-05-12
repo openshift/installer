@@ -50,6 +50,12 @@ struct ClusterRegistryConfig {
 	// whether or not to allow insecure access). It does not contain configuration for the
 	// internal cluster registry.
 	RegistrySources RegistrySources
+	// ImageDigestMirrors contains the configuration for the image mirroring based on digest.
+	// This field is optional and mutable. The default value is nil. The maximum number of image mirror entries is 252.
+	// This fields contents is used to create the ImageDigestMirrorSet on the cluster nodes by Hypershift.
+	// Each image mirror specified here is propogated to the entries in the ImageDigestMirrorSet by Hypershift.
+	// See for more information: https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/config_apis/imagedigestmirrorset-config-openshift-io-v1#imagedigestmirrorset-config-openshift-io-v1.
+	ImageDigestMirrors []ImageMirror
 }
 
 // RegistrySources contains configuration that determines how the container runtime should treat individual

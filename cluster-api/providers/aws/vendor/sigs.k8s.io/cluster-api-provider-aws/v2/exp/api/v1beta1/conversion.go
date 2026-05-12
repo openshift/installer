@@ -47,6 +47,9 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions != nil {
 		dst.Spec.AWSLaunchTemplate.InstanceMetadataOptions = restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions
 	}
+	if restored.Spec.AWSLaunchTemplate.EnclaveOptions != nil {
+		dst.Spec.AWSLaunchTemplate.EnclaveOptions = restored.Spec.AWSLaunchTemplate.EnclaveOptions
+	}
 	if restored.Spec.AvailabilityZoneSubnetType != nil {
 		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
 	}
@@ -120,6 +123,10 @@ func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 		}
 		dst.Spec.AWSLaunchTemplate.InstanceMetadataOptions = restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions
 		dst.Spec.AWSLaunchTemplate.NonRootVolumes = restored.Spec.AWSLaunchTemplate.NonRootVolumes
+
+		if restored.Spec.AWSLaunchTemplate.EnclaveOptions != nil {
+			dst.Spec.AWSLaunchTemplate.EnclaveOptions = restored.Spec.AWSLaunchTemplate.EnclaveOptions
+		}
 
 		if restored.Spec.AWSLaunchTemplate.PrivateDNSName != nil {
 			dst.Spec.AWSLaunchTemplate.PrivateDNSName = restored.Spec.AWSLaunchTemplate.PrivateDNSName

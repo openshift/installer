@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2025 Red Hat, Inc.
+Copyright (c) 2026 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,5 +65,13 @@ resource Cluster {
 		target Autoscaler
 	}
 
+	// Reference to the resource that manages the cluster's provision shard.
+	locator ProvisionShard {
+		target ClusterProvisionShardSubresource
+	}
 
+	// Reference to the resource that manages the collection of upgrade policies for the control plane.
+	locator ControlPlaneUpgradePolicies {
+		target ControlPlaneUpgradePolicies
+	}
 }

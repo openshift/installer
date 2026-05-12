@@ -30,4 +30,9 @@ resource Root {
 		target ManagedIdentitiesRequirements
 	}
 
+	// Reference to the resource that manages the collection of provision shards.
+	locator ProvisionShards {
+		target ProvisionShards
+	}
+
 }

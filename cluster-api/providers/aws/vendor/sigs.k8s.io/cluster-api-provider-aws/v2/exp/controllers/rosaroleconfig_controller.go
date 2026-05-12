@@ -463,20 +463,28 @@ func (r *ROSARoleConfigReconciler) setUpRuntime(ctx context.Context, scope *scop
 		return fmt.Errorf("failed to create OCM client: %w", err)
 	}
 
-	r.Runtime = rosacli.NewRuntime()
-	r.Runtime.OCMClient = ocmClient
-	r.Runtime.Reporter = reporter.CreateReporter() // &rosa.Reporter{}
-	r.Runtime.Logger = rosalogging.NewLogger()
+	runtime := rosacli.NewRuntime()
+	runtime.OCMClient = ocmClient
+	runtime.Reporter = reporter.CreateReporter() // &rosa.Reporter{}
+	runtime.Logger = rosalogging.NewLogger()
 
-	r.Runtime.AWSClient, err = aws.NewClient().Logger(r.Runtime.Logger).Build()
+	session := scope.Session()
+	awsClient, err := aws.NewClient().
+		Logger(runtime.Logger).
+		ExternalConfig(&session).
+		Build()
 	if err != nil {
 		return fmt.Errorf("failed to create aws client: %w", err)
 	}
+	runtime.AWSClient = awsClient
 
-	r.Runtime.Creator, err = r.Runtime.AWSClient.GetCreator()
+	creator, err := awsClient.GetCreator()
 	if err != nil {
 		return fmt.Errorf("failed to get creator: %w", err)
 	}
+	runtime.Creator = creator
 
+	// atomic assignment - only when fully initialized
+	r.Runtime = runtime
 	return nil
 }

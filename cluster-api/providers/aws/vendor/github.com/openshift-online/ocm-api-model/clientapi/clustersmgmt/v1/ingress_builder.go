@@ -28,6 +28,7 @@ type IngressBuilder struct {
 	clusterRoutesHostname         string
 	clusterRoutesTlsSecretRef     string
 	componentRoutes               map[string]*ComponentRouteBuilder
+	excludedNamespaceSelectors    []*NamespaceSelectorBuilder
 	excludedNamespaces            []string
 	listening                     ListeningMethod
 	loadBalancerType              LoadBalancerFlavor
@@ -40,14 +41,14 @@ type IngressBuilder struct {
 // NewIngress creates a new builder of 'ingress' objects.
 func NewIngress() *IngressBuilder {
 	return &IngressBuilder{
-		fieldSet_: make([]bool, 14),
+		fieldSet_: make([]bool, 15),
 	}
 }
 
 // Link sets the flag that indicates if this is a link.
 func (b *IngressBuilder) Link(value bool) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.fieldSet_[0] = true
 	return b
@@ -56,7 +57,7 @@ func (b *IngressBuilder) Link(value bool) *IngressBuilder {
 // ID sets the identifier of the object.
 func (b *IngressBuilder) ID(value string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.id = value
 	b.fieldSet_[1] = true
@@ -66,7 +67,7 @@ func (b *IngressBuilder) ID(value string) *IngressBuilder {
 // HREF sets the link to the object.
 func (b *IngressBuilder) HREF(value string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.href = value
 	b.fieldSet_[2] = true
@@ -90,7 +91,7 @@ func (b *IngressBuilder) Empty() bool {
 // DNSName sets the value of the 'DNS_name' attribute to the given value.
 func (b *IngressBuilder) DNSName(value string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.dnsName = value
 	b.fieldSet_[3] = true
@@ -100,7 +101,7 @@ func (b *IngressBuilder) DNSName(value string) *IngressBuilder {
 // ClusterRoutesHostname sets the value of the 'cluster_routes_hostname' attribute to the given value.
 func (b *IngressBuilder) ClusterRoutesHostname(value string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.clusterRoutesHostname = value
 	b.fieldSet_[4] = true
@@ -110,7 +111,7 @@ func (b *IngressBuilder) ClusterRoutesHostname(value string) *IngressBuilder {
 // ClusterRoutesTlsSecretRef sets the value of the 'cluster_routes_tls_secret_ref' attribute to the given value.
 func (b *IngressBuilder) ClusterRoutesTlsSecretRef(value string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.clusterRoutesTlsSecretRef = value
 	b.fieldSet_[5] = true
@@ -120,7 +121,7 @@ func (b *IngressBuilder) ClusterRoutesTlsSecretRef(value string) *IngressBuilder
 // ComponentRoutes sets the value of the 'component_routes' attribute to the given value.
 func (b *IngressBuilder) ComponentRoutes(value map[string]*ComponentRouteBuilder) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.componentRoutes = value
 	if value != nil {
@@ -134,21 +135,32 @@ func (b *IngressBuilder) ComponentRoutes(value map[string]*ComponentRouteBuilder
 // Default sets the value of the 'default' attribute to the given value.
 func (b *IngressBuilder) Default(value bool) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.default_ = value
 	b.fieldSet_[7] = true
 	return b
 }
 
+// ExcludedNamespaceSelectors sets the value of the 'excluded_namespace_selectors' attribute to the given values.
+func (b *IngressBuilder) ExcludedNamespaceSelectors(values ...*NamespaceSelectorBuilder) *IngressBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 15)
+	}
+	b.excludedNamespaceSelectors = make([]*NamespaceSelectorBuilder, len(values))
+	copy(b.excludedNamespaceSelectors, values)
+	b.fieldSet_[8] = true
+	return b
+}
+
 // ExcludedNamespaces sets the value of the 'excluded_namespaces' attribute to the given values.
 func (b *IngressBuilder) ExcludedNamespaces(values ...string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.excludedNamespaces = make([]string, len(values))
 	copy(b.excludedNamespaces, values)
-	b.fieldSet_[8] = true
+	b.fieldSet_[9] = true
 	return b
 }
 
@@ -157,10 +169,10 @@ func (b *IngressBuilder) ExcludedNamespaces(values ...string) *IngressBuilder {
 // Cluster components listening method.
 func (b *IngressBuilder) Listening(value ListeningMethod) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.listening = value
-	b.fieldSet_[9] = true
+	b.fieldSet_[10] = true
 	return b
 }
 
@@ -169,10 +181,10 @@ func (b *IngressBuilder) Listening(value ListeningMethod) *IngressBuilder {
 // Type of load balancer for AWS cloud provider parameters.
 func (b *IngressBuilder) LoadBalancerType(value LoadBalancerFlavor) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.loadBalancerType = value
-	b.fieldSet_[10] = true
+	b.fieldSet_[11] = true
 	return b
 }
 
@@ -181,23 +193,23 @@ func (b *IngressBuilder) LoadBalancerType(value LoadBalancerFlavor) *IngressBuil
 // Type of Namespace Ownership Policy.
 func (b *IngressBuilder) RouteNamespaceOwnershipPolicy(value NamespaceOwnershipPolicy) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.routeNamespaceOwnershipPolicy = value
-	b.fieldSet_[11] = true
+	b.fieldSet_[12] = true
 	return b
 }
 
 // RouteSelectors sets the value of the 'route_selectors' attribute to the given value.
 func (b *IngressBuilder) RouteSelectors(value map[string]string) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.routeSelectors = value
 	if value != nil {
-		b.fieldSet_[12] = true
+		b.fieldSet_[13] = true
 	} else {
-		b.fieldSet_[12] = false
+		b.fieldSet_[13] = false
 	}
 	return b
 }
@@ -207,10 +219,10 @@ func (b *IngressBuilder) RouteSelectors(value map[string]string) *IngressBuilder
 // Type of wildcard policy.
 func (b *IngressBuilder) RouteWildcardPolicy(value WildcardPolicy) *IngressBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 14)
+		b.fieldSet_ = make([]bool, 15)
 	}
 	b.routeWildcardPolicy = value
-	b.fieldSet_[13] = true
+	b.fieldSet_[14] = true
 	return b
 }
 
@@ -237,6 +249,14 @@ func (b *IngressBuilder) Copy(object *Ingress) *IngressBuilder {
 		b.componentRoutes = nil
 	}
 	b.default_ = object.default_
+	if object.excludedNamespaceSelectors != nil {
+		b.excludedNamespaceSelectors = make([]*NamespaceSelectorBuilder, len(object.excludedNamespaceSelectors))
+		for i, v := range object.excludedNamespaceSelectors {
+			b.excludedNamespaceSelectors[i] = NewNamespaceSelector().Copy(v)
+		}
+	} else {
+		b.excludedNamespaceSelectors = nil
+	}
 	if object.excludedNamespaces != nil {
 		b.excludedNamespaces = make([]string, len(object.excludedNamespaces))
 		copy(b.excludedNamespaces, object.excludedNamespaces)
@@ -280,6 +300,15 @@ func (b *IngressBuilder) Build() (object *Ingress, err error) {
 		}
 	}
 	object.default_ = b.default_
+	if b.excludedNamespaceSelectors != nil {
+		object.excludedNamespaceSelectors = make([]*NamespaceSelector, len(b.excludedNamespaceSelectors))
+		for i, v := range b.excludedNamespaceSelectors {
+			object.excludedNamespaceSelectors[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	if b.excludedNamespaces != nil {
 		object.excludedNamespaces = make([]string, len(b.excludedNamespaces))
 		copy(object.excludedNamespaces, b.excludedNamespaces)

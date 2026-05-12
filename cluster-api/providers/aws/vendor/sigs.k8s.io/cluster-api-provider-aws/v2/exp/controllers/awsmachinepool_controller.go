@@ -293,6 +293,12 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 		return ctrl.Result{}, nil
 	}
 
+	// AWS does not support Nitro Enclaves in Local Zones or Wavelength Zones. Check for that.
+	if err := validateEnclaveOptionsForEdgeZones(machinePoolScope); err != nil {
+		v1beta1conditions.MarkFalse(machinePoolScope.AWSMachinePool, expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateNitroEnclaveEdgeZoneReason, clusterv1beta1.ConditionSeverityError, "%s", err.Error())
+		return ctrl.Result{}, err
+	}
+
 	ec2Svc := r.getEC2Service(ec2Scope)
 	asgsvc := r.getASGService(clusterScope)
 	reconSvc := r.getReconcileService(ec2Scope)
@@ -457,6 +463,27 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// validateEnclaveOptionsForEdgeZones returns an error if enclaveOptions is enabled
+// and any subnet or availability zone on the AWSMachinePool resolves to a Local Zone
+// or Wavelength Zone. AWS does not support Nitro Enclaves in edge zones.
+func validateEnclaveOptionsForEdgeZones(machinePoolScope *scope.MachinePoolScope) error {
+	lt := machinePoolScope.AWSMachinePool.Spec.AWSLaunchTemplate
+
+	subnetIDs := make([]string, 0, len(machinePoolScope.AWSMachinePool.Spec.Subnets))
+	for _, ref := range machinePoolScope.AWSMachinePool.Spec.Subnets {
+		if ref.ID != nil {
+			subnetIDs = append(subnetIDs, *ref.ID)
+		}
+	}
+
+	return validateEnclaveEdgeZones(
+		lt.EnclaveOptions,
+		machinePoolScope.InfraCluster.Subnets(),
+		subnetIDs,
+		machinePoolScope.AWSMachinePool.Spec.AvailabilityZones,
+	)
 }
 
 func (r *AWSMachinePoolReconciler) reconcileDelete(ctx context.Context, machinePoolScope *scope.MachinePoolScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope) error {

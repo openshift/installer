@@ -37,23 +37,19 @@ const ProvisionShardNilKind = "ProvisionShardNil"
 
 // ProvisionShard represents the values of the 'provision_shard' type.
 //
-// Contains the properties of the provision shard, including AWS and GCP related configurations
+// Contains the properties of the provision shard
 type ProvisionShard struct {
-	fieldSet_                []bool
-	id                       string
-	href                     string
-	awsAccountOperatorConfig *ServerConfig
-	awsBaseDomain            string
-	gcpBaseDomain            string
-	gcpProjectOperator       *ServerConfig
-	cloudProvider            *CloudProvider
-	creationTimestamp        time.Time
-	hiveConfig               *ServerConfig
-	hypershiftConfig         *ServerConfig
-	lastUpdateTimestamp      time.Time
-	managementCluster        string
-	region                   *CloudRegion
-	status                   string
+	fieldSet_           []bool
+	id                  string
+	href                string
+	azureShard          *AzureShard
+	cloudProvider       *CloudProvider
+	creationTimestamp   time.Time
+	lastUpdateTimestamp time.Time
+	maestroConfig       *ProvisionShardMaestroConfig
+	region              *CloudRegion
+	status              string
+	topology            string
 }
 
 // Kind returns the name of the type of the object.
@@ -123,94 +119,27 @@ func (o *ProvisionShard) Empty() bool {
 	return true
 }
 
-// AWSAccountOperatorConfig returns the value of the 'AWS_account_operator_config' attribute, or
+// AzureShard returns the value of the 'azure_shard' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Contains the configuration for the AWS account operator.
-func (o *ProvisionShard) AWSAccountOperatorConfig() *ServerConfig {
+// The Azure related configuration of the Provision Shard.
+// Required during creation.
+func (o *ProvisionShard) AzureShard() *AzureShard {
 	if o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3] {
-		return o.awsAccountOperatorConfig
+		return o.azureShard
 	}
 	return nil
 }
 
-// GetAWSAccountOperatorConfig returns the value of the 'AWS_account_operator_config' attribute and
+// GetAzureShard returns the value of the 'azure_shard' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Contains the configuration for the AWS account operator.
-func (o *ProvisionShard) GetAWSAccountOperatorConfig() (value *ServerConfig, ok bool) {
+// The Azure related configuration of the Provision Shard.
+// Required during creation.
+func (o *ProvisionShard) GetAzureShard() (value *AzureShard, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3]
 	if ok {
-		value = o.awsAccountOperatorConfig
-	}
-	return
-}
-
-// AWSBaseDomain returns the value of the 'AWS_base_domain' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Contains the AWS base domain.
-func (o *ProvisionShard) AWSBaseDomain() string {
-	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
-		return o.awsBaseDomain
-	}
-	return ""
-}
-
-// GetAWSBaseDomain returns the value of the 'AWS_base_domain' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Contains the AWS base domain.
-func (o *ProvisionShard) GetAWSBaseDomain() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
-	if ok {
-		value = o.awsBaseDomain
-	}
-	return
-}
-
-// GCPBaseDomain returns the value of the 'GCP_base_domain' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Contains the GCP base domain.
-func (o *ProvisionShard) GCPBaseDomain() string {
-	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
-		return o.gcpBaseDomain
-	}
-	return ""
-}
-
-// GetGCPBaseDomain returns the value of the 'GCP_base_domain' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Contains the GCP base domain.
-func (o *ProvisionShard) GetGCPBaseDomain() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
-	if ok {
-		value = o.gcpBaseDomain
-	}
-	return
-}
-
-// GCPProjectOperator returns the value of the 'GCP_project_operator' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Contains the configuration for the GCP project operator.
-func (o *ProvisionShard) GCPProjectOperator() *ServerConfig {
-	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
-		return o.gcpProjectOperator
-	}
-	return nil
-}
-
-// GetGCPProjectOperator returns the value of the 'GCP_project_operator' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Contains the configuration for the GCP project operator.
-func (o *ProvisionShard) GetGCPProjectOperator() (value *ServerConfig, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
-	if ok {
-		value = o.gcpProjectOperator
+		value = o.azureShard
 	}
 	return
 }
@@ -219,8 +148,10 @@ func (o *ProvisionShard) GetGCPProjectOperator() (value *ServerConfig, ok bool) 
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Contains the cloud provider name.
+// Required during creation.
+// Immutable.
 func (o *ProvisionShard) CloudProvider() *CloudProvider {
-	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
+	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
 		return o.cloudProvider
 	}
 	return nil
@@ -230,8 +161,10 @@ func (o *ProvisionShard) CloudProvider() *CloudProvider {
 // a flag indicating if the attribute has a value.
 //
 // Contains the cloud provider name.
+// Required during creation.
+// Immutable.
 func (o *ProvisionShard) GetCloudProvider() (value *CloudProvider, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
+	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
 	if ok {
 		value = o.cloudProvider
 	}
@@ -243,8 +176,9 @@ func (o *ProvisionShard) GetCloudProvider() (value *CloudProvider, ok bool) {
 //
 // Date and time when the provision shard was initially created, using the
 // format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+// Readonly.
 func (o *ProvisionShard) CreationTimestamp() time.Time {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.creationTimestamp
 	}
 	return time.Time{}
@@ -255,56 +189,11 @@ func (o *ProvisionShard) CreationTimestamp() time.Time {
 //
 // Date and time when the provision shard was initially created, using the
 // format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+// Readonly.
 func (o *ProvisionShard) GetCreationTimestamp() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.creationTimestamp
-	}
-	return
-}
-
-// HiveConfig returns the value of the 'hive_config' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Contains the configuration for Hive.
-func (o *ProvisionShard) HiveConfig() *ServerConfig {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
-		return o.hiveConfig
-	}
-	return nil
-}
-
-// GetHiveConfig returns the value of the 'hive_config' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Contains the configuration for Hive.
-func (o *ProvisionShard) GetHiveConfig() (value *ServerConfig, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
-	if ok {
-		value = o.hiveConfig
-	}
-	return
-}
-
-// HypershiftConfig returns the value of the 'hypershift_config' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Contains the configuration for Hypershift.
-func (o *ProvisionShard) HypershiftConfig() *ServerConfig {
-	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
-		return o.hypershiftConfig
-	}
-	return nil
-}
-
-// GetHypershiftConfig returns the value of the 'hypershift_config' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Contains the configuration for Hypershift.
-func (o *ProvisionShard) GetHypershiftConfig() (value *ServerConfig, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
-	if ok {
-		value = o.hypershiftConfig
 	}
 	return
 }
@@ -314,8 +203,9 @@ func (o *ProvisionShard) GetHypershiftConfig() (value *ServerConfig, ok bool) {
 //
 // Date and time when the provision shard was last updated, using the
 // format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+// Readonly.
 func (o *ProvisionShard) LastUpdateTimestamp() time.Time {
-	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
 		return o.lastUpdateTimestamp
 	}
 	return time.Time{}
@@ -326,35 +216,36 @@ func (o *ProvisionShard) LastUpdateTimestamp() time.Time {
 //
 // Date and time when the provision shard was last updated, using the
 // format defined in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt).
+// Readonly.
 func (o *ProvisionShard) GetLastUpdateTimestamp() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
 	if ok {
 		value = o.lastUpdateTimestamp
 	}
 	return
 }
 
-// ManagementCluster returns the value of the 'management_cluster' attribute, or
+// MaestroConfig returns the value of the 'maestro_config' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Contains the name of the management cluster for Hypershift clusters that are assigned to this shard.
-// This field is populated by OCM, and must not be overwritten via API.
-func (o *ProvisionShard) ManagementCluster() string {
-	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
-		return o.managementCluster
+// The Maestro related configuration of the Provision Shard.
+// Required during creation.
+func (o *ProvisionShard) MaestroConfig() *ProvisionShardMaestroConfig {
+	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
+		return o.maestroConfig
 	}
-	return ""
+	return nil
 }
 
-// GetManagementCluster returns the value of the 'management_cluster' attribute and
+// GetMaestroConfig returns the value of the 'maestro_config' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Contains the name of the management cluster for Hypershift clusters that are assigned to this shard.
-// This field is populated by OCM, and must not be overwritten via API.
-func (o *ProvisionShard) GetManagementCluster() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
+// The Maestro related configuration of the Provision Shard.
+// Required during creation.
+func (o *ProvisionShard) GetMaestroConfig() (value *ProvisionShardMaestroConfig, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
-		value = o.managementCluster
+		value = o.maestroConfig
 	}
 	return
 }
@@ -363,8 +254,10 @@ func (o *ProvisionShard) GetManagementCluster() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Contains the cloud-provider region in which the provisioner spins up the cluster.
+// Required during creation.
+// Immutable.
 func (o *ProvisionShard) Region() *CloudRegion {
-	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
 		return o.region
 	}
 	return nil
@@ -374,8 +267,10 @@ func (o *ProvisionShard) Region() *CloudRegion {
 // a flag indicating if the attribute has a value.
 //
 // Contains the cloud-provider region in which the provisioner spins up the cluster.
+// Required during creation.
+// Immutable.
 func (o *ProvisionShard) GetRegion() (value *CloudRegion, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
 	if ok {
 		value = o.region
 	}
@@ -385,9 +280,21 @@ func (o *ProvisionShard) GetRegion() (value *CloudRegion, ok bool) {
 // Status returns the value of the 'status' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Status of the provision shard. Possible values: active/maintenance/offline.
+// Status of the provision shard.
+// Optional. By default it is set to `maintenance`.
+// During creation the possible values are: `maintenance`.
+// During update the possible values are: `active`, `maintenance`, `offline`.
+// Adding a new shard and activating it requires creating it
+// in `maintenance` status and then perform an aditional update call setting it
+// to `active` status.
+// A shard in `active` status is available for selection when a Cluster needs
+// to be allocated to a shard.
+// A shard in `maintenance` status is not available for selection when a Cluster
+// needs to be allocated to a shard.
+// A shard in `offline` status is not available for selection when a Cluster
+// needs to be allocated to a shard.
 func (o *ProvisionShard) Status() string {
-	if o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.status
 	}
 	return ""
@@ -396,11 +303,52 @@ func (o *ProvisionShard) Status() string {
 // GetStatus returns the value of the 'status' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Status of the provision shard. Possible values: active/maintenance/offline.
+// Status of the provision shard.
+// Optional. By default it is set to `maintenance`.
+// During creation the possible values are: `maintenance`.
+// During update the possible values are: `active`, `maintenance`, `offline`.
+// Adding a new shard and activating it requires creating it
+// in `maintenance` status and then perform an aditional update call setting it
+// to `active` status.
+// A shard in `active` status is available for selection when a Cluster needs
+// to be allocated to a shard.
+// A shard in `maintenance` status is not available for selection when a Cluster
+// needs to be allocated to a shard.
+// A shard in `offline` status is not available for selection when a Cluster
+// needs to be allocated to a shard.
 func (o *ProvisionShard) GetStatus() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.status
+	}
+	return
+}
+
+// Topology returns the value of the 'topology' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Topology sets how the control plane workloads that are request serving
+// (those receiving communication from outside the control plane)
+// are mapped to Nodes in the control plane K8s Cluster.
+// Required during creation.
+func (o *ProvisionShard) Topology() string {
+	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
+		return o.topology
+	}
+	return ""
+}
+
+// GetTopology returns the value of the 'topology' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Topology sets how the control plane workloads that are request serving
+// (those receiving communication from outside the control plane)
+// are mapped to Nodes in the control plane K8s Cluster.
+// Required during creation.
+func (o *ProvisionShard) GetTopology() (value string, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
+	if ok {
+		value = o.topology
 	}
 	return
 }

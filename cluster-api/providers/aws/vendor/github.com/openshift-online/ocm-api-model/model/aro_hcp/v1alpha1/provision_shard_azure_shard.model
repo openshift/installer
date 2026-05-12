@@ -1,0 +1,88 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// The Azure related configuration of the Provision Shard
+struct AzureShard {
+	// The Azure Public DNS Zone associated to the provision shard.
+	// It is the Azure Resource ID of a pre-existing Public DNS Zone.
+	// `public_dns_zone_resource_id` must be located in the same
+	// Azure Tenant as the Clusters Service's Azure infrastructure
+	// The Azure Resource Group Name specified as part of `public_dns_zone_resource_id`
+	// must be in the same Azure location to where Clusters Service is deployed.
+	// Required during creation.
+	// Immutable.
+	PublicDnsZoneResourceId String
+	// The Azure Key Vault URL used to store the certificates associated to the
+	// managed identities of the aro-hcp clusters control plane operators.
+	// The Azure Key Vault associated to the URL must pre-exist and be in the same Azure location
+	// to where Clusters Service is deployed.
+	// The URL must be a well-formed absolute URL.
+	// The URL must have an HTTPS scheme.
+	// The URL cannot contain HTTP query parameters.
+	// The URL path must be '/'.
+	// The expected url format naming scheme is: https://<name>.<known-host-domain>/
+	// where both <name> and <known-host-domain> must be specified. The <name> part
+	// cannot contain '.' characters. <known-host-domain> must be one of the
+	// known domain names for Key Vault. See https://aka.ms/azsdk/blog/vault-uri#recommended-actions
+	// for more information.
+	// Example of a URL: https://mykeyvault.vault.azure.net/
+	// Required during creation.
+	// Immutable.
+	CxManagedIdentitiesKeyVaultUrl String
+
+	// The Azure Key Vault URL used to store different types of secrets
+	// like k8s api certificates, image pull secrets, ...
+	// The Azure Key Vault associated to the URL must pre-exist and be in the same Azure location
+	// to where Clusters Service is deployed.
+	// The URL must be a well-formed absolute URL.
+	// The URL must have an HTTPS scheme.
+	// The URL cannot contain HTTP query parameters.
+	// The URL path must be '/'.
+	// The expected url format naming scheme is: https://<name>.<known-host-domain>/
+	// where both <name> and <known-host-domain> must be specified. The <name> part
+	// cannot contain '.' characters. <known-host-domain> must be one of the
+	// known domain names for Key Vault. See https://aka.ms/azsdk/blog/vault-uri#recommended-actions
+	// for more information.
+	// Example of a URL: https://mykeyvault.vault.azure.net/
+	// Required during creation.
+	// Immutable.
+	CxSecretsKeyVaultUrl String
+
+	// The Client ID of an Azure User-Assigned Managed Identity
+	// that would give access to the CX Secrets Key Vault.
+	// The Azure User-Assigned Managed Identity associated to the Client ID
+	// must be pre-exist and be in the same Azure location to where Clusters
+	// Service is deployed.
+	// The Azure Resource Group of the Azure User-Assigned Managed Identity
+	// must be in the same Azure location to where Clusters Service is
+	// deployed.
+	// Required during creation.
+	// Immutable.
+	CxSecretsKeyVaultManagedIdentityClientId String
+
+	// The Azure Resource ID of the AKS Management Cluster associated
+	// to the provision shard.
+	// It is the Azure Resource ID of a pre-existing Azure Kubernetes
+	// Service (AKS) Managed Cluster.
+	// `aks_management_cluster_resource_id` must be located in the same
+	// Azure Tenant as the Clusters Service's Azure infrastructure.
+	// The Azure Resource Group Name specified as part of `aks_management_cluster_resource_id`
+	// must be in the same Azure location to where Clusters Service is deployed.
+	// It must be unique across Azure based provision shards.
+	// Required during creation.
+	// Immutable.
+	AksManagementClusterResourceId string
+}
