@@ -190,7 +190,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		controller := c.getInfrastructureController(
 			&AWS,
 			[]string{
-				"-v=4",
+				"-v=9",
 				"--diagnostics-address=0",
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
