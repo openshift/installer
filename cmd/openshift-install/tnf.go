@@ -2,20 +2,23 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/fencing"
 	"github.com/openshift/installer/pkg/metrics/timer"
 )
 
-var tnfValidateOpts struct {
+var tnfOpts struct {
 	sshKeys []string
 }
 
@@ -35,6 +38,28 @@ to both control plane nodes.`,
 	return cmd
 }
 
+func loadTNFClients(ctx context.Context) (kubernetes.Interface, error) {
+	kubeconfigPath := filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig")
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	if err != nil {
+		return nil, err
+	}
+
+	cfgClient, err := configclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	infra, err := cfgClient.ConfigV1().Infrastructures().Get(ctx, "cluster", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if infra.Status.ControlPlaneTopology != configv1.DualReplicaTopologyMode {
+		return nil, fmt.Errorf("this command requires a Two Node with Fencing (DualReplica) cluster, found %q", infra.Status.ControlPlaneTopology)
+	}
+
+	return kubernetes.NewForConfig(config)
+}
+
 func newTNFValidateFencingCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate-fencing",
@@ -52,27 +77,15 @@ Requires SSH access to both nodes as user "core" and a cluster-admin kubeconfig.
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			kubeconfigPath := filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig")
-			config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+			kubeClient, err := loadTNFClients(ctx)
 			if err != nil {
-				logrus.Fatalf("Failed to load kubeconfig from %s: %v", kubeconfigPath, err)
-			}
-
-			kubeClient, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				logrus.Fatalf("Failed to create Kubernetes client: %v", err)
-			}
-
-			cfgClient, err := configclient.NewForConfig(config)
-			if err != nil {
-				logrus.Fatalf("Failed to create config client: %v", err)
+				logrus.Fatalf("Failed to initialize: %v", err)
 			}
 
 			if err := fencing.Run(ctx, fencing.Config{
-				KubeClient:   kubeClient,
-				ConfigClient: cfgClient,
-				SSHUser:      "core",
-				SSHKeys:      tnfValidateOpts.sshKeys,
+				KubeClient: kubeClient,
+				SSHUser:    "core",
+				SSHKeys:    tnfOpts.sshKeys,
 			}); err != nil {
 				logrus.Fatalf("Fencing validation failed: %v", err)
 			}
@@ -81,7 +94,7 @@ Requires SSH access to both nodes as user "core" and a cluster-admin kubeconfig.
 			timer.LogSummary()
 		},
 	}
-	cmd.PersistentFlags().StringArrayVar(&tnfValidateOpts.sshKeys, "key", nil,
+	cmd.PersistentFlags().StringArrayVar(&tnfOpts.sshKeys, "key", nil,
 		"Path to SSH private keys for node access. If not provided, SSH agent or default keys are used.")
 	return cmd
 }

@@ -19,8 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
-	configv1 "github.com/openshift/api/config/v1"
-	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/gather/ssh"
 )
 
@@ -49,10 +47,9 @@ type NodeInfo struct {
 
 // Config holds all inputs needed by the fencing validator.
 type Config struct {
-	KubeClient   kubernetes.Interface
-	ConfigClient configclient.Interface
-	SSHUser      string
-	SSHKeys      []string
+	KubeClient kubernetes.Interface
+	SSHUser    string
+	SSHKeys    []string
 }
 
 // Run executes the full fencing validation sequence.
@@ -60,10 +57,6 @@ func Run(ctx context.Context, cfg Config) error {
 	nodes, err := discoverNodes(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("node discovery failed: %w", err)
-	}
-
-	if err := verifyTopology(ctx, cfg); err != nil {
-		return err
 	}
 
 	logrus.Infof("Connecting to %s (%s)", nodes[0].Name, nodes[0].IP)
@@ -189,17 +182,6 @@ func nodeInternalIP(node *corev1.Node) string {
 	return ""
 }
 
-func verifyTopology(ctx context.Context, cfg Config) error {
-	infra, err := cfg.ConfigClient.ConfigV1().Infrastructures().Get(ctx, "cluster", metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("reading Infrastructure CR: %w", err)
-	}
-	if infra.Status.ControlPlaneTopology != configv1.DualReplicaTopologyMode {
-		return fmt.Errorf("fencing validation requires DualReplica topology, found %q", infra.Status.ControlPlaneTopology)
-	}
-	return nil
-}
-
 // --- SSH helpers ---
 
 func sshConnect(cfg Config, ip string) (*gossh.Client, error) {
@@ -313,7 +295,7 @@ func checkEtcdHealth(client *gossh.Client, nodes []NodeInfo) error {
 // --- Fencing ---
 
 func fenceNode(client *gossh.Client, pcmkName string) error {
-	cmd := fmt.Sprintf("timeout %d pcs stonith fence %s", fenceTimeout, shellQuote(pcmkName))
+	cmd := fmt.Sprintf("timeout %d pcs stonith fence %s", fenceTimeout, pcmkName)
 	_, err := sshRun(client, cmd)
 	return err
 }
@@ -324,12 +306,14 @@ func waitNotReady(ctx context.Context, kube kubernetes.Interface, nodeName strin
 	pollCtx, cancel := context.WithTimeout(ctx, notReadyTimeout)
 	defer cancel()
 	start := time.Now()
+	lastLog := start
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
 		if !isNodeReady(ctx, kube, nodeName) {
 			return true, nil
 		}
-		if time.Since(start) > time.Minute {
+		if time.Since(lastLog) > time.Minute {
 			logrus.Debugf("Still waiting for %s to become NotReady (%s elapsed)", nodeName, time.Since(start).Round(time.Second))
+			lastLog = time.Now()
 		}
 		return false, nil
 	})
@@ -339,12 +323,14 @@ func waitReady(ctx context.Context, kube kubernetes.Interface, nodeName string) 
 	pollCtx, cancel := context.WithTimeout(ctx, readyTimeout)
 	defer cancel()
 	start := time.Now()
+	lastLog := start
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
 		if isNodeReady(ctx, kube, nodeName) {
 			return true, nil
 		}
-		if time.Since(start) > time.Minute {
+		if time.Since(lastLog) > time.Minute {
 			logrus.Debugf("Still waiting for %s to become Ready (%s elapsed)", nodeName, time.Since(start).Round(time.Second))
+			lastLog = time.Now()
 		}
 		return false, nil
 	})
