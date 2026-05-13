@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -19,7 +19,8 @@ import (
 )
 
 var tnfOpts struct {
-	sshKeys []string
+	sshKeys    []string
+	restConfig *rest.Config
 }
 
 func newTNFCmd(ctx context.Context) *cobra.Command {
@@ -30,34 +31,34 @@ func newTNFCmd(ctx context.Context) *cobra.Command {
 
 These commands require a deployed two node cluster with fencing and SSH access
 to both control plane nodes.`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			runRootCmd(cmd, args)
+
+			kubeconfigPath := filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig")
+			config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+			if err != nil {
+				logrus.Fatalf("Failed to load kubeconfig from %s: %v", kubeconfigPath, err)
+			}
+			tnfOpts.restConfig = config
+
+			cfgClient, err := configclient.NewForConfig(config)
+			if err != nil {
+				logrus.Fatalf("Failed to create config client: %v", err)
+			}
+			infra, err := cfgClient.ConfigV1().Infrastructures().Get(ctx, "cluster", metav1.GetOptions{})
+			if err != nil {
+				logrus.Fatalf("Failed to read Infrastructure CR: %v", err)
+			}
+			if infra.Status.ControlPlaneTopology != configv1.DualReplicaTopologyMode {
+				logrus.Fatalf("This command requires a Two Node with Fencing (DualReplica) cluster, found %q", infra.Status.ControlPlaneTopology)
+			}
+		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Help()
 		},
 	}
 	cmd.AddCommand(newTNFValidateFencingCmd(ctx))
 	return cmd
-}
-
-func loadTNFClients(ctx context.Context) (kubernetes.Interface, error) {
-	kubeconfigPath := filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	if err != nil {
-		return nil, err
-	}
-
-	cfgClient, err := configclient.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-	infra, err := cfgClient.ConfigV1().Infrastructures().Get(ctx, "cluster", metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	if infra.Status.ControlPlaneTopology != configv1.DualReplicaTopologyMode {
-		return nil, fmt.Errorf("this command requires a Two Node with Fencing (DualReplica) cluster, found %q", infra.Status.ControlPlaneTopology)
-	}
-
-	return kubernetes.NewForConfig(config)
 }
 
 func newTNFValidateFencingCmd(ctx context.Context) *cobra.Command {
@@ -77,9 +78,9 @@ Requires SSH access to both nodes as user "core" and a cluster-admin kubeconfig.
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			kubeClient, err := loadTNFClients(ctx)
+			kubeClient, err := kubernetes.NewForConfig(tnfOpts.restConfig)
 			if err != nil {
-				logrus.Fatalf("Failed to initialize: %v", err)
+				logrus.Fatalf("Failed to create Kubernetes client: %v", err)
 			}
 
 			if err := fencing.Run(ctx, fencing.Config{
