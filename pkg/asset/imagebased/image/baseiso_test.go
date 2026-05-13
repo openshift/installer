@@ -9,35 +9,21 @@ import (
 	"os"
 	"testing"
 
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/types"
 )
 
 func TestBaseIso_Generate(t *testing.T) {
-	ocReleaseImage := "417.94.202407011030-0"
-
 	cases := []struct {
 		name                       string
 		envVarOsImageOverrideValue string
 		expectedBaseIsoFilename    string
-		architecture               string
 	}{
 		{
 			name:                       "os image override",
 			envVarOsImageOverrideValue: "openshift-4.18",
 			expectedBaseIsoFilename:    "openshift-4.18",
-		},
-		{
-			name:                    "default",
-			expectedBaseIsoFilename: ocReleaseImage,
-		},
-		{
-			name:                    "arm64 architecture",
-			expectedBaseIsoFilename: fmt.Sprintf("%s-arm64", ocReleaseImage),
-			architecture:            types.ArchitectureARM64,
 		},
 	}
 	for _, tc := range cases {
@@ -71,47 +57,10 @@ func TestBaseIso_Generate(t *testing.T) {
 				assert.NoError(t, err)
 			}()
 
-			baseIso := &BaseIso{
-				streamGetter: func(ctx context.Context) (*stream.Stream, error) {
-					return &stream.Stream{
-						Architectures: map[string]stream.Arch{
-							"x86_64": {
-								Artifacts: map[string]stream.PlatformArtifacts{
-									"metal": {
-										Release: ocReleaseImage,
-										Formats: map[string]stream.ImageFormat{
-											"iso": {
-												Disk: &stream.Artifact{
-													Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
-												},
-											},
-										},
-									},
-								},
-							},
-							"aarch64": {
-								Artifacts: map[string]stream.PlatformArtifacts{
-									"metal": {
-										Release: ocReleaseImage,
-										Formats: map[string]stream.ImageFormat{
-											"iso": {
-												Disk: &stream.Artifact{
-													Location: fmt.Sprintf("%s/%s-arm64", svr.URL, ocReleaseImage),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					}, nil
-				},
-			}
+			baseIso := &BaseIso{}
 			parents := asset.Parents{}
 			parents.Add(&ImageBasedInstallationConfig{
-				Config: ibiConfig().
-					architecture(tc.architecture).
-					build(),
+				Config: ibiConfig().build(),
 			})
 			err = baseIso.Generate(context.TODO(), parents)
 

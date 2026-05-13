@@ -22,27 +22,14 @@ import (
 
 // BaseIso generates the base ISO file for the image.
 type BaseIso struct {
-	streamGetter CoreOSBuildFetcher
-	ocRelease    ReleasePayload
-}
-
-// CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
-type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
-
-// defaultCoreOSStreamGetter uses the pinned metadata.
-var defaultCoreOSStreamGetter = func(ctx context.Context) (*stream.Stream, error) {
-	return rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+	ocRelease ReleasePayload
 }
 
 // NewBaseISOFetcher returns a struct that can be used to fetch a base ISO using
 // the default method.
-func NewBaseISOFetcher(ocRelease ReleasePayload, streamGetter CoreOSBuildFetcher) *BaseIso {
-	if streamGetter == nil {
-		streamGetter = defaultCoreOSStreamGetter
-	}
+func NewBaseISOFetcher(ocRelease ReleasePayload) *BaseIso {
 	return &BaseIso{
-		streamGetter: streamGetter,
-		ocRelease:    ocRelease,
+		ocRelease: ocRelease,
 	}
 }
 
@@ -64,18 +51,13 @@ func (i *BaseIso) GetBaseISOFilename(ctx context.Context, arch string) (baseIsoF
 	return
 }
 
-// GetMetalArtifact returns the CoreOS artifacts for metal for a given arch
-// from a given stream.
-func GetMetalArtifact(ctx context.Context, archName string, streamGetter CoreOSBuildFetcher) (stream.PlatformArtifacts, error) {
-	if streamGetter == nil {
-		streamGetter = defaultCoreOSStreamGetter
-	}
-
+// GetMetalArtifact returns the CoreOS metal artifacts for a given arch
+// using the embedded stream metadata.
+func GetMetalArtifact(ctx context.Context, archName string) (stream.PlatformArtifacts, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	// Get the ISO to use from rhcos.json
-	st, err := streamGetter(ctx)
+	st, err := rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
 	if err != nil {
 		return stream.PlatformArtifacts{}, err
 	}
@@ -95,7 +77,7 @@ func GetMetalArtifact(ctx context.Context, archName string, streamGetter CoreOSB
 
 // Download the ISO using the URL in rhcos.json.
 func (i *BaseIso) downloadIso(ctx context.Context, archName string) (string, error) {
-	metal, err := GetMetalArtifact(ctx, archName, i.streamGetter)
+	metal, err := GetMetalArtifact(ctx, archName)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +108,7 @@ func (i *BaseIso) checkReleasePayloadBaseISOVersion(ctx context.Context, r Relea
 	}
 
 	// Get pinned version from installer
-	metal, err := GetMetalArtifact(ctx, archName, i.streamGetter)
+	metal, err := GetMetalArtifact(ctx, archName)
 	if err != nil {
 		logrus.Warnf("unable to determine base ISO version: %s", err.Error())
 		return
@@ -151,7 +133,7 @@ func (i *BaseIso) retrieveBaseIso(ctx context.Context, archName string) (string,
 		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOExtract); err != nil {
 			return "", err
 		}
-		baseIsoFileName, err := i.ocRelease.GetBaseIso(archName, i.streamGetter)
+		baseIsoFileName, err := i.ocRelease.GetBaseIso(archName)
 		if err == nil {
 			if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOVerify); err != nil {
 				return "", err
