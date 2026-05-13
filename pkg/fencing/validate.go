@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -308,7 +309,11 @@ func waitNotReady(ctx context.Context, kube kubernetes.Interface, nodeName strin
 	start := time.Now()
 	lastLog := start
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
-		if !isNodeReady(ctx, kube, nodeName) {
+		ready, err := isNodeReady(ctx, kube, nodeName)
+		if err != nil {
+			return false, nil
+		}
+		if !ready {
 			return true, nil
 		}
 		if time.Since(lastLog) > time.Minute {
@@ -325,7 +330,11 @@ func waitReady(ctx context.Context, kube kubernetes.Interface, nodeName string) 
 	start := time.Now()
 	lastLog := start
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
-		if isNodeReady(ctx, kube, nodeName) {
+		ready, err := isNodeReady(ctx, kube, nodeName)
+		if err != nil {
+			return false, nil
+		}
+		if ready {
 			return true, nil
 		}
 		if time.Since(lastLog) > time.Minute {
@@ -336,17 +345,17 @@ func waitReady(ctx context.Context, kube kubernetes.Interface, nodeName string) 
 	})
 }
 
-func isNodeReady(ctx context.Context, kube kubernetes.Interface, nodeName string) bool {
+func isNodeReady(ctx context.Context, kube kubernetes.Interface, nodeName string) (bool, error) {
 	node, err := kube.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
-		return false
+		return false, err
 	}
 	for _, c := range node.Status.Conditions {
 		if c.Type == corev1.NodeReady {
-			return c.Status == corev1.ConditionTrue
+			return c.Status == corev1.ConditionTrue, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func pollPacemakerOnline(ctx context.Context, client *gossh.Client, nodes []NodeInfo) error {
@@ -486,21 +495,28 @@ func parseEtcdMembers(output, ipA, ipB string) error {
 	}
 
 	foundA, foundB := false, false
+	voters := 0
 	for _, m := range list.Members {
 		if m.IsLearner {
 			continue
 		}
+		voters++
 		for _, u := range m.ClientURLs {
-			if strings.Contains(u, ipA) {
+			parsed, err := url.Parse(u)
+			if err != nil {
+				continue
+			}
+			host := parsed.Hostname()
+			if host == ipA {
 				foundA = true
 			}
-			if strings.Contains(u, ipB) {
+			if host == ipB {
 				foundB = true
 			}
 		}
 	}
-	if !foundA || !foundB {
-		return fmt.Errorf("etcd does not have 2 voting members (found A=%v, B=%v)", foundA, foundB)
+	if voters != 2 || !foundA || !foundB {
+		return fmt.Errorf("etcd does not have exactly 2 voting members (voters=%d, foundA=%v, foundB=%v)", voters, foundA, foundB)
 	}
 	return nil
 }
