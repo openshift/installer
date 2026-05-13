@@ -14,6 +14,7 @@ func TestValidateMachinePool(t *testing.T) {
 	cases := []struct {
 		name     string
 		pool     *powervs.MachinePool
+		platform *powervs.Platform
 		expected string
 	}{
 		{
@@ -73,6 +74,7 @@ func TestValidateMachinePool(t *testing.T) {
 				SysType:   "s922",
 				MemoryGiB: 943,
 			},
+			platform: &powervs.Platform{Zone: "dal10"}, // Use a zone that supports s922
 			expected: `^test-path\.memory: Invalid value: 943: maximum memory limit for the s922 SysType is 942GiB$`,
 		},
 		{
@@ -101,6 +103,7 @@ func TestValidateMachinePool(t *testing.T) {
 				SysType:    "s922",
 				Processors: intstr.FromInt(33),
 			},
+			platform: &powervs.Platform{Zone: "dal10"}, // Use a zone that supports s922
 			expected: `^test-path\.processors: Invalid value: 33: maximum processors limit for s922 SysType is 15 cores$`,
 		},
 		{
@@ -136,6 +139,7 @@ func TestValidateMachinePool(t *testing.T) {
 			pool: &powervs.MachinePool{
 				SysType: "s922",
 			},
+			platform: &powervs.Platform{Zone: "dal10"}, // Use a zone that supports s922
 		},
 		{
 			name: "invalid sysType",
@@ -147,7 +151,11 @@ func TestValidateMachinePool(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(validMinimalPlatform(), tc.pool, field.NewPath("test-path")).ToAggregate()
+			platform := tc.platform
+			if platform == nil {
+				platform = validMinimalPlatform()
+			}
+			err := ValidateMachinePool(platform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
