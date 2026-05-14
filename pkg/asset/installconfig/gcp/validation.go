@@ -69,7 +69,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, ValidatePrivateDNSZone(client, ic)...)
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
-	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic)...)
 	allErrs = append(allErrs, validateServiceEndpointOverride(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
@@ -908,31 +908,46 @@ func validateUserTags(client API, projectID string, userTags []gcp.UserTag) erro
 	return NewTagManager(client).validateAndPersistUserTags(context.Background(), projectID, userTags)
 }
 
+// validateKMSKeyReference validates a KMS key reference by checking if the key ring exists.
+// Returns a field.Error on failure, or nil on success.
+// The defaultProjectID is used if the kmsKeyRef.ProjectID is empty.
+func validateKMSKeyReference(client API, kmsKeyRef *gcp.KMSKeyReference, defaultProjectID string, fldPath *field.Path) *field.Error {
+	if kmsKeyRef == nil {
+		return nil
+	}
+
+	// Create a copy with the project ID filled in if not specified
+	kmsKeyRefCopy := *kmsKeyRef
+	if kmsKeyRefCopy.ProjectID == "" {
+		kmsKeyRefCopy.ProjectID = defaultProjectID
+	}
+
+	if _, err := client.GetKeyRing(context.TODO(), &kmsKeyRefCopy); err != nil {
+		return field.Invalid(fldPath.Child("keyRing"), kmsKeyRef.KeyRing, err.Error())
+	}
+	return nil
+}
+
 // validatePlatformKMSKeys checks for encryption keys for all the machine pools. The encryption key rings are
 // checked against the API for validity/availability.
-func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+func validatePlatformKMSKeys(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+	platformPath := field.NewPath("platform", "gcp")
 
 	cp := ic.ControlPlane
 	validatedControlPlaneKey := false
-	if cp != nil && cp.Platform.GCP != nil && cp.Platform.GCP.EncryptionKey != nil && cp.Platform.GCP.EncryptionKey.KMSKey != nil {
-		if _, err := client.GetKeyRing(context.TODO(), cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey); err != nil {
-			return append(allErrs, field.Invalid(fieldPath.Child("controlPlane").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
-				cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
-				err.Error(),
-			))
+	if cp != nil && cp.Platform.GCP != nil && cp.Platform.GCP.OSDisk.EncryptionKey != nil && cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey != nil {
+		if err := validateKMSKeyReference(client, cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, field.NewPath("controlPlane", "platform", "gcp", "osDisk", "encryptionKey", "kmsKey")); err != nil {
+			return append(allErrs, err)
 		}
 		validatedControlPlaneKey = true
 	}
 
 	validatedComputeKeys := false
-	for _, mp := range ic.Compute {
-		if mp.Platform.GCP != nil && mp.Platform.GCP.EncryptionKey != nil && mp.Platform.GCP.EncryptionKey.KMSKey != nil {
-			if _, err := client.GetKeyRing(context.TODO(), mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey); err != nil {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("compute").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
-					mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
-					err.Error(),
-				))
+	for idx, mp := range ic.Compute {
+		if mp.Platform.GCP != nil && mp.Platform.GCP.OSDisk.EncryptionKey != nil && mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey != nil {
+			if err := validateKMSKeyReference(client, mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, field.NewPath("compute").Index(idx).Child("platform", "gcp", "osDisk", "encryptionKey", "kmsKey")); err != nil {
+				allErrs = append(allErrs, err)
 			} else {
 				validatedComputeKeys = true
 			}
@@ -940,15 +955,12 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 	}
 
 	defaultMp := ic.GCP.DefaultMachinePlatform
-	if defaultMp != nil && defaultMp.EncryptionKey != nil && defaultMp.EncryptionKey.KMSKey != nil {
-		if _, err := client.GetKeyRing(context.TODO(), defaultMp.EncryptionKey.KMSKey); err != nil {
+	if defaultMp != nil && defaultMp.OSDisk.EncryptionKey != nil && defaultMp.OSDisk.EncryptionKey.KMSKey != nil {
+		if err := validateKMSKeyReference(client, defaultMp.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, platformPath.Child("defaultMachinePlatform", "osDisk", "encryptionKey", "kmsKey")); err != nil {
 			if validatedControlPlaneKey && (validatedComputeKeys && len(allErrs) == 0) {
-				logrus.Warn("defaultMachinePool.encryptionKey.KMSKey.KeyRing is not valid, but compute and control plane key rings are valid")
+				logrus.Warn("defaultMachinePlatform.osDisk.encryptionKey.kmsKey is not valid, but compute and control plane keys are valid")
 			} else {
-				return append(allErrs, field.Invalid(fieldPath.Child("defaultMachinePool").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
-					defaultMp.EncryptionKey.KMSKey.KeyRing,
-					err.Error(),
-				))
+				return append(allErrs, err)
 			}
 		}
 	}
