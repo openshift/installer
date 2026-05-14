@@ -60,7 +60,7 @@ func installerMain() {
 		newAgentCmd(ctx),
 		newListFeaturesCmd(),
 		newImageBasedCmd(ctx),
-		newTNFCmd(ctx),
+		newTNFValidateFencingCmd(ctx),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}

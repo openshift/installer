@@ -298,6 +298,10 @@ func checkEtcdHealth(client *gossh.Client, nodes []NodeInfo) error {
 func fenceNode(client *gossh.Client, pcmkName string) error {
 	cmd := fmt.Sprintf("timeout %d pcs stonith fence %s", fenceTimeout, pcmkName)
 	_, err := sshRun(client, cmd)
+	if err != nil && strings.Contains(err.Error(), "exit status 124") {
+		return fmt.Errorf("fencing %s timed out after %ds — check BMC connectivity and fence agent config: %w",
+			pcmkName, fenceTimeout, err)
+	}
 	return err
 }
 
@@ -311,6 +315,7 @@ func waitNotReady(ctx context.Context, kube kubernetes.Interface, nodeName strin
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
 		ready, err := isNodeReady(ctx, kube, nodeName)
 		if err != nil {
+			logrus.Debugf("Error checking %s readiness: %v", nodeName, err)
 			return false, nil
 		}
 		if !ready {
@@ -332,6 +337,7 @@ func waitReady(ctx context.Context, kube kubernetes.Interface, nodeName string) 
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
 		ready, err := isNodeReady(ctx, kube, nodeName)
 		if err != nil {
+			logrus.Debugf("Error checking %s readiness: %v", nodeName, err)
 			return false, nil
 		}
 		if ready {
@@ -364,6 +370,7 @@ func pollPacemakerOnline(ctx context.Context, client *gossh.Client, nodes []Node
 	return wait.PollUntilContextCancel(pollCtx, pollInterval, true, func(ctx context.Context) (bool, error) {
 		out, err := sshRun(client, "pcs status nodes || crm_mon -1")
 		if err != nil {
+			logrus.Debugf("Error checking pacemaker status: %v", err)
 			return false, nil
 		}
 		online := parsePacemakerOnline(out)
@@ -384,6 +391,7 @@ func pollEtcdHealth(ctx context.Context, client *gossh.Client, nodes []NodeInfo)
 		healthCmd := fmt.Sprintf("podman exec etcd sh -lc 'ETCDCTL_API=3 etcdctl -w json endpoint health --endpoints=%s'", endpoints)
 		out, err := sshRun(client, healthCmd)
 		if err != nil {
+			logrus.Debugf("Error checking etcd health: %v", err)
 			return false, nil
 		}
 		if parseEtcdHealth(out) != nil {
@@ -393,6 +401,7 @@ func pollEtcdHealth(ctx context.Context, client *gossh.Client, nodes []NodeInfo)
 		memberCmd := "podman exec etcd sh -lc 'ETCDCTL_API=3 etcdctl -w json member list'"
 		out, err = sshRun(client, memberCmd)
 		if err != nil {
+			logrus.Debugf("Error checking etcd members: %v", err)
 			return false, nil
 		}
 		if parseEtcdMembers(out, nodes[0].IP, nodes[1].IP) != nil {
@@ -458,6 +467,9 @@ func parseDaemonStatus(output string) []string {
 			}
 		}
 	}
+	if !inSection {
+		logrus.Warn("Could not find Daemon Status section in pcs output — skipping daemon check")
+	}
 	return missing
 }
 
@@ -470,6 +482,9 @@ func parseEtcdHealth(output string) error {
 	var entries []etcdHealthEntry
 	if err := json.Unmarshal([]byte(output), &entries); err != nil {
 		return fmt.Errorf("failed to parse etcd health output: %w", err)
+	}
+	if len(entries) < 2 {
+		return fmt.Errorf("expected health for 2 endpoints, got %d", len(entries))
 	}
 	for _, e := range entries {
 		if !e.Health {
