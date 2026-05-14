@@ -41,6 +41,15 @@ func GetMasterRoles() []string {
 	}
 }
 
+// GetKMSRoles returns the KMS-related roles needed when customer-managed encryption keys are configured.
+// These roles allow the service account to decrypt data encrypted with the specified KMS keys.
+// Only grant these to service accounts that need to access KMS-encrypted resources.
+func GetKMSRoles() []string {
+	return []string{
+		"roles/cloudkms.cryptoKeyEncrypterDecrypter",
+	}
+}
+
 // GetWorkerRoles returns the pre-defined roles for a worker node.
 func GetWorkerRoles() []string {
 	return []string{

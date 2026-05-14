@@ -71,6 +71,16 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			return fmt.Errorf("failed to add master roles: %w", err)
 		}
 
+		// Add KMS decryption roles if KMS keys are configured for storage encryption.
+		// Master nodes need these permissions for:
+		// - Bootstrap node to access KMS-encrypted ignition bucket (bootstrap uses master SA)
+		// - Registry operator (runs on master nodes) to access KMS-encrypted registry bucket
+		if needsKMSPermissions(in.InstallConfig.Config.GCP) {
+			if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetKMSRoles(), in.InstallConfig.Config.GCP.Endpoint); err != nil {
+				return fmt.Errorf("failed to add KMS roles to master service account: %w", err)
+			}
+		}
+
 		// Add additional roles for shared VPC
 		if len(in.InstallConfig.Config.Platform.GCP.NetworkProjectID) > 0 {
 			projID := in.InstallConfig.Config.Platform.GCP.NetworkProjectID
@@ -310,4 +320,30 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 // PostProvision should be called to add or update and GCP resources after provisioning has completed.
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	return nil
+}
+
+// needsKMSPermissions returns true if KMS customer-managed encryption keys are configured
+// for either ignition storage or registry storage.
+func needsKMSPermissions(platform *gcptypes.Platform) bool {
+	if platform == nil {
+		return false
+	}
+
+	// Check if ignition storage encryption is configured
+	if platform.Ignition != nil &&
+		platform.Ignition.Storage != nil &&
+		platform.Ignition.Storage.EncryptionKey != nil &&
+		platform.Ignition.Storage.EncryptionKey.KMSKey != nil {
+		return true
+	}
+
+	// Check if registry storage encryption is configured
+	if platform.Registry != nil &&
+		platform.Registry.Storage != nil &&
+		platform.Registry.Storage.EncryptionKey != nil &&
+		platform.Registry.Storage.EncryptionKey.KMSKey != nil {
+		return true
+	}
+
+	return false
 }
