@@ -362,6 +362,39 @@ func (k *KMSKeyReference) Set(required *KMSKeyReference) {
 	}
 }
 
+// StorageEncryptionKeyReference describes the KMS key to use for storage bucket encryption.
+type StorageEncryptionKeyReference struct {
+	// KMSKey is a reference to a KMS Key to use for the encryption.
+	//
+	// +optional
+	KMSKey *KMSKeyReference `json:"kmsKey,omitempty"`
+
+	// KMSKeyServiceAccount is the service account being used for the
+	// encryption request for the given KMS key. If absent, the default
+	// service account for the storage service is used.
+	//
+	// +optional
+	KMSKeyServiceAccount string `json:"kmsKeyServiceAccount,omitempty"`
+}
+
+// Set sets the values from `required` to `s`.
+func (s *StorageEncryptionKeyReference) Set(required *StorageEncryptionKeyReference) {
+	if required == nil || s == nil {
+		return
+	}
+
+	if required.KMSKeyServiceAccount != "" {
+		s.KMSKeyServiceAccount = required.KMSKeyServiceAccount
+	}
+
+	if required.KMSKey != nil {
+		if s.KMSKey == nil {
+			s.KMSKey = &KMSKeyReference{}
+		}
+		s.KMSKey.Set(required.KMSKey)
+	}
+}
+
 // GetGCPInstanceFamily extracts the instance family from the instance type (for instance c4-standard-4 returns c4).
 func GetGCPInstanceFamily(instanceType string) string {
 	family, _, _ := strings.Cut(instanceType, "-")

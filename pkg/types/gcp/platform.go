@@ -238,3 +238,16 @@ func GetCloudEnvironment(projectID string) string {
 func IsNonDefaultUniverseDomain(universeDomain string) bool {
 	return universeDomain != "" && universeDomain != "googleapis.com"
 }
+
+// GetStorageKMSKey returns the KMS key to use for GCS bucket encryption.
+// Returns the key from defaultMachinePlatform.osDisk.encryptionKey.kmsKey if configured,
+// otherwise returns nil.
+func GetStorageKMSKey(platform *Platform) *KMSKeyReference {
+	if platform != nil &&
+		platform.DefaultMachinePlatform != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey != nil {
+		return platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey
+	}
+	return nil
+}
