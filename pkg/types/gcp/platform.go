@@ -193,3 +193,16 @@ func GetDefaultServiceAccount(platform *Platform, clusterID string, role string)
 func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
 }
+
+// GetStorageKMSKey returns the KMS key to use for GCS bucket encryption.
+// Returns the key from defaultMachinePlatform.osDisk.encryptionKey.kmsKey if configured,
+// otherwise returns nil.
+func GetStorageKMSKey(platform *Platform) *KMSKeyReference {
+	if platform != nil &&
+		platform.DefaultMachinePlatform != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey != nil {
+		return platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey
+	}
+	return nil
+}
