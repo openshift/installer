@@ -260,11 +260,13 @@ func checkDaemons(client *gossh.Client) error {
 		return fmt.Errorf("checking daemon status: %w", err)
 	}
 
-	missing := parseDaemonStatus(out)
+	missing, found := parseDaemonStatus(out)
 	if len(missing) > 0 {
 		return fmt.Errorf("daemons not active/running: %s", strings.Join(missing, ", "))
 	}
-	logrus.Info("All daemons (corosync, pacemaker, pcsd) are active")
+	if found {
+		logrus.Info("All daemons (corosync, pacemaker, pcsd) are active")
+	}
 	return nil
 }
 
@@ -449,9 +451,8 @@ func nodeInOnlineList(node NodeInfo, online []string) bool {
 	return false
 }
 
-func parseDaemonStatus(output string) []string {
+func parseDaemonStatus(output string) (missing []string, found bool) {
 	inSection := false
-	var missing []string
 	for _, line := range strings.Split(output, "\n") {
 		if strings.Contains(line, "Daemon Status:") {
 			inSection = true
@@ -470,7 +471,7 @@ func parseDaemonStatus(output string) []string {
 	if !inSection {
 		logrus.Warn("Could not find Daemon Status section in pcs output — skipping daemon check")
 	}
-	return missing
+	return missing, inSection
 }
 
 type etcdHealthEntry struct {

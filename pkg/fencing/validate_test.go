@@ -169,7 +169,7 @@ Daemon Status:
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := parseDaemonStatus(tc.input)
+			got, _ := parseDaemonStatus(tc.input)
 			if len(got) != len(tc.missing) {
 				t.Fatalf("parseDaemonStatus() = %v, want %v", got, tc.missing)
 			}
