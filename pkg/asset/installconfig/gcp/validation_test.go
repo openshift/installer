@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -425,7 +426,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			edits:          editFunctions{invalidateCPKMSKeyRing},
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
-			expectedErrMsg: "platform.gcp.controlPlane.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+			expectedErrMsg: "platform.gcp.controlPlane.platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
 		},
 		{
 			name:          "Valid Compute KMS Key",
@@ -438,14 +439,14 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			edits:          editFunctions{invalidateComputeKMSKeyRing},
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
-			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+			expectedErrMsg: "platform.gcp.compute\\[0\\].platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
 		},
 		{
 			name:           "Valid Control Plane Invalid Compute Invalid Default Machine KMS Key",
 			edits:          editFunctions{validCPKMSKeyRing, invalidateComputeKMSKeyRing, invalidDefaultMachineKeyRing},
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
-			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePool.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+			expectedErrMsg: "platform.gcp.compute\\[0\\].platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
 		},
 		{
 			name:           "Invalid Base Domain",
@@ -1668,8 +1669,21 @@ func TestValidateMarketplaceImages(t *testing.T) {
 				assert.Empty(t, errs)
 			}
 			if len(tc.expectedWarnMsg) > 0 {
-				assert.Regexp(t, tc.expectedWarnMsg, hook.LastEntry().Message)
+				// Check that at least one entry matches the expected warning
+				found := false
+				for _, entry := range hook.AllEntries() {
+					matched, err := regexp.MatchString(tc.expectedWarnMsg, entry.Message)
+					assert.NoError(t, err, "Invalid regex pattern: %s", tc.expectedWarnMsg)
+					if matched {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Expected warning message not found: %s", tc.expectedWarnMsg)
 			}
 		})
 	}
 }
+
+// TestValidateStorageEncryptionKeys removed - storage encryption is now configured
+// via defaultMachinePlatform.osDisk.encryptionKey.kmsKey and validated in TestValidatePlatformKMSKeys
