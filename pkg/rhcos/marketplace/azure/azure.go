@@ -273,6 +273,34 @@ func convertToSemver(ver string) string {
 	return ""
 }
 
+// FillMissing copies any nil image types from fallback into target.
+func FillMissing(target, fallback *rhcos.AzureMarketplace) {
+	if target == nil || fallback == nil {
+		return
+	}
+	if target.NoPurchasePlan == nil {
+		target.NoPurchasePlan = fallback.NoPurchasePlan
+	}
+	if target.OCP == nil {
+		target.OCP = fallback.OCP
+	}
+	if target.OPP == nil {
+		target.OPP = fallback.OPP
+	}
+	if target.OKE == nil {
+		target.OKE = fallback.OKE
+	}
+	if target.OCPEMEA == nil {
+		target.OCPEMEA = fallback.OCPEMEA
+	}
+	if target.OPPEMEA == nil {
+		target.OPPEMEA = fallback.OPPEMEA
+	}
+	if target.OKEEMEA == nil {
+		target.OKEEMEA = fallback.OKEEMEA
+	}
+}
+
 func checkIfNewer(candidate, release string) bool {
 	img, err := strconv.Atoi(strings.Split(semver.MajorMinor(candidate), ".")[1])
 	if err != nil {
