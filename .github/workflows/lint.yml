@@ -1,0 +1,40 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --config .golangci.yaml --timeout 10m
+          skip-cache: false
+          skip-pkg-cache: false
+          skip-build-cache: false
+
+      - name: Check lint results
+        if: failure()
+        run: |
+          echo "::error::Linting failed. Run 'golangci-lint run --config .golangci.yaml' locally to see issues."
+          exit 1

@@ -1,0 +1,48 @@
+name: Format Check
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  gofmt:
+    name: Check gofmt formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Check gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::The following files are not formatted with gofmt:"
+            echo "$unformatted"
+            echo ""
+            echo "Run 'gofmt -w .' to fix formatting issues."
+            exit 1
+          fi
+        shell: bash
+
+      - name: Check goimports (if available)
+        continue-on-error: true
+        run: |
+          go install golang.org/x/tools/cmd/goimports@latest
+          unformatted=$(goimports -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::warning::The following files need import formatting:"
+            echo "$unformatted"
+          fi
+        shell: bash

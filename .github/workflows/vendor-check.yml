@@ -1,0 +1,38 @@
+name: Vendor Check
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  verify-vendor:
+    name: Verify vendor directory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Verify vendor dependencies
+        run: |
+          go mod tidy
+          go mod vendor
+          git diff --exit-code go.mod go.sum vendor/
+        shell: bash
+
+      - name: Check for vendor changes
+        if: failure()
+        run: |
+          echo "::error::Vendor directory is out of sync. Run 'go mod tidy && go mod vendor' and commit the changes."
+          exit 1

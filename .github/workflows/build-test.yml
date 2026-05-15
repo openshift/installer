@@ -1,0 +1,61 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  build:
+    name: Build installer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build installer
+        run: ./hack/build.sh
+        env:
+          MODE: release
+
+      - name: Verify binary
+        run: |
+          ./bin/openshift-install version
+
+  unit-tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run tests
+        run: |
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        env:
+          CGO_ENABLED: 1
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: success()
+        continue-on-error: true
+        with:
+          file: ./coverage.out
+          flags: unittests
