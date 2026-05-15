@@ -7,7 +7,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `network` (optional string): The name of an existing GCP VPC where the cluster infrastructure should be provisioned.
 * `controlPlaneSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster control plane.
 * `computeSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster nodes.
-* `defaultMachinePlatform` (optional object): Default [GCP-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own GCP-specific properties.
+* `defaultMachinePlatform` (optional object): Default [GCP-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own GCP-specific properties. **Note**: The KMS key configured in `defaultMachinePlatform.osDisk.encryptionKey.kmsKey` is used for encrypting OS disks, the bootstrap ignition bucket, and the image registry storage bucket.
 * `licenses` (optional list of strings): A list of license URLs (https) that should be applied to the compute images (as defined in [the API][compute-images]). The use of this property in combination with any mechanism that results in using pre-built images (such as the current OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE) is forbidden. Also, note that use of these URLs will force the installer to copy the source image before being used. An example of this license is the one that enables [nested virtualization][gcp-nested]. A full list of available licenses can be retrieved using [the license API][license-api].
 
 ## Machine pools
@@ -23,7 +23,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
         * `keyRing` (string): The name of the KMS Key Ring which the KMS Key belongs to.
         * `location` (string): The GCP location in which the Key Ring exists.
         * `projectID` (optional string): The ID of the Project in which the KMS Key Ring exists. Defaults to the VM ProjectID if not set.
-      * `kmsKeyServiceAccount` (optional string): The service account being used for the encryption request for the given KMS key. If absent, the [Compute Engine default service account][default-service-account] is used.
+      * `kmsKeyServiceAccount` (optional string): **Deprecated**. This field is no longer needed as the installer automatically grants the Compute Engine service account permission to use the KMS key. The Compute Engine service account (`service-{PROJECT_NUMBER}@compute-system.iam.gserviceaccount.com`), not the instance service account, performs OS disk encryption.
 
 ## Installing to Existing Networks & Subnetworks
 
@@ -87,7 +87,6 @@ compute:
             keyRing: openshift-machine-keys
             location: global
             projectID: openshift-dev-installer
-          kmsKeyServiceAccount:  openshift-dev-installer@openshift-gce-devel.iam.gserviceaccount.com
   replicas: 3
 controlPlane:
   name: master
