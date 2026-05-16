@@ -4,12 +4,61 @@ set -euo pipefail
 # shellcheck source=release-image.sh.template
 . /usr/local/bin/release-image.sh
 
-# yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
-coreos_img={{.StreamTag}}
-until COREOS_IMAGE=$(image_for ${coreos_img}); do
-    echo 'Failed to query release image; retrying...'
+# Get the Machine Config Operator image from the release payload
+until MCO_IMAGE=$(image_for 'machine-config-operator'); do
+    echo 'Failed to query MCO image from release; retrying...'
     sleep 10
 done
+
+# Create temporary directory for binary extraction
+TEMP_DIR=$(mktemp -d)
+
+MCO_CONTAINER_ID=
+
+cleanup_mco() {
+    # Ensure that the MCO container is removed.
+    if [[ -n "${MCO_CONTAINER_ID}" ]]; then
+        podman container rm -f "${MCO_CONTAINER_ID}" >/dev/null 2>&1 || true
+        MCO_CONTAINER_ID=
+    fi
+
+    # Delete the MCO container image to conserve memory.
+    if [[ -n "${MCO_IMAGE}" ]]; then
+        podman image rm -f "${MCO_IMAGE}" >/dev/null 2>&1 || true
+        MCO_IMAGE=
+    fi
+
+    # Delete the tempdir.
+    if [[ -n "${TEMP_DIR}" ]]; then
+        rm -rf "${TEMP_DIR}"
+        TEMP_DIR=
+    fi
+}
+trap cleanup_mco EXIT
+
+echo "Extracting machine-config-osimagestream binary to ${TEMP_DIR}"
+
+MCO_CONTAINER_ID="$(podman create "${MCO_IMAGE}")"
+# Extract the machine-config-osimagestream binary from the MCO image. This avoids having to munge podman args, paths, env vars, etc.
+podman cp "${MCO_CONTAINER_ID}":/usr/bin/machine-config-osimagestream "${TEMP_DIR}/machine-config-osimagestream"
+
+# Execute the binary to get the CoreOS image pullspec
+# Note: Proxy environment variables (HTTP_PROXY, HTTPS_PROXY, NO_PROXY) are
+# automatically inherited from the environment if set via /etc/profile.d/proxy.sh
+until COREOS_IMAGE=$("${TEMP_DIR}/machine-config-osimagestream" \
+    get os-image-pullspec \
+    --release-image "${RELEASE_IMAGE_DIGEST}" \
+    --authfile /root/.docker/config.json \
+    --per-host-certs /etc/containers/certs.d \
+    --osimagestream-name '{{ .OSImageStream }}' \
+    --trust-bundle /etc/pki/ca-trust/source/anchors \
+    --registry-config /etc/containers/registries.conf); do
+    echo 'Failed to query for OS image pullspec; retrying...'
+    sleep 10
+done
+
+# Clean up the MCO container, image, and temp dir now that we have the pullspec.
+cleanup_mco
 
 # need to use rpm-ostree here since `bootc status` doesn't work in the live ISO currently
 # https://github.com/containers/bootc/issues/1043
