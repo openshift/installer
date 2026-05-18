@@ -4,8 +4,8 @@ package rhcos
 
 import "github.com/openshift/installer/pkg/types"
 
-// DefaultOSImageStream Not used in SCOS
-const DefaultOSImageStream types.OSImageStream = ""
+// DefaultOSImageStream Not (yet) used in SCOS
+const DefaultOSImageStream types.OSImageStream = "centos-10"
 
 func getStreamFileName(_ types.OSImageStream) string {
 	return "coreos/scos.json"
