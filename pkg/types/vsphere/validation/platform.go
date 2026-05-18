@@ -160,11 +160,10 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 	tagUrnPattern := regexp.MustCompile(`^(urn):(vmomi):(InventoryServiceTag):([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}):([^:]+)$`)
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
-	var associatedVCenter *vsphere.VCenter
-
 	zoneNames := make(map[string]string)
 
 	for index, failureDomain := range p.FailureDomains {
+		var associatedVCenter *vsphere.VCenter
 		if regionName, ok := zoneNames[failureDomain.Zone]; !ok {
 			zoneNames[failureDomain.Zone] = failureDomain.Region
 		} else if regionName == failureDomain.Region {
