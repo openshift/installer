@@ -70,7 +70,6 @@ type Platform struct {
 	AffinityGroups []AffinityGroup `json:"affinityGroups"`
 
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
-	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.OvirtPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }
