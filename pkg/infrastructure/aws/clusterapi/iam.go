@@ -71,6 +71,7 @@ var (
 						"elasticloadbalancing:RegisterTargets",
 						"elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer",
 						"elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
+						"elasticloadbalancing:SetSecurityGroups",
 						"kms:DescribeKey",
 					},
 					Resource: iamv1.Resources{
