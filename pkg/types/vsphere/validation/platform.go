@@ -165,6 +165,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 	zoneNames := make(map[string]string)
 
 	for index, failureDomain := range p.FailureDomains {
+		associatedVCenter = nil
 		if regionName, ok := zoneNames[failureDomain.Zone]; !ok {
 			zoneNames[failureDomain.Zone] = failureDomain.Region
 		} else if regionName == failureDomain.Region {
