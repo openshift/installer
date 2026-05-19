@@ -39,8 +39,10 @@ func (a *Kargs) Generate(_ context.Context, dependencies asset.Parents) error {
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		a.fips = agentClusterInstall.FIPSEnabled()
-		// Add kernel args for external oci platform
-		if agentClusterInstall.GetExternalPlatformName() == agent.ExternalPlatformNameOci {
+		// Add kernel args for external platforms
+		externalPlatformName := agentClusterInstall.GetExternalPlatformName()
+		switch externalPlatformName {
+		case agent.ExternalPlatformNameOci:
 			logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, agent.ExternalPlatformNameOci)
 			a.consoleArgs = " console=ttyS0"
 		}
