@@ -3,6 +3,8 @@ package validation
 import (
 	"fmt"
 	"regexp"
+	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -103,9 +105,26 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("failureDomain", "name"), fmt.Errorf("fail to compile the pattern %q: %w", pattern, err)))
 		} else {
-			for _, fd := range p.FailureDomains {
+			fdNames := make(map[string]int)
+			fdTopologies := make(map[string]string)
+
+			for idx, fd := range p.FailureDomains {
 				if !rexp.MatchString(fd.Name) {
 					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "name"), fd.Name, fmt.Sprintf("failureDomain name should match the pattern %q.", pattern)))
+				}
+
+				if prevIdx, exists := fdNames[fd.Name]; exists {
+					allErrs = append(allErrs, field.Duplicate(fldPath.Child("failureDomains").Index(idx).Child("name"), fmt.Sprintf("failure domain name %q is already used by failureDomains[%d]", fd.Name, prevIdx)))
+				} else {
+					fdNames[fd.Name] = idx
+				}
+
+				topoKey := nutanixFailureDomainTopologyKey(fd)
+				if prevName, exists := fdTopologies[topoKey]; exists {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomains").Index(idx), fd.Name,
+						fmt.Sprintf("failure domain %q has identical topology (same prismElement and subnets) as %q; this provides no additional fault tolerance", fd.Name, prevName)))
+				} else {
+					fdTopologies[topoKey] = fd.Name
 				}
 
 				if fd.PrismElement.UUID == "" {
@@ -151,6 +170,15 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 	default:
 		return false
 	}
+}
+
+// nutanixFailureDomainTopologyKey builds a comparable key from the infrastructure-defining
+// fields of a failure domain: Prism Element UUID and sorted subnet UUIDs.
+func nutanixFailureDomainTopologyKey(fd nutanix.FailureDomain) string {
+	subnets := make([]string, len(fd.SubnetUUIDs))
+	copy(subnets, fd.SubnetUUIDs)
+	sort.Strings(subnets)
+	return fmt.Sprintf("pe=%s;subnets=%s", fd.PrismElement.UUID, strings.Join(subnets, ","))
 }
 
 // validateSubnets validates the input subnetUUIDs meet the configuration requirements.

@@ -390,6 +390,65 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomain\.dataSourceImages: Required value: failureDomain "fd-1": both the dataSourceImage's uuid and name are empty, you need to configure one\.$`,
 		},
 		{
+			name: "failureDomain with duplicate name",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.FailureDomains = []nutanix.FailureDomain{
+					{
+						Name:         "fd-1",
+						PrismElement: nutanix.PrismElement{UUID: "fd-pe-uuid-1", Endpoint: nutanix.PrismEndpoint{Address: "fd-pe-1", Port: 9440}},
+						SubnetUUIDs:  []string{"fd-subnet-uuid-1"},
+					},
+					{
+						Name:         "fd-1",
+						PrismElement: nutanix.PrismElement{UUID: "fd-pe-uuid-2", Endpoint: nutanix.PrismEndpoint{Address: "fd-pe-2", Port: 9440}},
+						SubnetUUIDs:  []string{"fd-subnet-uuid-2"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]\.name: Duplicate value: "failure domain name \\"fd-1\\" is already used by failureDomains\[0\]"`,
+		},
+		{
+			name: "failureDomain with duplicate topology same prismElement and subnet",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.FailureDomains = []nutanix.FailureDomain{
+					{
+						Name:         "fd-1",
+						PrismElement: nutanix.PrismElement{UUID: "fd-pe-uuid", Endpoint: nutanix.PrismEndpoint{Address: "fd-pe", Port: 9440}},
+						SubnetUUIDs:  []string{"fd-subnet-uuid"},
+					},
+					{
+						Name:         "fd-2",
+						PrismElement: nutanix.PrismElement{UUID: "fd-pe-uuid", Endpoint: nutanix.PrismEndpoint{Address: "fd-pe", Port: 9440}},
+						SubnetUUIDs:  []string{"fd-subnet-uuid"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "fd-2": failure domain "fd-2" has identical topology \(same prismElement and subnets\) as "fd-1"; this provides no additional fault tolerance`,
+		},
+		{
+			name: "valid failureDomain with different prismElements",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.FailureDomains = []nutanix.FailureDomain{
+					{
+						Name:         "fd-1",
+						PrismElement: nutanix.PrismElement{UUID: "fd-pe-uuid-1", Endpoint: nutanix.PrismEndpoint{Address: "fd-pe-1", Port: 9440}},
+						SubnetUUIDs:  []string{"fd-subnet-uuid"},
+					},
+					{
+						Name:         "fd-2",
+						PrismElement: nutanix.PrismElement{UUID: "fd-pe-uuid-2", Endpoint: nutanix.PrismEndpoint{Address: "fd-pe-2", Port: 9440}},
+						SubnetUUIDs:  []string{"fd-subnet-uuid"},
+					},
+				}
+				return p
+			}(),
+		},
+		{
 			name: "valid failureDomain",
 			platform: func() *nutanix.Platform {
 				p := validPlatform()
