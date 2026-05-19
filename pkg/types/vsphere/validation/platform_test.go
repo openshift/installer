@@ -378,7 +378,7 @@ func TestValidatePlatform(t *testing.T) {
 
 				for i := range p.FailureDomains {
 					p.FailureDomains[i].Topology.ComputeCluster = "/test-datacenter/host/HostClusterFolder/test-cluster"
-					p.FailureDomains[i].Topology.ResourcePool = "/test-datacenter/host/HostClusterFolder/test-cluster/Resources/test-resourcepool"
+					p.FailureDomains[i].Topology.ResourcePool = fmt.Sprintf("/test-datacenter/host/HostClusterFolder/test-cluster/Resources/test-resourcepool-%d", i)
 					p.FailureDomains[i].Topology.Datastore = "/test-datacenter/datastore/StorageFolder/test-datastore"
 					p.FailureDomains[i].Topology.Folder = "/test-datacenter/vm/VMFolder/test-folder"
 				}
@@ -551,6 +551,16 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `test-path\.failureDomains\.name\[1\]: Duplicate value: "test-east-1a"`,
+		},
+		{
+			name: "Multi-zone platform failureDomain duplicate topology",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
 		},
 		{
 			name: "Multi-zone platform failureDomain zone missing tag category",
