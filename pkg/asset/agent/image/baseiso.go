@@ -36,8 +36,8 @@ func (i *BaseIso) Name() string {
 }
 
 // Fetch RootFS URL using the rhcos.json.
-func (i *BaseIso) getRootFSURL(ctx context.Context, archName string) (string, error) {
-	metal, err := rhcos.GetMetalArtifact(ctx, archName)
+func (i *BaseIso) getRootFSURL(ctx context.Context, archName string, osImageStream types.OSImageStream) (string, error) {
+	metal, err := rhcos.GetMetalArtifact(ctx, archName, osImageStream)
 	if err != nil {
 		return "", err
 	}
@@ -69,8 +69,11 @@ func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) erro
 	clusterInfo := &joiner.ClusterInfo{}
 	dependencies.Get(agentManifests, registriesConf, agentWorkflow, clusterInfo)
 
+	// Extract osImageStream from AgentClusterInstall annotation
+	osImageStream := agentManifests.GetOSImageStream()
+
 	baseIsoFileName, err := rhcos.NewBaseISOFetcher(
-		i.getRelease(agentManifests, registriesConf.MirrorConfig)).GetBaseISOFilename(ctx, agentManifests.InfraEnv.Spec.CpuArchitecture)
+		i.getRelease(agentManifests, registriesConf.MirrorConfig), osImageStream).GetBaseISOFilename(ctx, agentManifests.InfraEnv.Spec.CpuArchitecture)
 
 	if err == nil {
 		logrus.Debugf("Using base ISO image %s", baseIsoFileName)

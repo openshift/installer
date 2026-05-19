@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	agenttypes "github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/version"
@@ -155,7 +156,8 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 	if err != nil {
 		return err
 	}
-	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion)
+	// Use default OS image stream for unconfigured ignition workflow
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, rhcos.DefaultOSImageStream)
 	if err != nil {
 		return err
 	}

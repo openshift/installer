@@ -2,10 +2,12 @@ package manifests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -16,6 +18,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
+	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -116,6 +120,35 @@ func (m *AgentManifests) Load(f asset.FileFetcher) (bool, error) {
 // GetPullSecretData returns the content of the pull secret
 func (m *AgentManifests) GetPullSecretData() string {
 	return m.PullSecret.StringData[".dockerconfigjson"]
+}
+
+// GetOSImageStream extracts the osImageStream from the AgentClusterInstall
+// installConfigOverrides annotation, or returns the default if not present.
+func (m *AgentManifests) GetOSImageStream() types.OSImageStream {
+	if m.AgentClusterInstall == nil {
+		return rhcos.DefaultOSImageStream
+	}
+
+	if m.AgentClusterInstall.Annotations == nil {
+		return rhcos.DefaultOSImageStream
+	}
+
+	overridesJSON, ok := m.AgentClusterInstall.Annotations[installConfigOverrides]
+	if !ok {
+		return rhcos.DefaultOSImageStream
+	}
+
+	var overrides agentClusterInstallInstallConfigOverrides
+	if err := json.Unmarshal([]byte(overridesJSON), &overrides); err != nil {
+		logrus.Debugf("Failed to parse installConfigOverrides: %v", err)
+		return rhcos.DefaultOSImageStream
+	}
+
+	if overrides.OSImageStream == nil || *overrides.OSImageStream == "" {
+		return rhcos.DefaultOSImageStream
+	}
+
+	return *overrides.OSImageStream
 }
 
 func (m *AgentManifests) finish() error {

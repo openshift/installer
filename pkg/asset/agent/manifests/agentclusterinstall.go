@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -131,6 +132,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
 	// Allow override of FeatureGates
 	FeatureGates []string `json:"featureGates,omitempty"`
+	// OSImageStream is the OS Image Stream to be used for all machines in the cluster
+	OSImageStream *types.OSImageStream `json:"osImageStream,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -395,6 +398,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if installConfig.Config.AdditionalTrustBundlePolicy != "" && installConfig.Config.AdditionalTrustBundlePolicy != types.PolicyProxyOnly {
 			icOverridden = true
 			icOverrides.AdditionalTrustBundlePolicy = installConfig.Config.AdditionalTrustBundlePolicy
+		}
+
+		if installConfig.Config.OSImageStream != rhcos.DefaultOSImageStream && installConfig.Config.OSImageStream != "" {
+			icOverridden = true
+			icOverrides.OSImageStream = &installConfig.Config.OSImageStream
 		}
 
 		if icOverridden {
