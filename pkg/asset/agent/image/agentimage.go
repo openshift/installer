@@ -270,9 +270,9 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	if err != nil {
 		return err
 	}
-	// For external platform OCI, add CCM manifests in the openshift directory.
+	// For external platforms (OCI, IBM Z, etc.), add CCM manifests in the openshift directory.
 	if a.platform == hiveext.ExternalPlatformType {
-		logrus.Infof("When using %s oci platform, always make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, manifests.OpenshiftManifestDir())
+		logrus.Infof("When using %s platform, always make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, manifests.OpenshiftManifestDir())
 	}
 
 	return nil
