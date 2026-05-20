@@ -18,6 +18,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsnet "k8s.io/utils/net"
 
@@ -893,6 +894,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 	// three valid platforms for multi arch installations.
 	isMultiArchEnabled := platform.AWS != nil || platform.GCP != nil || platform.BareMetal != nil
 	poolNames := map[string]bool{}
+	customPoolCount := 0
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
 		switch p.Name {
@@ -900,7 +902,19 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		case types.MachinePoolEdgeRoleName:
 			allErrs = append(allErrs, validateComputeEdge(platform, p.Name, poolFldPath, poolFldPath)...)
 		default:
-			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{types.MachinePoolComputeRoleName, types.MachinePoolEdgeRoleName}))
+			// Custom pool: validate name is a legal DNS label, not a reserved name, and limit to five.
+			if errs := k8svalidation.IsDNS1123Label(p.Name); len(errs) > 0 {
+				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("name"), p.Name, strings.Join(errs, "; ")))
+			} else if types.ReservedMachinePoolNames.Has(p.Name) {
+				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("name"), p.Name, "pool name is reserved"))
+			} else if platform.GCP == nil {
+				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("name"), p.Name, "custom compute pools are currently only supported on GCP"))
+			} else {
+				customPoolCount++
+				if customPoolCount > 5 {
+					allErrs = append(allErrs, field.TooMany(poolFldPath.Child("name"), customPoolCount, 5))
+				}
+			}
 		}
 
 		if poolNames[p.Name] {

@@ -167,6 +167,7 @@ spec:
 						Data:     []byte("test-ignition"),
 					},
 				},
+				&machine.CustomPool{},
 			)
 			worker := &Worker{}
 			if err := worker.Generate(context.Background(), parents); err != nil {
@@ -230,6 +231,7 @@ func TestComputeIsNotModified(t *testing.T) {
 				Data:     []byte("test-ignition"),
 			},
 		},
+		&machine.CustomPool{},
 	)
 	worker := &Worker{}
 	if err := worker.Generate(context.Background(), parents); err != nil {

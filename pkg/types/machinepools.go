@@ -1,6 +1,8 @@
 package types
 
 import (
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -26,6 +28,21 @@ const (
 	// MachinePoolDefaultConfig name associated with the generic default configs for machine pool.
 	MachinePoolDefaultConfig = "default"
 )
+
+// ReservedMachinePoolNames contains pool names that are reserved by the installer
+// and may not be used as custom pool names.
+var ReservedMachinePoolNames = sets.New(
+	MachinePoolComputeRoleName,
+	MachinePoolEdgeRoleName,
+	MachinePoolControlPlaneRoleName,
+	MachinePoolArbiterRoleName,
+)
+
+// IsCustomPool returns true if the pool name is a user-defined custom pool,
+// i.e. non-empty and not one of the built-in reserved names.
+func IsCustomPool(poolName string) bool {
+	return poolName != "" && !ReservedMachinePoolNames.Has(poolName)
+}
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.
 // +kubebuilder:validation:Enum="";Enabled;Disabled

@@ -244,7 +244,8 @@ func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string
 	case "master":
 		return platform.Network, platform.ControlPlaneSubnet, nil
 	default:
-		return "", "", fmt.Errorf("unrecognized machine role %s", role)
+		// Custom pool: use the compute subnet, same as worker.
+		return platform.Network, platform.ComputeSubnet, nil
 	}
 }
 
@@ -255,6 +256,11 @@ func getTags(clusterID, role string) []string {
 	case "master":
 		return []string{fmt.Sprintf("%s-%s", clusterID, "control-plane"), clusterID}
 	default:
-		panic(fmt.Sprintf("unrecognized machine role %s", role))
+		// Custom pool: include the worker tag so existing worker firewall rules
+		// apply, plus a pool-specific tag for future targeted rules.
+		return []string{
+			fmt.Sprintf("%s-worker", clusterID),
+			fmt.Sprintf("%s-%s", clusterID, role),
+		}
 	}
 }

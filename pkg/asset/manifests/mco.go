@@ -77,8 +77,11 @@ func gcpBootImages(ic *types.InstallConfig) (cpImg bool, wImg bool) {
 		cpImg = true
 	}
 
-	if w := ic.Compute; len(w) > 0 && w[0].Platform.GCP != nil && w[0].Platform.GCP.OSImage != nil {
-		wImg = true
+	for _, computeMP := range ic.Compute {
+		if gcpPlatform := computeMP.Platform.GCP; gcpPlatform != nil && gcpPlatform.OSImage != nil {
+			wImg = true
+			break
+		}
 	}
 	return
 }
