@@ -44,13 +44,13 @@ allows for many clusters to be created. The network security groups which exist 
 
 By default, an x86 cluster will create:
 
-* One Standard_D4s_v3 bootstrap machine (removed after install)
-* Three Standard_D8s_v3 master nodes.
-* Three Standard_D2s_v3 worker nodes.
+* One Standard_D4s_v5 bootstrap machine (removed after install)
+* Three Standard_D8s_v5 master nodes.
+* Three Standard_D2s_v5 worker nodes.
 
-The specs for the VM sizes (Dsv3-series) are as follows:
+The specs for the VM sizes (Dsv5-series) are as follows:
 
-* Standard_D8s_v3
+* Standard_D8s_v5
    * 8 vCPU's, 32GiB ram
    * IOPs / Throughput (Mbps): (cached) 16000 / 128
    * IOPs / Throughput (Mbps): (uncached) 12800 / 192
@@ -58,7 +58,7 @@ The specs for the VM sizes (Dsv3-series) are as follows:
    * 64 GiB temp storage (SSD)
    * 16 data disks max
 
-* Standard_D4s_v3
+* Standard_D4s_v5
    * 4 vCPU's, 16GiB ram
    * IOPs / Throughput (Mbps): (cached) 8000 / 512
    * IOPs / Throughput (Mbps): (uncached) 6400 / 1152
@@ -67,7 +67,7 @@ The specs for the VM sizes (Dsv3-series) are as follows:
    * 32 GiB temp storage (SSD)
    * 8 data disks max
 
-* Standard_D2s_v3
+* Standard_D2s_v5
    * 2 vCPU's, 8GiB ram
    * IOPs / Throughput (Mbps): (cached) 4000 / 256
    * IOPs / Throughput (Mbps): (uncached) 3200 / 384

@@ -40,7 +40,7 @@
     },
     "nodeVMSize" : {
       "type" : "string",
-      "defaultValue" : "Standard_D4s_v3",
+      "defaultValue" : "Standard_D4s_v5",
       "metadata" : {
         "description" : "The size of the each Node Virtual Machine"
       }
