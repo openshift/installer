@@ -135,7 +135,7 @@ func (s marketplaceStream) azure(ctx context.Context, arch string, cfg streamCon
 	return nil
 }
 
-// getXYFromStream obtains the X.Y version from rhcos.json.
+// getReleaseFromStream obtains the X.Y version from rhcos.json.
 func getReleaseFromStream(cfg streamConfig) (string, error) {
 	if rel, ok := os.LookupEnv("STREAM_RELEASE_OVERRIDE"); ok {
 		log.Printf("Found STREAM_RELEASE_OVERRIDE %s", rel)
@@ -151,5 +151,9 @@ func getReleaseFromStream(cfg streamConfig) (string, error) {
 		return "", fmt.Errorf("failed to unmarshal RHCOS stream: %w", err)
 	}
 
-	return strings.Split(st.Stream, "-")[1], nil
+	parts := strings.Split(st.Stream, "-")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("unexpected stream format in %s: %q", cfg.inputFile, st.Stream)
+	}
+	return parts[1], nil
 }
