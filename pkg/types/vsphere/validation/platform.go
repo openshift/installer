@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -164,7 +165,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 	var associatedVCenter *vsphere.VCenter
 
 	zoneNames := make(map[string]string)
-	fdTopologies := make(map[string]string)
+	fdTopologies := make(map[vsphereTopologyKey]string)
 
 	for index, failureDomain := range p.FailureDomains {
 		if regionName, ok := zoneNames[failureDomain.Zone]; !ok {
@@ -173,10 +174,10 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zone"), failureDomain.Zone, fmt.Sprintf("cannot be used more than once for the failure domain region %q", failureDomain.Region)))
 		}
 
-		topoKey := vsphereFailureDomainTopologyKey(failureDomain)
+		topoKey := normalizedTopologyKey(failureDomain)
 		if prevName, exists := fdTopologies[topoKey]; exists {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(index), failureDomain.Name,
-				fmt.Sprintf("failure domain %q has identical topology (same server, datacenter, computeCluster, datastore, networks, resourcePool) as %q; this provides no additional fault tolerance", failureDomain.Name, prevName)))
+				fmt.Sprintf("failure domain %q has identical topology (same server, datacenter, computeCluster, datastore, networks, resourcePool, hostGroup) as %q; this provides no additional fault tolerance", failureDomain.Name, prevName)))
 		} else {
 			fdTopologies[topoKey] = failureDomain.Name
 		}
@@ -350,10 +351,30 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 	return allErrs
 }
 
-// vsphereFailureDomainTopologyKey builds a comparable key from the infrastructure-defining
-// fields of a failure domain topology. Inventory paths are canonicalized with filepath.Clean
-// so that syntactically different but equivalent paths (e.g. trailing slashes) are normalized.
-func vsphereFailureDomainTopologyKey(fd vsphere.FailureDomain) string {
+// vsphereTopologyKey is a comparable struct representing the physical infrastructure
+// fields of a failure domain. Used as a map key to detect duplicate topologies.
+//
+// Included fields (define physical placement):
+//   - server, datacenter, computeCluster, datastore, networks, resourcePool, hostGroup
+//
+// Excluded fields (identity/metadata, not infrastructure):
+//   - Name, Region, Zone, RegionType, ZoneType (scheduling labels)
+//   - Folder, Template, TagIDs (VM metadata, not fault-zone identity)
+type vsphereTopologyKey struct {
+	server         string
+	datacenter     string
+	computeCluster string
+	datastore      string
+	networks       string
+	resourcePool   string
+	hostGroup      string
+}
+
+// normalizedTopologyKey builds a comparable struct key from a failure domain.
+// Inventory paths are canonicalized with path.Clean (vSphere paths are URL-style,
+// always use forward slashes). Networks are sorted and joined with \x00 to avoid
+// ambiguity from names containing commas.
+func normalizedTopologyKey(fd vsphere.FailureDomain) vsphereTopologyKey {
 	networks := make([]string, len(fd.Topology.Networks))
 	copy(networks, fd.Topology.Networks)
 	sort.Strings(networks)
@@ -362,16 +383,18 @@ func vsphereFailureDomainTopologyKey(fd vsphere.FailureDomain) string {
 		if p == "" {
 			return ""
 		}
-		return filepath.Clean(p)
+		return path.Clean(p)
 	}
 
-	return fmt.Sprintf("server=%s;dc=%s;cluster=%s;ds=%s;nets=%s;rp=%s",
-		fd.Server,
-		fd.Topology.Datacenter,
-		normalizePath(fd.Topology.ComputeCluster),
-		normalizePath(fd.Topology.Datastore),
-		strings.Join(networks, ","),
-		normalizePath(fd.Topology.ResourcePool))
+	return vsphereTopologyKey{
+		server:         fd.Server,
+		datacenter:     fd.Topology.Datacenter,
+		computeCluster: normalizePath(fd.Topology.ComputeCluster),
+		datastore:      normalizePath(fd.Topology.Datastore),
+		networks:       strings.Join(networks, "\x00"),
+		resourcePool:   normalizePath(fd.Topology.ResourcePool),
+		hostGroup:      fd.Topology.HostGroup,
+	}
 }
 
 // validateDiskType checks that the specified diskType is valid.

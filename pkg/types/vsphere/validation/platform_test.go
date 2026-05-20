@@ -563,6 +563,23 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
 		},
 		{
+			name: "Valid HostGroup failure domains with same topology but different HostGroups",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[0].Topology.HostGroup = "host-group-a"
+				p.FailureDomains[0].Topology.ResourcePool = "/test-datacenter/host/test-cluster/Resources/test-resourcepool"
+
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[1].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[1].Topology.HostGroup = "host-group-b"
+				return p
+			}(),
+		},
+		{
 			name: "Multi-zone platform failureDomain zone missing tag category",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
