@@ -12,9 +12,21 @@ import (
 	"sigs.k8s.io/yaml"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
+
+const streamLabelKey = "coreos.openshift.io/stream"
+
+// streamLabelValue returns the OS image stream string to use as the BMH label value.
+// Falls back to the default stream if the install-config doesn't specify one.
+func streamLabelValue(config *types.InstallConfig) string {
+	if config.OSImageStream != "" {
+		return string(config.OSImageStream)
+	}
+	return string(rhcos.DefaultOSImageStream)
+}
 
 // HostSettings hold the information needed to build the manifests to
 // register hosts with the cluster.
@@ -31,7 +43,6 @@ type HostSettings struct {
 }
 
 func createNetworkConfigSecret(host *baremetal.Host) (*corev1.Secret, error) {
-
 	yamlNetworkConfig, err := yaml.Marshal(host.NetworkConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while creating network config secret")
@@ -80,7 +91,6 @@ func createSecret(host *baremetal.Host) (*corev1.Secret, baremetalhost.BMCDetail
 }
 
 func createBaremetalHost(host *baremetal.Host, bmc baremetalhost.BMCDetails) baremetalhost.BareMetalHost {
-
 	// Map string 'default' to hardware.DefaultProfileName
 	if host.HardwareProfile == "default" {
 		host.HardwareProfile = hardware.DefaultProfileName
@@ -134,7 +144,6 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 	}
 
 	for _, host := range config.Platform.BareMetal.Hosts {
-
 		// We only infer arbiter hosts if we are in an arbiter deployment
 		if config.IsArbiterEnabled() {
 			// If we know the host is an arbiter and the role isn't an empty value (i.e. explicitly defined by user)
@@ -178,6 +187,7 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 
 			newHost.ObjectMeta.Labels = map[string]string{
 				"installer.openshift.io/role": "control-plane",
+				streamLabelKey:                streamLabelValue(config),
 			}
 
 			// Link the new host to the currently available machine
@@ -196,6 +206,9 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 			numMasters++
 		} else {
 			newHost.Spec.Architecture = computeArch
+			newHost.ObjectMeta.Labels = map[string]string{
+				streamLabelKey: streamLabelValue(config),
+			}
 			// Pause workers until the real control plane is up.
 			newHost.ObjectMeta.Annotations = map[string]string{
 				"baremetalhost.metal3.io/paused": "",
@@ -279,6 +292,7 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 
 			newHost.ObjectMeta.Labels = map[string]string{
 				"installer.openshift.io/role": "control-plane",
+				streamLabelKey:                streamLabelValue(config),
 			}
 
 			// Link the new host to the currently available machine
