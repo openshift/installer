@@ -359,6 +359,7 @@ func TestFencingCredentialsSecretsFile(t *testing.T) {
 		name                          string
 		credentials                   []*types.Credential
 		fencingCredentialsSecretFiles []*SecretFile
+		expectedAnnotations           []map[string]string
 		err                           error
 	}{
 		{
@@ -391,8 +392,69 @@ func TestFencingCredentialsSecretsFile(t *testing.T) {
 					Data:     "map[address:[104 116 116 112 58 47 47 114 101 100 102 105 115 104 47 118 49 47 50] certificateVerification:[68 105 115 97 98 108 101 100] password:[112 97 115 115 50] username:[117 115 101 114 50]]",
 				},
 			},
+			expectedAnnotations: []map[string]string{
+				{"openshift.io/fencing-credentials": "hostname"},
+				{"openshift.io/fencing-credentials": "hostname"},
+			},
 			err: nil,
 		},
+		{
+			name: "credential with both hostname and mac address uses hostname",
+			credentials: []*types.Credential{
+				{
+					HostName:                "control-plane-0",
+					MACAddress:              "AA:BB:CC:DD:EE:01",
+					Address:                 "https://redfish/v1/1",
+					Username:                "user1",
+					Password:                "pass1",
+					CertificateVerification: "Enabled",
+				},
+			},
+			fencingCredentialsSecretFiles: []*SecretFile{
+				{
+					Filename: "openshift/99_openshift-etcd_fencing-credentials-secrets-0.yaml",
+					Name:     "fencing-credentials-control-plane-0",
+					Data:     "map[address:[104 116 116 112 115 58 47 47 114 101 100 102 105 115 104 47 118 49 47 49] certificateVerification:[69 110 97 98 108 101 100] password:[112 97 115 115 49] username:[117 115 101 114 49]]",
+				},
+			},
+			expectedAnnotations: []map[string]string{
+				{"openshift.io/fencing-credentials": "hostname"},
+			},
+			err: nil,
+		},
+		{
+			name: "valid credentials with mac address",
+			credentials: []*types.Credential{
+				{
+					MACAddress:              "AA:BB:CC:DD:EE:01",
+					Address:                 "https://redfish/v1/1",
+					Username:                "user1",
+					Password:                "pass1",
+					CertificateVerification: "Enabled",
+				},
+			},
+			fencingCredentialsSecretFiles: []*SecretFile{
+				{
+					Filename: "openshift/99_openshift-etcd_fencing-credentials-secrets-0.yaml",
+					Name:     "fencing-credentials-261dddd03aae841c2149ad8897e00961b9d429edc07213cbcfd840802d53e43b",
+					Data:     "map[address:[104 116 116 112 115 58 47 47 114 101 100 102 105 115 104 47 118 49 47 49] certificateVerification:[69 110 97 98 108 101 100] password:[112 97 115 115 49] username:[117 115 101 114 49]]",
+				},
+			},
+			expectedAnnotations: []map[string]string{
+				{"openshift.io/fencing-credentials": "mac-address"},
+			},
+			err: nil,
+		},
+		{
+			name: "credential with neither hostname nor mac address",
+			credentials: []*types.Credential{
+				{
+					Address:  "https://redfish/v1/1",
+					Username: "user1",
+					Password: "pass1",
+				},
+			},
+			err: fmt.Errorf("no hostName or macAddress provided")},
 	}
 
 	for _, tc := range cases {
@@ -438,8 +500,10 @@ func TestFencingCredentialsSecretsFile(t *testing.T) {
 
 			master := &Master{}
 			if tc.err != nil {
-				assert.Error(t, tc.err, master.Generate(context.Background(), parents))
-				assert.Len(t, master.FencingCredentialsSecretFiles, len(tc.fencingCredentialsSecretFiles))
+				err := master.Generate(context.Background(), parents)
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tc.err.Error())
+				}
 				return
 			}
 
@@ -447,6 +511,11 @@ func TestFencingCredentialsSecretsFile(t *testing.T) {
 			assert.Len(t, master.FencingCredentialsSecretFiles, len(tc.fencingCredentialsSecretFiles))
 			for i, secret := range master.FencingCredentialsSecretFiles {
 				verifySecret(t, secret, tc.fencingCredentialsSecretFiles[i].Filename, tc.fencingCredentialsSecretFiles[i].Name, tc.fencingCredentialsSecretFiles[i].Data)
+				if tc.expectedAnnotations != nil {
+					var s corev1.Secret
+					assert.NoError(t, yaml.Unmarshal(secret.Data, &s))
+					assert.Equal(t, tc.expectedAnnotations[i], s.Annotations)
+				}
 			}
 			verifyManifestOwnership(t, master)
 		})

@@ -25,6 +25,11 @@ func ValidateUniqueAndRequiredFields[T any](elements []T, fldPath *field.Path, f
 		fieldName := fl.Parent().Type().Name() + "." + fl.FieldName()
 		fieldValue := fl.Field().Interface()
 
+		// Skip uniqueness check for zero values (empty strings, zero ints, etc.)
+		if fl.Field().IsZero() {
+			return true
+		}
+
 		if fl.Field().Type().Comparable() {
 			if _, present := values[fieldName]; !present {
 				values[fieldName] = make(map[interface{}]struct{})

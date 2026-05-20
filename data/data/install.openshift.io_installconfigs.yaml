@@ -121,6 +121,8 @@ spec:
                           type: string
                         hostName:
                           type: string
+                        macAddress:
+                          type: string
                         password:
                           type: string
                         username:
@@ -1743,6 +1745,8 @@ spec:
                             type: string
                           hostName:
                             type: string
+                          macAddress:
+                            type: string
                           password:
                             type: string
                           username:
@@ -3304,6 +3308,8 @@ spec:
                           - Disabled
                           type: string
                         hostName:
+                          type: string
+                        macAddress:
                           type: string
                         password:
                           type: string

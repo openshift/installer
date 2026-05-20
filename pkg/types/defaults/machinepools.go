@@ -1,6 +1,8 @@
 package defaults
 
 import (
+	"net"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
@@ -25,6 +27,16 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform) {
 	}
 	if p.Architecture == "" {
 		p.Architecture = version.DefaultArch()
+	}
+
+	if p.Fencing != nil {
+		for _, credential := range p.Fencing.Credentials {
+			if credential.MACAddress != "" {
+				if parsed, err := net.ParseMAC(credential.MACAddress); err == nil {
+					credential.MACAddress = parsed.String()
+				}
+			}
+		}
 	}
 
 	switch platform.Name() {
