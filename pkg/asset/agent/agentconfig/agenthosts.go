@@ -125,6 +125,10 @@ func (a *AgentHosts) validateAgentHosts() field.ErrorList {
 			allErrs = append(allErrs, err...)
 		}
 
+		if err := a.validateInterfaceNamesMatchNetworkConfig(hostPath, host); err != nil {
+			allErrs = append(allErrs, err...)
+		}
+
 		if err := a.validateHostRootDeviceHints(hostPath, host); err != nil {
 			allErrs = append(allErrs, err...)
 		}
@@ -168,6 +172,47 @@ func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Hos
 		macs[mac] = true
 	}
 
+	return allErrs
+}
+
+func (a *AgentHosts) validateInterfaceNamesMatchNetworkConfig(hostPath *field.Path, host agent.Host) field.ErrorList {
+	if len(host.NetworkConfig.Raw) == 0 || len(host.Interfaces) == 0 {
+		return nil
+	}
+
+	var netInterfaces nmStateInterface
+	if err := yaml.Unmarshal(host.NetworkConfig.Raw, &netInterfaces); err != nil {
+		return nil
+	}
+
+	ncNames := make(map[string]bool, len(netInterfaces.Interfaces))
+	var ncNameList []string
+	for _, iface := range netInterfaces.Interfaces {
+		if iface.Name != "" {
+			ncNames[iface.Name] = true
+			ncNameList = append(ncNameList, iface.Name)
+		}
+	}
+	if len(ncNames) == 0 {
+		return nil
+	}
+
+	var allErrs field.ErrorList
+	for j, iface := range host.Interfaces {
+		if iface.Name == "" {
+			continue
+		}
+		if !ncNames[iface.Name] {
+			errMsg := "interface name \"" + iface.Name + "\" not found in networkConfig interfaces [" + strings.Join(ncNameList, ", ") + "]; " +
+				"the interfaces[].name values are logical names that must match the interface names used in networkConfig " +
+				"so that the MAC-to-interface mapping works correctly at boot time"
+			allErrs = append(allErrs, field.Invalid(
+				hostPath.Child("interfaces").Index(j).Child("name"),
+				iface.Name,
+				errMsg,
+			))
+		}
+	}
 	return allErrs
 }
 

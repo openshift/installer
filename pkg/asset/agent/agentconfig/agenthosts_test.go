@@ -101,6 +101,30 @@ routes:
     next-hop-interface: eth0
     table-id: 254
 `
+	agentNetworkConfigBond = `interfaces:
+- name: eth0
+  type: ethernet
+  state: up
+  mac-address: 28:d2:44:d2:b2:1a
+- name: eth1
+  type: ethernet
+  state: up
+  mac-address: 28:d2:44:d2:b2:1b
+- name: bond0
+  type: bond
+  state: up
+  link-aggregation:
+    mode: active-backup
+    port:
+    - eth0
+    - eth1
+  ipv4:
+    enabled: true
+    dhcp: false
+    address:
+    - ip: 192.168.111.80
+      prefix-length: 24
+`
 )
 
 func TestAgentHosts_Generate(t *testing.T) {
@@ -174,8 +198,8 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getAgentConfigMultiHost("worker"),
 			},
 			expectedConfig: agentHosts().hosts(
-				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
-				agentHost().name("test-2").role("worker").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
+				agentHost().name("test-2").role("worker").interfaces(iface("eth0", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
 		},
 		{
 			name: "multi-host-from-install-config",
@@ -329,8 +353,8 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getAgentConfigMultiHostEmbeddedRendezvousIP(),
 			},
 			expectedConfig: agentHosts().hosts(
-				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigEmbeddedRendezvousIPOne),
-				agentHost().name("test-2").role("worker").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigEmbeddedRendezvousIPTwo)),
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigEmbeddedRendezvousIPOne),
+				agentHost().name("test-2").role("worker").interfaces(iface("eth0", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigEmbeddedRendezvousIPTwo)),
 		},
 		{
 			name: "multi-host-from-agent-config-with-arbiter",
@@ -341,8 +365,52 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getAgentConfigMultiHost("arbiter"),
 			},
 			expectedConfig: agentHosts().hosts(
-				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
-				agentHost().name("test-2").role("arbiter").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
+				agentHost().name("test-2").role("arbiter").interfaces(iface("eth0", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
+		},
+		{
+			name: "interface-name-mismatch-with-networkconfig",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigMismatchedInterfaceName(),
+			},
+			expectedError:  "invalid Hosts configuration: hosts[0].interfaces[0].name: Invalid value: \"enp3s0\": interface name \"enp3s0\" not found in networkConfig interfaces [eth0]; the interfaces[].name values are logical names that must match the interface names used in networkConfig so that the MAC-to-interface mapping works correctly at boot time",
+			expectedConfig: nil,
+		},
+		{
+			name: "interface-name-matches-networkconfig",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigMatchingInterfaceName(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne)),
+		},
+		{
+			name: "bond-networkconfig-with-matching-interfaces",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigBondMatching(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a"), iface("eth1", "28:d2:44:d2:b2:1b")).deviceHint().networkConfig(agentNetworkConfigBond)),
+		},
+		{
+			name: "bond-networkconfig-with-mismatched-interfaces",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigBondMismatched(),
+			},
+			expectedError:  "invalid Hosts configuration: [hosts[0].interfaces[0].name: Invalid value: \"nic1\": interface name \"nic1\" not found in networkConfig interfaces [eth0, eth1, bond0]; the interfaces[].name values are logical names that must match the interface names used in networkConfig so that the MAC-to-interface mapping works correctly at boot time, hosts[0].interfaces[1].name: Invalid value: \"nic2\": interface name \"nic2\" not found in networkConfig interfaces [eth0, eth1, bond0]; the interfaces[].name values are logical names that must match the interface names used in networkConfig so that the MAC-to-interface mapping works correctly at boot time]",
+			expectedConfig: nil,
 		},
 	}
 	for _, tc := range cases {
@@ -453,13 +521,14 @@ func getAgentConfigSingleHost() *AgentConfig {
 
 func getAgentConfigMultiHost(role string) *AgentConfig {
 	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces[0].Name = "eth0"
 	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigOne)
 	host := agent.Host{
 		Hostname: "test-2",
 		Role:     role,
 		Interfaces: []*aiv1beta1.Interface{
 			{
-				Name:       "enp3s1",
+				Name:       "eth0",
 				MacAddress: "28:d2:44:d2:b2:1b",
 			},
 		},
@@ -528,6 +597,26 @@ func getAgentConfigInvalidInterfaces() *AgentConfig {
 	return a
 }
 
+func getAgentConfigBondMatching() *AgentConfig {
+	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces = []*aiv1beta1.Interface{
+		{Name: "eth0", MacAddress: "28:d2:44:d2:b2:1a"},
+		{Name: "eth1", MacAddress: "28:d2:44:d2:b2:1b"},
+	}
+	a.Config.Hosts[0].NetworkConfig.Raw = unmarshalJSON([]byte(agentNetworkConfigBond))
+	return a
+}
+
+func getAgentConfigBondMismatched() *AgentConfig {
+	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces = []*aiv1beta1.Interface{
+		{Name: "nic1", MacAddress: "28:d2:44:d2:b2:1a"},
+		{Name: "nic2", MacAddress: "28:d2:44:d2:b2:1b"},
+	}
+	a.Config.Hosts[0].NetworkConfig.Raw = unmarshalJSON([]byte(agentNetworkConfigBond))
+	return a
+}
+
 func getAgentConfigMissingInterfaces() *AgentConfig {
 	a := getNoHostsAgentConfig()
 	a.Config.Hosts = []agent.Host{
@@ -544,6 +633,20 @@ func getAgentConfigMissingInterfaces() *AgentConfig {
 			Role:     "master",
 		},
 	}
+	return a
+}
+
+func getAgentConfigMismatchedInterfaceName() *AgentConfig {
+	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces[0].Name = "enp3s0"
+	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigOne)
+	return a
+}
+
+func getAgentConfigMatchingInterfaceName() *AgentConfig {
+	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces[0].Name = "eth0"
+	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigOne)
 	return a
 }
 
