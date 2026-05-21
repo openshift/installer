@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/api/features"
-	mcfgv1alpha "github.com/openshift/api/machineconfiguration/v1alpha1"
+	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -49,15 +49,15 @@ func (f *OSImageStream) Generate(_ context.Context, dependencies asset.Parents) 
 		return nil
 	}
 
-	osImageStream := &mcfgv1alpha.OSImageStream{
+	osImageStream := &mcfgv1.OSImageStream{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: mcfgv1alpha.SchemeGroupVersion.String(),
+			APIVersion: mcfgv1.SchemeGroupVersion.String(),
 			Kind:       "OSImageStream",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cluster",
 		},
-		Spec: &mcfgv1alpha.OSImageStreamSpec{
+		Spec: mcfgv1.OSImageStreamSpec{
 			DefaultStream: string(installConfig.Config.OSImageStream),
 		},
 	}

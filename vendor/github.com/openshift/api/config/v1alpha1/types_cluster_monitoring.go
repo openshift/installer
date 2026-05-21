@@ -240,17 +240,6 @@ type OpenShiftStateMetricsConfig struct {
 // At least one field must be specified.
 // +kubebuilder:validation:MinProperties=1
 type NodeExporterConfig struct {
-	// nodeSelector defines the nodes on which the Pods are scheduled.
-	// nodeSelector is optional.
-	//
-	// When omitted, this means the user has no opinion and the platform is left
-	// to choose reasonable defaults. These defaults are subject to change over time.
-	// The current default value is `kubernetes.io/os: linux`.
-	// When specified, nodeSelector must contain at least 1 entry and must not contain more than 10 entries.
-	// +optional
-	// +kubebuilder:validation:MinProperties=1
-	// +kubebuilder:validation:MaxProperties=10
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 	// resources defines the compute resource requests and limits for the node-exporter container.
 	// This includes CPU, memory and HugePages constraints to help control scheduling and resource usage.
 	// When not specified, defaults are used by the platform. Requests cannot exceed limits.
@@ -276,20 +265,27 @@ type NodeExporterConfig struct {
 	// +kubebuilder:validation:MaxItems=5
 	// +kubebuilder:validation:MinItems=1
 	Resources []ContainerResource `json:"resources,omitempty"`
-	// tolerations defines tolerations for the pods.
-	// tolerations is optional.
+
+	// --- TOMBSTONE ---
+	// nodeSelector was a field that defined the nodes on which the Pods are scheduled.
+	// It was removed because node-exporter runs as a DaemonSet on all nodes,
+	// and the CMO does not support this field.
+	// The field name "nodeSelector" and json tag are reserved to prevent reuse
+	// with a different backing type.
 	//
-	// When omitted, this means the user has no opinion and the platform is left
-	// to choose reasonable defaults. These defaults are subject to change over time.
-	// The current default is to tolerate all taints (operator: Exists without any key),
-	// which is typical for DaemonSets that must run on every node.
-	// Maximum length for this list is 10.
-	// Minimum length for this list is 1.
-	// +kubebuilder:validation:MaxItems=10
-	// +kubebuilder:validation:MinItems=1
-	// +listType=atomic
 	// +optional
-	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+	// NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// --- TOMBSTONE ---
+	// tolerations was a field that defined tolerations for the pods.
+	// It was removed because node-exporter runs as a DaemonSet on all nodes,
+	// and the CMO does not support this field.
+	// The field name "tolerations" and json tag are reserved to prevent reuse
+	// with a different backing type.
+	//
+	// +optional
+	// Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
 	// collectors configures which node-exporter metric collectors are enabled.
 	// collectors is optional.
 	// Each collector can be individually enabled or disabled. Some collectors may have
@@ -456,6 +452,14 @@ type NodeExporterCollectorConfig struct {
 	// Enable when you need metrics for specific units; scope units carefully.
 	// +optional
 	Systemd NodeExporterCollectorSystemdConfig `json:"systemd,omitempty,omitzero"`
+	// softirqs configures the softirqs collector, which exposes detailed softirq statistics
+	// from /proc/softirqs.
+	// softirqs is optional.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default,
+	// which is subject to change over time. The current default is disabled.
+	// Enable when you need visibility into kernel softirq processing across CPUs.
+	// +optional
+	Softirqs NodeExporterCollectorSoftirqsConfig `json:"softirqs,omitempty,omitzero"`
 }
 
 // NodeExporterCollectorCpufreqConfig provides configuration for the cpufreq collector
@@ -664,6 +668,20 @@ type NodeExporterCollectorSystemdCollectConfig struct {
 // +kubebuilder:validation:MinLength=1
 // +kubebuilder:validation:MaxLength=1024
 type NodeExporterSystemdUnit string
+
+// NodeExporterCollectorSoftirqsConfig provides configuration for the softirqs collector
+// of the node-exporter agent. The softirqs collector exposes detailed softirq statistics
+// from /proc/softirqs.
+// It is disabled by default.
+type NodeExporterCollectorSoftirqsConfig struct {
+	// collectionPolicy declares whether the softirqs collector collects metrics.
+	// This field is required.
+	// Valid values are "Collect" and "DoNotCollect".
+	// When set to "Collect", the softirqs collector is active and softirq statistics are collected.
+	// When set to "DoNotCollect", the softirqs collector is inactive.
+	// +required
+	CollectionPolicy NodeExporterCollectorCollectionPolicy `json:"collectionPolicy,omitempty"`
+}
 
 // MonitoringPluginConfig provides configuration options for the monitoring plugin
 // that runs as a dynamic plugin of the OpenShift web console.
@@ -2359,6 +2377,34 @@ type TelemeterClientConfig struct {
 // At least one field must be specified; an empty thanosQuerierConfig object is not allowed.
 // +kubebuilder:validation:MinProperties=1
 type ThanosQuerierConfig struct {
+	// logLevel defines the verbosity of logs emitted by Thanos Querier.
+	// logLevel is optional.
+	// Allowed values are Error, Warn, Info, and Debug.
+	// When set to Error, only errors will be logged.
+	// When set to Warn, both warnings and errors will be logged.
+	// When set to Info, general information, warnings, and errors will all be logged.
+	// When set to Debug, detailed debugging information will be logged.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default value is `Info`.
+	// +optional
+	LogLevel LogLevel `json:"logLevel,omitempty"`
+	// requestLogging configures request logging for Thanos Querier.
+	// requestLogging is optional.
+	// When provided, the policy field within is required.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default behavior is to not log any requests.
+	// +optional
+	RequestLogging ThanosQuerierRequestLoggingConfig `json:"requestLogging,omitempty,omitzero"`
+	// crossOriginRequestPolicy configures the CORS (Cross-Origin Resource Sharing) policy
+	// for Thanos Querier's HTTP endpoints.
+	// crossOriginRequestPolicy is optional.
+	// Valid values are "AllowAll" and "DenyAll".
+	// When set to "AllowAll", CORS headers are added to responses, allowing cross-origin requests from any domain.
+	// When set to "DenyAll", no CORS headers are added and cross-origin requests are rejected by the browser.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default value is "DenyAll".
+	// +optional
+	CrossOriginRequestPolicy CrossOriginRequestPolicy `json:"crossOriginRequestPolicy,omitempty"`
 	// nodeSelector defines the nodes on which the Pods are scheduled.
 	// nodeSelector is optional.
 	//
@@ -2426,6 +2472,42 @@ type ThanosQuerierConfig struct {
 	// +optional
 	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 }
+
+// ThanosQuerierRequestLoggingConfig configures request logging for Thanos Querier.
+type ThanosQuerierRequestLoggingConfig struct {
+	// policy determines which HTTP and gRPC requests are logged by Thanos Querier.
+	// Valid values are "AllRequests" and "NoRequests".
+	// When set to "AllRequests", every request received by Thanos Querier is logged with method, path, and response status.
+	// The log level for request logs is derived from the logLevel field.
+	// When set to "NoRequests", request logging is turned off.
+	// +required
+	Policy RequestLoggingPolicy `json:"policy,omitempty"`
+}
+
+// RequestLoggingPolicy controls which HTTP and gRPC requests are logged.
+// Valid values are "AllRequests" and "NoRequests".
+// +kubebuilder:validation:Enum=AllRequests;NoRequests
+type RequestLoggingPolicy string
+
+const (
+	// RequestLoggingPolicyAllRequests enables logging of all incoming requests.
+	RequestLoggingPolicyAllRequests RequestLoggingPolicy = "AllRequests"
+	// RequestLoggingPolicyNoRequests disables request logging.
+	RequestLoggingPolicyNoRequests RequestLoggingPolicy = "NoRequests"
+)
+
+// CrossOriginRequestPolicy controls the CORS (Cross-Origin Resource Sharing) policy
+// for Thanos Querier's HTTP endpoints.
+// Valid values are "AllowAll" and "DenyAll".
+// +kubebuilder:validation:Enum=AllowAll;DenyAll
+type CrossOriginRequestPolicy string
+
+const (
+	// CrossOriginRequestPolicyAllowAll sets CORS headers allowing requests from any origin.
+	CrossOriginRequestPolicyAllowAll CrossOriginRequestPolicy = "AllowAll"
+	// CrossOriginRequestPolicyDenyAll does not set CORS headers, rejecting cross-origin requests.
+	CrossOriginRequestPolicyDenyAll CrossOriginRequestPolicy = "DenyAll"
+)
 
 // AuditProfile defines the audit log level for the Metrics Server.
 // +kubebuilder:validation:Enum=None;Metadata;Request;RequestResponse

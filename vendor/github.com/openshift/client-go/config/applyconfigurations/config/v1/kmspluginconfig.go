@@ -6,12 +6,12 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 )
 
-// KMSConfigApplyConfiguration represents a declarative configuration of the KMSConfig type for use
+// KMSPluginConfigApplyConfiguration represents a declarative configuration of the KMSPluginConfig type for use
 // with apply.
 //
-// KMSConfig defines the configuration for the KMS instance
+// KMSPluginConfig defines the configuration for the KMS instance
 // that will be used with KMS encryption
-type KMSConfigApplyConfiguration struct {
+type KMSPluginConfigApplyConfiguration struct {
 	// type defines the kind of platform for the KMS provider.
 	// Allowed values are Vault.
 	// When set to Vault, the plugin connects to a HashiCorp Vault server for key management.
@@ -20,19 +20,19 @@ type KMSConfigApplyConfiguration struct {
 	// The plugin connects to a Vault Enterprise server that is managed
 	// by the user outside the purview of the control plane.
 	// This field must be set when type is Vault, and must be unset otherwise.
-	Vault *VaultKMSConfigApplyConfiguration `json:"vault,omitempty"`
+	Vault *VaultKMSPluginConfigApplyConfiguration `json:"vault,omitempty"`
 }
 
-// KMSConfigApplyConfiguration constructs a declarative configuration of the KMSConfig type for use with
+// KMSPluginConfigApplyConfiguration constructs a declarative configuration of the KMSPluginConfig type for use with
 // apply.
-func KMSConfig() *KMSConfigApplyConfiguration {
-	return &KMSConfigApplyConfiguration{}
+func KMSPluginConfig() *KMSPluginConfigApplyConfiguration {
+	return &KMSPluginConfigApplyConfiguration{}
 }
 
 // WithType sets the Type field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Type field is set to the value of the last call.
-func (b *KMSConfigApplyConfiguration) WithType(value configv1.KMSProviderType) *KMSConfigApplyConfiguration {
+func (b *KMSPluginConfigApplyConfiguration) WithType(value configv1.KMSProviderType) *KMSPluginConfigApplyConfiguration {
 	b.Type = &value
 	return b
 }
@@ -40,7 +40,7 @@ func (b *KMSConfigApplyConfiguration) WithType(value configv1.KMSProviderType) *
 // WithVault sets the Vault field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Vault field is set to the value of the last call.
-func (b *KMSConfigApplyConfiguration) WithVault(value *VaultKMSConfigApplyConfiguration) *KMSConfigApplyConfiguration {
+func (b *KMSPluginConfigApplyConfiguration) WithVault(value *VaultKMSPluginConfigApplyConfiguration) *KMSPluginConfigApplyConfiguration {
 	b.Vault = value
 	return b
 }
