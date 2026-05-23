@@ -131,6 +131,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
 		&machines.Master{},
+		&machines.MasterCPMSSync{},
 		&machines.Arbiter{},
 		&machines.Worker{},
 		&manifests.Manifests{},

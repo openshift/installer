@@ -77,6 +77,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&machine.Worker{},
 		&machines.Worker{},
 		&machines.ClusterAPI{},
+		&machines.MasterCPMSSync{},
 		new(rhcos.Image),
 		&manifests.Manifests{},
 		&tls.RootCA{},
