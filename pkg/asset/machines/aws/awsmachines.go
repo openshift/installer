@@ -39,6 +39,98 @@ type MachineInput struct {
 	Config         *types.InstallConfig
 }
 
+// CAPIMachineSpecInput defines inputs for building an AWSMachineSpec.
+type CAPIMachineSpecInput struct {
+	InstanceType               string
+	AMI                        string
+	IAMInstanceProfile         string
+	Subnet                     *capa.AWSResourceReference
+	PublicIP                   bool
+	Tags                       capa.Tags
+	EC2RootVolume              awstypes.EC2RootVolume
+	KMSKeyARN                  string
+	IMDS                       capa.HTTPTokensState
+	SecurityGroups             []capa.AWSResourceReference
+	AdditionalSecurityGroupIDs []string
+	CPUOptions                 *awstypes.CPUOptions
+	Ignition                   *capa.Ignition
+	DedicatedHostID            string
+	IPFamily                   network.IPFamily
+}
+
+// GenerateCAPIMachineSpec constructs a capa.AWSMachineSpec from the provided inputs.
+func GenerateCAPIMachineSpec(in *CAPIMachineSpecInput) capa.AWSMachineSpec {
+	spec := capa.AWSMachineSpec{
+		Ignition:             in.Ignition,
+		UncompressedUserData: ptr.To(true),
+		InstanceType:         in.InstanceType,
+		AMI:                  capa.AMIReference{ID: ptr.To(in.AMI)},
+		SSHKeyName:           ptr.To(""),
+		IAMInstanceProfile:   in.IAMInstanceProfile,
+		Subnet:               in.Subnet,
+		PublicIP:             ptr.To(in.PublicIP),
+		AdditionalTags:       in.Tags,
+		RootVolume: &capa.Volume{
+			Size:          int64(in.EC2RootVolume.Size),
+			Type:          capa.VolumeType(in.EC2RootVolume.Type),
+			IOPS:          int64(in.EC2RootVolume.IOPS),
+			Encrypted:     ptr.To(true),
+			EncryptionKey: in.KMSKeyARN,
+		},
+		InstanceMetadataOptions: &capa.InstanceMetadataOptions{
+			HTTPTokens:   in.IMDS,
+			HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+		},
+	}
+
+	if throughput := in.EC2RootVolume.Throughput; throughput != nil {
+		spec.RootVolume.Throughput = ptr.To(int64(*throughput))
+	}
+
+	spec.AdditionalSecurityGroups = append(spec.AdditionalSecurityGroups, in.SecurityGroups...)
+	for _, sg := range in.AdditionalSecurityGroupIDs {
+		spec.AdditionalSecurityGroups = append(
+			spec.AdditionalSecurityGroups,
+			capa.AWSResourceReference{ID: ptr.To(sg)},
+		)
+	}
+
+	if in.CPUOptions != nil {
+		cpuOptions := capa.CPUOptions{}
+		if in.CPUOptions.ConfidentialCompute != nil {
+			cpuOptions.ConfidentialCompute = capa.AWSConfidentialComputePolicy(*in.CPUOptions.ConfidentialCompute)
+		}
+		spec.CPUOptions = cpuOptions
+	}
+
+	if in.DedicatedHostID != "" {
+		spec.Tenancy = "host"
+		spec.HostAffinity = ptr.To("host")
+		spec.HostID = ptr.To(in.DedicatedHostID)
+	}
+
+	if in.IPFamily.DualStackEnabled() {
+		// Only resource-name supports A and AAAA records for private host names
+		// See: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/hostname-types.html#ec2-instance-private-hostnames
+		spec.PrivateDNSName = &capa.PrivateDNSName{
+			EnableResourceNameDNSAAAARecord: ptr.To(true),
+			EnableResourceNameDNSARecord:    ptr.To(true),
+			HostnameType:                    ptr.To("resource-name"),
+		}
+		spec.InstanceMetadataOptions.HTTPProtocolIPv6 = capa.InstanceMetadataEndpointStateEnabled
+
+		// AssignPrimaryIPv6 is required for IPv6 primary to register instances to IPv6 target groups
+		switch in.IPFamily {
+		case network.DualStackIPv6Primary:
+			spec.AssignPrimaryIPv6 = ptr.To(capa.PrimaryIPv6AssignmentStateEnabled)
+		case network.DualStackIPv4Primary:
+			spec.AssignPrimaryIPv6 = ptr.To(capa.PrimaryIPv6AssignmentStateDisabled)
+		}
+	}
+
+	return spec
+}
+
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
 func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile, error) {
 	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != awstypes.Name {
@@ -97,54 +189,24 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					"cluster.x-k8s.io/control-plane": "",
 				},
 			},
-			Spec: capa.AWSMachineSpec{
-				Ignition:             in.Ignition,
-				UncompressedUserData: ptr.To(true),
-				InstanceType:         mpool.InstanceType,
-				AMI:                  capa.AMIReference{ID: ptr.To(mpool.AMIID)},
-				SSHKeyName:           ptr.To(""),
-				IAMInstanceProfile:   instanceProfile,
-				Subnet:               subnet,
-				PublicIP:             ptr.To(in.PublicIP),
-				AdditionalTags:       in.Tags,
-				RootVolume: &capa.Volume{
-					Size:          int64(mpool.EC2RootVolume.Size),
-					Type:          capa.VolumeType(mpool.EC2RootVolume.Type),
-					IOPS:          int64(mpool.EC2RootVolume.IOPS),
-					Encrypted:     ptr.To(true),
-					EncryptionKey: mpool.KMSKeyARN,
-				},
-				InstanceMetadataOptions: &capa.InstanceMetadataOptions{
-					HTTPTokens:   imds,
-					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
-				},
-			},
+			Spec: GenerateCAPIMachineSpec(&CAPIMachineSpecInput{
+				InstanceType:               mpool.InstanceType,
+				AMI:                        mpool.AMIID,
+				IAMInstanceProfile:         instanceProfile,
+				Subnet:                     subnet,
+				PublicIP:                   in.PublicIP,
+				Tags:                       in.Tags,
+				EC2RootVolume:              mpool.EC2RootVolume,
+				KMSKeyARN:                  mpool.KMSKeyARN,
+				IMDS:                       imds,
+				AdditionalSecurityGroupIDs: mpool.AdditionalSecurityGroupIDs,
+				CPUOptions:                 mpool.CPUOptions,
+				Ignition:                   in.Ignition,
+				IPFamily:                   in.IPFamily,
+			}),
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
 		utils.SetMachineOSStreamLabels(awsMachine, in.Config)
-
-		if throughput := mpool.EC2RootVolume.Throughput; throughput != nil {
-			awsMachine.Spec.RootVolume.Throughput = ptr.To(int64(*throughput))
-		}
-
-		if in.IPFamily.DualStackEnabled() {
-			awsMachine.Spec.PrivateDNSName = &capa.PrivateDNSName{
-				EnableResourceNameDNSAAAARecord: ptr.To(true),
-				EnableResourceNameDNSARecord:    ptr.To(true),
-				// Only resource-name supports A and AAAA records for private host names
-				// See: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/hostname-types.html#ec2-instance-private-hostnames
-				HostnameType: ptr.To("resource-name"),
-			}
-			awsMachine.Spec.InstanceMetadataOptions.HTTPProtocolIPv6 = capa.InstanceMetadataEndpointStateEnabled
-
-			// AssignPrimaryIPv6 is required for IPv6 primary to register instances to IPv6 target groups
-			switch in.IPFamily {
-			case network.DualStackIPv6Primary:
-				awsMachine.Spec.AssignPrimaryIPv6 = ptr.To(capa.PrimaryIPv6AssignmentStateEnabled)
-			case network.DualStackIPv4Primary:
-				awsMachine.Spec.AssignPrimaryIPv6 = ptr.To(capa.PrimaryIPv6AssignmentStateDisabled)
-			}
-		}
 
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)
@@ -157,24 +219,6 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
 				}
 			}
-		}
-
-		// Handle additional security groups.
-		for _, sg := range mpool.AdditionalSecurityGroupIDs {
-			awsMachine.Spec.AdditionalSecurityGroups = append(
-				awsMachine.Spec.AdditionalSecurityGroups,
-				capa.AWSResourceReference{ID: ptr.To(sg)},
-			)
-		}
-
-		if mpool.CPUOptions != nil {
-			cpuOptions := capa.CPUOptions{}
-
-			if mpool.CPUOptions.ConfidentialCompute != nil {
-				cpuOptions.ConfidentialCompute = capa.AWSConfidentialComputePolicy(*mpool.CPUOptions.ConfidentialCompute)
-			}
-
-			awsMachine.Spec.CPUOptions = cpuOptions
 		}
 
 		result = append(result, &asset.RuntimeFile{

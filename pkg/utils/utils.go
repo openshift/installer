@@ -2,6 +2,7 @@ package utils
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 
 	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -41,6 +42,24 @@ func SetMachineSetOSStreamLabels(machineSet *machineapi.MachineSet, ic *types.In
 		machineSet.Spec.Template.Labels = make(map[string]string)
 	}
 	machineSet.Spec.Template.Labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
+}
+
+// SetCAPIMachineSetOSStreamLabels adds the OS image stream label to a CAPI MachineSet's
+// metadata and Spec.Template if the OSStreams feature gate is enabled.
+func SetCAPIMachineSetOSStreamLabels(machineSet *capi.MachineSet, ic *types.InstallConfig) {
+	if ic == nil || !ic.Enabled(features.FeatureGateOSStreams) {
+		return
+	}
+	labels := machineSet.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
+	machineSet.SetLabels(labels)
+	if machineSet.Spec.Template.ObjectMeta.Labels == nil {
+		machineSet.Spec.Template.ObjectMeta.Labels = make(map[string]string)
+	}
+	machineSet.Spec.Template.ObjectMeta.Labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
 }
 
 // SetCPMSOSStreamLabels adds the OS image stream label to a ControlPlaneMachineSet's

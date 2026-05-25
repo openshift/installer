@@ -19,8 +19,8 @@ data:
   userData: {{.content}}
 `))
 
-// UserDataSecret generates the user data secret that contains the
-// master or worker pointer ignition.
+// UserDataSecret generates the user data secret in openshift-machine-api.
+// For CAPI, the cluster-capi-operator syncs it to openshift-cluster-api.
 func UserDataSecret(name string, content []byte) ([]byte, error) {
 	encodedData := map[string]string{
 		"name":    name,

@@ -73,6 +73,9 @@ const (
 	// workerMachineSetFileName is the format string for constructing the worker MachineSet filenames.
 	workerMachineSetFileName = "99_openshift-cluster-api_worker-machineset-%s.yaml"
 
+	// workerMachineTemplateFileName is the format string for constructing the worker MachineTemplate filenames.
+	workerMachineTemplateFileName = "99_openshift-cluster-api_worker-machinetemplate-%s.yaml"
+
 	// workerMachineFileName is the format string for constructing the worker Machine filenames.
 	workerMachineFileName = "99_openshift-cluster-api_worker-machines-%s.yaml"
 
@@ -91,8 +94,9 @@ const (
 )
 
 var (
-	workerMachineSetFileNamePattern = fmt.Sprintf(workerMachineSetFileName, "*")
-	workerMachineFileNamePattern    = fmt.Sprintf(workerMachineFileName, "*")
+	workerMachineSetFileNamePattern      = fmt.Sprintf(workerMachineSetFileName, "*")
+	workerMachineTemplateFileNamePattern = fmt.Sprintf(workerMachineTemplateFileName, "*")
+	workerMachineFileNamePattern         = fmt.Sprintf(workerMachineFileName, "*")
 	workerIPClaimFileNamePattern    = fmt.Sprintf(ipClaimFileName, "*worker*")
 	workerIPAddressFileNamePattern  = fmt.Sprintf(ipAddressFileName, "*worker*")
 
@@ -285,12 +289,13 @@ func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []strin
 
 // Worker generates the machinesets for `worker` machine pool.
 type Worker struct {
-	UserDataFile       *asset.File
-	MachineConfigFiles []*asset.File
-	MachineSetFiles    []*asset.File
-	MachineFiles       []*asset.File
-	IPClaimFiles       []*asset.File
-	IPAddrFiles        []*asset.File
+	UserDataFile         *asset.File
+	MachineConfigFiles   []*asset.File
+	MachineSetFiles      []*asset.File
+	MachineTemplateFiles []*asset.File
+	MachineFiles         []*asset.File
+	IPClaimFiles         []*asset.File
+	IPAddrFiles          []*asset.File
 }
 
 // Name returns a human friendly name for the Worker Asset.
@@ -327,7 +332,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 
 	workerUserDataSecretName := "worker-user-data"
 	machineConfigs := []*mcfgv1.MachineConfig{}
-	var ipClaims, ipAddrs, machines, machineSets []runtime.Object
+
+	var ipClaims, ipAddrs, machines, machineTemplates, machineSets []runtime.Object
 	var err error
 	ic := installConfig.Config
 
@@ -541,7 +547,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(&aws.MachineSetInput{
+
+			input := &aws.MachineSetInput{
 				ClusterID:                clusterID.InfraID,
 				InstallConfigPlatformAWS: installConfig.Config.Platform.AWS,
 				Subnets:                  subnets,
@@ -552,12 +559,27 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				UserDataSecret:           workerUserDataSecretName,
 				Hosts:                    dHosts,
 				Config:                   installConfig.Config,
-			})
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
 			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
+
+			if pool.Management == types.ClusterAPI {
+				templates, sets, err := aws.ClusterAPIMachineSets(input)
+				if err != nil {
+					return fmt.Errorf("failed to create CAPI worker machineset objects: %w", err)
+				}
+				for _, template := range templates {
+					machineTemplates = append(machineTemplates, &template)
+				}
+				for _, set := range sets {
+					machineSets = append(machineSets, &set)
+				}
+			} else {
+				sets, err := aws.MachineSets(input)
+				if err != nil {
+					return fmt.Errorf("failed to create worker machine objects: %w", err)
+				}
+				for _, set := range sets {
+					machineSets = append(machineSets, set)
+				}
 			}
 		case azuretypes.Name:
 			mpool := defaultAzureMachinePoolPlatform(installConfig.Config.Platform.Azure.CloudName)
@@ -818,6 +840,9 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	if w.MachineSetFiles, err = serialize(machineSets, workerMachineSetFileName, false); err != nil {
 		return fmt.Errorf("failed to serialize worker machine sets: %w", err)
 	}
+	if w.MachineTemplateFiles, err = serialize(machineTemplates, workerMachineTemplateFileName, false); err != nil {
+		return fmt.Errorf("failed to serialize worker machine templates: %w", err)
+	}
 	if w.IPClaimFiles, err = serialize(ipClaims, ipClaimFileName, true); err != nil {
 		return fmt.Errorf("failed to serialize worker ip claims: %w", err)
 	}
@@ -838,6 +863,7 @@ func (w *Worker) Files() []*asset.File {
 	}
 	files = append(files, w.MachineConfigFiles...)
 	files = append(files, w.MachineSetFiles...)
+	files = append(files, w.MachineTemplateFiles...)
 	files = append(files, w.MachineFiles...)
 	files = append(files, w.IPClaimFiles...)
 	files = append(files, w.IPAddrFiles...)
@@ -866,6 +892,12 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	w.MachineSetFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, workerMachineTemplateFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	w.MachineTemplateFiles = fileList
 
 	fileList, err = f.FetchByPattern(filepath.Join(directory, workerMachineFileNamePattern))
 	if err != nil {
