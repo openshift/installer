@@ -42,7 +42,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	rhcosAsset "github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
@@ -399,11 +398,6 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		pullSecret = merged
 	}
 
-	osImageStream := installConfig.Config.OSImageStream
-	if osImageStream == "" {
-		osImageStream = rhcos.DefaultOSImageStream
-	}
-
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 		FIPS:                  installConfig.Config.FIPS,
@@ -427,7 +421,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		FeatureSet:            installConfig.Config.FeatureSet,
 		Invoker:               openshiftInstallInvoker,
 		ClusterDomain:         installConfig.Config.ClusterDomain(),
-		OSImageStream:         osImageStream,
+		OSImageStream:         installConfig.Config.OSImageStream,
 	}
 }
 

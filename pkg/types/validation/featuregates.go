@@ -4,6 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/api/features"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/featuregates"
 )
@@ -37,7 +38,7 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 		},
 		{
 			FeatureGateName: features.FeatureGateOSStreams,
-			Condition:       len(c.OSImageStream) != 0,
+			Condition:       c.OSImageStream != rhcos.DefaultOSImageStream,
 			Field:           field.NewPath("osImageStream"),
 		},
 		{
