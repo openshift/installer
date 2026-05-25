@@ -3040,18 +3040,17 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "the Ingress capability is required",
 		},
 		{
-			name: "invalid OSImageStream set",
+			name: "invalid SCOS OSImageStream set",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				types.SCOS = true
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
 				c.OSImageStream = "rhel-10"
-
 				return c
 			}(),
 			expectedError: "OS Image Streams are only supported on OCP clusters using RHCOS",
 			restoreFnFactory: func(config *types.InstallConfig) func() {
 				old := types.SCOS
+				types.SCOS = true
 				return func() {
 					types.SCOS = old
 				}
