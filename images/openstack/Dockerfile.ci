@@ -28,7 +28,8 @@ COPY --from=builder /go/src/github.com/openshift/installer/docs/user/openstack /
 COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-manifests.sh /go/src/github.com/openshift/installer/scripts/openstack/manifest-tests /var/lib/openshift-install/manifest-tests
 
 # Install Dependendencies for tests
-RUN yum update -y && \
+RUN yum update -y --setopt=tsflags= tzdata && \
+    yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     ansible-collection-ansible-netcommon \
     ansible-collection-community-general \
