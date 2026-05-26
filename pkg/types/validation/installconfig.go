@@ -1812,13 +1812,12 @@ func validateOSImageStream(config *types.InstallConfig) field.ErrorList {
 		return errs
 	}
 
-	supportedValues := []string{string(types.OSImageStreamRHCOS9), string(types.OSImageStreamRHCOS10)}
-	if !slices.Contains(supportedValues, string(config.OSImageStream)) {
+	if !slices.Contains(types.OSImageStreamValues, config.OSImageStream) {
 		errs = append(errs,
 			field.NotSupported(
 				field.NewPath("osImageStream"),
 				config.OSImageStream,
-				supportedValues))
+				types.OSImageStreamValues))
 	}
 	return errs
 }
