@@ -56,7 +56,7 @@ func TestFormatKMSKeyResourcePath(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			path := formatKMSKeyResourcePath(tc.kmsKey, tc.projectID)
+			path := gcp.FormatKMSKeyResourcePath(tc.kmsKey, tc.projectID)
 			assert.Equal(t, tc.expectedPath, path)
 		})
 	}
