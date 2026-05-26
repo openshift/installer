@@ -317,8 +317,8 @@ cluster itself may not include these tags.
 		desc: `FIELDS:
     allowSharedKeyAccess <boolean>
       AllowSharedKeyAccess specifies if shared access key should be enabled for the storage account.
-Default value is true.
-Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+Default value is false.
+Needs the permission "Storage Blob Data Contributor" in azure.
 
     armEndpoint <string>
       ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.

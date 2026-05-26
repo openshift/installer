@@ -232,7 +232,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var storageClientFactory *armstorage.ClientFactory
 	var storageAccountKeys []armstorage.AccountKey
 
-	sharedKey := true
+	sharedKey := false
 	if in.InstallConfig.Config.Azure.AllowSharedKeyAccess != nil {
 		sharedKey = *in.InstallConfig.Config.Azure.AllowSharedKeyAccess
 	}
@@ -850,7 +850,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to create service client: %w", err)
 	}
 
-	sharedKey := true
+	sharedKey := false
 	if in.InstallConfig.Config.Azure.AllowSharedKeyAccess != nil {
 		sharedKey = *in.InstallConfig.Config.Azure.AllowSharedKeyAccess
 	}
@@ -905,7 +905,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		}
 	}
 	if sasURL == "" && !sharedKey {
-		udc, err := serviceClient.GetUserDelegationCredential(context.Background(), info, nil)
+		udc, err := serviceClient.GetUserDelegationCredential(ctx, info, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create user delegation credentials: %w", err)
 		}
