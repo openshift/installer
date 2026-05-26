@@ -14,27 +14,11 @@ import (
 
 const (
 	bootstrapIgnitionBucketObjName = "bootstrap.ign"
-	kmsKeyNameFmt                  = "projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s"
 )
 
 // GetBootstrapStorageName gets the name of the storage bucket for the bootstrap process.
 func GetBootstrapStorageName(clusterID string) string {
 	return fmt.Sprintf("%s-bootstrap-ignition", clusterID)
-}
-
-// formatKMSKeyResourcePath formats a KMSKeyReference into a full GCP resource path.
-func formatKMSKeyResourcePath(kmsKey *gcptypes.KMSKeyReference, projectID string) string {
-	if kmsKey == nil {
-		return ""
-	}
-
-	// Use the key's project ID if specified, otherwise use the default project ID
-	keyProjectID := projectID
-	if kmsKey.ProjectID != "" {
-		keyProjectID = kmsKey.ProjectID
-	}
-
-	return fmt.Sprintf(kmsKeyNameFmt, keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
 }
 
 // CreateStorage creates the gcp bucket/storage. The storage bucket does Not include the bucket object. The
@@ -57,7 +41,7 @@ func CreateStorage(ctx context.Context, ic *installconfig.InstallConfig, bucketH
 
 	// Add customer-managed KMS encryption if configured via defaultMachinePlatform
 	if kmsKey := gcptypes.GetStorageKMSKey(ic.Config.GCP); kmsKey != nil {
-		kmsKeyPath := formatKMSKeyResourcePath(kmsKey, ic.Config.GCP.ProjectID)
+		kmsKeyPath := gcptypes.FormatKMSKeyResourcePath(kmsKey, ic.Config.GCP.ProjectID)
 		bucketAttrs.Encryption = &storage.BucketEncryption{
 			DefaultKMSKeyName: kmsKeyPath,
 		}
