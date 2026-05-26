@@ -76,9 +76,13 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		// - Bootstrap node to access KMS-encrypted ignition bucket (bootstrap uses master SA)
 		// - Registry operator (runs on master nodes) to access KMS-encrypted registry bucket
 		if needsKMSPermissions(in.InstallConfig.Config.GCP) {
-			if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetKMSRoles(), in.InstallConfig.Config.GCP.Endpoint); err != nil {
+			kmsRoles := GetKMSRoles()
+			logrus.Debugf("Granting KMS roles %v to master service account %s", kmsRoles, masterSA)
+			if err = AddServiceAccountRoles(ctx, projectID, masterSA, kmsRoles, in.InstallConfig.Config.GCP.Endpoint); err != nil {
+				logrus.Errorf("Failed to grant KMS roles to master service account %s: %v. This may indicate the KMS key does not exist or installer lacks cloudkms.cryptoKeys.setIamPolicy permission.", masterSA, err)
 				return fmt.Errorf("failed to add KMS roles to master service account: %w", err)
 			}
+			logrus.Infof("Successfully granted KMS decryption permissions to master service account")
 		}
 
 		// Grant Compute Engine service account permission to use OS disk KMS key if configured.
@@ -86,10 +90,15 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		if controlPlaneMpool.OSDisk.EncryptionKey != nil && controlPlaneMpool.OSDisk.EncryptionKey.KMSKey != nil {
 			computeEngineSA, err := GetComputeEngineServiceAccount(ctx, projectID, in.InstallConfig.Config.GCP.Endpoint)
 			if err != nil {
-				return fmt.Errorf("failed to get Compute Engine service account: %w", err)
+				logrus.Errorf("Failed to retrieve Compute Engine service account for project %s. This is a Google-managed account that should exist in all projects.", projectID)
+				return fmt.Errorf("failed to get Compute Engine service account for project %s: %w", projectID, err)
 			}
-			if err = GrantKMSKeyIAMPermission(ctx, controlPlaneMpool.OSDisk.EncryptionKey.KMSKey, projectID, computeEngineSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter"); err != nil {
-				return fmt.Errorf("failed to grant Compute Engine SA permission on control plane OS disk KMS key: %w", err)
+			kmsKey := controlPlaneMpool.OSDisk.EncryptionKey.KMSKey
+			keyPath := gcptypes.FormatKMSKeyResourcePath(kmsKey, projectID)
+			logrus.Debugf("Granting Compute Engine SA permission on control plane OS disk KMS key: %s", keyPath)
+			if err = GrantKMSKeyIAMPermission(ctx, kmsKey, projectID, computeEngineSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter"); err != nil {
+				logrus.Errorf("Failed to grant Compute Engine SA permission on control plane OS disk KMS key %s: %v", keyPath, err)
+				return fmt.Errorf("failed to grant Compute Engine SA permission on control plane OS disk KMS key %s: %w", keyPath, err)
 			}
 		}
 
@@ -147,6 +156,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 			// Skip if we've already granted permissions for this key
 			if _, granted := grantedComputeKMSKeys[keyID]; granted {
+				logrus.Debugf("Skipping duplicate KMS grant for key %s (already granted)", keyID)
 				continue
 			}
 
@@ -154,18 +164,37 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			if computeEngineSA == "" {
 				sa, err := GetComputeEngineServiceAccount(ctx, projectID, in.InstallConfig.Config.GCP.Endpoint)
 				if err != nil {
-					return fmt.Errorf("failed to get Compute Engine service account: %w", err)
+					logrus.Errorf("Failed to retrieve Compute Engine service account for project %s. This is a Google-managed account required for KMS-encrypted disks.", projectID)
+					return fmt.Errorf("failed to get Compute Engine service account for project %s: %w", projectID, err)
 				}
 				computeEngineSA = sa
 			}
 
+			keyPath := gcptypes.FormatKMSKeyResourcePath(computeMpool.OSDisk.EncryptionKey.KMSKey, projectID)
+			logrus.Debugf("Granting Compute Engine SA permission on compute OS disk KMS key: %s (key %d of %d unique keys)",
+				keyPath, len(grantedComputeKMSKeys)+1, len(in.InstallConfig.Config.Compute))
+
 			if err := GrantKMSKeyIAMPermission(ctx, computeMpool.OSDisk.EncryptionKey.KMSKey, projectID, computeEngineSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter"); err != nil {
-				return fmt.Errorf("failed to grant Compute Engine SA permission on compute OS disk KMS key: %w", err)
+				// Log partial success state before failing
+				if len(grantedComputeKMSKeys) > 0 {
+					logrus.Warnf("Successfully granted KMS permissions for %d key(s) before encountering error", len(grantedComputeKMSKeys))
+					logrus.Debugf("Previously granted keys: %v", grantedComputeKMSKeys)
+				}
+				logrus.Errorf("Failed to grant Compute Engine SA permission on compute OS disk KMS key %s: %v", keyPath, err)
+				return fmt.Errorf("failed to grant Compute Engine SA permission on compute OS disk KMS key %s (granted %d of %d unique keys): %w",
+					keyID, len(grantedComputeKMSKeys), len(in.InstallConfig.Config.Compute), err)
 			}
 
 			// Mark this key as granted
 			grantedComputeKMSKeys[keyID] = struct{}{}
+			logrus.Debugf("Successfully granted KMS permissions for compute key %s (%d of %d unique keys complete)",
+				keyID, len(grantedComputeKMSKeys), len(in.InstallConfig.Config.Compute))
 		}
+	}
+
+	// Log summary if any compute KMS keys were granted
+	if len(grantedComputeKMSKeys) > 0 {
+		logrus.Infof("Successfully granted Compute Engine SA permissions for %d unique compute OS disk KMS key(s)", len(grantedComputeKMSKeys))
 	}
 
 	// Grant Cloud Storage service account permissions to use KMS keys for bucket encryption.
@@ -173,14 +202,19 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	if needsKMSPermissions(in.InstallConfig.Config.GCP) {
 		cloudStorageSA, err := GetCloudStorageServiceAccount(ctx, projectID, in.InstallConfig.Config.GCP.Endpoint)
 		if err != nil {
-			return fmt.Errorf("failed to get Cloud Storage service account: %w", err)
+			logrus.Errorf("Failed to retrieve Cloud Storage service account for project %s. This Google-managed account is required for KMS-encrypted storage buckets (bootstrap ignition and image registry).", projectID)
+			return fmt.Errorf("failed to get Cloud Storage service account for project %s: %w", projectID, err)
 		}
+		logrus.Debugf("Retrieved Cloud Storage service account: %s", cloudStorageSA)
 
 		// Grant permission for storage KMS key (used for both ignition and registry buckets)
 		// The key is configured via defaultMachinePlatform.osDisk.encryptionKey.kmsKey
 		if storageKMSKey := gcptypes.GetStorageKMSKey(platform); storageKMSKey != nil {
+			keyPath := gcptypes.FormatKMSKeyResourcePath(storageKMSKey, projectID)
+			logrus.Debugf("Granting Cloud Storage SA permission on storage KMS key: %s", keyPath)
 			if err = GrantKMSKeyIAMPermission(ctx, storageKMSKey, projectID, cloudStorageSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter"); err != nil {
-				return fmt.Errorf("failed to grant Cloud Storage SA permission on storage KMS key: %w", err)
+				logrus.Errorf("Failed to grant Cloud Storage SA permission on storage KMS key %s: %v. This will prevent KMS-encrypted storage buckets (bootstrap ignition and image registry) from being created.", keyPath, err)
+				return fmt.Errorf("failed to grant Cloud Storage SA permission on storage KMS key %s: %w", keyPath, err)
 			}
 		}
 	}
