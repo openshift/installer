@@ -25,6 +25,7 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
@@ -1804,17 +1805,20 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 
 func validateOSImageStream(config *types.InstallConfig) field.ErrorList {
 	errs := field.ErrorList{}
-	if len(config.OSImageStream) != 0 && config.IsSCOS() {
-		errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
+	if config.IsSCOS() {
+		if config.OSImageStream != rhcos.DefaultOSImageStream {
+			errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
+		}
+		return errs
 	}
 
 	supportedValues := []string{string(types.OSImageStreamRHCOS9), string(types.OSImageStreamRHCOS10)}
-	if config.OSImageStream != "" && !slices.Contains(supportedValues, string(config.OSImageStream)) {
+	if !slices.Contains(supportedValues, string(config.OSImageStream)) {
 		errs = append(errs,
-			field.Forbidden(
+			field.NotSupported(
 				field.NewPath("osImageStream"),
-				fmt.Sprintf("Unsupported OS Image Stream. Supported values are: %s", strings.Join(supportedValues, ", ")),
-			))
+				config.OSImageStream,
+				supportedValues))
 	}
 	return errs
 }

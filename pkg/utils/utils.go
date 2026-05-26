@@ -6,18 +6,8 @@ import (
 	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 )
-
-// GetOSImageStream returns the OS image stream value from the install config, defaulting to the
-// value of `DefaultOSImageStream` in as defined in pkg/rhcos/stream.go if not specified.
-func GetOSImageStream(ic *types.InstallConfig) string {
-	if ic.OSImageStream == "" {
-		return string(rhcos.DefaultOSImageStream)
-	}
-	return string(ic.OSImageStream)
-}
 
 // SetMachineOSStreamLabels adds the OS image stream label to a Machine if the OSStreams
 // feature gate is enabled.
@@ -29,7 +19,7 @@ func SetMachineOSStreamLabels[T metav1.Object](obj T, ic *types.InstallConfig) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[types.OSStreamLabelKey] = GetOSImageStream(ic)
+	labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
 	obj.SetLabels(labels)
 }
 
@@ -44,13 +34,13 @@ func SetMachineSetOSStreamLabels(machineSet *machineapi.MachineSet, ic *types.In
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[types.OSStreamLabelKey] = GetOSImageStream(ic)
+	labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
 	machineSet.SetLabels(labels)
 	// Set the Spec.Template labels
 	if machineSet.Spec.Template.Labels == nil {
 		machineSet.Spec.Template.Labels = make(map[string]string)
 	}
-	machineSet.Spec.Template.Labels[types.OSStreamLabelKey] = GetOSImageStream(ic)
+	machineSet.Spec.Template.Labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
 }
 
 // SetCPMSOSStreamLabels adds the OS image stream label to a ControlPlaneMachineSet's
@@ -64,7 +54,7 @@ func SetCPMSOSStreamLabels(cpms *machinev1.ControlPlaneMachineSet, ic *types.Ins
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[types.OSStreamLabelKey] = GetOSImageStream(ic)
+	labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
 	cpms.SetLabels(labels)
 	// Set the Spec.Template labels
 	if cpms.Spec.Template.OpenShiftMachineV1Beta1Machine == nil {
@@ -73,5 +63,5 @@ func SetCPMSOSStreamLabels(cpms *machinev1.ControlPlaneMachineSet, ic *types.Ins
 	if cpms.Spec.Template.OpenShiftMachineV1Beta1Machine.ObjectMeta.Labels == nil {
 		cpms.Spec.Template.OpenShiftMachineV1Beta1Machine.ObjectMeta.Labels = make(map[string]string)
 	}
-	cpms.Spec.Template.OpenShiftMachineV1Beta1Machine.ObjectMeta.Labels[types.OSStreamLabelKey] = GetOSImageStream(ic)
+	cpms.Spec.Template.OpenShiftMachineV1Beta1Machine.ObjectMeta.Labels[types.OSStreamLabelKey] = string(ic.OSImageStream)
 }

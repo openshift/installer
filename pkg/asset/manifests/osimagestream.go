@@ -12,7 +12,6 @@ import (
 	mcfgv1alpha "github.com/openshift/api/machineconfiguration/v1alpha1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/rhcos"
 )
 
 var osImageStreamFileName = path.Join(openshiftManifestDir, "99_osimagestream.yaml")
@@ -50,12 +49,6 @@ func (f *OSImageStream) Generate(_ context.Context, dependencies asset.Parents) 
 		return nil
 	}
 
-	// If no stream was set just report the default one for the current version
-	stream := installConfig.Config.OSImageStream
-	if stream == "" {
-		stream = rhcos.DefaultOSImageStream
-	}
-
 	osImageStream := &mcfgv1alpha.OSImageStream{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: mcfgv1alpha.SchemeGroupVersion.String(),
@@ -65,7 +58,7 @@ func (f *OSImageStream) Generate(_ context.Context, dependencies asset.Parents) 
 			Name: "cluster",
 		},
 		Spec: &mcfgv1alpha.OSImageStreamSpec{
-			DefaultStream: string(stream),
+			DefaultStream: string(installConfig.Config.OSImageStream),
 		},
 	}
 

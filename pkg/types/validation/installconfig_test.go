@@ -15,6 +15,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -47,8 +48,9 @@ func validInstallConfig() *types.InstallConfig {
 		Platform: types.Platform{
 			AWS: validAWSPlatform(),
 		},
-		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-		Publish:    types.ExternalPublishingStrategy,
+		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Publish:       types.ExternalPublishingStrategy,
+		OSImageStream: rhcos.DefaultOSImageStream,
 		Proxy: &types.Proxy{
 			HTTPProxy:  "http://user:password@127.0.0.1:8080",
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
@@ -3040,18 +3042,36 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "the Ingress capability is required",
 		},
 		{
-			name: "invalid OSImageStream set",
+			// Without the scos build tag, rhcos.DefaultOSImageStream
+			// is "rhel-9" rather than "centos-10", but the validation
+			// compares against the same constant so the logic is still
+			// tested correctly.
+			name: "valid SCOS OSImageStream default",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				return c
+			}(),
+			restoreFnFactory: func(config *types.InstallConfig) func() {
+				old := types.SCOS
 				types.SCOS = true
+				return func() {
+					types.SCOS = old
+				}
+			},
+		},
+		{
+			name: "invalid SCOS OSImageStream set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
 				c.OSImageStream = "rhel-10"
-
 				return c
 			}(),
 			expectedError: "OS Image Streams are only supported on OCP clusters using RHCOS",
 			restoreFnFactory: func(config *types.InstallConfig) func() {
 				old := types.SCOS
+				types.SCOS = true
 				return func() {
 					types.SCOS = old
 				}
@@ -3065,7 +3085,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.OSImageStream = "invalid"
 				return c
 			}(),
-			expectedError: "Unsupported OS Image Stream. Supported values are: rhel-9, rhel-10",
+			expectedError: "osImageStream: Unsupported value: \"invalid\": supported values: \"rhel-9\", \"rhel-10\"",
 		},
 		{
 			name: "sno on baremetal not supported",

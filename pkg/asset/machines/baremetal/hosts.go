@@ -12,21 +12,11 @@ import (
 	"sigs.k8s.io/yaml"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 const streamLabelKey = "coreos.openshift.io/stream"
-
-// streamLabelValue returns the OS image stream string to use as the BMH label value.
-// Falls back to the default stream if the install-config doesn't specify one.
-func streamLabelValue(config *types.InstallConfig) string {
-	if config.OSImageStream != "" {
-		return string(config.OSImageStream)
-	}
-	return string(rhcos.DefaultOSImageStream)
-}
 
 // HostSettings hold the information needed to build the manifests to
 // register hosts with the cluster.
@@ -187,7 +177,7 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 
 			newHost.ObjectMeta.Labels = map[string]string{
 				"installer.openshift.io/role": "control-plane",
-				streamLabelKey:                streamLabelValue(config),
+				streamLabelKey:                string(config.OSImageStream),
 			}
 
 			// Link the new host to the currently available machine
@@ -207,7 +197,7 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 		} else {
 			newHost.Spec.Architecture = computeArch
 			newHost.ObjectMeta.Labels = map[string]string{
-				streamLabelKey: streamLabelValue(config),
+				streamLabelKey: string(config.OSImageStream),
 			}
 			// Pause workers until the real control plane is up.
 			newHost.ObjectMeta.Annotations = map[string]string{
@@ -292,7 +282,7 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 
 			newHost.ObjectMeta.Labels = map[string]string{
 				"installer.openshift.io/role": "control-plane",
-				streamLabelKey:                streamLabelValue(config),
+				streamLabelKey:                string(config.OSImageStream),
 			}
 
 			// Link the new host to the currently available machine

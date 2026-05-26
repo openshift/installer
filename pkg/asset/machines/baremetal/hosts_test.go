@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 )
@@ -848,6 +849,7 @@ func config() *installConfigBuilder {
 					Architecture: types.ArchitectureAMD64,
 				},
 			},
+			OSImageStream: rhcos.DefaultOSImageStream,
 		},
 	}
 }

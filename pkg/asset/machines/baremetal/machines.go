@@ -11,7 +11,6 @@ import (
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	utils "github.com/openshift/installer/pkg/utils"
@@ -66,11 +65,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(platform *baremetal.Platform, userDataSecret string, osImageStream types.OSImageStream) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
-	stream := string(osImageStream)
-	if stream == "" {
-		stream = string(rhcos.DefaultOSImageStream)
-	}
-
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "baremetal.cluster.k8s.io/v1alpha1",
@@ -82,7 +76,7 @@ func provider(platform *baremetal.Platform, userDataSecret string, osImageStream
 		UserData: &corev1.SecretReference{Name: userDataSecret},
 		HostSelector: baremetalprovider.HostSelector{
 			MatchLabels: map[string]string{
-				"coreos.openshift.io/stream": stream,
+				"coreos.openshift.io/stream": string(osImageStream),
 			},
 		},
 	}

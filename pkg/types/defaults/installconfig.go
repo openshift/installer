@@ -3,6 +3,7 @@ package defaults
 import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -132,6 +133,10 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		nonedefaults.SetPlatformDefaults(c.Platform.None)
 	case c.Platform.Nutanix != nil:
 		nutanixdefaults.SetPlatformDefaults(c.Platform.Nutanix)
+	}
+
+	if c.OSImageStream == "" {
+		c.OSImageStream = rhcos.DefaultOSImageStream
 	}
 
 	if c.AdditionalTrustBundlePolicy == "" {

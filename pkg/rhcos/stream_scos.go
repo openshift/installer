@@ -4,7 +4,8 @@ package rhcos
 
 import "github.com/openshift/installer/pkg/types"
 
-// DefaultOSImageStream Not (yet) used in SCOS
+// DefaultOSImageStream is the OS image stream used when the install-config
+// does not specify one.
 const DefaultOSImageStream types.OSImageStream = "centos-10"
 
 func getStreamFileName(_ types.OSImageStream) string {
