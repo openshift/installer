@@ -191,6 +191,11 @@ func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVe
 		}
 	}
 
+	if foundVersion == "" {
+		logrus.Infof("No matching version found for publisher: %s, offer: %s, sku: %s, architecture: %s in release %s", pub, offer, sku, arch, xyVersion)
+		return nil, nil
+	}
+
 	// Now that we've found the version, check the architecture and the plan.
 	img, err := az.client.Get(ctx, region, pub, offer, sku, foundVersion, nil)
 	if err != nil {
@@ -221,20 +226,21 @@ func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVe
 
 // parseARO takes the release from coreos stream and
 // uses conventions to generate the SKU (gen1 & gen2) and version.
-// For instance, with a coreos release of "4.19"
-// gen1SKU: "aro_418"
-// gen2SKU: "418-v2"
-// version: "418.94.20241009" (removes timestamp & build number)
+// For instance, with a coreos release of "4.22":
+//
+//	gen1SKU: "aro_422"
+//	gen2SKU: "aro_422-v2"
+//	armSKU:  "aro_422-arm"
 func parseAROSKUs(release, arch string) (string, string) {
 	xyVersion := strings.ReplaceAll(release, ".", "")
 	var gen1SKU, gen2SKU string
 	switch arch {
 	case x86:
 		gen1SKU = fmt.Sprintf("aro_%s", xyVersion)
-		gen2SKU = fmt.Sprintf("%s-v2", xyVersion)
+		gen2SKU = fmt.Sprintf("aro_%s-v2", xyVersion)
 	case arm64:
 		gen1SKU = ""
-		gen2SKU = fmt.Sprintf("%s-arm", xyVersion)
+		gen2SKU = fmt.Sprintf("aro_%s-arm", xyVersion)
 	}
 	return gen1SKU, gen2SKU
 }
@@ -273,16 +279,64 @@ func convertToSemver(ver string) string {
 	return ""
 }
 
+// FillMissing copies any nil image types from fallback into target.
+func FillMissing(target, fallback *rhcos.AzureMarketplace) {
+	if target == nil || fallback == nil {
+		return
+	}
+	if target.NoPurchasePlan == nil {
+		target.NoPurchasePlan = fallback.NoPurchasePlan
+	}
+	if target.OCP == nil {
+		target.OCP = fallback.OCP
+	}
+	if target.OPP == nil {
+		target.OPP = fallback.OPP
+	}
+	if target.OKE == nil {
+		target.OKE = fallback.OKE
+	}
+	if target.OCPEMEA == nil {
+		target.OCPEMEA = fallback.OCPEMEA
+	}
+	if target.OPPEMEA == nil {
+		target.OPPEMEA = fallback.OPPEMEA
+	}
+	if target.OKEEMEA == nil {
+		target.OKEEMEA = fallback.OKEEMEA
+	}
+}
+
 func checkIfNewer(candidate, release string) bool {
-	img, err := strconv.Atoi(strings.Split(semver.MajorMinor(candidate), ".")[1])
+	mm := semver.MajorMinor(candidate)
+	imgMajor, err := strconv.Atoi(strings.TrimPrefix(strings.Split(mm, ".")[0], "v"))
+	if err != nil {
+		logrus.Infof("Error converting major version to int with version %s", candidate)
+		return true
+	}
+	// Images using RHEL version numbering (9.x, 10.x) are not comparable
+	// to OCP release versions and should never be filtered out.
+	if imgMajor == 9 || imgMajor == 10 {
+		return false
+	}
+	imgMinor, err := strconv.Atoi(strings.Split(mm, ".")[1])
 	if err != nil {
 		logrus.Infof("Error converting minor version to int with version %s", candidate)
 		return true
 	}
-	rel, err := strconv.Atoi(strings.Split(release, ".")[1])
+	relParts := strings.Split(release, ".")
+	relMajor, err := strconv.Atoi(relParts[0])
+	if err != nil {
+		logrus.Infof("Error converting major version to int with version %s", release)
+		return true
+	}
+	relMinor, err := strconv.Atoi(relParts[1])
 	if err != nil {
 		logrus.Infof("Error converting minor version to int with version %s", release)
 		return true
 	}
-	return img > rel
+	if imgMajor != relMajor {
+		return imgMajor > relMajor
+	}
+	return imgMinor > relMinor
 }
