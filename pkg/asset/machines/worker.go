@@ -15,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1" //nolint:staticcheck //CORS-3563
-	capi "sigs.k8s.io/cluster-api/api/core/v1beta1"           //nolint:staticcheck //CORS-3563
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"

@@ -2,7 +2,7 @@ package utils
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capi "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"

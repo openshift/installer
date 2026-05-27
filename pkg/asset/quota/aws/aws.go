@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	capi "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	quotatypes "github.com/openshift/installer/pkg/asset/quota/types"
