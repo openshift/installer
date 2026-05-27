@@ -14,7 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1" //nolint:staticcheck //CORS-3563
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta1"           //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -73,6 +75,9 @@ const (
 	// workerMachineSetFileName is the format string for constructing the worker MachineSet filenames.
 	workerMachineSetFileName = "99_openshift-cluster-api_worker-machineset-%s.yaml"
 
+	// workerCAPIMachineSetFileName is the format string for constructing the CAPI worker MachineSet filenames.
+	workerCAPIMachineSetFileName = "99_openshift-cluster-api_worker-capi-machineset-%s.yaml"
+
 	// workerMachineTemplateFileName is the format string for constructing the worker MachineTemplate filenames.
 	workerMachineTemplateFileName = "99_openshift-cluster-api_worker-machinetemplate-%s.yaml"
 
@@ -95,10 +100,11 @@ const (
 
 var (
 	workerMachineSetFileNamePattern      = fmt.Sprintf(workerMachineSetFileName, "*")
+	workerCAPIMachineSetFileNamePattern  = fmt.Sprintf(workerCAPIMachineSetFileName, "*")
 	workerMachineTemplateFileNamePattern = fmt.Sprintf(workerMachineTemplateFileName, "*")
 	workerMachineFileNamePattern         = fmt.Sprintf(workerMachineFileName, "*")
-	workerIPClaimFileNamePattern    = fmt.Sprintf(ipClaimFileName, "*worker*")
-	workerIPAddressFileNamePattern  = fmt.Sprintf(ipAddressFileName, "*worker*")
+	workerIPClaimFileNamePattern         = fmt.Sprintf(ipClaimFileName, "*worker*")
+	workerIPAddressFileNamePattern       = fmt.Sprintf(ipAddressFileName, "*worker*")
 
 	_ asset.WritableAsset = (*Worker)(nil)
 )
@@ -293,6 +299,7 @@ type Worker struct {
 	MachineConfigFiles   []*asset.File
 	MachineSetFiles      []*asset.File
 	MachineTemplateFiles []*asset.File
+	CAPIMachineSetFiles  []*asset.File
 	MachineFiles         []*asset.File
 	IPClaimFiles         []*asset.File
 	IPAddrFiles          []*asset.File
@@ -333,7 +340,12 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	workerUserDataSecretName := "worker-user-data"
 	machineConfigs := []*mcfgv1.MachineConfig{}
 
-	var ipClaims, ipAddrs, machines, machineTemplates, machineSets []runtime.Object
+	var ipClaims, ipAddrs, machines []runtime.Object
+	// MAPI machineset manifests
+	var machineSets []runtime.Object
+	// CAPI machineset and machine template manifests
+	var machineTemplates, capiMachineSets []runtime.Object
+
 	var err error
 	ic := installConfig.Config
 
@@ -570,7 +582,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 					machineTemplates = append(machineTemplates, &template)
 				}
 				for _, set := range sets {
-					machineSets = append(machineSets, &set)
+					capiMachineSets = append(capiMachineSets, &set)
 				}
 			} else {
 				sets, err := aws.MachineSets(input)
@@ -843,6 +855,9 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	if w.MachineTemplateFiles, err = serialize(machineTemplates, workerMachineTemplateFileName, false); err != nil {
 		return fmt.Errorf("failed to serialize worker machine templates: %w", err)
 	}
+	if w.CAPIMachineSetFiles, err = serialize(capiMachineSets, workerCAPIMachineSetFileName, false); err != nil {
+		return fmt.Errorf("failed to serialize worker CAPI machine sets: %w", err)
+	}
 	if w.IPClaimFiles, err = serialize(ipClaims, ipClaimFileName, true); err != nil {
 		return fmt.Errorf("failed to serialize worker ip claims: %w", err)
 	}
@@ -864,6 +879,7 @@ func (w *Worker) Files() []*asset.File {
 	files = append(files, w.MachineConfigFiles...)
 	files = append(files, w.MachineSetFiles...)
 	files = append(files, w.MachineTemplateFiles...)
+	files = append(files, w.CAPIMachineSetFiles...)
 	files = append(files, w.MachineFiles...)
 	files = append(files, w.IPClaimFiles...)
 	files = append(files, w.IPAddrFiles...)
@@ -898,6 +914,12 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	w.MachineTemplateFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, workerCAPIMachineSetFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	w.CAPIMachineSetFiles = fileList
 
 	fileList, err = f.FetchByPattern(filepath.Join(directory, workerMachineFileNamePattern))
 	if err != nil {
@@ -970,6 +992,32 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	}
 
 	return machineSets, nil
+}
+
+// CAPIMachineSets returns deserialized CAPI MachineSet manifest structures.
+func (w *Worker) CAPIMachineSets() ([]capi.MachineSet, error) {
+	machineSets := make([]capi.MachineSet, 0, len(w.CAPIMachineSetFiles))
+	for i, file := range w.CAPIMachineSetFiles {
+		machineSet := &capi.MachineSet{}
+		if err := yaml.Unmarshal(file.Data, machineSet); err != nil {
+			return nil, errors.Wrapf(err, "unmarshal CAPI worker machineset %d", i)
+		}
+		machineSets = append(machineSets, *machineSet)
+	}
+	return machineSets, nil
+}
+
+// CAPIMachineTemplates returns deserialized CAPI AWSMachineTemplate manifest structures.
+func (w *Worker) CAPIMachineTemplates() ([]capa.AWSMachineTemplate, error) {
+	templates := make([]capa.AWSMachineTemplate, 0, len(w.MachineTemplateFiles))
+	for i, file := range w.MachineTemplateFiles {
+		template := &capa.AWSMachineTemplate{}
+		if err := yaml.Unmarshal(file.Data, template); err != nil {
+			return nil, errors.Wrapf(err, "unmarshal CAPI worker machine template %d", i)
+		}
+		templates = append(templates, *template)
+	}
+	return templates, nil
 }
 
 // serialize marshals a list of runtime.Object manifests into asset files.
