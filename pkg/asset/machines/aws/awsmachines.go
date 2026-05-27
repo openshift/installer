@@ -61,15 +61,14 @@ type CAPIMachineSpecInput struct {
 // GenerateCAPIMachineSpec constructs a capa.AWSMachineSpec from the provided inputs.
 func GenerateCAPIMachineSpec(in *CAPIMachineSpecInput) capa.AWSMachineSpec {
 	spec := capa.AWSMachineSpec{
-		Ignition:             in.Ignition,
-		UncompressedUserData: ptr.To(true),
-		InstanceType:         in.InstanceType,
-		AMI:                  capa.AMIReference{ID: ptr.To(in.AMI)},
-		SSHKeyName:           ptr.To(""),
-		IAMInstanceProfile:   in.IAMInstanceProfile,
-		Subnet:               in.Subnet,
-		PublicIP:             ptr.To(in.PublicIP),
-		AdditionalTags:       in.Tags,
+		Ignition:           in.Ignition,
+		InstanceType:       in.InstanceType,
+		AMI:                capa.AMIReference{ID: ptr.To(in.AMI)},
+		SSHKeyName:         ptr.To(""),
+		IAMInstanceProfile: in.IAMInstanceProfile,
+		Subnet:             in.Subnet,
+		PublicIP:           ptr.To(in.PublicIP),
+		AdditionalTags:     in.Tags,
 		RootVolume: &capa.Volume{
 			Size:          int64(in.EC2RootVolume.Size),
 			Type:          capa.VolumeType(in.EC2RootVolume.Type),
