@@ -184,6 +184,7 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 							Kind:     "AWSMachineTemplate",
 							Name:     name,
 						},
+						FailureDomain: az,
 					},
 				},
 			},

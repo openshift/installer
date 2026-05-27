@@ -186,8 +186,9 @@ func MachineInfoFromCAPIMachineSets(capiMachineSets []capi.MachineSet, capiTempl
 	infos := make([]quotatypes.MachineInfo, 0, len(capiMachineSets))
 	for _, ms := range capiMachineSets {
 		infos = append(infos, quotatypes.MachineInfo{
-			InstanceType: templateInstanceTypes[ms.Spec.Template.Spec.InfrastructureRef.Name],
-			Replicas:     int64(*ms.Spec.Replicas),
+			InstanceType:     templateInstanceTypes[ms.Spec.Template.Spec.InfrastructureRef.Name],
+			AvailabilityZone: ms.Spec.Template.Spec.FailureDomain,
+			Replicas:         int64(*ms.Spec.Replicas),
 		})
 	}
 	return infos
