@@ -69,6 +69,7 @@ func NewClient(vCenter, username, password string, logger logrus.FieldLogger) (*
 
 	cnsClient, err := cns.NewClient(context.TODO(), sess.Vim25Client())
 	if err != nil {
+		sess.Close()
 		return nil, err
 	}
 

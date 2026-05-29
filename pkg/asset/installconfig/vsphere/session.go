@@ -85,6 +85,13 @@ var (
 	sessions   = make(map[string]*Session)
 )
 
+// redactHostname returns a short deterministic hash of the hostname, suitable
+// for logging. The plain hostname is never exposed in logs.
+func redactHostname(hostname string) string {
+	h := sha256.Sum256([]byte(hostname))
+	return fmt.Sprintf("%x", h[:16])
+}
+
 // NewSession creates or retrieves a cached vSphere session for the given
 // server, username, and password. Returns the session and a cleanup function.
 //
@@ -104,8 +111,15 @@ func NewSession(ctx context.Context, server, username, password string, opts ...
 
 	sessionsMu.Lock()
 	if sess, ok := sessions[key]; ok {
-		sessionsMu.Unlock()
-		return sess, func() { sess.Close() }, nil
+		if sess.Error() != nil {
+			// Cached session is closed — evict it so a fresh one is created.
+			delete(sessions, key)
+			sessionsMu.Unlock()
+			// Fall through to create a new session.
+		} else {
+			sessionsMu.Unlock()
+			return sess, func() { sess.Close() }, nil
+		}
 	}
 	sessionsMu.Unlock()
 
@@ -121,6 +135,9 @@ func NewSession(ctx context.Context, server, username, password string, opts ...
 	// Double check after acquiring the lock (another goroutine may have created
 	// the session in the meantime).
 	if s, ok := sessions[key]; ok {
+		// A cached session arrived in the meantime — close the one we just
+		// created to avoid leaking an authenticated client.
+		sess.Close()
 		sessionsMu.Unlock()
 		return s, func() { s.Close() }, nil
 	}
@@ -145,7 +162,7 @@ func (s *Session) Close() {
 	s.once.Do(func() {
 		var firstErr error
 
-		s.logger.WithField("vcenter", s.server).Debug("Closing vSphere session")
+		s.logger.WithField("vcenter", redactHostname(s.server)).Debug("Closing vSphere session")
 
 		if s.rest != nil {
 			if err := s.rest.Logout(context.Background()); err != nil {
@@ -166,7 +183,7 @@ func (s *Session) Close() {
 		}
 
 		s.closeErr = firstErr
-		s.logger.WithField("vcenter", s.server).Debug("vSphere session closed")
+		s.logger.WithField("vcenter", redactHostname(s.server)).Debug("vSphere session closed")
 	})
 }
 
@@ -220,7 +237,7 @@ func newSessionFromConn(ctx context.Context, server, username, password string, 
 		opts.Logger.WithError(err).Debug("PBM client creation failed (optional)")
 	}
 
-	s.logger.WithField("vcenter", server).Info("vSphere session created")
+	s.logger.WithField("vcenter", redactHostname(server)).Info("vSphere session created")
 	return s, nil
 }
 
