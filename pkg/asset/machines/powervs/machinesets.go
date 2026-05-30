@@ -25,7 +25,9 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
 	var network string
-	image := fmt.Sprintf("rhcos-%s", clusterID)
+
+	// Resolve the catalog image name from osImageStream (defaults to RHEL-CoreOS-9).
+	image := OSImageNameFromStream(config.OSImageStream)
 
 	total := int32(0)
 	if pool.Replicas != nil {
