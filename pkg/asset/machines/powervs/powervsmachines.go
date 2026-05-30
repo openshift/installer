@@ -2,8 +2,11 @@
 package powervs
 
 import (
+	"context"
 	"fmt"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -37,10 +40,18 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 		powerVSMachine *capibm.IBMPowerVSMachine
 		dataSecret     string
 		machine        *capi.Machine
+		err            error
 	)
 
-	// Note: This will be created later
-	image = fmt.Sprintf("rhcos-%s", clusterID)
+	// Get the boot image from the PowerVS workspace, fallback to default if error occurs
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	image, err = GetBootImageFromWorkspace(ctx, ic.PowerVS.ServiceInstanceGUID, ic.PowerVS.Zone, clusterID)
+	if err != nil {
+		// Fallback to default image naming pattern
+		image = fmt.Sprintf("rhcos-%s", clusterID)
+		logrus.Warnf("Failed to get boot image from PowerVS workspace, using default: %s (error: %v)", image, err)
+	}
 
 	if ic.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
@@ -112,13 +123,11 @@ func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceR
 			ServiceInstanceID: ic.PowerVS.ServiceInstanceGUID,
 			ServiceInstance:   &service,
 			SSHKey:            "",
-			ImageRef: &v1.LocalObjectReference{
-				Name: image,
-			},
-			SystemType:    mpool.SysType,
-			ProcessorType: capibm.PowerVSProcessorType(mpool.ProcType),
-			Processors:    mpool.Processors,
-			MemoryGiB:     mpool.MemoryGiB,
+			Image:             &capibm.IBMPowerVSResourceReference{Name: &image},
+			SystemType:        mpool.SysType,
+			ProcessorType:     capibm.PowerVSProcessorType(mpool.ProcType),
+			Processors:        mpool.Processors,
+			MemoryGiB:         mpool.MemoryGiB,
 		},
 	}
 	utils.SetMachineOSStreamLabels(machine, ic)
