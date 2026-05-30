@@ -52,6 +52,14 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
+	// OSImage is the name of an existing image in the Power VS Workspace to use for
+	// cluster nodes.  When both OSImage and ServiceInstanceGUID are specified, this
+	// image name is used directly instead of deriving it from osImageStream.
+	// OSImage requires ServiceInstanceGUID to be set.
+	//
+	// +optional
+	OSImage string `json:"osImage,omitempty"`
+
 	// ServiceInstanceGUID is the GUID of the Power IAAS instance created from the IBM Cloud Catalog
 	// before the cluster is completed.  Leave unset to allow the installer to create a service
 	// instance during cluster creation.

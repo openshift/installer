@@ -25,7 +25,15 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
 	var network string
-	image := fmt.Sprintf("rhcos-%s", clusterID)
+
+	// When both osImage and serviceInstanceGUID are specified in the install-config,
+	// use the caller-supplied image name directly; otherwise derive it from osImageStream.
+	var image string
+	if platform.OSImage != "" && platform.ServiceInstanceGUID != "" {
+		image = platform.OSImage
+	} else {
+		image = OSImageNameFromStream(config.OSImageStream)
+	}
 
 	total := int32(0)
 	if pool.Replicas != nil {
