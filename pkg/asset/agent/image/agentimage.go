@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
@@ -36,7 +37,7 @@ type AgentImage struct {
 	isoPath              string
 	rootFSURL            string
 	bootArtifactsBaseURL string
-	platform             hiveext.PlatformType
+	externalPlatformName string
 	isoFilename          string
 	imageExpiresAt       string
 	minimalISO           bool
@@ -50,8 +51,6 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 		&workflow.AgentWorkflow{},
 		&joiner.ClusterInfo{},
 		&AgentArtifacts{},
-		&manifests.AgentManifests{},
-		&BaseIso{},
 		&gencrypto.AuthConfig{},
 	}
 }
@@ -61,24 +60,25 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	agentArtifacts := &AgentArtifacts{}
-	agentManifests := &manifests.AgentManifests{}
-	baseIso := &BaseIso{}
-	dependencies.Get(agentArtifacts, agentManifests, baseIso, agentWorkflow, clusterInfo)
+	dependencies.Get(agentArtifacts, agentWorkflow, clusterInfo)
 
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGenerateISO); err != nil {
 		return err
 	}
 
+	var err error
+	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx, workflow.StageGenerateISO); err != nil {
+		return err
+	}
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
-		a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
 		a.isoFilename = agentISOFilename
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		authConfig := &gencrypto.AuthConfig{}
 		dependencies.Get(authConfig)
 
-		a.platform = clusterInfo.PlatformType
 		a.isoFilename = agentAddNodesISOFilename
 		a.imageExpiresAt = authConfig.AuthTokenExpiry
 
@@ -88,10 +88,10 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
-	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
 	a.minimalISO = agentArtifacts.MinimalISO
+	a.externalPlatformName = agentArtifacts.ExternalPlatformName
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
@@ -106,7 +106,7 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 			logrus.Debugf("Using custom rootfs URL: %s", a.rootFSURL)
 		} else {
 			// Default to the URL from the RHCOS streams file
-			defaultRootFSURL, err := baseIso.getRootFSURL(ctx, a.cpuArch)
+			defaultRootFSURL, err := getRootFSURL(ctx, a.cpuArch)
 			if err != nil {
 				return err
 			}
@@ -271,8 +271,8 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return err
 	}
 	// For external platform OCI, add CCM manifests in the openshift directory.
-	if a.platform == hiveext.ExternalPlatformType {
-		logrus.Infof("When using %s oci platform, always make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, manifests.OpenshiftManifestDir())
+	if a.externalPlatformName == agent.ExternalPlatformNameOci {
+		logrus.Infof("When using %s %s platform, always make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, a.externalPlatformName, manifests.OpenshiftManifestDir())
 	}
 
 	return nil
