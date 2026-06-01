@@ -2,7 +2,7 @@
 
 clusterctl_cmd = "./bin/clusterctl"
 kubectl_cmd = "kubectl"
-kubernetes_version = "v1.34.0"
+kubernetes_version = "v1.35.0"
 
 load("ext://uibutton", "cmd_button", "location", "text_input")
 
@@ -172,9 +172,9 @@ def load_provider_tilt_files():
 
 tilt_helper_dockerfile_header = """
 # Tilt image
-FROM golang:1.24.9 as tilt-helper
+FROM golang:1.25.10 as tilt-helper
 # Install delve. Note this should be kept in step with the Go release minor version.
-RUN go install github.com/go-delve/delve/cmd/dlv@v1.24
+RUN go install github.com/go-delve/delve/cmd/dlv@v1.25
 # Support live reloading with Tilt
 RUN wget --output-document /restart.sh --quiet https://raw.githubusercontent.com/tilt-dev/rerun-process-wrapper/master/restart.sh  && \
     wget --output-document /start.sh --quiet https://raw.githubusercontent.com/tilt-dev/rerun-process-wrapper/master/start.sh && \
@@ -183,7 +183,7 @@ RUN wget --output-document /restart.sh --quiet https://raw.githubusercontent.com
 """
 
 tilt_dockerfile_header = """
-FROM golang:1.24.9 as tilt
+FROM golang:1.25.10 as tilt
 WORKDIR /
 COPY --from=tilt-helper /process.txt .
 COPY --from=tilt-helper /start.sh .
@@ -249,7 +249,7 @@ def build_go_binary(context, reload_deps, debug, go_main, binary_name, label):
             build_cmd = build_cmd,
         ),
         deps = live_reload_deps,
-        labels = [label, "ALL.binaries"],
+        labels = [label],
     )
 
 def build_docker_image(image, context, binary_name, additional_docker_build_commands, additional_docker_helper_commands, port_forwards):
@@ -290,7 +290,12 @@ def build_docker_image(image, context, binary_name, additional_docker_build_comm
             ref = image,
             context = context + "/.tiltbuild/bin/",
             dockerfile_contents = dockerfile_contents,
-            build_args = {"binary_name": binary_name},
+            build_args = {
+                "binary_name": binary_name,
+                "http_proxy": os.getenv("http_proxy", ""),
+                "https_proxy": os.getenv("https_proxy", ""),
+                "no_proxy": os.getenv("no_proxy", ""),
+            },
             target = "tilt",
             only = binary_name,
             live_update = [
@@ -363,7 +368,7 @@ def enable_provider(name, debug):
             workload = find_object_name(objs, "Deployment"),
             objects = [find_object_qualified_name(objs, "Provider")] + find_all_objects_names(additional_objs),
             new_name = label.lower() + "_controller",
-            labels = [label, "ALL.controllers"],
+            labels = [label],
             port_forwards = port_forwards,
             links = links,
             resource_deps = ["provider_crd"] + p.get("resource_deps", []),
@@ -420,9 +425,9 @@ def deploy_provider_crds():
     )
 
 def deploy_observability():
-    if "promtail" in settings.get("deploy_observability", []):
-        k8s_yaml(read_file("./.tiltbuild/yaml/promtail.observability.yaml"), allow_duplicates = True)
-        k8s_resource(workload = "promtail", extra_pod_selectors = [{"app": "promtail"}], labels = ["observability"], resource_deps = ["loki"], objects = ["promtail:serviceaccount"])
+    if "alloy" in settings.get("deploy_observability", []):
+        k8s_yaml(read_file("./.tiltbuild/yaml/alloy.observability.yaml"), allow_duplicates = True)
+        k8s_resource(workload = "alloy", extra_pod_selectors = [{"app": "alloy"}], labels = ["observability"], resource_deps = ["loki"], objects = ["alloy:serviceaccount"])
 
     if "loki" in settings.get("deploy_observability", []):
         k8s_yaml(read_file("./.tiltbuild/yaml/loki.observability.yaml"), allow_duplicates = True)

@@ -34,9 +34,11 @@ import (
 	clusterclasscontroller "sigs.k8s.io/cluster-api/internal/controllers/clusterclass"
 	"sigs.k8s.io/cluster-api/internal/controllers/clusterresourceset"
 	"sigs.k8s.io/cluster-api/internal/controllers/clusterresourcesetbinding"
+	extensionconfigcontroller "sigs.k8s.io/cluster-api/internal/controllers/extensionconfig"
 	machinecontroller "sigs.k8s.io/cluster-api/internal/controllers/machine"
 	machinedeploymentcontroller "sigs.k8s.io/cluster-api/internal/controllers/machinedeployment"
 	machinehealthcheckcontroller "sigs.k8s.io/cluster-api/internal/controllers/machinehealthcheck"
+	machinepoolcontroller "sigs.k8s.io/cluster-api/internal/controllers/machinepool"
 	machinesetcontroller "sigs.k8s.io/cluster-api/internal/controllers/machineset"
 	clustertopologycontroller "sigs.k8s.io/cluster-api/internal/controllers/topology/cluster"
 	machinedeploymenttopologycontroller "sigs.k8s.io/cluster-api/internal/controllers/topology/machinedeployment"
@@ -70,9 +72,10 @@ func (r *ClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 
 // MachineReconciler reconciles a Machine object.
 type MachineReconciler struct {
-	Client       client.Client
-	APIReader    client.Reader
-	ClusterCache clustercache.ClusterCache
+	Client        client.Client
+	APIReader     client.Reader
+	ClusterCache  clustercache.ClusterCache
+	RuntimeClient runtimeclient.Client
 
 	// WatchFilterValue is the label value used to filter events prior to reconciliation.
 	WatchFilterValue string
@@ -88,6 +91,7 @@ func (r *MachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manag
 		Client:                           r.Client,
 		APIReader:                        r.APIReader,
 		ClusterCache:                     r.ClusterCache,
+		RuntimeClient:                    r.RuntimeClient,
 		WatchFilterValue:                 r.WatchFilterValue,
 		RemoteConditionsGracePeriod:      r.RemoteConditionsGracePeriod,
 		AdditionalSyncMachineLabels:      r.AdditionalSyncMachineLabels,
@@ -119,8 +123,9 @@ func (r *MachineSetReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 // MachineDeploymentReconciler reconciles a MachineDeployment object.
 type MachineDeploymentReconciler struct {
-	Client    client.Client
-	APIReader client.Reader
+	Client        client.Client
+	APIReader     client.Reader
+	RuntimeClient runtimeclient.Client
 
 	// WatchFilterValue is the label value used to filter events prior to reconciliation.
 	WatchFilterValue string
@@ -130,6 +135,7 @@ func (r *MachineDeploymentReconciler) SetupWithManager(ctx context.Context, mgr 
 	return (&machinedeploymentcontroller.Reconciler{
 		Client:           r.Client,
 		APIReader:        r.APIReader,
+		RuntimeClient:    r.RuntimeClient,
 		WatchFilterValue: r.WatchFilterValue,
 	}).SetupWithManager(ctx, mgr, options)
 }
@@ -277,5 +283,47 @@ func (r *ClusterResourceSetBindingReconciler) SetupWithManager(ctx context.Conte
 	return (&clusterresourcesetbinding.Reconciler{
 		Client:           r.Client,
 		WatchFilterValue: r.WatchFilterValue,
+	}).SetupWithManager(ctx, mgr, options)
+}
+
+// MachinePoolReconciler reconciles a MachinePool object.
+type MachinePoolReconciler struct {
+	Client       client.Client
+	APIReader    client.Reader
+	ClusterCache clustercache.ClusterCache
+
+	// WatchFilterValue is the label value used to filter events prior to reconciliation.
+	WatchFilterValue string
+}
+
+func (r *MachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+	return (&machinepoolcontroller.Reconciler{
+		Client:           r.Client,
+		APIReader:        r.APIReader,
+		ClusterCache:     r.ClusterCache,
+		WatchFilterValue: r.WatchFilterValue,
+	}).SetupWithManager(ctx, mgr, options)
+}
+
+// ExtensionConfigReconciler reconciles an ExtensionConfig object.
+type ExtensionConfigReconciler struct {
+	Client             client.Client
+	APIReader          client.Reader
+	RuntimeClient      runtimeclient.Client
+	PartialSecretCache cache.Cache
+	ReadOnly           bool
+
+	// WatchFilterValue is the label value used to filter events prior to reconciliation.
+	WatchFilterValue string
+}
+
+func (r *ExtensionConfigReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+	return (&extensionconfigcontroller.Reconciler{
+		Client:             r.Client,
+		APIReader:          r.APIReader,
+		RuntimeClient:      r.RuntimeClient,
+		PartialSecretCache: r.PartialSecretCache,
+		ReadOnly:           r.ReadOnly,
+		WatchFilterValue:   r.WatchFilterValue,
 	}).SetupWithManager(ctx, mgr, options)
 }

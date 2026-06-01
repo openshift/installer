@@ -20,9 +20,11 @@ linters:
     - durationcheck # multiplying two durations
     - errcheck # unchecked errors
     - errchkjson # invalid types passed to json encoder
+    - forbidigo # allows to block usage of funcs
     - ginkgolinter # ginkgo and gomega
     - gocritic # bugs, performance, style (we could add custom ones to this one)
     - godot # checks that comments end in a period
+    - godox # block FIXMEs
     - goprintffuncname # printft-like functions should be named with f at the end
     - gosec # potential security problems
     - govet # basically 'go vet'
@@ -51,6 +53,10 @@ linters:
     # TODO: It will be dropped when the Go version migration is done.
     - usetesting
   settings:
+    forbidigo:
+      forbid:
+        - pattern: ctrl.NewControllerManagedBy
+          msg: Use capicontrollerutil.NewControllerManagedBy instead
     ginkgolinter:
       forbid-focus-container: true
     gocritic:
@@ -83,6 +89,9 @@ linters:
         - ^ \+.*
         - ^ ANCHOR.*
         - '^ (alpha|beta|GA): v.*'
+    godox:
+      keywords:
+        - FIXME # FIXME's should be removed before merging PRs
     gosec:
       excludes:
       # integer overflow conversion int -> int32
@@ -174,6 +183,10 @@ linters:
           alias: ""
         - pkg: sigs.k8s.io/cluster-api/internal/topology/names
           alias: topologynames
+        - pkg: sigs.k8s.io/cluster-api/internal/util/client
+          alias: "clientutil"
+        - pkg: sigs.k8s.io/cluster-api/internal/util/controller
+          alias: "capicontrollerutil"
         # CAPD
         - pkg: sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1alpha3
           alias: infrav1alpha3
@@ -257,19 +270,11 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: (clusterv1alpha3.*|clusterv1alpha4.*) is deprecated: This type will be removed in one of the next releases.'
-        # Specific exclude rules for deprecated feature flags
-      - linters:
-          - staticcheck
-        text: 'SA1019: feature.ClusterResourceSet is deprecated: ClusterResourceSet feature is now GA and the corresponding feature flag will be removed in 1.12 release.'
         # v1Beta1 deprecated fields
       - linters:
           - staticcheck
         text: 'SA1019: .*\.Deprecated\.V1Beta1.* is deprecated'
-        # CR v0.21 deprecated Result.Requeue, will be fixed incrementally and tracked via https://github.com/kubernetes-sigs/cluster-api/issues/12272
-      - linters:
-          - staticcheck
-        text: 'SA1019: .*(res|result|i|j)\.Requeue is deprecated: Use `RequeueAfter` instead'
-      # TODO: var-naming: avoid meaningless package names by revive  
+      # TODO: var-naming: avoid meaningless package names by revive
       #   * test/infrastructure/docker/internal/docker/types/
       #   * bootstrap/kubeadm/types/
       #   * internal/webhooks/util/
@@ -402,6 +407,22 @@ linters:
           - staticcheck
         path: (.+)\.go$
         text: 'QF1008: could remove embedded field'
+      - linters:
+          - revive
+        path: errors/.*\.go$
+        text: 'var-naming: avoid package names that conflict with Go standard library package names'
+      - linters:
+          - revive
+        path: internal/util/hash/.*\.go$
+        text: 'var-naming: avoid package names that conflict with Go standard library package names'
+      - linters:
+          - revive
+        path: internal/controllers/topology/cluster/patches/api/.*\.go$
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: test/infrastructure/inmemory/pkg/server/api/.*\.go$
+        text: 'var-naming: avoid meaningless package names'
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

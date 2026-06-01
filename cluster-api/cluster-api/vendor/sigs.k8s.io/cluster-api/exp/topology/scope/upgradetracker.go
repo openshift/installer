@@ -23,6 +23,7 @@ type UpgradeTracker struct {
 	ControlPlane       ControlPlaneUpgradeTracker
 	MachineDeployments WorkerUpgradeTracker
 	MachinePools       WorkerUpgradeTracker
+	MinWorkersVersion  string
 }
 
 // ControlPlaneUpgradeTracker holds the current upgrade status of the Control Plane.
@@ -35,6 +36,23 @@ type ControlPlaneUpgradeTracker struct {
 	// - Upgrade is blocked because the current ControlPlane is not stable (provisioning OR scaling OR upgrading)
 	// - Upgrade is blocked because any of the current MachineDeployments or MachinePools are upgrading.
 	IsPendingUpgrade bool
+
+	// IsWaitingForWorkersUpgrade documents when a Control Plane is pending a version upgrade but
+	// it cannot pick up the new version until workers upgrades.
+	// Note: this happens when performing a multistep upgrade, and the current upgrade step requires
+	// also workers to upgrade, e.g. for preventing violation of the rule that defines the max
+	// version skew between control plane and workers.
+	IsWaitingForWorkersUpgrade bool
+
+	// UpgradePlan tracks the list of version upgrades required to reach the desired version.
+	// The following rules apply:
+	// - there should be at least one version for every minor between currentControlPlaneVersion (excluded) and desiredVersion (included).
+	// - each version must be:
+	//   - greater than currentControlPlaneVersion (or with a different build number)
+	//   - greater than the previous version in the list (or with a different build number)
+	//   - less or equal to desiredVersion (or with a different build number)
+	// - the last version in the plan must be equal to the desired version
+	UpgradePlan []string
 
 	// IsProvisioning is true if the current Control Plane is being provisioned for the first time. False otherwise.
 	IsProvisioning bool
@@ -69,6 +87,20 @@ type WorkerUpgradeTracker struct {
 	// in the current reconcile loop.
 	// By marking a MachineDeployment/MachinePool as pendingUpgrade we skip reconciling the MachineDeployment/MachinePool.
 	pendingUpgradeNames sets.Set[string]
+
+	// UpgradePlan tracks the list of version upgrades required to reach the desired version.
+	// the following rules apply:
+	// - each version must be:
+	//   - equal to currentControlPlaneVersion or to one of the versions in the control plane upgrade plan.
+	//   - greater than current min worker - MachineDeployment & MachinePool - version (or with a different build number)
+	//   - greater than the previous version in the list (or with a different build number)
+	//   - less or equal to the desiredVersion (or with a different build number)
+	//   - in case of versions with the same major/minor/patch version but different build number, also the order
+	//     of those versions must be the same for control plane and worker upgrade plan.
+	// - the last version in the plan must be equal to the desired version
+	// - the upgrade plane must have all the intermediate version which workers must go through to avoid breaking rules
+	//   defining the max version skew between control plane and workers.
+	UpgradePlan []string
 
 	// deferredNames is the set of MachineDeployment/MachinePool names that are not going to pick up the new version
 	// in the current reconcile loop because they are deferred by the user.
@@ -179,6 +211,33 @@ func (t *ControlPlaneUpgradeTracker) IsControlPlaneStable() bool {
 	return true
 }
 
+// IsControlPlaneStableOrWaitingForWorkersUpgrade returns true is the ControlPlane is stable or waiting for worker upgrade.
+func (t *ControlPlaneUpgradeTracker) IsControlPlaneStableOrWaitingForWorkersUpgrade() bool {
+	// If the current control plane is provisioning it is not considered stable.
+	if t.IsProvisioning {
+		return false
+	}
+
+	// If the current control plane is upgrading it is not considered stable.
+	if t.IsUpgrading {
+		return false
+	}
+
+	// Check if we are about to upgrade the control plane. Since the control plane is about to start its upgrade process
+	// it cannot be considered stable.
+	if t.IsStartingUpgrade {
+		return false
+	}
+
+	// If the ControlPlane is pending picking up an upgrade then it is not yet at the desired state and
+	// cannot be considered stable unless the control plane is waiting for worker upgrade.
+	if t.IsPendingUpgrade && !t.IsWaitingForWorkersUpgrade {
+		return false
+	}
+
+	return true
+}
+
 // MarkUpgrading marks a MachineDeployment/MachinePool as currently upgrading or about to upgrade.
 func (m *WorkerUpgradeTracker) MarkUpgrading(names ...string) {
 	for _, name := range names {
@@ -190,6 +249,12 @@ func (m *WorkerUpgradeTracker) MarkUpgrading(names ...string) {
 // are about to upgrade.
 func (m *WorkerUpgradeTracker) UpgradingNames() []string {
 	return sets.List(m.upgradingNames)
+}
+
+// IsAnyUpgrading returns true if any of the machine deployments are upgrading.
+// Returns false, otherwise.
+func (m *WorkerUpgradeTracker) IsAnyUpgrading() bool {
+	return len(m.upgradingNames) != 0
 }
 
 // UpgradeConcurrencyReached returns true if the number of MachineDeployments/MachinePools upgrading is at the concurrency limit.
@@ -257,8 +322,8 @@ func (m *WorkerUpgradeTracker) DeferredUpgradeNames() []string {
 	return sets.List(m.deferredNames)
 }
 
-// DeferredUpgrade returns true if the upgrade has been deferred for any of the
+// IsAnyUpgradeDeferred returns true if the upgrade has been deferred for any of the
 // MachineDeployments/MachinePools. Returns false, otherwise.
-func (m *WorkerUpgradeTracker) DeferredUpgrade() bool {
+func (m *WorkerUpgradeTracker) IsAnyUpgradeDeferred() bool {
 	return len(m.deferredNames) != 0
 }
