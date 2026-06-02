@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/exec"
 	"testing"
 
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,11 +31,6 @@ func TestBaseIso(t *testing.T) {
 		{
 			name:                    "default",
 			expectedBaseIsoFilename: ocBaseIsoFilename,
-		},
-		{
-			name:                    "direct download if oc is not available",
-			getIsoError:             &exec.Error{},
-			expectedBaseIsoFilename: ocReleaseImage,
 		},
 	}
 	for _, tc := range cases {
@@ -76,26 +69,6 @@ func TestBaseIso(t *testing.T) {
 					isoBaseVersion:  ocReleaseImage,
 					baseIsoFileName: ocBaseIsoFilename,
 					baseIsoError:    tc.getIsoError,
-				},
-				func(ctx context.Context) (*stream.Stream, error) {
-					return &stream.Stream{
-						Architectures: map[string]stream.Arch{
-							"x86_64": {
-								Artifacts: map[string]stream.PlatformArtifacts{
-									"metal": {
-										Release: ocReleaseImage,
-										Formats: map[string]stream.ImageFormat{
-											"iso": {
-												Disk: &stream.Artifact{
-													Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					}, nil
 				})
 			filename, err := fetcher.GetBaseISOFilename(context.Background(), "")
 
@@ -115,7 +88,7 @@ type mockRelease struct {
 	baseIsoError    error
 }
 
-func (m *mockRelease) GetBaseIso(architecture string, streamGetter CoreOSBuildFetcher) (string, error) {
+func (m *mockRelease) GetBaseIso(architecture string) (string, error) {
 	if m.baseIsoError != nil {
 		return "", m.baseIsoError
 	}

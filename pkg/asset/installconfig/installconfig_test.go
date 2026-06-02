@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/none"
 )
@@ -77,8 +78,9 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		Platform: types.Platform{
 			None: &none.Platform{},
 		},
-		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-		Publish:    types.ExternalPublishingStrategy,
+		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Publish:       types.ExternalPublishingStrategy,
+		OSImageStream: rhcos.DefaultOSImageStream,
 	}
 	assert.Equal(t, expected, installConfig.Config, "unexpected config generated")
 }
@@ -144,8 +146,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				Platform: types.Platform{
 					None: &none.Platform{},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-				Publish:    types.ExternalPublishingStrategy,
+				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:       types.ExternalPublishingStrategy,
+				OSImageStream: rhcos.DefaultOSImageStream,
 			},
 		},
 		{
@@ -244,8 +247,9 @@ wrong_key: wrong_value
 				Platform: types.Platform{
 					None: &none.Platform{},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-				Publish:    types.ExternalPublishingStrategy,
+				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:       types.ExternalPublishingStrategy,
+				OSImageStream: rhcos.DefaultOSImageStream,
 			},
 		},
 		{
@@ -299,8 +303,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				Platform: types.Platform{
 					None: &none.Platform{},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-				Publish:    types.ExternalPublishingStrategy,
+				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:       types.ExternalPublishingStrategy,
+				OSImageStream: rhcos.DefaultOSImageStream,
 			},
 		},
 	}

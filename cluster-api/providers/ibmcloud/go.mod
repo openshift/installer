@@ -73,7 +73,7 @@ require (
 	github.com/onsi/gomega v1.38.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/ppc64le-cloud/powervs-utils v0.0.0-20250403153021-219b161805db // indirect
+	github.com/ppc64le-cloud/powervs-utils v0.0.0-20260320143638-bc9d769bbbfc // indirect
 	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect

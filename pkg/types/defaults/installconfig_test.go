@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
@@ -35,9 +36,10 @@ func defaultInstallConfig() *types.InstallConfig {
 				},
 			},
 		},
-		ControlPlane: defaultMachinePool("master"),
-		Compute:      []types.MachinePool{*defaultMachinePool("worker")},
-		Publish:      types.ExternalPublishingStrategy,
+		ControlPlane:  defaultMachinePool("master"),
+		Compute:       []types.MachinePool{*defaultMachinePool("worker")},
+		Publish:       types.ExternalPublishingStrategy,
+		OSImageStream: rhcos.DefaultOSImageStream,
 	}
 }
 

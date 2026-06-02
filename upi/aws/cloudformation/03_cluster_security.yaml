@@ -542,6 +542,7 @@ Resources:
             - "elasticloadbalancing:RegisterTargets"
             - "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer"
             - "elasticloadbalancing:SetLoadBalancerPoliciesOfListener"
+            - "elasticloadbalancing:SetSecurityGroups"
             - "kms:DescribeKey"
             Resource: "*"
 

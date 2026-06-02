@@ -25,6 +25,7 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
@@ -1766,10 +1767,20 @@ func validateFencingCredentialsAndPlatform(installConfig *types.InstallConfig) (
 	fencingCredentials := installConfig.ControlPlane.Fencing
 	allErrs := field.ErrorList{}
 	if fencingCredentials != nil {
+
 		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath.Child("credentials"), func([]byte) bool { return false })...)
 		allErrs = append(allErrs, validateFencingForPlatform(installConfig, fldPath)...)
 
 		for i, credential := range fencingCredentials.Credentials {
+			credPath := fldPath.Child("credentials").Index(i)
+			if credential.HostName == "" && credential.MACAddress == "" {
+				allErrs = append(allErrs, field.Required(credPath, "at least one of hostname or macaddress must be provided"))
+			}
+			if credential.MACAddress != "" {
+				if err := validate.MAC(credential.MACAddress); err != nil {
+					allErrs = append(allErrs, field.Invalid(credPath.Child("macAddress"), credential.MACAddress, err.Error()))
+				}
+			}
 			if len(credential.CertificateVerification) > 0 && credential.CertificateVerification != types.CertificateVerificationDisabled && credential.CertificateVerification != types.CertificateVerificationEnabled {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("credentials").Index(i).Key("CertificateVerification"), installConfig.ControlPlane.Fencing.Credentials[i].CertificateVerification, fmt.Sprintf("invalid certificate verification; %q should set to one of the following: ['Enabled' (default), 'Disabled']", credential.CertificateVerification)))
 			}
@@ -1794,17 +1805,19 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 
 func validateOSImageStream(config *types.InstallConfig) field.ErrorList {
 	errs := field.ErrorList{}
-	if len(config.OSImageStream) != 0 && config.IsSCOS() {
-		errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
+	if config.IsSCOS() {
+		if config.OSImageStream != rhcos.DefaultOSImageStream {
+			errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
+		}
+		return errs
 	}
 
-	supportedValues := []string{string(types.OSImageStreamRHCOS9), string(types.OSImageStreamRHCOS10)}
-	if config.OSImageStream != "" && !slices.Contains(supportedValues, string(config.OSImageStream)) {
+	if !slices.Contains(types.OSImageStreamValues, config.OSImageStream) {
 		errs = append(errs,
-			field.Forbidden(
+			field.NotSupported(
 				field.NewPath("osImageStream"),
-				fmt.Sprintf("Unsupported OS Image Stream. Supported values are: %s", strings.Join(supportedValues, ", ")),
-			))
+				config.OSImageStream,
+				types.OSImageStreamValues))
 	}
 	return errs
 }

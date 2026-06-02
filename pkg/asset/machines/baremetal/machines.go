@@ -30,7 +30,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider, err := provider(platform, userDataSecret)
+	provider, err := provider(platform, userDataSecret, config.OSImageStream)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -64,7 +64,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *baremetal.Platform, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
+func provider(platform *baremetal.Platform, userDataSecret string, osImageStream types.OSImageStream) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "baremetal.cluster.k8s.io/v1alpha1",
@@ -74,6 +74,11 @@ func provider(platform *baremetal.Platform, userDataSecret string) (*baremetalpr
 			Method: "install_coreos",
 		},
 		UserData: &corev1.SecretReference{Name: userDataSecret},
+		HostSelector: baremetalprovider.HostSelector{
+			MatchLabels: map[string]string{
+				"coreos.openshift.io/stream": string(osImageStream),
+			},
+		},
 	}
 	return config, nil
 }

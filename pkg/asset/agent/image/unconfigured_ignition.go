@@ -155,7 +155,7 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 	if err != nil {
 		return err
 	}
-	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, nil)
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion)
 	if err != nil {
 		return err
 	}

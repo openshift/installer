@@ -219,7 +219,7 @@ func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyI
 
 func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReadyInput, vpcID string) (sets.Set[int64], error) {
 	foundPorts := sets.Set[int64]{}
-	wantedPorts := sets.New[int64](22, 443, 5000, 6443, 10258, 22623)
+	wantedPorts := sets.New[int64](22, 80, 443, 5000, 6443, 10258, 22623)
 
 	existingRules, err := in.InstallConfig.PowerVS.ListSecurityGroupRules(ctx, vpcID)
 	if err != nil {
@@ -314,7 +314,6 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	if err != nil {
 		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
 	}
-	logrus.Debugf("PostProvision: NewClient returns %+v", client)
 
 	// We need to set the region we will eventually query inside
 	vpcRegion = in.InstallConfig.Config.Platform.PowerVS.VPCRegion

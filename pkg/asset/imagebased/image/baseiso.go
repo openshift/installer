@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/rhcos"
+	assetrhcos "github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -19,15 +17,6 @@ import (
 // BaseIso generates the base ISO file for the image.
 type BaseIso struct {
 	File *asset.File
-
-	streamGetter CoreOSBuildFetcher
-}
-
-// CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
-type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
-
-func defaultCoreOSStreamGetter(ctx context.Context) (*stream.Stream, error) {
-	return rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
 }
 
 var _ asset.WritableAsset = (*BaseIso)(nil)
@@ -45,7 +34,7 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 }
 
 // Generate generates the base ISO.
-func (i *BaseIso) Generate(_ context.Context, dependencies asset.Parents) error {
+func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ibiConfig := &ImageBasedInstallationConfig{}
 	dependencies.Get(ibiConfig)
 
@@ -56,15 +45,12 @@ func (i *BaseIso) Generate(_ context.Context, dependencies asset.Parents) error 
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised.")
 		baseIsoFileName, err = cache.DownloadImageFile(urlOverride, cache.ImageBasedApplicationName)
 	} else {
-		if i.streamGetter == nil {
-			i.streamGetter = defaultCoreOSStreamGetter
-		}
 		architecture := types.ArchitectureAMD64
 		if ibiConfig.Config.Architecture != "" {
 			architecture = ibiConfig.Config.Architecture
 		}
 		logrus.Debugf("Using %s as the architecture for the iso", architecture)
-		baseIsoFileName, err = i.downloadBaseIso(arch.RpmArch(architecture))
+		baseIsoFileName, err = i.downloadBaseIso(ctx, arch.RpmArch(architecture))
 	}
 
 	if err == nil {
@@ -93,15 +79,15 @@ func (i *BaseIso) Load(f asset.FileFetcher) (bool, error) {
 }
 
 // Download the RHCOS base ISO via rhcos.json.
-func (i *BaseIso) downloadBaseIso(archName string) (string, error) {
-	metal, err := i.metalArtifact(archName)
+func (i *BaseIso) downloadBaseIso(ctx context.Context, archName string) (string, error) {
+	metal, err := assetrhcos.GetMetalArtifact(ctx, archName)
 	if err != nil {
 		return "", err
 	}
 
 	format, ok := metal.Formats["iso"]
 	if !ok {
-		return "", fmt.Errorf("no ISO found to download for %s: %w", archName, err)
+		return "", fmt.Errorf("no ISO found to download for %s", archName)
 	}
 
 	url := format.Disk.Location
@@ -112,26 +98,4 @@ func (i *BaseIso) downloadBaseIso(archName string) (string, error) {
 	}
 
 	return cachedImage, nil
-}
-
-func (i *BaseIso) metalArtifact(archName string) (stream.PlatformArtifacts, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-
-	st, err := i.streamGetter(ctx)
-	if err != nil {
-		return stream.PlatformArtifacts{}, err
-	}
-
-	streamArch, err := st.GetArchitecture(archName)
-	if err != nil {
-		return stream.PlatformArtifacts{}, err
-	}
-
-	metal, ok := streamArch.Artifacts["metal"]
-	if !ok {
-		return stream.PlatformArtifacts{}, fmt.Errorf("coreOs stream data not found for 'metal' artifact")
-	}
-
-	return metal, nil
 }

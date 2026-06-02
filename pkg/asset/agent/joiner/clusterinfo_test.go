@@ -2,13 +2,11 @@ package joiner
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -85,7 +83,6 @@ func TestClusterInfo_Generate(t *testing.T) {
 			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
 				t.Helper()
 				clusterInfo.Architecture = "arm64"
-				clusterInfo.OSImageLocation = "http://my-coreosimage-url/416.94.202402130130-1"
 				return clusterInfo
 			},
 		},
@@ -358,51 +355,6 @@ passwd:
 	}
 }
 
-func buildStreamData() *stream.Stream {
-	return &stream.Stream{
-		Architectures: map[string]stream.Arch{
-			"x86_64": {
-				Artifacts: map[string]stream.PlatformArtifacts{
-					"metal": {
-						Release: "416.94.202402130130-0",
-						Formats: map[string]stream.ImageFormat{
-							"iso": {
-								Disk: &stream.Artifact{
-									Location: "http://my-coreosimage-url/416.94.202402130130-0",
-								},
-							},
-						},
-					},
-				},
-			},
-			"aarch64": {
-				Artifacts: map[string]stream.PlatformArtifacts{
-					"metal": {
-						Release: "416.94.202402130130-0",
-						Formats: map[string]stream.ImageFormat{
-							"iso": {
-								Disk: &stream.Artifact{
-									Location: "http://my-coreosimage-url/416.94.202402130130-1",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func makeCoreOsBootImages(t *testing.T, st *stream.Stream) string {
-	t.Helper()
-	data, err := json.Marshal(st)
-	if err != nil {
-		t.Error(err)
-	}
-
-	return string(data)
-}
-
 func makeInstallConfig(t *testing.T) string {
 	t.Helper()
 	ic := &types.InstallConfig{
@@ -470,15 +422,6 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []
 				},
 				Data: map[string]string{
 					"install-config": makeInstallConfig(t),
-				},
-			},
-			&corev1.ConfigMap{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "coreos-bootimages",
-					Namespace: "openshift-machine-config-operator",
-				},
-				Data: map[string]string{
-					"stream": makeCoreOsBootImages(t, buildStreamData()),
 				},
 			},
 			&corev1.Secret{
@@ -591,9 +534,7 @@ func defaultExpectedClusterInfo() ClusterInfo {
 				},
 			},
 		},
-		PlatformType:    v1beta1.BareMetalPlatformType,
-		OSImage:         buildStreamData(),
-		OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
+		PlatformType: v1beta1.BareMetalPlatformType,
 		IgnitionEndpointWorker: &models.IgnitionEndpoint{
 			URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
 			CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
@@ -618,8 +559,6 @@ func verifyClusterInfo(t *testing.T, expectedClusterInfo, clusterInfo ClusterInf
 	assert.Equal(t, expectedClusterInfo.DeprecatedImageContentSources, clusterInfo.DeprecatedImageContentSources)
 	assert.Equal(t, expectedClusterInfo.PlatformType, clusterInfo.PlatformType)
 	assert.Equal(t, expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
-	assert.Equal(t, expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
-	assert.Equal(t, expectedClusterInfo.OSImage, clusterInfo.OSImage)
 	assert.Equal(t, expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
 	assert.Equal(t, expectedClusterInfo.FIPS, clusterInfo.FIPS)
 	assert.Equal(t, expectedClusterInfo.ChronyConf, clusterInfo.ChronyConf)

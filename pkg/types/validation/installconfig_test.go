@@ -15,6 +15,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -47,8 +48,9 @@ func validInstallConfig() *types.InstallConfig {
 		Platform: types.Platform{
 			AWS: validAWSPlatform(),
 		},
-		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-		Publish:    types.ExternalPublishingStrategy,
+		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Publish:       types.ExternalPublishingStrategy,
+		OSImageStream: rhcos.DefaultOSImageStream,
 		Proxy: &types.Proxy{
 			HTTPProxy:  "http://user:password@127.0.0.1:8080",
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
@@ -974,6 +976,30 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^platform\.vsphere\.failureDomains\.topology\.resourcePool: Invalid value: "my-resource-pool": full path of resource pool must be provided in format /<datacenter>/host/<cluster>/\.\.\.$`,
+		},
+		{
+			name: "vsphere cluster name with dot",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.ObjectMeta.Name = "jima.test"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "jima.test": cluster name must not contain '\.'$`,
+		},
+		{
+			name: "vsphere vCenter with special characters",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.VCenters[0].Server = "44&236-21-251.vmwarevmc.com"
+				return c
+			}(),
+			expectedError: `platform\.vsphere\.vcenters\[0\]\.server: Invalid value: "44&236-21-251\.vmwarevmc\.com": must be the domain name or IP address of the vCenter`,
 		},
 		{
 			name: "empty proxy settings",
@@ -3016,18 +3042,36 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "the Ingress capability is required",
 		},
 		{
-			name: "invalid OSImageStream set",
+			// Without the scos build tag, rhcos.DefaultOSImageStream
+			// is "rhel-9" rather than "centos-10", but the validation
+			// compares against the same constant so the logic is still
+			// tested correctly.
+			name: "valid SCOS OSImageStream default",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				return c
+			}(),
+			restoreFnFactory: func(config *types.InstallConfig) func() {
+				old := types.SCOS
 				types.SCOS = true
+				return func() {
+					types.SCOS = old
+				}
+			},
+		},
+		{
+			name: "invalid SCOS OSImageStream set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
 				c.OSImageStream = "rhel-10"
-
 				return c
 			}(),
 			expectedError: "OS Image Streams are only supported on OCP clusters using RHCOS",
 			restoreFnFactory: func(config *types.InstallConfig) func() {
 				old := types.SCOS
+				types.SCOS = true
 				return func() {
 					types.SCOS = old
 				}
@@ -3041,7 +3085,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.OSImageStream = "invalid"
 				return c
 			}(),
-			expectedError: "Unsupported OS Image Stream. Supported values are: rhel-9, rhel-10",
+			expectedError: "osImageStream: Unsupported value: \"invalid\": supported values: \"rhel-9\", \"rhel-10\"",
 		},
 		{
 			name: "sno on baremetal not supported",
@@ -3452,8 +3496,8 @@ func TestValidateTNF(t *testing.T) {
 				MachinePoolCP(machinePool().
 					Credential(c1().HostName(""), c2())).
 				CpReplicas(2).build(),
-			name:     "fencing_credential_host_name_required",
-			expected: "controlPlane.fencing.credentials\\[0\\].hostName: Required value: missing HostName",
+			name:     "fencing_credential_host_name_and_mac_address_required",
+			expected: "at least one of hostname or macaddress must be provided",
 		},
 		{
 			config: installConfig().
@@ -3465,6 +3509,44 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:     "fencing_credential_various_redfish_addresses",
 			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().HostName("").MACAddress("AA:BB:CC:DD:EE:01"), c2().HostName("").MACAddress("AA:BB:CC:DD:EE:02"))).
+				CpReplicas(2).build(),
+			name:     "valid_credential_with_mac_address_only",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().MACAddress("AA:BB:CC:DD:EE:01"), c2().MACAddress("AA:BB:CC:DD:EE:02"))).
+				CpReplicas(2).build(),
+			name:     "valid_credential_with_hostname_and_mac_address",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().HostName("").MACAddress("AA:BB:CC:DD:EE:01"),
+						c2().HostName("").MACAddress("AA:BB:CC:DD:EE:01"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_mac_address_not_unique",
+			expected: "Duplicate value",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().HostName("").MACAddress("not-a-mac"), c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_invalid_mac_address",
+			expected: `controlPlane.fencing.credentials\[0\].macAddress: Invalid value: "not-a-mac"`,
 		},
 		{
 			config: installConfig().
@@ -3774,6 +3856,11 @@ func (hb *credentialBuilder) FencingCredentialPassword(value string) *credential
 
 func (hb *credentialBuilder) CertificateVerification(value types.CertificateVerificationPolicy) *credentialBuilder {
 	hb.Credential.CertificateVerification = value
+	return hb
+}
+
+func (hb *credentialBuilder) MACAddress(value string) *credentialBuilder {
+	hb.Credential.MACAddress = value
 	return hb
 }
 

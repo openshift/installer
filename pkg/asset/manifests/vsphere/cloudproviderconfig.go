@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
-	cloudconfig "k8s.io/cloud-provider-vsphere/pkg/common/config"
+	"sigs.k8s.io/yaml"
 
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	cloudconfig "github.com/openshift/library-go/pkg/cloudprovider/vsphere"
 )
 
 const (
@@ -24,25 +24,26 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 
 // CloudProviderConfigYaml generates the yaml out of tree cloud provider config for the vSphere platform.
 func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, error) {
-	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)
+	vCenters := make(map[string]*cloudconfig.VirtualCenterConfig)
 
 	for _, vCenter := range p.VCenters {
 		vCenterPort := int32(443)
 		if vCenter.Port != 0 {
 			vCenterPort = vCenter.Port
 		}
-		vCenterConfig := cloudconfig.VirtualCenterConfigYAML{
-			VCenterIP:    vCenter.Server,
-			VCenterPort:  uint(vCenterPort),
-			Datacenters:  vCenter.Datacenters,
-			InsecureFlag: true,
+		vCenterConfig := cloudconfig.VirtualCenterConfig{
+			VCenterIP:   vCenter.Server,
+			VCenterPort: uint(vCenterPort),
+			Datacenters: vCenter.Datacenters,
+			// We are setting this in global so lets remove from here
+			//InsecureFlag: true,
 		}
 		vCenters[vCenter.Server] = &vCenterConfig
 	}
 
-	cloudProviderConfig := cloudconfig.CommonConfigYAML{
-		Global: cloudconfig.GlobalYAML{
-			SecretName:      "vsphere-creds",
+	cloudProviderConfig := cloudconfig.CommonConfig{
+		Global: cloudconfig.Global{
+			SecretName:      "vsphere-creds", // #nosec G101 -- this is the name of a Kubernetes secret, not a credential
 			SecretNamespace: "kube-system",
 			InsecureFlag:    true,
 		},
@@ -50,7 +51,7 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 	}
 
 	if len(p.FailureDomains) > 1 {
-		cloudProviderConfig.Labels = cloudconfig.LabelsYAML{
+		cloudProviderConfig.Labels = &cloudconfig.Labels{
 			Zone:   vspheretypes.TagCategoryZone,
 			Region: vspheretypes.TagCategoryRegion,
 		}

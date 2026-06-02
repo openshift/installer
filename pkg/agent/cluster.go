@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
@@ -21,7 +22,6 @@ import (
 type Cluster struct {
 	Ctx                    context.Context
 	API                    *clientSet
-	assetDir               string
 	clusterConsoleRouteURL string
 	clusterID              *strfmt.UUID
 	clusterInfraEnvID      *strfmt.UUID
@@ -59,7 +59,7 @@ type clusterInstallStatusHistory struct {
 }
 
 // NewCluster initializes a Cluster object
-func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, sshKey string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
+func NewCluster(ctx context.Context, assetStore asset.Store, rendezvousIP, kubeconfigPath, sshKey string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
 	czero := &Cluster{}
 	capi := &clientSet{}
 
@@ -68,7 +68,7 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 
 	switch workflowType {
 	case workflow.AgentWorkflowTypeInstall:
-		watcherAuthToken, err = FindAuthTokenFromAssetStore(assetDir)
+		watcherAuthToken, err = FindAuthTokenFromAssetStore(assetStore)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +118,6 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	czero.workflow = workflowType
 	czero.clusterID = nil
 	czero.clusterInfraEnvID = nil
-	czero.assetDir = assetDir
 	czero.clusterConsoleRouteURL = ""
 	czero.installHistory = cinstallstatushistory
 	czero.installHistory.ValidationResults = cvalidationresults

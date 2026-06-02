@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -33,7 +33,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 
-	provider, err := provider(platform, userDataSecret)
+	provider, err := provider(platform, userDataSecret, config.OSImageStream)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -53,7 +53,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			},
 		},
 		Spec: machineapi.MachineSetSpec{
-			Replicas: pointer.Int32Ptr(int32(total)),
+			Replicas: ptr.To(int32(total)),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"machine.openshift.io/cluster-api-machineset": name,

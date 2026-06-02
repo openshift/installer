@@ -107,6 +107,22 @@ func TestValidate(t *testing.T) {
 			expectErr:     `^\Q[compute[0].platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 2 vCPUs, compute[0].platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 8192 MiB Memory]\E$`,
 		},
 		{
+			name:          "invalid control plane and compute instance types",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "t2.small", "t2.small")),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `^\Q[controlPlane.platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 16384 MiB Memory, compute[0].platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 2 vCPUs, compute[0].platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 8192 MiB Memory]\E$`,
+		},
+		{
+			name:          "invalid default machine platform instance type",
+			installConfig: icBuild.build(icBuild.withInstanceType("t2.small", "", "")),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `^\Q[platform.aws.defaultMachinePlatform.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 4 vCPUs, platform.aws.defaultMachinePlatform.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 16384 MiB Memory, controlPlane.platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 16384 MiB Memory, compute[0].platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 2 vCPUs, compute[0].platform.aws.type: Invalid value: "t2.small": instance type does not meet minimum resource requirements of 8192 MiB Memory]\E$`,
+		},
+		{
 			name:          "invalid undefined compute instance type",
 			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.dummy")),
 			availRegions:  validAvailRegions(),

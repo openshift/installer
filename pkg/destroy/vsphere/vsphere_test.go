@@ -9,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	cnstypes "github.com/vmware/govmomi/cns/types"
 	"github.com/vmware/govmomi/vim25/mo"
 	vspheretypes "github.com/vmware/govmomi/vim25/types"
 	gomock "go.uber.org/mock/gomock"
@@ -613,4 +614,113 @@ func TestDeleteTagCategory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteCnsVolumes(t *testing.T) {
+	const (
+		someVolumesID = "some-volumes-infra-id"
+		getFailsID    = "get-fails-infra-id"
+	)
+
+	validVolume := cnstypes.CnsVolume{
+		VolumeId: cnstypes.CnsVolumeId{Id: "valid-volume-id"},
+		Name:     "valid-volume",
+	}
+	failVolume := cnstypes.CnsVolume{
+		VolumeId: cnstypes.CnsVolumeId{Id: "fail-volume-id"},
+		Name:     "fail-volume",
+	}
+
+	t.Run("Delete CNS volumes when none present", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		vsphereClient := mock.NewMockAPI(mockCtrl)
+
+		vsphereClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(infraID)).
+			Return([]cnstypes.CnsVolume{}, nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			GetVCenterName().
+			Return("").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		uninstaller := newWithClient(nullLogger, &metadata, []API{vsphereClient})
+		assert.NotNil(t, uninstaller)
+		assert.NoError(t, uninstaller.deleteCnsVolumes(context.TODO()))
+	})
+
+	t.Run("Delete CNS volumes when some present", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		vsphereClient := mock.NewMockAPI(mockCtrl)
+
+		vsphereClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(someVolumesID)).
+			Return([]cnstypes.CnsVolume{validVolume, validVolume}, nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(validVolume)).
+			Return(nil).
+			Times(2)
+		vsphereClient.EXPECT().
+			GetVCenterName().
+			Return("").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		metadata.InfraID = someVolumesID
+		uninstaller := newWithClient(nullLogger, &metadata, []API{vsphereClient})
+		assert.NotNil(t, uninstaller)
+		assert.NoError(t, uninstaller.deleteCnsVolumes(context.TODO()))
+	})
+
+	t.Run("Delete CNS volumes fails when listing fails", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		vsphereClient := mock.NewMockAPI(mockCtrl)
+
+		vsphereClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(getFailsID)).
+			Return(nil, errors.New("some vsphere error listing CNS volumes")).
+			Times(1)
+		vsphereClient.EXPECT().
+			GetVCenterName().
+			Return("").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		metadata.InfraID = getFailsID
+		uninstaller := newWithClient(nullLogger, &metadata, []API{vsphereClient})
+		assert.NotNil(t, uninstaller)
+		err := uninstaller.deleteCnsVolumes(context.TODO())
+		assert.Regexp(t, "some vsphere error", err)
+	})
+
+	t.Run("Delete CNS volumes fails when delete fails", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		vsphereClient := mock.NewMockAPI(mockCtrl)
+
+		vsphereClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(deleteFailsID)).
+			Return([]cnstypes.CnsVolume{validVolume, failVolume}, nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(validVolume)).
+			Return(nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(failVolume)).
+			Return(errors.New("some vsphere error deleting CNS volume")).
+			Times(1)
+		vsphereClient.EXPECT().
+			GetVCenterName().
+			Return("").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		metadata.InfraID = deleteFailsID
+		uninstaller := newWithClient(nullLogger, &metadata, []API{vsphereClient})
+		assert.NotNil(t, uninstaller)
+		err := uninstaller.deleteCnsVolumes(context.TODO())
+		assert.Regexp(t, "some vsphere error", err)
+	})
 }
