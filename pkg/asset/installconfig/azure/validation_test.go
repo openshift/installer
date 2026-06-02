@@ -43,6 +43,10 @@ var (
 	vmCapabilities = map[string]map[string]string{
 		"Standard_D8s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
 		"Standard_D4s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D8s_v5":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4s_v5":    {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D8as_v5":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4as_v5":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
 		"Standard_A1_v2":     {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
 		"Standard_D2_v4":     {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
 		"Standard_D4_v4":     {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},

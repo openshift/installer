@@ -32,7 +32,7 @@
     },
     "bootstrapVMSize" : {
       "type" : "string",
-      "defaultValue" : "Standard_D4s_v5",
+      "defaultValue" : "Standard_D4as_v5",
       "metadata" : {
         "description" : "The size of the Bootstrap Virtual Machine"
       }
