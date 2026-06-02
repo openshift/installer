@@ -113,33 +113,33 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "name"), fd.Name, fmt.Sprintf("failureDomain name should match the pattern %q.", pattern)))
 				}
 
-			if prevIdx, exists := fdNames[fd.Name]; exists {
-				allErrs = append(allErrs, field.Duplicate(fldPath.Child("failureDomains").Index(idx).Child("name"), fmt.Sprintf("failure domain name %q is already used by failureDomains[%d]", fd.Name, prevIdx)))
-			} else {
-				fdNames[fd.Name] = idx
-			}
-
-			if fd.PrismElement.UUID == "" {
-				allErrs = append(allErrs, field.Required(fldPath.Child("failureDomain", "prismElement", "uuid"), "failureDomain prismElement uuid cannot be empty"))
-			}
-
-			// validate subnets configuration
-			if errs := validateSubnets(fldPath.Child("failureDomain", "subnetUUIDs"), fd.SubnetUUIDs); len(errs) > 0 {
-				allErrs = append(allErrs, errs...)
-			}
-
-			// Only check for duplicate topology after basic required-field validation,
-			// so users see actionable "required field" errors instead of misleading
-			// "identical topology" when fields are simply empty.
-			if fd.PrismElement.UUID != "" && len(fd.SubnetUUIDs) > 0 {
-				topoKey := nutanixFailureDomainTopologyKey(fd)
-				if prevName, exists := fdTopologies[topoKey]; exists {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomains").Index(idx), fd.Name,
-						fmt.Sprintf("failure domain %q has identical topology (same prismElement and subnets) as %q; this provides no additional fault tolerance", fd.Name, prevName)))
+				if prevIdx, exists := fdNames[fd.Name]; exists {
+					allErrs = append(allErrs, field.Duplicate(fldPath.Child("failureDomains").Index(idx).Child("name"), fmt.Sprintf("failure domain name %q is already used by failureDomains[%d]", fd.Name, prevIdx)))
 				} else {
-					fdTopologies[topoKey] = fd.Name
+					fdNames[fd.Name] = idx
 				}
-			}
+
+				if fd.PrismElement.UUID == "" {
+					allErrs = append(allErrs, field.Required(fldPath.Child("failureDomain", "prismElement", "uuid"), "failureDomain prismElement uuid cannot be empty"))
+				}
+
+				// validate subnets configuration
+				if errs := validateSubnets(fldPath.Child("failureDomain", "subnetUUIDs"), fd.SubnetUUIDs); len(errs) > 0 {
+					allErrs = append(allErrs, errs...)
+				}
+
+				// Only check for duplicate topology after basic required-field validation,
+				// so users see actionable "required field" errors instead of misleading
+				// "identical topology" when fields are simply empty.
+				if fd.PrismElement.UUID != "" && len(fd.SubnetUUIDs) > 0 {
+					topoKey := nutanixFailureDomainTopologyKey(fd)
+					if prevName, exists := fdTopologies[topoKey]; exists {
+						allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomains").Index(idx), fd.Name,
+							fmt.Sprintf("failure domain %q has identical topology (same prismElement and subnets) as %q; this provides no additional fault tolerance", fd.Name, prevName)))
+					} else {
+						fdTopologies[topoKey] = fd.Name
+					}
+				}
 
 				for _, sc := range fd.StorageContainers {
 					if sc.ReferenceName == "" {
