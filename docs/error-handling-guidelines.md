@@ -2,12 +2,10 @@
 
 ## Error Wrapping
 
-The codebase uses **two wrapping libraries** side by side. Both are acceptable, but follow these rules:
+Prefer **`fmt.Errorf("...: %w", err)`** (stdlib) for all new code. The `github.com/pkg/errors` package is deprecated and no longer maintained -- do not introduce new usages. Existing `errors.Wrap`/`errors.Wrapf` calls should be migrated to `fmt.Errorf` when touching those files.
 
-- **`github.com/pkg/errors`** (`errors.Wrap`, `errors.Wrapf`, `errors.Errorf`) is imported in ~200 files across `pkg/`. Use it for legacy code and when you need `errors.Cause()`.
-- **`fmt.Errorf("...: %w", err)`** (stdlib) is used in ~230 files, particularly in newer infrastructure code (`pkg/infrastructure/`, `pkg/destroy/aws/`).
-- Prefer consistency within a file when possible, but mixing both styles in the same file is acceptable when needed (e.g., `pkg/destroy/aws/aws.go` uses both).
 - Always wrap with context describing **what failed**, not why: `"failed to create EC2 client: %w"`, not `"EC2 client error because credentials were bad"`.
+- Use `errors.Is` and `errors.As` (stdlib) for error inspection. Avoid `errors.Cause()` from `pkg/errors`.
 
 ## Validation Errors (`field.ErrorList`)
 
@@ -34,7 +32,7 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 4. Convert to `error` at the boundary using `.ToAggregate()`:
 ```go
 if err := validation.ValidateInstallConfig(cfg, false).ToAggregate(); err != nil {
-    return errors.Wrapf(err, "invalid %q file", filename)
+    return fmt.Errorf("invalid %q file: %w", filename, err)
 }
 ```
 
@@ -101,7 +99,7 @@ Destroy flows run in a poll loop (`wait.PollImmediateUntil` / `wait.PollImmediat
 
 ## General Conventions
 
-- **Graceful degradation for permissions**: When a quota or capability check fails due to missing permissions, log a warning and skip the check rather than failing the install. Pattern: `if IsUnauthorized(err) { logrus.Warn(...); return nil }`.
+- **Graceful degradation for permissions** (exception, not the norm): Quota and capability pre-flight checks are best-effort -- when they fail due to missing permissions, log a warning and skip the check rather than failing the install. This applies **only** to optional pre-flight checks, not to operations required for a successful install. Pattern: `if IsUnauthorized(err) { logrus.Warn(...); return nil }`.
 - **`utilerrors.NewAggregate`**: Use to combine multiple independent errors (destroy loops, SSH key loading, multi-resource operations). Returns nil if the slice is empty.
 - **Error messages**: Start with lowercase, do not end with punctuation. Use `"failed to <verb>"` not `"error <verbing>"`.
 - **`errors.As` / `errors.Is`**: Prefer over type assertions for cloud SDK errors. The codebase uses these consistently across all platforms.

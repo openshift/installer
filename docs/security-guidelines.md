@@ -81,7 +81,7 @@ Mirror registry hosts are cross-checked against pull secret entries; missing cre
 
 ## File Permissions
 
-Asset files are written with mode `0o640`. Credential files (Azure creds, PowerVS auth, oVirt config) use `0o600`. Do not use more permissive modes for any file containing secrets or keys.
+Asset files are written with mode `0o640`. Credential files (e.g., Azure creds, PowerVS auth, oVirt config, kubeadmin) use `0o600`. Do not use more permissive modes for any file containing secrets or keys.
 
 ## Agent Auth Tokens (JWT)
 

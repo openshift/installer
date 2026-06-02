@@ -39,7 +39,7 @@ When adding a new import that conflicts with an existing package name, follow th
 
 ### Package Documentation
 
-Every package should have a `doc.go` file with a package comment. Platform-type packages also define their platform `Name` constant in `doc.go`:
+Packages in `pkg/types/` should have a `doc.go` file with a package comment and `+k8s:deepcopy-gen=package` directive. Platform-type packages also define their platform `Name` constant in `doc.go`:
 
 ```go
 // Package aws contains AWS-specific structures for installer
@@ -120,8 +120,6 @@ Destroy providers use an `init()`-based registry. Each platform's `pkg/destroy/<
 
 Most platforms now provision infrastructure through Cluster API (CAPI). The wiring is in `pkg/infrastructure/platform/platform.go`, which maps platform names to `infrastructure.Provider` implementations. CAPI providers are initialized via `clusterapi.InitializeProvider()`.
 
-The `platform.go` file uses build tags (`altinfra` / default) to support alternative infrastructure configurations. When adding a new CAPI-based platform, update both `platform.go` and `platform_altinfra.go`.
-
 ### Embedded Data
 
 Static assets (bootstrap scripts, manifest templates, CAPI manifests) live in `data/data/`. In development builds, `data/assets.go` serves these from disk (honoring `OPENSHIFT_INSTALL_DATA` env var). In release builds, they are embedded into the binary via `data/assets_generate.go`.
@@ -134,7 +132,6 @@ The installer uses OpenShift feature gates (`configv1.FeatureGateName`) to condi
 
 The codebase uses build tags for conditional compilation:
 - `release` / default -- controls whether data assets are embedded or read from disk
-- `altinfra` -- alternative infrastructure provider wiring (used for CI/dev variants)
 
 ## Commit Message and PR Expectations
 

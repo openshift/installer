@@ -4,7 +4,7 @@
 
 | Command | Scope | Environment |
 |---------|-------|-------------|
-| `hack/go-test.sh` | Unit tests (`./cmd/... ./data/... ./pkg/...`) with `-short` flag | Podman container (golang:1.25) |
+| `hack/go-test.sh` | Unit tests (`./cmd/... ./data/... ./pkg/...`) with `-short` flag | Podman container |
 | `go test ./pkg/...` | Unit tests directly | Local Go toolchain |
 | `hack/go-integration-test.sh` | Integration tests (`-run .Integration`) | Local; requires `oc`, `nmstatectl`, registry credentials |
 | `hack/go-integration-test-nodejoiner.sh` | Node joiner integration tests | Local; auto-installs `setup-envtest` for kubebuilder binaries |
@@ -197,6 +197,12 @@ Validation functions return `field.ErrorList`. Test `expected` strings are regex
 
 ```go
 expected: `^test-path\.serviceEndpoints\[0\]\.url: Invalid value: "(.*)": host cannot be empty`
+```
+
+Use `\Q` and `\E` to match literal strings without tedious escaping:
+
+```go
+expected: `\Qtest-path.serviceEndpoints[0].url: Invalid value:\E`
 ```
 
 When no error is expected, leave `expected` empty (or `expectedError: false`) and assert `NoError`/`Empty`.

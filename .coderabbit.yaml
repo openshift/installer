@@ -1,9 +1,10 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+inheritance: true
 language: en-US
 tone_instructions: >-
   Be concise and direct. Focus on correctness, security, and backward
   compatibility. This is infrastructure software that provisions cloud
-  resources — mistakes can be costly and hard to reverse.
+  resources - mistakes can be costly and hard to reverse.
 
 reviews:
   profile: chill
@@ -17,13 +18,6 @@ reviews:
   estimate_code_review_effort: true
   request_changes_workflow: false
   poem: false
-  suggested_labels:
-  - platform/aws
-  - platform/openstack
-  - kind/bug
-  - kind/feature
-  - kind/cleanup
-  - kind/documentation
   suggested_reviewers: false
   auto_review:
     enabled: true
@@ -36,11 +30,14 @@ reviews:
     base_branches:
     - main
     - "release-4.*"
+    - "release-5.*"
   path_filters:
   # Exclude vendored dependencies - reviewed separately
   - "!vendor/**"
   - "!**/vendor/**"
-  # Exclude generated CRD manifests (auto-generated)
+  # Exclude generated files
+  - "!**/zz_generated*"
+  # Exclude generated CRD manifests
   - "!data/data/install.openshift.io_installconfigs.yaml"
   path_instructions:
   - path: "pkg/types/**/validation/**"
@@ -62,7 +59,7 @@ reviews:
       for the target output.
   - path: "pkg/destroy/**"
     instructions: >-
-      This is cluster teardown code. Be extra careful — bugs here can
+      This is cluster teardown code. Be extra careful - bugs here can
       leave orphaned cloud resources that cost money. Verify proper error
       handling and that all resources created during install are cleaned up.
   - path: "pkg/infrastructure/**"
@@ -129,6 +126,10 @@ knowledge_base:
   code_guidelines:
     filePatterns:
     - "docs/*-guidelines.md"
+    - "**/AGENTS.md"
+    - "**/CLAUDE.md"
+    - "**/CONTRIBUTING.md"
+    - "**/REDHAT.md"
   learnings:
     scope: auto
   issues:

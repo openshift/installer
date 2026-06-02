@@ -118,7 +118,7 @@ Azure and OpenStack session setup (`pkg/asset/installconfig/azure/session.go`, `
 ## Key Rules
 
 1. **Never spawn unbounded goroutines for API calls.** Use the semaphore pattern, fixed worker pools, or staged WaitGroups.
-2. **Order destroy stages by dependency.** Resources that reference others must be deleted first (instances before LBs, LBs before subnets, everything before routers).
+2. **Order destroy stages by dependency where the platform supports it.** Platforms like GCP and IBMCloud use explicit stages to enforce ordering (instances before LBs, LBs before subnets, everything before routers). AWS uses tag-based discovery where resources are attempted in arbitrary order each pass -- dependencies resolve naturally over multiple iterations as blocking resources are deleted first.
 3. **Retry with backoff, not tight loops.** Use `wait.ExponentialBackoff` or `wait.PollImmediateInfinite` from `k8s.io/apimachinery/pkg/util/wait`.
 4. **Treat 404 as success in destroy paths.** Resources may already be deleted by a concurrent operation or prior attempt.
 5. **Log transient errors at Debug, not Warn.** Use `errorTracker.suppressWarning` to avoid flooding logs during long retry sequences.

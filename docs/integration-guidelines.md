@@ -53,11 +53,11 @@ var _ clusterapi.BootstrapDestroyer = (*Provider)(nil)
 var _ clusterapi.PostDestroyer      = (*Provider)(nil)
 ```
 
-Hook execution order: `PreProvision` -> infrastructure ready -> `InfraReady` -> `Ignition` -> machines provisioned -> `PostProvision` -> (later) `DestroyBootstrap` -> `PostDestroy`.
+Hook execution order: `PreProvision` -> [wait: infrastructure ready] -> `InfraReady` -> `Ignition` -> [wait: machines provisioned] -> `PostProvision` -> (later) `DestroyBootstrap` -> `PostDestroy`.
 
 Optional `Timeouts` interface lets platforms override `NetworkTimeout()` and `ProvisionTimeout()`.
 
-Register the provider in `pkg/infrastructure/platform/platform.go` (and `platform_altinfra.go`):
+Register the provider in `pkg/infrastructure/platform/platform.go`:
 
 ```go
 case awstypes.Name:
@@ -72,7 +72,7 @@ case awstypes.Name:
 
 Tags are the primary mechanism for identifying cluster-owned resources during teardown.
 
-**AWS**: Uses tag key `kubernetes.io/cluster/<infraID>` with values `"owned"` or `"shared"`. CAPI also uses `sigs.k8s.io/cluster-api-provider-aws/cluster/<infraID>`. The `resourcegroupstaggingapi` is used to discover all tagged resources by ARN, which are then dispatched by ARN service type. Shared resources have their tags removed; owned resources are deleted.
+**AWS**: Uses tag keys `kubernetes.io/cluster/<infraID>` and `sigs.k8s.io/cluster-api-provider-aws/cluster/<infraID>` (CAPI-managed) with values `"owned"` or `"shared"`. During destroy, the Resource Groups Tagging API discovers all resources matching these tag keys. Owned resources are deleted (routed to per-service deleters based on the ARN service type). Shared resources (user-provided subnets, hosted zones, IAM roles) are not deleted -- only the `"shared"` tags are removed.
 
 **GCP**: Uses labels `kubernetes-io-cluster-<infraID>: owned|shared` (format constant: `gcpconsts.ClusterIDLabelFmt`). CAPI adds `capg-cluster-<infraID>: owned`. Resources are also matched by name prefix `<infraID>-*`.
 
@@ -152,6 +152,6 @@ Checklist:
 5. Create `pkg/asset/installconfig/<platform>/` for sessions and cloud validation
 6. Add platform cases to `platformcredscheck.go` and `platformpermscheck.go`
 7. Create CAPI provider in `pkg/infrastructure/<platform>/clusterapi/`
-8. Register in both `platform.go` and `platform_altinfra.go`
+8. Register in `platform.go`
 9. Create destroyer in `pkg/destroy/<platform>/` with `register.go`
 10. Add OWNERS file in each new directory
