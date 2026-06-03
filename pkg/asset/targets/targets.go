@@ -33,6 +33,7 @@ var (
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&clusterapi.Cluster{},
+		&tls.SignerKeyParams{},
 	}
 
 	// ManifestTemplates are the manifest-templates targeted assets.
