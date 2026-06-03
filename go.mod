@@ -71,7 +71,7 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.0
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20260429122012-1180c0f5c3e9
+	github.com/openshift/api v0.0.0-20260511191110-9b69e5fa27e9
 	github.com/openshift/assisted-image-service v0.0.0-20250917153356-4ca9ff81f712
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -378,4 +378,9 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 replace (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
 	sigs.k8s.io/cluster-api-provider-azure => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
+)
+
+replace (
+	github.com/openshift/api => github.com/pablintino/api v0.0.0-20260528074109-71b14e62c33b
+	github.com/openshift/client-go => github.com/pablintino/client-go v0.0.0-20260602163508-784018048305
 )

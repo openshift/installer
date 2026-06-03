@@ -44,6 +44,10 @@ func (c *FakeMachineconfigurationV1) MachineOSConfigs() v1.MachineOSConfigInterf
 	return newFakeMachineOSConfigs(c)
 }
 
+func (c *FakeMachineconfigurationV1) OSImageStreams() v1.OSImageStreamInterface {
+	return newFakeOSImageStreams(c)
+}
+
 func (c *FakeMachineconfigurationV1) PinnedImageSets() v1.PinnedImageSetInterface {
 	return newFakePinnedImageSets(c)
 }

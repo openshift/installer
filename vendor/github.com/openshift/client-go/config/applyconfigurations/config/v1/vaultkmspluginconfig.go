@@ -2,11 +2,11 @@
 
 package v1
 
-// VaultKMSConfigApplyConfiguration represents a declarative configuration of the VaultKMSConfig type for use
+// VaultKMSPluginConfigApplyConfiguration represents a declarative configuration of the VaultKMSPluginConfig type for use
 // with apply.
 //
-// VaultKMSConfig defines the KMS plugin configuration specific to Vault KMS
-type VaultKMSConfigApplyConfiguration struct {
+// VaultKMSPluginConfig defines the KMS plugin configuration specific to Vault KMS
+type VaultKMSPluginConfigApplyConfiguration struct {
 	// kmsPluginImage specifies the container image for the HashiCorp Vault KMS plugin.
 	//
 	// The image must be a fully qualified OCI image pull spec with a SHA256 digest.
@@ -46,32 +46,30 @@ type VaultKMSConfigApplyConfiguration struct {
 	// authentication defines the authentication method used to authenticate with Vault.
 	Authentication *VaultAuthenticationApplyConfiguration `json:"authentication,omitempty"`
 	// transitMount specifies the mount path of the Vault Transit engine.
-	// The value must be between 1 and 1024 characters when specified.
 	//
-	// When omitted, this means the user has no opinion and the platform is left
-	// to choose a reasonable default. These defaults are subject to change over time.
-	// The current default is "transit".
-	//
-	// The mount path cannot start or end with a forward slash, cannot contain spaces,
-	// and cannot contain consecutive forward slashes.
+	// The transit mount must be between 1 and 1024 characters, cannot start or
+	// end with a forward slash, cannot contain consecutive forward slashes, and
+	// must only contain RFC 3986 unreserved characters (alphanumeric, hyphen,
+	// period, underscore, tilde) and forward slashes as path separators.
 	TransitMount *string `json:"transitMount,omitempty"`
 	// transitKey specifies the name of the encryption key in Vault's Transit engine.
 	// This key is used to encrypt and decrypt data.
 	//
-	// The key name must be between 1 and 512 characters and cannot contain spaces or forward slashes.
+	// The transit key must be between 1 and 512 characters, cannot contain forward slashes,
+	// and must only contain alphanumeric characters, hyphens, periods, and underscores.
 	TransitKey *string `json:"transitKey,omitempty"`
 }
 
-// VaultKMSConfigApplyConfiguration constructs a declarative configuration of the VaultKMSConfig type for use with
+// VaultKMSPluginConfigApplyConfiguration constructs a declarative configuration of the VaultKMSPluginConfig type for use with
 // apply.
-func VaultKMSConfig() *VaultKMSConfigApplyConfiguration {
-	return &VaultKMSConfigApplyConfiguration{}
+func VaultKMSPluginConfig() *VaultKMSPluginConfigApplyConfiguration {
+	return &VaultKMSPluginConfigApplyConfiguration{}
 }
 
 // WithKMSPluginImage sets the KMSPluginImage field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the KMSPluginImage field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithKMSPluginImage(value string) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithKMSPluginImage(value string) *VaultKMSPluginConfigApplyConfiguration {
 	b.KMSPluginImage = &value
 	return b
 }
@@ -79,7 +77,7 @@ func (b *VaultKMSConfigApplyConfiguration) WithKMSPluginImage(value string) *Vau
 // WithVaultAddress sets the VaultAddress field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the VaultAddress field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithVaultAddress(value string) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithVaultAddress(value string) *VaultKMSPluginConfigApplyConfiguration {
 	b.VaultAddress = &value
 	return b
 }
@@ -87,7 +85,7 @@ func (b *VaultKMSConfigApplyConfiguration) WithVaultAddress(value string) *Vault
 // WithVaultNamespace sets the VaultNamespace field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the VaultNamespace field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithVaultNamespace(value string) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithVaultNamespace(value string) *VaultKMSPluginConfigApplyConfiguration {
 	b.VaultNamespace = &value
 	return b
 }
@@ -95,7 +93,7 @@ func (b *VaultKMSConfigApplyConfiguration) WithVaultNamespace(value string) *Vau
 // WithTLS sets the TLS field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TLS field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithTLS(value *VaultTLSConfigApplyConfiguration) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithTLS(value *VaultTLSConfigApplyConfiguration) *VaultKMSPluginConfigApplyConfiguration {
 	b.TLS = value
 	return b
 }
@@ -103,7 +101,7 @@ func (b *VaultKMSConfigApplyConfiguration) WithTLS(value *VaultTLSConfigApplyCon
 // WithAuthentication sets the Authentication field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Authentication field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithAuthentication(value *VaultAuthenticationApplyConfiguration) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithAuthentication(value *VaultAuthenticationApplyConfiguration) *VaultKMSPluginConfigApplyConfiguration {
 	b.Authentication = value
 	return b
 }
@@ -111,7 +109,7 @@ func (b *VaultKMSConfigApplyConfiguration) WithAuthentication(value *VaultAuthen
 // WithTransitMount sets the TransitMount field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TransitMount field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithTransitMount(value string) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithTransitMount(value string) *VaultKMSPluginConfigApplyConfiguration {
 	b.TransitMount = &value
 	return b
 }
@@ -119,7 +117,7 @@ func (b *VaultKMSConfigApplyConfiguration) WithTransitMount(value string) *Vault
 // WithTransitKey sets the TransitKey field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the TransitKey field is set to the value of the last call.
-func (b *VaultKMSConfigApplyConfiguration) WithTransitKey(value string) *VaultKMSConfigApplyConfiguration {
+func (b *VaultKMSPluginConfigApplyConfiguration) WithTransitKey(value string) *VaultKMSPluginConfigApplyConfiguration {
 	b.TransitKey = &value
 	return b
 }

@@ -976,16 +976,6 @@ const (
 // +kubebuilder:validation:XValidation:rule="!self.contains('//')",message="path must not contain consecutive forward slashes"
 type StorePath string
 
-// LayerStorePath is an absolute filesystem path used by additional layer store configurations.
-// The path must be between 1 and 256 characters long, begin with a forward slash, and only contain
-// the characters a-z, A-Z, 0-9, '/', '.', '_', '-', and may end with the ':ref' suffix for reference-based layer organization (e.g., stargz-store).
-// Consecutive forward slashes are not permitted.
-// +kubebuilder:validation:MinLength=1
-// +kubebuilder:validation:MaxLength=256
-// +kubebuilder:validation:XValidation:rule="self.matches('^/[a-zA-Z0-9/._-]+(:ref)?$')",message="path must be absolute and contain only alphanumeric characters, '/', '.', '_', '-', and optionally end with ':ref'"
-// +kubebuilder:validation:XValidation:rule="!self.contains('//')",message="path must not contain consecutive forward slashes"
-type LayerStorePath string
-
 // AdditionalLayerStore defines a read-only storage location for Open Container Initiative (OCI) container image layers.
 type AdditionalLayerStore struct {
 	// path specifies the absolute location of the additional layer store.
@@ -993,11 +983,10 @@ type AdditionalLayerStore struct {
 	// When a container image is requested, layers found at this location will be used instead of
 	// retrieving from the registry.
 	// The path is required and must be between 1 and 256 characters long, begin with a forward slash,
-	// and only contain the characters a-z, A-Z, 0-9, '/', '.', '_', '-', and may end with the ':ref' suffix
-	// for reference-based layer organization (e.g., /var/lib/stargz-store/store:ref for stargz-store).
+	// and only contain the characters a-z, A-Z, 0-9, '/', '.', '_', and '-'.
 	// Consecutive forward slashes are not permitted.
 	// +required
-	Path LayerStorePath `json:"path,omitempty"`
+	Path StorePath `json:"path,omitempty"`
 }
 
 // AdditionalImageStore defines an additional read-only storage location for Open Container Initiative (OCI) images.

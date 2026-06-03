@@ -31,7 +31,7 @@ func (AdditionalImageStore) SwaggerDoc() map[string]string {
 
 var map_AdditionalLayerStore = map[string]string{
 	"":     "AdditionalLayerStore defines a read-only storage location for Open Container Initiative (OCI) container image layers.",
-	"path": "path specifies the absolute location of the additional layer store. The path must exist on the node before configuration is applied. When a container image is requested, layers found at this location will be used instead of retrieving from the registry. The path is required and must be between 1 and 256 characters long, begin with a forward slash, and only contain the characters a-z, A-Z, 0-9, '/', '.', '_', '-', and may end with the ':ref' suffix for reference-based layer organization (e.g., /var/lib/stargz-store/store:ref for stargz-store). Consecutive forward slashes are not permitted.",
+	"path": "path specifies the absolute location of the additional layer store. The path must exist on the node before configuration is applied. When a container image is requested, layers found at this location will be used instead of retrieving from the registry. The path is required and must be between 1 and 256 characters long, begin with a forward slash, and only contain the characters a-z, A-Z, 0-9, '/', '.', '_', and '-'. Consecutive forward slashes are not permitted.",
 }
 
 func (AdditionalLayerStore) SwaggerDoc() map[string]string {
@@ -715,6 +715,55 @@ var map_MachineOSImageBuilder = map[string]string{
 
 func (MachineOSImageBuilder) SwaggerDoc() map[string]string {
 	return map_MachineOSImageBuilder
+}
+
+var map_OSImageStream = map[string]string{
+	"":         "OSImageStream describes a set of streams and associated images available for the MachineConfigPools to be used as base OS images.\n\nThe resource is a singleton named \"cluster\".\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+	"spec":     "spec contains the desired OSImageStream config configuration.",
+	"status":   "status describes the last observed state of this OSImageStream. Populated by the MachineConfigOperator after reading release metadata. When not present, the controller has not yet reconciled this resource.",
+}
+
+func (OSImageStream) SwaggerDoc() map[string]string {
+	return map_OSImageStream
+}
+
+var map_OSImageStreamList = map[string]string{
+	"":         "OSImageStreamList is a list of OSImageStream resources\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"metadata": "metadata is the standard list's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+}
+
+func (OSImageStreamList) SwaggerDoc() map[string]string {
+	return map_OSImageStreamList
+}
+
+var map_OSImageStreamSet = map[string]string{
+	"name":              "name is the required identifier of the stream.\n\nname is determined by the operator based on the OCI label of the discovered OS or Extension Image.\n\nMust be a valid RFC 1123 subdomain between 1 and 253 characters in length, consisting of lowercase alphanumeric characters, hyphens ('-'), and periods ('.').",
+	"osImage":           "osImage is a required OS Image referenced by digest.\n\nosImage contains the immutable, fundamental operating system components, including the kernel and base utilities, that define the core environment for the node's host operating system.\n\nThe format of the image pull spec is: host[:port][/namespace]/name@sha256:<digest>, where the digest must be 64 characters long, and consist only of lowercase hexadecimal characters, a-f and 0-9. The length of the whole spec must be between 1 to 447 characters.",
+	"osExtensionsImage": "osExtensionsImage is a required OS Extensions Image referenced by digest.\n\nosExtensionsImage bundles the extra repositories used to enable extensions, augmenting the base operating system without modifying the underlying immutable osImage.\n\nThe format of the image pull spec is: host[:port][/namespace]/name@sha256:<digest>, where the digest must be 64 characters long, and consist only of lowercase hexadecimal characters, a-f and 0-9. The length of the whole spec must be between 1 to 447 characters.",
+}
+
+func (OSImageStreamSet) SwaggerDoc() map[string]string {
+	return map_OSImageStreamSet
+}
+
+var map_OSImageStreamSpec = map[string]string{
+	"":              "OSImageStreamSpec defines the desired state of a OSImageStream.",
+	"defaultStream": "defaultStream is the desired name of the stream that should be used as the default when no specific stream is requested by a MachineConfigPool.\n\nThis field is set by the installer during installation. Users may need to update it if the currently selected stream is no longer available, for example when the stream has reached its End of Life. The MachineConfigOperator uses this value to determine which stream from status.availableStreams to apply as the default for MachineConfigPools that do not specify a stream override.\n\nWhen status.availableStreams has been populated by the operator, updating this field requires that the new value references the name of one of the streams in status.availableStreams. Status-only updates by the operator are not subject to this constraint, allowing the operator to update availableStreams independently of this field. During initial creation, before the operator has populated status, any valid value is accepted.\n\nFor upgrade scenarios where the source OCP version doesn't have this CRD the MCO creates and populates the OSImageStream cluster singleton setting this field with the proper value based on the source OCP version.\n\nIt must be a valid RFC 1123 subdomain between 1 and 253 characters in length, consisting of lowercase alphanumeric characters, hyphens ('-'), and periods ('.').",
+}
+
+func (OSImageStreamSpec) SwaggerDoc() map[string]string {
+	return map_OSImageStreamSpec
+}
+
+var map_OSImageStreamStatus = map[string]string{
+	"":                 "OSImageStreamStatus describes the current state of a OSImageStream",
+	"availableStreams": "availableStreams is a list of the available OS Image Streams that can be used as the base image for MachineConfigPools. availableStreams is required, must have at least one item, must not exceed 100 items, and must have unique entries keyed on the name field.",
+	"defaultStream":    "defaultStream is the name of the stream that should be used as the default when no specific stream is requested by a MachineConfigPool.\n\nIt must be a valid RFC 1123 subdomain between 1 and 253 characters in length, consisting of lowercase alphanumeric characters, hyphens ('-'), and periods ('.'), and must reference the name of one of the streams in availableStreams.",
+}
+
+func (OSImageStreamStatus) SwaggerDoc() map[string]string {
+	return map_OSImageStreamStatus
 }
 
 var map_PinnedImageRef = map[string]string{
