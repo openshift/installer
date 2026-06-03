@@ -226,6 +226,41 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
+			name: "PKI config present without feature gate - error",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PKI = &types.PKIConfig{}
+				return c
+			}(),
+			expected: `^pki: Forbidden: this field is protected by the ConfigurablePKI feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "PKI config present with TechPreviewNoUpgrade - passes",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.PKI = &types.PKIConfig{}
+				return c
+			}(),
+		},
+		{
+			name: "PKI config present with CustomNoUpgrade and ConfigurablePKI - passes",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"ConfigurablePKI=true"}
+				c.PKI = &types.PKIConfig{}
+				return c
+			}(),
+		},
+		{
+			name: "PKI nil without feature gate - no error",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				return c
+			}(),
+		},
+		{
 			name: "OKD featureset requires SCOS-compiled installer",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
