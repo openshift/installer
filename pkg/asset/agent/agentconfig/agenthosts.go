@@ -41,8 +41,9 @@ type nmStateInterface struct {
 // AgentHosts generates the hosts information from the AgentConfig and
 // OptionalInstallConfig assets.
 type AgentHosts struct {
-	Hosts        []agent.Host
-	rendezvousIP string
+	Hosts                []agent.Host
+	rendezvousIP         string
+	hostsFromAgentConfig bool
 }
 
 // Name returns a human friendly name.
@@ -74,7 +75,7 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 			a.rendezvousIP = agentConfig.Config.RendezvousIP
 			a.Hosts = append(a.Hosts, agentConfig.Config.Hosts...)
 			if len(a.Hosts) > 0 {
-				// Hosts defined in agent-config take precedence
+				a.hostsFromAgentConfig = true
 				logrus.Debugf("Using hosts from %s", agentConfigFilename)
 			}
 		}
@@ -92,6 +93,11 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
+		if len(a.Hosts) > 0 {
+			// nodes-config.yaml hosts are user-authored like agent-config.yaml hosts,
+			// unlike install-config hosts which have code-generated interface names.
+			a.hostsFromAgentConfig = true
+		}
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -125,9 +131,7 @@ func (a *AgentHosts) validateAgentHosts() field.ErrorList {
 			allErrs = append(allErrs, err...)
 		}
 
-		if err := a.validateInterfaceNamesMatchNetworkConfig(hostPath, host); err != nil {
-			allErrs = append(allErrs, err...)
-		}
+		a.warnInterfaceNamesNotInNetworkConfig(host)
 
 		if err := a.validateHostRootDeviceHints(hostPath, host); err != nil {
 			allErrs = append(allErrs, err...)
@@ -175,14 +179,17 @@ func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Hos
 	return allErrs
 }
 
-func (a *AgentHosts) validateInterfaceNamesMatchNetworkConfig(hostPath *field.Path, host agent.Host) field.ErrorList {
+func (a *AgentHosts) warnInterfaceNamesNotInNetworkConfig(host agent.Host) {
+	if !a.hostsFromAgentConfig {
+		return
+	}
 	if len(host.NetworkConfig.Raw) == 0 || len(host.Interfaces) == 0 {
-		return nil
+		return
 	}
 
 	var netInterfaces nmStateInterface
 	if err := yaml.Unmarshal(host.NetworkConfig.Raw, &netInterfaces); err != nil {
-		return nil
+		return
 	}
 
 	ncNames := make(map[string]bool, len(netInterfaces.Interfaces))
@@ -194,26 +201,19 @@ func (a *AgentHosts) validateInterfaceNamesMatchNetworkConfig(hostPath *field.Pa
 		}
 	}
 	if len(ncNames) == 0 {
-		return nil
+		return
 	}
 
-	var allErrs field.ErrorList
-	for j, iface := range host.Interfaces {
+	for _, iface := range host.Interfaces {
 		if iface.Name == "" {
 			continue
 		}
 		if !ncNames[iface.Name] {
-			errMsg := "interface name \"" + iface.Name + "\" not found in networkConfig interfaces [" + strings.Join(ncNameList, ", ") + "]; " +
-				"the interfaces[].name values are logical names that must match the interface names used in networkConfig " +
-				"so that the MAC-to-interface mapping works correctly at boot time"
-			allErrs = append(allErrs, field.Invalid(
-				hostPath.Child("interfaces").Index(j).Child("name"),
-				iface.Name,
-				errMsg,
-			))
+			logrus.Warnf("agent-config: interface name %q not found in networkConfig interfaces %v; "+
+				"connectivity may fail if interface names do not match at boot time",
+				iface.Name, ncNameList)
 		}
 	}
-	return allErrs
 }
 
 func (a *AgentHosts) validateHostRootDeviceHints(hostPath *field.Path, host agent.Host) field.ErrorList {

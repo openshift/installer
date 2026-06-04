@@ -369,15 +369,15 @@ func TestAgentHosts_Generate(t *testing.T) {
 				agentHost().name("test-2").role("arbiter").interfaces(iface("eth0", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
 		},
 		{
-			name: "interface-name-mismatch-with-networkconfig",
+			name: "interface-name-mismatch-with-networkconfig-warns-only",
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&joiner.AddNodesConfig{},
 				getInstallConfigSingleHost(),
 				getAgentConfigMismatchedInterfaceName(),
 			},
-			expectedError:  "invalid Hosts configuration: hosts[0].interfaces[0].name: Invalid value: \"enp3s0\": interface name \"enp3s0\" not found in networkConfig interfaces [eth0]; the interfaces[].name values are logical names that must match the interface names used in networkConfig so that the MAC-to-interface mapping works correctly at boot time",
-			expectedConfig: nil,
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("enp3s0", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne)),
 		},
 		{
 			name: "interface-name-matches-networkconfig",
@@ -402,15 +402,106 @@ func TestAgentHosts_Generate(t *testing.T) {
 				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a"), iface("eth1", "28:d2:44:d2:b2:1b")).deviceHint().networkConfig(agentNetworkConfigBond)),
 		},
 		{
-			name: "bond-networkconfig-with-mismatched-interfaces",
+			name: "bond-networkconfig-with-mismatched-interfaces-warns-only",
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&joiner.AddNodesConfig{},
 				getInstallConfigSingleHost(),
 				getAgentConfigBondMismatched(),
 			},
-			expectedError:  "invalid Hosts configuration: [hosts[0].interfaces[0].name: Invalid value: \"nic1\": interface name \"nic1\" not found in networkConfig interfaces [eth0, eth1, bond0]; the interfaces[].name values are logical names that must match the interface names used in networkConfig so that the MAC-to-interface mapping works correctly at boot time, hosts[0].interfaces[1].name: Invalid value: \"nic2\": interface name \"nic2\" not found in networkConfig interfaces [eth0, eth1, bond0]; the interfaces[].name values are logical names that must match the interface names used in networkConfig so that the MAC-to-interface mapping works correctly at boot time]",
-			expectedConfig: nil,
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("nic1", "28:d2:44:d2:b2:1a"), iface("nic2", "28:d2:44:d2:b2:1b")).deviceHint().networkConfig(agentNetworkConfigBond)),
+		},
+		{
+			name: "install-config-with-networkconfig-no-warning-inert-path",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithMismatchedNetworkConfig(),
+				getNoHostsAgentConfig(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:b0:bf:01")).deviceHint().networkConfig(installNetworkConfigOne)),
+		},
+		{
+			name: "add-nodes-interface-mismatch-warns-only",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.AddNodesConfig{
+					Config: joiner.Config{
+						Hosts: []agent.Host{
+							{
+								Hostname: "extra-worker-0",
+								Role:     "worker",
+								Interfaces: []*aiv1beta1.Interface{
+									{
+										Name:       "nic0",
+										MacAddress: "28:d2:44:d2:b2:1a",
+									},
+								},
+								NetworkConfig: aiv1beta1.NetConfig{
+									Raw: []byte(agentNetworkConfigOne),
+								},
+							},
+						},
+					},
+				},
+				getNoHostsInstallConfig(),
+				getNoHostsAgentConfig(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("extra-worker-0").role("worker").interfaces(iface("nic0", "28:d2:44:d2:b2:1a")).networkConfig(agentNetworkConfigOne)),
+		},
+		{
+			name: "add-nodes-interface-matches-no-warning",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.AddNodesConfig{
+					Config: joiner.Config{
+						Hosts: []agent.Host{
+							{
+								Hostname: "extra-worker-0",
+								Role:     "worker",
+								Interfaces: []*aiv1beta1.Interface{
+									{
+										Name:       "eth0",
+										MacAddress: "28:d2:44:d2:b2:1a",
+									},
+								},
+								NetworkConfig: aiv1beta1.NetConfig{
+									Raw: []byte(agentNetworkConfigOne),
+								},
+							},
+						},
+					},
+				},
+				getNoHostsInstallConfig(),
+				getNoHostsAgentConfig(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("extra-worker-0").role("worker").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).networkConfig(agentNetworkConfigOne)),
+		},
+		{
+			name: "agent-config-empty-interface-name-skipped",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigEmptyInterfaceName(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne)),
+		},
+		{
+			name: "agent-config-malformed-networkconfig-no-panic",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigMalformedNetworkConfig(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).deviceHint().rawNetworkConfig("not: valid: yaml: [[")),
 		},
 	}
 	for _, tc := range cases {
@@ -831,6 +922,13 @@ func (hb *HostBuilder) networkConfig(raw string) *HostBuilder {
 	return hb
 }
 
+func (hb *HostBuilder) rawNetworkConfig(raw string) *HostBuilder {
+	hb.Host.NetworkConfig = aiv1beta1.NetConfig{
+		Raw: []byte(raw),
+	}
+	return hb
+}
+
 func (hb *HostBuilder) deviceHint() *HostBuilder {
 	hb.Host.RootDeviceHints = baremetal.RootDeviceHints{
 		DeviceName: "/dev/sda",
@@ -855,4 +953,26 @@ func iface(name string, mac string) *InterfacetBuilder {
 
 func (ib *InterfacetBuilder) build() *aiv1beta1.Interface {
 	return &ib.Interface
+}
+
+func getInstallConfigWithMismatchedNetworkConfig() *agentAsset.OptionalInstallConfig {
+	a := getInstallConfigSingleHost()
+	a.Config.Platform.BareMetal.Hosts[0].NetworkConfig = &apiextv1.JSON{
+		Raw: []byte(installNetworkConfigOne),
+	}
+	return a
+}
+
+func getAgentConfigEmptyInterfaceName() *AgentConfig {
+	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces[0].Name = ""
+	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigOne)
+	return a
+}
+
+func getAgentConfigMalformedNetworkConfig() *AgentConfig {
+	a := getAgentConfigSingleHost()
+	a.Config.Hosts[0].Interfaces[0].Name = "eth0"
+	a.Config.Hosts[0].NetworkConfig.Raw = []byte("not: valid: yaml: [[")
+	return a
 }
