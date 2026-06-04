@@ -485,6 +485,15 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.server: Invalid value: "bad-vcenter": server does not exist in vcenters`,
 		},
 		{
+			name: "Multi-zone platform wrong vCenter name in second failureDomain",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Server = "bad-vcenter"
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.server: Invalid value: "bad-vcenter": server does not exist in vcenters`,
+		},
+		{
 			name: "Multi-zone platform datacenter not in vCenter datacenters list",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
