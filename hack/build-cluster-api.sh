@@ -13,14 +13,19 @@ copy_cluster_api_to_mirror() {
   mkdir -p "${CLUSTER_API_MIRROR_DIR}"
 
   # Clean the mirror, but preserve the README file.
-  rm -rf "${CLUSTER_API_MIRROR_DIR:?}/*.zip"
+  rm -f "${CLUSTER_API_MIRROR_DIR:?}"/*.zst "${CLUSTER_API_MIRROR_DIR:?}"/dict "${CLUSTER_API_MIRROR_DIR:?}"/*.zip
 
   if test "${SKIP_ENVTEST}" != y; then
     sync_envtest
   fi
 
-  # Zip every binary in the folder into a single zip file.
-  zip -j1 "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
+  # Train a zstd dictionary on all binaries for cross-binary deduplication,
+  # then compress each binary individually with the shared dictionary.
+  zstd -q --train "${CLUSTER_API_BIN_DIR}"/* -o "${CLUSTER_API_MIRROR_DIR}/dict" --maxdict=262144
+  for bin in "${CLUSTER_API_BIN_DIR}"/*; do
+    name=$(basename "$bin")
+    zstd -9 -D "${CLUSTER_API_MIRROR_DIR}/dict" "$bin" -o "${CLUSTER_API_MIRROR_DIR}/${name}.zst"
+  done
 }
 
 sync_envtest() {
