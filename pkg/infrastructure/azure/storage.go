@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	account "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/storage/mgmt/storage"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -32,6 +31,11 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
+// AzureStackStorageAPIVersion is the API version required for Azure Stack Hub
+// storage management operations. Azure Stack Hub doesn't support the latest
+// API versions that the V2 SDK defaults to.
+const AzureStackStorageAPIVersion = "2019-06-01"
+
 var (
 	vaultsClient *armkeyvault.VaultsClient
 	keysClient   *armkeyvault.KeysClient
@@ -51,6 +55,9 @@ type CreateStorageAccountInput struct {
 	CloudName            aztypes.CloudEnvironment
 	TokenCredential      azcore.TokenCredential
 	ClientOpts           *arm.ClientOptions
+	// APIVersion overrides the default API version for storage operations.
+	// Use "2019-06-01" for Azure Stack Hub compatibility.
+	APIVersion string
 }
 
 // CreateStorageAccountOutput contains the return values after creating a
@@ -78,11 +85,8 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 
 	opts := &arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
-			Cloud: in.ClientOpts.Cloud,
-			// Override is not supported in v1.6.0 of the sdk
-			// so we use legacy SDKs to achieve this same functionality
-			// in a separate code path for Azure Stack.
-			//APIVersion: "2019-06-01",
+			Cloud:      in.ClientOpts.Cloud,
+			APIVersion: in.APIVersion,
 		},
 	}
 	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, opts)
@@ -602,43 +606,59 @@ func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (stri
 }
 
 func createAccountOnStack(ctx context.Context, in *CreateBlockBlobInput) error {
-	cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
-	cl.Authorizer = in.Session.Authorizer
-
-	parameters := account.AccountCreateParameters{
-		Location: &in.Region,
-		Sku: &account.Sku{
-			Name: account.PremiumLRS,
+	cl, err := armstorage.NewAccountsClient(in.Session.Credentials.SubscriptionID,
+		in.TokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud:      in.Session.CloudConfig,
+				APIVersion: AzureStackStorageAPIVersion,
+			},
 		},
-		Tags: in.Tags,
-		Kind: account.Storage,
+	)
+	if err != nil {
+		return fmt.Errorf("error creating storage accounts client: %w", err)
 	}
 
-	future, err := cl.Create(ctx, in.ResourceGroupName, in.StorageAccountName, parameters)
+	parameters := armstorage.AccountCreateParameters{
+		Location: &in.Region,
+		SKU: &armstorage.SKU{
+			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
+		},
+		Tags: in.Tags,
+		Kind: to.Ptr(armstorage.KindStorage),
+	}
+
+	poller, err := cl.BeginCreate(ctx, in.ResourceGroupName, in.StorageAccountName, parameters, nil)
 	if err != nil {
 		return fmt.Errorf("error creating storage account creation request: %w", err)
 	}
-	if err = future.WaitForCompletionRef(ctx, cl.Client); err != nil {
-		return fmt.Errorf("error waiting for stack storage account to provision: %w", err)
-	}
-	acct, err := future.Result(cl)
+	acct, err := poller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error fetching storage account: %w", err)
+		return fmt.Errorf("error waiting for stack storage account to provision: %w", err)
 	}
 	logrus.Debugf("Created storage account %s", *acct.ID)
 	return nil
 }
 
 func getStorageAccountKey(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
-	cl := account.NewAccountsClientWithBaseURI(in.ARMEndpoint, in.Session.Credentials.SubscriptionID)
-	cl.Authorizer = in.Session.Authorizer
-	res, err := cl.ListKeys(ctx, in.ResourceGroupName, in.StorageAccountName)
+	cl, err := armstorage.NewAccountsClient(in.Session.Credentials.SubscriptionID,
+		in.TokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud:      in.Session.CloudConfig,
+				APIVersion: AzureStackStorageAPIVersion,
+			},
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("error creating storage accounts client: %w", err)
+	}
+	res, err := cl.ListKeys(ctx, in.ResourceGroupName, in.StorageAccountName, nil)
 	if err != nil {
 		return "", fmt.Errorf("error listing stack storage account keys: %w", err)
 	}
-	keys := *res.Keys
-	if len(keys) > 0 {
-		return *keys[0].Value, nil
+	if len(res.Keys) > 0 && res.Keys[0].Value != nil {
+		return *res.Keys[0].Value, nil
 	}
 	return "", fmt.Errorf("no storage account key found")
 }

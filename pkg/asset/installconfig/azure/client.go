@@ -7,18 +7,14 @@ import (
 	"strings"
 	"time"
 
-	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
-	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
-	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
-	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/marketplaceordering/armmarketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	azstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/Azure/go-autorest/autorest/to"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -26,31 +22,34 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
-	GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*aznetwork.VirtualNetwork, error)
-	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error)
-	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
-	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
-	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
-	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
-	GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error)
+	GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*armnetwork.VirtualNetwork, error)
+	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*armnetwork.IPAddressAvailabilityResult, error)
+	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
+	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*armnetwork.Subnet, error)
+	ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error)
+	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*armresources.Provider, error)
+	GetVirtualMachineSku(ctx context.Context, name, region string) (*armcompute.ResourceSKU, error)
 	GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error)
-	GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error)
-	GetGroup(ctx context.Context, groupName string) (*azres.Group, error)
+	GetDiskSkus(ctx context.Context, region string) ([]*armcompute.ResourceSKU, error)
+	GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
-	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
-	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
+	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*armcompute.DiskEncryptionSet, error)
+	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (*armcompute.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
-	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
+	GetLocationInfo(ctx context.Context, region string, instanceType string) (*armcompute.ResourceSKULocationInfo, error)
 	CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName, region string) error
 	GetRegionAvailabilityZones(ctx context.Context, region string) ([]string, error)
 	CheckSubnetNatgateway(ctx context.Context, resourceGroup, virtualNetwork, subnet string) (bool, error)
 	GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error
 }
 
-// APIVersion describes to the version to use for Azure API calls that support both azure and azurestack.
+// APIVersion describes the version to use for Azure API calls that support both azure and azurestack.
+// API version based on the cloud environment. This constant is retained for backward compatibility.
+//
+// Deprecated: Use ClientConfig.ClientOptions(ServiceNetwork) which automatically applies the correct version.
 const APIVersion = "2019-11-01"
 
 // Client makes calls to the Azure API.
@@ -67,74 +66,72 @@ func NewClient(ssn *Session) *Client {
 }
 
 // GetVirtualNetwork gets an Azure virtual network by name
-func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*aznetwork.VirtualNetwork, error) {
+func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*armnetwork.VirtualNetwork, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	vnetClient, err := c.getVirtualNetworksClient()
 	if err != nil {
 		return nil, err
 	}
 
-	vnet, err := vnetClient.Get(ctx, resourceGroupName, virtualNetwork, "")
+	resp, err := vnetClient.Get(ctx, resourceGroupName, virtualNetwork, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get virtual network %s: %w", virtualNetwork, err)
 	}
 
-	return &vnet, nil
+	return &resp.VirtualNetwork, nil
 }
 
 // CheckIPAddressAvailability checks availability of an IP address in an Azure virtual network.
-func (c *Client) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error) {
+func (c *Client) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*armnetwork.IPAddressAvailabilityResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	vnetClient, err := c.getVirtualNetworksClient()
 	if err != nil {
 		return nil, err
 	}
 
-	availability, err := vnetClient.CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr)
+	resp, err := vnetClient.CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get azure ip availability: %w", err)
 	}
 
-	return &availability, nil
+	return &resp.IPAddressAvailabilityResult, nil
 }
 
 // getSubnet gets an Azure subnet by name
-func (c *Client) getSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*aznetwork.Subnet, error) {
+func (c *Client) getSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*armnetwork.Subnet, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	subnetsClient, err := c.getSubnetsClient(ctx)
+	subnetsClient, err := c.getSubnetsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	subnet, err := subnetsClient.Get(ctx, resourceGroupName, virtualNetwork, subNetwork, "")
+	resp, err := subnetsClient.Get(ctx, resourceGroupName, virtualNetwork, subNetwork, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get subnet %s: %w", subNetwork, err)
 	}
 
-	return &subnet, nil
+	return &resp.Subnet, nil
 }
 
 // GetComputeSubnet gets the Azure compute subnet
-func (c *Client) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*aznetwork.Subnet, error) {
+func (c *Client) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*armnetwork.Subnet, error) {
 	return c.getSubnet(ctx, resourceGroupName, virtualNetwork, subNetwork)
 }
 
 // GetControlPlaneSubnet gets the Azure control plane subnet
-func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*aznetwork.Subnet, error) {
+func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subNetwork string) (*armnetwork.Subnet, error) {
 	return c.getSubnet(ctx, resourceGroupName, virtualNetwork, subNetwork)
 }
 
 // getVnetsClient sets up a new client to retrieve vnets
-func (c *Client) getVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
-	vnetsClient := aznetwork.NewVirtualNetworksClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	vnetsClient.Authorizer = c.ssn.Authorizer
-	return &vnetsClient, nil
+func (c *Client) getVirtualNetworksClient() (*armnetwork.VirtualNetworksClient, error) {
+	return armnetwork.NewVirtualNetworksClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // GetStorageEndpointSuffix retrieves the StorageEndpointSuffix from the
@@ -144,170 +141,178 @@ func (c *Client) GetStorageEndpointSuffix(ctx context.Context) (string, error) {
 }
 
 // getSubnetsClient sets up a new client to retrieve a subnet
-func (c *Client) getSubnetsClient(ctx context.Context) (*aznetwork.SubnetsClient, error) {
-	subnetClient := aznetwork.NewSubnetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	subnetClient.Authorizer = c.ssn.Authorizer
-	return &subnetClient, nil
+func (c *Client) getSubnetsClient() (*armnetwork.SubnetsClient, error) {
+	return armnetwork.NewSubnetsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // ListLocations lists the Azure regions dir the given subscription
-func (c *Client) ListLocations(ctx context.Context) (*[]azsubs.Location, error) {
+func (c *Client) ListLocations(ctx context.Context) ([]*armsubscriptions.Location, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	subsClient, err := c.getSubscriptionsClient(ctx)
+	subsClient, err := c.getSubscriptionsClient()
 	if err != nil {
 		return nil, err
 	}
 
-	locations, err := subsClient.ListLocations(ctx, c.ssn.Credentials.SubscriptionID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list locations: %w", err)
+	var locations []*armsubscriptions.Location
+	pager := subsClient.NewListLocationsPager(c.ssn.Credentials.SubscriptionID, nil)
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list locations: %w", err)
+		}
+		locations = append(locations, page.Value...)
 	}
 
-	return locations.Value, nil
+	return locations, nil
 }
 
 // getSubscriptionsClient sets up a new client to retrieve subscription data
-func (c *Client) getSubscriptionsClient(ctx context.Context) (azsubs.Client, error) {
-	client := azsubs.NewClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint)
-	client.Authorizer = c.ssn.Authorizer
-	return client, nil
+func (c *Client) getSubscriptionsClient() (*armsubscriptions.Client, error) {
+	return armsubscriptions.NewClient(c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // GetResourcesProvider gets the Azure resource provider
-func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error) {
+func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*armresources.Provider, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	providersClient, err := c.getProvidersClient(ctx)
+	providersClient, err := c.getProvidersClient()
 	if err != nil {
 		return nil, err
 	}
 
-	provider, err := providersClient.Get(ctx, resourceProviderNamespace, "")
+	resp, err := providersClient.Get(ctx, resourceProviderNamespace, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resource provider %s: %w", resourceProviderNamespace, err)
 	}
 
-	return &provider, nil
+	return &resp.Provider, nil
 }
 
 // getProvidersClient sets up a new client to retrieve providers data
-func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient, error) {
-	client := azres.NewProvidersClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
-	return client, nil
+func (c *Client) getProvidersClient() (*armresources.ProvidersClient, error) {
+	return armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
-func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error) {
-	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]*armcompute.ResourceSKU, error) {
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
+	}
 	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	var sku []azenc.ResourceSku
+	var skus []*armcompute.ResourceSKU
 	filter := fmt.Sprintf("location eq '%s'", region)
-	// This has to be initialized outside the `for` because we need access to
-	// `err`. If initialized in the loop and the API call fails right away,
-	// `page.NotDone()` will return `false` and we'll never check for the error
-	skuPage, err := client.List(ctx, filter, "false")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
-	}
-	for ; skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
+	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
+		Filter:                   &filter,
+		IncludeExtendedLocations: to.Ptr("false"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
-		for _, page := range skuPage.Values() {
-			for _, diskRegion := range to.StringSlice(page.Locations) {
-				if strings.EqualFold(diskRegion, region) {
-					sku = append(sku, page)
+		for _, sku := range page.Value {
+			if sku.Locations != nil {
+				for _, diskRegion := range sku.Locations {
+					if diskRegion != nil && strings.EqualFold(*diskRegion, region) {
+						skus = append(skus, sku)
+						break
+					}
 				}
 			}
 		}
 	}
 
-	if len(sku) != 0 {
-		return sku, nil
+	if len(skus) != 0 {
+		return skus, nil
 	}
 
 	return nil, fmt.Errorf("no disks for specified subscription in region %s", region)
 }
 
 // GetGroup returns resource group for the groupName.
-func (c *Client) GetGroup(ctx context.Context, groupName string) (*azres.Group, error) {
-	client := azres.NewGroupsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetGroup(ctx context.Context, groupName string) (*armresources.ResourceGroup, error) {
+	client, err := armresources.NewResourceGroupsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource groups client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	res, err := client.Get(ctx, groupName)
+	resp, err := client.Get(ctx, groupName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resource group: %w", err)
 	}
-	return &res, nil
+	return &resp.ResourceGroup, nil
 }
 
 // ListResourceIDsByGroup returns a list of resource IDs for resource group groupName.
 func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error) {
-	client := azres.NewClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+	client, err := armresources.NewClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resources client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var res []string
-	resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list resources: %w", err)
-	}
-	for ; resPage.NotDone(); err = resPage.NextWithContext(ctx) {
+	pager := client.NewListByResourceGroupPager(groupName, nil)
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching resource pages: %w", err)
 		}
-		for _, page := range resPage.Values() {
-			res = append(res, to.String(page.ID))
+		for _, resource := range page.Value {
+			if resource.ID != nil {
+				res = append(res, *resource.ID)
+			}
 		}
 	}
 	return res, nil
 }
 
 // GetVirtualMachineSku retrieves the resource SKU of a specified virtual machine SKU in the specified region.
-func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error) {
-	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*armcompute.ResourceSKU, error) {
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
+	}
 
-	// See https://issues.redhat.com/browse/OCPBUGS-29469 before chaging this timeout
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	filter := fmt.Sprintf("location eq '%s'", region)
-	// This has to be initialized outside the `for` because we need access to
-	// `err`. If initialized in the loop and the API call fails right away,
-	// `page.NotDone()` will return `false` and we'll never check for the error
-	page, err := client.List(ctx, filter, "false")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
-	}
-	for ; page.NotDone(); err = page.NextWithContext(ctx) {
+	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
+		Filter:                   &filter,
+		IncludeExtendedLocations: to.Ptr("false"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
-		for _, sku := range page.Values() {
+		for _, sku := range page.Value {
 			// Filter out resources that are not virtualMachines
-			if !strings.EqualFold("virtualMachines", *sku.ResourceType) {
+			if sku.ResourceType == nil || !strings.EqualFold("virtualMachines", *sku.ResourceType) {
 				continue
 			}
 			// Filter out resources that do not match the provided name
-			if !strings.EqualFold(name, *sku.Name) {
+			if sku.Name == nil || !strings.EqualFold(name, *sku.Name) {
 				continue
 			}
 			// Return the resource from the provided region
-			for _, location := range to.StringSlice(sku.Locations) {
-				if strings.EqualFold(location, region) {
-					return &sku, nil
+			if sku.Locations != nil {
+				for _, location := range sku.Locations {
+					if location != nil && strings.EqualFold(*location, region) {
+						return sku, nil
+					}
 				}
 			}
 		}
@@ -317,20 +322,22 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 }
 
 // GetDiskEncryptionSet retrieves the specified disk encryption set.
-func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error) {
+func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*armcompute.DiskEncryptionSet, error) {
 	if !strings.EqualFold(c.ssn.Credentials.SubscriptionID, subscriptionID) {
 		return nil, fmt.Errorf("different subscription from resource group subscription. Azure does not support cross subscription encryption sets")
 	}
-	client := azenc.NewDiskEncryptionSetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, subscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+	client, err := armcompute.NewDiskEncryptionSetsClient(subscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create disk encryption sets client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	diskEncryptionSet, err := client.Get(ctx, groupName, diskEncryptionSetName)
+	resp, err := client.Get(ctx, groupName, diskEncryptionSetName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get disk encryption set: %w", err)
 	}
-	return &diskEncryptionSet, nil
+	return &resp.DiskEncryptionSet, nil
 }
 
 // GetVirtualMachineFamily retrieves the VM family of an instance type.
@@ -346,7 +353,7 @@ func (c *Client) GetVirtualMachineFamily(ctx context.Context, name, region strin
 		return "", fmt.Errorf("error getting resource family")
 	}
 
-	return to.String(typeMeta.Family), nil
+	return *typeMeta.Family, nil
 }
 
 // GetVMCapabilities retrieves the capabilities of an instant type in a specific region. Returns these values
@@ -360,44 +367,52 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 		return nil, fmt.Errorf("not found in region %s", region)
 	}
 	capabilities := make(map[string]string)
-	for _, capability := range *typeMeta.Capabilities {
-		capabilities[to.String(capability.Name)] = to.String(capability.Value)
+	if typeMeta.Capabilities != nil {
+		for _, capability := range typeMeta.Capabilities {
+			if capability.Name != nil && capability.Value != nil {
+				capabilities[*capability.Name] = *capability.Value
+			}
+		}
 	}
 
 	return capabilities, nil
 }
 
 // GetMarketplaceImage get the specified marketplace VM image.
-func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error) {
-	client := azenc.NewVirtualMachineImagesClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (*armcompute.VirtualMachineImage, error) {
+	client, err := armcompute.NewVirtualMachineImagesClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create virtual machine images client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	image, err := client.Get(ctx, region, publisher, offer, sku, version)
+	resp, err := client.Get(ctx, region, publisher, offer, sku, version, nil)
 	if err != nil {
-		return image, fmt.Errorf("could not get marketplace image: %w", err)
+		return nil, fmt.Errorf("could not get marketplace image: %w", err)
 	}
-	return image, nil
+	return &resp.VirtualMachineImage, nil
 }
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
 func (c *Client) AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error) {
-	client := azmarketplace.NewMarketplaceAgreementsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+	client, err := armmarketplaceordering.NewMarketplaceAgreementsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
+	if err != nil {
+		return false, fmt.Errorf("failed to create marketplace agreements client: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	terms, err := client.Get(ctx, publisher, offer, sku)
+	resp, err := client.Get(ctx, armmarketplaceordering.OfferTypeVirtualmachine, publisher, offer, sku, nil)
 	if err != nil {
 		return false, err
 	}
 
-	if terms.AgreementProperties == nil {
+	if resp.Properties == nil {
 		return false, errors.New("no agreement properties for image")
 	}
 
-	return terms.AgreementProperties.Accepted != nil && *terms.AgreementProperties.Accepted, nil
+	return resp.Properties.Accepted != nil && *resp.Properties.Accepted, nil
 }
 
 // GetAvailabilityZones retrieves a list of availability zones for the given region, and instance type.
@@ -406,36 +421,49 @@ func (c *Client) GetAvailabilityZones(ctx context.Context, region string, instan
 	if err != nil {
 		return nil, err
 	}
-	if locationInfo != nil {
-		return to.StringSlice(locationInfo.Zones), nil
+	if locationInfo != nil && locationInfo.Zones != nil {
+		zones := make([]string, 0, len(locationInfo.Zones))
+		for _, z := range locationInfo.Zones {
+			if z != nil {
+				zones = append(zones, *z)
+			}
+		}
+		return zones, nil
 	}
 
 	return nil, fmt.Errorf("error retrieving availability zones for %s in %s", instanceType, region)
 }
 
 // GetLocationInfo retrieves the location info associated with the instance type in region
-func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error) {
-	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
+func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceType string) (*armcompute.ResourceSKULocationInfo, error) {
+	client, err := armcompute.NewResourceSKUsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceCompute))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource SKUs client: %w", err)
+	}
+
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
 
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
-	res, err := client.List(ctx, filter, "false")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
-	}
-	for ; res.NotDone(); err = res.NextWithContext(ctx) {
+	pager := client.NewListPager(&armcompute.ResourceSKUsClientListOptions{
+		Filter:                   &filter,
+		IncludeExtendedLocations: to.Ptr("false"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, resSku := range res.Values() {
-			if !strings.EqualFold(to.String(resSku.ResourceType), "virtualMachines") {
+		for _, resSku := range page.Value {
+			if resSku.ResourceType == nil || !strings.EqualFold(*resSku.ResourceType, "virtualMachines") {
 				continue
 			}
-			if strings.EqualFold(to.String(resSku.Name), instanceType) {
-				for _, locationInfo := range *resSku.LocationInfo {
-					return &locationInfo, nil
+			if resSku.Name != nil && strings.EqualFold(*resSku.Name, instanceType) {
+				if len(resSku.LocationInfo) > 0 {
+					return resSku.LocationInfo[0], nil
 				}
 			}
 		}
@@ -447,14 +475,7 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 // CheckIfExistsStorageAccount checks if the storage account provided already exists for diagnostics
 // purposes.
 func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName, region string) error {
-	accountClientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: "2019-04-01",
-			Cloud:      c.ssn.CloudConfig,
-		},
-	}
-	storageClient, err := azstorage.NewAccountsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &accountClientOptions)
+	storageClient, err := azstorage.NewAccountsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceStorage))
 	if err != nil {
 		return err
 	}
@@ -475,14 +496,7 @@ func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup,
 
 // GetRegionAvailabilityZones checks if a given region has availabililty zones for the nat gateways to use.
 func (c *Client) GetRegionAvailabilityZones(ctx context.Context, region string) ([]string, error) {
-	clientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: APIVersion,
-			Cloud:      c.ssn.CloudConfig,
-		},
-	}
-	providersClient, err := armresources.NewProvidersClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &clientOptions)
+	providersClient, err := c.getProvidersClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create providers client: %w", err)
 	}
@@ -542,14 +556,7 @@ func getZoneMappings(zm *armresources.ZoneMapping, region string) []string {
 
 // CheckSubnetNatgateway checks if there is an existing NAT gateway in a subnet.
 func (c *Client) CheckSubnetNatgateway(ctx context.Context, resourceGroup, virtualNetwork, subnet string) (bool, error) {
-	clientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// NOTE: the api version must support AzureStack
-			APIVersion: APIVersion,
-			Cloud:      c.ssn.CloudConfig,
-		},
-	}
-	clientFactory, err := armnetwork.NewClientFactory(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &clientOptions)
+	clientFactory, err := armnetwork.NewClientFactory(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, c.ssn.ClientConfig.ClientOptions(ServiceNetwork))
 	if err != nil {
 		return false, fmt.Errorf("failed to create client factory: %w", err)
 	}
@@ -579,15 +586,9 @@ func (c *Client) GetUserAssignedIdentity(ctx context.Context, subscriptionID, re
 		subID = c.ssn.Credentials.SubscriptionID
 	}
 
-	clientOptions := arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			// Don't override APIVersion for managed identities - let SDK use the default
-			// API version which supports user-assigned identities. The generic APIVersion
-			// constant (2019-11-01) doesn't support the managed identity API.
-			Cloud: c.ssn.CloudConfig,
-		},
-	}
-	client, err := armmsi.NewUserAssignedIdentitiesClient(subID, c.ssn.TokenCreds, &clientOptions)
+	// Don't override APIVersion for managed identities - let SDK use the default
+	// API version which supports user-assigned identities.
+	client, err := armmsi.NewUserAssignedIdentitiesClient(subID, c.ssn.TokenCreds, c.ssn.ClientConfig.DefaultClientOptions())
 	if err != nil {
 		return fmt.Errorf("failed to create user-assigned identities client: %w", err)
 	}

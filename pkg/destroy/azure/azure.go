@@ -12,17 +12,15 @@ import (
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	azcoreto "github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
-	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
-	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources"
 	"github.com/Azure/go-autorest/autorest"
-	azureenv "github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/to"
+	legacyto "github.com/Azure/go-autorest/autorest/to"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/applications"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
@@ -51,11 +49,11 @@ type ClusterUninstaller struct {
 
 	Logger logrus.FieldLogger
 
-	resourceGroupsClient    resources.GroupsClient
-	zonesClient             dns.ZonesClient
-	recordsClient           dns.RecordSetsClient
-	privateRecordSetsClient privatedns.RecordSetsClient
-	privateZonesClient      privatedns.PrivateZonesClient
+	resourceGroupsClient    *armresources.ResourceGroupsClient
+	zonesClient             *armdns.ZonesClient
+	recordsClient           *armdns.RecordSetsClient
+	privateRecordSetsClient *armprivatedns.RecordSetsClient
+	privateZonesClient      *armprivatedns.PrivateZonesClient
 	msgraphClient           *msgraphsdk.GraphServiceClient
 	resourceGraphClient     *armresourcegraph.Client
 	tagsClient              *armresources.TagsClient
@@ -64,23 +62,43 @@ type ClusterUninstaller struct {
 }
 
 func (o *ClusterUninstaller) configureClients() error {
+	if o.Session.ClientConfig == nil {
+		return fmt.Errorf("session ClientConfig is not initialized")
+	}
 	subscriptionID := o.Session.Credentials.SubscriptionID
-	endpoint := o.Session.Environment.ResourceManagerEndpoint
 
-	o.resourceGroupsClient = resources.NewGroupsClientWithBaseURI(endpoint, subscriptionID)
-	o.resourceGroupsClient.Authorizer = o.Session.Authorizer
+	// Use ClientConfig which handles API version overrides for different Azure environments
+	// defaultOpts := o.Session.ClientConfig.DefaultClientOptions()
+	defaultOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceNetwork)
+	dnsOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceDNS)
+	networkOpts := o.Session.ClientConfig.ClientOptions(azuresession.ServiceNetwork)
 
-	o.zonesClient = dns.NewZonesClientWithBaseURI(endpoint, subscriptionID)
-	o.zonesClient.Authorizer = o.Session.Authorizer
+	var err error
 
-	o.recordsClient = dns.NewRecordSetsClientWithBaseURI(endpoint, subscriptionID)
-	o.recordsClient.Authorizer = o.Session.Authorizer
+	o.resourceGroupsClient, err = armresources.NewResourceGroupsClient(subscriptionID, o.Session.TokenCreds, defaultOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create resource groups client: %w", err)
+	}
 
-	o.privateZonesClient = privatedns.NewPrivateZonesClientWithBaseURI(endpoint, subscriptionID)
-	o.privateZonesClient.Authorizer = o.Session.Authorizer
+	o.zonesClient, err = armdns.NewZonesClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create zones client: %w", err)
+	}
 
-	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(endpoint, subscriptionID)
-	o.privateRecordSetsClient.Authorizer = o.Session.Authorizer
+	o.recordsClient, err = armdns.NewRecordSetsClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create record sets client: %w", err)
+	}
+
+	o.privateZonesClient, err = armprivatedns.NewPrivateZonesClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create private zones client: %w", err)
+	}
+
+	o.privateRecordSetsClient, err = armprivatedns.NewRecordSetsClient(subscriptionID, o.Session.TokenCreds, dnsOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create private record sets client: %w", err)
+	}
 
 	adapter, err := msgraphsdk.NewGraphRequestAdapter(o.Session.AuthProvider)
 	if err != nil {
@@ -98,35 +116,26 @@ func (o *ClusterUninstaller) configureClients() error {
 	}
 	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
-	clientOpts := &arm.ClientOptions{
-		ClientOptions: azcore.ClientOptions{
-			Cloud: o.Session.CloudConfig,
-		},
+	o.resourceGraphClient, err = armresourcegraph.NewClient(o.Session.TokenCreds, defaultOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create resource graph client: %w", err)
 	}
 
-	rgClient, err := armresourcegraph.NewClient(o.Session.TokenCreds, clientOpts)
+	o.tagsClient, err = armresources.NewTagsClient(subscriptionID, o.Session.TokenCreds, defaultOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create tags client: %w", err)
 	}
-	o.resourceGraphClient = rgClient
 
-	tagsClient, err := armresources.NewTagsClient(o.Session.Credentials.SubscriptionID, o.Session.TokenCreds, clientOpts)
+	o.vnetClient, err = armnetwork.NewVirtualNetworksClient(subscriptionID, o.Session.TokenCreds, networkOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create vnet client: %w", err)
 	}
-	o.tagsClient = tagsClient
 
-	vnetClient, err := armnetwork.NewVirtualNetworksClient(subscriptionID, o.Session.TokenCreds, clientOpts)
+	o.subnetClient, err = armnetwork.NewSubnetsClient(subscriptionID, o.Session.TokenCreds, networkOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create subnet client: %w", err)
 	}
-	o.vnetClient = vnetClient
 
-	subnetClient, err := armnetwork.NewSubnetsClient(subscriptionID, o.Session.TokenCreds, clientOpts)
-	if err != nil {
-		return err
-	}
-	o.subnetClient = subnetClient
 	return nil
 }
 
@@ -168,28 +177,34 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 
 	// Retrieve metadata from resource group tags, if available
 	filter := fmt.Sprintf("tagName eq 'kubernetes.io_cluster.%s' and tagValue eq 'owned'", o.InfraID)
-	groupPager, err := o.resourceGroupsClient.ListComplete(waitCtx, filter, to.Int32Ptr(1))
-	if err != nil {
-		return nil, fmt.Errorf("could not list resource groups: %w", err)
-	}
+	groupPager := o.resourceGroupsClient.NewListPager(&armresources.ResourceGroupsClientListOptions{
+		Filter: to.Ptr(filter),
+		Top:    to.Ptr(int32(1)),
+	})
 
-	for ; groupPager.NotDone(); err = groupPager.NextWithContext(waitCtx) {
+	for groupPager.More() {
+		page, err := groupPager.NextPage(waitCtx)
 		if err != nil {
 			o.Logger.Debugf("failed to advance to next resource group list page: %v", err)
-			continue
+			break
 		}
-		group := groupPager.Value()
-		if len(o.ResourceGroupName) == 0 {
-			o.ResourceGroupName = to.String(group.Name)
-			o.Logger.Debugf("found resource group name=%s from tags", o.ResourceGroupName)
-		}
-		if len(o.BaseDomainResourceGroupName) == 0 {
-			o.BaseDomainResourceGroupName = to.String(group.Tags[azure.TagMetadataBaseDomainRG])
-			o.Logger.Debugf("found base domain resource group name=%s from tags", o.BaseDomainResourceGroupName)
-		}
-		if len(o.NetworkResourceGroupName) == 0 {
-			o.NetworkResourceGroupName = to.String(group.Tags[azure.TagMetadataNetworkRG])
-			o.Logger.Debugf("found network resource group name=%s from tags", o.NetworkResourceGroupName)
+		for _, group := range page.Value {
+			if len(o.ResourceGroupName) == 0 && group.Name != nil {
+				o.ResourceGroupName = *group.Name
+				o.Logger.Debugf("found resource group name=%s from tags", o.ResourceGroupName)
+			}
+			if len(o.BaseDomainResourceGroupName) == 0 && group.Tags != nil {
+				if tag := group.Tags[azure.TagMetadataBaseDomainRG]; tag != nil {
+					o.BaseDomainResourceGroupName = *tag
+					o.Logger.Debugf("found base domain resource group name=%s from tags", o.BaseDomainResourceGroupName)
+				}
+			}
+			if len(o.NetworkResourceGroupName) == 0 && group.Tags != nil {
+				if tag := group.Tags[azure.TagMetadataNetworkRG]; tag != nil {
+					o.NetworkResourceGroupName = *tag
+					o.Logger.Debugf("found network resource group name=%s from tags", o.NetworkResourceGroupName)
+				}
+			}
 		}
 	}
 
@@ -333,7 +348,7 @@ func removeSharedTags(
 				&subscriptionID,
 			},
 			Options: &armresourcegraph.QueryRequestOptions{
-				ResultFormat: azcoreto.Ptr(armresourcegraph.ResultFormatObjectArray),
+				ResultFormat: to.Ptr(armresourcegraph.ResultFormatObjectArray),
 			},
 		},
 		nil,
@@ -343,10 +358,10 @@ func removeSharedTags(
 	}
 
 	tagsParam := armresources.TagsPatchResource{
-		Operation: azcoreto.Ptr(armresources.TagsPatchOperationDelete),
+		Operation: to.Ptr(armresources.TagsPatchOperationDelete),
 		Properties: &armresources.Tags{
 			Tags: map[string]*string{
-				tagKey: to.StringPtr("shared"),
+				tagKey: to.Ptr("shared"),
 			},
 		},
 	}
@@ -407,7 +422,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 
 	var errs []error
 
-	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
+	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, legacyto.Int32Ptr(100))
 	logger.Debug(err)
 	if err != nil {
 		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
@@ -427,29 +442,29 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 			continue
 		}
 		for _, zone := range zonesPage.Values() {
-			allZones.Insert(to.String(zone.Name))
+			allZones.Insert(legacyto.String(zone.Name))
 		}
 	}
 
 	clusterTag := fmt.Sprintf("kubernetes.io_cluster.%s", o.InfraID)
 	for _, zone := range allZones.List() {
-		for recordPages, err := recordsClient.ListByDNSZone(ctx, rgName, zone, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
+		for recordPages, err := recordsClient.ListByDNSZone(ctx, rgName, zone, legacyto.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
 			if err != nil {
 				return err
 			}
 			for _, record := range recordPages.Values() {
-				metadata := to.StringMap(record.Metadata)
+				metadata := legacyto.StringMap(record.Metadata)
 				_, found := metadata[clusterTag]
 				if found {
-					resp, err := recordsClient.Delete(ctx, rgName, zone, to.String(record.Name), toAzureStackRecordType(to.String(record.Type)), "")
+					resp, err := recordsClient.Delete(ctx, rgName, zone, legacyto.String(record.Name), toAzureStackRecordType(legacyto.String(record.Type)), "")
 					if err != nil {
 						if wasNotFound(resp.Response) {
-							logger.WithField("record", to.String(record.Name)).Debug("already deleted")
+							logger.WithField("record", legacyto.String(record.Name)).Debug("already deleted")
 							continue
 						}
-						return fmt.Errorf("failed to delete record %s in zone %s: %w", to.String(record.Name), zone, err)
+						return fmt.Errorf("failed to delete record %s in zone %s: %w", legacyto.String(record.Name), zone, err)
 					}
-					logger.WithField("record", to.String(record.Name)).Info("deleted")
+					logger.WithField("record", legacyto.String(record.Name)).Info("deleted")
 				}
 			}
 		}
@@ -458,37 +473,41 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	return utilerrors.NewAggregate(errs)
 }
 
-func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, privateDNSClient privatedns.PrivateZonesClient, privateRecordsClient privatedns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
+func deletePublicRecords(ctx context.Context, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, privateDNSClient *armprivatedns.PrivateZonesClient, privateRecordsClient *armprivatedns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
 	// collect records from private zones in rgName
 	var errs []error
 
-	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
-	if err != nil {
-		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
-			logger.Debug("already deleted")
-			return utilerrors.NewAggregate(errs)
-		}
-		errs = append(errs, fmt.Errorf("failed to list dns zone: %w", err))
-		if isAuthError(err) {
-			return err
-		}
-	}
+	zonesPager := dnsClient.NewListByResourceGroupPager(rgName, &armdns.ZonesClientListByResourceGroupOptions{
+		Top: to.Ptr(int32(100)),
+	})
 
 	pageCount := 0
-	for ; zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
+	for zonesPager.More() {
+		page, err := zonesPager.NextPage(ctx)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to advance to next dns zone: %w", err))
-			continue
+			if isNotFoundError(err) {
+				logger.Debug("already deleted")
+				return utilerrors.NewAggregate(errs)
+			}
+			errs = append(errs, fmt.Errorf("failed to list dns zone: %w", err))
+			if isAuthError(err) {
+				return err
+			}
+			break
 		}
 		pageCount++
 
-		for _, zone := range zonesPage.Values() {
-			if zone.ZoneType == dns.Private {
-				if err := deletePublicRecordsForZone(ctx, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
-					errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
+		for _, zone := range page.Value {
+			if zone.Properties != nil && zone.Properties.ZoneType != nil && *zone.Properties.ZoneType == armdns.ZoneTypePrivate {
+				zoneName := ""
+				if zone.Name != nil {
+					zoneName = *zone.Name
+				}
+				if err := deletePublicRecordsForZone(ctx, dnsClient, recordsClient, logger, rgName, zoneName); err != nil {
+					errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", zoneName, err))
 					if isAuthError(err) {
 						return err
 					}
@@ -498,28 +517,32 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 		}
 	}
 
-	privateZonesPage, err := privateDNSClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
-	if err != nil {
-		if privateZonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
-			logger.Debug("already deleted")
-			return utilerrors.NewAggregate(errs)
-		}
-		errs = append(errs, fmt.Errorf("failed to list private dns zone: %w", err))
-		if isAuthError(err) {
-			return err
-		}
-	}
+	privateZonesPager := privateDNSClient.NewListByResourceGroupPager(rgName, &armprivatedns.PrivateZonesClientListByResourceGroupOptions{
+		Top: to.Ptr(int32(100)),
+	})
 
-	for ; privateZonesPage.NotDone(); err = privateZonesPage.NextWithContext(ctx) {
+	for privateZonesPager.More() {
+		page, err := privateZonesPager.NextPage(ctx)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to advance to next dns zone: %w", err))
-			continue
+			if isNotFoundError(err) {
+				logger.Debug("already deleted")
+				return utilerrors.NewAggregate(errs)
+			}
+			errs = append(errs, fmt.Errorf("failed to list private dns zone: %w", err))
+			if isAuthError(err) {
+				return err
+			}
+			break
 		}
 		pageCount++
 
-		for _, zone := range privateZonesPage.Values() {
-			if err := deletePublicRecordsForPrivateZone(ctx, privateRecordsClient, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
-				errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
+		for _, zone := range page.Value {
+			zoneName := ""
+			if zone.Name != nil {
+				zoneName = *zone.Name
+			}
+			if err := deletePublicRecordsForPrivateZone(ctx, privateRecordsClient, dnsClient, recordsClient, logger, rgName, zoneName); err != nil {
+				errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", zoneName, err))
 				if isAuthError(err) {
 					return err
 				}
@@ -535,64 +558,103 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 	return utilerrors.NewAggregate(errs)
 }
 
-func deletePublicRecordsForZone(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
+func deletePublicRecordsForZone(ctx context.Context, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
 	// collect all the records from the zoneName
-	allPrivateRecords := sets.NewString()
-	for recordPages, err := recordsClient.ListByDNSZone(ctx, zoneGroup, zoneName, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
+	allPrivateRecords := sets.New[string]()
+	recordPager := recordsClient.NewListByDNSZonePager(zoneGroup, zoneName, &armdns.RecordSetsClientListByDNSZoneOptions{
+		Top: to.Ptr(int32(100)),
+	})
+
+	for recordPager.More() {
+		page, err := recordPager.NextPage(ctx)
 		if err != nil {
 			return err
 		}
-		for _, record := range recordPages.Values() {
-			if t := toRecordType(to.String(record.Type)); t == dns.SOA || t == dns.NS {
+		for _, record := range page.Value {
+			recordType := ""
+			if record.Type != nil {
+				recordType = *record.Type
+			}
+			if t := toRecordType(recordType); t == armdns.RecordTypeSOA || t == armdns.RecordTypeNS {
 				continue
 			}
-			allPrivateRecords.Insert(fmt.Sprintf("%s.%s", to.String(record.Name), zoneName))
+			recordName := ""
+			if record.Name != nil {
+				recordName = *record.Name
+			}
+			allPrivateRecords.Insert(fmt.Sprintf("%s.%s", recordName, zoneName))
 		}
 	}
 
 	return deletePublicRecordsMatchingZoneName(ctx, dnsClient, recordsClient, logger, allPrivateRecords, zoneName)
 }
 
-func deletePublicRecordsForPrivateZone(ctx context.Context, privateRecordsClient privatedns.RecordSetsClient, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
+func deletePublicRecordsForPrivateZone(ctx context.Context, privateRecordsClient *armprivatedns.RecordSetsClient, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
 	// collect all the records from the zoneName
-	allPrivateRecords := sets.NewString()
-	for recordPages, err := privateRecordsClient.List(ctx, zoneGroup, zoneName, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
+	allPrivateRecords := sets.New[string]()
+	recordPager := privateRecordsClient.NewListPager(zoneGroup, zoneName, &armprivatedns.RecordSetsClientListOptions{
+		Top: to.Ptr(int32(100)),
+	})
+
+	for recordPager.More() {
+		page, err := recordPager.NextPage(ctx)
 		if err != nil {
 			return err
 		}
-		for _, record := range recordPages.Values() {
-			if t := toRecordType(to.String(record.Type)); t == dns.SOA || t == dns.NS {
+		for _, record := range page.Value {
+			recordType := ""
+			if record.Type != nil {
+				recordType = *record.Type
+			}
+			if t := toRecordType(recordType); t == armdns.RecordTypeSOA || t == armdns.RecordTypeNS {
 				continue
 			}
-			allPrivateRecords.Insert(fmt.Sprintf("%s.%s", to.String(record.Name), zoneName))
+			recordName := ""
+			if record.Name != nil {
+				recordName = *record.Name
+			}
+			allPrivateRecords.Insert(fmt.Sprintf("%s.%s", recordName, zoneName))
 		}
 	}
 
 	return deletePublicRecordsMatchingZoneName(ctx, dnsClient, recordsClient, logger, allPrivateRecords, zoneName)
 }
 
-func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, privateRecords sets.String, zoneName string) error {
+func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient *armdns.ZonesClient, recordsClient *armdns.RecordSetsClient, logger logrus.FieldLogger, privateRecords sets.Set[string], zoneName string) error {
 	sharedZones, err := getSharedDNSZones(ctx, dnsClient, zoneName)
 	if err != nil {
 		return fmt.Errorf("failed to find shared zone for %s: %w", zoneName, err)
 	}
 	for _, sharedZone := range sharedZones {
 		logger.Debugf("removing matching private records from %s", sharedZone.Name)
-		for recordPages, err := recordsClient.ListByDNSZone(ctx, sharedZone.Group, sharedZone.Name, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
+		recordPager := recordsClient.NewListByDNSZonePager(sharedZone.Group, sharedZone.Name, &armdns.RecordSetsClientListByDNSZoneOptions{
+			Top: to.Ptr(int32(100)),
+		})
+
+		for recordPager.More() {
+			page, err := recordPager.NextPage(ctx)
 			if err != nil {
 				return err
 			}
-			for _, record := range recordPages.Values() {
-				if privateRecords.Has(fmt.Sprintf("%s.%s", to.String(record.Name), sharedZone.Name)) {
-					resp, err := recordsClient.Delete(ctx, sharedZone.Group, sharedZone.Name, to.String(record.Name), toRecordType(to.String(record.Type)), "")
+			for _, record := range page.Value {
+				recordName := ""
+				if record.Name != nil {
+					recordName = *record.Name
+				}
+				recordType := ""
+				if record.Type != nil {
+					recordType = *record.Type
+				}
+				if privateRecords.Has(fmt.Sprintf("%s.%s", recordName, sharedZone.Name)) {
+					_, err := recordsClient.Delete(ctx, sharedZone.Group, sharedZone.Name, recordName, toRecordType(recordType), nil)
 					if err != nil {
-						if wasNotFound(resp.Response) {
-							logger.WithField("record", to.String(record.Name)).Debug("already deleted")
+						if isNotFoundError(err) {
+							logger.WithField("record", recordName).Debug("already deleted")
 							continue
 						}
-						return fmt.Errorf("failed to delete record %s in zone %s: %w", to.String(record.Name), sharedZone.Name, err)
+						return fmt.Errorf("failed to delete record %s in zone %s: %w", recordName, sharedZone.Name, err)
 					}
-					logger.WithField("record", to.String(record.Name)).Info("deleted")
+					logger.WithField("record", recordName).Info("deleted")
 				}
 			}
 		}
@@ -601,7 +663,7 @@ func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient dns.Zone
 }
 
 // getSharedDNSZones returns the all parent public dns zones for privZoneName in decreasing order of closeness.
-func getSharedDNSZones(ctx context.Context, client dns.ZonesClient, privZoneName string) ([]dnsZone, error) {
+func getSharedDNSZones(ctx context.Context, client *armdns.ZonesClient, privZoneName string) ([]dnsZone, error) {
 	domain := privZoneName
 	parents := sets.NewString(domain)
 	for {
@@ -616,13 +678,30 @@ func getSharedDNSZones(ctx context.Context, client dns.ZonesClient, privZoneName
 	}
 
 	allPublicZones := []dnsZone{}
-	for zonesPage, err := client.List(ctx, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
+	zonesPager := client.NewListPager(&armdns.ZonesClientListOptions{
+		Top: to.Ptr(int32(100)),
+	})
+
+	for zonesPager.More() {
+		page, err := zonesPager.NextPage(ctx)
 		if err != nil {
 			return nil, err
 		}
-		for _, zone := range zonesPage.Values() {
-			if zone.ZoneType == dns.Public && parents.Has(to.String(zone.Name)) {
-				allPublicZones = append(allPublicZones, dnsZone{Name: to.String(zone.Name), ID: to.String(zone.ID), Group: groupFromID(to.String(zone.ID)), Public: true})
+		for _, zone := range page.Value {
+			zoneName := ""
+			if zone.Name != nil {
+				zoneName = *zone.Name
+			}
+			zoneID := ""
+			if zone.ID != nil {
+				zoneID = *zone.ID
+			}
+			zoneType := armdns.ZoneTypePrivate
+			if zone.Properties != nil && zone.Properties.ZoneType != nil {
+				zoneType = *zone.Properties.ZoneType
+			}
+			if zoneType == armdns.ZoneTypePublic && parents.Has(zoneName) {
+				allPublicZones = append(allPublicZones, dnsZone{Name: zoneName, ID: zoneID, Group: groupFromID(zoneID), Public: true})
 				continue
 			}
 		}
@@ -642,23 +721,29 @@ func groupFromID(id string) string {
 	return strings.Split(id, "/")[4]
 }
 
-func toRecordType(t string) dns.RecordType {
-	return dns.RecordType(strings.TrimPrefix(t, "Microsoft.Network/dnszones/"))
+func toRecordType(t string) armdns.RecordType {
+	return armdns.RecordType(strings.TrimPrefix(t, "Microsoft.Network/dnszones/"))
 }
 
 func toAzureStackRecordType(t string) azurestackdns.RecordType {
 	return azurestackdns.RecordType(strings.TrimPrefix(t, "Microsoft.Network/dnszones/"))
 }
 
-func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, logger logrus.FieldLogger, name string) error {
+func deleteResourceGroup(ctx context.Context, client *armresources.ResourceGroupsClient, logger logrus.FieldLogger, name string) error {
 	logger = logger.WithField("resource group", name)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
-	delFuture, err := client.Delete(ctx, name)
-	if err == nil {
-		err = delFuture.WaitForCompletionRef(ctx, client.Client)
+	poller, err := client.BeginDelete(ctx, name, nil)
+	if err != nil {
+		if isNotFoundError(err) {
+			logger.Debug("already deleted")
+			return nil
+		}
+		return fmt.Errorf("failed to delete %s: %w", name, err)
 	}
+
+	_, err = poller.PollUntilDone(ctx, nil)
 	if err != nil {
 		if isNotFoundError(err) {
 			logger.Debug("already deleted")
@@ -679,17 +764,22 @@ func isNotFoundError(err error) bool {
 		return false
 	}
 
+	// Check for V2 SDK azcore.ResponseError
+	var respErr *azcore.ResponseError
+	if errors.As(err, &respErr) {
+		if respErr.StatusCode == http.StatusNotFound {
+			return true
+		}
+		if strings.HasSuffix(respErr.ErrorCode, "NotFound") {
+			return true
+		}
+	}
+
+	// Keep legacy check for autorest.DetailedError (for Azure Stack support)
 	var dErr autorest.DetailedError
 	if errors.As(err, &dErr) {
 		if dErr.StatusCode == http.StatusNotFound {
 			return true
-		}
-
-		if dErr.StatusCode == 0 {
-			var serviceErr *azureenv.ServiceError
-			if errors.As(dErr.Original, &serviceErr) && strings.HasSuffix(serviceErr.Code, "NotFound") {
-				return true
-			}
 		}
 	}
 
@@ -701,6 +791,15 @@ func isAuthError(err error) bool {
 		return false
 	}
 
+	// Check for V2 SDK azcore.ResponseError
+	var respErr *azcore.ResponseError
+	if errors.As(err, &respErr) {
+		if respErr.StatusCode >= 400 && respErr.StatusCode <= 403 {
+			return true
+		}
+	}
+
+	// Keep legacy check for autorest.DetailedError (for Azure Stack support)
 	var dErr autorest.DetailedError
 	if errors.As(err, &dErr) {
 		switch statusCode := dErr.StatusCode.(type) {
@@ -732,11 +831,20 @@ func isResourceGroupBlockedError(err error) bool {
 		return false
 	}
 
+	// Check for V2 SDK azcore.ResponseError
+	var respErr *azcore.ResponseError
+	if errors.As(err, &respErr) {
+		if respErr.StatusCode == http.StatusConflict {
+			return true
+		}
+	}
+
+	// Keep legacy check for autorest.DetailedError (for Azure Stack support)
 	var dErr autorest.DetailedError
 	if errors.As(err, &dErr) {
 		switch statusCode := dErr.StatusCode.(type) {
 		case int:
-			if statusCode == 409 {
+			if statusCode == http.StatusConflict {
 				return true
 			}
 		}

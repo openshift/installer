@@ -87,10 +87,9 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	subscriptionID := session.Credentials.SubscriptionID
 
 	onAzureStack := in.InstallConfig.Azure.CloudName == azure.StackCloud
-	if onAzureStack {
-		opts.APIVersion = stackDNSAPIVersion
-	}
 
+	// Note: API version override for Azure Stack Hub is now handled by the
+	// ClientConfig passed through opts from the caller.
 	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds, opts)
 	if err != nil {
 		return fmt.Errorf("failed to create public record client: %w", err)

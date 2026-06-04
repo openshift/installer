@@ -11,10 +11,9 @@ import (
 	"strings"
 	"time"
 
-	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
-	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
-	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -124,8 +123,8 @@ func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztype
 	resp, requestErr := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 	if requestErr != nil {
 		return requestErr
-	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.ConfidentialVMEncryptedWithCustomerKey {
-		return fmt.Errorf("the disk encryption set should be created with type %s", azenc.ConfidentialVMEncryptedWithCustomerKey)
+	} else if resp == nil || resp.Properties == nil || resp.Properties.EncryptionType == nil || *resp.Properties.EncryptionType != armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey {
+		return fmt.Errorf("the disk encryption set should be created with type %s", armcompute.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey)
 	}
 	if resp.Location != nil && !strings.EqualFold(*resp.Location, clusterRegion) {
 		return fmt.Errorf("disk encryption set is in %s, but the cluster region is %s", *resp.Location, clusterRegion)
@@ -327,35 +326,52 @@ func validateUltraSSD(client API, fieldPath *field.Path, icZones []string, regio
 		return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
 	}
 	// If Availability Zones not supported
-	if locationInfo == nil || len(to.StringSlice(locationInfo.Zones)) == 0 {
+	if locationInfo == nil || locationInfo.Zones == nil || len(locationInfo.Zones) == 0 {
 		errMsg := fmt.Sprintf("UltraSSD capability is not compatible with Availability Sets which are used because region %s does not support Availability Zones", region)
 		return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
 	}
-	allZones := to.StringSlice(locationInfo.Zones)
+	allZones := make([]string, 0, len(locationInfo.Zones))
+	for _, z := range locationInfo.Zones {
+		if z != nil {
+			allZones = append(allZones, *z)
+		}
+	}
 
 	// The UltraSSDAvailable capability might not be present at all, in which case it must assumed to be false
 	ultraSSDAvailable := false
 	if val, ok := capabilities["UltraSSDAvailable"]; ok {
 		ultraSSDAvailable = strings.EqualFold(val, "True")
 	}
-	for _, zoneDetails := range *locationInfo.ZoneDetails {
-		for _, capability := range *zoneDetails.Capabilities {
-			if !strings.EqualFold(to.String(capability.Name), "UltraSSDAvailable") {
+	if locationInfo.ZoneDetails != nil {
+		for _, zoneDetails := range locationInfo.ZoneDetails {
+			if zoneDetails == nil || zoneDetails.Capabilities == nil {
 				continue
 			}
-			if strings.EqualFold(to.String(capability.Value), "True") {
-				zones := icZones
-				// If no zones are configured in the install config, then all available zones in the region are used
-				if len(zones) == 0 {
-					zones = allZones
+			for _, capability := range zoneDetails.Capabilities {
+				if capability == nil || capability.Name == nil || !strings.EqualFold(*capability.Name, "UltraSSDAvailable") {
+					continue
 				}
-				capZones := to.StringSlice(zoneDetails.Name)
-				ultraSSDZones := sets.NewString(capZones...)
-				if !ultraSSDZones.HasAll(zones...) {
-					errMsg := fmt.Sprintf("UltraSSD capability only supported in zones %v for this instance type in the %s region", capZones, region)
-					return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+				if capability.Value != nil && strings.EqualFold(*capability.Value, "True") {
+					zones := icZones
+					// If no zones are configured in the install config, then all available zones in the region are used
+					if len(zones) == 0 {
+						zones = allZones
+					}
+					capZones := make([]string, 0)
+					if zoneDetails.Name != nil {
+						for _, n := range zoneDetails.Name {
+							if n != nil {
+								capZones = append(capZones, *n)
+							}
+						}
+					}
+					ultraSSDZones := sets.NewString(capZones...)
+					if !ultraSSDZones.HasAll(zones...) {
+						errMsg := fmt.Sprintf("UltraSSD capability only supported in zones %v for this instance type in the %s region", capZones, region)
+						return append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+					}
+					ultraSSDAvailable = true
 				}
-				ultraSSDAvailable = true
 			}
 		}
 	}
@@ -531,20 +547,20 @@ func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) 
 }
 
 // validateSubnet checks that the subnet is in the same network as the machine CIDR
-func validateSubnet(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
+func validateSubnet(client API, fieldPath *field.Path, subnet *armnetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if subnet == nil || subnet.SubnetPropertiesFormat == nil {
+	if subnet == nil || subnet.Properties == nil {
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "cannot get subnet information"))
 	}
 
 	var addressPrefix string
 	switch {
-	case subnet.AddressPrefix != nil:
-		addressPrefix = *subnet.AddressPrefix
+	case subnet.Properties.AddressPrefix != nil:
+		addressPrefix = *subnet.Properties.AddressPrefix
 	// NOTE: if the subscription has the `AllowMultipleAddressPrefixesOnSubnet` feature, the Azure API will return a
 	// `addressPrefixes` field with a slice of addresses instead of a single value via `addressPrefix`.
-	case subnet.AddressPrefixes != nil && len(*subnet.AddressPrefixes) > 0:
-		addressPrefix = (*subnet.AddressPrefixes)[0]
+	case len(subnet.Properties.AddressPrefixes) > 0:
+		addressPrefix = *subnet.Properties.AddressPrefixes[0]
 	default:
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "subnet does not have an address prefix"))
 	}
@@ -604,8 +620,16 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 	}
 
 	availableRegions := map[string]string{}
-	for _, location := range *locations {
-		availableRegions[to.String(location.Name)] = to.String(location.DisplayName)
+	for _, location := range locations {
+		name := ""
+		displayName := ""
+		if location.Name != nil {
+			name = *location.Name
+		}
+		if location.DisplayName != nil {
+			displayName = *location.DisplayName
+		}
+		availableRegions[name] = displayName
 	}
 
 	displayName, ok := availableRegions[p.Region]
@@ -626,10 +650,14 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("failed to retrieve resource capable regions: %w", err))}
 	}
 
-	for _, resType := range *provider.ResourceTypes {
-		if *resType.ResourceType == "resourceGroups" {
-			for _, resourceCapableRegion := range *resType.Locations {
-				if resourceCapableRegion == displayName {
+	if provider.ResourceTypes == nil {
+		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("no resource types found in Microsoft.Resources provider"))}
+	}
+
+	for _, resType := range provider.ResourceTypes {
+		if resType.ResourceType != nil && *resType.ResourceType == "resourceGroups" {
+			for _, resourceCapableRegion := range resType.Locations {
+				if resourceCapableRegion != nil && *resourceCapableRegion == displayName {
 					return field.ErrorList{}
 				}
 			}
@@ -654,21 +682,21 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"
 
 	// Look for an existing CNAME first
-	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
-	if err == nil && rs.CnameRecord != nil {
-		return fmt.Errorf(fmtStr, zoneName, azdns.CNAME, clusterName)
+	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, armdns.RecordTypeCNAME)
+	if err == nil && rs.Properties != nil && rs.Properties.CnameRecord != nil {
+		return fmt.Errorf(fmtStr, zoneName, armdns.RecordTypeCNAME, clusterName)
 	}
 
 	// Look for an A record
-	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.A)
-	if err == nil && rs.ARecords != nil && len(*rs.ARecords) > 0 {
-		return fmt.Errorf(fmtStr, zoneName, azdns.A, clusterName)
+	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, armdns.RecordTypeA)
+	if err == nil && rs.Properties != nil && rs.Properties.ARecords != nil && len(rs.Properties.ARecords) > 0 {
+		return fmt.Errorf(fmtStr, zoneName, armdns.RecordTypeA, clusterName)
 	}
 
 	// Look for an AAAA record
-	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.AAAA)
-	if err == nil && rs.AaaaRecords != nil && len(*rs.AaaaRecords) > 0 {
-		return fmt.Errorf(fmtStr, zoneName, azdns.AAAA, clusterName)
+	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, armdns.RecordTypeAAAA)
+	if err == nil && rs.Properties != nil && rs.Properties.AaaaRecords != nil && len(rs.Properties.AaaaRecords) > 0 {
+		return fmt.Errorf(fmtStr, zoneName, armdns.RecordTypeAAAA, clusterName)
 	}
 
 	return nil
@@ -758,7 +786,11 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to get resource group: %w", err)))
 	}
 
-	normalizedRegion := strings.Replace(strings.ToLower(to.String(group.Location)), " ", "", -1)
+	var location string
+	if group.Location != nil {
+		location = *group.Location
+	}
+	normalizedRegion := strings.ReplaceAll(strings.ToLower(location), " ", "")
 	if !strings.EqualFold(normalizedRegion, platform.Region) {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("expected to in region %s, but found it to be in %s", platform.Region, normalizedRegion)))
 	}
@@ -931,7 +963,13 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 	if err != nil {
 		return field.Invalid(osImageFieldPath, osImage, err.Error())
 	}
-	imageHyperVGen := string(vmImage.HyperVGeneration)
+	if vmImage == nil || vmImage.Properties == nil {
+		return field.Invalid(osImageFieldPath, osImage, "could not retrieve marketplace image properties")
+	}
+	imageHyperVGen := ""
+	if vmImage.Properties.HyperVGeneration != nil {
+		imageHyperVGen = string(*vmImage.Properties.HyperVGeneration)
+	}
 	if !instanceHyperVGenSet.Has(imageHyperVGen) {
 		errMsg := fmt.Sprintf("instance type supports HyperVGenerations %v but the specified image is for HyperVGeneration %s; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU", instanceHyperVGenSet.UnsortedList(), imageHyperVGen)
 		return field.Invalid(osImageFieldPath, osImage.SKU, errMsg)
@@ -943,7 +981,7 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 		// Use the default if not set in the install-config
 		osImagePlan = aztypes.ImageWithPurchasePlan
 	}
-	if plan := vmImage.Plan; plan != nil {
+	if plan := vmImage.Properties.Plan; plan != nil {
 		if osImagePlan == aztypes.ImageNoPurchasePlan {
 			return field.Invalid(osImageFieldPath, osImage, "marketplace image requires license terms to be accepted")
 		}
@@ -1048,7 +1086,7 @@ func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region s
 }
 
 // validateSubnetNatGateway checks whether a NAT Gateway is already attached to a compute subnet.
-func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, outboundType aztypes.OutboundType, role capz.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
+func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *armnetwork.Subnet, outboundType aztypes.OutboundType, role capz.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
 	var allErrs field.ErrorList
 	if outboundType != aztypes.NATGatewayMultiZoneOutboundType && outboundType != aztypes.NATGatewaySingleZoneOutboundType {
 		return allErrs
@@ -1072,7 +1110,7 @@ func validateCustomSubnets(client API, fldPath *field.Path, ic *types.InstallCon
 	virtualNetwork := ic.Azure.VirtualNetwork
 	networkResourceGroupName := ic.Azure.NetworkResourceGroupName
 
-	vnetSubnetList := map[string]*aznetwork.Subnet{}
+	vnetSubnetList := map[string]*armnetwork.Subnet{}
 	if virtualNetwork != "" {
 		existingVnet, err := client.GetVirtualNetwork(context.TODO(), networkResourceGroupName, virtualNetwork)
 		if err != nil || existingVnet == nil {
@@ -1084,9 +1122,11 @@ func validateCustomSubnets(client API, fldPath *field.Path, ic *types.InstallCon
 				fmt.Sprintf("virtual network in region %s not in the same region as resource group %s mentioned", *existingVnet.Location, ic.Azure.Region)))
 			return allErrs
 		}
-		if existingVnet.VirtualNetworkPropertiesFormat != nil && existingVnet.Subnets != nil {
-			for _, subnet := range *existingVnet.Subnets {
-				vnetSubnetList[*subnet.Name] = &subnet
+		if existingVnet.Properties != nil && existingVnet.Properties.Subnets != nil {
+			for _, subnet := range existingVnet.Properties.Subnets {
+				if subnet.Name != nil {
+					vnetSubnetList[*subnet.Name] = subnet
+				}
 			}
 		}
 	}

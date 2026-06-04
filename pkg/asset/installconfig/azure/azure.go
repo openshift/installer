@@ -105,7 +105,7 @@ func getRegions(ctx context.Context, client API) (map[string]string, error) {
 	}
 
 	allLocations := map[string]string{}
-	for _, location := range *locations {
+	for _, location := range locations {
 		allLocations[to.String(location.Name)] = to.String(location.DisplayName)
 	}
 	return allLocations, nil
@@ -117,9 +117,19 @@ func getResourceCapableRegions(ctx context.Context, client API) ([]string, error
 		return nil, err
 	}
 
-	for _, resType := range *provider.ResourceTypes {
-		if *resType.ResourceType == "resourceGroups" {
-			return *resType.Locations, nil
+	if provider.ResourceTypes == nil {
+		return []string{}, nil
+	}
+
+	for _, resType := range provider.ResourceTypes {
+		if resType.ResourceType != nil && *resType.ResourceType == "resourceGroups" {
+			var locations []string
+			for _, loc := range resType.Locations {
+				if loc != nil {
+					locations = append(locations, *loc)
+				}
+			}
+			return locations, nil
 		}
 	}
 

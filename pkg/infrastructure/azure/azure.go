@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
@@ -40,15 +38,6 @@ const (
 	retryCount       = 6
 	confidentialVMST = "ConfidentialVMSupported"
 	trustedLaunchST  = "TrustedLaunchsupported"
-
-	// stackAPIVersion is the Azure Stack compatible API version.
-	stackAPIVersion = "2019-06-01"
-
-	// stackComputeAPIVersion is the Azure Stack compatible API version for compute resources (VMs & images).
-	stackComputeAPIVersion = "2020-06-01"
-
-	// stackDNSAPIVersion is the Azure Stack compatible API version for DNS resources.
-	stackDNSAPIVersion = "2018-05-01"
 )
 
 // Provider implements Azure CAPI installation.
@@ -64,8 +53,7 @@ type Provider struct {
 	CloudConfiguration    cloud.Configuration
 	TokenCredential       azcore.TokenCredential
 	Tags                  map[string]*string
-	clientOptions         *arm.ClientOptions
-	computeClientOptions  *arm.ClientOptions
+	ClientConfig          *azconfig.ClientConfig
 	publicLBIP            string
 	publicLBIPv6          string
 }
@@ -119,23 +107,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 	p.Tags = tags
 
-	opts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: p.CloudConfiguration,
-		},
-	}
-	computeClientOpts := opts
-	if platform.CloudName == aztypes.StackCloud {
-		opts.APIVersion = stackAPIVersion
-		computeClientOpts = &arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud:      p.CloudConfiguration,
-				APIVersion: stackComputeAPIVersion,
-			},
-		}
-	}
-	p.clientOptions = opts
-	p.computeClientOptions = computeClientOpts
+	// Use ClientConfig from session which automatically handles API version overrides
+	// for different Azure environments (including Azure Stack Hub)
+	p.ClientConfig = session.ClientConfig
 
 	if err = handleIdentity(ctx, identityInput{
 		installConfig:     installConfig,
@@ -144,7 +118,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		subscriptionID:    subscriptionID,
 		tokenCredential:   p.TokenCredential,
 		infraID:           in.InfraID,
-		clientOpts:        p.clientOptions,
+		clientOpts:        p.ClientConfig.DefaultClientOptions(),
 		tags:              p.Tags,
 	}); err != nil {
 		errMsg := "error creating user-assigned identity: please ensure your user credentials " +
@@ -156,7 +130,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
-		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, p.TokenCredential, p.clientOptions)
+		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, p.TokenCredential, p.ClientConfig.ClientOptions(azconfig.ServiceNetwork))
 		if err != nil {
 			return fmt.Errorf("failed to create azure network factory: %w", err)
 		}
@@ -251,7 +225,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			Tags:                 tags,
 			CustomerManagedKey:   platform.CustomerManagedKey,
 			TokenCredential:      p.TokenCredential,
-			ClientOpts:           p.clientOptions,
+			ClientOpts:           p.ClientConfig.ClientOptions(azconfig.ServiceStorage),
+			APIVersion:           p.ClientConfig.GetAPIVersion(azconfig.ServiceStorage),
 		})
 		if err != nil {
 			return err
@@ -293,7 +268,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			TokenCredential:      session.TokenCreds,
 			StorageAccountName:   storageAccountName,
 			StorageAccountKeys:   storageAccountKeys,
-			ClientOpts:           p.clientOptions,
+			ClientOpts:           p.ClientConfig.ClientOptions(azconfig.ServiceStorage),
 		})
 		if err != nil {
 			return err
@@ -307,7 +282,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			Region:            platform.Region,
 			Tags:              tags,
 			TokenCredential:   p.TokenCredential,
-			ClientOpts:        p.clientOptions,
+			ClientOpts:        p.ClientConfig.ClientOptions(azconfig.ServiceCompute),
 		})
 		if err != nil {
 			return err
@@ -326,7 +301,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			SKU:                  "basic",
 			Tags:                 tags,
 			TokenCredential:      p.TokenCredential,
-			ClientOpts:           p.clientOptions,
+			ClientOpts:           p.ClientConfig.ClientOptions(azconfig.ServiceCompute),
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -352,7 +327,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			SKU:                  "gen2",
 			Tags:                 tags,
 			TokenCredential:      p.TokenCredential,
-			ClientOpts:           p.clientOptions,
+			ClientOpts:           p.ClientConfig.ClientOptions(azconfig.ServiceCompute),
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -397,7 +372,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	if installConfig.Azure.CloudName == aztypes.StackCloud {
-		client, err := armcompute.NewImagesClient(subscriptionID, p.TokenCredential, p.computeClientOptions)
+		client, err := armcompute.NewImagesClient(subscriptionID, p.TokenCredential, p.ClientConfig.ClientOptions(azconfig.ServiceCompute))
 		if err != nil {
 			return fmt.Errorf("error creating stack managed images client: %w", err)
 		}
@@ -414,7 +389,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
-	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, p.clientOptions)
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, p.ClientConfig.ClientOptions(azconfig.ServiceNetwork))
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
@@ -527,7 +502,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.lbBackendAddressPools = lbBaps
 
 	if in.InstallConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, resourceGroupName, p.clientOptions); err != nil {
+		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, resourceGroupName, p.ClientConfig.ClientOptions(azconfig.ServiceDNS)); err != nil {
 			return fmt.Errorf("error creating DNS records: %w", err)
 		}
 	}
@@ -563,7 +538,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 	}
 
 	if in.InstallConfig.Config.PublicAPI() {
-		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, p.computeClientOptions)
+		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, p.ClientConfig.ClientOptions(azconfig.ServiceCompute))
 		if err != nil {
 			return fmt.Errorf("error creating vm client: %w", err)
 		}
@@ -667,22 +642,12 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	// Construct client options here, rather than relying on p.clientOptions,
-	// as PostDestroy can be called as part of destroy bootstrap, in which case
-	// p.clientOption would not be populated.
-	opts := &arm.ClientOptions{
-		ClientOptions: policy.ClientOptions{
-			Cloud: session.CloudConfig,
-		},
-	}
-	if in.Metadata.Azure.CloudName == aztypes.StackCloud {
-		opts.APIVersion = stackAPIVersion
-	}
-
+	// Use session's ClientConfig which handles API version overrides for different
+	// Azure environments automatically.
 	networkClientFactory, err := armnetwork.NewClientFactory(
 		session.Credentials.SubscriptionID,
 		session.TokenCreds,
-		opts,
+		session.ClientConfig.ClientOptions(azconfig.ServiceNetwork),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
@@ -865,7 +830,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			StorageAccountName:   p.StorageAccountName,
 			StorageAccountKeys:   p.StorageAccountKeys,
 			AllowSharedKeyAccess: sharedKey,
-			ClientOpts:           p.clientOptions,
+			ClientOpts:           p.ClientConfig.ClientOptions(azconfig.ServiceStorage),
 			BootstrapIgnData:     ignOutput.UpdatedBootstrapIgn,
 			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
 			ContainerName:        ignitionContainerName,
@@ -898,7 +863,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			BootstrapIgnData:     ignOutput.UpdatedBootstrapIgn,
 			ImageLength:          lengthBootstrapFile,
 			StorageAccountKeys:   p.StorageAccountKeys,
-			ClientOpts:           p.clientOptions,
+			ClientOpts:           p.ClientConfig.ClientOptions(azconfig.ServiceStorage),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)

@@ -49,6 +49,9 @@ type Session struct {
 	TokenCreds   azcore.TokenCredential
 	CloudConfig  cloud.Configuration
 	AuthType     AuthenticationType
+	// ClientConfig provides centralized configuration for Azure SDK clients
+	// including API version overrides and cloud configuration.
+	ClientConfig *ClientConfig
 }
 
 // Credentials is the data type for credentials as understood by the azure sdk
@@ -117,6 +120,7 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	}
 	session.CloudConfig = *cloudConfig
 	session.AuthType = authType
+	session.ClientConfig = NewClientConfig(*cloudConfig, cloudName)
 	return session, nil
 }
 
