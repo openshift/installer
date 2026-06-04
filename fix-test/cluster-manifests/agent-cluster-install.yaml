@@ -1,0 +1,38 @@
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  creationTimestamp: null
+  name: test-cluster
+spec:
+  apiVIP: 10.0.0.5
+  apiVIPs:
+  - 10.0.0.5
+  clusterDeploymentRef:
+    name: test-cluster
+  imageSetRef:
+    name: openshift-1f026bc5be128afc4f4095c715264f089f18f28b-dirty
+  ingressVIP: 10.0.0.5
+  ingressVIPs:
+  - 10.0.0.5
+  loadBalancer:
+    type: UserManaged
+  networking:
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    machineNetwork:
+    - cidr: 10.0.0.0/16
+    networkType: OVNKubernetes
+    serviceNetwork:
+    - 172.30.0.0/16
+    userManagedNetworking: false
+  platformType: BareMetal
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 3
+status:
+  debugInfo:
+    eventsURL: ""
+    logsURL: ""
+  progress:
+    totalPercentage: 0
