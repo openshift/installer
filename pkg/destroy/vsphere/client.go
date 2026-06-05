@@ -53,7 +53,6 @@ type Client struct {
 	session    *vsphere.Session
 	logger     logrus.FieldLogger
 }
-
 const defaultTimeout = time.Minute * 5
 
 // NewClient initializes a client for cluster destruction.

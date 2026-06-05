@@ -189,7 +189,6 @@ func (s *Session) Close() {
 
 // Error returns any error that occurred during Close.
 func (s *Session) Error() error {
-	s.once.Do(func() {}) // ensure once guard is initialized
 	return s.closeErr
 }
 
@@ -225,13 +224,13 @@ func newSessionFromConn(ctx context.Context, server, username, password string, 
 	}
 	s.rest = restClient
 
-	if cnsClient, err := cns.NewClient(ctx, s.vim25); err == nil {
+	if cnsClient, err := cns.NewClient(context.Background(), s.vim25); err == nil {
 		s.cns = cnsClient
 	} else {
 		opts.Logger.WithError(err).Debug("CNS client creation failed (optional)")
 	}
 
-	if pbmClient, err := pbm.NewClient(ctx, s.vim25); err == nil {
+	if pbmClient, err := pbm.NewClient(context.Background(), s.vim25); err == nil {
 		s.pbm = pbmClient
 	} else {
 		opts.Logger.WithError(err).Debug("PBM client creation failed (optional)")
