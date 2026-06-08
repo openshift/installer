@@ -102,6 +102,12 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 	}
 
+	if platform.IsWIFEnabled() && !platform.IsWIFBYO() {
+		if err := ProvisionWIF(ctx, in); err != nil {
+			return fmt.Errorf("failed to provision WIF resources: %w", err)
+		}
+	}
+
 	return nil
 }
 

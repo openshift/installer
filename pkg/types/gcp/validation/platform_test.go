@@ -242,6 +242,82 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "valid WIF BYO",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{
+					PoolID:     "my-wif-pool",
+					ProviderID: "my-oidc-provider",
+				},
+			},
+			credentialsMode: types.ManualCredentialsMode,
+			valid:           true,
+		},
+		{
+			name: "valid WIF installer-provisioned",
+			platform: &gcp.Platform{
+				Region:                     "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{},
+			},
+			credentialsMode: types.ManualCredentialsMode,
+			valid:           true,
+		},
+		{
+			name: "invalid WIF partial - only poolID",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{
+					PoolID: "my-wif-pool",
+				},
+			},
+			credentialsMode: types.ManualCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "invalid WIF partial - only providerID",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{
+					ProviderID: "my-oidc-provider",
+				},
+			},
+			credentialsMode: types.ManualCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "invalid WIF poolID format",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{
+					PoolID:     "AB",
+					ProviderID: "my-oidc-provider",
+				},
+			},
+			credentialsMode: types.ManualCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "invalid WIF poolID gcp- prefix",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{
+					PoolID:     "gcp-reserved-pool",
+					ProviderID: "my-oidc-provider",
+				},
+			},
+			credentialsMode: types.ManualCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "invalid WIF with non-Manual credentials mode",
+			platform: &gcp.Platform{
+				Region:                     "us-east1",
+				WorkloadIdentityFederation: &gcp.WorkloadIdentityFederation{},
+			},
+			credentialsMode: types.MintCredentialsMode,
+			valid:           false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -3,6 +3,7 @@ package manifests
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -14,6 +15,7 @@ import (
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
 
@@ -137,15 +139,27 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			},
 		}
 	case gcptypes.Name:
-		session, err := gcp.GetSession(ctx)
-		if err != nil {
-			return err
-		}
-		creds := session.Credentials.JSON
-		cloudCreds = cloudCredsSecretData{
-			GCP: &GCPCredsSecretData{
-				Base64encodeServiceAccount: base64.StdEncoding.EncodeToString(creds),
-			},
+		if installConfig.Config.GCP.IsWIFEnabled() {
+			externalAccountJSON, err := generateGCPExternalAccountJSON(ctx, installConfig, clusterID.InfraID)
+			if err != nil {
+				return err
+			}
+			cloudCreds = cloudCredsSecretData{
+				GCPWIF: &GCPWIFCredsSecretData{
+					Base64encodeExternalAccountJSON: base64.StdEncoding.EncodeToString(externalAccountJSON),
+				},
+			}
+		} else {
+			session, err := gcp.GetSession(ctx)
+			if err != nil {
+				return err
+			}
+			creds := session.Credentials.JSON
+			cloudCreds = cloudCredsSecretData{
+				GCP: &GCPCredsSecretData{
+					Base64encodeServiceAccount: base64.StdEncoding.EncodeToString(creds),
+				},
+			}
 		}
 	case ibmcloudtypes.Name:
 		client, err := ibmcloud.NewClient(installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
@@ -277,7 +291,11 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 
 	switch platform {
 	case awstypes.Name, openstacktypes.Name, powervctypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ibmcloudtypes.Name, ovirttypes.Name:
-		if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
+		skipCloudCreds := installConfig.Config.CredentialsMode == types.ManualCredentialsMode
+		if installConfig.Config.Platform.GCP != nil && installConfig.Config.GCP.IsWIFEnabled() {
+			skipCloudCreds = false
+		}
+		if !skipCloudCreds {
 			assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		}
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
@@ -341,4 +359,59 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 
 	asset.SortFiles(o.FileList)
 	return len(o.FileList) > 0, nil
+}
+
+func generateGCPExternalAccountJSON(ctx context.Context, ic *installconfig.InstallConfig, infraID string) ([]byte, error) {
+	projectID := ic.Config.GCP.ProjectID
+	wif := ic.Config.GCP.WorkloadIdentityFederation
+
+	poolID := wif.PoolID
+	providerID := wif.ProviderID
+	if poolID == "" {
+		poolID = fmt.Sprintf("%s-wif-pool", infraID)
+	}
+	if providerID == "" {
+		providerID = fmt.Sprintf("%s-oidc-provider", infraID)
+	}
+
+	opts := []option.ClientOption{}
+	if gcptypes.ShouldUseEndpointForInstaller(ic.Config.GCP.Endpoint) {
+		opts = append(opts, gcp.CreateEndpointOption(ic.Config.GCP.Endpoint.Name, gcp.ServiceNameGCPCloudResource))
+	}
+	crmSvc, err := gcp.GetCloudResourceService(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource manager service: %w", err)
+	}
+
+	project, err := crmSvc.Projects.Get(fmt.Sprintf("projects/%s", projectID)).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get project number for %s: %w", projectID, err)
+	}
+	projectNumber := ""
+	if len(project.Name) > 9 {
+		projectNumber = project.Name[9:]
+	}
+	if projectNumber == "" {
+		return nil, fmt.Errorf("unexpected project name format: %s", project.Name)
+	}
+
+	audience := fmt.Sprintf(
+		"//iam.googleapis.com/projects/%s/locations/global/workloadIdentityPools/%s/providers/%s",
+		projectNumber, poolID, providerID,
+	)
+
+	externalAccount := map[string]any{
+		"type":               "external_account",
+		"audience":           audience,
+		"subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+		"token_url":          "https://sts.googleapis.com/v1/token",
+		"credential_source": map[string]any{
+			"file": "/var/run/secrets/openshift/serviceaccount/token",
+			"format": map[string]string{
+				"type": "text",
+			},
+		},
+	}
+
+	return json.Marshal(externalAccount)
 }

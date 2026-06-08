@@ -98,6 +98,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			c.CredentialsMode = types.ManualCredentialsMode
 		} else if c.Platform.PowerVS != nil {
 			c.CredentialsMode = types.ManualCredentialsMode
+		} else if c.Platform.GCP != nil && c.Platform.GCP.IsWIFEnabled() {
+			c.CredentialsMode = types.ManualCredentialsMode
 		}
 	}
 

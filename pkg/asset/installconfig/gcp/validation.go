@@ -71,6 +71,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateServiceEndpointOverride(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateWIFProvider(client, ic)...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("gcp").Child("userTags"), ic.Platform.GCP.UserTags, err.Error()))
@@ -731,6 +732,43 @@ func ValidateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList
 		errMsg := "Manual credentials mode needs to be enabled to use environmental authentication"
 		return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
 	}
+
+	if ic.GCP.IsWIFEnabled() && ic.CredentialsMode != types.ManualCredentialsMode {
+		errMsg := "workload identity federation requires Manual credentials mode"
+		return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
+	}
+
+	return allErrs
+}
+
+func validateWIFProvider(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !ic.GCP.IsWIFBYO() {
+		return allErrs
+	}
+
+	fldPath := field.NewPath("platform").Child("gcp").Child("workloadIdentityFederation")
+	wif := ic.GCP.WorkloadIdentityFederation
+
+	provider, err := client.GetWIFProvider(context.TODO(), ic.GCP.ProjectID, wif.PoolID, wif.ProviderID)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, wif.ProviderID,
+			fmt.Sprintf("failed to get WIF provider: %v", err)))
+	}
+
+	if provider.State != "ACTIVE" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("providerID"), wif.ProviderID,
+			fmt.Sprintf("WIF provider is not active (state: %s)", provider.State)))
+	}
+
+	if provider.Oidc == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("providerID"), wif.ProviderID,
+			"WIF provider does not have an OIDC configuration"))
+	} else if provider.Oidc.IssuerUri == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("providerID"), wif.ProviderID,
+			"WIF provider OIDC issuer URI is empty"))
+	}
+
 	return allErrs
 }
 
