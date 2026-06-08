@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func (o *ClusterUninstaller) listWIFProviders(ctx context.Context) ([]cloudResource, error) {
@@ -46,7 +44,7 @@ func (o *ClusterUninstaller) deleteWIFProvider(ctx context.Context, item cloudRe
 
 	op, err := o.iamSvc.Projects.Locations.WorkloadIdentityPools.Providers.Delete(item.name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		return errors.Wrapf(err, "failed to delete WIF provider %s", item.name)
+		return fmt.Errorf("failed to delete WIF provider %s: %w", item.name, err)
 	}
 	if op != nil && !op.Done {
 		o.Logger.Debugf("Waiting for WIF provider deletion: %s", op.Name)
@@ -71,7 +69,7 @@ func (o *ClusterUninstaller) destroyWIFProviders(ctx context.Context) error {
 		}
 	}
 	if items = o.getPendingItems("wifprovider"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }
@@ -115,7 +113,7 @@ func (o *ClusterUninstaller) deleteWIFPool(ctx context.Context, item cloudResour
 
 	op, err := o.iamSvc.Projects.Locations.WorkloadIdentityPools.Delete(item.name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		return errors.Wrapf(err, "failed to delete WIF pool %s", item.name)
+		return fmt.Errorf("failed to delete WIF pool %s: %w", item.name, err)
 	}
 	if op != nil && !op.Done {
 		o.Logger.Debugf("Waiting for WIF pool deletion: %s", op.Name)
@@ -140,7 +138,7 @@ func (o *ClusterUninstaller) destroyWIFPools(ctx context.Context) error {
 		}
 	}
 	if items = o.getPendingItems("wifpool"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }
