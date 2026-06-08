@@ -41,9 +41,8 @@ type nmStateInterface struct {
 // AgentHosts generates the hosts information from the AgentConfig and
 // OptionalInstallConfig assets.
 type AgentHosts struct {
-	Hosts                []agent.Host
-	rendezvousIP         string
-	hostsFromAgentConfig bool
+	Hosts        []agent.Host
+	rendezvousIP string
 }
 
 // Name returns a human friendly name.
@@ -75,8 +74,10 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 			a.rendezvousIP = agentConfig.Config.RendezvousIP
 			a.Hosts = append(a.Hosts, agentConfig.Config.Hosts...)
 			if len(a.Hosts) > 0 {
-				a.hostsFromAgentConfig = true
 				logrus.Debugf("Using hosts from %s", agentConfigFilename)
+				for _, host := range a.Hosts {
+					warnInterfaceNamesNotInNetworkConfig(host)
+				}
 			}
 		}
 
@@ -93,10 +94,8 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
-		if len(a.Hosts) > 0 {
-			// nodes-config.yaml hosts are user-authored like agent-config.yaml hosts,
-			// unlike install-config hosts which have code-generated interface names.
-			a.hostsFromAgentConfig = true
+		for _, host := range a.Hosts {
+			warnInterfaceNamesNotInNetworkConfig(host)
 		}
 
 	default:
@@ -130,8 +129,6 @@ func (a *AgentHosts) validateAgentHosts() field.ErrorList {
 		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
 			allErrs = append(allErrs, err...)
 		}
-
-		a.warnInterfaceNamesNotInNetworkConfig(host)
 
 		if err := a.validateHostRootDeviceHints(hostPath, host); err != nil {
 			allErrs = append(allErrs, err...)
@@ -179,10 +176,7 @@ func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Hos
 	return allErrs
 }
 
-func (a *AgentHosts) warnInterfaceNamesNotInNetworkConfig(host agent.Host) {
-	if !a.hostsFromAgentConfig {
-		return
-	}
+func warnInterfaceNamesNotInNetworkConfig(host agent.Host) {
 	if len(host.NetworkConfig.Raw) == 0 || len(host.Interfaces) == 0 {
 		return
 	}
