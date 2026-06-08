@@ -124,7 +124,7 @@ func IsUnauthorized(err error) bool {
 	}
 
 	if grpcCode := status.Code(errors.Cause(err)); grpcCode != codes.OK {
-		return grpcCode == codes.PermissionDenied
+		return grpcCode == codes.PermissionDenied || grpcCode == codes.Unauthenticated
 	}
 	return false
 }
