@@ -51,7 +51,23 @@ func OIDCIssuerURL(infraID string) string {
 }
 
 // ProvisionWIF creates WIF infrastructure for installer-provisioned mode.
+// Requires a user-provided bound SA signing key for JWKS generation.
 func ProvisionWIF(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	if in.BoundSASigningKey == nil || len(in.BoundSASigningKey.Files()) == 0 {
+		return fmt.Errorf("bound service account signing key is required for WIF provisioning; provide bound-service-account-signing-key.key in the asset directory")
+	}
+
+	var publicKeyPEM []byte
+	for _, f := range in.BoundSASigningKey.Files() {
+		if f.Filename == "tls/bound-service-account-signing-key.pub" {
+			publicKeyPEM = f.Data
+			break
+		}
+	}
+	if len(publicKeyPEM) == 0 {
+		return fmt.Errorf("failed to find bound SA signing public key")
+	}
+
 	platform := in.InstallConfig.Config.Platform.GCP
 	projectID := platform.ProjectID
 	infraID := in.InfraID
@@ -96,7 +112,7 @@ func ProvisionWIF(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	}
 
 	logrus.Infof("Creating OIDC discovery bucket %s", OIDCBucketName(infraID))
-	if err := createOIDCBucket(ctx, storageClient, projectID, region, infraID, issuerURL); err != nil {
+	if err := createOIDCBucket(ctx, storageClient, projectID, region, infraID, issuerURL, publicKeyPEM); err != nil {
 		return fmt.Errorf("failed to create OIDC bucket: %w", err)
 	}
 
@@ -185,7 +201,7 @@ func createWorkloadIdentityPool(ctx context.Context, iamSvc *iam.Service, projec
 	return waitForIAMOperation(ctx, iamSvc, op.Name)
 }
 
-func createOIDCBucket(ctx context.Context, storageClient *storage.Client, projectID, region, infraID, issuerURL string) error {
+func createOIDCBucket(ctx context.Context, storageClient *storage.Client, projectID, region, infraID, issuerURL string, publicKeyPEM []byte) error {
 	bucketName := OIDCBucketName(infraID)
 	bucket := storageClient.Bucket(bucketName)
 
@@ -214,6 +230,20 @@ func createOIDCBucket(ctx context.Context, storageClient *storage.Client, projec
 	}
 	if err := wtr.Close(); err != nil {
 		return fmt.Errorf("failed to close OIDC discovery doc writer: %w", err)
+	}
+
+	jwksData, err := GenerateJWKS(publicKeyPEM)
+	if err != nil {
+		return fmt.Errorf("failed to generate JWKS: %w", err)
+	}
+
+	jwksWriter := bucket.Object("keys.json").NewWriter(ctx)
+	jwksWriter.ContentType = "application/json"
+	if _, err := jwksWriter.Write(jwksData); err != nil {
+		return fmt.Errorf("failed to write JWKS: %w", err)
+	}
+	if err := jwksWriter.Close(); err != nil {
+		return fmt.Errorf("failed to close JWKS writer: %w", err)
 	}
 
 	return nil
