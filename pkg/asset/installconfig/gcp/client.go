@@ -802,7 +802,11 @@ func (c *Client) GetWIFProvider(ctx context.Context, project, poolID, providerID
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	iamSvc, err := GetIAMService(ctx)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPIAM))
+	}
+	iamSvc, err := GetIAMService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create IAM service: %w", err)
 	}

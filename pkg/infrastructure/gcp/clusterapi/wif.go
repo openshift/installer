@@ -8,14 +8,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
 	"slices"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/sirupsen/logrus"
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -117,7 +120,7 @@ func ProvisionWIF(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	}
 
 	logrus.Infof("Creating OIDC provider %s", providerName)
-	if err := createOIDCProvider(ctx, iamSvc, projectID, infraID, poolName, providerName, issuerURL); err != nil {
+	if err := createOIDCProvider(ctx, iamSvc, projectID, projectNumber, infraID, poolName, providerName, issuerURL); err != nil {
 		return fmt.Errorf("failed to create OIDC provider: %w", err)
 	}
 
@@ -195,6 +198,10 @@ func createWorkloadIdentityPool(ctx context.Context, iamSvc *iam.Service, projec
 	op, err := iamSvc.Projects.Locations.WorkloadIdentityPools.Create(parent, pool).
 		WorkloadIdentityPoolId(poolName).Context(ctx).Do()
 	if err != nil {
+		if isAlreadyExists(err) {
+			logrus.Debugf("WIF pool %s already exists, continuing", poolName)
+			return nil
+		}
 		return fmt.Errorf("failed to create WIF pool: %w", err)
 	}
 
@@ -249,12 +256,12 @@ func createOIDCBucket(ctx context.Context, storageClient *storage.Client, projec
 	return nil
 }
 
-func createOIDCProvider(ctx context.Context, iamSvc *iam.Service, projectID, infraID, poolName, providerName, issuerURL string) error {
+func createOIDCProvider(ctx context.Context, iamSvc *iam.Service, projectID, projectNumber, infraID, poolName, providerName, issuerURL string) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	parent := fmt.Sprintf("projects/%s/locations/global/workloadIdentityPools/%s", projectID, poolName)
-	audience := fmt.Sprintf("//iam.googleapis.com/%s/providers/%s", parent, providerName)
+	audience := BuildAudienceURI(projectNumber, poolName, providerName)
 
 	provider := &iam.WorkloadIdentityPoolProvider{
 		DisplayName: fmt.Sprintf("%s OIDC Provider", infraID),
@@ -271,6 +278,10 @@ func createOIDCProvider(ctx context.Context, iamSvc *iam.Service, projectID, inf
 	op, err := iamSvc.Projects.Locations.WorkloadIdentityPools.Providers.Create(parent, provider).
 		WorkloadIdentityPoolProviderId(providerName).Context(ctx).Do()
 	if err != nil {
+		if isAlreadyExists(err) {
+			logrus.Debugf("OIDC provider %s already exists, continuing", providerName)
+			return nil
+		}
 		return fmt.Errorf("failed to create OIDC provider: %w", err)
 	}
 
@@ -408,6 +419,11 @@ func GenerateJWKS(publicKeyPEM []byte) ([]byte, error) {
 	}
 
 	return json.Marshal(jwks)
+}
+
+func isAlreadyExists(err error) bool {
+	var ae *googleapi.Error
+	return errors.As(err, &ae) && ae.Code == http.StatusConflict
 }
 
 // BuildAudienceURI constructs the WIF audience URI from project number, pool ID, and provider ID.

@@ -752,8 +752,11 @@ func validateWIFProvider(client API, ic *types.InstallConfig) field.ErrorList {
 
 	provider, err := client.GetWIFProvider(context.TODO(), ic.GCP.ProjectID, wif.PoolID, wif.ProviderID)
 	if err != nil {
-		return append(allErrs, field.Invalid(fldPath, wif.ProviderID,
-			fmt.Sprintf("failed to get WIF provider: %v", err)))
+		var ae *googleapi.Error
+		if errors.As(err, &ae) && ae.Code == 404 {
+			return append(allErrs, field.NotFound(fldPath.Child("providerID"), wif.ProviderID))
+		}
+		return append(allErrs, field.InternalError(fldPath.Child("providerID"), err))
 	}
 
 	if provider.State != "ACTIVE" {

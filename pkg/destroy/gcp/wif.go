@@ -47,7 +47,8 @@ func (o *ClusterUninstaller) deleteWIFProvider(ctx context.Context, item cloudRe
 		return fmt.Errorf("failed to delete WIF provider %s: %w", item.name, err)
 	}
 	if op != nil && !op.Done {
-		o.Logger.Debugf("Waiting for WIF provider deletion: %s", op.Name)
+		o.Logger.Debugf("WIF provider deletion in progress: %s", op.Name)
+		return fmt.Errorf("WIF provider %s deletion still in progress", item.name)
 	}
 	o.deletePendingItems(item.typeName, []cloudResource{item})
 	o.Logger.Infof("Deleted WIF provider %s", item.name)
@@ -116,7 +117,8 @@ func (o *ClusterUninstaller) deleteWIFPool(ctx context.Context, item cloudResour
 		return fmt.Errorf("failed to delete WIF pool %s: %w", item.name, err)
 	}
 	if op != nil && !op.Done {
-		o.Logger.Debugf("Waiting for WIF pool deletion: %s", op.Name)
+		o.Logger.Debugf("WIF pool deletion in progress: %s", op.Name)
+		return fmt.Errorf("WIF pool %s deletion still in progress", item.name)
 	}
 	o.deletePendingItems(item.typeName, []cloudResource{item})
 	o.Logger.Infof("Deleted WIF pool %s", item.name)
