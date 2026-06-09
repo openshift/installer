@@ -14,8 +14,6 @@ import (
 //	ModTime() time.Time // modification time
 //	IsDir() bool        // abbreviation for Mode().IsDir()
 //	Sys() interface{}   // underlying data source (can return nil)
-//
-//nolint:structcheck // we are willing to leave unused elements here so that we can know their reference
 type finalizeFileInfo struct {
 	path              string
 	target            string

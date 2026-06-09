@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/diskfs/go-diskfs/util"
+	"github.com/diskfs/go-diskfs/backend"
 	uuid "github.com/google/uuid"
 )
 
@@ -147,7 +147,7 @@ func (p *Partition) GetStart() int64 {
 
 // WriteContents fills the partition with the contents provided
 // reads from beginning of reader to exactly size of partition in bytes
-func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, error) {
+func (p *Partition) WriteContents(f backend.WritableFile, contents io.Reader) (uint64, error) {
 	pss, lss := p.sectorSizes()
 	total := uint64(0)
 	// validate start/end/size
@@ -202,7 +202,7 @@ func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, erro
 
 // ReadContents reads the contents of the partition into a writer
 // streams the entire partition to the writer
-func (p *Partition) ReadContents(f util.File, out io.Writer) (int64, error) {
+func (p *Partition) ReadContents(f backend.File, out io.Writer) (int64, error) {
 	pss, _ := p.sectorSizes()
 	total := int64(0)
 	// chunks of physical sector size for efficient writing

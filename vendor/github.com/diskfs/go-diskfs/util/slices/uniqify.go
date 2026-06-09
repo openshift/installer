@@ -1,4 +1,4 @@
-package util
+package slices
 
 func Uniqify[T comparable](s []T) []T {
 	m := make(map[T]bool)

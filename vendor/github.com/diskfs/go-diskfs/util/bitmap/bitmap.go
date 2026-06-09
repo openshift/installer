@@ -1,4 +1,4 @@
-package util
+package bitmap
 
 import "fmt"
 
@@ -13,8 +13,8 @@ type Contiguous struct {
 	Count    int
 }
 
-// BitmapFromBytes create a bitmap struct from bytes
-func BitmapFromBytes(b []byte) *Bitmap {
+// FromBytes create a bitmap struct from bytes
+func FromBytes(b []byte) *Bitmap {
 	// just copy them over
 	bits := make([]byte, len(b))
 	copy(bits, b)
@@ -25,9 +25,9 @@ func BitmapFromBytes(b []byte) *Bitmap {
 	return &bm
 }
 
-// NewBitmap creates a new bitmap of size bytes; it is not in bits to force the caller to have
+// New creates a new bitmap of size bytes; it is not in bits to force the caller to have
 // a complete set
-func NewBitmap(bytes int) *Bitmap {
+func New(bytes int) *Bitmap {
 	bm := Bitmap{
 		bits: make([]byte, bytes),
 	}
