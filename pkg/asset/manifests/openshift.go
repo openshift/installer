@@ -400,7 +400,7 @@ func generateGCPExternalAccountJSON(ctx context.Context, ic *installconfig.Insta
 		projectNumber, poolID, providerID,
 	)
 
-	externalAccount := map[string]any{
+	externalAccount := map[string]any{ // #nosec G101 -- not a hardcoded credential, this is a credential type identifier
 		"type":               "external_account",
 		"audience":           audience,
 		"subject_token_type": "urn:ietf:params:oauth:token-type:jwt",

@@ -31,10 +31,13 @@ func TestBuildAudienceURI(t *testing.T) {
 
 func TestGenerateOIDCDiscoveryDoc(t *testing.T) {
 	issuerURL := "https://storage.googleapis.com/test-oidc"
-	doc := generateOIDCDiscoveryDoc(issuerURL)
+	doc, err := generateOIDCDiscoveryDoc(issuerURL)
+	if !assert.NoError(t, err) {
+		return
+	}
 
 	var parsed map[string]any
-	err := json.Unmarshal(doc, &parsed)
+	err = json.Unmarshal(doc, &parsed)
 	assert.NoError(t, err)
 
 	assert.Equal(t, issuerURL, parsed["issuer"])

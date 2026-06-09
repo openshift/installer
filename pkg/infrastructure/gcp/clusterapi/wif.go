@@ -229,7 +229,10 @@ func createOIDCBucket(ctx context.Context, storageClient *storage.Client, projec
 		return fmt.Errorf("failed to set OIDC bucket IAM policy: %w", err)
 	}
 
-	discoveryDoc := generateOIDCDiscoveryDoc(issuerURL)
+	discoveryDoc, err := generateOIDCDiscoveryDoc(issuerURL)
+	if err != nil {
+		return fmt.Errorf("failed to generate OIDC discovery doc: %w", err)
+	}
 	wtr := bucket.Object(".well-known/openid-configuration").NewWriter(ctx)
 	wtr.ContentType = "application/json"
 	if _, err := wtr.Write(discoveryDoc); err != nil {
@@ -368,7 +371,7 @@ func waitForIAMOperation(ctx context.Context, iamSvc *iam.Service, opName string
 	return nil
 }
 
-func generateOIDCDiscoveryDoc(issuerURL string) []byte {
+func generateOIDCDiscoveryDoc(issuerURL string) ([]byte, error) {
 	doc := map[string]any{
 		"issuer":                                issuerURL,
 		"jwks_uri":                              fmt.Sprintf("%s/keys.json", issuerURL),
@@ -376,8 +379,7 @@ func generateOIDCDiscoveryDoc(issuerURL string) []byte {
 		"subject_types_supported":               []string{"public"},
 		"id_token_signing_alg_values_supported": []string{"RS256"},
 	}
-	data, _ := json.MarshalIndent(doc, "", "  ")
-	return data
+	return json.MarshalIndent(doc, "", "  ")
 }
 
 // GenerateJWKS produces a JSON Web Key Set from an RSA public key PEM.
