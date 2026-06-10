@@ -7,6 +7,8 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	cloudconfig "github.com/openshift/library-go/pkg/cloudprovider/vsphere"
 )
@@ -22,8 +24,20 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 	}
 }
 
+// setNodes sets Nodes section in vsphere-cloud-provider config according passed VSpherePlatformNodeNetworking spec.
+func setNodes(cfg *cloudconfig.CPIConfig, nodeNetworking *configv1.VSpherePlatformNodeNetworking) {
+	cfg.Nodes.ExternalVMNetworkName = nodeNetworking.External.Network
+	cfg.Nodes.ExternalNetworkSubnetCIDR = strings.Join(nodeNetworking.External.NetworkSubnetCIDR, ",")
+	cfg.Nodes.ExcludeExternalNetworkSubnetCIDR = strings.Join(nodeNetworking.External.ExcludeNetworkSubnetCIDR, ",")
+
+	cfg.Nodes.InternalVMNetworkName = nodeNetworking.Internal.Network
+	cfg.Nodes.InternalNetworkSubnetCIDR = strings.Join(nodeNetworking.Internal.NetworkSubnetCIDR, ",")
+	cfg.Nodes.ExcludeInternalNetworkSubnetCIDR = strings.Join(nodeNetworking.Internal.ExcludeNetworkSubnetCIDR, ",")
+}
+
 // CloudProviderConfigYaml generates the yaml out of tree cloud provider config for the vSphere platform.
-func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, error) {
+func CloudProviderConfigYaml(infraID string, ic *installconfig.InstallConfig) (string, error) {
+	p := ic.Config.Platform.VSphere
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfig)
 
 	for _, vCenter := range p.VCenters {
@@ -41,20 +55,42 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 		vCenters[vCenter.Server] = &vCenterConfig
 	}
 
-	cloudProviderConfig := cloudconfig.CommonConfig{
+	cloudProviderConfig := cloudconfig.CPIConfig{CommonConfig: cloudconfig.CommonConfig{
 		Global: cloudconfig.Global{
 			SecretName:      "vsphere-creds", // #nosec G101 -- this is the name of a Kubernetes secret, not a credential
 			SecretNamespace: "kube-system",
 			InsecureFlag:    true,
 		},
 		Vcenter: vCenters,
-	}
+	}}
 
 	if len(p.FailureDomains) > 1 {
 		cloudProviderConfig.Labels = &cloudconfig.Labels{
 			Zone:   vspheretypes.TagCategoryZone,
 			Region: vspheretypes.TagCategoryRegion,
 		}
+	}
+
+	// Populate the nodes section with networking information mirroring the logic
+	// in GetInfraPlatformSpec. If nodeNetworking is explicitly set in the
+	// install-config, use it directly; otherwise fall back to the machine
+	// network CIDRs (which should encompass the VIPs).
+	if p.NodeNetworking != nil {
+		setNodes(&cloudProviderConfig, p.NodeNetworking)
+	} else {
+		var cidrs []string
+		for _, machineNetwork := range ic.Config.MachineNetwork {
+			cidrs = append(cidrs, machineNetwork.CIDR.String())
+		}
+		nodeNetworking := &configv1.VSpherePlatformNodeNetworking{
+			External: configv1.VSpherePlatformNodeNetworkingSpec{
+				NetworkSubnetCIDR: cidrs,
+			},
+			Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+				NetworkSubnetCIDR: cidrs,
+			},
+		}
+		setNodes(&cloudProviderConfig, nodeNetworking)
 	}
 
 	cloudProviderConfigYaml, err := yaml.Marshal(cloudProviderConfig)
