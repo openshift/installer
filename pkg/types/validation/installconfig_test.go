@@ -857,6 +857,19 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^compute\[1\]\.name: Duplicate value: "worker"$`,
 		},
 		{
+			name: "edge compute with cluster api",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = append(c.Compute, func() types.MachinePool {
+					p := *validMachinePool("edge")
+					p.Management = types.ClusterAPI
+					return p
+				}())
+				return c
+			}(),
+			expectedError: `^compute\[1\]\.management: Invalid value: "ClusterAPI": edge compute pools cannot be managed by Cluster API$`,
+		},
+		{
 			name: "no compute replicas",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
