@@ -102,22 +102,21 @@ reviews:
       User-facing documentation. Ensure accuracy, check for broken links,
       and verify command examples actually work. Flag outdated platform
       references.
-
-tools:
-  golangci-lint:
-    enabled: true
-  shellcheck:
-    enabled: true
-  yamllint:
-    enabled: true
-  hadolint:
-    enabled: true
-  gitleaks:
-    enabled: true
-  semgrep:
-    enabled: true
-  checkov:
-    enabled: true
+  tools:
+    golangci-lint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    yamllint:
+      enabled: true
+    hadolint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    semgrep:
+      enabled: true
+    checkov:
+      enabled: true
 
 chat:
   auto_reply: true
