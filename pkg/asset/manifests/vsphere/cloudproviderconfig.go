@@ -41,16 +41,16 @@ func CloudProviderConfigYaml(infraID string, ic *installconfig.InstallConfig) (s
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfig)
 
 	for _, vCenter := range p.VCenters {
-		vCenterPort := int32(443)
-		if vCenter.Port != 0 {
-			vCenterPort = vCenter.Port
-		}
 		vCenterConfig := cloudconfig.VirtualCenterConfig{
 			VCenterIP:   vCenter.Server,
-			VCenterPort: uint(vCenterPort),
 			Datacenters: vCenter.Datacenters,
 			// We are setting this in global so lets remove from here
 			//InsecureFlag: true,
+		}
+		// Only set port if it is configured in the install-config.  infrastructure/cluster will do the same which results
+		// in the 3CMO not setting port if not configured in infrastructure/cluster.
+		if vCenter.Port != 0 {
+			vCenterConfig.VCenterPort = uint(vCenter.Port)
 		}
 		vCenters[vCenter.Server] = &vCenterConfig
 	}
