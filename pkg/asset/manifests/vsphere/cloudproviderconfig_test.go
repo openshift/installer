@@ -34,6 +34,26 @@ resourcepool-path = "/test-datacenter/host/cluster/Resources/test-resourcepool"
 
 `
 
+	// expectedIniConfigNoPort is the expected INI config when the vCenter port
+	// is not set (Port == 0). The port line and its trailing blank line must be
+	// absent from the VirtualCenter section.
+	expectedIniConfigNoPort = `[Global]
+secret-name = "vsphere-creds"
+secret-namespace = "kube-system"
+insecure-flag = "1"
+
+[VirtualCenter "test-vcenter"]
+datacenters = "test-datacenter,test-datacenter2"
+
+[Workspace]
+server = "test-vcenter"
+datacenter = "test-datacenter"
+default-datastore = "test-datastore"
+folder = "/test-datacenter/vm/test-folder"
+resourcepool-path = "/test-datacenter/host/cluster/Resources/test-resourcepool"
+
+`
+
 	expectIniLabelsSection = `[Labels]
 region = "openshift-region"
 zone = "openshift-zone"
@@ -58,6 +78,26 @@ vcenter:
     - test-datacenter
     - test-datacenter2
     port: 443
+    server: test-vcenter
+`
+
+	// expectedYamlConfigNoPort is used when the vCenter port is not set
+	// (Port == 0). The port field must be absent from the vcenter block.
+	expectedYamlConfigNoPort = `global:
+  insecureFlag: true
+  secretName: vsphere-creds
+  secretNamespace: kube-system
+labels:
+  region: openshift-region
+  zone: openshift-zone
+nodes:
+  externalNetworkSubnetCidr: 10.0.0.0/24
+  internalNetworkSubnetCidr: 10.0.0.0/24
+vcenter:
+  test-vcenter:
+    datacenters:
+    - test-datacenter
+    - test-datacenter2
     server: test-vcenter
 `
 
@@ -268,6 +308,30 @@ func TestCloudProviderConfig(t *testing.T) {
 			}(),
 			useYaml:             true,
 			expectedCloudConfig: expectedYamlConfigWithExplicitNodes,
+		},
+		{
+			// When Port is not set (zero value) the INI VirtualCenter section
+			// must not contain a port line.
+			name: "intree cloud provider config omits port when not configured",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenters[0].Port = 0
+				return p
+			}(),
+			cloudProviderFunc:   CloudProviderConfigIni,
+			expectedCloudConfig: expectedIniConfigNoPort + expectIniLabelsSection,
+		},
+		{
+			// When Port is not set (zero value) the YAML vcenter block must
+			// not contain a port field.
+			name: "outtree yaml cloud provider config omits port when not configured",
+			installConfig: func() *installconfig.InstallConfig {
+				p := validPlatform()
+				p.VCenters[0].Port = 0
+				return makeInstallConfig(p, "", "10.0.0.0/24")
+			}(),
+			useYaml:             true,
+			expectedCloudConfig: expectedYamlConfigNoPort,
 		},
 	}
 
