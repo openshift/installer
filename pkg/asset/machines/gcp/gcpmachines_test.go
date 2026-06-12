@@ -3,7 +3,6 @@ package gcp
 
 import (
 	"fmt"
-	"github.com/openshift/installer/pkg/rhcos"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -203,6 +203,7 @@ func getBaseGCPMachine() *capg.GCPMachine {
 			Name: "012345678-master-0",
 			Labels: map[string]string{
 				"cluster.x-k8s.io/control-plane": "",
+				types.OSStreamLabelKey:           string(rhcos.BuildDefaultOSImageStream()),
 			},
 		},
 		Spec: capg.GCPMachineSpec{
@@ -282,6 +283,7 @@ func getBaseCapiMachine() *capi.Machine {
 			Name: "012345678-master-0",
 			Labels: map[string]string{
 				"cluster.x-k8s.io/control-plane": "",
+				types.OSStreamLabelKey:           string(rhcos.BuildDefaultOSImageStream()),
 			},
 		},
 		Spec: capi.MachineSpec{

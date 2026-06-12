@@ -892,8 +892,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20260603130340-1ad2ac3eb53d h1:V5l//7MwowilGuUojdEf0VWvqd7iBe4J1U6W9Q7McD4=
-github.com/openshift/api v0.0.0-20260603130340-1ad2ac3eb53d/go.mod h1:pyVjK0nZ4sRs4fuQVQ4rubsJdahI1PB94LnQ8sGdvxo=
+github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6 h1:W8yZzA6a8zTNOq+pzUAKJmpZCyxP8rTjRaLC0aLap/8=
+github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6/go.mod h1:pyVjK0nZ4sRs4fuQVQ4rubsJdahI1PB94LnQ8sGdvxo=
 github.com/openshift/assisted-image-service v0.0.0-20260209112552-a5cb0f44ccc6 h1:Fboc+QTpkg6AlB+wwG/VmWicAah4aHPD1kg0S8fFzqc=
 github.com/openshift/assisted-image-service v0.0.0-20260209112552-a5cb0f44ccc6/go.mod h1:tvKT0hUiAOVZC+zgN0jYk7E0Tq1UTkh/IJaG8vQjviI=
 github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea h1:YhJ9iHKKT5ooAdVr8qq3BdudhTxP/WF0XYDT5gzi1ak=
