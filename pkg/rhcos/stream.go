@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version/versioninfo"
 )
 
 // GetDefaultOSImageStream returns the default OS image stream for the
@@ -20,7 +21,11 @@ func GetDefaultOSImageStream(_ *types.InstallConfig) types.OSImageStream {
 // build version's default FeatureSet, for callers that don't have an
 // install-config to read the FeatureSet from.
 func BuildDefaultOSImageStream() types.OSImageStream {
-	return types.OSImageStreamRHCOS9
+	versionInfo := versioninfo.GetInfo()
+	if versionInfo.Major < 5 {
+		return types.OSImageStreamRHCOS9
+	}
+	return types.OSImageStreamRHCOS10
 }
 
 func getStreamFileName(stream types.OSImageStream) string {
