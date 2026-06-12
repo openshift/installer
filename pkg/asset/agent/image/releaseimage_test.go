@@ -1,9 +1,12 @@
 package image
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/version"
 )
 
 func TestReleaseImageList(t *testing.T) {
@@ -41,7 +44,11 @@ func TestReleaseImageList(t *testing.T) {
 			name:     "CI-ephemeral",
 			pullSpec: "registry.build04.ci.openshift.org/ci-op-m7rfgytz/release@sha256:ebb203f24ee060d61bdb466696a9c20b3841f9929badf9b81fc99cbedc2a679e",
 			arch:     "x86_64",
-			result:   "[{\"openshift_version\":\"was not built correctly\",\"cpu_architecture\":\"x86_64\",\"cpu_architectures\":[\"x86_64\"],\"url\":\"registry.build04.ci.openshift.org/ci-op-m7rfgytz/release@sha256:ebb203f24ee060d61bdb466696a9c20b3841f9929badf9b81fc99cbedc2a679e\",\"version\":\"was not built correctly\"}]",
+			result: func() string {
+				v, err := version.Version()
+				assert.NoError(t, err)
+				return fmt.Sprintf("[{\"openshift_version\":\"%s\",\"cpu_architecture\":\"x86_64\",\"cpu_architectures\":[\"x86_64\"],\"url\":\"registry.build04.ci.openshift.org/ci-op-m7rfgytz/release@sha256:ebb203f24ee060d61bdb466696a9c20b3841f9929badf9b81fc99cbedc2a679e\",\"version\":\"%s\"}]", v, v)
+			}(),
 		},
 	}
 
