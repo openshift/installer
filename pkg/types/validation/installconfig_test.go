@@ -50,7 +50,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 		Publish:       types.ExternalPublishingStrategy,
-		OSImageStream: rhcos.DefaultOSImageStream,
+		OSImageStream: rhcos.BuildDefaultOSImageStream(),
 		Proxy: &types.Proxy{
 			HTTPProxy:  "http://user:password@127.0.0.1:8080",
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",

@@ -3,6 +3,7 @@ package gcp
 
 import (
 	"fmt"
+	"github.com/openshift/installer/pkg/rhcos"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -115,7 +116,7 @@ func Test_GenerateMachines(t *testing.T) {
 }
 
 func getBaseInstallConfig() *installconfig.InstallConfig {
-	return &installconfig.InstallConfig{
+	ic := &installconfig.InstallConfig{
 		AssetBase: installconfig.AssetBase{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
@@ -137,6 +138,8 @@ func getBaseInstallConfig() *installconfig.InstallConfig {
 			},
 		},
 	}
+	ic.Config.OSImageStream = rhcos.GetDefaultOSImageStream(ic.Config)
+	return ic
 }
 
 func getICWithLabels() *installconfig.InstallConfig {

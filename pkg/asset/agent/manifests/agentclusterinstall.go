@@ -400,7 +400,7 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			icOverrides.AdditionalTrustBundlePolicy = installConfig.Config.AdditionalTrustBundlePolicy
 		}
 
-		if installConfig.Config.OSImageStream != rhcos.DefaultOSImageStream && installConfig.Config.OSImageStream != "" {
+		if installConfig.Config.OSImageStream != rhcos.GetDefaultOSImageStream(installConfig.Config) {
 			icOverridden = true
 			icOverrides.OSImageStream = &installConfig.Config.OSImageStream
 		}

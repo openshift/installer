@@ -136,7 +136,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	}
 
 	if c.OSImageStream == "" {
-		c.OSImageStream = rhcos.DefaultOSImageStream
+		c.OSImageStream = rhcos.GetDefaultOSImageStream(c)
 	}
 
 	if c.AdditionalTrustBundlePolicy == "" {

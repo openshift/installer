@@ -126,26 +126,26 @@ func (m *AgentManifests) GetPullSecretData() string {
 // installConfigOverrides annotation, or returns the default if not present.
 func (m *AgentManifests) GetOSImageStream() types.OSImageStream {
 	if m.AgentClusterInstall == nil {
-		return rhcos.DefaultOSImageStream
+		return rhcos.BuildDefaultOSImageStream()
 	}
 
 	if m.AgentClusterInstall.Annotations == nil {
-		return rhcos.DefaultOSImageStream
+		return rhcos.BuildDefaultOSImageStream()
 	}
 
 	overridesJSON, ok := m.AgentClusterInstall.Annotations[installConfigOverrides]
 	if !ok {
-		return rhcos.DefaultOSImageStream
+		return rhcos.BuildDefaultOSImageStream()
 	}
 
 	var overrides agentClusterInstallInstallConfigOverrides
 	if err := json.Unmarshal([]byte(overridesJSON), &overrides); err != nil {
 		logrus.Debugf("Failed to parse installConfigOverrides: %v", err)
-		return rhcos.DefaultOSImageStream
+		return rhcos.BuildDefaultOSImageStream()
 	}
 
 	if overrides.OSImageStream == nil || *overrides.OSImageStream == "" {
-		return rhcos.DefaultOSImageStream
+		return rhcos.BuildDefaultOSImageStream()
 	}
 
 	return *overrides.OSImageStream

@@ -13,11 +13,12 @@ import (
 
 // printStreamJSON is the implementation of print-stream-json
 func printStreamJSON(cmd *cobra.Command, _ []string) error {
-	osImageStream := rhcos.DefaultOSImageStream
 	streamFlag, err := cmd.Flags().GetString("stream")
 	if err != nil {
 		return err
 	}
+
+	var osImageStream types.OSImageStream
 	if streamFlag != "" {
 		validStreams := types.OSImageStreamValues()
 		s := types.OSImageStream(streamFlag)
@@ -32,7 +33,10 @@ func printStreamJSON(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
 		}
 		osImageStream = s
+	} else {
+		osImageStream = rhcos.BuildDefaultOSImageStream()
 	}
+
 	streamData, err := rhcos.FetchRawCoreOSStream(context.Background(), osImageStream)
 	if err != nil {
 		return err

@@ -38,7 +38,7 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 		},
 		{
 			FeatureGateName: features.FeatureGateOSStreams,
-			Condition:       c.OSImageStream != rhcos.DefaultOSImageStream,
+			Condition:       c.OSImageStream != rhcos.GetDefaultOSImageStream(c),
 			Field:           field.NewPath("osImageStream"),
 		},
 		{
