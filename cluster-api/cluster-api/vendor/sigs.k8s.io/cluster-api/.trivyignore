@@ -1,0 +1,8 @@
+# CVE-2026-39883: opentelemetry-go BSD kenv command PATH hijacking
+# This vulnerability only affects BSD/Solaris platforms.
+# Cluster API runs on Linux containers, so this CVE is not exploitable.
+# The fix (otel/sdk v1.43.0) requires Go 1.25, which is not available on this release branch.
+# govulncheck confirms no vulnerable code path is reachable.
+CVE-2026-39883
+# CVE-2026-29181: Cluster API is not using the affected otel packages (verified via govulncheck)
+CVE-2026-29181

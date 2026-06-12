@@ -49,6 +49,7 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -69,12 +70,8 @@ import (
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/crdmigrator"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	expcontrollers "sigs.k8s.io/cluster-api/exp/controllers"
-	expipamwebhooks "sigs.k8s.io/cluster-api/exp/ipam/webhooks"
 	runtimecatalog "sigs.k8s.io/cluster-api/exp/runtime/catalog"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
-	runtimecontrollers "sigs.k8s.io/cluster-api/exp/runtime/controllers"
-	expwebhooks "sigs.k8s.io/cluster-api/exp/webhooks"
 	"sigs.k8s.io/cluster-api/feature"
 	addonsv1alpha3 "sigs.k8s.io/cluster-api/internal/api/addons/v1alpha3"
 	addonsv1alpha4 "sigs.k8s.io/cluster-api/internal/api/addons/v1alpha4"
@@ -543,13 +540,25 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 	var runtimeClient runtimeclient.Client
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
 		// This is the creation of the runtimeClient for the controllers, embedding a shared catalog and registry instance.
-		runtimeClient = internalruntimeclient.New(internalruntimeclient.Options{
+		var certWatcher *certwatcher.CertWatcher
+		runtimeClient, certWatcher, err = internalruntimeclient.New(internalruntimeclient.Options{
 			CertFile: runtimeExtensionCertFile,
 			KeyFile:  runtimeExtensionKeyFile,
 			Catalog:  catalog,
 			Registry: runtimeregistry.New(),
 			Client:   mgr.GetClient(),
 		})
+		if err != nil {
+			setupLog.Error(err, "Unable to create RuntimeSDK client")
+			os.Exit(1)
+		}
+		if certWatcher != nil {
+			// Note: certWatcher is managed by the manager to ensure that a certWatcher failure leads to a binary restart.
+			if err := mgr.Add(certWatcher); err != nil {
+				setupLog.Error(err, "Unable to add RuntimeSDK client cert-watcher to the manager")
+				os.Exit(1)
+			}
+		}
 	}
 
 	// Setup a separate cache without label selector for secrets, to be used
@@ -623,12 +632,13 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 	}
 
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
-		if err = (&runtimecontrollers.ExtensionConfigReconciler{
-			Client:           mgr.GetClient(),
-			APIReader:        mgr.GetAPIReader(),
-			RuntimeClient:    runtimeClient,
-			WatchFilterValue: watchFilterValue,
-		}).SetupWithManager(ctx, mgr, concurrency(extensionConfigConcurrency), partialSecretCache); err != nil {
+		if err = (&controllers.ExtensionConfigReconciler{
+			Client:             mgr.GetClient(),
+			APIReader:          mgr.GetAPIReader(),
+			RuntimeClient:      runtimeClient,
+			PartialSecretCache: partialSecretCache,
+			WatchFilterValue:   watchFilterValue,
+		}).SetupWithManager(ctx, mgr, concurrency(extensionConfigConcurrency)); err != nil {
 			setupLog.Error(err, "Unable to create controller", "controller", "ExtensionConfig")
 			os.Exit(1)
 		}
@@ -675,6 +685,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 		Client:                           mgr.GetClient(),
 		APIReader:                        mgr.GetAPIReader(),
 		ClusterCache:                     clusterCache,
+		RuntimeClient:                    runtimeClient,
 		WatchFilterValue:                 watchFilterValue,
 		RemoteConditionsGracePeriod:      remoteConditionsGracePeriod,
 		AdditionalSyncMachineLabels:      additionalSyncMachineLabelRegexes,
@@ -715,6 +726,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 	if err := (&controllers.MachineDeploymentReconciler{
 		Client:           mgr.GetClient(),
 		APIReader:        mgr.GetAPIReader(),
+		RuntimeClient:    runtimeClient,
 		WatchFilterValue: watchFilterValue,
 	}).SetupWithManager(ctx, mgr, concurrency(machineDeploymentConcurrency)); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "MachineDeployment")
@@ -722,7 +734,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 	}
 
 	if feature.Gates.Enabled(feature.MachinePool) {
-		if err := (&expcontrollers.MachinePoolReconciler{
+		if err := (&controllers.MachinePoolReconciler{
 			Client:           mgr.GetClient(),
 			APIReader:        mgr.GetAPIReader(),
 			ClusterCache:     clusterCache,
@@ -733,22 +745,20 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 		}
 	}
 
-	if feature.Gates.Enabled(feature.ClusterResourceSet) {
-		if err := (&controllers.ClusterResourceSetReconciler{
-			Client:           mgr.GetClient(),
-			ClusterCache:     clusterCache,
-			WatchFilterValue: watchFilterValue,
-		}).SetupWithManager(ctx, mgr, concurrency(clusterResourceSetConcurrency), partialSecretCache); err != nil {
-			setupLog.Error(err, "Unable to create controller", "controller", "ClusterResourceSet")
-			os.Exit(1)
-		}
-		if err := (&controllers.ClusterResourceSetBindingReconciler{
-			Client:           mgr.GetClient(),
-			WatchFilterValue: watchFilterValue,
-		}).SetupWithManager(ctx, mgr, concurrency(clusterResourceSetConcurrency)); err != nil {
-			setupLog.Error(err, "Unable to create controller", "controller", "ClusterResourceSetBinding")
-			os.Exit(1)
-		}
+	if err := (&controllers.ClusterResourceSetReconciler{
+		Client:           mgr.GetClient(),
+		ClusterCache:     clusterCache,
+		WatchFilterValue: watchFilterValue,
+	}).SetupWithManager(ctx, mgr, concurrency(clusterResourceSetConcurrency), partialSecretCache); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "ClusterResourceSet")
+		os.Exit(1)
+	}
+	if err := (&controllers.ClusterResourceSetBindingReconciler{
+		Client:           mgr.GetClient(),
+		WatchFilterValue: watchFilterValue,
+	}).SetupWithManager(ctx, mgr, concurrency(clusterResourceSetConcurrency)); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "ClusterResourceSetBinding")
+		os.Exit(1)
 	}
 
 	if err := (&controllers.MachineHealthCheckReconciler{
@@ -808,7 +818,7 @@ func setupWebhooks(ctx context.Context, mgr ctrl.Manager, clusterCacheReader web
 
 	// NOTE: MachinePool is behind MachinePool feature gate flag; the webhook
 	// is going to prevent creating or updating new objects in case the feature flag is disabled
-	if err := (&expwebhooks.MachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.MachinePool{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "MachinePool")
 		os.Exit(1)
 	}
@@ -838,14 +848,14 @@ func setupWebhooks(ctx context.Context, mgr ctrl.Manager, clusterCacheReader web
 		os.Exit(1)
 	}
 
-	if err := (&expipamwebhooks.IPAddress{
+	if err := (&webhooks.IPAddress{
 		// We are using GetAPIReader here to avoid caching all IPAddressClaims
 		Client: mgr.GetAPIReader(),
 	}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "IPAddress")
 		os.Exit(1)
 	}
-	if err := (&expipamwebhooks.IPAddressClaim{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.IPAddressClaim{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create webhook", "webhook", "IPAddressClaim")
 		os.Exit(1)
 	}

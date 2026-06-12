@@ -19,6 +19,7 @@ package machinedeployment
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,6 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -39,8 +39,14 @@ import (
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
+	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
+	"sigs.k8s.io/cluster-api/feature"
+	clientutil "sigs.k8s.io/cluster-api/internal/util/client"
+	capicontrollerutil "sigs.k8s.io/cluster-api/internal/util/controller"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/cache"
+	"sigs.k8s.io/cluster-api/util/collections"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/finalizers"
 	clog "sigs.k8s.io/cluster-api/util/log"
@@ -68,19 +74,25 @@ const machineDeploymentManagerName = "capi-machinedeployment"
 
 // Reconciler reconciles a MachineDeployment object.
 type Reconciler struct {
-	Client    client.Client
-	APIReader client.Reader
+	Client        client.Client
+	APIReader     client.Reader
+	RuntimeClient runtimeclient.Client
 
 	// WatchFilterValue is the label value used to filter events prior to reconciliation.
 	WatchFilterValue string
 
 	recorder record.EventRecorder
 	ssaCache ssa.Cache
+
+	canUpdateMachineSetCache cache.Cache[CanUpdateMachineSetCacheEntry]
 }
 
 func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	if r.Client == nil || r.APIReader == nil {
 		return errors.New("Client and APIReader must not be nil")
+	}
+	if feature.Gates.Enabled(feature.InPlaceUpdates) && r.RuntimeClient == nil {
+		return errors.New("RuntimeClient must not be nil when InPlaceUpdates feature gate is enabled")
 	}
 
 	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "machinedeployment")
@@ -89,30 +101,27 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		return err
 	}
 
-	err = ctrl.NewControllerManagedBy(mgr).
+	err = capicontrollerutil.NewControllerManagedBy(mgr, predicateLog).
 		For(&clusterv1.MachineDeployment{}).
-		Owns(&clusterv1.MachineSet{}, builder.WithPredicates(predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog))).
+		Owns(&clusterv1.MachineSet{}).
 		// Watches enqueues MachineDeployment for corresponding MachineSet resources, if no managed controller reference (owner) exists.
 		Watches(
 			&clusterv1.MachineSet{},
 			handler.EnqueueRequestsFromMapFunc(r.MachineSetToDeployments),
-			builder.WithPredicates(predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog)),
 		).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, r.WatchFilterValue)).
 		Watches(
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(clusterToMachineDeployments),
-			builder.WithPredicates(predicates.All(mgr.GetScheme(), predicateLog,
-				predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog),
-				predicates.ClusterPausedTransitions(mgr.GetScheme(), predicateLog),
-			)),
+			predicates.ClusterPausedTransitions(mgr.GetScheme(), predicateLog),
 			// TODO: should this wait for Cluster.Status.InfrastructureReady similar to Infra Machine resources?
 		).Complete(r)
 	if err != nil {
 		return errors.Wrap(err, "failed setting up with a controller manager")
 	}
 
+	r.canUpdateMachineSetCache = cache.New[CanUpdateMachineSetCacheEntry](cache.HookCacheDefaultTTL)
 	r.recorder = mgr.GetEventRecorderFor("machinedeployment-controller")
 	r.ssaCache = ssa.NewCache("machinedeployment")
 	return nil
@@ -161,6 +170,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ct
 		cluster:           cluster,
 	}
 
+	// Get machines.
+	selectorMap, err := metav1.LabelSelectorAsMap(&s.machineDeployment.Spec.Selector)
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(err, "failed to convert label selector to a map")
+	}
+	machineList := &clusterv1.MachineList{}
+	if err := r.Client.List(ctx, machineList, client.InNamespace(s.machineDeployment.Namespace), client.MatchingLabels(selectorMap)); err != nil {
+		return ctrl.Result{}, errors.Wrap(err, "failed to list Machines")
+	}
+	s.machines = collections.FromMachineList(machineList)
+
 	defer func() {
 		if err := r.updateStatus(ctx, s); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
@@ -174,10 +194,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ct
 		}
 		if err := patchMachineDeployment(ctx, patchHelper, deployment, patchOpts...); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
-		}
-
-		if reterr != nil {
-			retres = ctrl.Result{}
 		}
 	}()
 
@@ -193,6 +209,7 @@ type scope struct {
 	machineDeployment                            *clusterv1.MachineDeployment
 	cluster                                      *clusterv1.Cluster
 	machineSets                                  []*clusterv1.MachineSet
+	machines                                     collections.Machines
 	bootstrapTemplateNotFound                    bool
 	bootstrapTemplateExists                      bool
 	infrastructureTemplateNotFound               bool
@@ -265,6 +282,18 @@ func (r *Reconciler) reconcile(ctx context.Context, s *scope) error {
 		return err
 	}
 
+	var anyManagedFieldIssueMitigated bool
+	for _, ms := range s.machineSets {
+		managedFieldIssueMitigated, err := ssa.MitigateManagedFieldsIssue(ctx, r.Client, ms, machineDeploymentManagerName)
+		if err != nil {
+			return err
+		}
+		anyManagedFieldIssueMitigated = anyManagedFieldIssueMitigated || managedFieldIssueMitigated
+	}
+	if anyManagedFieldIssueMitigated {
+		return nil // No requeue needed, changes will trigger another reconcile.
+	}
+
 	// If not already present, add a label specifying the MachineDeployment name to MachineSets.
 	// Ensure all required labels exist on the controlled MachineSets.
 	// This logic is needed to add the `cluster.x-k8s.io/deployment-name` label to MachineSets
@@ -286,34 +315,153 @@ func (r *Reconciler) reconcile(ctx context.Context, s *scope) error {
 		}
 	}
 
-	// Loop over all MachineSets and cleanup managed fields.
-	// We do this so that MachineSets that were created/patched before (< v1.4.0) the controller adopted
-	// Server-Side-Apply (SSA) can also work with SSA. Otherwise, fields would be co-owned by our "old" "manager" and
-	// "capi-machinedeployment" and then we would not be able to e.g. drop labels and annotations.
-	// Note: We are cleaning up managed fields for all MachineSets, so we're able to remove this code in a few
-	// Cluster API releases. If we do this only for selected MachineSets, we would have to keep this code forever.
-	for idx := range s.machineSets {
-		machineSet := s.machineSets[idx]
-		if err := ssa.CleanUpManagedFieldsForSSAAdoption(ctx, r.Client, machineSet, machineDeploymentManagerName); err != nil {
-			return errors.Wrapf(err, "failed to clean up managedFields of MachineSet %s", klog.KObj(machineSet))
-		}
-	}
-
 	templateExists := s.infrastructureTemplateExists && (!md.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() || s.bootstrapTemplateExists)
 
 	if ptr.Deref(md.Spec.Paused, false) {
-		return r.sync(ctx, md, s.machineSets, templateExists)
+		return r.sync(ctx, md, s.machineSets, s.machines, templateExists)
 	}
 
 	if md.Spec.Rollout.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
-		return r.rolloutRolling(ctx, md, s.machineSets, templateExists)
+		return r.rolloutRollingUpdate(ctx, md, s.machineSets, s.machines, templateExists)
 	}
 
 	if md.Spec.Rollout.Strategy.Type == clusterv1.OnDeleteMachineDeploymentStrategyType {
-		return r.rolloutOnDelete(ctx, md, s.machineSets, templateExists)
+		return r.rolloutOnDelete(ctx, md, s.machineSets, s.machines, templateExists)
 	}
 
 	return errors.Errorf("unexpected deployment strategy type: %s", md.Spec.Rollout.Strategy.Type)
+}
+
+// createOrUpdateMachineSetsAndSyncMachineDeploymentRevision applies changes identified by the rolloutPlanner to both newMS and oldMSs.
+// Note: Both newMS and oldMS include the full intent for the SSA apply call with mandatory labels,
+// in place propagated fields, the annotations derived from the MachineDeployment, revision annotations
+// and also annotations influencing how to perform scale up/down operations.
+// scaleIntents instead are handled separately in the rolloutPlanner and should be applied to MachineSets
+// before persisting changes.
+// Note: When the newMS has been created by the rollout planner, also wait for the cache to be up to date.
+func (r *Reconciler) createOrUpdateMachineSetsAndSyncMachineDeploymentRevision(ctx context.Context, p *rolloutPlanner) error {
+	log := ctrl.LoggerFrom(ctx)
+
+	// Note: newMS goes first so in the logs we will have first create/scale up newMS, then scale down oldMSs
+	allMSs := append([]*clusterv1.MachineSet{p.newMS}, p.oldMSs...)
+
+	// Get all the diff introduced by the rollout planner.
+	// Note: collect all the diff first, so for each change we can add an overview of all the MachineSets
+	// in the MachineDeployment, because those info are required to understand why a change happened.
+	machineSetsDiff := map[string]machineSetDiff{}
+	machineSetsSummary := map[string]string{}
+	for _, ms := range allMSs {
+		// Update spec.Replicas in the MachineSet.
+		if scaleIntent, ok := p.scaleIntents[ms.Name]; ok {
+			ms.Spec.Replicas = ptr.To(scaleIntent)
+		}
+
+		diff := p.getMachineSetDiff(ms)
+		machineSetsDiff[ms.Name] = diff
+		machineSetsSummary[ms.Name] = diff.Summary
+	}
+
+	// Apply changes to MachineSets.
+	for _, ms := range allMSs {
+		log := log.WithValues("MachineSet", klog.KObj(ms))
+		ctx := ctrl.LoggerInto(ctx, log)
+
+		// Retrieve the diff for the MachineSet.
+		// Note: no need to check for diff doesn't exist, all the diff have been computed right above.
+		diff := machineSetsDiff[ms.Name]
+
+		// Add to the log kv pairs providing the overview of all the MachineSets computed above.
+		// Note: This value should not be added to the context to prevent propagation to other func.
+		log = log.WithValues("machineSets", machineSetsSummary)
+
+		if diff.OriginalMS == nil {
+			// Create the MachineSet.
+			if err := ssa.Patch(ctx, r.Client, machineDeploymentManagerName, ms); err != nil {
+				r.recorder.Eventf(p.md, corev1.EventTypeWarning, "FailedCreate", "Failed to create MachineSet %s: %v", klog.KObj(ms), err)
+				return errors.Wrapf(err, "failed to create MachineSet %s", klog.KObj(ms))
+			}
+			if len(p.oldMSs) > 0 {
+				log.Info(fmt.Sprintf("MachineSets need rollout: %s", strings.Join(machineSetNames(p.oldMSs), ", ")), "reason", p.createReason)
+			}
+			log.Info(fmt.Sprintf("MachineSet %s created, it is now the current MachineSet", ms.Name))
+			if diff.DesiredReplicas > 0 {
+				log.Info(fmt.Sprintf("Scaled up current MachineSet %s from 0 to %d replicas (+%[2]d)", ms.Name, diff.DesiredReplicas))
+			}
+			r.recorder.Eventf(p.md, corev1.EventTypeNormal, "SuccessfulCreate", "Created MachineSet %s with %d replicas", klog.KObj(ms), diff.DesiredReplicas)
+
+			// Keep trying to get the MachineSet. This will force the cache to update and prevent any future reconciliation of
+			// the MachineDeployment to reconcile with an outdated list of MachineSets which could lead to unwanted creation of
+			// a duplicate MachineSet.
+			if err := clientutil.WaitForObjectsToBeAddedToTheCache(ctx, r.Client, "MachineSet creation", ms); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		// Add to the log kv pairs providing context and details about changes in this MachineSet (reason, diff)
+		// Note: Those values should not be added to the context to prevent propagation to other func.
+		statusToLogKeyAndValues := []any{
+			"reason", diff.Reason,
+			"diff", diff.OtherChanges,
+		}
+		if len(p.acknowledgedMachineNames) > 0 {
+			statusToLogKeyAndValues = append(statusToLogKeyAndValues, "acknowledgedMachines", sortAndJoin(p.acknowledgedMachineNames))
+		}
+		if len(p.updatingMachineNames) > 0 {
+			statusToLogKeyAndValues = append(statusToLogKeyAndValues, "updatingMachines", sortAndJoin(p.updatingMachineNames))
+		}
+		log = log.WithValues(statusToLogKeyAndValues...)
+
+		err := ssa.Patch(ctx, r.Client, machineDeploymentManagerName, ms, ssa.WithCachingProxy{Cache: r.ssaCache, Original: diff.OriginalMS})
+		if err != nil {
+			// Note: If we are Applying a MachineSet with UID set and the MachineSet does not exist anymore, the
+			// kube-apiserver returns a conflict error.
+			if (apierrors.IsConflict(err) || apierrors.IsNotFound(err)) && !ms.DeletionTimestamp.IsZero() {
+				continue
+			}
+			r.recorder.Eventf(p.md, corev1.EventTypeWarning, "FailedUpdate", "Failed to update MachineSet %s: %v", klog.KObj(ms), err)
+			return errors.Wrapf(err, "failed to update MachineSet %s", klog.KObj(ms))
+		}
+
+		if diff.DesiredReplicas < diff.OriginalReplicas {
+			log.Info(fmt.Sprintf("Scaled down %s MachineSet %s from %d to %d replicas (-%d)", diff.Type, ms.Name, diff.OriginalReplicas, diff.DesiredReplicas, diff.OriginalReplicas-diff.DesiredReplicas))
+			r.recorder.Eventf(p.md, corev1.EventTypeNormal, "SuccessfulScale", "Scaled down MachineSet %v: %d -> %d", ms.Name, diff.OriginalReplicas, diff.DesiredReplicas)
+		}
+		if diff.DesiredReplicas > diff.OriginalReplicas {
+			log.Info(fmt.Sprintf("Scaled up %s MachineSet %s from %d to %d replicas (+%d)", diff.Type, ms.Name, diff.OriginalReplicas, diff.DesiredReplicas, diff.DesiredReplicas-diff.OriginalReplicas))
+			r.recorder.Eventf(p.md, corev1.EventTypeNormal, "SuccessfulScale", "Scaled up MachineSet %v: %d -> %d", ms.Name, diff.OriginalReplicas, diff.DesiredReplicas)
+		}
+		if diff.DesiredReplicas == diff.OriginalReplicas && diff.OtherChanges != "" {
+			log.Info(fmt.Sprintf("Updated %s MachineSet %s", diff.Type, ms.Name))
+		}
+
+		// Only wait for cache if the object was changed.
+		if diff.OriginalMS.ResourceVersion != ms.ResourceVersion {
+			if err := clientutil.WaitForCacheToBeUpToDate(ctx, r.Client, "MachineSet update", ms); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Surface the revision annotation on the MD level
+	if p.md.Annotations == nil {
+		p.md.Annotations = make(map[string]string)
+	}
+	if p.md.Annotations[clusterv1.RevisionAnnotation] != p.revision {
+		p.md.Annotations[clusterv1.RevisionAnnotation] = p.revision
+	}
+
+	return nil
+}
+
+func machineSetNames(machineSets []*clusterv1.MachineSet) []string {
+	names := []string{}
+	for _, ms := range machineSets {
+		names = append(names, ms.Name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) error {
@@ -332,11 +480,11 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) error {
 	for _, ms := range s.machineSets {
 		if ms.DeletionTimestamp.IsZero() {
 			if err := r.Client.Delete(ctx, ms); err != nil && !apierrors.IsNotFound(err) {
-				return errors.Wrapf(err, "failed to delete MachineSet %s", klog.KObj(ms))
+				return errors.Wrapf(err, "failed to delete MachineSet %s (MachineDeployment deleting)", klog.KObj(ms))
 			}
 			// Note: We intentionally log after Delete because we want this log line to show up only after DeletionTimestamp has been set.
 			// Also, setting DeletionTimestamp doesn't mean the MachineSet is actually deleted (deletion takes some time).
-			log.Info("Deleting MachineSet (MachineDeployment deleted)", "MachineSet", klog.KObj(ms))
+			log.Info(fmt.Sprintf("MachineSet %s deleting (MachineDeployment deleting)", ms.Name), "MachineSet", klog.KObj(ms))
 		}
 	}
 
@@ -356,22 +504,20 @@ func (r *Reconciler) getAndAdoptMachineSetsForDeployment(ctx context.Context, s 
 		return err
 	}
 
+	selector, err := metav1.LabelSelectorAsSelector(&md.Spec.Selector)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get MachineSets: failed to compute label selector from MachineDeployment.spec.selector")
+	}
+
+	if selector.Empty() {
+		return errors.New("failed to get MachineSets: label selector computed from MachineDeployment.spec.selector is empty")
+	}
+
 	filtered := make([]*clusterv1.MachineSet, 0, len(machineSets.Items))
 	for idx := range machineSets.Items {
 		ms := &machineSets.Items[idx]
 		log := log.WithValues("MachineSet", klog.KObj(ms))
 		ctx := ctrl.LoggerInto(ctx, log)
-		selector, err := metav1.LabelSelectorAsSelector(&md.Spec.Selector)
-		if err != nil {
-			log.Error(err, "Skipping MachineSet, failed to get label selector from spec selector")
-			continue
-		}
-
-		// If a MachineDeployment with a nil or empty selector creeps in, it should match nothing, not everything.
-		if selector.Empty() {
-			log.Info("Skipping MachineSet as the selector is empty")
-			continue
-		}
 
 		// Skip this MachineSet unless either selector matches or it has a controller ref pointing to this MachineDeployment
 		if !selector.Matches(labels.Set(ms.Labels)) && !metav1.IsControlledBy(ms, md) {

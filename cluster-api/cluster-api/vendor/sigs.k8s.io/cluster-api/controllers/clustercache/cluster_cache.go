@@ -44,6 +44,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	capicontrollerutil "sigs.k8s.io/cluster-api/internal/util/controller"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -134,6 +135,10 @@ type ClusterCache interface {
 	// If there is no connection to the workload cluster ErrClusterNotConnected will be returned.
 	GetReader(ctx context.Context, cluster client.ObjectKey) (client.Reader, error)
 
+	// GetUncachedClient returns a live (uncached) client for the given cluster.
+	// If there is no connection to the workload cluster ErrClusterNotConnected will be returned.
+	GetUncachedClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
+
 	// GetRESTConfig returns a REST config for the given cluster.
 	// If there is no connection to the workload cluster ErrClusterNotConnected will be returned.
 	GetRESTConfig(ctx context.Context, cluster client.ObjectKey) (*rest.Config, error)
@@ -143,6 +148,9 @@ type ClusterCache interface {
 	// cert to communicate with etcd.
 	// This private key is stored and cached in the ClusterCache because it's expensive to generate a new
 	// private key in every single Reconcile.
+	//
+	// Deprecated: This method is deprecated and will be removed in a future release as caching a rsa.PrivateKey
+	// is outside the scope of the ClusterCache.
 	GetClientCertificatePrivateKey(ctx context.Context, cluster client.ObjectKey) (*rsa.PrivateKey, error)
 
 	// Watch watches a workload cluster for events.
@@ -321,7 +329,8 @@ func SetupWithManager(ctx context.Context, mgr manager.Manager, options Options,
 		cacheCtxCancel:        cacheCtxCancel,
 	}
 
-	err := ctrl.NewControllerManagedBy(mgr).
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "clustercache")
+	err := capicontrollerutil.NewControllerManagedBy(mgr, predicateLog).
 		Named("clustercache").
 		For(&clusterv1.Cluster{}).
 		WithOptions(controllerOptions).
@@ -390,6 +399,16 @@ func (cc *clusterCache) GetReader(ctx context.Context, cluster client.ObjectKey)
 		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting client reader")
 	}
 	return accessor.GetReader(ctx)
+}
+
+// GetUncachedClient returns a live (uncached) client for the given cluster.
+// If there is no connection to the workload cluster ErrClusterNotConnected will be returned.
+func (cc *clusterCache) GetUncachedClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error) {
+	accessor := cc.getClusterAccessor(cluster)
+	if accessor == nil {
+		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting uncached client")
+	}
+	return accessor.GetUncachedClient(ctx)
 }
 
 func (cc *clusterCache) GetRESTConfig(ctx context.Context, cluster client.ObjectKey) (*rest.Config, error) {
@@ -679,6 +698,12 @@ func shouldSendEvent(now, lastProbeSuccessTime, lastEventSentTime time.Time, did
 // This method should only be used for tests and is not part of the public ClusterCache interface.
 func (cc *clusterCache) SetConnectionCreationRetryInterval(interval time.Duration) {
 	cc.clusterAccessorConfig.ConnectionCreationRetryInterval = interval
+}
+
+// DisablePrivateKeyGeneration can be used to disable the creation of cluster cert private key on clusteraccessor.
+// This method should only be used for tests and is not part of the public ClusterCache interface.
+func (cc *clusterCache) DisablePrivateKeyGeneration() {
+	cc.clusterAccessorConfig.DisableClientCertificatePrivateKey = true
 }
 
 // Shutdown can be used to shut down the ClusterCache in unit tests.

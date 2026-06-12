@@ -55,10 +55,12 @@ import (
 	"sigs.k8s.io/cluster-api/exp/topology/scope"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/hooks"
+	capicontrollerutil "sigs.k8s.io/cluster-api/internal/util/controller"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/internal/webhooks"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
+	"sigs.k8s.io/cluster-api/util/cache"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -90,6 +92,8 @@ type Reconciler struct {
 	externalTracker external.ObjectTracker
 	recorder        record.EventRecorder
 
+	hookCache cache.Cache[cache.HookEntry]
+
 	// desiredStateGenerator is used to generate the desired state.
 	desiredStateGenerator desiredstate.Generator
 
@@ -106,13 +110,11 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	}
 
 	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "topology/cluster")
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	c, err := capicontrollerutil.NewControllerManagedBy(mgr, predicateLog).
 		For(&clusterv1.Cluster{}, builder.WithPredicates(
 			// Only reconcile Cluster with topology and with changes relevant for this controller.
-			predicates.All(mgr.GetScheme(), predicateLog,
-				predicates.ClusterHasTopology(mgr.GetScheme(), predicateLog),
-				clusterChangeIsRelevant(mgr.GetScheme(), predicateLog),
-			),
+			predicates.ClusterHasTopology(mgr.GetScheme(), predicateLog),
+			clusterChangeIsRelevant(mgr.GetScheme(), predicateLog),
 		)).
 		Named("topology/cluster").
 		WatchesRawSource(r.ClusterCache.GetClusterSource("topology/cluster", func(_ context.Context, o client.Object) []ctrl.Request {
@@ -121,26 +123,19 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		Watches(
 			&clusterv1.ClusterClass{},
 			handler.EnqueueRequestsFromMapFunc(r.clusterClassToCluster),
-			builder.WithPredicates(predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog)),
 		).
 		Watches(
 			&clusterv1.MachineDeployment{},
 			handler.EnqueueRequestsFromMapFunc(r.machineDeploymentToCluster),
 			// Only trigger Cluster reconciliation if the MachineDeployment is topology owned, the resource is changed, and the change is relevant.
-			builder.WithPredicates(predicates.All(mgr.GetScheme(), predicateLog,
-				predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog),
-				predicates.ResourceIsTopologyOwned(mgr.GetScheme(), predicateLog),
-				machineDeploymentChangeIsRelevant(mgr.GetScheme(), predicateLog),
-			)),
+			predicates.ResourceIsTopologyOwned(mgr.GetScheme(), predicateLog),
+			machineDeploymentChangeIsRelevant(mgr.GetScheme(), predicateLog),
 		).
 		Watches(
 			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(r.machinePoolToCluster),
 			// Only trigger Cluster reconciliation if the MachinePool is topology owned, the resource is changed.
-			builder.WithPredicates(predicates.All(mgr.GetScheme(), predicateLog,
-				predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog),
-				predicates.ResourceIsTopologyOwned(mgr.GetScheme(), predicateLog),
-			)),
+			predicates.ResourceIsTopologyOwned(mgr.GetScheme(), predicateLog),
 		).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, r.WatchFilterValue)).
@@ -156,7 +151,20 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		Scheme:          mgr.GetScheme(),
 		PredicateLogger: &predicateLog,
 	}
-	r.desiredStateGenerator = desiredstate.NewGenerator(r.Client, r.ClusterCache, r.RuntimeClient)
+	r.hookCache = cache.New[cache.HookEntry](cache.HookCacheDefaultTTL)
+	r.desiredStateGenerator, err = desiredstate.NewGenerator(
+		r.Client,
+		r.ClusterCache,
+		r.RuntimeClient,
+		r.hookCache,
+		// Note: We are using 10m so that we are able to relatively quickly pick up changes to the
+		// upgrade plan from the extension if necessary.
+		cache.New[desiredstate.GenerateUpgradePlanCacheEntry](10*time.Minute),
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed creating desired state generator")
+	}
+
 	r.recorder = mgr.GetEventRecorderFor("topology/cluster-controller")
 	r.ssaCache = ssa.NewCache("topology/cluster")
 	return nil
@@ -310,7 +318,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	// In case the object is deleted, the managed topology stops to reconcile;
 	// (the other controllers will take care of deletion).
 	if !cluster.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, cluster)
+		return r.reconcileDelete(ctx, s)
 	}
 
 	// Handle normal reconciliation loop.
@@ -377,6 +385,14 @@ func (r *Reconciler) reconcile(ctx context.Context, s *scope.Scope) (ctrl.Result
 		return ctrl.Result{}, errors.Wrap(err, "error creating dynamic watch")
 	}
 
+	anyManagedFieldIssueMitigated, err := r.mitigateManagedFieldsIssue(ctx, s)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if anyManagedFieldIssueMitigated {
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil // Explicitly requeue as we are not watching all objects.
+	}
+
 	// Computes the desired state of the Cluster and store it in the request scope.
 	s.Desired, err = r.desiredStateGenerator.Generate(ctx, s)
 	if err != nil {
@@ -404,10 +420,9 @@ func (r *Reconciler) setupDynamicWatches(ctx context.Context, s *scope.Scope) er
 		if err := r.externalTracker.Watch(ctrl.LoggerFrom(ctx), s.Current.InfrastructureCluster,
 			handler.EnqueueRequestForOwner(scheme, r.Client.RESTMapper(), &clusterv1.Cluster{}),
 			// Only trigger Cluster reconciliation if the InfrastructureCluster is topology owned.
-			predicates.All(scheme, *r.externalTracker.PredicateLogger,
-				predicates.ResourceIsChanged(scheme, *r.externalTracker.PredicateLogger),
-				predicates.ResourceIsTopologyOwned(scheme, *r.externalTracker.PredicateLogger),
-			)); err != nil {
+			predicates.ResourceIsChanged(scheme, *r.externalTracker.PredicateLogger),
+			predicates.ResourceIsTopologyOwned(scheme, *r.externalTracker.PredicateLogger),
+		); err != nil {
 			return errors.Wrap(err, "error watching Infrastructure CR")
 		}
 	}
@@ -415,10 +430,9 @@ func (r *Reconciler) setupDynamicWatches(ctx context.Context, s *scope.Scope) er
 		if err := r.externalTracker.Watch(ctrl.LoggerFrom(ctx), s.Current.ControlPlane.Object,
 			handler.EnqueueRequestForOwner(scheme, r.Client.RESTMapper(), &clusterv1.Cluster{}),
 			// Only trigger Cluster reconciliation if the ControlPlane is topology owned.
-			predicates.All(scheme, *r.externalTracker.PredicateLogger,
-				predicates.ResourceIsChanged(scheme, *r.externalTracker.PredicateLogger),
-				predicates.ResourceIsTopologyOwned(scheme, *r.externalTracker.PredicateLogger),
-			)); err != nil {
+			predicates.ResourceIsChanged(scheme, *r.externalTracker.PredicateLogger),
+			predicates.ResourceIsTopologyOwned(scheme, *r.externalTracker.PredicateLogger),
+		); err != nil {
 			return errors.Wrap(err, "error watching ControlPlane CR")
 		}
 	}
@@ -431,8 +445,25 @@ func (r *Reconciler) callBeforeClusterCreateHook(ctx context.Context, s *scope.S
 	log := ctrl.LoggerFrom(ctx)
 
 	if !s.Current.Cluster.Spec.InfrastructureRef.IsDefined() && !s.Current.Cluster.Spec.ControlPlaneRef.IsDefined() {
-		v1beta1Cluster := &clusterv1beta1.Cluster{}
+		// Return quickly if the hook is not defined.
+		extensionHandlers, err := r.RuntimeClient.GetAllExtensions(ctx, runtimehooksv1.BeforeClusterCreate, s.Current.Cluster)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if len(extensionHandlers) == 0 {
+			return ctrl.Result{}, nil
+		}
+
+		if cacheEntry, ok := r.hookCache.Has(cache.NewHookEntryKey(s.Current.Cluster, runtimehooksv1.BeforeClusterCreate)); ok {
+			if requeueAfter, requeue := cacheEntry.ShouldRequeue(time.Now()); requeue {
+				log.V(5).Info(fmt.Sprintf("Skip calling BeforeClusterCreate hook, retry after %s", requeueAfter))
+				s.HookResponseTracker.Add(runtimehooksv1.BeforeClusterCreate, cacheEntry.ToResponse(&runtimehooksv1.BeforeClusterCreateResponse{}, requeueAfter))
+				return ctrl.Result{RequeueAfter: requeueAfter}, nil
+			}
+		}
+
 		// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+		v1beta1Cluster := &clusterv1beta1.Cluster{}
 		if err := v1beta1Cluster.ConvertFrom(s.Current.Cluster.DeepCopy()); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
 		}
@@ -445,10 +476,14 @@ func (r *Reconciler) callBeforeClusterCreateHook(ctx context.Context, s *scope.S
 			return ctrl.Result{}, err
 		}
 		s.HookResponseTracker.Add(runtimehooksv1.BeforeClusterCreate, hookResponse)
+
 		if hookResponse.RetryAfterSeconds != 0 {
-			log.Info(fmt.Sprintf("Creation of Cluster topology is blocked by %s hook", runtimecatalog.HookName(runtimehooksv1.BeforeClusterCreate)))
+			r.hookCache.Add(cache.NewHookEntry(s.Current.Cluster, runtimehooksv1.BeforeClusterCreate, time.Now().Add(time.Duration(hookResponse.RetryAfterSeconds)*time.Second), hookResponse.GetMessage()))
+			log.Info(fmt.Sprintf("Creation of Cluster topology is blocked by %s hook, retry after %ds", runtimecatalog.HookName(runtimehooksv1.BeforeClusterCreate), hookResponse.RetryAfterSeconds))
 			return ctrl.Result{RequeueAfter: time.Duration(hookResponse.RetryAfterSeconds) * time.Second}, nil
 		}
+
+		log.Info(fmt.Sprintf("Creation of Cluster topology unblocked by %s hook", runtimecatalog.HookName(runtimehooksv1.BeforeClusterCreate)))
 	}
 	return ctrl.Result{}, nil
 }
@@ -519,12 +554,34 @@ func (r *Reconciler) machinePoolToCluster(_ context.Context, o client.Object) []
 	}}
 }
 
-func (r *Reconciler) reconcileDelete(ctx context.Context, cluster *clusterv1.Cluster) (ctrl.Result, error) {
+func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope.Scope) (ctrl.Result, error) {
+	cluster := s.Current.Cluster
+
 	// Call the BeforeClusterDelete hook if the 'ok-to-delete' annotation is not set
 	// and add the annotation to the cluster after receiving a successful non-blocking response.
 	log := ctrl.LoggerFrom(ctx)
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
 		if !hooks.IsOkToDelete(cluster) {
+			// Return quickly if the hook is not defined.
+			extensionHandlers, err := r.RuntimeClient.GetAllExtensions(ctx, runtimehooksv1.BeforeClusterDelete, s.Current.Cluster)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			if len(extensionHandlers) == 0 {
+				if err := hooks.MarkAsOkToDelete(ctx, r.Client, cluster, false); err != nil {
+					return ctrl.Result{}, err
+				}
+				return ctrl.Result{}, nil
+			}
+
+			if cacheEntry, ok := r.hookCache.Has(cache.NewHookEntryKey(s.Current.Cluster, runtimehooksv1.BeforeClusterDelete)); ok {
+				if requeueAfter, requeue := cacheEntry.ShouldRequeue(time.Now()); requeue {
+					log.V(5).Info(fmt.Sprintf("Skip calling BeforeClusterDelete hook, retry after %s", requeueAfter))
+					s.HookResponseTracker.Add(runtimehooksv1.BeforeClusterDelete, cacheEntry.ToResponse(&runtimehooksv1.BeforeClusterDeleteResponse{}, requeueAfter))
+					return ctrl.Result{RequeueAfter: requeueAfter}, nil
+				}
+			}
+
 			v1beta1Cluster := &clusterv1beta1.Cluster{}
 			// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
 			if err := v1beta1Cluster.ConvertFrom(cluster.DeepCopy()); err != nil {
@@ -538,15 +595,20 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, cluster *clusterv1.Clu
 			if err := r.RuntimeClient.CallAllExtensions(ctx, runtimehooksv1.BeforeClusterDelete, cluster, hookRequest, hookResponse); err != nil {
 				return ctrl.Result{}, err
 			}
+			// Add the response to the tracker so we can later update condition or requeue when required.
+			s.HookResponseTracker.Add(runtimehooksv1.BeforeClusterDelete, hookResponse)
+
 			if hookResponse.RetryAfterSeconds != 0 {
-				log.Info(fmt.Sprintf("Cluster deletion is blocked by %q hook", runtimecatalog.HookName(runtimehooksv1.BeforeClusterDelete)))
+				r.hookCache.Add(cache.NewHookEntry(s.Current.Cluster, runtimehooksv1.BeforeClusterDelete, time.Now().Add(time.Duration(hookResponse.RetryAfterSeconds)*time.Second), hookResponse.GetMessage()))
+				log.Info(fmt.Sprintf("Cluster deletion is blocked by %q hook, retry after %ds", runtimecatalog.HookName(runtimehooksv1.BeforeClusterDelete), hookResponse.RetryAfterSeconds))
 				return ctrl.Result{RequeueAfter: time.Duration(hookResponse.RetryAfterSeconds) * time.Second}, nil
 			}
 			// The BeforeClusterDelete hook returned a non-blocking response. Now the cluster is ready to be deleted.
 			// Lets mark the cluster as `ok-to-delete`
-			if err := hooks.MarkAsOkToDelete(ctx, r.Client, cluster); err != nil {
+			if err := hooks.MarkAsOkToDelete(ctx, r.Client, cluster, false); err != nil {
 				return ctrl.Result{}, err
 			}
+			log.Info(fmt.Sprintf("Cluster deletion is unblocked by %s hook", runtimecatalog.HookName(runtimehooksv1.BeforeClusterDelete)))
 		}
 	}
 	return ctrl.Result{}, nil

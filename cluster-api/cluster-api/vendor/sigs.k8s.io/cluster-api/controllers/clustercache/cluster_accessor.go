@@ -82,6 +82,10 @@ type clusterAccessorConfig struct {
 	// connection after creating a connection failed.
 	ConnectionCreationRetryInterval time.Duration
 
+	// DisableClientCertificatePrivateKey is the flag to disable the creation of the client
+	// certificate private key.
+	DisableClientCertificatePrivateKey bool
+
 	// Cache is the config used for the cache that the clusterAccessor creates.
 	Cache *clusterAccessorCacheConfig
 
@@ -191,6 +195,10 @@ type clusterAccessorLockedConnectionState struct {
 	// all typed objects except the ones for which caching has been disabled via DisableFor.
 	cachedClient client.Client
 
+	// uncachedClient to communicate with the workload cluster.
+	// It performs live GET/LIST calls directly against the API server with no caching.
+	uncachedClient client.Client
+
 	// cache is the cache used by the client.
 	// It manages informers that have been created e.g. by adding indexes to the cache,
 	// Get & List calls from the client or via the Watch method of the clusterAccessor.
@@ -280,7 +288,7 @@ func (ca *clusterAccessor) Connect(ctx context.Context) (retErr error) {
 	// Only generate the clientCertificatePrivateKey once as there is no need to regenerate it after disconnect/connect.
 	// Note: This has to be done before setting connection, because otherwise this code wouldn't be re-entrant if the
 	// private key generation fails because we check Connected above.
-	if ca.lockedState.clientCertificatePrivateKey == nil {
+	if ca.lockedState.clientCertificatePrivateKey == nil && !ca.config.DisableClientCertificatePrivateKey {
 		log.V(6).Info("Generating client certificate private key")
 		clientCertificatePrivateKey, err := certs.NewPrivateKey()
 		if err != nil {
@@ -297,11 +305,12 @@ func (ca *clusterAccessor) Connect(ctx context.Context) (retErr error) {
 		consecutiveFailures:  0,
 	}
 	ca.lockedState.connection = &clusterAccessorLockedConnectionState{
-		restConfig:   connection.RESTConfig,
-		restClient:   connection.RESTClient,
-		cachedClient: connection.CachedClient,
-		cache:        connection.Cache,
-		watches:      sets.Set[string]{},
+		restConfig:     connection.RESTConfig,
+		restClient:     connection.RESTClient,
+		cachedClient:   connection.CachedClient,
+		uncachedClient: connection.UncachedClient,
+		cache:          connection.Cache,
+		watches:        sets.Set[string]{},
 	}
 
 	return nil
@@ -405,6 +414,18 @@ func (ca *clusterAccessor) GetReader(ctx context.Context) (client.Reader, error)
 	}
 
 	return ca.lockedState.connection.cachedClient, nil
+}
+
+// GetUncachedClient returns a live (uncached) client for the given cluster.
+func (ca *clusterAccessor) GetUncachedClient(ctx context.Context) (client.Client, error) {
+	ca.rLock(ctx)
+	defer ca.rUnlock(ctx)
+
+	if ca.lockedState.connection == nil {
+		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting uncached client")
+	}
+
+	return ca.lockedState.connection.uncachedClient, nil
 }
 
 func (ca *clusterAccessor) GetRESTConfig(ctx context.Context) (*rest.Config, error) {
