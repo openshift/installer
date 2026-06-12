@@ -69,9 +69,9 @@ func Destroy(ctx context.Context, dir string) (err error) {
 		}
 	}
 
-	featureSets, ok := types.FeatureSetsForProfile()
-	if !ok {
-		return fmt.Errorf("no feature sets for cluster profile %q", types.GetClusterProfileName())
+	featureSets, err := types.FeatureSetsForProfile()
+	if err != nil {
+		return fmt.Errorf("no feature sets for cluster profile %q. %w", types.GetClusterProfileName(), err)
 	}
 	fg := featuregates.FeatureGateFromFeatureSets(featureSets, metadata.FeatureSet, metadata.CustomFeatureSet)
 

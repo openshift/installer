@@ -10,6 +10,8 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/version"
+	"github.com/openshift/installer/pkg/version/versioninfo"
 )
 
 // StringsToIPs is used to convert list of strings to list of IP addresses.
@@ -43,21 +45,21 @@ func MachineNetworksToCIDRs(nets []MachineNetworkEntry) []configv1.CIDR {
 	return res
 }
 
-// openshiftMajorVersion is the major version of OpenShift that this installer targets.
-// This is used when looking up feature sets from the API.
-const openshiftMajorVersion uint64 = 4
-
 // FeatureSetsForProfile returns the feature sets for the current cluster profile
 // and OpenShift major version.
-func FeatureSetsForProfile() (map[configv1.FeatureSet]*features.FeatureGateEnabledDisabled, bool) {
+func FeatureSetsForProfile() (map[configv1.FeatureSet]*features.FeatureGateEnabledDisabled, error) {
 	clusterProfile := GetClusterProfileName()
 	allSets := features.AllFeatureSets()
-	versionSets, ok := allSets[openshiftMajorVersion]
+	versionInfo := versioninfo.GetInfo()
+	versionSets, ok := allSets[uint64(versionInfo.Major)]
 	if !ok {
-		return nil, false
+		return nil, fmt.Errorf("no FeatureSet available for version %d", versionInfo.Major)
 	}
 	profileSets, ok := versionSets[clusterProfile]
-	return profileSets, ok
+	if !ok {
+		return nil, fmt.Errorf("no FeatureSet available for %s cluster profile", clusterProfile)
+	}
+	return profileSets, nil
 }
 
 // GetClusterProfileName utility method to retrieve the cluster profile setting.  This is used
@@ -102,4 +104,9 @@ func (c *InstallConfig) CreateAzureIdentity() bool {
 	cpNeedsID := cpID == nil || (cpID.Type == capz.VMIdentityUserAssigned && len(cpID.UserAssignedIdentities) == 0)
 
 	return defaultNeedsID && (computeNeedsID || cpNeedsID)
+}
+
+// DefaultArch returns the default release architecture.
+func DefaultArch() Architecture {
+	return Architecture(version.RawDefaultArch())
 }

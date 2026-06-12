@@ -1574,9 +1574,9 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	featureSets, ok := types.FeatureSetsForProfile()
-	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", types.GetClusterProfileName())
+	featureSets, err := types.FeatureSetsForProfile()
+	if err != nil {
+		logrus.Warnf("no feature sets for cluster profile %q. %s", types.GetClusterProfileName(), err)
 	}
 	if _, ok := featureSets[c.FeatureSet]; c.FeatureSet != configv1.CustomNoUpgrade && !ok {
 		sortedFeatureSets := func() []string {
@@ -1679,7 +1679,7 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 func validateReleaseArchitecture(controlPlanePool *types.MachinePool, computePool []types.MachinePool, releaseArch types.Architecture) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	clusterArch := version.DefaultArch()
+	clusterArch := types.DefaultArch()
 	if controlPlanePool != nil && controlPlanePool.Architecture != "" {
 		clusterArch = controlPlanePool.Architecture
 	}

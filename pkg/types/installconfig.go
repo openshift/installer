@@ -623,9 +623,9 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 		customFS = featuregates.GenerateCustomFeatures(c.FeatureGates)
 	}
 
-	featureSets, ok := FeatureSetsForProfile()
-	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", GetClusterProfileName())
+	featureSets, err := FeatureSetsForProfile()
+	if err != nil {
+		logrus.Warnf("no feature sets for cluster profile %q. %v", GetClusterProfileName(), err)
 	}
 	fg := featuregates.FeatureGateFromFeatureSets(featureSets, c.FeatureSet, customFS)
 

@@ -11,13 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/version"
 )
 
 // Platform collects AWS-specific configuration.
 func Platform(ctx context.Context) (*aws.Platform, error) {
-	architecture := version.DefaultArch()
+	architecture := types.DefaultArch()
 	regions, err := knownPublicRegions(architecture, rhcos.DefaultOSImageStream)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AWS public regions: %w", err)
