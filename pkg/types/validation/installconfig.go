@@ -25,7 +25,6 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
@@ -1805,19 +1804,14 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 
 func validateOSImageStream(config *types.InstallConfig) field.ErrorList {
 	errs := field.ErrorList{}
-	if config.IsSCOS() {
-		if config.OSImageStream != rhcos.DefaultOSImageStream {
-			errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
-		}
-		return errs
-	}
+	validStreams := types.OSImageStreamValues()
 
-	if !slices.Contains(types.OSImageStreamValues, config.OSImageStream) {
+	if !slices.Contains(validStreams, config.OSImageStream) {
 		errs = append(errs,
 			field.NotSupported(
 				field.NewPath("osImageStream"),
 				config.OSImageStream,
-				types.OSImageStreamValues))
+				validStreams))
 	}
 	return errs
 }

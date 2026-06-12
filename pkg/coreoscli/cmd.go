@@ -19,16 +19,17 @@ func printStreamJSON(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	if streamFlag != "" {
+		validStreams := types.OSImageStreamValues()
 		s := types.OSImageStream(streamFlag)
 		valid := false
-		for _, v := range types.OSImageStreamValues {
+		for _, v := range validStreams {
 			if s == v {
 				valid = true
 				break
 			}
 		}
 		if !valid {
-			return fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, types.OSImageStreamValues)
+			return fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
 		}
 		osImageStream = s
 	}
@@ -58,7 +59,7 @@ func NewCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		RunE:  printStreamJSON,
 	}
-	printStreamCmd.Flags().StringVar(&stream, "stream", "", fmt.Sprintf("OS image stream to use (one of %v)", types.OSImageStreamValues))
+	printStreamCmd.Flags().StringVar(&stream, "stream", "", fmt.Sprintf("OS image stream to use (one of %v)", types.OSImageStreamValues()))
 	cmd.AddCommand(printStreamCmd)
 
 	return cmd
