@@ -49,6 +49,9 @@ func FeatureGateFromFeatureSets(knownFeatureSets map[configv1.FeatureSet]*featur
 	}
 
 	featureSet := knownFeatureSets[fs]
+	if featureSet == nil {
+		return newFeatureGate(nil, nil)
+	}
 
 	completeEnabled, completeDisabled := completeFeatureGates(knownFeatureSets, toFeatureGateNames(featureSet.Enabled), toFeatureGateNames(featureSet.Disabled))
 	return newFeatureGate(completeEnabled, completeDisabled)
