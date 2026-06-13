@@ -82,7 +82,7 @@ func (i *BaseIso) Load(f asset.FileFetcher) (bool, error) {
 // Download the RHCOS base ISO via rhcos.json.
 func (i *BaseIso) downloadBaseIso(ctx context.Context, archName string) (string, error) {
 	// Use default OS image stream for image-based installer
-	metal, err := assetrhcos.GetMetalArtifact(ctx, archName, rhcos.DefaultOSImageStream)
+	metal, err := assetrhcos.GetMetalArtifact(ctx, archName, rhcos.BuildDefaultOSImageStream())
 	if err != nil {
 		return "", err
 	}

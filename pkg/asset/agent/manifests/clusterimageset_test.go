@@ -19,11 +19,15 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
+	"github.com/openshift/installer/pkg/version"
 )
 
 func TestClusterImageSet_Generate(t *testing.T) {
 	currentRelease, err := releaseimage.Default()
 	assert.NoError(t, err)
+	ver, err := version.Version()
+	assert.NoError(t, err)
+	clusterImageSetName := fmt.Sprintf("openshift-%s", ver)
 
 	cases := []struct {
 		name           string
@@ -47,7 +51,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 					APIVersion: "hive.openshift.io/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "openshift-was not built correctly",
+					Name: clusterImageSetName,
 				},
 				Spec: hivev1.ClusterImageSetSpec{
 					ReleaseImage: currentRelease,
@@ -80,7 +84,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 					APIVersion: "hive.openshift.io/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "openshift-was not built correctly",
+					Name:      clusterImageSetName,
 					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: hivev1.ClusterImageSetSpec{

@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
-	"github.com/openshift/installer/pkg/version"
 )
 
 // SetMachinePoolDefaults sets the defaults for the machine pool.
@@ -28,7 +27,7 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform, fgat
 		p.Hyperthreading = types.HyperthreadingEnabled
 	}
 	if p.Architecture == "" {
-		p.Architecture = version.DefaultArch()
+		p.Architecture = types.DefaultArch()
 	}
 
 	if p.Fencing != nil {

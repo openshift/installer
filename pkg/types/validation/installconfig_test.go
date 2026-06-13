@@ -50,7 +50,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 		Publish:       types.ExternalPublishingStrategy,
-		OSImageStream: rhcos.DefaultOSImageStream,
+		OSImageStream: rhcos.BuildDefaultOSImageStream(),
 		Proxy: &types.Proxy{
 			HTTPProxy:  "http://user:password@127.0.0.1:8080",
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
@@ -3055,25 +3055,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "the Ingress capability is required",
 		},
 		{
-			// Without the scos build tag, rhcos.DefaultOSImageStream
-			// is "rhel-9" rather than "centos-10", but the validation
-			// compares against the same constant so the logic is still
-			// tested correctly.
-			name: "valid SCOS OSImageStream default",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = configv1.TechPreviewNoUpgrade
-				return c
-			}(),
-			restoreFnFactory: func(config *types.InstallConfig) func() {
-				old := types.SCOS
-				types.SCOS = true
-				return func() {
-					types.SCOS = old
-				}
-			},
-		},
-		{
 			name: "invalid SCOS OSImageStream set",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -3081,7 +3062,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.OSImageStream = "rhel-10"
 				return c
 			}(),
-			expectedError: "OS Image Streams are only supported on OCP clusters using RHCOS",
+			expectedError: "osImageStream: Unsupported value: \"rhel-10\": supported values: \"centos-10\"",
 			restoreFnFactory: func(config *types.InstallConfig) func() {
 				old := types.SCOS
 				types.SCOS = true

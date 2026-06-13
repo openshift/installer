@@ -641,6 +641,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			releaseImage.PullSpec,
 			installConfig.Config.PullSecret,
 			types.BuildMirrorConfig(installConfig.Config),
+			installConfig.Config.OSImageStream,
 			installConfig.Config.Platform.BareMetal.ExternalBridge,
 			installConfig.Config.Platform.BareMetal.ExternalMACAddress,
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,

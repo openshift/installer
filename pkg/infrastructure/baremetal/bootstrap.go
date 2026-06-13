@@ -18,7 +18,6 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	assetrhcos "github.com/openshift/installer/pkg/asset/rhcos"
-	"github.com/openshift/installer/pkg/rhcos"
 )
 
 func newDomain(name string) libvirtxml.Domain {
@@ -172,14 +171,13 @@ func createStoragePool(virConn *libvirt.Libvirt, config baremetalConfig) (libvir
 }
 
 func getLiveISO(config baremetalConfig, arch string) (string, error) {
-	// Use default OS image stream for IPI bare metal workflow
 	fetcher := assetrhcos.NewBaseISOFetcher(
 		assetrhcos.NewReleasePayload(
 			assetrhcos.ExtractConfig{},
 			config.ReleaseImagePullSpec,
 			config.PullSecret,
 			config.MirrorConfig,
-		), rhcos.DefaultOSImageStream)
+		), config.OSImageStream)
 	return fetcher.GetBaseISOFilename(context.Background(), arch)
 }
 

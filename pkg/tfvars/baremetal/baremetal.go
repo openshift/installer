@@ -15,12 +15,13 @@ type Bridge struct {
 
 // Config represents the baremetal platform parts of install config needed for bootstrapping.
 type Config struct {
-	LibvirtURI           string             `json:"libvirt_uri,omitempty"`
-	FIPS                 bool               `json:"fips,omitempty"`
-	ReleaseImagePullSpec string             `json:"release_image,omitempty"`
-	PullSecret           string             `json:"pull_secret,omitempty"`
-	MirrorConfig         types.MirrorConfig `json:"mirror_config,omitempty"`
-	Bridges              []Bridge           `json:"bridges"`
+	LibvirtURI           string              `json:"libvirt_uri,omitempty"`
+	FIPS                 bool                `json:"fips,omitempty"`
+	ReleaseImagePullSpec string              `json:"release_image,omitempty"`
+	PullSecret           string              `json:"pull_secret,omitempty"`
+	MirrorConfig         types.MirrorConfig  `json:"mirror_config,omitempty"`
+	OSImageStream        types.OSImageStream `json:"os_image_stream,omitempty"`
+	Bridges              []Bridge            `json:"bridges"`
 }
 
 // TFVars generates bare metal specific Terraform variables.
@@ -30,6 +31,7 @@ func TFVars(
 	releaseImagePullSpec string,
 	pullSecret string,
 	mirrorConfig types.MirrorConfig,
+	osImageStream types.OSImageStream,
 	externalBridge, externalMAC, provisioningBridge, provisioningMAC string) ([]byte, error) {
 	var bridges []Bridge
 
@@ -53,6 +55,7 @@ func TFVars(
 		ReleaseImagePullSpec: releaseImagePullSpec,
 		PullSecret:           pullSecret,
 		MirrorConfig:         mirrorConfig,
+		OSImageStream:        osImageStream,
 		Bridges:              bridges,
 	}
 

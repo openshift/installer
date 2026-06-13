@@ -29,7 +29,7 @@ func TestInstallConfigLoad(t *testing.T) {
 		fetchError     error
 		expectedFound  bool
 		expectedError  string
-		expectedConfig *types.InstallConfig
+		expectedConfig func() *types.InstallConfig
 	}{
 		{
 			name: "unsupported platform",
@@ -449,63 +449,66 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(3),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(3),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform: types.Platform{
-					Nutanix: &nutanix.Platform{
-						APIVIPs:        []string{"192.168.122.10"},
-						IngressVIPs:    []string{"192.168.122.11"},
-						DNSRecordsType: configv1.DNSRecordsTypeInternal,
-						PrismCentral: nutanix.PrismCentral{
-							Endpoint: nutanix.PrismEndpoint{Address: "pc1.test.metalkube.org", Port: 9440},
-							Username: "testUser",
-							Password: "testPassword",
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
 						},
-						PrismElements: []nutanix.PrismElement{{
-							Endpoint: nutanix.PrismEndpoint{Address: "pe1.test.metalkube.org", Port: 9440},
-							UUID:     "00061f7f-44f7-19dc-72gc-7cc25586ee53",
-						}},
-						SubnetUUIDs: []string{"a2e46975-2cde-4a49-9dda-815eb4fcd681"},
 					},
-				},
-				PullSecret:      `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:         types.ExternalPublishingStrategy,
-				CredentialsMode: types.ManualCredentialsMode,
-				OSImageStream:   rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						Nutanix: &nutanix.Platform{
+							APIVIPs:        []string{"192.168.122.10"},
+							IngressVIPs:    []string{"192.168.122.11"},
+							DNSRecordsType: configv1.DNSRecordsTypeInternal,
+							PrismCentral: nutanix.PrismCentral{
+								Endpoint: nutanix.PrismEndpoint{Address: "pc1.test.metalkube.org", Port: 9440},
+								Username: "testUser",
+								Password: "testPassword",
+							},
+							PrismElements: []nutanix.PrismElement{{
+								Endpoint: nutanix.PrismEndpoint{Address: "pe1.test.metalkube.org", Port: 9440},
+								UUID:     "00061f7f-44f7-19dc-72gc-7cc25586ee53",
+							}},
+							SubnetUUIDs: []string{"a2e46975-2cde-4a49-9dda-815eb4fcd681"},
+						},
+					},
+					PullSecret:      `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:         types.ExternalPublishingStrategy,
+					CredentialsMode: types.ManualCredentialsMode,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1039,51 +1042,54 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(1),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(1),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform: types.Platform{
-					External: &external.Platform{
-						PlatformName:           "some-cloud-provider",
-						CloudControllerManager: "",
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
 					},
-				},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						External: &external.Platform{
+							PlatformName:           "some-cloud-provider",
+							CloudControllerManager: "",
+						},
+					},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1127,46 +1133,49 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(1),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(1),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform:      types.Platform{None: &none.Platform{}},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
+					},
+					Platform:   types.Platform{None: &none.Platform{}},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1195,46 +1204,49 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(3),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(2),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(3),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform:      types.Platform{None: &none.Platform{}},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(2),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
+					},
+					Platform:   types.Platform{None: &none.Platform{}},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1263,46 +1275,49 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(5),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(2),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(5),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform:      types.Platform{None: &none.Platform{}},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(2),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
+					},
+					Platform:   types.Platform{None: &none.Platform{}},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1331,46 +1346,49 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(4),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(2),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(4),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform:      types.Platform{None: &none.Platform{}},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(2),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
+					},
+					Platform:   types.Platform{None: &none.Platform{}},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1437,107 +1455,110 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(3),
-					Hyperthreading: types.HyperthreadingDisabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(2),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(3),
 						Hyperthreading: types.HyperthreadingDisabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform: types.Platform{
-					BareMetal: &baremetal.Platform{
-						LibvirtURI:                         "qemu+ssh://root@52.116.73.24/system",
-						ClusterProvisioningIP:              "192.168.122.90",
-						BootstrapProvisioningIP:            "192.168.122.91",
-						ExternalBridge:                     "somevalue",
-						ExternalMACAddress:                 "52:54:00:f6:b4:02",
-						ProvisioningNetwork:                "Disabled",
-						ProvisioningBridge:                 "br0",
-						ProvisioningMACAddress:             "52:54:00:6e:3b:02",
-						ProvisioningDHCPRange:              "172.22.0.10,172.22.0.254",
-						DeprecatedProvisioningDHCPExternal: true,
-						ProvisioningNetworkCIDR: &ipnet.IPNet{
-							IPNet: net.IPNet{
-								IP:   []byte("\xc0\xa8\x7a\x00"),
-								Mask: []byte("\xff\xff\xfe\x00"),
-							},
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(2),
+							Hyperthreading: types.HyperthreadingDisabled,
+							Architecture:   types.ArchitectureAMD64,
 						},
-						ProvisioningNetworkInterface: "eth11",
-						Hosts: []*baremetal.Host{
-							{
-								Name:            "host1",
-								BootMACAddress:  "52:54:01:aa:aa:a1",
-								BootMode:        "UEFI",
-								HardwareProfile: "default",
-							},
-							{
-								Name:            "host2",
-								BootMACAddress:  "52:54:01:bb:bb:b1",
-								BootMode:        "UEFI",
-								HardwareProfile: "default",
-							},
-							{
-								Name:            "host3",
-								BootMACAddress:  "52:54:01:cc:cc:c1",
-								BootMode:        "UEFI",
-								HardwareProfile: "default",
-							},
-							{
-								Name:            "host4",
-								BootMACAddress:  "52:54:01:dd:dd:d1",
-								BootMode:        "UEFI",
-								HardwareProfile: "default",
-							},
-							{
-								Name:            "host5",
-								BootMACAddress:  "52:54:01:ee:ee:e1",
-								BootMode:        "UEFI",
-								HardwareProfile: "default",
-							}},
-						DeprecatedAPIVIP:               "192.168.122.10",
-						APIVIPs:                        []string{"192.168.122.10"},
-						DeprecatedIngressVIP:           "192.168.122.11",
-						IngressVIPs:                    []string{"192.168.122.11"},
-						DNSRecordsType:                 configv1.DNSRecordsTypeInternal,
-						DeprecatedBootstrapOSImage:     "https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd",
-						DeprecatedClusterOSImage:       "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
-						BootstrapExternalStaticIP:      "192.1168.122.50",
-						BootstrapExternalStaticGateway: "gateway",
-						AdditionalNTPServers:           []string{"10.0.1.1", "10.0.1.2"},
 					},
-				},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						BareMetal: &baremetal.Platform{
+							LibvirtURI:                         "qemu+ssh://root@52.116.73.24/system",
+							ClusterProvisioningIP:              "192.168.122.90",
+							BootstrapProvisioningIP:            "192.168.122.91",
+							ExternalBridge:                     "somevalue",
+							ExternalMACAddress:                 "52:54:00:f6:b4:02",
+							ProvisioningNetwork:                "Disabled",
+							ProvisioningBridge:                 "br0",
+							ProvisioningMACAddress:             "52:54:00:6e:3b:02",
+							ProvisioningDHCPRange:              "172.22.0.10,172.22.0.254",
+							DeprecatedProvisioningDHCPExternal: true,
+							ProvisioningNetworkCIDR: &ipnet.IPNet{
+								IPNet: net.IPNet{
+									IP:   []byte("\xc0\xa8\x7a\x00"),
+									Mask: []byte("\xff\xff\xfe\x00"),
+								},
+							},
+							ProvisioningNetworkInterface: "eth11",
+							Hosts: []*baremetal.Host{
+								{
+									Name:            "host1",
+									BootMACAddress:  "52:54:01:aa:aa:a1",
+									BootMode:        "UEFI",
+									HardwareProfile: "default",
+								},
+								{
+									Name:            "host2",
+									BootMACAddress:  "52:54:01:bb:bb:b1",
+									BootMode:        "UEFI",
+									HardwareProfile: "default",
+								},
+								{
+									Name:            "host3",
+									BootMACAddress:  "52:54:01:cc:cc:c1",
+									BootMode:        "UEFI",
+									HardwareProfile: "default",
+								},
+								{
+									Name:            "host4",
+									BootMACAddress:  "52:54:01:dd:dd:d1",
+									BootMode:        "UEFI",
+									HardwareProfile: "default",
+								},
+								{
+									Name:            "host5",
+									BootMACAddress:  "52:54:01:ee:ee:e1",
+									BootMode:        "UEFI",
+									HardwareProfile: "default",
+								}},
+							DeprecatedAPIVIP:               "192.168.122.10",
+							APIVIPs:                        []string{"192.168.122.10"},
+							DeprecatedIngressVIP:           "192.168.122.11",
+							IngressVIPs:                    []string{"192.168.122.11"},
+							DNSRecordsType:                 configv1.DNSRecordsTypeInternal,
+							DeprecatedBootstrapOSImage:     "https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd",
+							DeprecatedClusterOSImage:       "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
+							BootstrapExternalStaticIP:      "192.1168.122.50",
+							BootstrapExternalStaticGateway: "gateway",
+							AdditionalNTPServers:           []string{"10.0.1.1", "10.0.1.2"},
+						},
+					},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1583,81 +1604,84 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+						},
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
+							{
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
+							},
 						},
 					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(3),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(3),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
-				},
-				Platform: types.Platform{
-					VSphere: &vsphere.Platform{
-						DeprecatedVCenter:          "192.168.122.30",
-						DeprecatedUsername:         "testUsername",
-						DeprecatedPassword:         "testPassword",
-						DeprecatedDatacenter:       "testDataCenter",
-						DeprecatedCluster:          "testCluster",
-						DeprecatedDefaultDatastore: "testDefaultDataStore",
-						DeprecatedFolder:           "testFolder",
-						DeprecatedAPIVIP:           "192.168.122.10",
-						APIVIPs:                    []string{"192.168.122.10"},
-						IngressVIPs:                []string{"192.168.122.11"},
-						DNSRecordsType:             configv1.DNSRecordsTypeInternal,
-						VCenters: []vsphere.VCenter{{
-							Server:      "192.168.122.30",
-							Port:        443,
-							Username:    "testUsername",
-							Password:    "testPassword",
-							Datacenters: []string{"testDataCenter"},
-						}},
-						FailureDomains: []vsphere.FailureDomain{{
-							Name:   "generated-failure-domain",
-							Region: "generated-region",
-							Zone:   "generated-zone",
-							Server: "192.168.122.30",
-							Topology: vsphere.Topology{
-								Datacenter:     "testDataCenter",
-								ComputeCluster: "/testDataCenter/host/testCluster",
-								Networks:       []string{""},
-								Datastore:      "/testDataCenter/datastore/testDefaultDataStore",
-								ResourcePool:   "/testDataCenter/host/testCluster/Resources",
-								Folder:         "/testDataCenter/vm/testFolder",
-							},
-						}},
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
 					},
-				},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						VSphere: &vsphere.Platform{
+							DeprecatedVCenter:          "192.168.122.30",
+							DeprecatedUsername:         "testUsername",
+							DeprecatedPassword:         "testPassword",
+							DeprecatedDatacenter:       "testDataCenter",
+							DeprecatedCluster:          "testCluster",
+							DeprecatedDefaultDatastore: "testDefaultDataStore",
+							DeprecatedFolder:           "testFolder",
+							DeprecatedAPIVIP:           "192.168.122.10",
+							APIVIPs:                    []string{"192.168.122.10"},
+							IngressVIPs:                []string{"192.168.122.11"},
+							DNSRecordsType:             configv1.DNSRecordsTypeInternal,
+							VCenters: []vsphere.VCenter{{
+								Server:      "192.168.122.30",
+								Port:        443,
+								Username:    "testUsername",
+								Password:    "testPassword",
+								Datacenters: []string{"testDataCenter"},
+							}},
+							FailureDomains: []vsphere.FailureDomain{{
+								Name:   "generated-failure-domain",
+								Region: "generated-region",
+								Zone:   "generated-zone",
+								Server: "192.168.122.30",
+								Topology: vsphere.Topology{
+									Datacenter:     "testDataCenter",
+									ComputeCluster: "/testDataCenter/host/testCluster",
+									Networks:       []string{""},
+									Datastore:      "/testDataCenter/datastore/testDefaultDataStore",
+									ResourcePool:   "/testDataCenter/host/testCluster/Resources",
+									Folder:         "/testDataCenter/vm/testFolder",
+								},
+							}},
+						},
+					},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1797,69 +1821,72 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
 						},
-					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(2),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-					Fencing: &types.Fencing{
-						Credentials: []*types.Credential{
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
 							{
-								HostName: "host1",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
-							},
-							{
-								HostName: "host2",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
 							},
 						},
 					},
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(2),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
+						Fencing: &types.Fencing{
+							Credentials: []*types.Credential{
+								{
+									HostName: "host1",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+								},
+								{
+									HostName: "host2",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								},
+							},
+						},
 					},
-				},
-				Platform: types.Platform{
-					External: &external.Platform{
-						PlatformName:           "oci",
-						CloudControllerManager: external.CloudControllerManagerTypeExternal,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
 					},
-				},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				FeatureSet:    configv1.CustomNoUpgrade,
-				FeatureGates:  []string{"DualReplica=true"},
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						External: &external.Platform{
+							PlatformName:           "oci",
+							CloudControllerManager: external.CloudControllerManagerTypeExternal,
+						},
+					},
+					PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:      types.ExternalPublishingStrategy,
+					FeatureSet:   configv1.CustomNoUpgrade,
+					FeatureGates: []string{"DualReplica=true"},
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -1937,67 +1964,70 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
 			// #nosec G101
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
 						},
-					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(2),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-					Fencing: &types.Fencing{
-						Credentials: []*types.Credential{
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
 							{
-								HostName: "host1",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
-							},
-							{
-								HostName: "host2",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
 							},
 						},
 					},
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(2),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
+						Fencing: &types.Fencing{
+							Credentials: []*types.Credential{
+								{
+									HostName: "host1",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+								},
+								{
+									HostName: "host2",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								},
+							},
+						},
 					},
-				},
-				Platform: types.Platform{
-					External: &external.Platform{
-						PlatformName:           "oci",
-						CloudControllerManager: external.CloudControllerManagerTypeExternal,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
 					},
-				},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						External: &external.Platform{
+							PlatformName:           "oci",
+							CloudControllerManager: external.CloudControllerManagerTypeExternal,
+						},
+					},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -2113,69 +2143,72 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
 						},
-					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(2),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-					Fencing: &types.Fencing{
-						Credentials: []*types.Credential{
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
 							{
-								HostName: "host1",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
-							},
-							{
-								HostName: "host2",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
 							},
 						},
 					},
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(2),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
+						Fencing: &types.Fencing{
+							Credentials: []*types.Credential{
+								{
+									HostName: "host1",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+								},
+								{
+									HostName: "host2",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								},
+							},
+						},
 					},
-				},
-				Platform: types.Platform{
-					External: &external.Platform{
-						PlatformName:           "oci",
-						CloudControllerManager: external.CloudControllerManagerTypeExternal,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
 					},
-				},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				FeatureSet:    configv1.CustomNoUpgrade,
-				FeatureGates:  []string{"DualReplica=true"},
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Platform: types.Platform{
+						External: &external.Platform{
+							PlatformName:           "oci",
+							CloudControllerManager: external.CloudControllerManagerTypeExternal,
+						},
+					},
+					PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:      types.ExternalPublishingStrategy,
+					FeatureSet:   configv1.CustomNoUpgrade,
+					FeatureGates: []string{"DualReplica=true"},
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 		{
@@ -2217,64 +2250,67 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
-			expectedConfig: &types.InstallConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: types.InstallConfigVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cluster",
-				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
-				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			expectedConfig: func() *types.InstallConfig {
+				ic := &types.InstallConfig{ //nolint:gosec // not real credentials
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: types.InstallConfigVersion,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-cluster",
+					},
+					AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+					BaseDomain:                  "test-domain",
+					Networking: &types.Networking{
+						MachineNetwork: []types.MachineNetworkEntry{
+							{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
 						},
-					},
-				},
-				ControlPlane: &types.MachinePool{
-					Name:           "master",
-					Replicas:       pointer.Int64(2),
-					Hyperthreading: types.HyperthreadingEnabled,
-					Architecture:   types.ArchitectureAMD64,
-					Fencing: &types.Fencing{
-						Credentials: []*types.Credential{
+						NetworkType:    "OVNKubernetes",
+						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+						ClusterNetwork: []types.ClusterNetworkEntry{
 							{
-								HostName: "host1",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
-							},
-							{
-								HostName: "host2",
-								Username: "admin",
-								Password: "password",
-								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+								HostPrefix: 23,
 							},
 						},
 					},
-				},
-				Compute: []types.MachinePool{
-					{
-						Name:           "worker",
-						Replicas:       pointer.Int64(0),
+					ControlPlane: &types.MachinePool{
+						Name:           "master",
+						Replicas:       pointer.Int64(2),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
+						Fencing: &types.Fencing{
+							Credentials: []*types.Credential{
+								{
+									HostName: "host1",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+								},
+								{
+									HostName: "host2",
+									Username: "admin",
+									Password: "password",
+									Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+								},
+							},
+						},
 					},
-				},
-				Platform:      types.Platform{None: &none.Platform{}},
-				PullSecret:    `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:       types.ExternalPublishingStrategy,
-				FeatureSet:    configv1.CustomNoUpgrade,
-				FeatureGates:  []string{"DualReplica=true"},
-				OSImageStream: rhcos.DefaultOSImageStream,
+					Compute: []types.MachinePool{
+						{
+							Name:           "worker",
+							Replicas:       pointer.Int64(0),
+							Hyperthreading: types.HyperthreadingEnabled,
+							Architecture:   types.ArchitectureAMD64,
+						},
+					},
+					Platform:     types.Platform{None: &none.Platform{}},
+					PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:      types.ExternalPublishingStrategy,
+					FeatureSet:   configv1.CustomNoUpgrade,
+					FeatureGates: []string{"DualReplica=true"},
+				}
+				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
+				return ic
 			},
 		},
 	}
@@ -2301,7 +2337,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 				assert.NoError(t, err)
 			}
 			if tc.expectedFound {
-				assert.Equal(t, tc.expectedConfig, asset.Config, "unexpected Config in InstallConfig")
+				assert.Equal(t, tc.expectedConfig(), asset.Config, "unexpected Config in InstallConfig")
 			}
 		})
 	}

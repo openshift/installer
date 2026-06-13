@@ -157,7 +157,7 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 		return err
 	}
 	// Use default OS image stream for unconfigured ignition workflow
-	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, rhcos.DefaultOSImageStream)
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, rhcos.BuildDefaultOSImageStream())
 	if err != nil {
 		return err
 	}

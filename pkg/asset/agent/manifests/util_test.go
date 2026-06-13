@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	agenttypes "github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -78,7 +79,7 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 		panic(err)
 	}
 
-	return &agent.OptionalInstallConfig{
+	ic := &agent.OptionalInstallConfig{
 		AssetBase: installconfig.AssetBase{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
@@ -130,6 +131,9 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 		},
 		Supplied: true,
 	}
+
+	ic.Config.OSImageStream = rhcos.GetDefaultOSImageStream(ic.Config)
+	return ic
 }
 
 // GetValidOptionalInstallConfigDualStack returns a valid optional install config for dual stack
@@ -151,7 +155,7 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 		panic(err)
 	}
 
-	return &agent.OptionalInstallConfig{
+	ic := &agent.OptionalInstallConfig{
 		AssetBase: installconfig.AssetBase{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
@@ -209,6 +213,9 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 		},
 		Supplied: true,
 	}
+
+	ic.Config.OSImageStream = rhcos.GetDefaultOSImageStream(ic.Config)
+	return ic
 }
 
 func getValidOptionalInstallConfigDualStackDualVIPs() *agent.OptionalInstallConfig {

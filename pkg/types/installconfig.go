@@ -623,9 +623,9 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 		customFS = featuregates.GenerateCustomFeatures(c.FeatureGates)
 	}
 
-	featureSets, ok := FeatureSetsForProfile()
-	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", GetClusterProfileName())
+	featureSets, err := FeatureSetsForProfile()
+	if err != nil {
+		logrus.Warnf("no feature sets for cluster profile %q. %v", GetClusterProfileName(), err)
 	}
 	fg := featuregates.FeatureGateFromFeatureSets(featureSets, c.FeatureSet, customFS)
 
@@ -674,14 +674,21 @@ const (
 	OSImageStreamRHCOS9 OSImageStream = "rhel-9"
 	// OSImageStreamRHCOS10 represents the RHEL 10 OS Image Stream.
 	OSImageStreamRHCOS10 OSImageStream = "rhel-10"
+	// OSImageStreamCentos10 represents the SCOS 10 OS Image Stream.
+	OSImageStreamCentos10 OSImageStream = "centos-10"
 
 	// OSStreamLabelKey represents the label key used to note the OS image stream on MachineSet
 	// and Machine resources.
 	OSStreamLabelKey = "machineconfiguration.openshift.io/osstream"
 )
 
-// OSImageStreamValues holds the list of valid values a OSImageStream can take.
-var OSImageStreamValues = []OSImageStream{
-	OSImageStreamRHCOS9,
-	OSImageStreamRHCOS10,
+// OSImageStreamValues returns the list of valid values a OSImageStream can take.
+func OSImageStreamValues() []OSImageStream {
+	if SCOS {
+		return []OSImageStream{OSImageStreamCentos10}
+	}
+	return []OSImageStream{
+		OSImageStreamRHCOS9,
+		OSImageStreamRHCOS10,
+	}
 }

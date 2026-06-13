@@ -82,7 +82,7 @@ func provider(platform *baremetal.Platform, userDataSecret string, osImageStream
 
 func hostSelectorForStream(stream types.OSImageStream) baremetalprovider.HostSelector {
 	var exclude []string
-	for _, s := range types.OSImageStreamValues {
+	for _, s := range types.OSImageStreamValues() {
 		if s != stream {
 			exclude = append(exclude, string(s))
 		}
