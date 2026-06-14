@@ -123,13 +123,16 @@ func cleanArch(releaseArchitecture string) string {
 	return strings.ReplaceAll(releaseArchitecture, "linux/", "")
 }
 
-// removeGoVersionPrefix converts a Go module version tag (e.g. "v1.4.22")
-// into the corresponding OCP version (e.g. "4.22").
+// removeGoVersionPrefix converts a Go module version tag (e.g. "v1.5.0")
+// into the corresponding OCP version (e.g. "5.0"). The installer's Go
+// module uses major version 1, so "v1.X.Y" means OCP version "X.Y".
+// ART builds set BUILD_VERSION directly to the OCP version (e.g. "v5.0.0"),
+// so we only strip the first segment when it is "1".
 func removeGoVersionPrefix(version string) string {
 	if strings.HasPrefix(version, "v") {
 		version = strings.TrimPrefix(version, "v")
 		parts := strings.SplitN(version, ".", 2)
-		if len(parts) > 1 {
+		if len(parts) > 1 && parts[0] == "1" {
 			version = parts[1]
 		}
 	}
