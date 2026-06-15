@@ -70,4 +70,4 @@ USER 1000:1000
 ENV HOME /output
 ENV LC_ALL en_US.UTF-8
 WORKDIR /output
-ENTRYPOINT ["/bin/openshift-install"]
+ENTRYPOINT ["/bin/bash"]
