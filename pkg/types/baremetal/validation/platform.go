@@ -6,8 +6,10 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/go-playground/validator/v10"
@@ -20,6 +22,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -523,6 +526,34 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsRecordsType"), c.BareMetal.DNSRecordsType, "external DNS records can only be configured with user-managed loadbalancers"))
 	}
 
+	if p.BGPVIPConfig != nil {
+		allErrs = append(allErrs, validateBGPVIPConfig(p.BGPVIPConfig, fldPath.Child("bgpVIPConfig"))...)
+		// The BGP VIP rendering path configures the cluster network
+		// operator's OVN-Kubernetes configuration.
+		if n != nil && n.NetworkType != string(operv1.NetworkTypeOVNKubernetes) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bgpVIPConfig"), n.NetworkType,
+				"BGP-based VIP management requires the OVNKubernetes network type"))
+		}
+	}
+
+	for i, host := range p.Hosts {
+		if host == nil {
+			continue
+		}
+		hostsPath := fldPath.Child("hosts").Index(i).Child("bgpPeers")
+		if len(host.BGPPeers) > 0 && p.BGPVIPConfig == nil {
+			allErrs = append(allErrs, field.Forbidden(hostsPath,
+				"host-level BGP peer overrides require platform.baremetal.bgpVIPConfig"))
+			continue
+		}
+		if len(host.BGPPeers) > 16 {
+			allErrs = append(allErrs, field.TooMany(hostsPath, len(host.BGPPeers), 16))
+		}
+		for j, peer := range host.BGPPeers {
+			allErrs = append(allErrs, validateBGPPeer(peer, hostsPath.Index(j))...)
+		}
+	}
+
 	return allErrs
 }
 
@@ -551,6 +582,87 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 	default:
 		return false
 	}
+}
+
+func validateBGPVIPConfig(bgpConfig *baremetal.BGPVIPConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if bgpConfig == nil {
+		return allErrs
+	}
+
+	// Validate LocalASN
+	if bgpConfig.LocalASN < 1 || bgpConfig.LocalASN > 4294967295 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("localASN"), bgpConfig.LocalASN,
+			"must be between 1 and 4294967295"))
+	}
+
+	// Validate Peers
+	if len(bgpConfig.Peers) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("peers"), "at least one BGP peer is required"))
+	}
+	if len(bgpConfig.Peers) > 16 {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child("peers"), len(bgpConfig.Peers), 16))
+	}
+
+	for i, peer := range bgpConfig.Peers {
+		peerPath := fldPath.Child("peers").Index(i)
+		allErrs = append(allErrs, validateBGPPeer(peer, peerPath)...)
+	}
+
+	for i, community := range bgpConfig.Communities {
+		if !bgpCommunityRe.MatchString(community) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("communities").Index(i), community,
+				"must be a standard (AA:NN) or large (AA:BB:CC) BGP community"))
+		}
+	}
+
+	return allErrs
+}
+
+// bgpCommunityRe matches standard (AA:NN) and large (AA:BB:CC) BGP community
+// values.
+var bgpCommunityRe = regexp.MustCompile(`^\d+:\d+(:\d+)?$`)
+
+func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if peer.PeerAddress == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("peerAddress"), "peer address is required"))
+	} else if ip := net.ParseIP(peer.PeerAddress); ip == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("peerAddress"), peer.PeerAddress, "must be a valid IP address"))
+	}
+
+	if peer.PeerASN < 1 || peer.PeerASN > 4294967295 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("peerASN"), peer.PeerASN,
+			"must be between 1 and 4294967295"))
+	}
+
+	if peer.BFDEnabled != "" && peer.BFDEnabled != "true" && peer.BFDEnabled != "false" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("bfdEnabled"), peer.BFDEnabled,
+			`must be "true", "false", or empty`))
+	}
+
+	if peer.EBGPMultiHop != "" && peer.EBGPMultiHop != "true" && peer.EBGPMultiHop != "false" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("ebgpMultiHop"), peer.EBGPMultiHop,
+			`must be "true", "false", or empty`))
+	}
+
+	if peer.Port != 0 && (peer.Port < 1 || peer.Port > 65535) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("port"), peer.Port,
+			"must be between 1 and 65535, or omitted for the default 179"))
+	}
+
+	for name, value := range map[string]string{"holdTime": peer.HoldTime, "keepaliveTime": peer.KeepaliveTime} {
+		if value == "" {
+			continue
+		}
+		if _, err := time.ParseDuration(value); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child(name), value,
+				"must be a valid duration (e.g. 90s)"))
+		}
+	}
+
+	return allErrs
 }
 
 // ValidateProvisioning checks that provisioning network requirements specified is valid.

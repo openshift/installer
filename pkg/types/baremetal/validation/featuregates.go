@@ -18,5 +18,10 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Condition:       c.BareMetal.DNSRecordsType == configv1.DNSRecordsTypeExternal,
 			Field:           field.NewPath("platform", "baremetal", "dnsRecordsType"),
 		},
+		{
+			FeatureGateName: features.FeatureGateBGPBasedVIPManagement,
+			Condition:       c.BareMetal.BGPVIPConfig != nil,
+			Field:           field.NewPath("platform", "baremetal", "bgpVIPConfig"),
+		},
 	}
 }
