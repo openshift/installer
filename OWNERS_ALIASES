@@ -9,6 +9,7 @@ aliases:
     - patrickdillon
     - pawanpinjarkar
     - rna-afk
+    - rochacbruno
     - rwsu
     - sadasu
     - tthvo
@@ -87,9 +88,11 @@ aliases:
   gcp-approvers:
     - patrickdillon
     - barbacbd
+    - rochacbruno
   gcp-reviewers:
     - patrickdillon
     - barbacbd
+    - rochacbruno
   azure-approvers:
     - jhixson74
     - rna-afk
