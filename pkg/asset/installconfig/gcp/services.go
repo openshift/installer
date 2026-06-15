@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/storage"
@@ -59,6 +60,39 @@ func CreateEndpointOption(endpointName string, service ServiceNameGCP) option.Cl
 	return option.WithEndpoint(endpoint)
 }
 
+// CredentialOptions returns the client options needed to authenticate with the
+// session credentials. When raw credential JSON is available,
+// WithAuthCredentialsJSON is used so that the Google API library can apply
+// self-signed JWT authentication for non-default universe domains (e.g.,
+// Google Cloud Dedicated). For non-default universe domains,
+// WithUniverseDomain is also included so the client's configured universe
+// domain matches the credentials.
+func CredentialOptions(ssn *Session) ([]option.ClientOption, error) {
+	var opts []option.ClientOption
+	if len(ssn.Credentials.JSON) > 0 {
+		var f struct {
+			Type       option.CredentialsType `json:"type"`
+			PrivateKey string                 `json:"private_key"`
+		}
+		if json.Unmarshal(ssn.Credentials.JSON, &f) == nil && f.Type == option.ServiceAccount && f.PrivateKey != "" {
+			opts = append(opts, option.WithAuthCredentialsJSON(f.Type, ssn.Credentials.JSON))
+		} else {
+			opts = append(opts, option.WithCredentials(ssn.Credentials))
+		}
+	}
+	if len(opts) == 0 {
+		opts = append(opts, option.WithCredentials(ssn.Credentials))
+	}
+	ud, err := ssn.Credentials.GetUniverseDomain()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get universe domain: %w", err)
+	}
+	if ud != "googleapis.com" {
+		opts = append(opts, option.WithUniverseDomain(ud))
+	}
+	return opts, nil
+}
+
 // getOptions creates the options for use during service creation.
 func getOptions(ctx context.Context) ([]option.ClientOption, error) {
 	ssn, err := GetSession(ctx)
@@ -66,8 +100,9 @@ func getOptions(ctx context.Context) ([]option.ClientOption, error) {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	options := []option.ClientOption{
-		option.WithCredentials(ssn.Credentials),
+	options, err := CredentialOptions(ssn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get credential options: %w", err)
 	}
 	return options, nil
 }

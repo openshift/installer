@@ -35,7 +35,10 @@ func Load(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint, s
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create services svc")
 	}
-	metricsOptions := []option.ClientOption{option.WithCredentials(ssn.Credentials)}
+	metricsOptions, err := gcpconfig.CredentialOptions(ssn)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get credential options")
+	}
 	metricsSvc, err := monitoring.NewMetricClient(ctx, metricsOptions...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create metrics svc")
