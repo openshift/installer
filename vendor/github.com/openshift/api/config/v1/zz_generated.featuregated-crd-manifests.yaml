@@ -145,6 +145,9 @@ clusterversions.config.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
+  - CRDCompatibilityRequirementOperator
+  - CRDCompatibilityRequirementOperator+ClusterAPIMachineManagement
+  - ClusterAPIMachineManagement
   - ClusterUpdateAcceptRisks
   - ClusterUpdatePreflight
   - ImageStreamImportMode
