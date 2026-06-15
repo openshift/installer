@@ -2,7 +2,9 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
@@ -609,6 +611,10 @@ func deleteInboundNatRule(ctx context.Context, in *inboundNatRuleInput) error {
 		nil,
 	)
 	if err != nil {
+		var respErr *azcore.ResponseError
+		if errors.As(err, &respErr) && respErr.StatusCode == http.StatusNotFound {
+			return nil
+		}
 		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
 	}
 	_, err = inboundNatRulesPoller.PollUntilDone(ctx, nil)
