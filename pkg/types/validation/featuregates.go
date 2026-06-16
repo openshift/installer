@@ -48,8 +48,15 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 		},
 		{
 			FeatureGateName: features.FeatureGateClusterAPIComputeInstall,
-			Condition:       len(c.Compute) > 0 && c.Compute[0].Management == types.ClusterAPI,
-			Field:           field.NewPath("compute", "management"),
+			Condition: func() bool {
+				for _, compute := range c.Compute {
+					if compute.Management == types.ClusterAPI {
+						return true
+					}
+				}
+				return false
+			}(),
+			Field: field.NewPath("compute", "management"),
 		},
 	}
 }
