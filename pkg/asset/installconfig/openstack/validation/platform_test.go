@@ -3,6 +3,7 @@ package validation
 import (
 	"testing"
 
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/mtu"
@@ -721,6 +722,96 @@ func TestMachineSubnet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			aggregatedErrors := ValidatePlatform(tc.platform, tc.networking, tc.cloudInfo).ToAggregate()
 			if tc.expectedErrMsg != "" {
+				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func validBootstrapCloudInfo() *CloudInfo {
+	ci := validPlatformCloudInfo()
+	ci.Flavors = map[string]Flavor{
+		validCtrlPlaneFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  validCtrlPlaneFlavor,
+				RAM:   16384,
+				Disk:  100,
+				VCPUs: 4,
+			},
+		},
+		invalidCtrlPlaneFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  invalidCtrlPlaneFlavor,
+				RAM:   8192, // too low
+				Disk:  100,
+				VCPUs: 2, // too low
+			},
+		},
+	}
+	return ci
+}
+
+func TestBootstrapFlavor(t *testing.T) {
+	cases := []struct {
+		name           string
+		platform       *openstack.Platform
+		cloudInfo      *CloudInfo
+		networking     *types.Networking
+		expectedError  bool
+		expectedErrMsg string // NOTE: this is a REGEXP
+	}{
+		{
+			name:           "no bootstrapFlavor specified, skip validation",
+			platform:       validPlatform(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "valid bootstrapFlavor meets control plane requirements",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = validCtrlPlaneFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "bootstrapFlavor not found in OpenStack",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = notExistFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform\.openstack\.bootstrapFlavor: Not found: "non-existant-flavor"`,
+		},
+		{
+			name: "bootstrapFlavor insufficient resources for control plane",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = invalidCtrlPlaneFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform\.openstack\.bootstrapFlavor: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			aggregatedErrors := ValidatePlatform(tc.platform, tc.networking, tc.cloudInfo).ToAggregate()
+			if tc.expectedError {
 				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)

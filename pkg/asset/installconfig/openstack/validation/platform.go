@@ -45,7 +45,21 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate custom cluster os image
 	allErrs = append(allErrs, validateClusterOSImage(p, ci, fldPath)...)
 
+	// validate bootstrap flavor if specified
+	allErrs = append(allErrs, validateBootstrapFlavor(p, ci, fldPath)...)
+
 	return allErrs
+}
+
+// validateBootstrapFlavor validates that the bootstrapFlavor, when specified,
+// exists in OpenStack and meets the control plane minimum requirements. The
+// bootstrap node acts as the initial control plane, so it must satisfy the
+// same resource requirements.
+func validateBootstrapFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) field.ErrorList {
+	if p.BootstrapFlavor == "" {
+		return nil
+	}
+	return validateFlavor(p.BootstrapFlavor, ci, ctrlPlaneFlavorMinimums, fldPath.Child("bootstrapFlavor"), true)
 }
 
 // validateControlPlanePort validates the machines subnets and network, while enforcing proper byo subnets usage and returns a list of all validation errors.
