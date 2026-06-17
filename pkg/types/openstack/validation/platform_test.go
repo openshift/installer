@@ -143,6 +143,71 @@ func TestValidatePlatform(t *testing.T) {
 			networking:    validNetworking(),
 			expectedError: `^test-path\.controlPlanePort.fixedIPs\[0\]\.subnet.id: Invalid value: "fake": invalid subnet ID`,
 		},
+		// bootstrapFlavor static validation
+		{
+			name: "bootstrapFlavor not set",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				// BootstrapFlavor is empty (omitted) — field is optional
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      true,
+		},
+		{
+			name: "bootstrapFlavor valid name",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "m1.large"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      true,
+		},
+		{
+			name: "bootstrapFlavor whitespace-only value",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "   "
+				return p
+			}(),
+			networking:    validNetworking(),
+			valid:         false,
+			expectedError: `^test-path\.bootstrapFlavor: Invalid value: "   ": bootstrapFlavor must not consist entirely of whitespace`,
+		},
+		{
+			name: "bootstrapFlavor whitespace-only tabs",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "\t\t"
+				return p
+			}(),
+			networking:    validNetworking(),
+			valid:         false,
+			expectedError: `bootstrapFlavor must not consist entirely of whitespace`,
+		},
+		{
+			name: "bootstrapFlavor with leading whitespace preserved",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				// A flavor name with leading whitespace: unusual but not rejected
+				// by static validation (cloud-connected validation checks existence).
+				p.BootstrapFlavor = " m1.medium"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      true,
+		},
+		{
+			name: "bootstrapFlavor with trailing whitespace preserved",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = "m1.medium "
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

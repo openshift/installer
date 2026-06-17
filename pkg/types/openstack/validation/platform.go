@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"strings"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -19,6 +21,8 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("externalDNS"), p.ExternalDNS, err.Error()))
 		}
 	}
+
+	allErrs = append(allErrs, validateBootstrapFlavor(p, fldPath)...)
 
 	allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
 
@@ -47,6 +51,21 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 	default:
 		return false
 	}
+}
+
+// validateBootstrapFlavor returns an error if the bootstrapFlavor field is set
+// to a value that consists entirely of whitespace. Empty string is allowed
+// because the field is optional. Whitespace within a valid flavor name is
+// preserved and not rejected here; cloud-connected validation checks whether
+// the exact name exists in OpenStack.
+func validateBootstrapFlavor(p *openstack.Platform, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if p.BootstrapFlavor != "" && strings.TrimSpace(p.BootstrapFlavor) == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapFlavor"), p.BootstrapFlavor, "bootstrapFlavor must not consist entirely of whitespace"))
+	}
+
+	return allErrs
 }
 
 // validateControlPlanePort returns all the errors found when the control plane port is not valid.
