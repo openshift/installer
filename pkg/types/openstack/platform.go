@@ -18,6 +18,12 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
+	// BootstrapFlavor defines the OpenStack Nova flavor for the bootstrap
+	// machine. If not specified, the installer uses the control plane flavor.
+	// eg. m1.medium
+	// +optional
+	BootstrapFlavor string `json:"bootstrapFlavor,omitempty"`
+
 	// Cloud is the name of OpenStack cloud to use from clouds.yaml.
 	Cloud string `json:"cloud"`
 
