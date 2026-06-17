@@ -730,6 +730,25 @@ func TestMachineSubnet(t *testing.T) {
 	}
 }
 
+const (
+	// bootstrapSpecialFlavor is a flavor name with special characters that
+	// should be accepted if it exists in the cloud.
+	bootstrapSpecialFlavor = "ocp.bootstrap-4cpu"
+
+	// bootstrapLowRAMFlavor has sufficient VCPUs and disk but insufficient RAM.
+	bootstrapLowRAMFlavor = "bootstrap-low-ram"
+
+	// bootstrapLowVCPUFlavor has sufficient RAM and disk but insufficient VCPUs.
+	bootstrapLowVCPUFlavor = "bootstrap-low-vcpu"
+
+	// bootstrapLowDiskFlavor has sufficient RAM and VCPUs but insufficient disk.
+	bootstrapLowDiskFlavor = "bootstrap-low-disk"
+
+	// bootstrapBaremetalFlavor is a baremetal flavor that would otherwise fail
+	// resource checks but should be skipped because baremetal is exempt.
+	bootstrapBaremetalFlavor = "bootstrap-baremetal"
+)
+
 func validBootstrapCloudInfo() *CloudInfo {
 	ci := validPlatformCloudInfo()
 	ci.Flavors = map[string]Flavor{
@@ -748,6 +767,47 @@ func validBootstrapCloudInfo() *CloudInfo {
 				Disk:  100,
 				VCPUs: 2, // too low
 			},
+		},
+		bootstrapSpecialFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  bootstrapSpecialFlavor,
+				RAM:   16384,
+				Disk:  100,
+				VCPUs: 4,
+			},
+		},
+		bootstrapLowRAMFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  bootstrapLowRAMFlavor,
+				RAM:   8192, // too low (< 16384 MB)
+				Disk:  100,
+				VCPUs: 4,
+			},
+		},
+		bootstrapLowVCPUFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  bootstrapLowVCPUFlavor,
+				RAM:   16384,
+				Disk:  100,
+				VCPUs: 2, // too low (< 4)
+			},
+		},
+		bootstrapLowDiskFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  bootstrapLowDiskFlavor,
+				RAM:   16384,
+				Disk:  10, // too low (< 25 GB)
+				VCPUs: 4,
+			},
+		},
+		bootstrapBaremetalFlavor: {
+			Flavor: flavors.Flavor{
+				Name:  bootstrapBaremetalFlavor,
+				RAM:   8192, // would normally be too low
+				Disk:  10,   // would normally be too low
+				VCPUs: 2,    // would normally be too low
+			},
+			Baremetal: true,
 		},
 	}
 	return ci
@@ -805,6 +865,66 @@ func TestBootstrapFlavor(t *testing.T) {
 			networking:     validNetworking(),
 			expectedError:  true,
 			expectedErrMsg: `platform\.openstack\.bootstrapFlavor: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements`,
+		},
+		{
+			name: "bootstrapFlavor with insufficient RAM",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = bootstrapLowRAMFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform\.openstack\.bootstrapFlavor: Invalid value: "bootstrap-low-ram": Flavor did not meet the following minimum requirements: Must have minimum of 16384 MB RAM, had 8192 MB`,
+		},
+		{
+			name: "bootstrapFlavor with insufficient VCPUs",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = bootstrapLowVCPUFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform\.openstack\.bootstrapFlavor: Invalid value: "bootstrap-low-vcpu": Flavor did not meet the following minimum requirements: Must have minimum of 4 VCPUs, had 2`,
+		},
+		{
+			name: "bootstrapFlavor with insufficient disk and no root volume",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = bootstrapLowDiskFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform\.openstack\.bootstrapFlavor: Invalid value: "bootstrap-low-disk": Flavor did not meet the following minimum requirements: Must have minimum of 25 GB Disk, had 10 GB`,
+		},
+		{
+			name: "bootstrapFlavor with special characters in name",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = bootstrapSpecialFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "bootstrapFlavor is baremetal flavor, validation skipped",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = bootstrapBaremetalFlavor
+				return p
+			}(),
+			cloudInfo:      validBootstrapCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
 		},
 	}
 
