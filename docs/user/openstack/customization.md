@@ -35,6 +35,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `ingressVIPs` (optional array of strings): IP address on the machineNetwork that will be assigned to the ingress VIP. If more than one are set, it must be one IPv4 and one IPv6.
 * `controlPlanePort` (optional object): the UUID and/or Name of an OpenStack Network and its Subnets where to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
 * `defaultMachinePlatform` (optional object): Default [OpenStack-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own OpenStack-specific properties.
+* `bootstrapFlavor` (optional string): The OpenStack flavor to use for the bootstrap machine. The bootstrap node is a temporary machine used only during installation and can often use a smaller flavor than the control plane machines. If not specified, the bootstrap machine uses the same flavor as the control plane machines.
 
 ## Machine pools
 
@@ -56,7 +57,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
 > **Note**
-> The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
+> The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool. The `type` (flavor) used for the bootstrap node can be overridden independently by setting `bootstrapFlavor` in the cluster-scoped platform properties.
 
 > **Note**
 > Note when deploying the control-plane machines with `rootVolume`, it is highly suggested to use an [additional ephemeral disk dedicated to etcd](./etcd-ephemeral-disk.md).
@@ -118,6 +119,25 @@ platform:
     defaultMachinePlatform:
       type: m1.s2.xlarge
     externalNetwork: external
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+An example OpenStack install config using a smaller flavor for the bootstrap machine:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+platform:
+  openstack:
+    apiFloatingIP: 128.0.0.1
+    cloud: mycloud
+    defaultMachinePlatform:
+      type: m1.xlarge
+    externalNetwork: external
+    bootstrapFlavor: m1.medium
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
