@@ -107,6 +107,8 @@ while getopts a:b:c:e:f:i:t:pr:h o; do
 		*) print_help; exit 1 ;;
 	esac
 done
+# Default bootstrap_flavor to compute_flavor if not explicitly set via -b
+bootstrap_flavor="${bootstrap_flavor:-${compute_flavor}}"
 readonly api_fip bootstrap_flavor os_cloud external_network compute_flavor openshift_install tests_dir persist run
 
 declare python_venv
