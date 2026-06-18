@@ -117,7 +117,6 @@ func TestGenerateMachines(t *testing.T) {
 							RootVolume: &capa.Volume{
 								Encrypted: ptr.To(true),
 							},
-							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
 								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
 							},
@@ -173,7 +172,6 @@ func TestGenerateMachines(t *testing.T) {
 							RootVolume: &capa.Volume{
 								Encrypted: ptr.To(true),
 							},
-							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
 								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
 							},
@@ -231,7 +229,6 @@ func TestGenerateMachines(t *testing.T) {
 							RootVolume: &capa.Volume{
 								Encrypted: ptr.To(true),
 							},
-							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
 								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
 							},

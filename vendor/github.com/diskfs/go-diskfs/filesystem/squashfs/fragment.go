@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-//nolint:deadcode,varcheck,unused // we need these references in the future
+//nolint:unused // we need these references in the future
 const (
 	fragmentEntriesPerBlock = 512
 	fragmentEntrySize       = 16
@@ -17,7 +17,6 @@ type fragmentEntry struct {
 	compressed bool
 }
 
-//nolint:structcheck,deadcode,unused // we need these references in the future
 type fragmentTable struct {
 	entries []*fragmentEntry
 }
@@ -40,7 +39,7 @@ func parseFragmentEntry(b []byte) (*fragmentEntry, error) {
 	start := binary.LittleEndian.Uint64(b[0:8])
 	size := binary.LittleEndian.Uint32(b[8:12])
 	unCompFlag := uint32(1 << 24)
-	compressed := true
+	var compressed = true
 	if size&unCompFlag == unCompFlag {
 		compressed = false
 	}

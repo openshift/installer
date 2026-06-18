@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	assetrhcos "github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -80,7 +81,8 @@ func (i *BaseIso) Load(f asset.FileFetcher) (bool, error) {
 
 // Download the RHCOS base ISO via rhcos.json.
 func (i *BaseIso) downloadBaseIso(ctx context.Context, archName string) (string, error) {
-	metal, err := assetrhcos.GetMetalArtifact(ctx, archName)
+	// Use default OS image stream for image-based installer
+	metal, err := assetrhcos.GetMetalArtifact(ctx, archName, rhcos.BuildDefaultOSImageStream())
 	if err != nil {
 		return "", err
 	}

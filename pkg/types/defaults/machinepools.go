@@ -3,18 +3,19 @@ package defaults
 import (
 	"net"
 
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
-	"github.com/openshift/installer/pkg/version"
 )
 
 // SetMachinePoolDefaults sets the defaults for the machine pool.
-func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform) {
+func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform, fgates featuregates.FeatureGate) {
 	defaultReplicaCount := int64(3)
 	if p.Name == types.MachinePoolEdgeRoleName || p.Name == types.MachinePoolArbiterRoleName {
 		defaultReplicaCount = 0
@@ -26,7 +27,7 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform) {
 		p.Hyperthreading = types.HyperthreadingEnabled
 	}
 	if p.Architecture == "" {
-		p.Architecture = version.DefaultArch()
+		p.Architecture = types.DefaultArch()
 	}
 
 	if p.Fencing != nil {
@@ -36,6 +37,16 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform) {
 					credential.MACAddress = parsed.String()
 				}
 			}
+		}
+	}
+
+	// Set management to ClusterAPI if the appropriate feature gate is enabled and management is unspecified
+	if p.Management == "" {
+		if p.Name == types.MachinePoolControlPlaneRoleName && fgates.Enabled(features.FeatureGateClusterAPIControlPlaneInstall) {
+			p.Management = types.ClusterAPI
+		}
+		if p.Name == types.MachinePoolComputeRoleName && fgates.Enabled(features.FeatureGateClusterAPIComputeInstall) {
+			p.Management = types.ClusterAPI
 		}
 	}
 
@@ -69,7 +80,7 @@ func hasEdgePoolConfig(pools []types.MachinePool) bool {
 }
 
 // CreateEdgeMachinePoolDefaults create the edge compute pool when it is not already defined.
-func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform *types.Platform, replicas int64) *types.MachinePool {
+func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform *types.Platform, replicas int64, fgates featuregates.FeatureGate) *types.MachinePool {
 	if hasEdgePoolConfig(pools) {
 		return nil
 	}
@@ -77,6 +88,6 @@ func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform *types.Pl
 		Name:     types.MachinePoolEdgeRoleName,
 		Replicas: &replicas,
 	}
-	SetMachinePoolDefaults(pool, platform)
+	SetMachinePoolDefaults(pool, platform, fgates)
 	return pool
 }

@@ -80,7 +80,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		},
 		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 		Publish:       types.ExternalPublishingStrategy,
-		OSImageStream: rhcos.DefaultOSImageStream,
+		OSImageStream: rhcos.BuildDefaultOSImageStream(),
 	}
 	assert.Equal(t, expected, installConfig.Config, "unexpected config generated")
 }
@@ -148,7 +148,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+				OSImageStream: rhcos.BuildDefaultOSImageStream(),
 			},
 		},
 		{
@@ -249,7 +249,7 @@ wrong_key: wrong_value
 				},
 				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+				OSImageStream: rhcos.BuildDefaultOSImageStream(),
 			},
 		},
 		{
@@ -305,7 +305,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:       types.ExternalPublishingStrategy,
-				OSImageStream: rhcos.DefaultOSImageStream,
+				OSImageStream: rhcos.BuildDefaultOSImageStream(),
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,7 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diskfs/go-diskfs/util"
+	"github.com/diskfs/go-diskfs/backend"
+	"github.com/diskfs/go-diskfs/version"
 	"github.com/djherbis/times"
 )
 
@@ -51,8 +53,13 @@ type FinalizeOptions struct {
 //	Nlink() uint32         // number of hardlinks, if supported
 //	Uid()   uint32         // uid, if supported
 //	Gid()   uint32         // gid, if supported
-//
-//nolint:structcheck // keep unused members so that we can know their references
+type collisionGroup struct {
+	files     []*finalizeFileInfo
+	parent    *finalizeFileInfo // directory containing these files
+	basename  string            // the truncated basename they all collide on
+	extension string            // the truncated extension (if any)
+}
+
 type finalizeFileInfo struct {
 	path               string
 	target             string
@@ -463,7 +470,11 @@ func (fsm *FileSystem) Finalize(options FinalizeOptions) error {
 		 10- write volume descriptor set terminator
 	*/
 
-	f := fsm.file
+	f, err := fsm.backend.Writable()
+	if err != nil {
+		return err
+	}
+
 	blocksize := int(fsm.blocksize)
 
 	// 1- blank out sectors 0-15
@@ -672,8 +683,10 @@ func (fsm *FileSystem) Finalize(options FinalizeOptions) error {
 		if err != nil {
 			return fmt.Errorf("could not convert directory to bytes: %v", err)
 		}
-		for i, e := range p {
-			_, _ = f.WriteAt(e, writeAt+int64(i*blocksize))
+		var pos int64
+		for _, e := range p {
+			_, _ = f.WriteAt(e, writeAt+pos)
+			pos += int64(len(e))
 		}
 	}
 
@@ -781,7 +794,7 @@ func (fsm *FileSystem) Finalize(options FinalizeOptions) error {
 		pathTableMOptionalLocation: 0,
 		volumeSetIdentifier:        "",
 		publisherIdentifier:        "",
-		preparerIdentifier:         util.AppNameVersion,
+		preparerIdentifier:         version.AppName,
 		applicationIdentifier:      "",
 		copyrightFile:              "", // 37 bytes
 		abstractFile:               "", // 37 bytes
@@ -816,7 +829,7 @@ func (fsm *FileSystem) Finalize(options FinalizeOptions) error {
 
 // copyFileData copy data from file `from` at offset `fromOffset` to file `to` at offset `toOffset`.
 // Copies `size` bytes. If `size` is 0, copies as many bytes as it can.
-func copyFileData(from, to util.File, fromOffset, toOffset int64, size int) (int, error) {
+func copyFileData(from backend.File, to backend.WritableFile, fromOffset, toOffset int64, size int) (int, error) {
 	buf := make([]byte, 2048)
 	copied := 0
 	for {
@@ -909,10 +922,11 @@ func createPathTable(fi []*finalizeFileInfo) *pathTable {
 
 func walkTree(workspace string) ([]*finalizeFileInfo, map[string]*finalizeFileInfo, error) {
 	var (
-		dirList  = make(map[string]*finalizeFileInfo)
-		fileList = make([]*finalizeFileInfo, 0)
-		entry    *finalizeFileInfo
-		serial   uint64
+		dirList         = make(map[string]*finalizeFileInfo)
+		fileList        = make([]*finalizeFileInfo, 0)
+		collisionGroups = make(map[string]*collisionGroup)
+		entry           *finalizeFileInfo
+		serial          uint64
 	)
 	err := filepath.WalkDir(workspace, func(actualPath string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -956,12 +970,118 @@ func walkTree(workspace string) ([]*finalizeFileInfo, map[string]*finalizeFileIn
 			dirList[parentDir] = parentDirInfo
 			fileList = append(fileList, entry)
 		}
+
+		// Add to collision groups (for both files and directories)
+		// Build collision key: parent path + truncated 8.3 name
+		truncated := entry.shortname
+		if entry.extension != "" {
+			truncated += "." + entry.extension
+		}
+		collisionKey := parentDir + "/" + truncated
+		if collisionGroups[collisionKey] == nil {
+			collisionGroups[collisionKey] = &collisionGroup{
+				files:     make([]*finalizeFileInfo, 0),
+				parent:    parentDirInfo,
+				basename:  entry.shortname,
+				extension: entry.extension,
+			}
+		}
+		collisionGroups[collisionKey].files = append(collisionGroups[collisionKey].files, entry)
 		return nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Resolve filename collisions
+	for _, group := range collisionGroups {
+		if len(group.files) > 1 {
+			if err := resolveCollisionGroup(group); err != nil {
+				return nil, nil, fmt.Errorf("error resolving filename collisions: %v", err)
+			}
+		}
+	}
+
 	return fileList, dirList, nil
+}
+
+// resolveCollisionGroup resolves filename collisions for a group of files
+// using xorriso's algorithm from libisofs/ecma119_tree.c
+func resolveCollisionGroup(group *collisionGroup) error {
+	if len(group.files) <= 1 {
+		return nil
+	}
+
+	// Build hash table of all names in the parent directory
+	nameTable := make(map[string]bool)
+	for _, sibling := range group.parent.children {
+		name := sibling.shortname
+		if sibling.extension != "" {
+			name += "." + sibling.extension
+		}
+		nameTable[name] = true
+	}
+
+	// Calculate minimum digit width needed
+	digits := len(fmt.Sprintf("%d", len(group.files)-1))
+
+	// Try increasing digit widths until all files are resolved (max 7 digits)
+	for digits < 8 {
+		maxBasename := 8 - digits
+
+		// Truncate basename to max length
+		basename := group.basename
+		if len(basename) > maxBasename {
+			basename = basename[:maxBasename]
+		}
+		extension := group.extension
+
+		// Try to assign names to each file in the collision group
+		change := 0
+		maxChange := int(math.Pow10(digits))
+		allResolved := true
+
+		for _, file := range group.files {
+			// Try incrementing change values until we find a unique name
+			found := false
+			for change < maxChange {
+				// Format the candidate name
+				indexStr := fmt.Sprintf("%0*d", digits, change)
+				candidate := basename + indexStr
+				if extension != "" {
+					candidate += "." + extension
+				}
+				change++
+
+				// Check if this name is already taken
+				if !nameTable[candidate] {
+					// Update file shortname in-place
+					file.shortname = basename + indexStr
+					nameTable[candidate] = true
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				allResolved = false
+				break
+			}
+		}
+
+		if allResolved {
+			return nil
+		}
+
+		// Need more digits, try again
+		digits++
+	}
+
+	name := group.basename
+	if group.extension != "" {
+		name += "." + group.extension
+	}
+	return fmt.Errorf("too many filename collisions for: %s", name)
 }
 
 func calculateBlocks(size, blocksize int64) uint32 {
@@ -987,6 +1107,18 @@ func calculateShortnameExtension(name string) (shortname, extension string) {
 	re := regexp.MustCompile("[^A-Z0-9_]")
 	shortname = re.ReplaceAllString(shortname, "_")
 	extension = re.ReplaceAllString(extension, "_")
+
+	// Truncate to ISO 9660 Level 1 (8.3 format) for maximum compatibility
+	// This ensures compatibility with tools that expect traditional short names
+	// Extension: max 3 characters
+	if len(extension) > 3 {
+		extension = extension[:3]
+	}
+
+	// Basename: max 8 characters
+	if len(shortname) > 8 {
+		shortname = shortname[:8]
+	}
 
 	return shortname, extension
 }

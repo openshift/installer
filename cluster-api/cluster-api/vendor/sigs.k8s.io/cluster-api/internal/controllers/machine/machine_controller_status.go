@@ -34,6 +34,8 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/internal/contract"
+	"sigs.k8s.io/cluster-api/internal/controllers/machinedeployment/mdutil"
+	"sigs.k8s.io/cluster-api/internal/util/inplace"
 	"sigs.k8s.io/cluster-api/util/conditions"
 )
 
@@ -42,7 +44,7 @@ import (
 // machine being partially deleted but also for running machines being disrupted e.g. by deleting the node.
 // Additionally, this func should ensure that the conditions managed by this controller are always set in order to
 // comply with the recommendation in the Kubernetes API guidelines.
-func (r *Reconciler) updateStatus(ctx context.Context, s *scope) {
+func (r *Reconciler) updateStatus(ctx context.Context, s *scope) ctrl.Result {
 	// Update status from the Bootstrap Config external resource.
 	// Note: some of the status fields derived from the Bootstrap Config are managed in reconcileBootstrap, e.g. status.BootstrapReady, etc.
 	// here we are taking care only of the delta (condition).
@@ -64,11 +66,13 @@ func (r *Reconciler) updateStatus(ctx context.Context, s *scope) {
 	// in reconcileDelete (e.g. status.Deletion nested fields), and also in the defer patch at the end of the main reconcile loop (status.ObservedGeneration) etc.
 	// Note: also other controllers adds conditions to the machine object (machine's owner controller sets the UpToDate condition,
 	// MHC controller sets HealthCheckSucceeded and OwnerRemediated conditions, KCP sets conditions about etcd and control plane pods).
-	setDeletingCondition(ctx, s.machine, s.reconcileDeleteExecuted, s.deletingReason, s.deletingMessage)
+	setDeletingCondition(ctx, s.machine, s.deletingReason, s.deletingMessage)
+	setUpdatingCondition(ctx, s.machine, s.updatingReason, s.updatingMessage)
+	setUpToDateCondition(ctx, s.machine, s.owningMachineSet, s.owningMachineDeployment)
 	setReadyCondition(ctx, s.machine)
-	setAvailableCondition(ctx, s.machine)
-
 	setMachinePhaseAndLastUpdated(ctx, s.machine)
+
+	return setAvailableCondition(ctx, s.machine)
 }
 
 func setBootstrapReadyCondition(_ context.Context, machine *clusterv1.Machine, bootstrapConfig *unstructured.Unstructured, bootstrapConfigIsNotFound bool) {
@@ -609,19 +613,13 @@ func transformControlPlaneAndEtcdConditions(messages []string) []string {
 	return out
 }
 
-func setDeletingCondition(_ context.Context, machine *clusterv1.Machine, reconcileDeleteExecuted bool, deletingReason, deletingMessage string) {
+func setDeletingCondition(_ context.Context, machine *clusterv1.Machine, deletingReason, deletingMessage string) {
 	if machine.DeletionTimestamp.IsZero() {
 		conditions.Set(machine, metav1.Condition{
 			Type:   clusterv1.MachineDeletingCondition,
 			Status: metav1.ConditionFalse,
 			Reason: clusterv1.MachineNotDeletingReason,
 		})
-		return
-	}
-
-	if !reconcileDeleteExecuted {
-		// Don't update the Deleting condition if reconcileDelete was not executed (e.g.
-		// because of rate-limiting).
 		return
 	}
 
@@ -633,17 +631,117 @@ func setDeletingCondition(_ context.Context, machine *clusterv1.Machine, reconci
 	})
 }
 
+func setUpdatingCondition(_ context.Context, machine *clusterv1.Machine, updatingReason, updatingMessage string) {
+	if inplace.IsUpdateInProgress(machine) {
+		if updatingReason == "" {
+			updatingReason = clusterv1.MachineInPlaceUpdatingReason
+		}
+		if updatingMessage == "" {
+			updatingMessage = "In-place update in progress"
+		}
+		conditions.Set(machine, metav1.Condition{
+			Type:    clusterv1.MachineUpdatingCondition,
+			Status:  metav1.ConditionTrue,
+			Reason:  updatingReason,
+			Message: updatingMessage,
+		})
+		return
+	}
+
+	conditions.Set(machine, metav1.Condition{
+		Type:   clusterv1.MachineUpdatingCondition,
+		Status: metav1.ConditionFalse,
+		Reason: clusterv1.MachineNotUpdatingReason,
+	})
+}
+
+func setUpToDateCondition(_ context.Context, m *clusterv1.Machine, ms *clusterv1.MachineSet, md *clusterv1.MachineDeployment) {
+	// If the current Machine is a stand-alone machine or a machine controlled by a stand-alone MachineSet,
+	// do not set an up-to-date condition on Machines, allowing tools managing higher level abstractions to set this condition.
+	// Note: This is also consistent with the fact that the MachineSet primarily takes care of the number of Machine
+	//       replicas, it doesn't reconcile them (even if we have a few exceptions like in-place propagation of a few selected
+	//       fields and remediation).
+	// Note: The Machine controller is computing upToDate condition only for worker machines.
+	//       This difference exists for two reasons:
+	//       - We would like to avoid race conditions that might happen by computing machine's conditions on different controllers,
+	//         and most specifically for those conditions that are considered in the MachineSet controller and in the MachineDeployment
+	//         controller e.g. to orchestrate rollouts with in-place updates.
+	//       - Core CAPI is not aware of specific details of every control plane implementation, so it is not possible to
+	//         compute the UpToDateCondition for control plane machines.
+	if ms == nil || md == nil {
+		return
+	}
+
+	// Determine current and desired state.
+	// If the current MachineSet is owned by a MachineDeployment, we mirror what is implemented in the MachineDeployment controller
+	// to trigger rollouts (by creating new MachineSets).
+	// More specifically:
+	// - desired state for the Machine is the spec.Template of the MachineDeployment
+	// - current state for the Machine is the spec.Template of the MachineSet who owns the Machine
+	// Note: We are intentionally considering current spec from the MachineSet instead of spec from the Machine itself in
+	//       order to surface info consistent with what the MachineDeployment controller uses to take decisions about rollouts.
+	//       The downside is that the system will ignore out of band changes applied to controlled Machines, which is
+	//       considered an acceptable trade-off given that out of band changes are the exception (users should not change
+	//       objects owned by the system).
+	//       However, if out of band changes happen, at least the system will ignore out of band changes consistently, both in the
+	//       MachineDeployment controller and in the condition computed here.
+	current := &ms.Spec.Template
+	desired := &md.Spec.Template
+
+	upToDate, notUpToDateResult := mdutil.MachineTemplateUpToDate(current, desired)
+
+	if !md.Spec.Rollout.After.IsZero() && md.Spec.Rollout.After.Before(ptr.To(metav1.Now())) && ms.CreationTimestamp.Before(ptr.To(md.Spec.Rollout.After)) {
+		upToDate = false
+		notUpToDateResult.ConditionMessages = append(notUpToDateResult.ConditionMessages, "MachineDeployment spec.rolloutAfter expired")
+	}
+
+	if !upToDate {
+		for i := range notUpToDateResult.ConditionMessages {
+			notUpToDateResult.ConditionMessages[i] = fmt.Sprintf("* %s", notUpToDateResult.ConditionMessages[i])
+		}
+		conditions.Set(m, metav1.Condition{
+			Type:   clusterv1.MachineUpToDateCondition,
+			Status: metav1.ConditionFalse,
+			Reason: clusterv1.MachineNotUpToDateReason,
+			// Note: the code computing the message for MachineDeployment's RolloutOut condition is making assumptions on the format/content of this message.
+			Message: strings.Join(notUpToDateResult.ConditionMessages, "\n"),
+		})
+		return
+	}
+
+	if c := conditions.Get(m, clusterv1.MachineUpdatingCondition); c != nil && c.Status == metav1.ConditionTrue {
+		msg := "* In-place update in progress"
+		if c.Message != "" {
+			msg = fmt.Sprintf("* %s", c.Message)
+		}
+		conditions.Set(m, metav1.Condition{
+			Type:    clusterv1.MachineUpToDateCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  clusterv1.MachineUpToDateUpdatingReason,
+			Message: msg,
+		})
+		return
+	}
+
+	conditions.Set(m, metav1.Condition{
+		Type:   clusterv1.MachineUpToDateCondition,
+		Status: metav1.ConditionTrue,
+		Reason: clusterv1.MachineUpToDateReason,
+	})
+}
+
 func setReadyCondition(ctx context.Context, machine *clusterv1.Machine) {
 	log := ctrl.LoggerFrom(ctx)
 
 	forConditionTypes := conditions.ForConditionTypes{
 		clusterv1.MachineDeletingCondition,
+		clusterv1.MachineUpdatingCondition,
 		clusterv1.MachineBootstrapConfigReadyCondition,
 		clusterv1.MachineInfrastructureReadyCondition,
 		clusterv1.MachineNodeHealthyCondition,
 		clusterv1.MachineHealthCheckSucceededCondition,
 	}
-	negativePolarityConditionTypes := []string{clusterv1.MachineDeletingCondition}
+	negativePolarityConditionTypes := []string{clusterv1.MachineDeletingCondition, clusterv1.MachineUpdatingCondition}
 	for _, g := range machine.Spec.ReadinessGates {
 		forConditionTypes = append(forConditionTypes, g.ConditionType)
 		if g.Polarity == clusterv1.NegativePolarityCondition {
@@ -666,9 +764,10 @@ func setReadyCondition(ctx context.Context, machine *clusterv1.Machine) {
 				negativePolarityConditionTypes: negativePolarityConditionTypes,
 			},
 		},
-		// Instruct summary to consider Deleting condition with negative polarity.
+		// Instruct summary to consider Deleting and updating condition with negative polarity.
 		conditions.NegativePolarityConditionTypes{
 			clusterv1.MachineDeletingCondition,
+			clusterv1.MachineUpdatingCondition,
 		},
 	}
 
@@ -753,7 +852,7 @@ func calculateDeletingConditionForSummary(machine *clusterv1.Machine) conditions
 	}
 }
 
-func setAvailableCondition(ctx context.Context, machine *clusterv1.Machine) {
+func setAvailableCondition(ctx context.Context, machine *clusterv1.Machine) ctrl.Result {
 	log := ctrl.LoggerFrom(ctx)
 	readyCondition := conditions.Get(machine, clusterv1.MachineReadyCondition)
 
@@ -767,7 +866,7 @@ func setAvailableCondition(ctx context.Context, machine *clusterv1.Machine) {
 			Reason:  clusterv1.MachineAvailableInternalErrorReason,
 			Message: "Please check controller logs for errors",
 		})
-		return
+		return ctrl.Result{}
 	}
 
 	if readyCondition.Status != metav1.ConditionTrue {
@@ -776,16 +875,17 @@ func setAvailableCondition(ctx context.Context, machine *clusterv1.Machine) {
 			Status: metav1.ConditionFalse,
 			Reason: clusterv1.MachineNotReadyReason,
 		})
-		return
+		return ctrl.Result{}
 	}
 
-	if time.Since(readyCondition.LastTransitionTime.Time) >= time.Duration(ptr.Deref(machine.Spec.MinReadySeconds, 0))*time.Second {
+	t := time.Since(readyCondition.LastTransitionTime.Time) - time.Duration(ptr.Deref(machine.Spec.MinReadySeconds, 0))*time.Second
+	if t >= 0 {
 		conditions.Set(machine, metav1.Condition{
 			Type:   clusterv1.MachineAvailableCondition,
 			Status: metav1.ConditionTrue,
 			Reason: clusterv1.MachineAvailableReason,
 		})
-		return
+		return ctrl.Result{}
 	}
 
 	conditions.Set(machine, metav1.Condition{
@@ -793,6 +893,7 @@ func setAvailableCondition(ctx context.Context, machine *clusterv1.Machine) {
 		Status: metav1.ConditionFalse,
 		Reason: clusterv1.MachineWaitingForMinReadySecondsReason,
 	})
+	return ctrl.Result{RequeueAfter: -t}
 }
 
 func setMachinePhaseAndLastUpdated(_ context.Context, m *clusterv1.Machine) {
@@ -816,6 +917,10 @@ func setMachinePhaseAndLastUpdated(_ context.Context, m *clusterv1.Machine) {
 	// Set the phase to "running" if there is a NodeRef field and infrastructure is ready.
 	if m.Status.NodeRef.IsDefined() && ptr.Deref(m.Status.Initialization.InfrastructureProvisioned, false) {
 		m.Status.SetTypedPhase(clusterv1.MachinePhaseRunning)
+	}
+
+	if conditions.IsTrue(m, clusterv1.MachineUpdatingCondition) {
+		m.Status.SetTypedPhase(clusterv1.MachinePhaseUpdating)
 	}
 
 	// Set the phase to "deleting" if the deletion timestamp is set.

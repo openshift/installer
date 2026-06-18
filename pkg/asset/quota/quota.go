@@ -70,6 +70,15 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		return err
 	}
 
+	capiWorkers, err := workersAsset.CAPIMachineSets()
+	if err != nil {
+		return err
+	}
+	capiTemplates, err := workersAsset.CAPIMachineTemplates()
+	if err != nil {
+		return err
+	}
+
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case typesaws.Name:
@@ -95,7 +104,14 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrapf(err, "failed to load instance types for %s", ic.AWS.Region)
 		}
-		reports, err := quota.Check(q, aws.Constraints(ic.Config, masters, workers, instanceTypes))
+
+		masterInfos := aws.MachineInfoFromMAPIMachines(masters)
+		// Edge pools always use MAPI at the moment; worker pools may use CAPI. The split is
+		// handled at generation time (MachineSetFiles vs CAPIMachineSetFiles),
+		// so we simply collect from both sources — empty slices are no-ops.
+		workerInfos := append(aws.MachineInfoFromMAPIMachineSets(workers), aws.MachineInfoFromCAPIMachineSets(capiWorkers, capiTemplates)...)
+
+		reports, err := quota.Check(q, aws.Constraints(ic.Config, masterInfos, workerInfos, instanceTypes))
 		if err != nil {
 			return summarizeFailingReport(reports)
 		}

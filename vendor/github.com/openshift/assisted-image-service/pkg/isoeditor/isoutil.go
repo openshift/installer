@@ -104,7 +104,7 @@ func Create(outPath string, workDir string, volumeLabel string) error {
 	// we were writing to a particular partition on a device, but we are
 	// not so the minimum iso size will work for us here
 	minISOSize := 38 * 1024
-	d, err := diskfs.Create(outPath, int64(minISOSize), diskfs.Raw, diskfs.SectorSizeDefault)
+	d, err := diskfs.Create(outPath, int64(minISOSize), diskfs.SectorSizeDefault)
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func ReadFileFromISO(isoPath, filePath string) ([]byte, error) {
 
 // Gets directly the ISO 9660 filesystem (equivalent to GetFileSystem(0)).
 func GetISO9660FileSystem(d *disk.Disk) (filesystem.FileSystem, error) {
-	return iso9660.Read(d.File, d.Size, 0, 0)
+	return iso9660.Read(d.Backend, d.Size, 0, 0)
 }
 
 // fileEntry represents a single file to be added to a CPIO archive

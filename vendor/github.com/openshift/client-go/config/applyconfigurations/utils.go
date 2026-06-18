@@ -78,6 +78,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.BuildOverridesApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("BuildSpec"):
 		return &configv1.BuildSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClientCredentialConfig"):
+		return &configv1.ClientCredentialConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ClientSecretSecretReference"):
+		return &configv1.ClientSecretSecretReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CloudControllerManagerStatus"):
 		return &configv1.CloudControllerManagerStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CloudLoadBalancerConfig"):
@@ -150,6 +154,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.DNSZoneApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("EquinixMetalPlatformStatus"):
 		return &configv1.EquinixMetalPlatformStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ExternalClaimsSource"):
+		return &configv1.ExternalClaimsSourceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ExternalIPConfig"):
 		return &configv1.ExternalIPConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ExternalIPPolicy"):
@@ -158,6 +164,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.ExternalPlatformSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ExternalPlatformStatus"):
 		return &configv1.ExternalPlatformStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ExternalSourceAuthentication"):
+		return &configv1.ExternalSourceAuthenticationApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ExternalSourceCertificateAuthorityConfigMapReference"):
+		return &configv1.ExternalSourceCertificateAuthorityConfigMapReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ExternalSourcePredicate"):
+		return &configv1.ExternalSourcePredicateApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ExternalSourceTLS"):
+		return &configv1.ExternalSourceTLSApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ExtraMapping"):
 		return &configv1.ExtraMappingApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("FeatureGate"):
@@ -264,8 +278,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.InsightsDataGatherSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KeystoneIdentityProvider"):
 		return &configv1.KeystoneIdentityProviderApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("KMSConfig"):
-		return &configv1.KMSConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("KMSPluginConfig"):
+		return &configv1.KMSPluginConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KubevirtPlatformStatus"):
 		return &configv1.KubevirtPlatformStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("LDAPAttributeMapping"):
@@ -290,6 +304,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.NetworkDiagnosticsTargetPlacementApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("NetworkMigration"):
 		return &configv1.NetworkMigrationApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("NetworkObservabilitySpec"):
+		return &configv1.NetworkObservabilitySpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("NetworkSpec"):
 		return &configv1.NetworkSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("NetworkStatus"):
@@ -416,6 +432,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.SecretNameReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("SignatureStore"):
 		return &configv1.SignatureStoreApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("SourcedClaimMapping"):
+		return &configv1.SourcedClaimMappingApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("SourceURL"):
+		return &configv1.SourceURLApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("Storage"):
 		return &configv1.StorageApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("TemplateReference"):
@@ -456,8 +476,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.VaultAuthenticationApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VaultConfigMapReference"):
 		return &configv1.VaultConfigMapReferenceApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultKMSConfig"):
-		return &configv1.VaultKMSConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("VaultKMSPluginConfig"):
+		return &configv1.VaultKMSPluginConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VaultSecretReference"):
 		return &configv1.VaultSecretReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VaultTLSConfig"):
@@ -574,6 +594,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.NodeExporterCollectorNetDevConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorProcessesConfig"):
 		return &configv1alpha1.NodeExporterCollectorProcessesConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorSoftirqsConfig"):
+		return &configv1alpha1.NodeExporterCollectorSoftirqsConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorSystemdCollectConfig"):
 		return &configv1alpha1.NodeExporterCollectorSystemdCollectConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorSystemdConfig"):
@@ -640,6 +662,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.TelemeterClientConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ThanosQuerierConfig"):
 		return &configv1alpha1.ThanosQuerierConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ThanosQuerierRequestLoggingConfig"):
+		return &configv1alpha1.ThanosQuerierRequestLoggingConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSConfig"):
 		return &configv1alpha1.TLSConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("UppercaseActionConfig"):

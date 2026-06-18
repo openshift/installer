@@ -17,7 +17,7 @@ import (
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset/ignition"
-	"github.com/openshift/installer/pkg/asset/rhcos"
+	assetrhcos "github.com/openshift/installer/pkg/asset/rhcos"
 )
 
 func newDomain(name string) libvirtxml.Domain {
@@ -171,13 +171,13 @@ func createStoragePool(virConn *libvirt.Libvirt, config baremetalConfig) (libvir
 }
 
 func getLiveISO(config baremetalConfig, arch string) (string, error) {
-	fetcher := rhcos.NewBaseISOFetcher(
-		rhcos.NewReleasePayload(
-			rhcos.ExtractConfig{},
+	fetcher := assetrhcos.NewBaseISOFetcher(
+		assetrhcos.NewReleasePayload(
+			assetrhcos.ExtractConfig{},
 			config.ReleaseImagePullSpec,
 			config.PullSecret,
 			config.MirrorConfig,
-		))
+		), config.OSImageStream)
 	return fetcher.GetBaseISOFilename(context.Background(), arch)
 }
 

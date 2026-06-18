@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/diskfs/go-diskfs/util"
+	"github.com/diskfs/go-diskfs/backend"
 )
 
 // Partition represents the structure of a single partition on the disk
@@ -115,7 +115,7 @@ func partitionFromBytes(b []byte, logicalSectorSize, physicalSectorSize int) (*P
 		EndSector:          b[6],
 		EndCylinder:        b[7],
 		Start:              binary.LittleEndian.Uint32(b[8:12]),
-		Size:               binary.LittleEndian.Uint32(b[12:16]),
+		Size:               binary.LittleEndian.Uint32(b[12:16]), //nolint:gosec // we already checked the length above
 		logicalSectorSize:  logicalSectorSize,
 		physicalSectorSize: physicalSectorSize,
 	}, nil
@@ -123,7 +123,7 @@ func partitionFromBytes(b []byte, logicalSectorSize, physicalSectorSize int) (*P
 
 // WriteContents fills the partition with the contents provided
 // reads from beginning of reader to exactly size of partition in bytes
-func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, error) {
+func (p *Partition) WriteContents(f backend.WritableFile, contents io.Reader) (uint64, error) {
 	pss, lss := p.sectorSizes()
 	total := uint64(0)
 
@@ -166,7 +166,7 @@ func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, erro
 
 // readContents reads the contents of the partition into a writer
 // streams the entire partition to the writer
-func (p *Partition) ReadContents(f util.File, out io.Writer) (int64, error) {
+func (p *Partition) ReadContents(f backend.File, out io.Writer) (int64, error) {
 	pss, lss := p.sectorSizes()
 	total := int64(0)
 	// chunks of physical sector size for efficient writing

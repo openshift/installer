@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,6 +41,7 @@ import (
 	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
 	"sigs.k8s.io/cluster-api/internal/topology/variables"
 	clog "sigs.k8s.io/cluster-api/util/log"
+	"sigs.k8s.io/cluster-api/util/version"
 )
 
 func (webhook *ClusterClass) SetupWebhookWithManager(mgr ctrl.Manager) error {
@@ -145,6 +147,9 @@ func (webhook *ClusterClass) validate(ctx context.Context, oldClusterClass, newC
 	// Validate metadata
 	allErrs = append(allErrs, validateClusterClassMetadata(newClusterClass)...)
 
+	// Ensure all kubernetes versions are valid.
+	allErrs = append(allErrs, validateKubernetesVersions(newClusterClass.Spec.KubernetesVersions)...)
+
 	// If this is an update run additional validation.
 	if oldClusterClass != nil {
 		// Ensure spec changes are compatible.
@@ -157,6 +162,10 @@ func (webhook *ClusterClass) validate(ctx context.Context, oldClusterClass, newC
 				errors.Wrapf(err, "Clusters using ClusterClass %v can not be retrieved", oldClusterClass.Name)))
 			return apierrors.NewInvalid(clusterv1.GroupVersion.WithKind("ClusterClass").GroupKind(), newClusterClass.Name, allErrs)
 		}
+
+		// Ensure New ClusterClass contains Kubernetes versions of all the Clusters of ClusterClass.
+		allErrs = append(allErrs,
+			webhook.validateKubernetesVersionsOfClusters(clusters, oldClusterClass, newClusterClass)...)
 
 		// Ensure no MachineDeploymentClass currently in use has been removed from the ClusterClass.
 		allErrs = append(allErrs,
@@ -235,6 +244,32 @@ func validateUpdatesToMachineHealthCheckClasses(clusters []clusterv1.Cluster, ol
 					fmt.Sprintf("healthCheck cannot be deleted because it is used by Cluster(s) %q", strings.Join(clustersUsingMHC, ",")),
 				))
 			}
+		}
+	}
+
+	return allErrs
+}
+
+func (webhook *ClusterClass) validateKubernetesVersionsOfClusters(clusters []clusterv1.Cluster, _, newClusterClass *clusterv1.ClusterClass) field.ErrorList {
+	var allErrs field.ErrorList
+
+	// If there is no KubernetesVersions is set in the ClusterClass return early.
+	if len(newClusterClass.Spec.KubernetesVersions) == 0 {
+		return allErrs
+	}
+
+	kubernetesVersions := sets.Set[string]{}
+	for _, v := range newClusterClass.Spec.KubernetesVersions {
+		kubernetesVersions.Insert(v)
+	}
+
+	// Error if any Cluster's Kubernetes version is not set in the ClusterClass.
+	for _, c := range clusters {
+		if !kubernetesVersions.Has(c.Spec.Topology.Version) {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "kubernetesVersions"),
+				fmt.Sprintf("Kubernetes Version %s is used by Cluster %q but not set in ClusterClass",
+					c.Spec.Topology.Version, c.Name),
+			))
 		}
 	}
 
@@ -498,6 +533,43 @@ func validateAutoscalerAnnotationsForClusterClass(clusters []clusterv1.Cluster, 
 	var allErrs field.ErrorList
 	for _, c := range clusters {
 		allErrs = append(allErrs, validateAutoscalerAnnotationsForCluster(&c, newClusterClass)...)
+	}
+	return allErrs
+}
+
+// validateKubernetesVersions iterates over a list of versions and check they are valid.
+func validateKubernetesVersions(versions []string) field.ErrorList {
+	var allErrs field.ErrorList
+	var previousVersion *semver.Version
+	for i, v := range versions {
+		semV, err := semver.ParseTolerant(v)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("spec", "kubernetesVersion").Index(i),
+				v,
+				"version must be a valid semantic version",
+			))
+			continue
+		}
+		if previousVersion != nil {
+			// Note: we tolerate having one version followed by another with the same major.minor.patch but different build tags (version.Compare==2)
+			if version.Compare(semV, *previousVersion, version.WithBuildTags()) <= 0 {
+				allErrs = append(allErrs, field.Invalid(
+					field.NewPath("spec", "kubernetesVersion").Index(i),
+					v,
+					fmt.Sprintf("version must be greater than v%s", previousVersion.String()),
+				))
+			}
+
+			if previousVersion.Minor != semV.Minor && previousVersion.Minor+1 != semV.Minor {
+				allErrs = append(allErrs, field.Invalid(
+					field.NewPath("spec", "kubernetesVersion").Index(i),
+					v,
+					fmt.Sprintf("expecting a version with minor %d or %d, found version %s", previousVersion.Minor, previousVersion.Minor+1, semV),
+				))
+			}
+		}
+		previousVersion = &semV
 	}
 	return allErrs
 }

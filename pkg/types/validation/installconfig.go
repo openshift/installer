@@ -25,7 +25,6 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
@@ -900,6 +899,9 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		case types.MachinePoolComputeRoleName:
 		case types.MachinePoolEdgeRoleName:
 			allErrs = append(allErrs, validateComputeEdge(platform, p.Name, poolFldPath, poolFldPath)...)
+			if p.Management == types.ClusterAPI {
+				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("management"), p.Management, "edge compute pools cannot be managed by Cluster API"))
+			}
 		default:
 			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{types.MachinePoolComputeRoleName, types.MachinePoolEdgeRoleName}))
 		}
@@ -1574,9 +1576,9 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	featureSets, ok := types.FeatureSetsForProfile()
-	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", types.GetClusterProfileName())
+	featureSets, err := types.FeatureSetsForProfile()
+	if err != nil {
+		logrus.Warnf("no feature sets for cluster profile %q. %s", types.GetClusterProfileName(), err)
 	}
 	if _, ok := featureSets[c.FeatureSet]; c.FeatureSet != configv1.CustomNoUpgrade && !ok {
 		sortedFeatureSets := func() []string {
@@ -1679,7 +1681,7 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 func validateReleaseArchitecture(controlPlanePool *types.MachinePool, computePool []types.MachinePool, releaseArch types.Architecture) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	clusterArch := version.DefaultArch()
+	clusterArch := types.DefaultArch()
 	if controlPlanePool != nil && controlPlanePool.Architecture != "" {
 		clusterArch = controlPlanePool.Architecture
 	}
@@ -1805,19 +1807,14 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 
 func validateOSImageStream(config *types.InstallConfig) field.ErrorList {
 	errs := field.ErrorList{}
-	if config.IsSCOS() {
-		if config.OSImageStream != rhcos.DefaultOSImageStream {
-			errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
-		}
-		return errs
-	}
+	validStreams := types.OSImageStreamValues()
 
-	if !slices.Contains(types.OSImageStreamValues, config.OSImageStream) {
+	if !slices.Contains(validStreams, config.OSImageStream) {
 		errs = append(errs,
 			field.NotSupported(
 				field.NewPath("osImageStream"),
 				config.OSImageStream,
-				types.OSImageStreamValues))
+				validStreams))
 	}
 	return errs
 }

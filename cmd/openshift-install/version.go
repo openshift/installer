@@ -40,7 +40,7 @@ func runVersionCmd(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Printf("release architecture %s\n", releaseArch)
 	if strings.Contains(releaseArch, "multi") || strings.Contains(releaseArch, "unknown") {
-		fmt.Printf("default architecture %s\n", version.DefaultArch())
+		fmt.Printf("default architecture %s\n", version.RawDefaultArch())
 	}
 
 	return nil

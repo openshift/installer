@@ -48,7 +48,7 @@ func (d *directoryEntry) equal(o *directoryEntry) bool {
 	if !d.inode.equal(o.inode) {
 		return false
 	}
-	return d.isSubdirectory == o.isSubdirectory && d.name == o.name && d.size == o.size && d.modTime == o.modTime && d.mode == o.mode
+	return d.isSubdirectory == o.isSubdirectory && d.name == o.name && d.size == o.size && d.modTime.Equal(o.modTime) && d.mode == o.mode
 }
 
 // Name string       // base name of the file
@@ -181,7 +181,8 @@ func (d *directoryEntry) Open() (filesystem.File, error) {
 	//nolint:exhaustive // all other cases fall under default
 	switch iType {
 	case inodeBasicFile:
-		extFile := body.(*basicFile).toExtended()
+		bFile, _ := body.(*basicFile)
+		extFile := bFile.toExtended()
 		eFile = &extFile
 	case inodeExtendedFile:
 		eFile, _ = body.(*extendedFile)

@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/openshift/installer/pkg/types"
 )
 
 // This file handles correctly identifying the default release version, which is expected to be
@@ -65,7 +63,7 @@ func String() (string, error) {
 // Version returns the installer/release version.
 func Version() (string, error) {
 	if strings.HasPrefix(defaultVersionPadded, defaultVersionPrefix) {
-		return Raw, nil
+		return removeGoVersionPrefix(Raw), nil
 	}
 	nullTerminator := strings.IndexByte(defaultVersionPadded, '\x00')
 	if nullTerminator == -1 {
@@ -125,7 +123,23 @@ func cleanArch(releaseArchitecture string) string {
 	return strings.ReplaceAll(releaseArchitecture, "linux/", "")
 }
 
-// DefaultArch returns the default release architecture
-func DefaultArch() types.Architecture {
-	return types.Architecture(defaultArch)
+// removeGoVersionPrefix converts a Go module version tag (e.g. "v1.5.0")
+// into the corresponding OCP version (e.g. "5.0"). The installer's Go
+// module uses major version 1, so "v1.X.Y" means OCP version "X.Y".
+// ART builds set BUILD_VERSION directly to the OCP version (e.g. "v5.0.0"),
+// so we only strip the first segment when it is "1".
+func removeGoVersionPrefix(version string) string {
+	if strings.HasPrefix(version, "v") {
+		version = strings.TrimPrefix(version, "v")
+		parts := strings.SplitN(version, ".", 2)
+		if len(parts) > 1 && parts[0] == "1" {
+			version = parts[1]
+		}
+	}
+	return version
+}
+
+// RawDefaultArch returns the default release architecture embedded in the binary.
+func RawDefaultArch() string {
+	return defaultArch
 }

@@ -28,15 +28,37 @@ import (
 )
 
 const (
-	machineOsImageName   = "machine-os-images"
-	coreOsFileName       = "/coreos/coreos-%s.iso"
-	coreOsSha256FileName = "/coreos/coreos-%s.iso.sha256"
-	coreOsStreamFileName = "/coreos/coreos-stream.json"
+	machineOsImageName = "machine-os-images"
 	// ocDefaultTries is the number of times to execute the oc command on failures.
 	ocDefaultTries = 5
 	// ocDefaultRetryDelay is the time between retries.
 	ocDefaultRetryDelay = time.Second * 5
 )
+
+// getCoreOsFileName returns the ISO file path in machine-os-images based on stream.
+func getCoreOsFileName(stream types.OSImageStream, architecture string) string {
+	// rhel-10 uses coreos10- prefix, rhel-9 uses coreos- prefix
+	if stream == types.OSImageStreamRHCOS10 {
+		return fmt.Sprintf("/coreos/coreos10-%s.iso", architecture)
+	}
+	return fmt.Sprintf("/coreos/coreos-%s.iso", architecture)
+}
+
+// getCoreOsSha256FileName returns the ISO checksum file path based on stream.
+func getCoreOsSha256FileName(stream types.OSImageStream, architecture string) string {
+	if stream == types.OSImageStreamRHCOS10 {
+		return fmt.Sprintf("/coreos/coreos10-%s.iso.sha256", architecture)
+	}
+	return fmt.Sprintf("/coreos/coreos-%s.iso.sha256", architecture)
+}
+
+// getCoreOsStreamFileName returns the stream metadata file path based on stream.
+func getCoreOsStreamFileName(stream types.OSImageStream) string {
+	if stream == types.OSImageStreamRHCOS10 {
+		return "/coreos/coreos10-stream.json"
+	}
+	return "/coreos/coreos-stream.json"
+}
 
 // ExtractConfig is used to set up the retries for extracting the base ISO.
 type ExtractConfig struct {
@@ -46,8 +68,8 @@ type ExtractConfig struct {
 
 // ReleasePayload is the interface to use the oc command to the get image info.
 type ReleasePayload interface {
-	GetBaseIso(architecture string) (string, error)
-	GetBaseIsoVersion(architecture string) (string, error)
+	GetBaseIso(architecture string, osImageStream types.OSImageStream) (string, error)
+	GetBaseIsoVersion(architecture string, osImageStream types.OSImageStream) (string, error)
 	ExtractFile(image string, filename string, architecture string) ([]string, error)
 }
 
@@ -94,7 +116,7 @@ func (r *releasePayload) ExtractFile(image string, filename string, architecture
 }
 
 // Get the CoreOS ISO from the releaseImage.
-func (r *releasePayload) GetBaseIso(architecture string) (string, error) {
+func (r *releasePayload) GetBaseIso(architecture string, osImageStream types.OSImageStream) (string, error) {
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
 	image, err := r.getImageFromRelease(machineOsImageName, architecture)
 	if err != nil {
@@ -106,7 +128,7 @@ func (r *releasePayload) GetBaseIso(architecture string) (string, error) {
 		return "", err
 	}
 
-	filename := fmt.Sprintf(coreOsFileName, architecture)
+	filename := getCoreOsFileName(osImageStream, architecture)
 	// Check if file is already cached
 	cachedFile, err := cache.GetFileFromCache(path.Base(filename), cacheDir)
 	if err != nil {
@@ -114,7 +136,7 @@ func (r *releasePayload) GetBaseIso(architecture string) (string, error) {
 	}
 	if cachedFile != "" {
 		logrus.Info("Verifying cached file")
-		valid, err := r.verifyCacheFile(image, cachedFile, architecture)
+		valid, err := r.verifyCacheFile(image, cachedFile, architecture, osImageStream)
 		if err != nil {
 			return "", err
 		}
@@ -133,14 +155,15 @@ func (r *releasePayload) GetBaseIso(architecture string) (string, error) {
 	return path[0], err
 }
 
-func (r *releasePayload) GetBaseIsoVersion(architecture string) (string, error) {
-	files, err := r.ExtractFile(machineOsImageName, coreOsStreamFileName, architecture)
+func (r *releasePayload) GetBaseIsoVersion(architecture string, osImageStream types.OSImageStream) (string, error) {
+	streamFileName := getCoreOsStreamFileName(osImageStream)
+	files, err := r.ExtractFile(machineOsImageName, streamFileName, architecture)
 	if err != nil {
 		return "", err
 	}
 
 	if len(files) > 1 {
-		return "", fmt.Errorf("too many files found for %s", coreOsStreamFileName)
+		return "", fmt.Errorf("too many files found for %s", streamFileName)
 	}
 
 	rawData, err := os.ReadFile(files[0])
@@ -266,11 +289,11 @@ func (r *releasePayload) extractFileFromImage(image, file, cacheDir string, arch
 }
 
 // Get hash from rhcos.json.
-func (r *releasePayload) getHashFromInstaller(architecture string) (bool, string) {
+func (r *releasePayload) getHashFromInstaller(architecture string, osImageStream types.OSImageStream) (bool, string) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
-	st, err := rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+	st, err := rhcos.FetchCoreOSBuild(ctx, osImageStream)
 	if err != nil {
 		return false, ""
 	}
@@ -298,7 +321,7 @@ func matchingHash(imageSha []byte, sha string) bool {
 }
 
 // Check if there is a different base ISO in the release payload.
-func (r *releasePayload) verifyCacheFile(image, file, architecture string) (bool, error) {
+func (r *releasePayload) verifyCacheFile(image, file, architecture string, osImageStream types.OSImageStream) (bool, error) {
 	// Get hash of cached file
 	f, err := os.Open(file)
 	if err != nil {
@@ -313,7 +336,7 @@ func (r *releasePayload) verifyCacheFile(image, file, architecture string) (bool
 	fileSha := h.Sum(nil)
 
 	// Check if the hash of cached file matches hash in rhcos.json
-	found, rhcosSha := r.getHashFromInstaller(architecture)
+	found, rhcosSha := r.getHashFromInstaller(architecture, osImageStream)
 	if found && matchingHash(fileSha, rhcosSha) {
 		logrus.Debug("Found matching hash in installer metadata")
 		return true, nil
@@ -327,7 +350,7 @@ func (r *releasePayload) verifyCacheFile(image, file, architecture string) (bool
 
 	defer os.RemoveAll(tempDir)
 
-	shaFilename := fmt.Sprintf(coreOsSha256FileName, architecture)
+	shaFilename := getCoreOsSha256FileName(osImageStream, architecture)
 	shaFile, err := r.extractFileFromImage(image, shaFilename, tempDir, architecture)
 	if err != nil {
 		logrus.Debug("Could not get SHA from payload for cache comparison")

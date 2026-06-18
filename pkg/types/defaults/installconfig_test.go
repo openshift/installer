@@ -39,7 +39,7 @@ func defaultInstallConfig() *types.InstallConfig {
 		ControlPlane:  defaultMachinePool("master"),
 		Compute:       []types.MachinePool{*defaultMachinePool("worker")},
 		Publish:       types.ExternalPublishingStrategy,
-		OSImageStream: rhcos.DefaultOSImageStream,
+		OSImageStream: rhcos.BuildDefaultOSImageStream(),
 	}
 }
 

@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 type editFunctions []func(ic *types.InstallConfig)
@@ -223,6 +224,28 @@ var (
 			AddressPrefix: &validControlPlaneSubnetCIDR,
 		},
 	}
+
+	dualStackVirtualNetworkAPIResult = &aznetwork.VirtualNetwork{
+		Name: &validVirtualNetwork,
+		VirtualNetworkPropertiesFormat: &aznetwork.VirtualNetworkPropertiesFormat{
+			Subnets: &[]aznetwork.Subnet{{
+				Name: &validComputeSubnet,
+				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+					AddressPrefixes: &[]string{"10.0.0.0/24", "fd00::/64"},
+				},
+			}, {
+				Name: &validControlPlaneSubnet,
+				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+					AddressPrefixes: &[]string{"10.0.1.0/24", "fd00:1::/64"},
+				},
+			}},
+		},
+	}
+
+	enableDualStack = func(ic *types.InstallConfig) {
+		ic.Azure.IPFamily = network.DualStackIPv4Primary
+	}
+
 	locationsAPIResult = func() *[]azsubs.Location {
 		r := []azsubs.Location{}
 		for i := 0; i < len(validRegionsList); i++ {
@@ -586,6 +609,11 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-compute-subnet": subnet does not exist in the vnet, platform.azure.subnetSpec.subnets: Invalid value: "invalid-controlplane-subnet": subnet does not exist in the vnet`,
 		},
 		{
+			name:     "Dual-stack with IPv4-only subnets",
+			edits:    editFunctions{enableDualStack},
+			errorMsg: "subnet does not have an IPv6 address prefix, which is required when ipFamily is dual-stack",
+		},
+		{
 			name:     "Valid instance types",
 			edits:    editFunctions{validInstanceTypes},
 			errorMsg: "",
@@ -793,6 +821,37 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateDualStackSubnets(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureClient := mock.NewMockAPI(mockCtrl)
+
+	for _, value := range instanceTypeSku {
+		azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), to.String(value.Name), gomock.Any()).Return(value, nil).AnyTimes()
+	}
+	azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+	for key, value := range vmCapabilities {
+		azureClient.EXPECT().GetVMCapabilities(gomock.Any(), key, validRegion).Return(value, nil).AnyTimes()
+	}
+	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), gomock.Any()).Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
+	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), validNetworkResourceGroup, validVirtualNetwork).Return(dualStackVirtualNetworkAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetVirtualNetwork(gomock.Any(), gomock.Any(), gomock.Not(validVirtualNetwork)).Return(&aznetwork.VirtualNetwork{}, fmt.Errorf("invalid virtual network")).AnyTimes()
+	azureClient.EXPECT().ListLocations(gomock.Any()).Return(locationsAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetResourcesProvider(gomock.Any(), validResourceGroupNamespace).Return(resourcesProviderAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetDiskSkus(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
+	azureClient.EXPECT().GetVirtualMachineFamily(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).AnyTimes()
+
+	ic := validInstallConfig()
+	ic.Azure.IPFamily = network.DualStackIPv4Primary
+
+	metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+	metadata.UseMockClient(azureClient)
+	err := Validate(azureClient, metadata, ic)
+	assert.NoError(t, err)
 }
 
 var validGroupResult = &azres.Group{

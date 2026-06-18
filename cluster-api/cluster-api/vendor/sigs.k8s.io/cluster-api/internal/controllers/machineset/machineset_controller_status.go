@@ -31,6 +31,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/internal/util/inplace"
 	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	clog "sigs.k8s.io/cluster-api/util/log"
@@ -81,6 +82,13 @@ func setReplicas(_ context.Context, ms *clusterv1.MachineSet, machines []*cluste
 
 	var readyReplicas, availableReplicas, upToDateReplicas int32
 	for _, machine := range machines {
+		// If a machine is in-place updating consider it not Ready, not Available and not UpToDate.
+		// Note: We have to check this here because we don't want to rely on an additional Machine controller
+		//       reconcile to set the conditions to be able to update the replica counters here correctly.
+		if inplace.IsUpdateInProgress(machine) {
+			continue
+		}
+
 		if conditions.IsTrue(machine, clusterv1.MachineReadyCondition) {
 			readyReplicas++
 		}
@@ -191,7 +199,13 @@ func setScalingDownCondition(_ context.Context, ms *clusterv1.MachineSet, machin
 	if !ms.DeletionTimestamp.IsZero() {
 		desiredReplicas = 0
 	}
-	currentReplicas := int32(len(machines))
+	currentReplicas := int32(0)
+	for _, m := range machines {
+		if _, ok := m.Annotations[clusterv1.PendingAcknowledgeMoveAnnotation]; ok {
+			continue
+		}
+		currentReplicas++
+	}
 
 	// Scaling down.
 	if currentReplicas > desiredReplicas {

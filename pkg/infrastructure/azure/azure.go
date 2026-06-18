@@ -442,7 +442,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 	logrus.Debugf("updated internal load balancer: %s", *intLoadBalancer.ID)
 
+	// Collect backend pools from internal load balancer - control plane VMs need to be in these pools
 	var lbBaps []*armnetwork.BackendAddressPool
+	lbBaps = append(lbBaps, intLoadBalancer.Properties.BackendAddressPools...)
 	var extLBFQDN string
 	if in.InstallConfig.Config.PublicAPI() {
 		var publicIPv6 *armnetwork.PublicIPAddress
@@ -492,7 +494,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
-		lbBaps = loadBalancer.Properties.BackendAddressPools
+		// Append external load balancer backend pools to the list (internal pools already added)
+		lbBaps = append(lbBaps, loadBalancer.Properties.BackendAddressPools...)
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
 		p.publicLBIP = *publicIP.Properties.IPAddress
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
@@ -526,8 +529,22 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
+	// Add IPv6 frontend and load balancing rule for internal LB in dual-stack mode.
+	// The frontend must be added first so addIPv6InternalLBRule can reference it.
+	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+		lbInput.loadBalancerName = fmt.Sprintf("%s-internal", in.InfraID)
+		if err := addIPv6InternalLBFrontend(ctx, lbInput); err != nil {
+			return fmt.Errorf("failed to add IPv6 frontend to internal load balancer: %w", err)
+		}
+		logrus.Debugf("added IPv6 frontend to internal load balancer")
+
+		if err := addIPv6InternalLBRule(ctx, in, networkClientFactory, resourceGroupName); err != nil {
+			return fmt.Errorf("failed to add IPv6 internal LB rule: %w", err)
+		}
+	}
+
 	if in.InstallConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, resourceGroupName, p.clientOptions); err != nil {
+		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, p.publicLBIPv6, resourceGroupName, p.clientOptions); err != nil {
 			return fmt.Errorf("error creating DNS records: %w", err)
 		}
 	}
@@ -543,24 +560,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		return fmt.Errorf("error retrieving Azure session: %w", err)
 	}
 	subscriptionID := ssn.Credentials.SubscriptionID
-
-	// Add IPv6 frontend IP to internal LB after CAPZ finishes machine reconciliation.
-	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
-		lbClient := p.NetworkClientFactory.NewLoadBalancersClient()
-		lbInput := &lbInput{
-			loadBalancerName: fmt.Sprintf("%s-internal", in.InfraID),
-			infraID:          in.InfraID,
-			region:           in.InstallConfig.Config.Azure.Region,
-			resourceGroup:    p.ResourceGroupName,
-			subscriptionID:   subscriptionID,
-			lbClient:         lbClient,
-			tags:             p.Tags,
-		}
-		if err := addIPv6InternalLBFrontend(ctx, lbInput); err != nil {
-			return fmt.Errorf("failed to add IPv6 frontend to internal load balancer: %w", err)
-		}
-		logrus.Debugf("added IPv6 frontend to internal load balancer")
-	}
 
 	if in.InstallConfig.Config.PublicAPI() {
 		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, p.computeClientOptions)
@@ -652,6 +651,39 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 				return fmt.Errorf("failed to set public ipv6 to outbound ipv6 lb: %w", err)
 			}
 			logrus.Debugf("updated outbound ipv6 lb %s with public ipv6: %s", outboundLBName, *publicIPv6outbound.ID)
+			frontendIPv6ConfigName := "public-lb-ip-v6"
+			sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", in.InfraID)
+			frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
+				subscriptionID,
+				p.ResourceGroupName,
+				loadBalancerName,
+				frontendIPv6ConfigName,
+			)
+
+			inboundNatRuleV6, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
+				resourceGroupName:    p.ResourceGroupName,
+				loadBalancerName:     loadBalancerName,
+				frontendIPConfigID:   frontendIPv6ConfigID,
+				inboundNatRuleName:   sshRuleNameV6,
+				inboundNatRulePort:   22,
+				networkClientFactory: p.NetworkClientFactory,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create IPv6 SSH inbound nat rule: %w", err)
+			}
+			_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
+				resourceGroupName:    p.ResourceGroupName,
+				loadBalancerName:     loadBalancerName,
+				bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", in.InfraID),
+				frontendIPConfigID:   frontendIPv6ConfigID,
+				inboundNatRuleID:     *inboundNatRuleV6.ID,
+				inboundNatRuleName:   sshRuleNameV6,
+				inboundNatRulePort:   22,
+				networkClientFactory: p.NetworkClientFactory,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to associate IPv6 SSH inbound nat rule to interface: %w", err)
+			}
 		}
 	}
 
@@ -733,6 +765,15 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		})
 		if err != nil {
 			return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		}
+		err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
+			resourceGroupName:    resourceGroupName,
+			loadBalancerName:     in.Metadata.InfraID,
+			inboundNatRuleName:   fmt.Sprintf("%s_v6", sshRuleName),
+			networkClientFactory: networkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete inbound IPv6 nat rule: %w", err)
 		}
 	}
 	return nil
@@ -968,4 +1009,131 @@ func getMachinePoolSecurityType(installConfig *types.InstallConfig) string {
 		return confidentialVMST
 	}
 	return ""
+}
+
+// addIPv6InternalLBRule adds an IPv6 load balancing rule for port 6443 on the internal load balancer.
+// CAPZ only creates a single LBRuleHTTPS that uses the first (IPv4) frontend IP.
+// For dual-stack, we need an additional rule for the IPv6 frontend IP.
+func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, networkClientFactory *armnetwork.ClientFactory, resourceGroup string) error {
+	lbClient := networkClientFactory.NewLoadBalancersClient()
+	internalLBName := fmt.Sprintf("%s-internal", in.InfraID)
+
+	lb, err := lbClient.Get(ctx, resourceGroup, internalLBName, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get internal load balancer: %w", err)
+	}
+
+	if lb.Properties == nil {
+		return fmt.Errorf("internal load balancer has no properties")
+	}
+
+	// Check if the IPv6 rules already exist
+	for _, rule := range lb.Properties.LoadBalancingRules {
+		if rule.Name != nil && *rule.Name == "LBRuleHTTPS-v6" {
+			logrus.Infof("IPv6 load balancing rules already exist")
+			return nil
+		}
+	}
+
+	// Find the IPv6 frontend IP configuration
+	var ipv6FrontendID string
+	for _, frontend := range lb.Properties.FrontendIPConfigurations {
+		if frontend.Properties != nil &&
+			frontend.Properties.PrivateIPAddressVersion != nil &&
+			*frontend.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv6 {
+			ipv6FrontendID = *frontend.ID
+			break
+		}
+	}
+	if ipv6FrontendID == "" {
+		return fmt.Errorf("no IPv6 frontend IP configuration found on internal load balancer")
+	}
+
+	// Find the IPv6 backend pool
+	var ipv6BackendPoolID string
+	for _, pool := range lb.Properties.BackendAddressPools {
+		if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
+			ipv6BackendPoolID = *pool.ID
+			break
+		}
+	}
+	if ipv6BackendPoolID == "" {
+		return fmt.Errorf("no IPv6 backend pool found on internal load balancer")
+	}
+
+	// Find the HTTPS probe (API server) and MCS probe
+	var httpsProbeID, mcsProbeID string
+	for _, probe := range lb.Properties.Probes {
+		if probe.Name != nil {
+			switch *probe.Name {
+			case "HTTPSProbe":
+				httpsProbeID = *probe.ID
+			case "sint-probe":
+				mcsProbeID = *probe.ID
+			}
+		}
+	}
+	if httpsProbeID == "" {
+		return fmt.Errorf("HTTPS probe not found on internal load balancer")
+	}
+	if mcsProbeID == "" {
+		return fmt.Errorf("MCS probe (sint-probe) not found on internal load balancer")
+	}
+
+	// Add the IPv6 API server load balancing rule (port 6443)
+	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, &armnetwork.LoadBalancingRule{
+		Name: to.Ptr("LBRuleHTTPS-v6"),
+		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+			FrontendPort:         to.Ptr(int32(6443)),
+			BackendPort:          to.Ptr(int32(6443)),
+			EnableFloatingIP:     to.Ptr(false),
+			IdleTimeoutInMinutes: to.Ptr(int32(30)),
+			LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+			FrontendIPConfiguration: &armnetwork.SubResource{
+				ID: to.Ptr(ipv6FrontendID),
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(ipv6BackendPoolID),
+			},
+			Probe: &armnetwork.SubResource{
+				ID: to.Ptr(httpsProbeID),
+			},
+		},
+	})
+
+	// Add the IPv6 MCS load balancing rule (port 22623)
+	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, &armnetwork.LoadBalancingRule{
+		Name: to.Ptr("sint-v6"),
+		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+			FrontendPort:         to.Ptr(int32(22623)),
+			BackendPort:          to.Ptr(int32(22623)),
+			EnableFloatingIP:     to.Ptr(false),
+			IdleTimeoutInMinutes: to.Ptr(int32(30)),
+			LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+			FrontendIPConfiguration: &armnetwork.SubResource{
+				ID: to.Ptr(ipv6FrontendID),
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(ipv6BackendPoolID),
+			},
+			Probe: &armnetwork.SubResource{
+				ID: to.Ptr(mcsProbeID),
+			},
+		},
+	})
+
+	poller, err := lbClient.BeginCreateOrUpdate(ctx, resourceGroup, internalLBName, lb.LoadBalancer, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update internal load balancer with IPv6 rule: %w", err)
+	}
+
+	_, err = poller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update internal load balancer with IPv6 rule: %w", err)
+	}
+
+	logrus.Infof("Successfully added IPv6 load balancing rule for port 6443 on internal load balancer")
+	return nil
 }

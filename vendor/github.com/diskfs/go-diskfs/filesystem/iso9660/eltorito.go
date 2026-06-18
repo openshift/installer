@@ -7,10 +7,10 @@ import (
 	"os"
 
 	"github.com/diskfs/go-diskfs/partition/mbr"
-	"github.com/diskfs/go-diskfs/util"
+	"github.com/diskfs/go-diskfs/version"
 )
 
-//nolint:deadcode,varcheck,unused // we need these references in the future
+//nolint:unused // we need these references in the future
 const (
 	elToritoSector        = 0x11
 	elToritoDefaultBlocks = 4
@@ -98,7 +98,7 @@ func (et *ElTorito) validationEntry() []byte {
 	b := make([]byte, 0x20)
 	b[0] = 1
 	b[1] = byte(et.Platform)
-	copy(b[4:0x1c], util.AppNameVersion)
+	copy(b[4:0x1c], version.AppName)
 	b[0x1e] = 0x55
 	b[0x1f] = 0xaa
 	// calculate checksum

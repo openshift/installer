@@ -277,6 +277,9 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		case awstypes.AwsEuscPartitionID:
 			// For AWS EU Sovereign Cloud, use "eusc-de-east-1"
 			tagRegion = awstypes.EuscDeEast1RegionID
+		case awstypes.AwsCnPartitionID:
+			// For AWS China, use "cn-northwest-1"
+			tagRegion = awstypes.CnNorthwest1RegionID
 		case awstypes.AwsUsGovPartitionID:
 			// For AWS Government Cloud, use "us-gov-west-1"
 			tagRegion = awstypes.UsGovWest1RegionID
@@ -301,6 +304,16 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	switch o.Region {
 	case awstypes.EuscDeEast1RegionID:
 	case awstypes.CnNorth1RegionID, awstypes.CnNorthwest1RegionID:
+		if o.Region != awstypes.CnNorthwest1RegionID {
+			tagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
+				Region:    awstypes.CnNorthwest1RegionID,
+				Endpoints: o.endpoints,
+			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+			if err != nil {
+				return nil, fmt.Errorf("failed to create resource tagging client for cn-northwest-1: %w", err)
+			}
+			tagClients = append(tagClients, tagClient)
+		}
 	case awstypes.UsIsoEast1RegionID, awstypes.UsIsoWest1RegionID, awstypes.UsIsoBEast1RegionID:
 	case awstypes.UsGovEast1RegionID, awstypes.UsGovWest1RegionID:
 		if o.Region != awstypes.UsGovWest1RegionID {

@@ -27,7 +27,6 @@ import (
 	gcpbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
@@ -38,7 +37,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
-	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
@@ -222,135 +220,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 
 	switch platform {
 	case aws.Name:
-		var vpc string
-		var privateSubnets []string
-		var publicSubnets []string
-
-		if len(installConfig.Config.Platform.AWS.VPC.Subnets) > 0 {
-			subnets, err := installConfig.AWS.PrivateSubnets(ctx)
-			if err != nil {
-				return err
-			}
-
-			for id := range subnets {
-				privateSubnets = append(privateSubnets, id)
-			}
-
-			subnets, err = installConfig.AWS.PublicSubnets(ctx)
-			if err != nil {
-				return err
-			}
-
-			for id := range subnets {
-				publicSubnets = append(publicSubnets, id)
-			}
-
-			vpc, err = installConfig.AWS.VPCID(ctx)
-			if err != nil {
-				return err
-			}
-		}
-
-		object := "bootstrap.ign"
-		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
-
-		platformAWS := installConfig.Config.Platform.AWS
-		client, err := awsconfig.NewS3Client(ctx, awsconfig.EndpointOptions{
-			Region:    platformAWS.Region,
-			Endpoints: platformAWS.ServiceEndpoints,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create s3 client: %w", err)
-		}
-
-		url, err := awsconfig.PresignedS3URL(ctx, client, bucket, object)
-		if err != nil {
-			return err
-		}
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-		masterConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(masters))
-		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
-		}
-		workers, err := workersAsset.MachineSets()
-		if err != nil {
-			return err
-		}
-
-		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
-		for i, m := range workers {
-			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
-		}
-		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
-		osImageID := osImage[0]
-		osImageRegion := installConfig.Config.AWS.Region
-		if len(osImage) == 2 {
-			osImageRegion = osImage[1]
-		}
-
-		workerIAMRoleName := ""
-		if mp := installConfig.Config.WorkerMachinePool(); mp != nil {
-			awsMP := &aws.MachinePool{}
-			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
-			awsMP.Set(mp.Platform.AWS)
-			workerIAMRoleName = awsMP.IAMRole
-		}
-
-		var securityGroups []string
-		if mp := installConfig.Config.AWS.DefaultMachinePlatform; mp != nil {
-			securityGroups = mp.AdditionalSecurityGroupIDs
-		}
-		masterIAMRoleName := ""
-		if mp := installConfig.Config.ControlPlane; mp != nil {
-			awsMP := &aws.MachinePool{}
-			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
-			awsMP.Set(mp.Platform.AWS)
-			masterIAMRoleName = awsMP.IAMRole
-			if len(awsMP.AdditionalSecurityGroupIDs) > 0 {
-				securityGroups = awsMP.AdditionalSecurityGroupIDs
-			}
-		}
-
-		// AWS Zones is used to determine which route table the edge zone will be associated.
-		allZones, err := installConfig.AWS.AllZones(ctx)
-		if err != nil {
-			return err
-		}
-
-		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
-			VPC:                       vpc,
-			PrivateSubnets:            privateSubnets,
-			PublicSubnets:             publicSubnets,
-			AvailabilityZones:         allZones,
-			InternalZone:              installConfig.Config.AWS.HostedZone,
-			InternalZoneRole:          installConfig.Config.AWS.HostedZoneRole,
-			Services:                  installConfig.Config.AWS.ServiceEndpoints,
-			Publish:                   installConfig.Config.Publish,
-			MasterConfigs:             masterConfigs,
-			WorkerConfigs:             workerConfigs,
-			AMIID:                     osImageID,
-			AMIRegion:                 osImageRegion,
-			IgnitionBucket:            bucket,
-			IgnitionPresignedURL:      url,
-			AdditionalTrustBundle:     installConfig.Config.AdditionalTrustBundle,
-			MasterIAMRoleName:         masterIAMRoleName,
-			WorkerIAMRoleName:         workerIAMRoleName,
-			Architecture:              installConfig.Config.ControlPlane.Architecture,
-			Proxy:                     installConfig.Config.Proxy,
-			PreserveBootstrapIgnition: installConfig.Config.AWS.BestEffortDeleteIgnition,
-			MasterSecurityGroups:      securityGroups,
-			PublicIpv4Pool:            installConfig.Config.AWS.PublicIpv4Pool,
-		})
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: TfPlatformVarsFileName,
-			Data:     data,
-		})
+		// AWS uses CAPI for infrastructure provisioning; no Terraform variables needed.
 	case azure.Name:
 		session, err := installConfig.Azure.Session()
 		if err != nil {
@@ -771,6 +641,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			releaseImage.PullSpec,
 			installConfig.Config.PullSecret,
 			types.BuildMirrorConfig(installConfig.Config),
+			installConfig.Config.OSImageStream,
 			installConfig.Config.Platform.BareMetal.ExternalBridge,
 			installConfig.Config.Platform.BareMetal.ExternalMACAddress,
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,

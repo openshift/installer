@@ -8,32 +8,24 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+	quotatypes "github.com/openshift/installer/pkg/asset/quota/types"
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
 )
 
 // Constraints returns a list of quota constraints based on the InstallConfig.
 // These constraints can be used to check if there is enough quota for creating a cluster
-// for the isntall config.
-func Constraints(config *types.InstallConfig, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet, instanceTypes map[string]InstanceTypeInfo) []quota.Constraint {
-	ctrplConfigs := make([]*machineapi.AWSMachineProviderConfig, len(controlPlanes))
-	for i, m := range controlPlanes {
-		ctrplConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
-	}
-	computeReplicas := make([]int64, len(computes))
-	computeConfigs := make([]*machineapi.AWSMachineProviderConfig, len(computes))
-	for i, w := range computes {
-		computeReplicas[i] = int64(*w.Spec.Replicas)
-		computeConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
-	}
-
+// for the install config.
+func Constraints(config *types.InstallConfig, controlPlanes []quotatypes.MachineInfo, computes []quotatypes.MachineInfo, instanceTypes map[string]InstanceTypeInfo) []quota.Constraint {
 	var ret []quota.Constraint
 	for _, gen := range []constraintGenerator{
-		network(config, append(ctrplConfigs, computeConfigs...)),
-		controlPlane(config, ctrplConfigs, instanceTypes),
-		compute(config, computeReplicas, computeConfigs, instanceTypes),
+		network(config, append(controlPlanes, computes...)),
+		controlPlane(config, controlPlanes, instanceTypes),
+		compute(config, computes, instanceTypes),
 		others,
 	} {
 		ret = append(ret, gen()...)
@@ -63,11 +55,11 @@ func aggregate(quotas []quota.Constraint) []quota.Constraint {
 // constraintGenerator generates a list of constraints.
 type constraintGenerator func() []quota.Constraint
 
-func network(config *types.InstallConfig, machines []*machineapi.AWSMachineProviderConfig) func() []quota.Constraint {
+func network(config *types.InstallConfig, machines []quotatypes.MachineInfo) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		zones := sets.NewString()
 		for _, m := range machines {
-			zones.Insert(m.Placement.AvailabilityZone)
+			zones.Insert(m.AvailabilityZone)
 		}
 
 		var ret []quota.Constraint
@@ -102,7 +94,7 @@ func network(config *types.InstallConfig, machines []*machineapi.AWSMachineProvi
 	}
 }
 
-func controlPlane(config *types.InstallConfig, machines []*machineapi.AWSMachineProviderConfig, instanceTypes map[string]InstanceTypeInfo) func() []quota.Constraint {
+func controlPlane(config *types.InstallConfig, machines []quotatypes.MachineInfo, instanceTypes map[string]InstanceTypeInfo) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		var ret []quota.Constraint
 		for _, m := range machines {
@@ -114,12 +106,12 @@ func controlPlane(config *types.InstallConfig, machines []*machineapi.AWSMachine
 	}
 }
 
-func compute(config *types.InstallConfig, replicas []int64, machines []*machineapi.AWSMachineProviderConfig, instanceTypes map[string]InstanceTypeInfo) func() []quota.Constraint {
+func compute(config *types.InstallConfig, machines []quotatypes.MachineInfo, instanceTypes map[string]InstanceTypeInfo) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		var ret []quota.Constraint
-		for idx, m := range machines {
+		for _, m := range machines {
 			q := machineTypeToQuota(m.InstanceType, instanceTypes)
-			q.Count = q.Count * replicas[idx]
+			q.Count *= m.Replicas
 			q.Region = config.Platform.AWS.Region
 			ret = append(ret, q)
 		}
@@ -155,4 +147,49 @@ func machineTypeToQuota(t string, instanceTypes map[string]InstanceTypeInfo) quo
 		logrus.Warnf("%s", warnMessage)
 		return quota.Constraint{Name: "ec2/L-7295265B", Count: 0}
 	}
+}
+
+// MachineInfoFromMAPIMachines converts MAPI Machine objects to MachineInfo.
+func MachineInfoFromMAPIMachines(mapiMachines []machinev1beta1.Machine) []quotatypes.MachineInfo {
+	infos := make([]quotatypes.MachineInfo, 0, len(mapiMachines))
+	for _, m := range mapiMachines {
+		providerConfig := m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig)
+		infos = append(infos, quotatypes.MachineInfo{
+			InstanceType:     providerConfig.InstanceType,
+			AvailabilityZone: providerConfig.Placement.AvailabilityZone,
+			Replicas:         1,
+		})
+	}
+	return infos
+}
+
+// MachineInfoFromMAPIMachineSets converts MAPI MachineSet objects to MachineInfo.
+func MachineInfoFromMAPIMachineSets(mapiMachineSets []machinev1beta1.MachineSet) []quotatypes.MachineInfo {
+	infos := make([]quotatypes.MachineInfo, 0, len(mapiMachineSets))
+	for _, ms := range mapiMachineSets {
+		providerConfig := ms.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig)
+		infos = append(infos, quotatypes.MachineInfo{
+			InstanceType:     providerConfig.InstanceType,
+			AvailabilityZone: providerConfig.Placement.AvailabilityZone,
+			Replicas:         int64(*ms.Spec.Replicas),
+		})
+	}
+	return infos
+}
+
+// MachineInfoFromCAPIMachineSets converts CAPI MachineSet and AWSMachineTemplate objects to MachineInfo.
+func MachineInfoFromCAPIMachineSets(capiMachineSets []capi.MachineSet, capiTemplates []capa.AWSMachineTemplate) []quotatypes.MachineInfo {
+	templateInstanceTypes := make(map[string]string, len(capiTemplates))
+	for _, t := range capiTemplates {
+		templateInstanceTypes[t.Name] = t.Spec.Template.Spec.InstanceType
+	}
+	infos := make([]quotatypes.MachineInfo, 0, len(capiMachineSets))
+	for _, ms := range capiMachineSets {
+		infos = append(infos, quotatypes.MachineInfo{
+			InstanceType:     templateInstanceTypes[ms.Spec.Template.Spec.InfrastructureRef.Name],
+			AvailabilityZone: ms.Spec.Template.Spec.FailureDomain,
+			Replicas:         int64(*ms.Spec.Replicas),
+		})
+	}
+	return infos
 }

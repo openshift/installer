@@ -6,16 +6,27 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version/versioninfo"
 )
 
-const (
-	// DefaultOSImageStream is the OS image stream used when the install-config
-	// does not specify one.
-	DefaultOSImageStream = types.OSImageStreamRHCOS9
+// GetDefaultOSImageStream returns the default OS image stream for the
+// build version's default FeatureSet.
+func GetDefaultOSImageStream(_ *types.InstallConfig) types.OSImageStream {
+	// Note: This function is in place to allow stream
+	// selection based on FeatureGates in the future
+	return BuildDefaultOSImageStream()
+}
 
-	payloadImageStreamTagRHCOS9  = "rhel-coreos"
-	payloadImageStreamTagRHCOS10 = "rhel-coreos-10"
-)
+// BuildDefaultOSImageStream returns the default OS image stream for the
+// build version's default FeatureSet, for callers that don't have an
+// install-config to read the FeatureSet from.
+func BuildDefaultOSImageStream() types.OSImageStream {
+	versionInfo := versioninfo.GetInfo()
+	if versionInfo.Major < 5 {
+		return types.OSImageStreamRHCOS9
+	}
+	return types.OSImageStreamRHCOS10
+}
 
 func getStreamFileName(stream types.OSImageStream) string {
 	return fmt.Sprintf("coreos/coreos-%v.json", stream)
@@ -23,13 +34,4 @@ func getStreamFileName(stream types.OSImageStream) string {
 
 func getMarketplaceStreamFileName(stream types.OSImageStream) string {
 	return fmt.Sprintf("coreos/marketplace/coreos-%v.json", stream)
-}
-
-// GetPayloadImageStreamTag returns the payload image stream tag corresponding
-// to the given OS image stream.
-func GetPayloadImageStreamTag(stream types.OSImageStream) string {
-	if stream == types.OSImageStreamRHCOS9 {
-		return payloadImageStreamTagRHCOS9
-	}
-	return payloadImageStreamTagRHCOS10
 }

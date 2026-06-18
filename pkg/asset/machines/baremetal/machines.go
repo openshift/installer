@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
@@ -73,12 +74,26 @@ func provider(platform *baremetal.Platform, userDataSecret string, osImageStream
 		CustomDeploy: baremetalprovider.CustomDeploy{
 			Method: "install_coreos",
 		},
-		UserData: &corev1.SecretReference{Name: userDataSecret},
-		HostSelector: baremetalprovider.HostSelector{
-			MatchLabels: map[string]string{
-				"coreos.openshift.io/stream": string(osImageStream),
+		UserData:     &corev1.SecretReference{Name: userDataSecret},
+		HostSelector: hostSelectorForStream(osImageStream),
+	}
+	return config, nil
+}
+
+func hostSelectorForStream(stream types.OSImageStream) baremetalprovider.HostSelector {
+	var exclude []string
+	for _, s := range types.OSImageStreamValues() {
+		if s != stream {
+			exclude = append(exclude, string(s))
+		}
+	}
+	return baremetalprovider.HostSelector{
+		MatchExpressions: []baremetalprovider.HostSelectorRequirement{
+			{
+				Key:      streamLabelKey,
+				Operator: selection.NotIn,
+				Values:   exclude,
 			},
 		},
 	}
-	return config, nil
 }

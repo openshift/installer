@@ -214,6 +214,7 @@ func (fr *FakeOCPRegistry) setupReleasePayload() error {
 			return err
 		}
 		fr.addTarFile(tw, "coreos/coreos-x86_64.iso", isoData)
+		fr.addTarFile(tw, "coreos/coreos10-x86_64.iso", isoData)
 		return nil
 	}); err != nil {
 		return err

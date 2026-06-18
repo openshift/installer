@@ -61,7 +61,7 @@ func (fl *File) Read(b []byte) (int, error) {
 		// read those bytes
 		startPosOnDisk := e.startingBlock*blocksize + uint64(startPositionInExtent)
 		b2 := make([]byte, toReadInOffset)
-		read, err := fl.filesystem.file.ReadAt(b2, int64(startPosOnDisk))
+		read, err := fl.filesystem.backend.ReadAt(b2, int64(startPosOnDisk))
 		if err != nil {
 			return int(readBytes), fmt.Errorf("failed to read bytes: %v", err)
 		}
@@ -145,6 +145,12 @@ func (fl *File) Write(b []byte) (int, error) {
 	// the offset given for reading is relative to the file, so we need to calculate
 	// where these are in the extents relative to the file
 	writeStartBlock := uint64(fl.offset) / blocksize
+
+	writableFile, err := fl.filesystem.backend.Writable()
+	if err != nil {
+		return -1, err
+	}
+
 	for _, e := range fl.extents {
 		// if the last block of the extent is before the first block we want to write, skip it
 		if uint64(e.fileBlock)+uint64(e.count) < writeStartBlock {
@@ -164,7 +170,7 @@ func (fl *File) Write(b []byte) (int, error) {
 		startPosOnDisk := e.startingBlock*blocksize + uint64(startPositionInExtent)
 		b2 := make([]byte, toWriteInOffset)
 		copy(b2, b[writtenBytes:])
-		written, err := fl.filesystem.file.WriteAt(b2, int64(startPosOnDisk))
+		written, err := writableFile.WriteAt(b2, int64(startPosOnDisk))
 		if err != nil {
 			return int(writtenBytes), fmt.Errorf("failed to read bytes: %v", err)
 		}
@@ -175,7 +181,7 @@ func (fl *File) Write(b []byte) (int, error) {
 			break
 		}
 	}
-	var err error
+
 	if fl.offset >= fileSize {
 		err = io.EOF
 	}

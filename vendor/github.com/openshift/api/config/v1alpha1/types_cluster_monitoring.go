@@ -158,6 +158,12 @@ type ClusterMonitoringSpec struct {
 	// When set, at least one field must be specified within monitoringPluginConfig.
 	// +optional
 	MonitoringPluginConfig MonitoringPluginConfig `json:"monitoringPluginConfig,omitempty,omitzero"`
+	// kubeStateMetricsConfig is an optional field that can be used to configure the kube-state-metrics
+	// agent that runs in the openshift-monitoring namespace. kube-state-metrics generates metrics about
+	// the state of Kubernetes objects such as Deployments, Nodes, and Pods.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+	// +optional
+	KubeStateMetricsConfig KubeStateMetricsConfig `json:"kubeStateMetricsConfig,omitempty,omitzero"`
 }
 
 // OpenShiftStateMetricsConfig provides configuration options for the openshift-state-metrics agent
@@ -240,17 +246,6 @@ type OpenShiftStateMetricsConfig struct {
 // At least one field must be specified.
 // +kubebuilder:validation:MinProperties=1
 type NodeExporterConfig struct {
-	// nodeSelector defines the nodes on which the Pods are scheduled.
-	// nodeSelector is optional.
-	//
-	// When omitted, this means the user has no opinion and the platform is left
-	// to choose reasonable defaults. These defaults are subject to change over time.
-	// The current default value is `kubernetes.io/os: linux`.
-	// When specified, nodeSelector must contain at least 1 entry and must not contain more than 10 entries.
-	// +optional
-	// +kubebuilder:validation:MinProperties=1
-	// +kubebuilder:validation:MaxProperties=10
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 	// resources defines the compute resource requests and limits for the node-exporter container.
 	// This includes CPU, memory and HugePages constraints to help control scheduling and resource usage.
 	// When not specified, defaults are used by the platform. Requests cannot exceed limits.
@@ -276,20 +271,27 @@ type NodeExporterConfig struct {
 	// +kubebuilder:validation:MaxItems=5
 	// +kubebuilder:validation:MinItems=1
 	Resources []ContainerResource `json:"resources,omitempty"`
-	// tolerations defines tolerations for the pods.
-	// tolerations is optional.
+
+	// --- TOMBSTONE ---
+	// nodeSelector was a field that defined the nodes on which the Pods are scheduled.
+	// It was removed because node-exporter runs as a DaemonSet on all nodes,
+	// and the CMO does not support this field.
+	// The field name "nodeSelector" and json tag are reserved to prevent reuse
+	// with a different backing type.
 	//
-	// When omitted, this means the user has no opinion and the platform is left
-	// to choose reasonable defaults. These defaults are subject to change over time.
-	// The current default is to tolerate all taints (operator: Exists without any key),
-	// which is typical for DaemonSets that must run on every node.
-	// Maximum length for this list is 10.
-	// Minimum length for this list is 1.
-	// +kubebuilder:validation:MaxItems=10
-	// +kubebuilder:validation:MinItems=1
-	// +listType=atomic
 	// +optional
-	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+	// NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
+	// --- TOMBSTONE ---
+	// tolerations was a field that defined tolerations for the pods.
+	// It was removed because node-exporter runs as a DaemonSet on all nodes,
+	// and the CMO does not support this field.
+	// The field name "tolerations" and json tag are reserved to prevent reuse
+	// with a different backing type.
+	//
+	// +optional
+	// Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
 	// collectors configures which node-exporter metric collectors are enabled.
 	// collectors is optional.
 	// Each collector can be individually enabled or disabled. Some collectors may have
@@ -456,6 +458,14 @@ type NodeExporterCollectorConfig struct {
 	// Enable when you need metrics for specific units; scope units carefully.
 	// +optional
 	Systemd NodeExporterCollectorSystemdConfig `json:"systemd,omitempty,omitzero"`
+	// softirqs configures the softirqs collector, which exposes detailed softirq statistics
+	// from /proc/softirqs.
+	// softirqs is optional.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default,
+	// which is subject to change over time. The current default is disabled.
+	// Enable when you need visibility into kernel softirq processing across CPUs.
+	// +optional
+	Softirqs NodeExporterCollectorSoftirqsConfig `json:"softirqs,omitempty,omitzero"`
 }
 
 // NodeExporterCollectorCpufreqConfig provides configuration for the cpufreq collector
@@ -665,6 +675,20 @@ type NodeExporterCollectorSystemdCollectConfig struct {
 // +kubebuilder:validation:MaxLength=1024
 type NodeExporterSystemdUnit string
 
+// NodeExporterCollectorSoftirqsConfig provides configuration for the softirqs collector
+// of the node-exporter agent. The softirqs collector exposes detailed softirq statistics
+// from /proc/softirqs.
+// It is disabled by default.
+type NodeExporterCollectorSoftirqsConfig struct {
+	// collectionPolicy declares whether the softirqs collector collects metrics.
+	// This field is required.
+	// Valid values are "Collect" and "DoNotCollect".
+	// When set to "Collect", the softirqs collector is active and softirq statistics are collected.
+	// When set to "DoNotCollect", the softirqs collector is inactive.
+	// +required
+	CollectionPolicy NodeExporterCollectorCollectionPolicy `json:"collectionPolicy,omitempty"`
+}
+
 // MonitoringPluginConfig provides configuration options for the monitoring plugin
 // that runs as a dynamic plugin of the OpenShift web console.
 // The monitoring plugin provides the monitoring UI in the OpenShift web console
@@ -778,12 +802,43 @@ type AlertmanagerConfig struct {
 	CustomConfig AlertmanagerCustomConfig `json:"customConfig,omitempty,omitzero"`
 }
 
+// UserAlertmanagerConfigSelection controls whether the platform Alertmanager selects
+// AlertmanagerConfig resources from user-defined namespaces.
+// +enum
+type UserAlertmanagerConfigSelection string
+
+const (
+	// UserAlertmanagerConfigSelectionSelectable enables user-defined namespaces to be selected
+	// for AlertmanagerConfig lookups on the platform Alertmanager.
+	UserAlertmanagerConfigSelectionSelectable UserAlertmanagerConfigSelection = "Selectable"
+	// UserAlertmanagerConfigSelectionNone disables user-defined namespaces from being selected
+	// for AlertmanagerConfig lookups on the platform Alertmanager.
+	UserAlertmanagerConfigSelectionNone UserAlertmanagerConfigSelection = "None"
+)
+
 // AlertmanagerCustomConfig represents the configuration for a custom Alertmanager deployment.
 // alertmanagerCustomConfig provides configuration options for the default Alertmanager instance
 // that runs in the `openshift-monitoring` namespace. Use this configuration to control
-// whether the default Alertmanager is deployed, how it logs, and how its pods are scheduled.
+// whether user-defined namespaces are selected for AlertmanagerConfig lookups, how it logs,
+// and how its pods are scheduled.
 // +kubebuilder:validation:MinProperties=1
 type AlertmanagerCustomConfig struct {
+	// userAlertmanagerConfigSelection is an optional field that controls whether user-defined
+	// namespaces can be selected for AlertmanagerConfig lookups on the platform Alertmanager
+	// instance in the `openshift-monitoring` namespace.
+	// Valid values are Selectable and None.
+	// When set to Selectable, the platform Alertmanager discovers AlertmanagerConfig resources
+	// in user-defined namespaces. This is equivalent to `enableUserAlertmanagerConfig: true` in
+	// the cluster-monitoring-config ConfigMap.
+	// When set to None, user-defined namespaces are not selected for AlertmanagerConfig lookups
+	// on the platform Alertmanager. This is equivalent to `enableUserAlertmanagerConfig: false`
+	// in the cluster-monitoring-config ConfigMap.
+	// This setting only applies when the user-workload monitoring Alertmanager is not enabled.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+	// The current default value is `None`.
+	// +optional
+	// +kubebuilder:validation:Enum=Selectable;None
+	UserAlertmanagerConfigSelection UserAlertmanagerConfigSelection `json:"userAlertmanagerConfigSelection,omitempty"`
 	// logLevel defines the verbosity of logs emitted by Alertmanager.
 	// This field allows users to control the amount and severity of logs generated, which can be useful
 	// for debugging issues or reducing noise in production environments.
@@ -1322,7 +1377,7 @@ type PrometheusConfig struct {
 	// +kubebuilder:validation:MinItems=1
 	Resources []ContainerResource `json:"resources,omitempty"`
 	// retention configures how long Prometheus retains metrics data and how much storage it can use.
-	// When omitted, the platform chooses reasonable defaults (currently 15 days retention, no size limit).
+	// When omitted, the platform chooses reasonable defaults (currently 15d retention, no size limit).
 	// +optional
 	Retention Retention `json:"retention,omitempty,omitzero"`
 	// tolerations defines tolerations for the pods.
@@ -2217,26 +2272,63 @@ type SecretKeySelector struct {
 // Retention configures how long Prometheus retains metrics data and how much storage it can use.
 // +kubebuilder:validation:MinProperties=1
 type Retention struct {
+	// TOMBSTONE: This field has been tombstoned in favor of the `duration` field. This tombstone will be dropped when promoting this API to v1.
+	// ---
 	// durationInDays specifies how many days Prometheus will retain metrics data.
 	// Prometheus automatically deletes data older than this duration.
 	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
 	// The default value is 15.
 	// Minimum value is 1 day.
 	// Maximum value is 365 days (1 year).
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=365
-	// +optional
-	DurationInDays int32 `json:"durationInDays,omitempty"`
+	// Former marker: kubebuilder:validation:Minimum=1
+	// Former marker: kubebuilder:validation:Maximum=365
+	// Former marker: optional
+	// DurationInDays int32 `json:"durationInDays,omitempty"`
+
+	// TOMBSTONE: This field has been tombstoned in favor of the `size` field. This tombstone will be dropped when promoting this API to v1.
+	// ---
 	// sizeInGiB specifies the maximum storage size in gibibytes (GiB) that Prometheus
 	// can use for data blocks and the write-ahead log (WAL).
 	// When the limit is reached, Prometheus will delete oldest data first.
 	// When omitted, no size limit is enforced and Prometheus uses available PersistentVolume capacity.
 	// Minimum value is 1 GiB.
 	// Maximum value is 16384 GiB (16 TiB).
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=16384
+	// Former marker: kubebuilder:validation:Minimum=1
+	// Former marker: kubebuilder:validation:Maximum=16384
+	// Former marker: optional
+	// SizeInGiB int32 `json:"sizeInGiB,omitempty"`
+
+	// duration is an optional field that specifies how long Prometheus retains metrics data.
+	// Valid values are Prometheus-style duration strings with unit suffixes y, w, d, h, m, s, or ms
+	// (for example, "15d", "24h", or "5d1h30m"). Each unit value must be a positive integer.
+	// Composite durations must follow the fixed unit order y, w, d, h, m, s, ms.
+	// Must be at least 1 character and at most 64 characters.
+	// When set to "0", time-based retention is disabled. This is the only supported form for disabling
+	// time-based retention; other zero-duration representations such as "0d", "0h", or "0y" are rejected.
+	// Prometheus automatically deletes data older than this duration.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+	// The current default value is `15d`.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:XValidation:rule=`self == "0" || self.matches('^([1-9][0-9]*y)?([1-9][0-9]*w)?([1-9][0-9]*d)?([1-9][0-9]*h)?([1-9][0-9]*m)?([1-9][0-9]*s)?([1-9][0-9]*ms)?$')`,message=`must be "0" to disable time-based retention, or a duration string with only positive unit values`
 	// +optional
-	SizeInGiB int32 `json:"sizeInGiB,omitempty"`
+	Duration string `json:"duration,omitempty"`
+
+	// size is an optional field that specifies the maximum storage size that Prometheus
+	// can use for data blocks and the write-ahead log (WAL).
+	// Valid values are byte-size strings with an optional decimal prefix and a unit suffix B, KB, MB, GB,
+	// TB, EB, PB, or their binary equivalents KiB, MiB, GiB, TiB, EiB, PiB (for example, "500MiB", "10GiB").
+	// The numeric value must be greater than zero.
+	// Must be at least 1 character and at most 32 characters.
+	// When set to "0", no size limit is enforced. This is the only supported form for disabling size-based
+	// retention; other zero-size representations such as "0B" or "0MiB" are rejected.
+	// When the limit is reached, Prometheus deletes oldest data first.
+	// When omitted, no size limit is enforced and Prometheus uses available PersistentVolume capacity.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:XValidation:rule=`self == "0" || self.matches('^([1-9][0-9]*([.][0-9]+)?|[0-9]*[.][1-9][0-9]*)((K|M|G|T|E|P)i?)?B$')`,message=`must be "0" to disable size-based retention, or a positive byte-size string`
+	// +optional
+	Size string `json:"size,omitempty"`
 }
 
 // RelabelAction defines the action to perform in a relabeling rule.
@@ -2359,6 +2451,34 @@ type TelemeterClientConfig struct {
 // At least one field must be specified; an empty thanosQuerierConfig object is not allowed.
 // +kubebuilder:validation:MinProperties=1
 type ThanosQuerierConfig struct {
+	// logLevel defines the verbosity of logs emitted by Thanos Querier.
+	// logLevel is optional.
+	// Allowed values are Error, Warn, Info, and Debug.
+	// When set to Error, only errors will be logged.
+	// When set to Warn, both warnings and errors will be logged.
+	// When set to Info, general information, warnings, and errors will all be logged.
+	// When set to Debug, detailed debugging information will be logged.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default value is `Info`.
+	// +optional
+	LogLevel LogLevel `json:"logLevel,omitempty"`
+	// requestLogging configures request logging for Thanos Querier.
+	// requestLogging is optional.
+	// When provided, the policy field within is required.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default behavior is to not log any requests.
+	// +optional
+	RequestLogging ThanosQuerierRequestLoggingConfig `json:"requestLogging,omitempty,omitzero"`
+	// crossOriginRequestPolicy configures the CORS (Cross-Origin Resource Sharing) policy
+	// for Thanos Querier's HTTP endpoints.
+	// crossOriginRequestPolicy is optional.
+	// Valid values are "AllowAll" and "DenyAll".
+	// When set to "AllowAll", CORS headers are added to responses, allowing cross-origin requests from any domain.
+	// When set to "DenyAll", no CORS headers are added and cross-origin requests are rejected by the browser.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, that is subject to change over time.
+	// The current default value is "DenyAll".
+	// +optional
+	CrossOriginRequestPolicy CrossOriginRequestPolicy `json:"crossOriginRequestPolicy,omitempty"`
 	// nodeSelector defines the nodes on which the Pods are scheduled.
 	// nodeSelector is optional.
 	//
@@ -2427,6 +2547,42 @@ type ThanosQuerierConfig struct {
 	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 }
 
+// ThanosQuerierRequestLoggingConfig configures request logging for Thanos Querier.
+type ThanosQuerierRequestLoggingConfig struct {
+	// policy determines which HTTP and gRPC requests are logged by Thanos Querier.
+	// Valid values are "AllRequests" and "NoRequests".
+	// When set to "AllRequests", every request received by Thanos Querier is logged with method, path, and response status.
+	// The log level for request logs is derived from the logLevel field.
+	// When set to "NoRequests", request logging is turned off.
+	// +required
+	Policy RequestLoggingPolicy `json:"policy,omitempty"`
+}
+
+// RequestLoggingPolicy controls which HTTP and gRPC requests are logged.
+// Valid values are "AllRequests" and "NoRequests".
+// +kubebuilder:validation:Enum=AllRequests;NoRequests
+type RequestLoggingPolicy string
+
+const (
+	// RequestLoggingPolicyAllRequests enables logging of all incoming requests.
+	RequestLoggingPolicyAllRequests RequestLoggingPolicy = "AllRequests"
+	// RequestLoggingPolicyNoRequests disables request logging.
+	RequestLoggingPolicyNoRequests RequestLoggingPolicy = "NoRequests"
+)
+
+// CrossOriginRequestPolicy controls the CORS (Cross-Origin Resource Sharing) policy
+// for Thanos Querier's HTTP endpoints.
+// Valid values are "AllowAll" and "DenyAll".
+// +kubebuilder:validation:Enum=AllowAll;DenyAll
+type CrossOriginRequestPolicy string
+
+const (
+	// CrossOriginRequestPolicyAllowAll sets CORS headers allowing requests from any origin.
+	CrossOriginRequestPolicyAllowAll CrossOriginRequestPolicy = "AllowAll"
+	// CrossOriginRequestPolicyDenyAll does not set CORS headers, rejecting cross-origin requests.
+	CrossOriginRequestPolicyDenyAll CrossOriginRequestPolicy = "DenyAll"
+)
+
 // AuditProfile defines the audit log level for the Metrics Server.
 // +kubebuilder:validation:Enum=None;Metadata;Request;RequestResponse
 type AuditProfile string
@@ -2491,4 +2647,155 @@ type Audit struct {
 	// for more information about auditing and log levels.
 	// +required
 	Profile AuditProfile `json:"profile,omitempty"`
+}
+
+// KubeStateMetricsConfig provides configuration options for the kube-state-metrics agent
+// that runs in the `openshift-monitoring` namespace. kube-state-metrics generates metrics
+// about the state of Kubernetes objects such as Deployments, Nodes, and Pods.
+// +kubebuilder:validation:MinProperties=1
+type KubeStateMetricsConfig struct {
+	// nodeSelector defines the nodes on which the Pods are scheduled.
+	// nodeSelector is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// The current default value is `kubernetes.io/os: linux`.
+	// When specified, nodeSelector must contain at least 1 entry and must not contain more than 10 entries.
+	// +optional
+	// +kubebuilder:validation:MinProperties=1
+	// +kubebuilder:validation:MaxProperties=10
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// resources defines the compute resource requests and limits for the kube-state-metrics container.
+	// This includes CPU, memory and HugePages constraints to help control scheduling and resource usage.
+	// When not specified, defaults are used by the platform. Requests cannot exceed limits.
+	// This field is optional.
+	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// This is a simplified API that maps to Kubernetes ResourceRequirements.
+	// The current default values are:
+	//   resources:
+	//    - name: cpu
+	//      request: 4m
+	//      limit: null
+	//    - name: memory
+	//      request: 40Mi
+	//      limit: null
+	// Maximum length for this list is 5.
+	// Minimum length for this list is 1.
+	// Each resource name must be unique within this list.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=5
+	// +kubebuilder:validation:MinItems=1
+	Resources []ContainerResource `json:"resources,omitempty"`
+	// tolerations defines tolerations for the pods.
+	// tolerations is optional.
+	//
+	// When omitted, no tolerations are applied. This default is subject to change over time.
+	// When specified, tolerations must contain at least 1 entry and must not contain more than 10 entries.
+	// Each toleration's operator, when specified, must be either "Exists" or "Equal".
+	// Each toleration's effect, when specified, must be one of "NoSchedule", "PreferNoSchedule", or "NoExecute".
+	// An empty or unset effect means match all effects.
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	// +listType=atomic
+	// +kubebuilder:validation:XValidation:rule="self.all(t, !has(t.operator) || t.operator == 'Exists' || t.operator == 'Equal')",message="operator must be either Exists or Equal"
+	// +kubebuilder:validation:XValidation:rule="self.all(t, !has(t.effect) || t.effect == 'NoSchedule' || t.effect == 'PreferNoSchedule' || t.effect == 'NoExecute' || t.effect == '')",message="effect must be NoSchedule, PreferNoSchedule, NoExecute, or empty"
+	// +optional
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+	// topologySpreadConstraints defines rules for how kube-state-metrics Pods should be distributed
+	// across topology domains such as zones, nodes, or other user-defined labels.
+	// topologySpreadConstraints is optional.
+	// This helps improve high availability and resource efficiency by avoiding placing
+	// too many replicas in the same failure domain.
+	//
+	// This field maps directly to the `topologySpreadConstraints` field in the Pod spec.
+	// When omitted, no topology spread constraints are applied. This default is subject to change over time.
+	// When specified, topologySpreadConstraints must contain at least 1 entry and must not contain more than 10 entries.
+	// Entries must have unique topologyKey and whenUnsatisfiable pairs.
+	// Each entry's whenUnsatisfiable must be either "DoNotSchedule" or "ScheduleAnyway".
+	// Each entry's maxSkew must be at least 1.
+	// When minDomains is specified, it must be at least 1 and whenUnsatisfiable must be "DoNotSchedule".
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	// +listType=map
+	// +listMapKey=topologyKey
+	// +listMapKey=whenUnsatisfiable
+	// +kubebuilder:validation:XValidation:rule="self.all(c, c.whenUnsatisfiable == 'DoNotSchedule' || c.whenUnsatisfiable == 'ScheduleAnyway')",message="whenUnsatisfiable must be either DoNotSchedule or ScheduleAnyway"
+	// +kubebuilder:validation:XValidation:rule="self.all(c, c.maxSkew >= 1)",message="maxSkew must be at least 1"
+	// +kubebuilder:validation:XValidation:rule="self.all(c, !has(c.minDomains) || c.minDomains >= 1)",message="minDomains must be at least 1"
+	// +kubebuilder:validation:XValidation:rule="self.all(c, !has(c.minDomains) || c.whenUnsatisfiable == 'DoNotSchedule')",message="minDomains can only be used when whenUnsatisfiable is DoNotSchedule"
+	// +optional
+	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+	// additionalResourceLabels defines additional Kubernetes resource labels to expose as metrics
+	// in kube-state-metrics.
+	// Currently, only "Job" and "CronJob" resources are supported due to cardinality concerns.
+	// Each entry specifies a resource name and a list of Kubernetes label names to expose.
+	// Use "*" in the labels list to expose all labels for a given resource.
+	// additionalResourceLabels is optional.
+	// When omitted, no additional Kubernetes object labels are exposed as metrics
+	// by kube-state-metrics beyond its built-in metric labels (e.g. namespace, job_name).
+	// Use this field to opt in to exposing specific Kubernetes labels as metric labels
+	// for the supported resource types.
+	// Minimum length for this list is 1.
+	// Maximum length for this list is 2.
+	// Each resource name must be unique within this list.
+	// +optional
+	// +kubebuilder:validation:MaxItems=2
+	// +kubebuilder:validation:MinItems=1
+	// +listType=map
+	// +listMapKey=resource
+	AdditionalResourceLabels []KubeStateMetricsResourceLabels `json:"additionalResourceLabels,omitempty"`
+}
+
+// KubeStateMetricsResourceName is the name of a Kubernetes resource whose labels can be exposed
+// as metrics by kube-state-metrics. Currently, only "Job" and "CronJob" are supported
+// due to cardinality concerns.
+// Valid values are "Job" and "CronJob".
+// +kubebuilder:validation:Enum=Job;CronJob
+type KubeStateMetricsResourceName string
+
+const (
+	// KubeStateMetricsResourceJob indicates the Kubernetes Job resource.
+	KubeStateMetricsResourceJob KubeStateMetricsResourceName = "Job"
+	// KubeStateMetricsResourceCronJob indicates the Kubernetes CronJob resource.
+	KubeStateMetricsResourceCronJob KubeStateMetricsResourceName = "CronJob"
+)
+
+// KubeStateMetricsLabelName is the name of a Kubernetes label to expose as a metric
+// via kube-state-metrics. Use "*" to expose all labels for a resource.
+// Must be either the wildcard "*" or a valid Kubernetes label key.
+// A valid label key has an optional DNS subdomain prefix followed by a "/" and a name segment,
+// or just a name segment without a prefix. The name segment must be 63 characters or fewer,
+// beginning and ending with an alphanumeric character, with dashes, underscores, dots, and
+// alphanumerics in between.
+// Must be at least 1 character and at most 253 characters in length.
+// +kubebuilder:validation:MinLength=1
+// +kubebuilder:validation:MaxLength=253
+// +kubebuilder:validation:XValidation:rule="self == '*' || !format.qualifiedName().validate(self).hasValue()",message="must be a valid Kubernetes label key or the wildcard '*'"
+type KubeStateMetricsLabelName string
+
+// KubeStateMetricsResourceLabels defines which Kubernetes labels to expose as metrics
+// for a given resource type in kube-state-metrics.
+type KubeStateMetricsResourceLabels struct {
+	// resource is the Kubernetes resource name whose labels should be exposed as metrics.
+	// Currently, only "Job" and "CronJob" are supported due to cardinality concerns.
+	// Valid values are "Job" and "CronJob".
+	// This field is required.
+	// +required
+	Resource KubeStateMetricsResourceName `json:"resource,omitempty"`
+	// labels is the list of Kubernetes label names to expose as metrics for this resource.
+	// Use "*" to expose all labels for the specified resource.
+	// When "*" is specified, it must be the only entry in the list; mixing "*" with
+	// specific label names is not allowed.
+	// This field is required.
+	// Each label name must be unique within this list.
+	// Minimum length for this list is 1.
+	// Maximum length for this list is 50.
+	// +required
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=50
+	// +listType=set
+	// +kubebuilder:validation:XValidation:rule="!self.exists(l, l == '*') || self.size() == 1",message="when '*' is specified, no other labels may be listed"
+	Labels []KubeStateMetricsLabelName `json:"labels,omitempty"`
 }
