@@ -82,6 +82,12 @@ func TestBootstrapFlavorName(t *testing.T) {
 			assert.True(t, ok, "openstack_bootstrap_flavor_name must be present in Terraform variables JSON")
 			assert.Equal(t, tc.wantBootstrapFlavor, got,
 				"openstack_bootstrap_flavor_name should equal the resolved bootstrap flavor")
+
+			// Verify master flavor is unchanged regardless of bootstrapFlavor setting.
+			masterGot, masterOK := result["openstack_master_flavor_name"]
+			assert.True(t, masterOK, "openstack_master_flavor_name must be present in Terraform variables JSON")
+			assert.Equal(t, tc.masterFlavor, masterGot,
+				"openstack_master_flavor_name must be unaffected by bootstrapFlavor setting")
 		})
 	}
 }
