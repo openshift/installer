@@ -180,11 +180,16 @@ func TFVars(
 		additionalSecurityGroupIDs = mastermpool.AdditionalSecurityGroupIDs
 	}
 
+	// Resolve the bootstrap flavor: use explicitly configured BootstrapFlavor
+	// if set, otherwise fall back to the master flavor for backward compatibility.
+	bootstrapFlavorName := installConfig.Config.Platform.OpenStack.ResolveBootstrapFlavor(masterSpecs[0].Flavor)
+
 	return json.MarshalIndent(struct {
 		BaseImageName                     string                            `json:"openstack_base_image_name,omitempty"`
 		ExternalNetwork                   string                            `json:"openstack_external_network,omitempty"`
 		Cloud                             string                            `json:"openstack_credentials_cloud,omitempty"`
 		FlavorName                        string                            `json:"openstack_master_flavor_name,omitempty"`
+		BootstrapFlavorName               string                            `json:"openstack_bootstrap_flavor_name,omitempty"`
 		APIFloatingIP                     string                            `json:"openstack_api_floating_ip,omitempty"`
 		IngressFloatingIP                 string                            `json:"openstack_ingress_floating_ip,omitempty"`
 		APIVIPs                           []string                          `json:"openstack_api_int_ips,omitempty"`
@@ -211,6 +216,7 @@ func TFVars(
 		ExternalNetwork:                   installConfig.Config.Platform.OpenStack.ExternalNetwork,
 		Cloud:                             cloud,
 		FlavorName:                        masterSpecs[0].Flavor,
+		BootstrapFlavorName:               bootstrapFlavorName,
 		APIFloatingIP:                     installConfig.Config.Platform.OpenStack.APIFloatingIP,
 		IngressFloatingIP:                 installConfig.Config.Platform.OpenStack.IngressFloatingIP,
 		APIVIPs:                           installConfig.Config.Platform.OpenStack.APIVIPs,
