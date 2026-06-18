@@ -11,6 +11,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   - [Examples](#examples)
     - [Minimal](#minimal)
     - [Custom machine pools](#custom-machine-pools)
+    - [Bootstrap with smaller flavor](#bootstrap-with-smaller-flavor)
   - [Image Overrides](#image-overrides)
   - [Custom Subnets](#custom-subnets)
   - [Additional Networks](#additional-networks)
@@ -119,27 +120,26 @@ platform:
     defaultMachinePlatform:
       type: m1.s2.xlarge
     externalNetwork: external
+    # bootstrapFlavor: m1.medium  # Optionally use a smaller flavor for the temporary bootstrap machine
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
 
-An example OpenStack install config using a smaller flavor for the bootstrap machine:
+### Bootstrap with smaller flavor
+
+An example OpenStack install config using a smaller flavor for the temporary bootstrap machine:
 
 ```yaml
-apiVersion: v1
-baseDomain: example.com
-metadata:
-  name: test-cluster
 platform:
   openstack:
-    apiFloatingIP: 128.0.0.1
     cloud: mycloud
+    bootstrapFlavor: m1.medium  # Smaller flavor for temporary bootstrap
     defaultMachinePlatform:
       type: m1.xlarge
-    externalNetwork: external
-    bootstrapFlavor: m1.medium
-pullSecret: '{"auths": ...}'
-sshKey: ssh-ed25519 AAAA...
+controlPlane:
+  platform:
+    openstack:
+      type: m1.xlarge  # Control plane uses larger flavor
 ```
 
 ## Image Overrides
