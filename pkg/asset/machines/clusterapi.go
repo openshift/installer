@@ -439,19 +439,39 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
-		for _, role := range []string{"master", "bootstrap"} {
-			openStackMachines, err := openstack.GenerateMachines(
-				clusterID.InfraID,
-				ic,
-				&pool,
-				imageName,
-				role,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to create machine objects: %w", err)
-			}
-			c.FileList = append(c.FileList, openStackMachines...)
+		// Generate master machines using the control plane pool.
+		masterMachines, err := openstack.GenerateMachines(
+			clusterID.InfraID,
+			ic,
+			&pool,
+			imageName,
+			"master",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
+		c.FileList = append(c.FileList, masterMachines...)
+
+		// Generate bootstrap machine. If bootstrapFlavor is set on the
+		// platform, use it instead of the control plane flavor.
+		bootstrapPool := pool
+		bootstrapMpool := *pool.Platform.OpenStack
+		bootstrapFlavor := ic.Platform.OpenStack.ResolveBootstrapFlavor(bootstrapMpool.FlavorName)
+		if bootstrapFlavor != bootstrapMpool.FlavorName {
+			bootstrapMpool.FlavorName = bootstrapFlavor
+		}
+		bootstrapPool.Platform.OpenStack = &bootstrapMpool
+		bootstrapMachines, err := openstack.GenerateMachines(
+			clusterID.InfraID,
+			ic,
+			&bootstrapPool,
+			imageName,
+			"bootstrap",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create bootstrap machine objects: %w", err)
+		}
+		c.FileList = append(c.FileList, bootstrapMachines...)
 	case powervstypes.Name:
 		// Generate PowerVS master machines using ControPlane machinepool
 		mpool := defaultPowerVSMachinePoolPlatform(ic)
