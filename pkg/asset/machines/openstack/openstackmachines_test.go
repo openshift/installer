@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 func TestIsSingleStackIPv6(t *testing.T) {
@@ -138,6 +139,43 @@ func openStackMachineFlavorFromFiles(t *testing.T, files []*asset.RuntimeFile) s
 	return ""
 }
 
+// newMinimalPowerVCInstallConfig returns a minimal InstallConfig for PowerVC
+// suitable for use in unit tests of GenerateMachines. PowerVC is a thin
+// platform that requires both Platform.PowerVC and Platform.OpenStack to be
+// set; after ConvertPowerVCInstallConfig is called, Platform.OpenStack
+// carries the resolved values. This helper pre-populates both fields so that
+// tests can bypass the conversion step and call GenerateMachines directly.
+func newMinimalPowerVCInstallConfig(bootstrapFlavor string) *types.InstallConfig {
+	return &types.InstallConfig{
+		Platform: types.Platform{
+			// PowerVC must be non-nil so that Platform.Name() returns "powervc".
+			PowerVC: &powervc.Platform{
+				Cloud: "test-powervc-cloud",
+			},
+			// OpenStack must also be non-nil because openstackmachines.go
+			// accesses config.Platform.OpenStack directly.  In a real install
+			// ConvertPowerVCInstallConfig copies PowerVC data here; tests set
+			// it explicitly.
+			OpenStack: &openstack.Platform{
+				Cloud:           "test-powervc-cloud",
+				BootstrapFlavor: bootstrapFlavor,
+			},
+		},
+		Networking: &types.Networking{
+			MachineNetwork: []types.MachineNetworkEntry{
+				{
+					CIDR: ipnet.IPNet{
+						IPNet: net.IPNet{
+							IP:   net.ParseIP("10.0.0.0"),
+							Mask: net.CIDRMask(24, 32),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 // TestGenerateMachinesBootstrapFlavor verifies that GenerateMachines uses the
 // correct flavor for both master and bootstrap roles.
 //
@@ -150,7 +188,11 @@ func TestGenerateMachinesBootstrapFlavor(t *testing.T) {
 		clusterID          = "test-cluster"
 		controlPlaneFlavor = "m1.xlarge"
 		bootstrapFlavor    = "m1.medium"
-		osImage            = "rhcos-4.18"
+		// specialFlavor contains dots, dashes and digits — all characters that
+		// are common in real OpenStack flavour names but could in theory be
+		// mishandled by string manipulation.
+		specialFlavor = "ocp.bootstrap-4cpu"
+		osImage       = "rhcos-4.18"
 	)
 
 	tests := []struct {
@@ -183,6 +225,22 @@ func TestGenerateMachinesBootstrapFlavor(t *testing.T) {
 			role:            masterRole,
 			wantFlavor:      controlPlaneFlavor,
 		},
+		{
+			// Flavor names that contain dots, dashes, and digits must be
+			// passed through as-is without any modification.
+			name:            "bootstrap flavor with special characters is used verbatim",
+			bootstrapFlavor: specialFlavor,
+			role:            bootstrapRole,
+			wantFlavor:      specialFlavor,
+		},
+		{
+			// Master machines must ignore the special-character bootstrapFlavor
+			// and always use the control-plane flavor.
+			name:            "master ignores special-character bootstrapFlavor",
+			bootstrapFlavor: specialFlavor,
+			role:            masterRole,
+			wantFlavor:      controlPlaneFlavor,
+		},
 	}
 
 	for _, tc := range tests {
@@ -198,6 +256,83 @@ func TestGenerateMachinesBootstrapFlavor(t *testing.T) {
 					// Clone the pool so master pool is unaffected.
 					bootstrapMpool := *pool.Platform.OpenStack
 					bootstrapMpool.FlavorName = resolvedFlavor
+					pool = newMinimalPool(resolvedFlavor)
+				}
+			}
+
+			files, err := GenerateMachines(clusterID, ic, pool, osImage, tc.role)
+			if err != nil {
+				t.Fatalf("GenerateMachines() returned error: %v", err)
+			}
+			if len(files) == 0 {
+				t.Fatal("GenerateMachines() returned no files")
+			}
+
+			gotFlavor := openStackMachineFlavorFromFiles(t, files)
+			if gotFlavor != tc.wantFlavor {
+				t.Errorf("OpenStackMachine.Spec.Flavor = %q, want %q", gotFlavor, tc.wantFlavor)
+			}
+		})
+	}
+}
+
+// TestGenerateMachinesBootstrapFlavorPowerVC verifies that the bootstrap flavor
+// feature works for the PowerVC platform. PowerVC shares the OpenStack CAPI
+// code path: after ConvertPowerVCInstallConfig runs, Platform.OpenStack is
+// populated and openstackmachines.GenerateMachines is called for both master
+// and bootstrap roles. BootstrapFlavor lives on Platform.OpenStack (not on
+// Platform.PowerVC) so the same resolution logic applies.
+func TestGenerateMachinesBootstrapFlavorPowerVC(t *testing.T) {
+	const (
+		clusterID          = "powervc-cluster"
+		controlPlaneFlavor = "powervc-large"
+		bootstrapFlavor    = "powervc-medium"
+		specialFlavor      = "ocp.bootstrap-4cpu"
+		osImage            = "rhcos-4.18"
+	)
+
+	tests := []struct {
+		name            string
+		bootstrapFlavor string // set on Platform.OpenStack.BootstrapFlavor
+		role            string
+		wantFlavor      string
+	}{
+		{
+			name:            "PowerVC bootstrap uses bootstrapFlavor when set",
+			bootstrapFlavor: bootstrapFlavor,
+			role:            bootstrapRole,
+			wantFlavor:      bootstrapFlavor,
+		},
+		{
+			name:            "PowerVC bootstrap falls back to control plane flavor when not set",
+			bootstrapFlavor: "",
+			role:            bootstrapRole,
+			wantFlavor:      controlPlaneFlavor,
+		},
+		{
+			name:            "PowerVC master always uses control plane flavor",
+			bootstrapFlavor: bootstrapFlavor,
+			role:            masterRole,
+			wantFlavor:      controlPlaneFlavor,
+		},
+		{
+			name:            "PowerVC bootstrap flavor with special characters is used verbatim",
+			bootstrapFlavor: specialFlavor,
+			role:            bootstrapRole,
+			wantFlavor:      specialFlavor,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Use a PowerVC install config (Platform.Name() == "powervc").
+			ic := newMinimalPowerVCInstallConfig(tc.bootstrapFlavor)
+
+			// Resolve the effective flavor for this role, mirroring clusterapi.go.
+			pool := newMinimalPool(controlPlaneFlavor)
+			if tc.role == bootstrapRole {
+				resolvedFlavor := ic.Platform.OpenStack.ResolveBootstrapFlavor(pool.Platform.OpenStack.FlavorName)
+				if resolvedFlavor != pool.Platform.OpenStack.FlavorName {
 					pool = newMinimalPool(resolvedFlavor)
 				}
 			}
