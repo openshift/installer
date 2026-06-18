@@ -20,5 +20,10 @@ rsync -a --exclude crypto-policies "${ostree_checkout}/usr/etc/" /etc
 echo "Reloading SELinux policy"
 semodule -R
 
+# Fix SSH host key permissions after rsync. The node image may ship keys
+# with 0640 permissions, but OpenSSH 9.8+ (RHEL 10) requires 0600 and
+# will refuse to start if private keys are group-readable.
+chmod 0600 /etc/ssh/ssh_host_*_key 2>/dev/null || true
+
 # handle upgrade of sshd between RHEL 9.6 and 9.8
 systemctl --no-block try-restart sshd.service
