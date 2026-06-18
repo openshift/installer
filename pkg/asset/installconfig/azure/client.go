@@ -446,7 +446,7 @@ func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup,
 	accountClientOptions := arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
 			// NOTE: the api version must support AzureStack
-			APIVersion: APIVersion,
+			APIVersion: "2019-04-01",
 			Cloud:      c.ssn.CloudConfig,
 		},
 	}
