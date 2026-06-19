@@ -42,6 +42,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	baremetalutils "github.com/openshift/installer/pkg/utils/baremetal"
 )
@@ -416,8 +417,8 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 
 	timeout := 45 * time.Minute
 
-	// Wait longer for baremetal, VSphere due to length of time it takes to boot
-	if platformName == baremetal.Name || platformName == vsphere.Name {
+	// Wait longer for baremetal, vSphere, and OpenStack due to length of time it takes to boot
+	if platformName == baremetal.Name || platformName == openstack.Name || platformName == vsphere.Name {
 		timeout = 60 * time.Minute
 	}
 	// For AWS, only increase timeout when UserProvisionedDNS is enabled
