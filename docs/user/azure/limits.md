@@ -46,7 +46,7 @@ By default, an x86 cluster will create:
 
 * One Standard_D4as_v5 bootstrap machine (removed after install)
 * Three Standard_D8as_v5 master nodes.
-* Three Standard_D2as_v5 worker nodes.
+* Three Standard_D4as_v5 worker nodes.
 
 The specs for the VM sizes (Dasv5-series) are as follows:
 
