@@ -1,11 +1,13 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
 	machinev1 "github.com/openshift/api/machine/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -286,4 +288,81 @@ func TestFailureDomains(t *testing.T) {
 }
 
 func TestPruneFailureDomains(t *testing.T) {
+}
+
+// TestMAPIBootstrapFlavorSelection verifies that generateProviderSpec selects the correct
+// flavor for bootstrap and master roles in the MAPI code path:
+//   - Bootstrap with BootstrapFlavor set   → BootstrapFlavor is used
+//   - Bootstrap with BootstrapFlavor empty → control plane FlavorName is used (fallback)
+//   - Master with BootstrapFlavor set      → FlavorName is used (master is unaffected)
+func TestMAPIBootstrapFlavorSelection(t *testing.T) {
+	const (
+		controlPlaneFlavor = "m1.xlarge"
+		bootstrapFlavor    = "m1.medium"
+		clusterID          = "test-cluster"
+		osImage            = "rhcos"
+		userDataSecret     = "user-data"
+	)
+
+	emptyFD := machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}}
+	configDrive := false
+
+	tests := []struct {
+		name            string
+		role            string
+		bootstrapFlavor string // value placed in platform.BootstrapFlavor
+		wantFlavor      string
+	}{
+		{
+			name:            "bootstrap uses BootstrapFlavor when specified",
+			role:            bootstrapRole,
+			bootstrapFlavor: bootstrapFlavor,
+			wantFlavor:      bootstrapFlavor,
+		},
+		{
+			name:            "bootstrap falls back to control plane flavor when BootstrapFlavor is empty",
+			role:            bootstrapRole,
+			bootstrapFlavor: "",
+			wantFlavor:      controlPlaneFlavor,
+		},
+		{
+			name:            "master always uses FlavorName regardless of BootstrapFlavor",
+			role:            masterRole,
+			bootstrapFlavor: bootstrapFlavor,
+			wantFlavor:      controlPlaneFlavor,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &types.InstallConfig{
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						BootstrapFlavor: tt.bootstrapFlavor,
+					},
+				},
+			}
+			mpool := &openstack.MachinePool{
+				FlavorName: controlPlaneFlavor,
+			}
+
+			spec, err := generateProviderSpec(
+				context.Background(),
+				clusterID,
+				config,
+				mpool,
+				osImage,
+				tt.role,
+				userDataSecret,
+				emptyFD,
+				&configDrive,
+			)
+			if err != nil {
+				t.Fatalf("generateProviderSpec() unexpected error: %v", err)
+			}
+			if got := spec.Flavor; got != tt.wantFlavor {
+				t.Errorf("Flavor = %q, want %q", got, tt.wantFlavor)
+			}
+		})
+	}
 }

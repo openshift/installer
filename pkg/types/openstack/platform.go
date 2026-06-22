@@ -124,6 +124,11 @@ type Platform struct {
 	// +optional
 	ControlPlanePort *PortTarget `json:"controlPlanePort,omitempty"`
 
+	// BootstrapFlavor is the name of the flavor used for the bootstrap instance.
+	// When not specified, the bootstrap machine will use the control plane flavor.
+	// +optional
+	BootstrapFlavor string `json:"bootstrapFlavor,omitempty"`
+
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
 	// +optional
 	LoadBalancer *configv1.OpenStackPlatformLoadBalancer `json:"loadBalancer,omitempty"`
