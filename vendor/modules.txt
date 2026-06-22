@@ -786,10 +786,6 @@ github.com/envoyproxy/go-control-plane/envoy/type/v3
 # github.com/envoyproxy/protoc-gen-validate v1.3.0
 ## explicit; go 1.21.1
 github.com/envoyproxy/protoc-gen-validate/validate
-# github.com/erofs/go-erofs v0.0.0-20250726210804-e84d089fc453
-## explicit; go 1.23
-github.com/erofs/go-erofs
-github.com/erofs/go-erofs/internal/disk
 # github.com/evanphx/json-patch/v5 v5.9.11
 ## explicit; go 1.18
 github.com/evanphx/json-patch/v5
@@ -906,7 +902,6 @@ github.com/golang-jwt/jwt/v4
 github.com/golang-jwt/jwt/v5
 # github.com/golang/mock v1.7.0-rc.1
 ## explicit; go 1.15
-github.com/golang/mock/gomock
 # github.com/golang/protobuf v1.5.4
 ## explicit; go 1.17
 github.com/golang/protobuf/ptypes/timestamp
@@ -1330,7 +1325,7 @@ github.com/openshift/api/machineconfiguration/v1alpha1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1
-# github.com/openshift/assisted-image-service v0.0.0-20260209112552-a5cb0f44ccc6
+# github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120
 ## explicit; go 1.25.0
 github.com/openshift/assisted-image-service/internal/common
 github.com/openshift/assisted-image-service/pkg/isoeditor

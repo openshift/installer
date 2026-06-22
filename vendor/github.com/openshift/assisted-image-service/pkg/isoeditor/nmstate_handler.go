@@ -3,14 +3,12 @@ package isoeditor
 import (
 	"bytes"
 	"fmt"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/erofs/go-erofs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -211,32 +209,9 @@ type erofsExtractor struct {
 }
 
 func (e *erofsExtractor) ExtractNmstatectl(nmstateDir string) (string, error) {
-	f, err := os.Open(filepath.Join(nmstateDir, "root.erofs"))
+	nmstatectlPath, err := e.findFileInErofs(nmstateDir, "/", "nmstatectl")
 	if err != nil {
-		log.Errorf("failed to open root.erofs: %v", err.Error())
-		return "", err
-	}
-	defer f.Close()
-
-	rootFile, err := erofs.EroFS(f)
-	if err != nil {
-		log.Errorf("failed to read root.erofs: %v", err.Error())
-		return "", err
-	}
-
-	nmstatectlPath := ""
-
-	err = fs.WalkDir(rootFile, "/", func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.Name() == "nmstatectl" {
-			nmstatectlPath = path
-		}
-		return nil
-	})
-	if err != nil {
-		log.Errorf("failed to find nmstatectl in root.erofs: %v", err.Error())
+		log.Errorf("failed to search for nmstatectl in root.erofs: %v", err.Error())
 		return "", err
 	}
 
@@ -251,4 +226,55 @@ func (e *erofsExtractor) ExtractNmstatectl(nmstateDir string) (string, error) {
 	}
 
 	return "nmstatectl", nil
+}
+
+// findFileInErofs recursively searches for a file in an EROFS image using dump.erofs
+func (e *erofsExtractor) findFileInErofs(nmstateDir, dirPath, filename string) (string, error) {
+	output, err := e.executer.Execute(fmt.Sprintf("dump.erofs --path=%s --ls root.erofs", dirPath), nmstateDir)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to list directory %s", dirPath)
+	}
+
+	// Parse the output to find entries
+	// Format: "       NID TYPE  FILENAME"
+	// Example: "        44    1  .aleph-version.json"
+	// Type 1 = regular file, Type 2 = directory
+	entryRegex := regexp.MustCompile(`^\s*(\d+)\s+(\d+)\s+(.+)$`)
+
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		matches := entryRegex.FindStringSubmatch(line)
+		if len(matches) != 4 {
+			continue
+		}
+
+		entryType := matches[2]
+		entryName := strings.TrimSpace(matches[3])
+
+		if entryName == "." || entryName == ".." {
+			continue
+		}
+
+		fullPath := filepath.Join(dirPath, entryName)
+
+		// Return if a regular file (entry type 1) matches
+		if entryName == filename && entryType == "1" {
+			return fullPath, nil
+		}
+
+		// Recurse into directories (type 2)
+		if entryType == "2" {
+			found, err := e.findFileInErofs(nmstateDir, fullPath, filename)
+			if err != nil {
+				// Log but continue searching other directories
+				log.Warnf("failed to search in %s: %v", fullPath, err)
+				continue
+			}
+			if found != "" {
+				return found, nil
+			}
+		}
+	}
+
+	return "", nil
 }

@@ -378,8 +378,6 @@ github.com/envoyproxy/go-control-plane/ratelimit v0.1.0/go.mod h1:Wk+tMFAFbCXaJP
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/envoyproxy/protoc-gen-validate v1.3.0 h1:TvGH1wof4H33rezVKWSpqKz5NXWg5VPuZ0uONDT6eb4=
 github.com/envoyproxy/protoc-gen-validate v1.3.0/go.mod h1:HvYl7zwPa5mffgyeTUHA9zHIH36nmrm7oCbo4YKoSWA=
-github.com/erofs/go-erofs v0.0.0-20250726210804-e84d089fc453 h1:PCt3HPQM9lr9QRaDF9Sg+cH8HGlpBabVmrlYWHEGAmI=
-github.com/erofs/go-erofs v0.0.0-20250726210804-e84d089fc453/go.mod h1:XkSeN9MHszGd4+3gcEjadJLYHCQpWzJ7/8yznzMuzJs=
 github.com/ettle/strcase v0.2.0 h1:fGNiVF21fHXpX1niBgk0aROov1LagYsOwV/xqKDKR/Q=
 github.com/ettle/strcase v0.2.0/go.mod h1:DajmHElDSaX76ITe3/VHVyMin4LWSJN5Z909Wp+ED1A=
 github.com/evanphx/json-patch v4.12.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
@@ -900,8 +898,8 @@ github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6 h1:W8yZzA6a8zTNOq+pzUAKJmpZCyxP8rTjRaLC0aLap/8=
 github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6/go.mod h1:pyVjK0nZ4sRs4fuQVQ4rubsJdahI1PB94LnQ8sGdvxo=
-github.com/openshift/assisted-image-service v0.0.0-20260209112552-a5cb0f44ccc6 h1:Fboc+QTpkg6AlB+wwG/VmWicAah4aHPD1kg0S8fFzqc=
-github.com/openshift/assisted-image-service v0.0.0-20260209112552-a5cb0f44ccc6/go.mod h1:tvKT0hUiAOVZC+zgN0jYk7E0Tq1UTkh/IJaG8vQjviI=
+github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120 h1:fxnvVDuqfnAz9jCuritFrsb6IK33dxc/MxC9Gtv+nlk=
+github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120/go.mod h1:eLxB7EHTDEvuJHobsVZsyMKOFkVATz4aGAwNtSGMdyM=
 github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea h1:YhJ9iHKKT5ooAdVr8qq3BdudhTxP/WF0XYDT5gzi1ak=
 github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea/go.mod h1:wA7MaLcf/KoUl7fhB1bHBdhRBLjWPih90sHpxOV6ZLE=
 github.com/openshift/assisted-service/client v0.0.0-20250922204150-a52b83145bea h1:nYepkoJZSEjQEadaZ7oZraaeTug0zSV43HISLaHTCF0=
