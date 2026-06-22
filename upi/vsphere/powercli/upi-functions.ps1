@@ -1,5 +1,23 @@
 #!/usr/bin/pwsh
 
+function Get-UPIInstallResourcePoolSettings {
+    param(
+        [Parameter(Mandatory = $true)]
+        $Metadata
+    )
+    $poolName = $Metadata.infraID
+    $managePool = $true
+    $var = Get-Variable -Name vsphere_install_resource_pool_name -ErrorAction SilentlyContinue
+    if ($null -ne $var -and -not [string]::IsNullOrWhiteSpace($var.Value)) {
+        $poolName = $var.Value
+        $managePool = $false
+    }
+    return @{
+        PoolName   = $poolName
+        ManagePool = $managePool
+    }
+}
+
 function New-OpenShiftVM {
     param(
         [int]$CoresPerSocket = 1, # Default is 1 due to not knowing how many may come in via NumCpu variable
@@ -278,7 +296,8 @@ function New-OpenshiftVMs {
             $name = "$($metadata.infraID)-$($key)"
             Write-Output "Creating $($name)"
 
-            $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $node.server
+            $rpSettings = Get-UPIInstallResourcePoolSettings -Metadata $metadata
+            $rp = Get-ResourcePool -Name $rpSettings.PoolName -Location $(Get-Cluster -Name $($node.cluster)) -Server $node.server
             ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
             $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter -Server $node.server
 
