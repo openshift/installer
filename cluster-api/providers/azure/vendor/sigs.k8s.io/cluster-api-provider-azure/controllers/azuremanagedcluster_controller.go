@@ -23,10 +23,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -148,7 +148,7 @@ func (amcr *AzureManagedClusterReconciler) Reconcile(ctx context.Context, req ct
 
 	log = log.WithValues("controlPlane", controlPlaneRef.Name)
 
-	patchhelper, err := patch.NewHelper(aksCluster, amcr.Client)
+	patchhelper, err := v1beta1patch.NewHelper(aksCluster, amcr.Client)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to init patch helper")
 	}

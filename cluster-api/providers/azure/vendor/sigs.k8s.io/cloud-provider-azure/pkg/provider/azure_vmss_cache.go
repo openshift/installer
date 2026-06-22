@@ -102,7 +102,7 @@ func (ss *ScaleSet) newVMSSCache() (azcache.Resource, error) {
 			}
 		}
 
-		if !ss.Cloud.Config.DisableAPICallCache {
+		if !ss.DisableAPICallCache {
 			if resourceGroupNotFound {
 				// gc vmss vm cache when there is resource group not found
 				vmssVMKeys := ss.vmssVMCache.GetStore().ListKeys()
@@ -118,10 +118,10 @@ func (ss *ScaleSet) newVMSSCache() (azcache.Resource, error) {
 		return localCache, nil
 	}
 
-	if ss.Config.VmssCacheTTLInSeconds == 0 {
-		ss.Config.VmssCacheTTLInSeconds = consts.VMSSCacheTTLDefaultInSeconds
+	if ss.VmssCacheTTLInSeconds == 0 {
+		ss.VmssCacheTTLInSeconds = consts.VMSSCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedCache(time.Duration(ss.Config.VmssCacheTTLInSeconds)*time.Second, getter, ss.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(time.Duration(ss.VmssCacheTTLInSeconds)*time.Second, getter, ss.DisableAPICallCache)
 }
 
 func (ss *ScaleSet) getVMSSVMsFromCache(ctx context.Context, resourceGroup, vmssName string, crt azcache.AzureCacheReadType) (*sync.Map, error) {
@@ -142,13 +142,13 @@ func (ss *ScaleSet) getVMSSVMsFromCache(ctx context.Context, resourceGroup, vmss
 
 // newVMSSVirtualMachinesCache instantiates a new VMs cache for VMs belonging to the provided VMSS.
 func (ss *ScaleSet) newVMSSVirtualMachinesCache() (azcache.Resource, error) {
-	vmssVirtualMachinesCacheTTL := time.Duration(ss.Config.VmssVirtualMachinesCacheTTLInSeconds) * time.Second
+	vmssVirtualMachinesCacheTTL := time.Duration(ss.VmssVirtualMachinesCacheTTLInSeconds) * time.Second
 
 	getter := func(_ context.Context, cacheKey string) (interface{}, error) {
 		localCache := &sync.Map{} // [nodeName]*VMSSVirtualMachineEntry
 		oldCache := make(map[string]*VMSSVirtualMachineEntry)
 
-		if !ss.Cloud.Config.DisableAPICallCache {
+		if !ss.DisableAPICallCache {
 			entry, exists, err := ss.vmssVMCache.GetStore().GetByKey(cacheKey)
 			if err != nil {
 				return nil, err
@@ -206,12 +206,12 @@ func (ss *ScaleSet) newVMSSVirtualMachinesCache() (azcache.Resource, error) {
 			}
 			localCache.Store(computerName, vmssVMCacheEntry)
 
-			if !ss.Cloud.Config.DisableAPICallCache {
+			if !ss.DisableAPICallCache {
 				delete(oldCache, computerName)
 			}
 		}
 
-		if !ss.Cloud.Config.DisableAPICallCache {
+		if !ss.DisableAPICallCache {
 			// add old missing cache data with nil entries to prevent aggressive
 			// ARM calls during cache invalidation
 			for name, vmEntry := range oldCache {
@@ -242,12 +242,12 @@ func (ss *ScaleSet) newVMSSVirtualMachinesCache() (azcache.Resource, error) {
 		return localCache, nil
 	}
 
-	return azcache.NewTimedCache(vmssVirtualMachinesCacheTTL, getter, ss.Cloud.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(vmssVirtualMachinesCacheTTL, getter, ss.DisableAPICallCache)
 }
 
 // DeleteCacheForNode deletes Node from VMSS VM and VM caches.
 func (ss *ScaleSet) DeleteCacheForNode(ctx context.Context, nodeName string) error {
-	if ss.Config.DisableAPICallCache {
+	if ss.DisableAPICallCache {
 		return nil
 	}
 	vmManagementType, err := ss.getVMManagementTypeByNodeName(ctx, nodeName, azcache.CacheReadTypeUnsafe)
@@ -342,7 +342,7 @@ func (ss *ScaleSet) newNonVmssUniformNodesCache() (azcache.Resource, error) {
 		klog.V(2).Infof("refresh the cache of NonVmssUniformNodesCache in rg %v", resourceGroups)
 
 		for _, resourceGroup := range resourceGroups.UnsortedList() {
-			vms, err := ss.Cloud.ListVirtualMachines(ctx, resourceGroup)
+			vms, err := ss.ListVirtualMachines(ctx, resourceGroup)
 			if err != nil {
 				return nil, fmt.Errorf("getter function of nonVmssUniformNodesCache: failed to list vms in the resource group %s: %w", resourceGroup, err)
 			}
@@ -380,10 +380,10 @@ func (ss *ScaleSet) newNonVmssUniformNodesCache() (azcache.Resource, error) {
 		return localCache, nil
 	}
 
-	if ss.Config.NonVmssUniformNodesCacheTTLInSeconds == 0 {
-		ss.Config.NonVmssUniformNodesCacheTTLInSeconds = consts.NonVmssUniformNodesCacheTTLDefaultInSeconds
+	if ss.NonVmssUniformNodesCacheTTLInSeconds == 0 {
+		ss.NonVmssUniformNodesCacheTTLInSeconds = consts.NonVmssUniformNodesCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedCache(time.Duration(ss.Config.NonVmssUniformNodesCacheTTLInSeconds)*time.Second, getter, ss.Cloud.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(time.Duration(ss.NonVmssUniformNodesCacheTTLInSeconds)*time.Second, getter, ss.DisableAPICallCache)
 }
 
 func (ss *ScaleSet) getVMManagementTypeByNodeName(ctx context.Context, nodeName string, crt azcache.AzureCacheReadType) (VMManagementType, error) {
@@ -397,7 +397,7 @@ func (ss *ScaleSet) getVMManagementTypeByNodeName(ctx context.Context, nodeName 
 		return ManagedByUnknownVMSet, err
 	}
 
-	if ss.Cloud.Config.DisableAPICallCache {
+	if ss.DisableAPICallCache {
 		if cached.(NonVmssUniformNodesEntry).AvSetVMNodeNames.Has(nodeName) {
 			return ManagedByAvSet, nil
 		}
@@ -531,7 +531,7 @@ func (ss *ScaleSet) getVMManagementTypeByIPConfigurationID(ctx context.Context, 
 }
 
 func (az *Cloud) GetVMNameByIPConfigurationName(ctx context.Context, nicResourceGroup, nicName string) (string, error) {
-	nic, rerr := az.NetworkClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
+	nic, rerr := az.ComputeClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
 	if rerr != nil {
 		return "", fmt.Errorf("failed to get interface of name %s: %w", nicName, rerr)
 	}

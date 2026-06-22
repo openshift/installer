@@ -15,6 +15,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/otlptranslator"
 	"google.golang.org/protobuf/proto"
 
@@ -36,7 +37,7 @@ const (
 )
 
 var metricsPool = sync.Pool{
-	New: func() any {
+	New: func() interface{} {
 		return &metricdata.ResourceMetrics{}
 	},
 }
@@ -48,7 +49,7 @@ type Exporter struct {
 }
 
 // MarshalLog returns logging data about the Exporter.
-func (e *Exporter) MarshalLog() any {
+func (e *Exporter) MarshalLog() interface{} {
 	const t = "Prometheus exporter"
 
 	if r, ok := e.Reader.(*metric.ManualReader); ok {
@@ -103,18 +104,12 @@ func New(opts ...Option) (*Exporter, error) {
 	// TODO (#3244): Enable some way to configure the reader, but not change temporality.
 	reader := metric.NewManualReader(cfg.readerOpts...)
 
-	labelNamer := otlptranslator.LabelNamer{UTF8Allowed: !cfg.translationStrategy.ShouldEscape()}
-	escapedNamespace := cfg.namespace
-	if escapedNamespace != "" {
-		var err error
-		// If the namespace needs to be escaped, do that now when creating the new
-		// Collector object. The escaping is not persisted in the Config itself.
-		escapedNamespace, err = labelNamer.Build(escapedNamespace)
-		if err != nil {
-			return nil, err
-		}
+	utf8Allowed := model.NameValidationScheme == model.UTF8Validation // nolint:staticcheck // We need this check to keep supporting the legacy scheme.
+	if !utf8Allowed {
+		// Only sanitize if prometheus does not support UTF-8.
+		logDeprecatedLegacyScheme()
 	}
-
+	labelNamer := otlptranslator.LabelNamer{UTF8Allowed: utf8Allowed}
 	collector := &collector{
 		reader:                   reader,
 		disableTargetInfo:        cfg.disableTargetInfo,
@@ -122,11 +117,18 @@ func New(opts ...Option) (*Exporter, error) {
 		withoutCounterSuffixes:   cfg.withoutCounterSuffixes,
 		disableScopeInfo:         cfg.disableScopeInfo,
 		metricFamilies:           make(map[string]*dto.MetricFamily),
-		namespace:                escapedNamespace,
+		namespace:                labelNamer.Build(cfg.namespace),
 		resourceAttributesFilter: cfg.resourceAttributesFilter,
-		metricNamer:              otlptranslator.NewMetricNamer(escapedNamespace, cfg.translationStrategy),
-		unitNamer:                otlptranslator.UnitNamer{UTF8Allowed: !cfg.translationStrategy.ShouldEscape()},
-		labelNamer:               labelNamer,
+		metricNamer: otlptranslator.MetricNamer{
+			Namespace: cfg.namespace,
+			// We decide whether to pass type and unit to the netricNamer based
+			// on whether units or counter suffixes are enabled, and keep this
+			// always enabled.
+			WithMetricSuffixes: true,
+			UTF8Allowed:        utf8Allowed,
+		},
+		unitNamer:  otlptranslator.UnitNamer{UTF8Allowed: utf8Allowed},
+		labelNamer: labelNamer,
 	}
 
 	if err := cfg.registerer.Register(collector); err != nil {
@@ -141,7 +143,7 @@ func New(opts ...Option) (*Exporter, error) {
 }
 
 // Describe implements prometheus.Collector.
-func (*collector) Describe(chan<- *prometheus.Desc) {
+func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 	// The Opentelemetry SDK doesn't have information on which will exist when the collector
 	// is registered. By returning nothing we are an "unchecked" collector in Prometheus,
 	// and assume responsibility for consistency of the metrics produced.
@@ -195,11 +197,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if c.resourceAttributesFilter != nil && len(c.resourceKeyVals.keys) == 0 {
-		err := c.createResourceAttributes(metrics.Resource)
-		if err != nil {
-			otel.Handle(err)
-			return
-		}
+		c.createResourceAttributes(metrics.Resource)
 	}
 
 	for _, scopeMetrics := range metrics.ScopeMetrics {
@@ -213,11 +211,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 			kv.keys = append(kv.keys, scopeNameLabel, scopeVersionLabel, scopeSchemaLabel)
 			kv.vals = append(kv.vals, scopeMetrics.Scope.Name, scopeMetrics.Scope.Version, scopeMetrics.Scope.SchemaURL)
 
-			attrKeys, attrVals, err := getAttrs(scopeMetrics.Scope.Attributes, c.labelNamer)
-			if err != nil {
-				otel.Handle(err)
-				continue
-			}
+			attrKeys, attrVals := getAttrs(scopeMetrics.Scope.Attributes, c.labelNamer)
 			for i := range attrKeys {
 				attrKeys[i] = scopeLabelPrefix + attrKeys[i]
 			}
@@ -233,13 +227,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 			if typ == nil {
 				continue
 			}
-			name, err := c.getName(m)
-			if err != nil {
-				// TODO(#7066): Handle this error better. It's not clear this can be
-				// reached, bad metric names should / will be caught at creation time.
-				otel.Handle(err)
-				continue
-			}
+			name := c.getName(m)
 
 			drop, help := c.validateMetrics(name, m.Description, typ)
 			if drop {
@@ -334,11 +322,7 @@ func addExponentialHistogramMetric[N int64 | float64](
 	labelNamer otlptranslator.LabelNamer,
 ) {
 	for _, dp := range histogram.DataPoints {
-		keys, values, err := getAttrs(dp.Attributes, labelNamer)
-		if err != nil {
-			otel.Handle(err)
-			continue
-		}
+		keys, values := getAttrs(dp.Attributes, labelNamer)
 		keys = append(keys, kv.keys...)
 		values = append(values, kv.vals...)
 
@@ -398,7 +382,8 @@ func addExponentialHistogramMetric[N int64 | float64](
 			otel.Handle(err)
 			continue
 		}
-		m = addExemplars(m, dp.Exemplars, labelNamer)
+
+		// TODO(GiedriusS): add exemplars here after https://github.com/prometheus/client_golang/pull/1654#pullrequestreview-2434669425 is done.
 		ch <- m
 	}
 }
@@ -412,11 +397,7 @@ func addHistogramMetric[N int64 | float64](
 	labelNamer otlptranslator.LabelNamer,
 ) {
 	for _, dp := range histogram.DataPoints {
-		keys, values, err := getAttrs(dp.Attributes, labelNamer)
-		if err != nil {
-			otel.Handle(err)
-			continue
-		}
+		keys, values := getAttrs(dp.Attributes, labelNamer)
 		keys = append(keys, kv.keys...)
 		values = append(values, kv.vals...)
 
@@ -452,11 +433,7 @@ func addSumMetric[N int64 | float64](
 	}
 
 	for _, dp := range sum.DataPoints {
-		keys, values, err := getAttrs(dp.Attributes, labelNamer)
-		if err != nil {
-			otel.Handle(err)
-			continue
-		}
+		keys, values := getAttrs(dp.Attributes, labelNamer)
 		keys = append(keys, kv.keys...)
 		values = append(values, kv.vals...)
 
@@ -484,11 +461,7 @@ func addGaugeMetric[N int64 | float64](
 	labelNamer otlptranslator.LabelNamer,
 ) {
 	for _, dp := range gauge.DataPoints {
-		keys, values, err := getAttrs(dp.Attributes, labelNamer)
-		if err != nil {
-			otel.Handle(err)
-			continue
-		}
+		keys, values := getAttrs(dp.Attributes, labelNamer)
 		keys = append(keys, kv.keys...)
 		values = append(values, kv.vals...)
 
@@ -504,7 +477,7 @@ func addGaugeMetric[N int64 | float64](
 
 // getAttrs converts the attribute.Set to two lists of matching Prometheus-style
 // keys and values.
-func getAttrs(attrs attribute.Set, labelNamer otlptranslator.LabelNamer) ([]string, []string, error) {
+func getAttrs(attrs attribute.Set, labelNamer otlptranslator.LabelNamer) ([]string, []string) {
 	keys := make([]string, 0, attrs.Len())
 	values := make([]string, 0, attrs.Len())
 	itr := attrs.Iter()
@@ -522,11 +495,7 @@ func getAttrs(attrs attribute.Set, labelNamer otlptranslator.LabelNamer) ([]stri
 		keysMap := make(map[string][]string)
 		for itr.Next() {
 			kv := itr.Attribute()
-			key, err := labelNamer.Build(string(kv.Key))
-			if err != nil {
-				// TODO(#7066) Handle this error better.
-				return nil, nil, err
-			}
+			key := labelNamer.Build(string(kv.Key))
 			if _, ok := keysMap[key]; !ok {
 				keysMap[key] = []string{kv.Value.Emit()}
 			} else {
@@ -540,21 +509,17 @@ func getAttrs(attrs attribute.Set, labelNamer otlptranslator.LabelNamer) ([]stri
 			values = append(values, strings.Join(vals, ";"))
 		}
 	}
-	return keys, values, nil
+	return keys, values
 }
 
 func (c *collector) createInfoMetric(name, description string, res *resource.Resource) (prometheus.Metric, error) {
-	keys, values, err := getAttrs(*res.Set(), c.labelNamer)
-	if err != nil {
-		return nil, err
-	}
+	keys, values := getAttrs(*res.Set(), c.labelNamer)
 	desc := prometheus.NewDesc(name, description, keys, nil)
 	return prometheus.NewConstMetric(desc, prometheus.GaugeValue, float64(1), values...)
 }
 
-// getName returns the sanitized name, translated according to the selected
-// TranslationStrategy and namespace option.
-func (c *collector) getName(m metricdata.Metrics) (string, error) {
+// getName returns the sanitized name, prefixed with the namespace and suffixed with unit.
+func (c *collector) getName(m metricdata.Metrics) string {
 	translatorMetric := otlptranslator.Metric{
 		Name: m.Name,
 		Type: c.namingMetricType(m),
@@ -565,7 +530,7 @@ func (c *collector) getName(m metricdata.Metrics) (string, error) {
 	return c.metricNamer.Build(translatorMetric)
 }
 
-func (*collector) metricType(m metricdata.Metrics) *dto.MetricType {
+func (c *collector) metricType(m metricdata.Metrics) *dto.MetricType {
 	switch v := m.Data.(type) {
 	case metricdata.ExponentialHistogram[int64], metricdata.ExponentialHistogram[float64]:
 		return dto.MetricType_HISTOGRAM.Enum()
@@ -616,18 +581,13 @@ func (c *collector) namingMetricType(m metricdata.Metrics) otlptranslator.Metric
 	return otlptranslator.MetricTypeUnknown
 }
 
-func (c *collector) createResourceAttributes(res *resource.Resource) error {
+func (c *collector) createResourceAttributes(res *resource.Resource) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	resourceAttrs, _ := res.Set().Filter(c.resourceAttributesFilter)
-	resourceKeys, resourceValues, err := getAttrs(resourceAttrs, c.labelNamer)
-	if err != nil {
-		return err
-	}
-
+	resourceKeys, resourceValues := getAttrs(resourceAttrs, c.labelNamer)
 	c.resourceKeyVals = keyVals{keys: resourceKeys, vals: resourceValues}
-	return nil
 }
 
 func (c *collector) validateMetrics(name, description string, metricType *dto.MetricType) (drop bool, help string) {
@@ -678,14 +638,10 @@ func addExemplars[N int64 | float64](
 	}
 	promExemplars := make([]prometheus.Exemplar, len(exemplars))
 	for i, exemplar := range exemplars {
-		labels, err := attributesToLabels(exemplar.FilteredAttributes, labelNamer)
-		if err != nil {
-			otel.Handle(err)
-			return m
-		}
+		labels := attributesToLabels(exemplar.FilteredAttributes, labelNamer)
 		// Overwrite any existing trace ID or span ID attributes
-		labels[otlptranslator.ExemplarTraceIDKey] = hex.EncodeToString(exemplar.TraceID)
-		labels[otlptranslator.ExemplarSpanIDKey] = hex.EncodeToString(exemplar.SpanID)
+		labels[otlptranslator.ExemplarTraceIDKey] = hex.EncodeToString(exemplar.TraceID[:])
+		labels[otlptranslator.ExemplarSpanIDKey] = hex.EncodeToString(exemplar.SpanID[:])
 		promExemplars[i] = prometheus.Exemplar{
 			Value:     float64(exemplar.Value),
 			Timestamp: exemplar.Time,
@@ -702,14 +658,10 @@ func addExemplars[N int64 | float64](
 	return metricWithExemplar
 }
 
-func attributesToLabels(attrs []attribute.KeyValue, labelNamer otlptranslator.LabelNamer) (prometheus.Labels, error) {
+func attributesToLabels(attrs []attribute.KeyValue, labelNamer otlptranslator.LabelNamer) prometheus.Labels {
 	labels := make(map[string]string)
 	for _, attr := range attrs {
-		name, err := labelNamer.Build(string(attr.Key))
-		if err != nil {
-			return nil, err
-		}
-		labels[name] = attr.Value.Emit()
+		labels[labelNamer.Build(string(attr.Key))] = attr.Value.Emit()
 	}
-	return labels, nil
+	return labels
 }

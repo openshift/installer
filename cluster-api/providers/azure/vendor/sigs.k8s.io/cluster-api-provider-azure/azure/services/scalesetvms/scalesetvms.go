@@ -90,7 +90,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 
 	reconciler := s.Reconciler
 	var getter azure.ResourceSpecGetter = scaleSetVMSpec
-	var result interface{}
+	var result any
 	var err error
 	// Fetch the latest instance or VM data. AzureMachinePoolReconciler handles model mutations.
 	if scaleSetVMSpec.IsFlex {
