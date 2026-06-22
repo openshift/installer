@@ -147,15 +147,6 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
 
-	if c.BootstrapInPlace != nil && c.ControlPlane.Replicas != nil &&
-		*c.ControlPlane.Replicas == 1 && c.Platform.Name() == baremetal.Name {
-		allErrs = append(allErrs, field.Invalid(
-			field.NewPath("bootstrapInPlace"),
-			"",
-			"Single Node OpenShift is not supported on the baremetal platform",
-		))
-	}
-
 	if c.Arbiter != nil {
 		allErrs = append(allErrs, validateArbiter(&c.Platform, c.Arbiter, c.ControlPlane, field.NewPath("arbiter"))...)
 	}
