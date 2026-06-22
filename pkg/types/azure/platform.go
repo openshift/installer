@@ -64,7 +64,8 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// NetworkResourceGroupName specifies the network resource group that contains an existing VNet
+	// NetworkResourceGroupName specifies the network resource group that contains an existing VNet.
+	// This resource group must differ from resourceGroupName because the cluster resource group is deleted on cluster destroy, and network resources must not be removed.
 	//
 	// +optional
 	NetworkResourceGroupName string `json:"networkResourceGroupName,omitempty"`
@@ -108,6 +109,7 @@ type Platform struct {
 	// ownership of all resources in the resource group. Destroying the cluster using installer will delete this
 	// resource group.
 	// This resource group must be empty with no other resources when trying to use it for creating a cluster.
+	// This resource group must differ from networkResourceGroupName because the cluster resource group is deleted on cluster destroy, and network resources must not be removed.
 	// If empty, a new resource group will created for the cluster.
 	//
 	// +optional
