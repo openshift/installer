@@ -388,6 +388,11 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := computePath.Child("platform")
 			logrus.Warnf("%s is ignored", fieldPath)
 		}
+
+		if len(compute.DiskSetup) > 0 {
+			fieldPath := computePath.Child("diskSetup")
+			logrus.Warnf("%s is ignored", fieldPath)
+		}
 	}
 
 	if installConfig.ControlPlane.Hyperthreading != "Enabled" {
@@ -397,6 +402,11 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 
 	if installConfig.ControlPlane.Platform != (types.MachinePoolPlatform{}) {
 		fieldPath := field.NewPath("controlPlane", "platform")
+		logrus.Warnf("%s is ignored", fieldPath)
+	}
+
+	if len(installConfig.ControlPlane.DiskSetup) > 0 {
+		fieldPath := field.NewPath("controlPlane", "diskSetup")
 		logrus.Warnf("%s is ignored", fieldPath)
 	}
 
