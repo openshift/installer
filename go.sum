@@ -896,8 +896,6 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6 h1:W8yZzA6a8zTNOq+pzUAKJmpZCyxP8rTjRaLC0aLap/8=
-github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6/go.mod h1:pyVjK0nZ4sRs4fuQVQ4rubsJdahI1PB94LnQ8sGdvxo=
 github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120 h1:fxnvVDuqfnAz9jCuritFrsb6IK33dxc/MxC9Gtv+nlk=
 github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120/go.mod h1:eLxB7EHTDEvuJHobsVZsyMKOFkVATz4aGAwNtSGMdyM=
 github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea h1:YhJ9iHKKT5ooAdVr8qq3BdudhTxP/WF0XYDT5gzi1ak=
@@ -940,6 +938,8 @@ github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+
 github.com/opentracing/opentracing-go v1.2.0/go.mod h1:GxEUsuufX4nBwe+T+Wl9TAgYrxe9dPLANfrWvHYVTgc=
 github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db h1:ahvAlEurj4TF1SExDJHNeqknQC8lAwnZEPLyZJuRyd0=
 github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db/go.mod h1:Zkdj9/rW6eyuw0uOeEns6O3pP5G2ak+bI/tgkQ/tEZI=
+github.com/pawanpinjarkar/api v0.0.0-20260611132132-df7836b66b8f h1:bwjDh4ucX1B+OV+vqoHY52l3abPyIb+Ir+kOUmrmGz8=
+github.com/pawanpinjarkar/api v0.0.0-20260611132132-df7836b66b8f/go.mod h1:pyVjK0nZ4sRs4fuQVQ4rubsJdahI1PB94LnQ8sGdvxo=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
