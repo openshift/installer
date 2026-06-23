@@ -581,6 +581,14 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		}
 	}
 
+	if installConfig.Networking != nil &&
+		installConfig.Networking.OVNKubernetesConfig != nil &&
+		installConfig.Networking.OVNKubernetesConfig.IPv4 != nil &&
+		installConfig.Networking.OVNKubernetesConfig.IPv4.InternalJoinSubnet != nil {
+		fieldPath := field.NewPath("networking", "ovnKubernetesConfig", "ipv4", "internalJoinSubnet")
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.Networking.OVNKubernetesConfig.IPv4.InternalJoinSubnet)
+	}
+
 	// "External" is the default set from generic install config code
 	if installConfig.Publish != "External" {
 		fieldPath := field.NewPath("publish")
