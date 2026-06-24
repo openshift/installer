@@ -63,6 +63,10 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform, fgat
 		}
 		azuredefaults.Apply(platform.Azure.DefaultMachinePlatform, p.Platform.Azure)
 	case gcp.Name:
+		if p.Platform.GCP == nil && platform.GCP.DefaultMachinePlatform != nil {
+			p.Platform.GCP = &gcp.MachinePool{}
+		}
+		gcpdefaults.Apply(platform.GCP.DefaultMachinePlatform, p.Platform.GCP)
 		gcpdefaults.SetMachinePoolDefaults(platform, p.Platform.GCP)
 	default:
 	}
