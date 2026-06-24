@@ -203,6 +203,21 @@ func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.Er
 
 // DefaultInstanceTypeForArch returns the appropriate instance type based on the target architecture.
 func DefaultInstanceTypeForArch(arch types.Architecture) string {
+	return DefaultInstanceTypeForArchAndProjectID(arch, "")
+}
+
+// DefaultInstanceTypeForArchAndProjectID returns the appropriate instance type based on the target architecture and project ID.
+// For sovereign cloud environments, it returns c3-standard-4 which is available in those regions.
+// For public GCP, it returns n2-standard-4 (x86) or t2a-standard-4 (ARM64).
+func DefaultInstanceTypeForArchAndProjectID(arch types.Architecture, projectID string) string {
+	cloudEnv := gcp.GetCloudEnvironment(projectID)
+
+	// Sovereign cloud uses c3-standard-4 for all architectures
+	if cloudEnv == gcp.CloudEnvironmentSovereign {
+		return "c3-standard-4"
+	}
+
+	// Public GCP: ARM64 uses t2a, x86 uses n2
 	if arch == types.ArchitectureARM64 {
 		return "t2a-standard-4"
 	}
