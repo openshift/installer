@@ -27,7 +27,7 @@ func SetMachinePoolDefaults(platform *types.Platform, pool *gcp.MachinePool) {
 	if pool.InstanceType != "" && pool.OSDisk.DiskType == "" {
 		family := gcp.GetGCPInstanceFamily(pool.InstanceType)
 		if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; ok {
-			pool.OSDisk.DiskType = gcp.DefaultDiskTypeForInstance(pool.InstanceType)
+			pool.OSDisk.DiskType = gcp.DefaultDiskTypeForInstanceAndProjectID(pool.InstanceType, platform.GCP.ProjectID, platform.GCP.Region)
 		}
 	}
 }
