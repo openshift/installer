@@ -67,6 +67,7 @@ type cloudCredsSecretData struct {
 
 type bootkubeTemplateData struct {
 	CVOCapabilities            *types.Capabilities
+	CVOChannel                 string
 	CVOClusterID               string
 	EtcdCaBundle               string
 	EtcdMetricCaCert           string
