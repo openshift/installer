@@ -37,6 +37,15 @@ func failedReleaseImage() []logrus.Entry {
 	}
 }
 
+func failedNodeImagePull() []logrus.Entry {
+	return []logrus.Entry{
+		{Level: logrus.ErrorLevel, Message: "Node image pull failed on the bootstrap machine"},
+		{Level: logrus.InfoLevel, Message: "Line 1"},
+		{Level: logrus.InfoLevel, Message: "Line 2"},
+		{Level: logrus.InfoLevel, Message: "Line 3"},
+	}
+}
+
 func failedURLChecks() []logrus.Entry {
 	return []logrus.Entry{
 		{Level: logrus.InfoLevel, Message: "Line 1"},
@@ -69,56 +78,69 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 		{
 			name: "bootkube not started",
 			files: map[string]string{
-				"log-bundle/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":      "[]",
+				"log-bundle/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+				"log-bundle/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":        "[]",
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the bootkube.service systemd unit"},
 			},
 		},
 		{
-			name: "release-image and API Server URL successful",
+			name: "release-image, node-image and API Server URL successful",
 			files: map[string]string{
-				"log-bundle/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":      generateSuccessOutput("check-api-url"),
+				"log-bundle/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+				"log-bundle/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":        generateSuccessOutput("check-api-url"),
 			},
 		},
 		{
 			name: "release-image and API Server URL successful bootstrap-in-place",
 			files: map[string]string{
-				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":                           generateSuccessOutput("check-api-url"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":                             generateSuccessOutput("check-api-url"),
 			},
 		},
 		{
 			name: "only release-image failed",
 			files: map[string]string{
 				"log-bundle/bootstrap/services/release-image.json": generateFailureOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":      generateSuccessOutput("check-api-url"),
 			},
 			expectedOutput: failedReleaseImage(),
 		},
 		{
+			name: "only node-image-pull failed",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+				"log-bundle/bootstrap/services/node-image-pull.json": generateFailureOutput("node-image-pull"),
+			},
+			expectedOutput: failedNodeImagePull(),
+		},
+		{
 			name: "API Server URL failed",
 			files: map[string]string{
-				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":                           generateFailureOutput("check-api-url"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":                             generateFailureOutput("check-api-url"),
 			},
 			expectedOutput: failedURLChecks(),
 		},
 		{
 			name: "API-INT Server URL failed",
 			files: map[string]string{
-				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":                           generateFailureOutput("check-api-int-url"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":                             generateFailureOutput("check-api-int-url"),
 			},
 			expectedOutput: failedURLChecks(),
 		},
 		{
 			name: "both release-image and API Server URLs failed",
 			files: map[string]string{
-				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": generateFailureOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":                           generateFailureOutput("check-api-url"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json":   generateFailureOutput("pull-release-image"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/node-image-pull.json": generateFailureOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":                             generateFailureOutput("check-api-url"),
 			},
 			expectedOutput: failedReleaseImage(),
 		},
@@ -135,8 +157,9 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 		{
 			name: "empty bootkube.json",
 			files: map[string]string{
-				"log-bundle/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":      "",
+				"log-bundle/bootstrap/services/release-image.json":                        generateSuccessOutput("pull-release-image"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":                             "",
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.InfoLevel, Message: "Could not analyze the bootkube.service: service entries file does not begin with a token: EOF"},
@@ -156,8 +179,9 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 		{
 			name: "malformed bootkube.json",
 			files: map[string]string{
-				"log-bundle/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
-				"log-bundle/bootstrap/services/bootkube.json":      "{}",
+				"log-bundle/bootstrap/services/release-image.json":                        generateSuccessOutput("pull-release-image"),
+				"log-bundle/log-bundle-bootstrap/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":                             "{}",
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.InfoLevel, Message: "Could not analyze the bootkube.service: service entries file does not begin with an array"},
