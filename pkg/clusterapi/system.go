@@ -312,15 +312,16 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			logrus.Infof("setting %q to %s for capg infrastructure controller", gAppCredEnvVar, v)
 		}
 
-		// Google Cloud Dedicated support: detect universe domain from
-		// credentials and pass it to the CAPG controller via env var.
-		ud, err := session.Credentials.GetUniverseDomain()
+		// Set universe domain for sovereign cloud environments
+		// The universe domain is extracted from the credentials and must be explicitly
+		// set for the CAPI provider to use the correct GCP API endpoints
+		universeDomain, err := session.Credentials.GetUniverseDomain()
 		if err != nil {
-			return fmt.Errorf("failed to get universe domain from gcp credentials: %w", err)
+			return fmt.Errorf("failed to get universe domain from GCP credentials: %w", err)
 		}
-		if ud != "googleapis.com" {
-			capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] = ud
-			logrus.Infof("setting GOOGLE_CLOUD_UNIVERSE_DOMAIN to %q for capg infrastructure controller", ud)
+		if gcp.IsNonDefaultUniverseDomain(universeDomain) {
+			capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] = universeDomain
+			logrus.Infof("setting GOOGLE_CLOUD_UNIVERSE_DOMAIN to %s for capg infrastructure controller", universeDomain)
 		}
 
 		controllers = append(controllers,
