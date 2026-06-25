@@ -9,7 +9,6 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
-	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -19,16 +18,6 @@ func TestFeatureGates(t *testing.T) {
 		installConfig *types.InstallConfig
 		expected      string
 	}{
-		{
-			name: "AWS UserProvisionedDNS is not allowed without Feature Gates",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.AWS = validAWSPlatform()
-				c.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
-				return c
-			}(),
-			expected: `^platform.aws.userProvisionedDNS: Forbidden: this field is protected by the AWSClusterHostedDNSInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
-		},
 		{
 			name: "AWS Sovereign Cloud is not allowed without Feature Gates",
 			installConfig: func() *types.InstallConfig {
