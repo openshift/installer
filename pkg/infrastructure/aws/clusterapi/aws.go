@@ -503,34 +503,34 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 	startTime := time.Now()
 	untilTime := startTime.Add(timeout)
 	timezone, _ := untilTime.Zone()
-	logrus.Debugf("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
+	logrus.Debugf("Waiting up to %v (until %v %s) for bootstrap rules to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
 	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
 		func(ctx context.Context) (bool, error) {
-			if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
+			if err := removeBootstrapRules(ctx, in.Client, in.Metadata.InfraID); err != nil {
 				// If the cluster object has been modified between Get and Update, k8s client will refuse to update it.
 				// In that case, we need to retry.
 				if k8serrors.IsConflict(err) {
-					logrus.Debugf("AWSCluster update conflict during SSH rule removal: %v", err)
+					logrus.Debugf("AWSCluster update conflict during bootstrap rule removal: %v", err)
 					return false, nil
 				}
-				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
+				return true, fmt.Errorf("failed to remove bootstrap rules: %w", err)
 			}
-			return isSSHRuleGone(ctx, ec2Client, sgID)
+			return isBootstrapRuleGone(ctx, ec2Client, sgID)
 		},
 	); err != nil {
 		if wait.Interrupted(err) {
-			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
+			return fmt.Errorf("bootstrap rules were not removed within %v: %w", timeout, err)
 		}
-		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
+		return fmt.Errorf("unable to remove bootstrap rules: %w", err)
 	}
-	logrus.Debugf("Completed removing bootstrap SSH rule after %v", time.Since(startTime))
+	logrus.Debugf("Completed removing bootstrap rules after %v", time.Since(startTime))
 
 	return nil
 }
 
-// removeSSHRule removes the SSH rule for accessing the bootstrap node
-// by removing the rule from the cluster spec and updating the object.
-func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) error {
+// removeBootstrapRules removes bootstrap-only rules (SSH and konnectivity)
+// by removing them from the cluster spec and updating the object.
+func removeBootstrapRules(ctx context.Context, cl k8sClient.Client, infraID string) error {
 	awsCluster := &capa.AWSCluster{}
 	key := k8sClient.ObjectKey{
 		Name:      infraID,
@@ -545,6 +545,9 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
 			continue
 		}
+		if strings.EqualFold(rule.Description, awsmanifest.BootstrapKonnectivityDescription) {
+			continue
+		}
 		postBootstrapRules = append(postBootstrapRules, rule)
 	}
 
@@ -555,14 +558,15 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		if err := cl.Update(ctx, awsCluster); err != nil {
 			return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
 		}
-		logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
+		logrus.Debug("Updated AWSCluster to remove bootstrap rules")
 	}
 
 	return nil
 }
 
-// isSSHRuleGone checks that the Public SSH rule has been removed from the security group.
-func isSSHRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, error) {
+// isBootstrapRuleGone checks that the bootstrap-only rules (SSH and konnectivity)
+// have been removed from the security group.
+func isBootstrapRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, error) {
 	sgs, err := awsconfig.DescribeSecurityGroups(ctx, client, []string{sgID})
 	if err != nil {
 		return false, fmt.Errorf("error getting security group: %w", err)
@@ -578,22 +582,29 @@ func isSSHRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, 
 
 	sg := sgs[0]
 	for _, rule := range sg.IpPermissions {
-		if ptr.Deref(rule.ToPort, 0) != 22 {
-			continue
-		}
-		// Check IPv4 rules
-		for _, source := range rule.IpRanges {
-			if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
-				ruleDesc := ptr.Deref(source.Description, "[no description]")
-				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
-				return false, nil
+		port := ptr.Deref(rule.ToPort, 0)
+		switch port {
+		case 22:
+			// Check IPv4 rules
+			for _, source := range rule.IpRanges {
+				if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
+					ruleDesc := ptr.Deref(source.Description, "[no description]")
+					logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
+					return false, nil
+				}
 			}
-		}
-		// Check IPv6 rules
-		for _, source := range rule.Ipv6Ranges {
-			if source.CidrIpv6 != nil && *source.CidrIpv6 == "::/0" {
-				ruleDesc := ptr.Deref(source.Description, "[no description]")
-				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIpv6)
+			// Check IPv6 rules
+			for _, source := range rule.Ipv6Ranges {
+				if source.CidrIpv6 != nil && *source.CidrIpv6 == "::/0" {
+					ruleDesc := ptr.Deref(source.Description, "[no description]")
+					logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIpv6)
+					return false, nil
+				}
+			}
+		case 8091:
+			// Check konnectivity rule (uses security group sources)
+			if len(rule.UserIdGroupPairs) > 0 {
+				logrus.Debugf("Found konnectivity ingress rule on port 8091. Still waiting for deletion...")
 				return false, nil
 			}
 		}

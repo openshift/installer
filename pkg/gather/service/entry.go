@@ -10,7 +10,7 @@ type Entry struct {
 	// present when the phase is an ending phase.
 	Result Result `json:"result,omitempty"`
 	// Stage is the name of the stage being executed. This is only present when the phase is either StageStart or StageEnd.
-	Stage string `json:"string,omitempty"`
+	Stage string `json:"stage,omitempty"`
 	// PreCommand is the name of the pre-command being executed. This is only present when the phase is either
 	// PreCommandStart or PreCommandEnd.
 	PreCommand string `json:"preCommand,omitempty"`
