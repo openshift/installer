@@ -182,7 +182,10 @@ type contentLoader struct {
 }
 
 func (f *contentLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
-	// Use CredentialsFromJSONWithParams to ensure universe domain from credentials is applied
+	// Use CredentialsFromJSONWithParams to ensure universe domain from credentials is applied.
+	// This function automatically extracts the universe domain from the credentials JSON.
+	// Note: CredentialsFromJSONWithTypeAndParams would be preferred but is not available
+	// in the current vendored version of golang.org/x/oauth2/google.
 	return googleoauth.CredentialsFromJSONWithParams(ctx, []byte(f.content), googleoauth.CredentialsParams{
 		Scopes: []string{compute.CloudPlatformScope},
 	})

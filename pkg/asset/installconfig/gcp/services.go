@@ -72,7 +72,10 @@ func getOptions(ctx context.Context) ([]option.ClientOption, error) {
 
 	// Explicitly set universe domain from credentials if present
 	// This is required for sovereign clouds which use a different universe domain
-	universeDomain := ssn.Credentials.UniverseDomain()
+	universeDomain, err := ssn.Credentials.GetUniverseDomain()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get universe domain from credentials: %w", err)
+	}
 	if universeDomain != "" && universeDomain != "googleapis.com" {
 		options = append(options, option.WithUniverseDomain(universeDomain))
 	}

@@ -92,6 +92,8 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "must provide a region"))
 	}
+	cloudEnv := gcp.GetCloudEnvironment(p.ProjectID)
+	allErrs = append(allErrs, validateUniverseDomain(p.UniverseDomain, cloudEnv, fldPath.Child("universeDomain"))...)
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 		allErrs = append(allErrs, ValidateDefaultDiskType(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
@@ -193,4 +195,22 @@ func validateLabel(key, value string) error {
 		return fmt.Errorf("label key contains restricted prefix. Label key cannot have `kubernetes-io`, `openshift-io` prefixes")
 	}
 	return nil
+}
+
+// validateUniverseDomain validates universe domain usage.
+// Universe domain is optional - it can be set for sovereign clouds when explicitly
+// provided by the user. If not provided, the GCP SDK will extract it from credentials.
+// Note: Format validation is intentionally not performed here. The GCP SDK will
+// validate the actual domain format when making API calls.
+func validateUniverseDomain(universeDomain, cloudEnvironment string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Universe domain is optional. If provided for non-sovereign cloud, warn the user
+	// that this is unusual but don't prevent it (they may know something we don't).
+	if universeDomain != "" && cloudEnvironment != gcp.CloudEnvironmentSovereign {
+		allErrs = append(allErrs, field.Invalid(fldPath, universeDomain,
+			"universe domain is typically only needed for sovereign cloud environments (project IDs with colon prefix)"))
+	}
+
+	return allErrs
 }
