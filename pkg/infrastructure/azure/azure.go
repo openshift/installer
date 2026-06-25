@@ -479,9 +479,14 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var extLBFQDN string
 	if in.InstallConfig.Config.PublicAPI() {
 		var publicIPv6 *armnetwork.PublicIPAddress
+		v4InfraID := in.InfraID
+		v6InfraID := ""
+		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+			v6InfraID = fmt.Sprintf("%s-v6", in.InfraID)
+		}
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
-			infraID:       in.InfraID,
+			infraID:       v4InfraID,
 			region:        in.InstallConfig.Config.Azure.Region,
 			resourceGroup: resourceGroupName,
 			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
@@ -495,7 +500,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
 			publicIPv6, err = createPublicIP(ctx, &pipInput{
 				name:          fmt.Sprintf("%s-pip-v6", in.InfraID),
-				infraID:       in.InfraID,
+				infraID:       v6InfraID,
 				region:        in.InstallConfig.Config.Azure.Region,
 				resourceGroup: resourceGroupName,
 				pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
@@ -661,27 +666,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 
 		// For dual-stack, create IPv6 inbound rule for SSH access to bootstrap.
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
-			publicIPv6outbound, err := createPublicIP(ctx, &pipInput{
-				name:          fmt.Sprintf("%s-pip-v6-outbound-lb", in.InfraID),
-				infraID:       in.InfraID,
-				region:        in.InstallConfig.Config.Azure.Region,
-				resourceGroup: p.ResourceGroupName,
-				pipClient:     p.NetworkClientFactory.NewPublicIPAddressesClient(),
-				tags:          p.Tags,
-				ipversion:     armnetwork.IPVersionIPv6,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to create public ipv6 for outbound ipv6 lb: %w", err)
-			}
-			logrus.Debugf("created public ipv6 for outbound ipv6 lb: %s", *publicIPv6outbound.ID)
-
-			// Update the outbound node IPv6 load balancer.
-			outboundLBName := fmt.Sprintf("%s-ipv6-outbound-node-lb", in.InfraID)
-			err = updateOutboundIPv6LoadBalancer(ctx, publicIPv6outbound, p.NetworkClientFactory.NewLoadBalancersClient(), p.ResourceGroupName, outboundLBName, in.InfraID)
-			if err != nil {
-				return fmt.Errorf("failed to set public ipv6 to outbound ipv6 lb: %w", err)
-			}
-			logrus.Debugf("updated outbound ipv6 lb %s with public ipv6: %s", outboundLBName, *publicIPv6outbound.ID)
 			frontendIPv6ConfigName := "public-lb-ip-v6"
 			sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", in.InfraID)
 			frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
@@ -716,6 +700,36 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 				return fmt.Errorf("failed to associate IPv6 SSH inbound nat rule to interface: %w", err)
 			}
 		}
+	}
+
+	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+		bootstrapNicName := fmt.Sprintf("%s-bootstrap-nic", in.InfraID)
+		nicClient := p.NetworkClientFactory.NewInterfacesClient()
+		bootstrapNic, err := nicClient.Get(ctx, p.ResourceGroupName, bootstrapNicName, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get bootstrap nic: %w", err)
+		}
+		for _, ipconfig := range bootstrapNic.Properties.IPConfigurations {
+			if ipconfig.Properties.PrivateIPAddressVersion != nil && *ipconfig.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv6 {
+				for _, pool := range p.lbBackendAddressPools {
+					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
+						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
+							ipconfig.Properties.LoadBalancerBackendAddressPools,
+							pool,
+						)
+					}
+				}
+			}
+		}
+		pollerResp, err := nicClient.BeginCreateOrUpdate(ctx, p.ResourceGroupName, bootstrapNicName, bootstrapNic.Interface, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update bootstrap nic with IPv6 backend pools: %w", err)
+		}
+		_, err = pollerResp.PollUntilDone(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update bootstrap nic with IPv6 backend pools: %w", err)
+		}
+		logrus.Debugf("associated bootstrap NIC with IPv6 backend pools")
 	}
 
 	return nil

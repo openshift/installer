@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/aws/smithy-go/ptr"
@@ -1975,6 +1976,84 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
+			name: "azure: valid dual-stack with DualStackIPv6Primary and IPv4-first serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("172.30.0.0/16"),
+					*ipnet.MustParseCIDR("ffd1::/112"),
+				}
+				return c
+			}(),
+			restoreFnFactory: func(_ *types.InstallConfig) func() {
+				os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {
+					os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK")
+				}
+			},
+		},
+		{
+			name: "azure: valid dual-stack with DualStackIPv4Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			restoreFnFactory: func(_ *types.InstallConfig) func() {
+				os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {
+					os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK")
+				}
+			},
+		},
+		{
+			name: "azure: invalid dual-stack with IPv6-first serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4`,
+			restoreFnFactory: func(_ *types.InstallConfig) func() {
+				os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {
+					os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK")
+				}
+			},
+		},
+		{
+			name: "azure: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `^\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4\E$`,
+			restoreFnFactory: func(_ *types.InstallConfig) func() {
+				os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {
+					os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK")
+				}
+			},
 		},
 		{
 			name: "invalid IPv6 hostprefix",
