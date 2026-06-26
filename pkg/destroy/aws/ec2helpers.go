@@ -827,12 +827,12 @@ func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.C
 		helper   func(ctx context.Context, client *ec2v2.Client, vpc string, failFast bool, logger logrus.FieldLogger) error
 		failFast bool
 	}{
+		{helper: deleteEC2VPCEndpointsByVPC, failFast: true},     // must precede NICs and subnets
 		{helper: deleteEC2NATGatewaysByVPC, failFast: true},      // not always tagged
 		{helper: deleteEC2NetworkInterfaceByVPC, failFast: true}, // not always tagged
 		{helper: deleteEC2RouteTablesByVPC, failFast: true},      // not always tagged
 		{helper: deleteEC2SecurityGroupsByVPC, failFast: false},  // not always tagged
 		{helper: deleteEC2SubnetsByVPC, failFast: true},          // not always tagged
-		{helper: deleteEC2VPCEndpointsByVPC, failFast: true},     // not taggable
 	} {
 		err := child.helper(ctx, ec2Client, id, child.failFast, logger)
 		if err != nil {
