@@ -30,7 +30,7 @@ type MachinePool struct {
 	// +listType=map
 	// +listMapKey=name
 	// +kubebuilder:validation:MaxItems=29
-	DataDisks []DataDisk `json:"dataDisks"`
+	DataDisks []DataDisk `json:"dataDisks,omitempty"`
 
 	// Zones defines available zones
 	// Zones is available in TechPreview.
