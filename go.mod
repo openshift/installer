@@ -72,7 +72,7 @@ require (
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.39.1
 	github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6
-	github.com/openshift/assisted-image-service v0.0.0-20260209112552-a5cb0f44ccc6
+	github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
@@ -168,7 +168,6 @@ require (
 	github.com/djherbis/times v1.6.0 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.36.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
-	github.com/erofs/go-erofs v0.0.0-20250726210804-e84d089fc453 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/golangci/plugin-module-register v0.1.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect

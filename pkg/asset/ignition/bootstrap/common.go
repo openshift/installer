@@ -26,6 +26,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -99,6 +100,7 @@ type bootstrapTemplateData struct {
 	Invoker               string
 	ClusterDomain         string
 	OSImageStream         types.OSImageStream
+	KonnectivityEnabled   bool
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -397,6 +399,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		}
 		pullSecret = merged
 	}
+	konnectivityFeatureGateEnabled := (installConfig.Config.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) ||
+		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement))
 
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
@@ -422,6 +426,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		Invoker:               openshiftInstallInvoker,
 		ClusterDomain:         installConfig.Config.ClusterDomain(),
 		OSImageStream:         installConfig.Config.OSImageStream,
+		KonnectivityEnabled:   konnectivityFeatureGateEnabled && !bootstrapInPlace,
 	}
 }
 

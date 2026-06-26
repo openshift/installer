@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -37,8 +38,9 @@ func failedReleaseImage() []logrus.Entry {
 	}
 }
 
-func failedURLChecks() []logrus.Entry {
+func failedBootkubeStage(stage string) []logrus.Entry {
 	return []logrus.Entry{
+		{Level: logrus.ErrorLevel, Message: fmt.Sprintf("The bootkube service failed at stage %q", stage)},
 		{Level: logrus.InfoLevel, Message: "Line 1"},
 		{Level: logrus.InfoLevel, Message: "Line 2"},
 		{Level: logrus.InfoLevel, Message: "Line 3"},
@@ -104,7 +106,7 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
 				"log-bundle/bootstrap/services/bootkube.json":                           generateFailureOutput("check-api-url"),
 			},
-			expectedOutput: failedURLChecks(),
+			expectedOutput: failedBootkubeStage("check-api-url"),
 		},
 		{
 			name: "API-INT Server URL failed",
@@ -112,7 +114,7 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 				"log-bundle/log-bundle-bootstrap/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
 				"log-bundle/bootstrap/services/bootkube.json":                           generateFailureOutput("check-api-int-url"),
 			},
-			expectedOutput: failedURLChecks(),
+			expectedOutput: failedBootkubeStage("check-api-int-url"),
 		},
 		{
 			name: "both release-image and API Server URLs failed",

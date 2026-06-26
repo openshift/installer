@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version/versioninfo"
 	"github.com/openshift/library-go/pkg/crypto"
 )
 
@@ -170,8 +172,12 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		rootCA,
 	)
 
+	versionInfo := versioninfo.GetInfo()
+	cvoChannel := fmt.Sprintf("stable-%d.%d", versionInfo.Major, versionInfo.Minor)
+
 	templateData := &bootkubeTemplateData{
 		CVOCapabilities:       installConfig.Config.Capabilities,
+		CVOChannel:            cvoChannel,
 		CVOClusterID:          clusterID.UUID,
 		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),

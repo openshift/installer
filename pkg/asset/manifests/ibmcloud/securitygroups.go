@@ -472,6 +472,8 @@ func buildBootstrapSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet
 			})
 		}
 	}
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix))
+
 	return capibmcloud.VPCSecurityGroup{
 		Name: bootstrapSGNamePtr,
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
@@ -486,6 +488,24 @@ func buildBootstrapSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet
 					},
 					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
 					Remotes:  remotes,
+				},
+			},
+			{
+				// Konnectivity
+				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
+				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
+					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
+						MaximumPort: 8091,
+						MinimumPort: 8091,
+					},
+					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.VPCSecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: clusterWideSGNamePtr,
+						},
+					},
 				},
 			},
 		},
