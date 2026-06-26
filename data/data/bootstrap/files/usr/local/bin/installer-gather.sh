@@ -82,6 +82,7 @@ find "${ARTIFACTS}/rendered-assets" -name "*secret*" -print0 | xargs -0 rm -rf
 find "${ARTIFACTS}/rendered-assets" -name "*kubeconfig*" -print0 | xargs -0 rm
 find "${ARTIFACTS}/rendered-assets" -name "*.key" -print0 | xargs -0 rm
 find "${ARTIFACTS}/rendered-assets" -name ".kube" -print0 | xargs -0 rm -rf
+grep -Rl '^kind: Secret' "${ARTIFACTS}/rendered-assets" | xargs rm
 
 # Collect system information specific to IBM Linux Z (s390x) systems. The dbginfo
 # script is available by default as part of the s390-utils rpm package
