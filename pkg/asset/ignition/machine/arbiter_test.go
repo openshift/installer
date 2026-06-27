@@ -70,8 +70,10 @@ func TestArbiterGenerate(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
+			rootCAParents := asset.Parents{}
+			rootCAParents.Add(tc.installConfig)
 			rootCA := &tls.RootCA{}
-			err := rootCA.Generate(context.Background(), nil)
+			err := rootCA.Generate(context.Background(), rootCAParents)
 			assert.NoError(t, err, "unexpected error generating root CA")
 
 			parents := asset.Parents{}

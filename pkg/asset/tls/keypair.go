@@ -35,7 +35,10 @@ func (k *KeyPair) Generate(_ context.Context, filenameBase string) error {
 		return errors.Wrap(err, "failed to get public key data from private key")
 	}
 
-	k.Pvt = PrivateKeyToPem(key)
+	k.Pvt, err = PrivateKeyToPem(key)
+	if err != nil {
+		return errors.Wrap(err, "failed to encode private key to PEM")
+	}
 	k.Pub = pubkeyData
 
 	k.FileList = []*asset.File{

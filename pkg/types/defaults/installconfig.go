@@ -142,4 +142,5 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if c.AdditionalTrustBundlePolicy == "" {
 		c.AdditionalTrustBundlePolicy = types.PolicyProxyOnly
 	}
+
 }
