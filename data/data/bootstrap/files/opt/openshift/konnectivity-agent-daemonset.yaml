@@ -15,8 +15,6 @@ spec:
       labels:
         app: konnectivity-agent
     spec:
-      hostNetwork: true
-      dnsPolicy: Default
       priorityClassName: system-node-critical
       tolerations:
       - operator: Exists
