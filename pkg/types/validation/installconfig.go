@@ -47,6 +47,7 @@ import (
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	ovirtvalidation "github.com/openshift/installer/pkg/types/ovirt/validation"
+	pkivalidation "github.com/openshift/installer/pkg/types/pki"
 	"github.com/openshift/installer/pkg/types/powervc"
 	powervcvalidation "github.com/openshift/installer/pkg/types/powervc/validation"
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -281,6 +282,10 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
 				"the Ingress capability is required"))
 		}
+	}
+
+	if c.PKI != nil {
+		allErrs = append(allErrs, pkivalidation.ValidatePKIConfig(c.PKI, field.NewPath("pki"))...)
 	}
 
 	allErrs = append(allErrs, ValidateFeatureSet(c)...)

@@ -92,6 +92,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.InternalReleaseImageTLSSecret{},
 		&bootkube.InternalReleaseImageRegistryAuthSecret{},
 		&BMCVerifyCAConfigMap{},
+		&PKIConfiguration{},
 	}
 }
 
@@ -109,8 +110,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
 	mcoCfgTemplate := &manifests.MCO{}
 	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
+	pkiConfig := &PKIConfiguration{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -149,6 +151,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, clusterCSIDriverConfig.Files()...)
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
 	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
+	m.FileList = append(m.FileList, pkiConfig.Files()...)
 
 	asset.SortFiles(m.FileList)
 
