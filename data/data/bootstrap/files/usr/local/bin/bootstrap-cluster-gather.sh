@@ -70,6 +70,15 @@ function cluster_bootstrap_gather() {
     echo "Waiting for logs ..."
     while wait -n; do jobs; done
 
+    # Redact pull-secret auth tokens embedded in MachineConfig Ignition data.
+    # The pull-secret JSON is URL-encoded inside data: URIs, so
+    #   "auth":"<value>"  becomes  %22auth%22%3A%22<base64>%22
+    if [[ -f "${ARTIFACTS_TEMP}/resources/machineconfigs.json" ]]; then
+        sed -E -i \
+            's/%22auth%22%3A%22([A-Za-z0-9_-]|%3D|%2B|%2F)*%22/%22auth%22%3A%22REDACTED%22/g' \
+            "${ARTIFACTS_TEMP}/resources/machineconfigs.json"
+    fi
+
     if (( $(stat -c%s "${ARTIFACTS_TEMP}/resources/openapi.json.gz") <= 20 ))
     then
         rm -rf "${ARTIFACTS_TEMP}"
