@@ -2,8 +2,11 @@
 package powervs
 
 import (
+	"context"
 	"fmt"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -25,7 +28,16 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
 	var network string
-	image := fmt.Sprintf("rhcos-%s", clusterID)
+
+	// Get the boot image from the PowerVS workspace, fallback to default if error occurs
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	image, err := GetBootImageFromWorkspace(ctx, config.PowerVS.ServiceInstanceGUID, config.PowerVS.Zone, clusterID)
+	if err != nil {
+		// Fallback to default image naming pattern
+		image = fmt.Sprintf("rhcos-%s", clusterID)
+		logrus.Warnf("Failed to get boot image from PowerVS workspace, using default: %s (error: %v)", image, err)
+	}
 
 	total := int32(0)
 	if pool.Replicas != nil {
