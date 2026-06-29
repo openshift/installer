@@ -1689,6 +1689,25 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	return allErrs
 }
 
+func validateMachineManagement(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if p.Management != types.ClusterAPI {
+		return allErrs
+	}
+
+	switch platform.Name() {
+	case aws.Name:
+		// ATM, ClusterAPI management is only supported for worker and edge compute pool
+		if p.Name == types.MachinePoolControlPlaneRoleName {
+			allErrs = append(allErrs, field.Invalid(fldPath, p.Management, fmt.Sprintf("%s machines cannot be managed by Cluster API", p.Name)))
+		}
+	default:
+		allErrs = append(allErrs, field.Invalid(fldPath, p.Management, fmt.Sprintf("machines cannot be managed by Cluster API for platform %s", platform.Name())))
+	}
+	return allErrs
+}
+
 // validateReleaseArchitecture ensures a compatible payload is used according to the desired architecture of the cluster.
 func validateReleaseArchitecture(controlPlanePool *types.MachinePool, computePool []types.MachinePool, releaseArch types.Architecture) field.ErrorList {
 	allErrs := field.ErrorList{}

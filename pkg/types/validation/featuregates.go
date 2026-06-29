@@ -42,23 +42,6 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 			Field:           field.NewPath("osImageStream"),
 		},
 		{
-			FeatureGateName: features.FeatureGateClusterAPIControlPlaneInstall,
-			Condition:       c.ControlPlane != nil && c.ControlPlane.Management == types.ClusterAPI,
-			Field:           field.NewPath("controlPlane", "management"),
-		},
-		{
-			FeatureGateName: features.FeatureGateClusterAPIComputeInstall,
-			Condition: func() bool {
-				for _, compute := range c.Compute {
-					if compute.Management == types.ClusterAPI {
-						return true
-					}
-				}
-				return false
-			}(),
-			Field: field.NewPath("compute", "management"),
-		},
-		{
 			FeatureGateName: features.FeatureGateConfigurablePKI,
 			Condition:       c.PKI != nil,
 			Field:           field.NewPath("pki"),

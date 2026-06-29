@@ -252,6 +252,46 @@ func TestValidateMachinePool(t *testing.T) {
 			valid: true,
 		},
 		{
+			name:     "valid CAPI management on AWS worker",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool(types.MachinePoolComputeRoleName)
+				p.Management = types.ClusterAPI
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "valid CAPI management on AWS edge",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool(types.MachinePoolEdgeRoleName)
+				p.Management = types.ClusterAPI
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "invalid CAPI management on AWS master",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool(types.MachinePoolControlPlaneRoleName)
+				p.Management = types.ClusterAPI
+				return p
+			}(),
+			expectedError: `master machines cannot be managed by Cluster API`,
+		},
+		{
+			name:     "invalid CAPI management on GCP",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool(types.MachinePoolComputeRoleName)
+				p.Management = types.ClusterAPI
+				return p
+			}(),
+			expectedError: `machines cannot be managed by Cluster API for platform gcp`,
+		},
+		{
 			name:     "valid multiple disks",
 			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
 			pool: func() *types.MachinePool {

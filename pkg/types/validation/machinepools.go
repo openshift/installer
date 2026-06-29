@@ -79,7 +79,7 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	}
 
 	allErrs = append(allErrs, validateDiskSetup(p, fldPath.Child("diskSetup"))...)
-
+	allErrs = append(allErrs, validateMachineManagement(platform, p, fldPath.Child("management"))...)
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
 	return allErrs
 }
