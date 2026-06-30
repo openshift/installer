@@ -20,6 +20,7 @@ import (
 	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
+	iam "google.golang.org/api/iam/v1"
 	sets "k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -360,6 +361,21 @@ func (m *MockAPI) GetSubnetworks(ctx context.Context, network, project, region s
 func (mr *MockAPIMockRecorder) GetSubnetworks(ctx, network, project, region any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetworks", reflect.TypeOf((*MockAPI)(nil).GetSubnetworks), ctx, network, project, region)
+}
+
+// GetWIFProvider mocks base method.
+func (m *MockAPI) GetWIFProvider(ctx context.Context, project, poolID, providerID string) (*iam.WorkloadIdentityPoolProvider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWIFProvider", ctx, project, poolID, providerID)
+	ret0, _ := ret[0].(*iam.WorkloadIdentityPoolProvider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWIFProvider indicates an expected call of GetWIFProvider.
+func (mr *MockAPIMockRecorder) GetWIFProvider(ctx, project, poolID, providerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWIFProvider", reflect.TypeOf((*MockAPI)(nil).GetWIFProvider), ctx, project, poolID, providerID)
 }
 
 // GetZones mocks base method.

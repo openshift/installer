@@ -23,12 +23,13 @@ func Metadata(config *types.InstallConfig) *gcp.Metadata {
 	}
 
 	return &gcp.Metadata{
-		Region:                  config.Platform.GCP.Region,
-		ProjectID:               config.Platform.GCP.ProjectID,
-		NetworkProjectID:        config.Platform.GCP.NetworkProjectID,
-		PrivateZoneDomain:       privateZoneDomain,
-		PrivateZoneProjectID:    privateZoneProject,
-		Endpoint:                config.Platform.GCP.Endpoint,
-		FirewallRulesManagement: config.GCP.FirewallRulesManagement,
+		Region:                     config.Platform.GCP.Region,
+		ProjectID:                  config.Platform.GCP.ProjectID,
+		NetworkProjectID:           config.Platform.GCP.NetworkProjectID,
+		PrivateZoneDomain:          privateZoneDomain,
+		PrivateZoneProjectID:       privateZoneProject,
+		Endpoint:                   config.Platform.GCP.Endpoint,
+		FirewallRulesManagement:    config.GCP.FirewallRulesManagement,
+		WorkloadIdentityFederation: config.Platform.GCP.WorkloadIdentityFederation,
 	}
 }

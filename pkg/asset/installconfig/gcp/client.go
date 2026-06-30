@@ -15,6 +15,7 @@ import (
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	serviceusage "google.golang.org/api/serviceusage/v1beta1"
@@ -60,6 +61,7 @@ type API interface {
 	GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
 	UpdateDNSPrivateZoneLabels(ctx context.Context, baseDomain, project, zoneName string, labels map[string]string) error
 	GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error)
+	GetWIFProvider(ctx context.Context, project, poolID, providerID string) (*iam.WorkloadIdentityPoolProvider, error)
 }
 
 // Client makes calls to the GCP API.
@@ -793,6 +795,28 @@ func (c *Client) GetPrivateServiceConnectEndpoint(ctx context.Context, project s
 		return nil, fmt.Errorf("failed to create Compute service: %w", err)
 	}
 	return GetPrivateServiceConnectEndpoint(svc, project, endpoint)
+}
+
+// GetWIFProvider retrieves a Workload Identity Pool Provider.
+func (c *Client) GetWIFProvider(ctx context.Context, project, poolID, providerID string) (*iam.WorkloadIdentityPoolProvider, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPIAM))
+	}
+	iamSvc, err := GetIAMService(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create IAM service: %w", err)
+	}
+
+	name := fmt.Sprintf("projects/%s/locations/global/workloadIdentityPools/%s/providers/%s", project, poolID, providerID)
+	provider, err := iamSvc.Projects.Locations.WorkloadIdentityPools.Providers.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get WIF provider %s: %w", name, err)
+	}
+	return provider, nil
 }
 
 // aiZone returns true if the GCP zone follows the AI naming convention.
