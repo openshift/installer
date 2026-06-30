@@ -13,6 +13,7 @@ func Test_DetermineTopologies(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		installConfig        *types.InstallConfig
+		mastersSchedulable   bool
 		expectedControlPlane configv1.TopologyMode
 		expectedInfra        configv1.TopologyMode
 	}{
@@ -24,6 +25,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 				Compute: []types.MachinePool{},
 			},
+			mastersSchedulable:   true,
 			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
@@ -35,6 +37,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 				Compute: []types.MachinePool{},
 			},
+			mastersSchedulable:   true,
 			expectedControlPlane: configv1.SingleReplicaTopologyMode,
 			expectedInfra:        configv1.SingleReplicaTopologyMode,
 		},
@@ -50,6 +53,7 @@ func Test_DetermineTopologies(t *testing.T) {
 					},
 				},
 			},
+			mastersSchedulable:   false,
 			expectedControlPlane: configv1.SingleReplicaTopologyMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
@@ -65,6 +69,7 @@ func Test_DetermineTopologies(t *testing.T) {
 					},
 				},
 			},
+			mastersSchedulable:   false,
 			expectedControlPlane: configv1.SingleReplicaTopologyMode,
 			expectedInfra:        configv1.SingleReplicaTopologyMode,
 		},
@@ -76,6 +81,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 				Compute: []types.MachinePool{},
 			},
+			mastersSchedulable:   true,
 			expectedControlPlane: configv1.DualReplicaTopologyMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
@@ -90,6 +96,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 				Compute: []types.MachinePool{},
 			},
+			mastersSchedulable:   true,
 			expectedControlPlane: configv1.HighlyAvailableArbiterMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
@@ -104,6 +111,7 @@ func Test_DetermineTopologies(t *testing.T) {
 				},
 				Compute: []types.MachinePool{},
 			},
+			mastersSchedulable:   true,
 			expectedControlPlane: configv1.HighlyAvailableArbiterMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
@@ -122,13 +130,26 @@ func Test_DetermineTopologies(t *testing.T) {
 					},
 				},
 			},
+			mastersSchedulable:   false,
+			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
+			expectedInfra:        configv1.HighlyAvailableTopologyMode,
+		},
+		{
+			desc: "should default infra to HA when control plane is HA, 0 workers, and masters are not schedulable",
+			installConfig: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{
+					Replicas: ptr.To[int64](3),
+				},
+				Compute: []types.MachinePool{},
+			},
+			mastersSchedulable:   false,
 			expectedControlPlane: configv1.HighlyAvailableTopologyMode,
 			expectedInfra:        configv1.HighlyAvailableTopologyMode,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			controlPlane, infra := determineTopologies(tc.installConfig)
+			controlPlane, infra := determineTopologies(tc.installConfig, tc.mastersSchedulable)
 			if controlPlane != tc.expectedControlPlane {
 				t.Fatalf("expected control plane topology to be %s but got %s", tc.expectedControlPlane, controlPlane)
 			}

@@ -60,6 +60,7 @@ func (*Infrastructure) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&CloudProviderConfig{},
 		&AdditionalTrustBundleConfig{},
+		&Scheduler{},
 	}
 }
 
@@ -72,7 +73,8 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 	installConfig := &installconfig.InstallConfig{}
 	cloudproviderconfig := &CloudProviderConfig{}
 	trustbundleconfig := &AdditionalTrustBundleConfig{}
-	dependencies.Get(clusterID, installConfig, cloudproviderconfig, trustbundleconfig)
+	scheduler := &Scheduler{}
+	dependencies.Get(clusterID, installConfig, cloudproviderconfig, trustbundleconfig, scheduler)
 
 	config := &configv1.Infrastructure{
 		TypeMeta: metav1.TypeMeta{
@@ -94,7 +96,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		},
 	}
 
-	controlPlaneTopology, infrastructureTopology := determineTopologies(installConfig.Config)
+	controlPlaneTopology, infrastructureTopology := determineTopologies(installConfig.Config, scheduler.MastersSchedulable)
 
 	config.Status.InfrastructureTopology = infrastructureTopology
 	config.Status.ControlPlaneTopology = controlPlaneTopology
