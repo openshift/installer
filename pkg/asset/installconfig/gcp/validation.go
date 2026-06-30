@@ -201,8 +201,14 @@ func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.Er
 	return allErrs
 }
 
-// DefaultInstanceTypeForArch returns the appropriate instance type based on the target architecture.
-func DefaultInstanceTypeForArch(arch types.Architecture) string {
+// DefaultInstanceTypeForArch returns the appropriate instance type based on project ID, region, and architecture.
+// The cloud environment is automatically detected from the project ID and region.
+func DefaultInstanceTypeForArch(projectID, region string, arch types.Architecture) string {
+	if cloudEnv := gcp.GetCloudEnvironment(projectID); cloudEnv == gcp.CloudEnvironmentSovereign {
+		// c3-standard-4 is the default for sovereign clouds
+		// Note: ARM64 is not currently supported in sovereign clouds
+		return "c3-standard-4"
+	}
 	if arch == types.ArchitectureARM64 {
 		return "t2a-standard-4"
 	}
@@ -232,7 +238,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if ic.GCP.DefaultMachinePlatform.DiskType != "" {
 			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
 		} else {
-			defaultDiskType = gcp.DefaultDiskTypeForInstance(defaultInstanceType)
+			defaultDiskType = gcp.DefaultDiskTypeForInstanceAndProjectID(defaultInstanceType, ic.GCP.ProjectID, ic.GCP.Region)
 		}
 
 		if ic.GCP.DefaultMachinePlatform.OnHostMaintenance != "" {
@@ -270,7 +276,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	if ic.ControlPlane != nil {
 		arch = string(ic.ControlPlane.Architecture)
 		if instanceType == "" {
-			instanceType = DefaultInstanceTypeForArch(ic.ControlPlane.Architecture)
+			instanceType = DefaultInstanceTypeForArch(ic.GCP.ProjectID, ic.GCP.Region, ic.ControlPlane.Architecture)
 		}
 		if ic.ControlPlane.Platform.GCP != nil {
 			if ic.ControlPlane.Platform.GCP.InstanceType != "" {
@@ -291,7 +297,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
 					))
 				}
-				cpDiskType = gcp.DefaultDiskTypeForInstance(instanceType)
+				cpDiskType = gcp.DefaultDiskTypeForInstanceAndProjectID(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 			}
 			if ic.ControlPlane.Platform.GCP.OnHostMaintenance != "" {
 				cpOnHostMaintenance = ic.ControlPlane.Platform.GCP.OnHostMaintenance
@@ -334,7 +340,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		onHostMaintenance := defaultOnHostMaintenance
 		confidentialCompute := defaultConfidentialCompute
 		if instanceType == "" {
-			instanceType = DefaultInstanceTypeForArch(compute.Architecture)
+			instanceType = DefaultInstanceTypeForArch(ic.GCP.ProjectID, ic.GCP.Region, compute.Architecture)
 		}
 		if diskType == "" {
 			diskType = gcp.PDSSD
@@ -365,7 +371,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
 					))
 				}
-				diskType = gcp.DefaultDiskTypeForInstance(instanceType)
+				diskType = gcp.DefaultDiskTypeForInstanceAndProjectID(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 			}
 		}
 

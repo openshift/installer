@@ -2,6 +2,9 @@ package gcp
 
 import (
 	"fmt"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/dns"
 )
@@ -17,6 +20,18 @@ const (
 	// UnmanagedFirewallRules indicates that the firewall rules should be managed by the user. The
 	// firewall rules should exist prior to the installation occurs.
 	UnmanagedFirewallRules FirewallRulesManagementPolicy = "Unmanaged"
+
+	// CloudEnvironmentSovereign is the cloud environment identifier for GCP sovereign clouds.
+	CloudEnvironmentSovereign = "sovereign"
+)
+
+var (
+	// sovereignCloudProjectPrefixes contains known project ID prefixes for sovereign clouds.
+	// Project IDs in sovereign clouds use the format: <prefix>:<project-id>
+	// This list helps distinguish from organization-scoped public GCP projects (orgname:project-id).
+	sovereignCloudProjectPrefixes = []string{
+		"eu0", // European sovereign cloud (Germany)
+	}
 )
 
 // DNS contains the gcp dns zone information for the cluster.
@@ -126,6 +141,12 @@ type Platform struct {
 	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
+
+	// UniverseDomain is the Google Cloud universe domain for the cluster.
+	// When no value is set, GCP APIs use a default value: googleapis.com.
+	// Universe Domain may be required to configure Sovereign Cloud environments.
+	// +optional
+	UniverseDomain string `json:"universeDomain,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
@@ -184,12 +205,51 @@ func GetConfiguredServiceAccount(platform *Platform, mpool *MachinePool) string 
 
 // GetDefaultServiceAccount returns the default service account email to use based on role.
 // The default should be used when an existing service account is not configured.
+// For sovereign cloud project IDs (e.g., eu0:project-id), the service account email format is:
+//
+//	service-account-name@project-id.eu0.iam.gserviceaccount.com
+//
+// For standard project IDs, the format is:
+//
+//	service-account-name@project-id.iam.gserviceaccount.com
 func GetDefaultServiceAccount(platform *Platform, clusterID string, role string) string {
-	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+	projectID := platform.ProjectID
+
+	// For sovereign cloud project IDs in format "prefix:project-id", swap to "project-id.prefix"
+	if strings.Contains(projectID, ":") {
+		parts := strings.SplitN(projectID, ":", 2)
+		if len(parts) == 2 && sets.New(sovereignCloudProjectPrefixes...).Has(parts[0]) {
+			// Sovereign cloud: swap to project-id.prefix format
+			// Example: "eu0:openshift" becomes "openshift.eu0"
+			projectID = fmt.Sprintf("%s.%s", parts[1], parts[0])
+		}
+		// For organization-scoped projects (e.g., "google.com:project-id"),
+		// keep the full projectID unchanged and let GCP handle the format
+	}
+
+	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], projectID)
 }
 
 // ShouldUseEndpointForInstaller returns true when the endpoint should be used for GCP api endpoint overrides in the
 // installer.
 func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
+}
+
+// GetCloudEnvironment determines the cloud environment from the project ID format.
+// Returns CloudEnvironmentSovereign for sovereign cloud environments, empty string for public GCP.
+// Uses known sovereign cloud project ID prefixes to distinguish from organization-scoped
+// public GCP projects (orgname:project-id).
+func GetCloudEnvironment(projectID string) string {
+	// Check if project ID has a known sovereign cloud prefix
+	if strings.Contains(projectID, ":") {
+		parts := strings.SplitN(projectID, ":", 2)
+		if len(parts) == 2 && sets.New(sovereignCloudProjectPrefixes...).Has(parts[0]) {
+			// Known sovereign prefix is definitive - this IS a sovereign cloud project
+			return CloudEnvironmentSovereign
+		}
+	}
+
+	// No known sovereign prefix found
+	return ""
 }

@@ -372,21 +372,43 @@ func GetGCPInstanceFamily(instanceType string) string {
 }
 
 // DefaultDiskTypeForInstance returns the default disk type for a GCP instance type. If instance type is not
-// recognized, pd-ssd is return.
+// recognized, pd-ssd is returned. For sovereign cloud instances, hyperdisk-balanced is preferred when available.
 func DefaultDiskTypeForInstance(instanceType string) string {
+	return DefaultDiskTypeForInstanceAndProjectID(instanceType, "", "")
+}
+
+// DefaultDiskTypeForInstanceAndProjectID returns the default disk type for a GCP instance type, project ID, and region.
+// The cloud environment is automatically detected from the project ID and region.
+// For sovereign cloud, hyperdisk-balanced is preferred. For public GCP, pd-ssd is preferred.
+func DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID, region string) string {
 	defaultDiskType := PDSSD
 	diskTypes, ok := GetDiskTypes(instanceType)
 	if ok {
 		supportedDiskTypes := sets.New(diskTypes...)
-		switch {
-		case supportedDiskTypes.Has(PDSSD):
-			defaultDiskType = PDSSD
-		case supportedDiskTypes.Has(HyperDiskBalanced):
-			defaultDiskType = HyperDiskBalanced
-		default:
-			// this shouldn't happen because all supported instance types
-			// have either pd-ssd or hyperdisk balanced
-			defaultDiskType = diskTypes[0]
+		cloudEnv := GetCloudEnvironment(projectID)
+
+		// Sovereign cloud prefers hyperdisk-balanced
+		if cloudEnv == CloudEnvironmentSovereign {
+			switch {
+			case supportedDiskTypes.Has(HyperDiskBalanced):
+				defaultDiskType = HyperDiskBalanced
+			case supportedDiskTypes.Has(PDSSD):
+				defaultDiskType = PDSSD
+			default:
+				defaultDiskType = diskTypes[0]
+			}
+		} else {
+			// Public GCP prefers pd-ssd
+			switch {
+			case supportedDiskTypes.Has(PDSSD):
+				defaultDiskType = PDSSD
+			case supportedDiskTypes.Has(HyperDiskBalanced):
+				defaultDiskType = HyperDiskBalanced
+			default:
+				// this shouldn't happen because all supported instance types
+				// have either pd-ssd or hyperdisk balanced
+				defaultDiskType = diskTypes[0]
+			}
 		}
 	}
 	return defaultDiskType

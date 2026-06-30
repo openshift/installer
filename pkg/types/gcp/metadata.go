@@ -9,4 +9,5 @@ type Metadata struct {
 	PrivateZoneProjectID    string                        `json:"privateZoneProjectID,omitempty"`
 	Endpoint                *PSCEndpoint                  `json:"endpoint,omitempty"`
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
+	UniverseDomain          string                        `json:"universeDomain,omitempty"`
 }

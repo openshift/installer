@@ -6716,6 +6716,12 @@ spec:
                     description: Region specifies the GCP region where the cluster
                       will be created.
                     type: string
+                  universeDomain:
+                    description: |-
+                      UniverseDomain is the Google Cloud universe domain for the cluster.
+                      When no value is set, GCP APIs use a default value: googleapis.com.
+                      Universe Domain may be required to configure Sovereign Cloud environments.
+                    type: string
                   userLabels:
                     description: |-
                       userLabels has additional keys and values that the installer will add as
