@@ -180,6 +180,20 @@ func TestSetMachinePoolDefaultsWithFeatureGates(t *testing.T) {
 			expectedManagement: "",
 		},
 		{
+			name:               "edge compute with DevPreviewNoUpgrade feature set",
+			pool:               &types.MachinePool{Name: types.MachinePoolEdgeRoleName},
+			platform:           &types.Platform{},
+			featureSet:         configv1.DevPreviewNoUpgrade,
+			expectedManagement: types.ClusterAPI,
+		},
+		{
+			name:               "edge compute with default feature set",
+			pool:               &types.MachinePool{Name: types.MachinePoolEdgeRoleName},
+			platform:           &types.Platform{},
+			featureSet:         configv1.Default,
+			expectedManagement: "",
+		},
+		{
 			name:               "control plane with management already set",
 			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName, Management: types.MachineAPI},
 			platform:           &types.Platform{},
@@ -189,6 +203,13 @@ func TestSetMachinePoolDefaultsWithFeatureGates(t *testing.T) {
 		{
 			name:               "compute with management already set",
 			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName, Management: types.MachineAPI},
+			platform:           &types.Platform{},
+			featureSet:         configv1.DevPreviewNoUpgrade,
+			expectedManagement: types.MachineAPI,
+		},
+		{
+			name:               "edge compute with management already set",
+			pool:               &types.MachinePool{Name: types.MachinePoolEdgeRoleName, Management: types.MachineAPI},
 			platform:           &types.Platform{},
 			featureSet:         configv1.DevPreviewNoUpgrade,
 			expectedManagement: types.MachineAPI,

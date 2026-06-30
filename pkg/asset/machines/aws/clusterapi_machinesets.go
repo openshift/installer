@@ -10,6 +10,7 @@ import (
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	capi "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/utils"
 )
@@ -56,6 +57,7 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 		nodeLabels := map[string]string{
 			"node-role.kubernetes.io/worker": "",
 		}
+		nodeTaints := []capi.MachineTaint{}
 		instanceType := mpool.InstanceType
 		publicSubnet := in.PublicSubnet
 		subnetRef := &capa.AWSResourceReference{}
@@ -80,12 +82,27 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 			}
 		}
 
-		// TODO: edge pools do not share same instance type and regular cluster workloads.
-		// The instance type is selected based in the offerings for the location.
-		// The labels and taints are set to prevent regular workloads.
-		// https://github.com/openshift/enhancements/blob/master/enhancements/installer/aws-custom-edge-machineset-local-zones.md
-		// FIXME: node taints on Machine/MachineSet is only supported in CAPI v1.12+ with feature gate MachineTaintPropagation.
-		// Until we bump the CAPI version, edge machines can only be provisioned via MAPI.
+		if in.Pool.Name == types.MachinePoolEdgeRoleName {
+			// edge pools do not share same instance type and regular cluster workloads.
+			// The instance type is selected based in the offerings for the location.
+			zone := in.Zones[az]
+			if zone.PreferredInstanceType != "" {
+				instanceType = zone.PreferredInstanceType
+			}
+
+			nodeLabels["node-role.kubernetes.io/edge"] = ""
+			nodeLabels["machine.openshift.io/zone-type"] = zone.Type
+			nodeLabels["machine.openshift.io/zone-group"] = zone.GroupName
+			nodeLabels["machine.openshift.io/parent-zone-name"] = zone.ParentZoneName
+
+			// The labels and taints are set to prevent regular workloads.
+			// https://github.com/openshift/enhancements/blob/master/enhancements/installer/aws-custom-edge-machineset-local-zones.md
+			nodeTaints = append(nodeTaints, capi.MachineTaint{
+				Key:         "node-role.kubernetes.io/edge",
+				Effect:      "NoSchedule",
+				Propagation: capi.MachineTaintPropagationAlways,
+			})
+		}
 
 		dedicatedHost := DedicatedHost(in.Hosts, mpool.HostPlacement, az)
 
@@ -185,6 +202,7 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 							Name:     name,
 						},
 						FailureDomain: az,
+						Taints:        nodeTaints,
 					},
 				},
 			},
