@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC.
+// Copyright 2026 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -485,6 +485,8 @@ func (s Api) MarshalJSON() ([]byte, error) {
 type Aspect struct {
 	// Kind: The type of this aspect configuration.
 	Kind string `json:"kind,omitempty"`
+	// Rules: Optional. Rules of the Configuration.
+	Rules []*AspectRule `json:"rules,omitempty"`
 	// Spec: Content of the configuration. The underlying schema should be defined
 	// by Aspect owners as protobuf message under `google/api/configaspects/proto`.
 	Spec googleapi.RawMessage `json:"spec,omitempty"`
@@ -503,6 +505,33 @@ type Aspect struct {
 
 func (s Aspect) MarshalJSON() ([]byte, error) {
 	type NoMethod Aspect
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AspectRule: Rule-based configuration for an aspect.
+type AspectRule struct {
+	// Config: Required. Rules of the configuration. The underlying schema should
+	// be defined by Aspect owners as protobuf message under
+	// `google/api/configaspects/proto`.
+	Config googleapi.RawMessage `json:"config,omitempty"`
+	// Selector: Required. Selects the RPC methods to which this rule applies.
+	// Refer to selector for syntax details.
+	Selector string `json:"selector,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Config") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Config") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AspectRule) MarshalJSON() ([]byte, error) {
+	type NoMethod AspectRule
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -737,7 +766,9 @@ type BackendRule struct {
 	// OverridesByRequestProtocol: The map between request protocol and the backend
 	// address.
 	OverridesByRequestProtocol map[string]BackendRule `json:"overridesByRequestProtocol,omitempty"`
-	// PathTranslation: no-lint
+	// PathTranslation: Path translation specifies how to combine the backend
+	// address with the request path in order to produce the appropriate forwarding
+	// URL for the request. See PathTranslation for more details.
 	//
 	// Possible values:
 	//   "PATH_TRANSLATION_UNSPECIFIED"
@@ -1191,7 +1222,7 @@ type CommonLanguageSettings struct {
 	// Example: https://cloud.google.com/nodejs/docs/reference/asset/latest
 	ReferenceDocsUri string `json:"referenceDocsUri,omitempty"`
 	// SelectiveGapicGeneration: Configuration for which RPCs should be generated
-	// in the GAPIC client.
+	// in the GAPIC client. Note: This field should not be used in most cases.
 	SelectiveGapicGeneration *SelectiveGapicGeneration `json:"selectiveGapicGeneration,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "Destinations") to
 	// unconditionally include in API requests. By default, fields with empty or
@@ -1501,8 +1532,8 @@ func (s ContextRule) MarshalJSON() ([]byte, error) {
 // Example: control: environment: servicecontrol.googleapis.com
 type Control struct {
 	// Environment: The service controller environment to use. If empty, no control
-	// plane feature (like quota and billing) will be enabled. The recommended
-	// value for most services is servicecontrol.googleapis.com
+	// plane features (like quota and billing) will be enabled. The recommended
+	// value for most services is servicecontrol.googleapis.com.
 	Environment string `json:"environment,omitempty"`
 	// MethodPolicies: Defines policies applying to the API methods of the service.
 	MethodPolicies []*MethodPolicy `json:"methodPolicies,omitempty"`
@@ -2338,7 +2369,7 @@ type GoogleApiService struct {
 	// Metrics: Defines the metrics used by this service.
 	Metrics []*MetricDescriptor `json:"metrics,omitempty"`
 	// MonitoredResources: Defines the monitored resources used by this service.
-	// This is required by the Service.monitoring and Service.logging
+	// This is required by the `Service.monitoring` and `Service.logging`
 	// configurations.
 	MonitoredResources []*MonitoredResourceDescriptor `json:"monitoredResources,omitempty"`
 	// Monitoring: Monitoring configuration.
@@ -2840,9 +2871,100 @@ func (s GoogleApiServiceusageV2betaImpact) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
+// GoogleApiServiceusageV2betaMcpEnableRule: McpEnableRule contains MCP
+// enablement related rules.
+type GoogleApiServiceusageV2betaMcpEnableRule struct {
+	// McpServices: List of enabled MCP services.
+	McpServices []*GoogleApiServiceusageV2betaMcpService `json:"mcpServices,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "McpServices") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "McpServices") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2betaMcpEnableRule) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2betaMcpEnableRule
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2betaMcpPolicy: MCP Consumer Policy is a set of rules
+// that define MCP related policy for a cloud resource hierarchy.
+type GoogleApiServiceusageV2betaMcpPolicy struct {
+	// CreateTime: Output only. The time the policy was created. For singleton
+	// policies (such as the `default` policy), this is the first touch of the
+	// policy.
+	CreateTime string `json:"createTime,omitempty"`
+	// Etag: An opaque tag indicating the current version of the policy, used for
+	// concurrency control.
+	Etag string `json:"etag,omitempty"`
+	// McpEnableRules: McpEnableRules contains MCP enablement related rules.
+	McpEnableRules []*GoogleApiServiceusageV2betaMcpEnableRule `json:"mcpEnableRules,omitempty"`
+	// Name: Output only. The resource name of the policy. Only the `default`
+	// policy is supported. We allow the following formats:
+	// `projects/{PROJECT_NUMBER}/mcpPolicies/default`,
+	// `projects/{PROJECT_ID}/mcpPolicies/default`,
+	// `folders/{FOLDER_ID}/mcpPolicies/default`,
+	// `organizations/{ORG_ID}/mcpPolicies/default`.
+	Name string `json:"name,omitempty"`
+	// UpdateTime: Output only. The time the policy was last updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "CreateTime") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2betaMcpPolicy) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2betaMcpPolicy
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2betaMcpService: McpService contains the service names
+// that are enabled for MCP.
+type GoogleApiServiceusageV2betaMcpService struct {
+	// Service: The names of the services that are enabled for MCP. Example:
+	// `services/library-example.googleapis.com`
+	Service string `json:"service,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Service") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Service") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2betaMcpService) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2betaMcpService
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
 // GoogleApiServiceusageV2betaUpdateConsumerPolicyMetadata: Metadata for the
 // `UpdateConsumerPolicy` method.
 type GoogleApiServiceusageV2betaUpdateConsumerPolicyMetadata struct {
+}
+
+// GoogleApiServiceusageV2betaUpdateMcpPolicyMetadata: Metadata for the
+// `UpdateMcpPolicy` method.
+type GoogleApiServiceusageV2betaUpdateMcpPolicyMetadata struct {
 }
 
 // Http: Defines the HTTP configuration for an API service. It contains a list
@@ -3481,8 +3603,8 @@ type ListOperationsResponse struct {
 	Operations []*Operation `json:"operations,omitempty"`
 	// Unreachable: Unordered list. Unreachable resources. Populated when the
 	// request sets `ListOperationsRequest.return_partial_success` and reads across
-	// collections e.g. when attempting to list all resources across all supported
-	// locations.
+	// collections. For example, when attempting to list all resources across all
+	// supported locations.
 	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
@@ -3687,90 +3809,6 @@ func (s *LongRunning) UnmarshalJSON(data []byte) error {
 	}
 	s.PollDelayMultiplier = float64(s1.PollDelayMultiplier)
 	return nil
-}
-
-// McpEnableRule: McpEnableRule contains MCP enablement related rules.
-type McpEnableRule struct {
-	// McpServices: List of enabled MCP services.
-	McpServices []*McpService `json:"mcpServices,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "McpServices") to
-	// unconditionally include in API requests. By default, fields with empty or
-	// default values are omitted from API requests. See
-	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
-	// details.
-	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "McpServices") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
-	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
-	NullFields []string `json:"-"`
-}
-
-func (s McpEnableRule) MarshalJSON() ([]byte, error) {
-	type NoMethod McpEnableRule
-	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
-}
-
-// McpPolicy: MCP Consumer Policy is a set of rules that define MCP related
-// policy for a cloud resource hierarchy.
-type McpPolicy struct {
-	// CreateTime: Output only. The time the policy was created. For singleton
-	// policies (such as the `default` policy), this is the first touch of the
-	// policy.
-	CreateTime string `json:"createTime,omitempty"`
-	// Etag: An opaque tag indicating the current version of the policy, used for
-	// concurrency control.
-	Etag string `json:"etag,omitempty"`
-	// McpEnableRules: McpEnableRules contains MCP enablement related rules.
-	McpEnableRules []*McpEnableRule `json:"mcpEnableRules,omitempty"`
-	// Name: Output only. The resource name of the policy. Only the `default`
-	// policy is supported. We allow the following formats:
-	// `projects/{PROJECT_NUMBER}/mcpPolicies/default`,
-	// `projects/{PROJECT_ID}/mcpPolicies/default`,
-	// `folders/{FOLDER_ID}/mcpPolicies/default`,
-	// `organizations/{ORG_ID}/mcpPolicies/default`.
-	Name string `json:"name,omitempty"`
-	// UpdateTime: Output only. The time the policy was last updated.
-	UpdateTime string `json:"updateTime,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "CreateTime") to
-	// unconditionally include in API requests. By default, fields with empty or
-	// default values are omitted from API requests. See
-	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
-	// details.
-	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "CreateTime") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
-	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
-	NullFields []string `json:"-"`
-}
-
-func (s McpPolicy) MarshalJSON() ([]byte, error) {
-	type NoMethod McpPolicy
-	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
-}
-
-// McpService: McpService contains the service names that are enabled for MCP.
-type McpService struct {
-	// Service: The names of the services that are enabled for MCP. Example:
-	// `services/library-example.googleapis.com`
-	Service string `json:"service,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "Service") to unconditionally
-	// include in API requests. By default, fields with empty or default values are
-	// omitted from API requests. See
-	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
-	// details.
-	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "Service") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
-	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
-	NullFields []string `json:"-"`
-}
-
-func (s McpService) MarshalJSON() ([]byte, error) {
-	type NoMethod McpService
-	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Method: Method represents a method of an API interface. New usages of this
@@ -4746,6 +4784,7 @@ type Publishing struct {
 	//   "SHOPPING" - Shopping Org.
 	//   "GEO" - Geo Org.
 	//   "GENERATIVE_AI" - Generative AI - https://developers.generativeai.google
+	//   "HEALTH" - Health Org.
 	Organization string `json:"organization,omitempty"`
 	// ProtoReferenceDocumentationUri: Optional link to proto reference
 	// documentation. Example:
@@ -5103,7 +5142,8 @@ func (s RubySettings) MarshalJSON() ([]byte, error) {
 }
 
 // SelectiveGapicGeneration: This message is used to configure the generation
-// of a subset of the RPCs in a service for client libraries.
+// of a subset of the RPCs in a service for client libraries. Note: This
+// feature should not be used in most cases.
 type SelectiveGapicGeneration struct {
 	// GenerateOmittedAsInternal: Setting this to true indicates to the client
 	// generators that methods that would be excluded from the generation should
@@ -5489,10 +5529,6 @@ type UpdateConsumerPolicyMetadata struct {
 type UpdateContentSecurityPolicyMetadata struct {
 }
 
-// UpdateMcpPolicyMetadata: Metadata for the `UpdateMcpPolicy` method.
-type UpdateMcpPolicyMetadata struct {
-}
-
 // Usage: Configuration controlling usage of a service.
 type Usage struct {
 	// ProducerNotificationChannel: The full resource name of a channel used for
@@ -5534,7 +5570,7 @@ func (s Usage) MarshalJSON() ([]byte, error) {
 
 // UsageRule: Usage configuration rules for the service.
 type UsageRule struct {
-	// AllowUnregisteredCalls:  Use this rule to configure unregistered calls for
+	// AllowUnregisteredCalls: Use this rule to configure unregistered calls for
 	// the service. Unregistered calls are calls that do not contain consumer
 	// project identity. (Example: calls that do not contain an API key). WARNING:
 	// By default, API methods do not allow unregistered calls, and each method
@@ -5722,9 +5758,9 @@ func (c *OperationsListCall) PageToken(pageToken string) *OperationsListCall {
 // ReturnPartialSuccess sets the optional parameter "returnPartialSuccess":
 // When set to `true`, operations that are reachable are returned as normal,
 // and those that are unreachable are returned in the
-// [ListOperationsResponse.unreachable] field. This can only be `true` when
-// reading across collections e.g. when `parent` is set to
-// "projects/example/locations/-". This field is not by default supported and
+// ListOperationsResponse.unreachable field. This can only be `true` when
+// reading across collections. For example, when `parent` is set to
+// "projects/example/locations/-". This field is not supported by default and
 // will result in an `UNIMPLEMENTED` error if set unless explicitly documented
 // otherwise in service or product specific documentation.
 func (c *OperationsListCall) ReturnPartialSuccess(returnPartialSuccess bool) *OperationsListCall {

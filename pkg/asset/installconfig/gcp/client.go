@@ -720,7 +720,11 @@ func (c *Client) GetNamespacedTagValue(ctx context.Context, tagNamespacedName st
 }
 
 func (c *Client) getKeyManagementClient(ctx context.Context) (*kms.KeyManagementClient, error) {
-	kmsClient, err := kms.NewKeyManagementClient(ctx, option.WithCredentials(c.ssn.Credentials))
+	opts, err := CredentialOptions(c.ssn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get credential options: %w", err)
+	}
+	kmsClient, err := kms.NewKeyManagementClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create kms key management client: %w", err)
 	}
