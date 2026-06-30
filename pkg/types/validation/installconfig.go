@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	dockerref "github.com/containers/image/v5/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	dockerref "go.podman.io/image/v5/docker/reference"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"

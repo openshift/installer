@@ -229,7 +229,7 @@ github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/shared
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/version
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/managedidentity
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/public
-# github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c
+# github.com/BurntSushi/toml v1.5.0
 ## explicit; go 1.18
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
@@ -627,26 +627,6 @@ github.com/cncf/xds/go/xds/data/orca/v3
 github.com/cncf/xds/go/xds/service/orca/v3
 github.com/cncf/xds/go/xds/type/matcher/v3
 github.com/cncf/xds/go/xds/type/v3
-# github.com/containers/image/v5 v5.31.0
-## explicit; go 1.21
-github.com/containers/image/v5/docker/reference
-github.com/containers/image/v5/internal/multierr
-github.com/containers/image/v5/internal/rootless
-github.com/containers/image/v5/pkg/compression/internal
-github.com/containers/image/v5/pkg/compression/types
-github.com/containers/image/v5/pkg/sysregistriesv2
-github.com/containers/image/v5/types
-# github.com/containers/storage v1.54.0
-## explicit; go 1.21
-github.com/containers/storage/pkg/fileutils
-github.com/containers/storage/pkg/homedir
-github.com/containers/storage/pkg/idtools
-github.com/containers/storage/pkg/lockfile
-github.com/containers/storage/pkg/mount
-github.com/containers/storage/pkg/reexec
-github.com/containers/storage/pkg/regexp
-github.com/containers/storage/pkg/system
-github.com/containers/storage/pkg/unshare
 # github.com/coreos/go-json v0.0.0-20230131223807-18775e0fb4fb
 ## explicit; go 1.18
 github.com/coreos/go-json
@@ -1247,6 +1227,9 @@ github.com/mitchellh/go-wordwrap
 # github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
+# github.com/moby/sys/capability v0.4.0
+## explicit; go 1.21
+github.com/moby/sys/capability
 # github.com/moby/sys/mountinfo v0.7.2
 ## explicit; go 1.17
 github.com/moby/sys/mountinfo
@@ -1304,7 +1287,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/opencontainers/runtime-spec v1.2.0
+# github.com/opencontainers/runtime-spec v1.2.1
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/openshift/api v0.0.0-20260610192510-1b2a074e0bd6
@@ -1595,9 +1578,6 @@ github.com/std-uritemplate/std-uritemplate/go/v2
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
-# github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
-## explicit
-github.com/syndtr/gocapability/capability
 # github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 ## explicit; go 1.13
 github.com/thedevsaddam/retry
@@ -1745,6 +1725,27 @@ go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
 go.opentelemetry.io/otel/trace/internal/telemetry
 go.opentelemetry.io/otel/trace/noop
+# go.podman.io/image/v5 v5.37.0
+## explicit; go 1.23.3
+go.podman.io/image/v5/docker/reference
+go.podman.io/image/v5/internal/multierr
+go.podman.io/image/v5/internal/rootless
+go.podman.io/image/v5/pkg/compression/internal
+go.podman.io/image/v5/pkg/compression/types
+go.podman.io/image/v5/pkg/sysregistriesv2
+go.podman.io/image/v5/types
+# go.podman.io/storage v1.60.0
+## explicit; go 1.23.3
+go.podman.io/storage/internal/rawfilelock
+go.podman.io/storage/pkg/fileutils
+go.podman.io/storage/pkg/homedir
+go.podman.io/storage/pkg/idtools
+go.podman.io/storage/pkg/lockfile
+go.podman.io/storage/pkg/mount
+go.podman.io/storage/pkg/reexec
+go.podman.io/storage/pkg/regexp
+go.podman.io/storage/pkg/system
+go.podman.io/storage/pkg/unshare
 # go.uber.org/mock v0.6.0
 ## explicit; go 1.23.0
 go.uber.org/mock/gomock

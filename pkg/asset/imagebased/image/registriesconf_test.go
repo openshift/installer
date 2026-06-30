@@ -33,7 +33,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 				},
 			},
 
-			expectedData: []byte("credential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"quay.io\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"mirror-quay.io\"\n"),
+			expectedData: []byte("additional-layer-store-auth-helper = \"\"\ncredential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"quay.io\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"mirror-quay.io\"\n"),
 		},
 	}
 
