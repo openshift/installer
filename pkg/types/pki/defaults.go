@@ -2,6 +2,8 @@ package pki
 
 import (
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+	features "github.com/openshift/api/features"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // DefaultPKIProfile returns the default PKI profile for OpenShift clusters.
@@ -24,4 +26,35 @@ func DefaultPKIProfile() configv1alpha1.PKIProfile {
 			},
 		},
 	}
+}
+
+// EffectiveSignerPKIConfig returns the effective PKI config for signer certificate generation.
+//   - If user specified pki in install-config, returns that config unchanged.
+//   - If ConfigurablePKI feature gate is enabled and pki is nil, returns a
+//     PKIConfig derived from DefaultPKIProfile().SignerCertificates.
+//   - If feature gate is disabled, returns nil (RSA-2048 legacy path).
+func EffectiveSignerPKIConfig(ic *types.InstallConfig) *types.PKIConfig {
+	if ic.PKI != nil {
+		return ic.PKI
+	}
+
+	if ic.Enabled(features.FeatureGateConfigurablePKI) {
+		profile := DefaultPKIProfile()
+		keyConfig := types.KeyConfig{
+			Algorithm: types.KeyAlgorithm(profile.SignerCertificates.Key.Algorithm),
+		}
+		switch keyConfig.Algorithm {
+		case types.KeyAlgorithmRSA:
+			keyConfig.RSA = &types.RSAKeyConfig{KeySize: profile.SignerCertificates.Key.RSA.KeySize}
+		case types.KeyAlgorithmECDSA:
+			keyConfig.ECDSA = &types.ECDSAKeyConfig{Curve: types.ECDSACurve(profile.SignerCertificates.Key.ECDSA.Curve)}
+		}
+		return &types.PKIConfig{
+			SignerCertificates: types.CertificateConfig{
+				Key: keyConfig,
+			},
+		}
+	}
+
+	return nil
 }
