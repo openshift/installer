@@ -76,6 +76,9 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 			if len(a.Hosts) > 0 {
 				// Hosts defined in agent-config take precedence
 				logrus.Debugf("Using hosts from %s", agentConfigFilename)
+				for i, host := range a.Hosts {
+					warnInterfaceNamesNotInNetworkConfig(host, i)
+				}
 			}
 		}
 
@@ -92,6 +95,9 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
+		for i, host := range a.Hosts {
+			warnInterfaceNamesNotInNetworkConfig(host, i)
+		}
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -169,6 +175,42 @@ func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Hos
 	}
 
 	return allErrs
+}
+
+func warnInterfaceNamesNotInNetworkConfig(host agent.Host, hostIdx int) {
+	if len(host.NetworkConfig.Raw) == 0 || len(host.Interfaces) == 0 {
+		return
+	}
+
+	var netInterfaces nmStateInterface
+	if err := yaml.Unmarshal(host.NetworkConfig.Raw, &netInterfaces); err != nil {
+		return
+	}
+
+	ncNames := make(map[string]bool, len(netInterfaces.Interfaces))
+	var ncNameList []string
+	for _, iface := range netInterfaces.Interfaces {
+		if iface.Name != "" {
+			ncNames[iface.Name] = true
+			ncNameList = append(ncNameList, iface.Name)
+		}
+	}
+	if len(ncNames) == 0 {
+		return
+	}
+
+	hostPath := field.NewPath("hosts").Index(hostIdx)
+	for i, iface := range host.Interfaces {
+		if iface.Name == "" {
+			continue
+		}
+		if !ncNames[iface.Name] {
+			ifacePath := hostPath.Child("interfaces").Index(i).Child("name")
+			logrus.Warnf("%s: interface name %q not found in networkConfig interfaces %v; "+
+				"connectivity may fail if interface names do not match at boot time",
+				ifacePath, iface.Name, ncNameList)
+		}
+	}
 }
 
 func (a *AgentHosts) validateHostRootDeviceHints(hostPath *field.Path, host agent.Host) field.ErrorList {
