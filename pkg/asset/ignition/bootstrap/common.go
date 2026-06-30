@@ -16,12 +16,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
+	"go.podman.io/image/v5/pkg/sysregistriesv2"
 	utilsnet "k8s.io/utils/net"
 	"k8s.io/utils/ptr"
 

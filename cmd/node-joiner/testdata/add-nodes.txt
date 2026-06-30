@@ -23,6 +23,7 @@ hosts:
           macAddress: 00:f4:3d:a0:0e:2b
           
 -- expected/registries.conf --
+additional-layer-store-auth-helper = ""
 credential-helpers = []
 short-name-mode = ""
 unqualified-search-registries = []

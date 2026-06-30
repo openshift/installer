@@ -7,11 +7,11 @@ import (
 	"path"
 	"testing"
 
-	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
+	"go.podman.io/image/v5/pkg/sysregistriesv2"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
@@ -119,7 +119,7 @@ podman rm lca-cli
 
 				"/var/tmp/ibi-configuration.json": "{\"extraPartitionLabel\":\"var-lib-containers\",\"extraPartitionNumber\":5,\"extraPartitionStart\":\"-40G\",\"installationDisk\":\"/dev/vda\",\"releaseRegistry\":\"mirror.quay.io\",\"seedImage\":\"quay.io/openshift-kni/seed-image:4.16.0\",\"seedVersion\":\"4.16.0\"}\n",
 
-				"/etc/containers/registries.conf": "credential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"quay.io\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"mirror-quay.io\"\n",
+				"/etc/containers/registries.conf": "additional-layer-store-auth-helper = \"\"\ncredential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"quay.io\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"mirror-quay.io\"\n",
 
 				"/etc/pki/ca-trust/source/anchors/additional-trust-bundle.pem": testCert,
 
