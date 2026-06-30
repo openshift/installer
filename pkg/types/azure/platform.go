@@ -52,8 +52,9 @@ type Platform struct {
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
 
 	// AllowSharedKeyAccess specifies if shared access key should be enabled for the storage account.
-	// Default value is true.
-	// Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+	// Default value is false.
+	// Needs the permission "Storage Blob Data Contributor" in azure.
+	//
 	//
 	// +optional
 	AllowSharedKeyAccess *bool `json:"allowSharedKeyAccess,omitempty"`
