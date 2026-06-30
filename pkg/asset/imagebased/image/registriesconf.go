@@ -3,8 +3,8 @@ package image
 import (
 	"context"
 
-	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/pelletier/go-toml"
+	"go.podman.io/image/v5/pkg/sysregistriesv2"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	dockerref "github.com/containers/image/v5/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	dockerref "go.podman.io/image/v5/docker/reference"
 
 	"github.com/openshift/installer/pkg/asset"
 )

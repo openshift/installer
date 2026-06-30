@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	dockerref "github.com/containers/image/v5/docker/reference"
 	"github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
+	dockerref "go.podman.io/image/v5/docker/reference"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
