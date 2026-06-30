@@ -193,3 +193,34 @@ func GetDefaultServiceAccount(platform *Platform, clusterID string, role string)
 func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
 }
+
+// GetStorageKMSKey returns the KMS key to use for GCS bucket encryption.
+// Returns the key from defaultMachinePlatform.osDisk.encryptionKey.kmsKey if configured,
+// otherwise returns nil.
+func GetStorageKMSKey(platform *Platform) *KMSKeyReference {
+	if platform != nil &&
+		platform.DefaultMachinePlatform != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey != nil {
+		return platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey
+	}
+	return nil
+}
+
+// FormatKMSKeyResourcePath formats a KMSKeyReference into a full GCP resource path.
+// It constructs the path in the format: projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{name}.
+// If the KMSKeyReference specifies a ProjectID, it uses that; otherwise, it uses the provided default projectID.
+func FormatKMSKeyResourcePath(kmsKey *KMSKeyReference, projectID string) string {
+	if kmsKey == nil {
+		return ""
+	}
+
+	// Use the key's project ID if specified, otherwise use the default project ID
+	keyProjectID := projectID
+	if kmsKey.ProjectID != "" {
+		keyProjectID = kmsKey.ProjectID
+	}
+
+	return fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
+		keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
+}
