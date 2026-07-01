@@ -59,17 +59,34 @@ func CreateEndpointOption(endpointName string, service ServiceNameGCP) option.Cl
 	return option.WithEndpoint(endpoint)
 }
 
+// CredentialOptions returns the client options for authenticating with GCP,
+// including universe domain support for Google Cloud Dedicated.
+// When credential JSON is available, it is passed via WithCredentialsJSON so
+// the client library can use self-signed JWTs for non-default universe
+// domains (where the OAuth2 token endpoint is unavailable). Falls back to
+// WithCredentials for metadata-based credentials that have no JSON.
+func CredentialOptions(ssn *Session) ([]option.ClientOption, error) {
+	ud, err := ssn.Credentials.GetUniverseDomain()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get universe domain: %w", err)
+	}
+	var opts []option.ClientOption
+	if len(ssn.Credentials.JSON) > 0 {
+		opts = append(opts, option.WithCredentialsJSON(ssn.Credentials.JSON))
+	} else {
+		opts = append(opts, option.WithCredentials(ssn.Credentials))
+	}
+	opts = append(opts, option.WithUniverseDomain(ud))
+	return opts, nil
+}
+
 // getOptions creates the options for use during service creation.
 func getOptions(ctx context.Context) ([]option.ClientOption, error) {
 	ssn, err := GetSession(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
-
-	options := []option.ClientOption{
-		option.WithCredentials(ssn.Credentials),
-	}
-	return options, nil
+	return CredentialOptions(ssn)
 }
 
 // GetComputeService creates the compute service. The service is created with credentials and any service
