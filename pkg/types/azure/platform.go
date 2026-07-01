@@ -172,7 +172,7 @@ type CustomerManagedKey struct {
 }
 
 // CloudEnvironment is the name of the Azure cloud environment
-// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud;AzureUSSecCloud
 type CloudEnvironment string
 
 const (
@@ -190,6 +190,9 @@ const (
 
 	// StackCloud is the Azure cloud environment used at the edge and on premises.
 	StackCloud CloudEnvironment = "AzureStackCloud"
+
+	// AzureUSSecCloud is the Azure cloud environment for US Government Secret (IL6) workloads.
+	USSecCloud CloudEnvironment = "AzureUSSecCloud"
 )
 
 // Name returns name that Azure uses for the cloud environment.
