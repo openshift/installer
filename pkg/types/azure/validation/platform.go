@@ -23,6 +23,7 @@ var (
 		azure.ChinaCloud:        true,
 		azure.GermanCloud:       true,
 		azure.StackCloud:        true,
+		azure.USSecCloud:        true,
 	}
 
 	validCloudNameValues = func() []string {
@@ -61,7 +62,8 @@ const maxUserTagLimit = 10
 // isUserTagsAllowed returns true if the cloud environment supports userTags.
 // userTags are supported on PublicCloud and USGovernmentCloud.
 func isUserTagsAllowed(cloudName azure.CloudEnvironment) bool {
-	return cloudName == azure.PublicCloud || cloudName == azure.USGovernmentCloud
+	return cloudName == azure.PublicCloud ||
+		cloudName == azure.USGovernmentCloud
 }
 
 // ValidatePlatform checks that the specified platform is valid.
