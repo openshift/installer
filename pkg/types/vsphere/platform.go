@@ -145,7 +145,6 @@ type Platform struct {
 	NodeNetworking *configv1.VSpherePlatformNodeNetworking `json:"nodeNetworking,omitempty"`
 
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
-	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.VSpherePlatformLoadBalancer `json:"loadBalancer,omitempty"`
 

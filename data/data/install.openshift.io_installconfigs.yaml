@@ -6368,9 +6368,8 @@ spec:
                       Default is qemu:///system
                     type: string
                   loadBalancer:
-                    description: |-
-                      LoadBalancer defines how the load balancer used by the cluster is configured.
-                      LoadBalancer is available in TechPreview.
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured.
                     properties:
                       type:
                         default: OpenShiftManagedDefault
@@ -7362,9 +7361,8 @@ spec:
                     maxItems: 2
                     type: array
                   loadBalancer:
-                    description: |-
-                      LoadBalancer defines how the load balancer used by the cluster is configured.
-                      LoadBalancer is available in TechPreview.
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured.
                     properties:
                       type:
                         default: OpenShiftManagedDefault
@@ -7929,9 +7927,8 @@ spec:
                     maxItems: 2
                     type: array
                   loadBalancer:
-                    description: |-
-                      LoadBalancer defines how the load balancer used by the cluster is configured.
-                      LoadBalancer is available in TechPreview.
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured.
                     properties:
                       type:
                         default: OpenShiftManagedDefault
@@ -8719,9 +8716,8 @@ spec:
                     maxItems: 2
                     type: array
                   loadBalancer:
-                    description: |-
-                      LoadBalancer defines how the load balancer used by the cluster is configured.
-                      LoadBalancer is available in TechPreview.
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured.
                     properties:
                       type:
                         default: OpenShiftManagedDefault
