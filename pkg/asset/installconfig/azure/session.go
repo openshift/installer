@@ -125,7 +125,7 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 	var cloudEnv azureenv.Environment
 	var err error
 	switch cloudName {
-	case azure.StackCloud:
+	case azure.StackCloud, azure.USSecCloud:
 		cloudEnv, err = azureenv.EnvironmentFromURL(armEndpoint)
 	default:
 		cloudEnv, err = azureenv.EnvironmentFromName(string(cloudName))
@@ -136,7 +136,7 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 
 	var cloudConfig cloud.Configuration
 	switch cloudName {
-	case azure.StackCloud:
+	case azure.StackCloud, azure.USSecCloud:
 		cloudConfig = cloud.Configuration{
 			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
 			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
