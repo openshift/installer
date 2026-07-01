@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
+	"github.com/openshift/installer/pkg/asset/credentialsrequest"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -80,6 +81,8 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&manifests.Manifests{},
 		&tls.RootCA{},
+		&tls.BoundSASigningKey{},
+		&credentialsrequest.CredentialsRequests{},
 	}
 }
 
