@@ -22,6 +22,7 @@ var (
 		azure.ChinaCloud:        true,
 		azure.GermanCloud:       true,
 		azure.StackCloud:        true,
+		azure.USSecCloud:        true,
 	}
 
 	validCloudNameValues = func() []string {
@@ -60,7 +61,9 @@ const maxUserTagLimit = 10
 // isUserTagsAllowed returns true if the cloud environment supports userTags.
 // userTags are supported on PublicCloud and USGovernmentCloud.
 func isUserTagsAllowed(cloudName azure.CloudEnvironment) bool {
-	return cloudName == azure.PublicCloud || cloudName == azure.USGovernmentCloud
+	return cloudName == azure.PublicCloud ||
+		cloudName == azure.USGovernmentCloud ||
+		cloudName == azure.USSecCloud
 }
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -416,6 +419,18 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	}
 	if p.UserProvisionedDNS != "" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "userProvisionedDNS is not supported on Azure Stack Hub"))
+	}
+	return allErrs
+}
+
+func validateUSSec(p *azure.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if p.ARMEndpoint == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be provided when installing on Azure Government Secret"))
+	}
+
+	if p.ClusterOSImage == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "a VHD URL must be provided when installing on Azure Government Secret "+"(marketplace images are not available in air-gapped environments)"))
 	}
 	return allErrs
 }
