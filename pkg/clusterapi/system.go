@@ -219,7 +219,9 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		}
 		azProvider := Azure
 		var envFP string
-		if cloudName == azure.StackCloud {
+
+		switch cloudName {
+		case azure.StackCloud:
 			// Set provider so that the Azure Stack (forked) controller and CRDs are used.
 			azProvider = AzureStack
 
@@ -232,6 +234,15 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			envFP = filepath.Join(c.componentDir, "azurestackcloud.json")
 			if err = os.WriteFile(envFP, b, 0600); err != nil {
 				return fmt.Errorf("failed to write Azure Stack environment file: %w", err)
+			}
+		case azure.USSecCloud:
+			b, err := json.Marshal(session.Environment)
+			if err != nil {
+				return errors.Wrap(err, "could not serialize Azure Government Secret endpoints")
+			}
+			envFP = filepath.Join(c.componentDir, "azureusseccloud.json")
+			if err = os.WriteFile(envFP, b, 0600); err != nil {
+				return fmt.Errorf("failed to write Azure Government Secret environment file: %w", err)
 			}
 		}
 
