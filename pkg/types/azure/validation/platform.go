@@ -120,6 +120,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	// check if configured userTags are valid.
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
+	if p.CloudName == azure.StackCloud && p.AllowSharedKeyAccess != nil && !*p.AllowSharedKeyAccess {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("allowSharedKeyAccess"), p.AllowSharedKeyAccess, "disabling shared access key creation is unsupported in Azure stack hub"))
+	}
 	switch cloud := p.CloudName; cloud {
 	case azure.StackCloud:
 		allErrs = append(allErrs, validateAzureStack(p, fldPath)...)
