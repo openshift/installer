@@ -3,6 +3,8 @@ package aws
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -362,6 +364,40 @@ func GetDefaultServiceEndpoint(ctx context.Context, service string, opts Endpoin
 		return endpoint, fmt.Errorf("failed to resolve aws %s service endpoint: %w", service, err)
 	}
 	return endpoint, nil
+}
+
+// GetS3DNSSuffix resolves the DNS suffix for S3 in the given region.
+// For example, us-east-1 returns "amazonaws.com" and cn-north-1 returns "amazonaws.com.cn".
+func GetS3DNSSuffix(region string) (string, error) {
+	resolver := s3.NewDefaultEndpointResolverV2()
+	endpoint, err := resolver.ResolveEndpoint(context.Background(), s3.EndpointParameters{
+		Region: &region,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	endpointURL, err := url.Parse(endpoint.URI.String())
+	if err != nil {
+		return "", fmt.Errorf("failed to parse endpoint URL %s: %w", endpoint.URI.String(), err)
+	}
+
+	hostParts := strings.Split(endpointURL.Hostname(), ".")
+	if len(hostParts) < 3 {
+		return "", fmt.Errorf("invalid hostname: %s", endpointURL.Hostname())
+	}
+
+	return strings.Join(hostParts[2:], "."), nil
+}
+
+// OIDCIssuerURL constructs the OIDC issuer URL for the given cluster
+// infrastructure ID and region.
+func OIDCIssuerURL(infraID, region string) (string, error) {
+	dnsSuffix, err := GetS3DNSSuffix(region)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("https://%s.s3.%s.%s", typesaws.OIDCBucketName(infraID), region, dnsSuffix), nil
 }
 
 // GetPartitionIDForRegion retrieves the partition ID for a given region.
