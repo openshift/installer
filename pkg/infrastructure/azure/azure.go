@@ -51,6 +51,17 @@ const (
 	stackDNSAPIVersion = "2018-05-01"
 )
 
+// rhcosImageInfo holds the RHCos image information extracted from stream metadata.
+type rhcosImageInfo struct {
+	ImageURL                    string
+	ImageLength                 int64
+	GalleryName                 string
+	GalleryImageName            string
+	GalleryImageVersionName     string
+	GalleryGen2ImageName        string
+	GalleryGen2ImageVersionName string
+}
+
 // Provider implements Azure CAPI installation.
 type Provider struct {
 	ResourceGroupName     string
@@ -96,6 +107,53 @@ func (p Provider) ProvisionTimeout() time.Duration {
 // PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
 // in the status and should use the API load balancer when gathering bootstrap log bundles.
 func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.APILoadBalancer }
+
+// getRHCOSImageInfo fetches the RHCOS stream metadata and computes Azure-specific
+// image information including gallery names, image URL, and validates image alignment.
+func getRHCOSImageInfo(ctx context.Context, installConfig *types.InstallConfig, infraID string) (*rhcosImageInfo, error) {
+	stream, err := rhcos.FetchCoreOSBuild(ctx, installConfig.OSImageStream)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rhcos stream: %w", err)
+	}
+
+	archName := arch.RpmArch(string(installConfig.ControlPlane.Architecture))
+	streamArch, err := stream.GetArchitecture(archName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rhcos architecture: %w", err)
+	}
+
+	azureDisk := streamArch.RHELCoreOSExtensions.AzureDisk
+	imageURL := azureDisk.URL
+
+	rawImageVersion := strings.ReplaceAll(azureDisk.Release, "-", "_")
+	imageVersion := rawImageVersion[:len(rawImageVersion)-6]
+
+	galleryName := fmt.Sprintf("gallery_%s", strings.ReplaceAll(infraID, "-", "_"))
+	galleryImageName := infraID
+	galleryImageVersionName := imageVersion
+	galleryGen2ImageName := fmt.Sprintf("%s-gen2", infraID)
+	galleryGen2ImageVersionName := imageVersion
+
+	headResponse, err := http.Head(imageURL) // nolint:gosec
+	if err != nil {
+		return nil, fmt.Errorf("failed HEAD request for image URL %s: %w", imageURL, err)
+	}
+
+	imageLength := headResponse.ContentLength
+	if imageLength%512 != 0 {
+		return nil, fmt.Errorf("image length is not aligned on a 512 byte boundary")
+	}
+
+	return &rhcosImageInfo{
+		ImageURL:                    imageURL,
+		ImageLength:                 imageLength,
+		GalleryName:                 galleryName,
+		GalleryImageName:            galleryImageName,
+		GalleryImageVersionName:     galleryImageVersionName,
+		GalleryGen2ImageName:        galleryGen2ImageName,
+		GalleryGen2ImageVersionName: galleryGen2ImageVersionName,
+	}, nil
+}
 
 // InfraReady is called once the installer infrastructure is ready.
 func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
@@ -188,42 +246,15 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		architecture = armcompute.ArchitectureX64
 	}
 
+	// Get information regarding the RHCOS Image Stream
+	imageInfo, err := getRHCOSImageInfo(ctx, installConfig, in.InfraID)
+	if err != nil {
+		return err
+	}
 	resourceGroupName := p.ResourceGroupName
 	storageAccountName := aztypes.GetStorageAccountName(in.InfraID)
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
-
-	stream, err := rhcos.FetchCoreOSBuild(ctx, in.InstallConfig.Config.OSImageStream)
-	if err != nil {
-		return fmt.Errorf("failed to get rhcos stream: %w", err)
-	}
-	archName := arch.RpmArch(string(installConfig.ControlPlane.Architecture))
-	streamArch, err := stream.GetArchitecture(archName)
-	if err != nil {
-		return fmt.Errorf("failed to get rhcos architecture: %w", err)
-	}
-
-	azureDisk := streamArch.RHELCoreOSExtensions.AzureDisk
-	imageURL := azureDisk.URL
-
-	rawImageVersion := strings.ReplaceAll(azureDisk.Release, "-", "_")
-	imageVersion := rawImageVersion[:len(rawImageVersion)-6]
-
-	galleryName := fmt.Sprintf("gallery_%s", strings.ReplaceAll(in.InfraID, "-", "_"))
-	galleryImageName := in.InfraID
-	galleryImageVersionName := imageVersion
-	galleryGen2ImageName := fmt.Sprintf("%s-gen2", in.InfraID)
-	galleryGen2ImageVersionName := imageVersion
-
-	headResponse, err := http.Head(imageURL) // nolint:gosec
-	if err != nil {
-		return fmt.Errorf("failed HEAD request for image URL %s: %w", imageURL, err)
-	}
-
-	imageLength := headResponse.ContentLength
-	if imageLength%512 != 0 {
-		return fmt.Errorf("image length is not aligned on a 512 byte boundary")
-	}
 
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
@@ -286,8 +317,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
 			StorageURL:           storageURL,
 			BlobURL:              blobURL,
-			ImageURL:             imageURL,
-			ImageLength:          imageLength,
+			ImageURL:             imageInfo.ImageURL,
+			ImageLength:          imageInfo.ImageLength,
 			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
 			AllowSharedKeyAccess: sharedKey,
 			TokenCredential:      session.TokenCreds,
@@ -303,7 +334,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		createImageGalleryOutput, err := CreateImageGallery(ctx, &CreateImageGalleryInput{
 			SubscriptionID:    subscriptionID,
 			ResourceGroupName: resourceGroupName,
-			GalleryName:       galleryName,
+			GalleryName:       imageInfo.GalleryName,
 			Region:            platform.Region,
 			Tags:              tags,
 			TokenCredential:   p.TokenCredential,
@@ -318,8 +349,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		// Create gallery images
 		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
 			ResourceGroupName:    resourceGroupName,
-			GalleryName:          galleryName,
-			GalleryImageName:     galleryImageName,
+			GalleryName:          imageInfo.GalleryName,
+			GalleryImageName:     imageInfo.GalleryImageName,
 			Region:               platform.Region,
 			Publisher:            "RedHat",
 			Offer:                "rhcos",
@@ -344,8 +375,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
 			ResourceGroupName:    resourceGroupName,
-			GalleryName:          galleryName,
-			GalleryImageName:     galleryGen2ImageName,
+			GalleryName:          imageInfo.GalleryName,
+			GalleryImageName:     imageInfo.GalleryGen2ImageName,
 			Region:               platform.Region,
 			Publisher:            "RedHat-gen2",
 			Offer:                "rhcos-gen2",
@@ -368,9 +399,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
 			ResourceGroupName:       resourceGroupName,
 			StorageAccountID:        *storageAccount.ID,
-			GalleryName:             galleryName,
-			GalleryImageName:        galleryImageName,
-			GalleryImageVersionName: galleryImageVersionName,
+			GalleryName:             imageInfo.GalleryName,
+			GalleryImageName:        imageInfo.GalleryImageName,
+			GalleryImageVersionName: imageInfo.GalleryImageVersionName,
 			Region:                  platform.Region,
 			BlobURL:                 blobURL,
 			RegionalReplicaCount:    int32(1),
@@ -383,9 +414,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
 			ResourceGroupName:       resourceGroupName,
 			StorageAccountID:        *storageAccount.ID,
-			GalleryName:             galleryName,
-			GalleryImageName:        galleryGen2ImageName,
-			GalleryImageVersionName: galleryGen2ImageVersionName,
+			GalleryName:             imageInfo.GalleryName,
+			GalleryImageName:        imageInfo.GalleryGen2ImageName,
+			GalleryImageVersionName: imageInfo.GalleryGen2ImageVersionName,
 			Region:                  platform.Region,
 			BlobURL:                 blobURL,
 			RegionalReplicaCount:    int32(1),
