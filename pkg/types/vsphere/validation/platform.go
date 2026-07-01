@@ -143,7 +143,7 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 			}
 		}
 		if len(vCenter.Username) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("username"), "must specify the username"))
+			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("user"), "must specify the user"))
 		}
 		if len(vCenter.Password) == 0 {
 			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("password"), "must specify the password"))
