@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"net"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -343,8 +344,9 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents ass
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		//Validity:  ValidityTenYears(),
+		Validity: time.Hour * 2,
+		IsCA:     true,
 	}
 
 	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer")
