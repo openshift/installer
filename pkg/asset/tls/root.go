@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"time"
 
 	"github.com/openshift/installer/pkg/asset"
 )
@@ -32,7 +33,8 @@ func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
+		//Validity:  ValidityTenYears(),
+		Validity:  time.Hour*2,
 		IsCA:      true,
 	}
 
