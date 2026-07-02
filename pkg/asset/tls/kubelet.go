@@ -26,13 +26,13 @@ func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(installConfig)
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay(installConfig),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityOneDay(installConfig),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -116,13 +116,13 @@ func (c *KubeletBootstrapCertSigner) Dependencies() []asset.Asset {
 // Generate generates the root-ca key and cert pair.
 func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityTenYears(),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.

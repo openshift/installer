@@ -59,7 +59,10 @@ func (a *IngressOperatorSignerCertKey) Generate(ctx context.Context, dependencie
 		return err
 	}
 
-	a.KeyRaw = tls.PrivateKeyToPem(key)
+	a.KeyRaw, err = tls.PrivateKeyToPem(key)
+	if err != nil {
+		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	}
 	a.CertRaw = tls.CertToPem(crt)
 
 	return nil
