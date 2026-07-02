@@ -155,7 +155,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		if nrg := installConfig.Config.Platform.Azure.NetworkResourceGroupName; nrg != "" {
 			config.Status.PlatformStatus.Azure.NetworkResourceGroupName = nrg
 		}
-		if installConfig.Config.Platform.Azure.CloudName == azure.StackCloud {
+		if installConfig.Config.Platform.Azure.ARMEndpoint != "" {
 			config.Status.PlatformStatus.Azure.ARMEndpoint = installConfig.Config.Platform.Azure.ARMEndpoint
 		}
 		if len(installConfig.Config.Azure.UserTags) > 0 {

@@ -73,8 +73,8 @@ func GetSession(cloudName azure.CloudEnvironment, armEndpoint string) (*Session,
 func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint string, credentials *Credentials) (*Session, error) {
 	var cloudEnv azureenv.Environment
 	var err error
-	switch cloudName {
-	case azure.StackCloud:
+	switch {
+	case armEndpoint != "":
 		cloudEnv, err = azureenv.EnvironmentFromURL(armEndpoint)
 	default:
 		cloudEnv, err = azureenv.EnvironmentFromName(string(cloudName))
@@ -124,8 +124,8 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string) (*cloud.Configuration, error) {
 	var cloudEnv azureenv.Environment
 	var err error
-	switch cloudName {
-	case azure.StackCloud:
+	switch {
+	case armEndpoint != "":
 		cloudEnv, err = azureenv.EnvironmentFromURL(armEndpoint)
 	default:
 		cloudEnv, err = azureenv.EnvironmentFromName(string(cloudName))
@@ -135,8 +135,8 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 	}
 
 	var cloudConfig cloud.Configuration
-	switch cloudName {
-	case azure.StackCloud:
+	switch {
+	case armEndpoint != "":
 		cloudConfig = cloud.Configuration{
 			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
 			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
@@ -146,9 +146,9 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 				},
 			},
 		}
-	case azure.USGovernmentCloud:
+	case cloudName == azure.USGovernmentCloud:
 		cloudConfig = cloud.AzureGovernment
-	case azure.ChinaCloud:
+	case cloudName == azure.ChinaCloud:
 		cloudConfig = cloud.AzureChina
 	default:
 		cloudConfig = cloud.AzurePublic

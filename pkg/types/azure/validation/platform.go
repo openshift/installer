@@ -152,13 +152,6 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	switch cloud := p.CloudName; cloud {
 	case azure.StackCloud:
 		allErrs = append(allErrs, validateAzureStack(p, fldPath)...)
-	default:
-		if p.ARMEndpoint != "" {
-			allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must not be set when the cloud name is %s", cloud)))
-		}
-		if p.ClusterOSImage != "" {
-			allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), fmt.Sprintf("clusterOSImage must not be set when the cloud name is %s", cloud)))
-		}
 	}
 
 	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
