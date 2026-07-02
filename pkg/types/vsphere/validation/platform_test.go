@@ -455,7 +455,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Username = ""
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters\[0].username: Required value: must specify the username$`,
+			expectedError: `^test-path\.vcenters\[0].user: Required value: must specify the user$`,
 		},
 		{
 			name: "Multi-zone missing password",
