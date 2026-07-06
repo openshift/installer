@@ -1377,7 +1377,7 @@ type PrometheusConfig struct {
 	// +kubebuilder:validation:MinItems=1
 	Resources []ContainerResource `json:"resources,omitempty"`
 	// retention configures how long Prometheus retains metrics data and how much storage it can use.
-	// When omitted, the platform chooses reasonable defaults (currently 15 days retention, no size limit).
+	// When omitted, the platform chooses reasonable defaults (currently 15d retention, no size limit).
 	// +optional
 	Retention Retention `json:"retention,omitempty,omitzero"`
 	// tolerations defines tolerations for the pods.
@@ -1552,7 +1552,7 @@ type RemoteWriteSpec struct {
 	Name string `json:"name,omitempty"`
 	// authorization defines the authorization method for the remote write endpoint.
 	// When omitted, no authorization is performed.
-	// When set, type must be one of BearerToken, BasicAuth, OAuth2, SigV4, SafeAuthorization, or ServiceAccount; the corresponding nested config must be set (ServiceAccount has no config).
+	// When set, type must be one of Authorization, BasicAuth, OAuth2, SigV4, or ServiceAccount; the corresponding nested config must be set (ServiceAccount has no config).
 	// +optional
 	AuthorizationConfig RemoteWriteAuthorization `json:"authorization,omitzero"`
 	// headers specifies the custom HTTP headers to be sent along with each remote write request.
@@ -1654,39 +1654,49 @@ type BasicAuth struct {
 }
 
 // RemoteWriteAuthorizationType defines the authorization method for remote write endpoints.
-// +kubebuilder:validation:Enum=BearerToken;BasicAuth;OAuth2;SigV4;SafeAuthorization;ServiceAccount
+// +kubebuilder:validation:Enum=Authorization;BasicAuth;OAuth2;SigV4;ServiceAccount
 type RemoteWriteAuthorizationType string
 
 const (
-	// RemoteWriteAuthorizationTypeBearerToken indicates bearer token from a secret.
-	RemoteWriteAuthorizationTypeBearerToken RemoteWriteAuthorizationType = "BearerToken"
+	// RemoteWriteAuthorizationTypeAuthorization indicates authorization credentials from a secret.
+	// The secret key contains the credentials (e.g. a Bearer token). Use the authorization field.
+	RemoteWriteAuthorizationTypeAuthorization RemoteWriteAuthorizationType = "Authorization"
 	// RemoteWriteAuthorizationTypeBasicAuth indicates HTTP basic authentication.
 	RemoteWriteAuthorizationTypeBasicAuth RemoteWriteAuthorizationType = "BasicAuth"
 	// RemoteWriteAuthorizationTypeOAuth2 indicates OAuth2 client credentials.
 	RemoteWriteAuthorizationTypeOAuth2 RemoteWriteAuthorizationType = "OAuth2"
 	// RemoteWriteAuthorizationTypeSigV4 indicates AWS Signature Version 4.
 	RemoteWriteAuthorizationTypeSigV4 RemoteWriteAuthorizationType = "SigV4"
-	// RemoteWriteAuthorizationTypeSafeAuthorization indicates authorization from a secret (Prometheus SafeAuthorization pattern).
-	// The secret key contains the credentials (e.g. a Bearer token). Use the safeAuthorization field.
-	RemoteWriteAuthorizationTypeSafeAuthorization RemoteWriteAuthorizationType = "SafeAuthorization"
 	// RemoteWriteAuthorizationTypeServiceAccount indicates use of the pod's service account token for machine identity.
 	// No additional field is required; the operator configures the token path.
 	RemoteWriteAuthorizationTypeServiceAccount RemoteWriteAuthorizationType = "ServiceAccount"
+
+	// --- TOMBSTONE ---
+	// RemoteWriteAuthorizationTypeBearerToken was a constant for bearer token authentication from a secret.
+	// It has been removed in favor of RemoteWriteAuthorizationTypeAuthorization. The constant name is reserved to prevent reuse.
+	//
+	// RemoteWriteAuthorizationTypeBearerToken RemoteWriteAuthorizationType = "BearerToken"
+
+	// --- TOMBSTONE ---
+	// RemoteWriteAuthorizationTypeSafeAuthorization was a constant for authorization credentials from a secret (Prometheus SafeAuthorization pattern).
+	// It has been removed in favor of RemoteWriteAuthorizationTypeAuthorization. The constant name is reserved to prevent reuse.
+	//
+	// RemoteWriteAuthorizationTypeSafeAuthorization RemoteWriteAuthorizationType = "SafeAuthorization"
 )
 
 // RemoteWriteAuthorization defines the authorization method for a remote write endpoint.
-// Exactly one of the nested configs must be set according to the type discriminator.
-// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'BearerToken' ? has(self.bearerToken) : !has(self.bearerToken)",message="bearerToken is required when type is BearerToken, and forbidden otherwise"
+// Nested config requirements depend on the type discriminator: Authorization requires authorization,
+// BasicAuth requires basicAuth, OAuth2 requires oauth2, SigV4 requires sigv4, and ServiceAccount forbids all nested configs.
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'Authorization' ? has(self.authorization) : !has(self.authorization)",message="authorization is required when type is Authorization, and forbidden otherwise"
 // +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'BasicAuth' ? has(self.basicAuth) : !has(self.basicAuth)",message="basicAuth is required when type is BasicAuth, and forbidden otherwise"
 // +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'OAuth2' ? has(self.oauth2) : !has(self.oauth2)",message="oauth2 is required when type is OAuth2, and forbidden otherwise"
 // +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'SigV4' ? has(self.sigv4) : !has(self.sigv4)",message="sigv4 is required when type is SigV4, and forbidden otherwise"
-// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'SafeAuthorization' ? has(self.safeAuthorization) : !has(self.safeAuthorization)",message="safeAuthorization is required when type is SafeAuthorization, and forbidden otherwise"
 // +union
 type RemoteWriteAuthorization struct {
 	// type specifies the authorization method to use.
-	// Allowed values are BearerToken, BasicAuth, OAuth2, SigV4, SafeAuthorization, ServiceAccount.
+	// Allowed values are Authorization, BasicAuth, OAuth2, SigV4, and ServiceAccount.
 	//
-	// When set to BearerToken, the bearer token is read from a Secret referenced by the bearerToken field.
+	// When set to Authorization, credentials are read from a single Secret key. The secret key typically contains a Bearer token. Use the authorization field.
 	//
 	// When set to BasicAuth, HTTP basic authentication is used; the basicAuth field (username and password from Secrets) must be set.
 	//
@@ -1694,22 +1704,16 @@ type RemoteWriteAuthorization struct {
 	//
 	// When set to SigV4, AWS Signature Version 4 is used for authentication; the sigv4 field must be set.
 	//
-	// When set to SafeAuthorization, credentials are read from a single Secret key (Prometheus SafeAuthorization pattern). The secret key typically contains a Bearer token. Use the safeAuthorization field.
-	//
 	// When set to ServiceAccount, the pod's service account token is used for machine identity. No additional field is required; the operator configures the token path.
 	// +unionDiscriminator
 	// +required
 	Type RemoteWriteAuthorizationType `json:"type,omitempty"`
-	// safeAuthorization defines the secret reference containing the credentials for authentication (e.g. Bearer token).
-	// Required when type is "SafeAuthorization", and forbidden otherwise. Maps to Prometheus SafeAuthorization. The secret must exist in the openshift-monitoring namespace.
-	// +unionMember
+	// authorization defines the secret reference containing the authorization credentials (e.g. Bearer token).
+	// Required when type is "Authorization", and forbidden otherwise.
+	// The secret must exist in the openshift-monitoring namespace.
+	// +unionMember=Authorization
 	// +optional
-	SafeAuthorization *v1.SecretKeySelector `json:"safeAuthorization,omitempty"`
-	// bearerToken defines the secret reference containing the bearer token.
-	// Required when type is "BearerToken", and forbidden otherwise.
-	// +unionMember
-	// +optional
-	BearerToken SecretKeySelector `json:"bearerToken,omitempty,omitzero"`
+	Authorization SecretKeySelector `json:"authorization,omitempty,omitzero"`
 	// basicAuth defines HTTP basic authentication credentials.
 	// Required when type is "BasicAuth", and forbidden otherwise.
 	// +unionMember
@@ -1725,6 +1729,22 @@ type RemoteWriteAuthorization struct {
 	// +unionMember
 	// +optional
 	Sigv4 Sigv4 `json:"sigv4,omitempty,omitzero"`
+
+	// --- TOMBSTONE ---
+	// bearerToken was a field for bearer token authentication from a secret.
+	// It has been removed in favor of authorization. The field name is reserved to prevent reuse.
+	//
+	// +unionMember
+	// +optional
+	// BearerToken SecretKeySelector `json:"bearerToken,omitempty,omitzero"`
+
+	// --- TOMBSTONE ---
+	// safeAuthorization was a field for authorization credentials from a secret (Prometheus SafeAuthorization pattern).
+	// It has been removed in favor of authorization. The field name is reserved to prevent reuse.
+	//
+	// +unionMember
+	// +optional
+	// SafeAuthorization *v1.SecretKeySelector `json:"safeAuthorization,omitempty"`
 }
 
 // MetadataConfigSendPolicy defines whether to send metadata with platform defaults or with custom settings.
@@ -2272,26 +2292,63 @@ type SecretKeySelector struct {
 // Retention configures how long Prometheus retains metrics data and how much storage it can use.
 // +kubebuilder:validation:MinProperties=1
 type Retention struct {
+	// TOMBSTONE: This field has been tombstoned in favor of the `duration` field. This tombstone will be dropped when promoting this API to v1.
+	// ---
 	// durationInDays specifies how many days Prometheus will retain metrics data.
 	// Prometheus automatically deletes data older than this duration.
 	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
 	// The default value is 15.
 	// Minimum value is 1 day.
 	// Maximum value is 365 days (1 year).
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=365
-	// +optional
-	DurationInDays int32 `json:"durationInDays,omitempty"`
+	// Former marker: kubebuilder:validation:Minimum=1
+	// Former marker: kubebuilder:validation:Maximum=365
+	// Former marker: optional
+	// DurationInDays int32 `json:"durationInDays,omitempty"`
+
+	// TOMBSTONE: This field has been tombstoned in favor of the `size` field. This tombstone will be dropped when promoting this API to v1.
+	// ---
 	// sizeInGiB specifies the maximum storage size in gibibytes (GiB) that Prometheus
 	// can use for data blocks and the write-ahead log (WAL).
 	// When the limit is reached, Prometheus will delete oldest data first.
 	// When omitted, no size limit is enforced and Prometheus uses available PersistentVolume capacity.
 	// Minimum value is 1 GiB.
 	// Maximum value is 16384 GiB (16 TiB).
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=16384
+	// Former marker: kubebuilder:validation:Minimum=1
+	// Former marker: kubebuilder:validation:Maximum=16384
+	// Former marker: optional
+	// SizeInGiB int32 `json:"sizeInGiB,omitempty"`
+
+	// duration is an optional field that specifies how long Prometheus retains metrics data.
+	// Valid values are Prometheus-style duration strings with unit suffixes y, w, d, h, m, s, or ms
+	// (for example, "15d", "24h", or "5d1h30m"). Each unit value must be a positive integer.
+	// Composite durations must follow the fixed unit order y, w, d, h, m, s, ms.
+	// Must be at least 1 character and at most 64 characters.
+	// When set to "0", time-based retention is disabled. This is the only supported form for disabling
+	// time-based retention; other zero-duration representations such as "0d", "0h", or "0y" are rejected.
+	// Prometheus automatically deletes data older than this duration.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+	// The current default value is `15d`.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:XValidation:rule=`self == "0" || self.matches('^([1-9][0-9]*y)?([1-9][0-9]*w)?([1-9][0-9]*d)?([1-9][0-9]*h)?([1-9][0-9]*m)?([1-9][0-9]*s)?([1-9][0-9]*ms)?$')`,message=`must be "0" to disable time-based retention, or a duration string with only positive unit values`
 	// +optional
-	SizeInGiB int32 `json:"sizeInGiB,omitempty"`
+	Duration string `json:"duration,omitempty"`
+
+	// size is an optional field that specifies the maximum storage size that Prometheus
+	// can use for data blocks and the write-ahead log (WAL).
+	// Valid values are byte-size strings with an optional decimal prefix and a unit suffix B, KB, MB, GB,
+	// TB, EB, PB, or their binary equivalents KiB, MiB, GiB, TiB, EiB, PiB (for example, "500MiB", "10GiB").
+	// The numeric value must be greater than zero.
+	// Must be at least 1 character and at most 32 characters.
+	// When set to "0", no size limit is enforced. This is the only supported form for disabling size-based
+	// retention; other zero-size representations such as "0B" or "0MiB" are rejected.
+	// When the limit is reached, Prometheus deletes oldest data first.
+	// When omitted, no size limit is enforced and Prometheus uses available PersistentVolume capacity.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=32
+	// +kubebuilder:validation:XValidation:rule=`self == "0" || self.matches('^([1-9][0-9]*([.][0-9]+)?|[0-9]*[.][1-9][0-9]*)((K|M|G|T|E|P)i?)?B$')`,message=`must be "0" to disable size-based retention, or a positive byte-size string`
+	// +optional
+	Size string `json:"size,omitempty"`
 }
 
 // RelabelAction defines the action to perform in a relabeling rule.
