@@ -20,6 +20,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -295,7 +297,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	installConfig := in.InstallConfig.Config
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
+	p.CloudConfiguration = session.CloudConfig
+	p.TokenCredential = session.TokenCreds
 
 	var architecture armcompute.Architecture
 	if installConfig.ControlPlane.Architecture == types.ArchitectureARM64 {
@@ -348,22 +351,30 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		tags[k] = ptr.To(v)
 	}
 
-	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
 
+	sharedKey := true
+	if in.InstallConfig.Config.Azure.AllowSharedKeyAccess != nil {
+		sharedKey = *in.InstallConfig.Config.Azure.AllowSharedKeyAccess
+	}
+	if sharedKey {
+		logrus.Info("Shared key access is enabled for storage account; Managed Identity-based access will not be used for blob operations")
+	}
+
 	// Create storage account
 	createStorageAccountOutput, err := CreateStorageAccount(ctx, &CreateStorageAccountInput{
-		SubscriptionID:     subscriptionID,
-		ResourceGroupName:  resourceGroupName,
-		StorageAccountName: storageAccountName,
-		CloudName:          platform.CloudName,
-		Region:             platform.Region,
-		AuthType:           session.AuthType,
-		Tags:               tags,
-		CustomerManagedKey: platform.CustomerManagedKey,
-		TokenCredential:    tokenCredential,
-		CloudConfiguration: cloudConfiguration,
+		SubscriptionID:       subscriptionID,
+		ResourceGroupName:    resourceGroupName,
+		StorageAccountName:   storageAccountName,
+		CloudName:            platform.CloudName,
+		Region:               platform.Region,
+		AuthType:             session.AuthType,
+		AllowSharedKeyAccess: sharedKey,
+		Tags:                 tags,
+		CustomerManagedKey:   platform.CustomerManagedKey,
+		TokenCredential:      p.TokenCredential,
+		CloudConfiguration:   p.CloudConfiguration,
 	})
 	if err != nil {
 		return err
@@ -395,13 +406,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	// Upload the image to the container
 	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); !ok {
 		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
-			StorageURL:         storageURL,
-			BlobURL:            blobURL,
-			ImageURL:           imageURL,
-			ImageLength:        imageLength,
-			StorageAccountName: storageAccountName,
-			StorageAccountKeys: storageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			StorageURL:           storageURL,
+			BlobURL:              blobURL,
+			ImageURL:             imageURL,
+			ImageLength:          imageLength,
+			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
+			AllowSharedKeyAccess: sharedKey,
+			TokenCredential:      session.TokenCreds,
+			StorageAccountName:   storageAccountName,
+			StorageAccountKeys:   storageAccountKeys,
+			CloudConfiguration:   p.CloudConfiguration,
 		})
 		if err != nil {
 			return err
@@ -414,8 +428,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			GalleryName:        galleryName,
 			Region:             platform.Region,
 			Tags:               tags,
-			TokenCredential:    tokenCredential,
-			CloudConfiguration: cloudConfiguration,
+			TokenCredential:    p.TokenCredential,
+			CloudConfiguration: p.CloudConfiguration,
 		})
 		if err != nil {
 			return err
@@ -433,8 +447,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			Offer:                "rhcos",
 			SKU:                  "basic",
 			Tags:                 tags,
-			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
+			TokenCredential:      p.TokenCredential,
+			CloudConfiguration:   p.CloudConfiguration,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -462,8 +476,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			Offer:                "rhcos-gen2",
 			SKU:                  "gen2",
 			Tags:                 tags,
-			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
+			TokenCredential:      p.TokenCredential,
+			CloudConfiguration:   p.CloudConfiguration,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
@@ -507,10 +521,10 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
-	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, p.TokenCredential,
 		&arm.ClientOptions{
 			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
+				Cloud: p.CloudConfiguration,
 			},
 		},
 	)
@@ -830,7 +844,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	bootstrapIgnData := in.BootstrapIgnData
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
 
 	ignitionContainerName := "ignition"
 	blobName := "bootstrap.ign"
@@ -853,16 +866,50 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 
 	sasURL := ""
+	now := time.Now().UTC().Add(-10 * time.Second)
+	expiry := now.Add(1 * time.Hour)
+	info := service.KeyInfo{
+		Start:  to.Ptr(now.UTC().Format(sas.TimeFormat)),
+		Expiry: to.Ptr(expiry.UTC().Format(sas.TimeFormat)),
+	}
 
+	serviceClient, err := service.NewClient(fmt.Sprintf("https://%s.blob.%s/", p.StorageAccountName, session.Environment.StorageEndpointSuffix),
+		session.TokenCreds,
+		&service.ClientOptions{
+			ClientOptions: azcore.ClientOptions{
+				Cloud: p.CloudConfiguration,
+			},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service client: %w", err)
+	}
+
+	sharedKey := true
+	if in.InstallConfig.Config.Azure.AllowSharedKeyAccess != nil {
+		sharedKey = *in.InstallConfig.Config.Azure.AllowSharedKeyAccess
+	}
 	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil {
 		logrus.Debugf("Creating a Block Blob for ignition shim")
 		sasURL, err = CreateBlockBlob(ctx, &CreateBlockBlobInput{
-			StorageURL:         p.StorageURL,
-			BlobURL:            blobURL,
-			StorageAccountName: p.StorageAccountName,
-			StorageAccountKeys: p.StorageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
-			BootstrapIgnData:   bootstrapIgnData,
+			StorageURL:           p.StorageURL,
+			BlobURL:              blobURL,
+			AuthType:             session.AuthType,
+			TokenCredential:      session.TokenCreds,
+			StorageAccountName:   p.StorageAccountName,
+			StorageAccountKeys:   p.StorageAccountKeys,
+			AllowSharedKeyAccess: sharedKey,
+			CloudConfiguration:   p.CloudConfiguration,
+			BootstrapIgnData:     bootstrapIgnData,
+			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
+			ContainerName:        ignitionContainerName,
+			BlobName:             blobName,
+			StorageSuffix:        session.Environment.StorageEndpointSuffix,
+			ARMEndpoint:          in.InstallConfig.Azure.ARMEndpoint,
+			Session:              session,
+			Region:               in.InstallConfig.Config.Azure.Region,
+			Tags:                 p.Tags,
+			ResourceGroupName:    p.ResourceGroupName,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
@@ -875,18 +922,39 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		}
 
 		sasURL, err = CreatePageBlob(ctx, &CreatePageBlobInput{
-			StorageURL:         p.StorageURL,
-			BlobURL:            blobURL,
-			ImageURL:           "",
-			StorageAccountName: p.StorageAccountName,
-			BootstrapIgnData:   bootstrapIgnData,
-			ImageLength:        lengthBootstrapFile,
-			StorageAccountKeys: p.StorageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
+			StorageURL:           p.StorageURL,
+			BlobURL:              blobURL,
+			ImageURL:             "",
+			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
+			AllowSharedKeyAccess: sharedKey,
+			TokenCredential:      session.TokenCreds,
+			StorageAccountName:   p.StorageAccountName,
+			BootstrapIgnData:     bootstrapIgnData,
+			ImageLength:          lengthBootstrapFile,
+			StorageAccountKeys:   p.StorageAccountKeys,
+			CloudConfiguration:   p.CloudConfiguration,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)
 		}
+	}
+	if sasURL == "" && !sharedKey {
+		udc, err := serviceClient.GetUserDelegationCredential(context.Background(), info, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create user delegation credentials: %w", err)
+		}
+		sasQueryParams, err := sas.BlobSignatureValues{
+			Protocol:      sas.ProtocolHTTPS,
+			StartTime:     time.Now().UTC().Add(time.Second * -10),
+			ExpiryTime:    time.Now().UTC().Add(1 * time.Hour),
+			Permissions:   to.Ptr(sas.ContainerPermissions{Read: true}).String(),
+			ContainerName: "ignition",
+			BlobName:      blobName,
+		}.SignWithUserDelegation(udc)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sign blob %s: %w", blobURL, err)
+		}
+		sasURL = fmt.Sprintf("https://%s.blob.%s/ignition/%s?%s", p.StorageAccountName, session.Environment.StorageEndpointSuffix, blobName, sasQueryParams.Encode())
 	}
 	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
 	if err != nil {
