@@ -103,6 +103,7 @@ func GetConfigWithOptions(ctx context.Context, options ...func(*config.LoadOptio
 	// If failed, ask the user for the credentials via the survey.
 	_, err := getCredentialsV2(ctx, options)
 	if err != nil {
+		logrus.Warnf("Failed to retrieve credentials from provider chain: %v", err)
 		if err := getUserCredentialsV2(); err != nil {
 			return aws.Config{}, err
 		}
