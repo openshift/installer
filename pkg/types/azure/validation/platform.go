@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/network"
@@ -162,6 +163,7 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	}
 
 	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
+	allErrs = append(allErrs, validateDualStackIPv6CIDRFromInstallConfig(ic, p.IPFamily)...)
 
 	if p.CloudName == azure.StackCloud && p.AllowSharedKeyAccess != nil && !*p.AllowSharedKeyAccess {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("allowSharedAccessKey"), p.AllowSharedKeyAccess, "disabling shared access key creation is unsupported in Azure stack hub"))
@@ -187,6 +189,113 @@ func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.Erro
 		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, validValues))
 	}
 	return allErrs
+}
+
+// validateDualStackIPv6CIDR validates Azure IPv6 networking configuration.
+// Azure does not support single-stack IPv6 (IPv6-only). IPv6 can only be used in dual-stack mode with IPv4.
+// Additionally, Azure's subnet splitting logic requires /64 subnets for IPv6, so the parent CIDR must have a broader prefix (prefix length less than /64).
+func validateDualStackIPv6CIDR(machineNetworks []ipnet.IPNet, ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(machineNetworks) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("machineNetwork"), "cannot proceed with no machine networks specified"))
+		return allErrs
+	}
+
+	// Check for IPv4 and IPv6 machine networks
+	hasIPv4 := false
+	hasIPv6 := false
+	ipv6Indices := []int{}
+	ipv6TooLongIndices := []int{}
+	ipv6NotNibbleBoundaryIndices := []int{}
+
+	for i, machineNetwork := range machineNetworks {
+		ip := machineNetwork.IP
+		if len(ip) == 0 {
+			// Skip invalid CIDRs - they'll be caught by other validation
+			continue
+		}
+
+		if ip.To4() != nil {
+			hasIPv4 = true
+		} else {
+			// IPv6 address
+			hasIPv6 = true
+			ipv6Indices = append(ipv6Indices, i)
+
+			// Check if prefix is /64 or more narrow (cannot be split)
+			prefixLen, _ := machineNetwork.Mask.Size()
+			if prefixLen >= 64 {
+				ipv6TooLongIndices = append(ipv6TooLongIndices, i)
+			} else if prefixLen%4 != 0 {
+				// Check if prefix is not on a nibble boundary (multiples of 4)
+				ipv6NotNibbleBoundaryIndices = append(ipv6NotNibbleBoundaryIndices, i)
+			}
+		}
+	}
+
+	// Check if dual-stack is enabled
+	isDualStack := ipFamily == network.DualStackIPv4Primary || ipFamily == network.DualStackIPv6Primary
+
+	// Azure does not support single-stack IPv6 (IPv6 without IPv4)
+	if hasIPv6 && !hasIPv4 {
+		for _, i := range ipv6Indices {
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+				machineNetworks[i].String(),
+				"single-stack IPv6 is not supported on Azure. IPv6 may only be used with dual-stack networking (both IPv4 and IPv6)",
+			))
+		}
+		return allErrs
+	}
+
+	// If dual-stack is enabled, ensure IPv6 is present
+	if isDualStack && !hasIPv6 {
+		allErrs = append(allErrs, field.Required(
+			fldPath.Child("machineNetwork"),
+			"at least one IPv6 machine network must be specified when dual-stack is enabled",
+		))
+		return allErrs
+	}
+
+	// Report error if IPv6 prefix is not on a nibble boundary (multiples of 4)
+	if len(ipv6NotNibbleBoundaryIndices) > 0 {
+		for _, i := range ipv6NotNibbleBoundaryIndices {
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+				machineNetworks[i].String(),
+				"IPv6 CIDR prefix length must be on a nibble boundary (multiples of 4). Valid prefixes less than /64 are /48, /52, /56, /60",
+			))
+		}
+	}
+
+	// Report error if dual-stack (both IPv4 and IPv6 present) and IPv6 uses /64 or more narrow prefix
+	if hasIPv4 && len(ipv6TooLongIndices) > 0 {
+		for _, i := range ipv6TooLongIndices {
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+				machineNetworks[i].String(),
+				"in dual-stack configurations, IPv6 machine network CIDRs require prefix lengths shorter than /64 on nibble boundaries (e.g., /48, /52, /56, /60). Azure recommends /56 to allow splitting into multiple /64 subnets",
+			))
+		}
+	}
+
+	return allErrs
+}
+
+// validateDualStackIPv6CIDRFromInstallConfig validates Azure dual-stack IPv6 CIDR configuration from an InstallConfig.
+// This is a convenience wrapper that extracts machine networks from the InstallConfig and delegates to validateDualStackIPv6CIDR.
+func validateDualStackIPv6CIDRFromInstallConfig(ic *types.InstallConfig, ipFamily network.IPFamily) field.ErrorList {
+	if ic == nil || ic.Networking == nil {
+		return field.ErrorList{}
+	}
+
+	machineNetworks := make([]ipnet.IPNet, len(ic.MachineNetwork))
+	for i, mn := range ic.MachineNetwork {
+		machineNetworks[i] = mn.CIDR
+	}
+
+	return validateDualStackIPv6CIDR(machineNetworks, ipFamily, field.NewPath("networking"))
 }
 
 // validateCustomerManagedKeys validates the key vault id.
