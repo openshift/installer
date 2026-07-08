@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/network"
@@ -162,6 +163,7 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	}
 
 	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
+	allErrs = append(allErrs, validateDualStackMachineNetworks(ic, p.IPFamily)...)
 
 	if p.CloudName == azure.StackCloud && p.AllowSharedKeyAccess != nil && !*p.AllowSharedKeyAccess {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("allowSharedAccessKey"), p.AllowSharedKeyAccess, "disabling shared access key creation is unsupported in Azure stack hub"))
@@ -186,6 +188,97 @@ func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.Erro
 	default:
 		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, validValues))
 	}
+	return allErrs
+}
+
+// validateDualStackMachineNetworks validates Azure IPv6 networking configuration.
+// Azure does not support single-stack IPv6 (IPv6-only). IPv6 can only be used in dual-stack mode with IPv4.
+// Additionally, Azure's subnet splitting logic requires /64 subnets for IPv6, so the parent CIDR must have a broader prefix (prefix length less than /64).
+func validateDualStackMachineNetworks(ic *types.InstallConfig, ipFamily network.IPFamily) field.ErrorList {
+	if ic == nil || ic.Networking == nil {
+		return field.ErrorList{}
+	}
+
+	fldPath := field.NewPath("networking")
+	var allErrs field.ErrorList
+
+	machineNetworks := make([]ipnet.IPNet, len(ic.MachineNetwork))
+	for i, mn := range ic.MachineNetwork {
+		machineNetworks[i] = mn.CIDR
+	}
+
+	hasIPv4 := false
+	hasIPv6 := false
+	ipv6Indices := []int{}
+	ipv6TooLongIndices := []int{}
+	ipv6NotNibbleBoundaryIndices := []int{}
+
+	for i, machineNetwork := range machineNetworks {
+		ip := machineNetwork.IP
+		if len(ip) == 0 {
+			continue
+		}
+
+		if ip.To4() != nil {
+			hasIPv4 = true
+		} else {
+			hasIPv6 = true
+			ipv6Indices = append(ipv6Indices, i)
+
+			prefixLen, bits := machineNetwork.Mask.Size()
+			if bits == 0 {
+				allErrs = append(allErrs, field.Invalid(
+					fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+					machineNetworks[i].String(),
+					"CIDR has a non-canonical network mask",
+				))
+			} else if prefixLen >= 64 {
+				ipv6TooLongIndices = append(ipv6TooLongIndices, i)
+			} else if prefixLen%4 != 0 {
+				ipv6NotNibbleBoundaryIndices = append(ipv6NotNibbleBoundaryIndices, i)
+			}
+		}
+	}
+
+	if hasIPv6 && !hasIPv4 {
+		for _, i := range ipv6Indices {
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+				machineNetworks[i].String(),
+				"single-stack IPv6 is not supported on Azure. IPv6 may only be used with dual-stack networking (both IPv4 and IPv6)",
+			))
+		}
+		return allErrs
+	}
+
+	if ipFamily.DualStackEnabled() && !hasIPv6 {
+		allErrs = append(allErrs, field.Required(
+			fldPath.Child("machineNetwork"),
+			"at least one IPv6 machine network must be specified when dual-stack is enabled",
+		))
+		return allErrs
+	}
+
+	if len(ipv6NotNibbleBoundaryIndices) > 0 {
+		for _, i := range ipv6NotNibbleBoundaryIndices {
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+				machineNetworks[i].String(),
+				"IPv6 CIDR prefix length must be on a nibble boundary (multiples of 4). Valid prefixes less than /64 are /48, /52, /56, /60",
+			))
+		}
+	}
+
+	if len(ipv6TooLongIndices) > 0 {
+		for _, i := range ipv6TooLongIndices {
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("machineNetwork").Index(i).Child("cidr"),
+				machineNetworks[i].String(),
+				"in dual-stack configurations, IPv6 machine network CIDRs require prefix lengths shorter than /64 on nibble boundaries (e.g., /48, /52, /56, /60). Azure recommends /56 to allow splitting into multiple /64 subnets",
+			))
+		}
+	}
+
 	return allErrs
 }
 
