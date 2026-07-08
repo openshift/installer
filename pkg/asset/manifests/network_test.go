@@ -206,3 +206,17 @@ func TestCNOConfigEnablesFRRForBGPVIP(t *testing.T) {
 	assert.Contains(t, cfg.Spec.AdditionalRoutingCapabilities.Providers,
 		operatorv1.RoutingCapabilitiesProviderFRR)
 }
+
+func TestCNOConfigNilForBareMetalWithoutBGPVIP(t *testing.T) {
+	ic := validInstallConfigWithMTU(&types.InstallConfig{
+		Networking: &types.Networking{NetworkType: "OVNKubernetes"},
+		Platform: types.Platform{
+			BareMetal: &baremetal.Platform{},
+		},
+	})
+	cfg, err := clusterNetworkOperatorConfig(ic, nil, nil)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Nil(t, cfg)
+}
