@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -144,6 +145,16 @@ func clusterNetworkOperatorConfig(ic *installconfig.InstallConfig, cns []configv
 		if ic.Config.NetworkType == "OVNKubernetes" {
 			cnoCfg = ovnNetworkOperatorConfig(cns, sn)
 			cnoCfg.Spec.DefaultNetwork.OVNKubernetesConfig.GatewayConfig = &operatorv1.GatewayConfig{RoutingViaHost: true}
+		}
+	case baremetal.Name:
+		// BGP-based VIP management needs frr-k8s CRDs/namespace deployed by
+		// CNO; enable the FRR routing capability provider. Non-OVN network
+		// types are rejected by install-config validation.
+		if ic.Config.Platform.BareMetal.BGPVIPConfig != nil && ic.Config.NetworkType == string(operatorv1.NetworkTypeOVNKubernetes) {
+			cnoCfg = ovnNetworkOperatorConfig(cns, sn)
+			cnoCfg.Spec.AdditionalRoutingCapabilities = &operatorv1.AdditionalRoutingCapabilities{
+				Providers: []operatorv1.RoutingCapabilitiesProvider{operatorv1.RoutingCapabilitiesProviderFRR},
+			}
 		}
 	}
 
