@@ -134,7 +134,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 	if c.Networking != nil {
 		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
-		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
+		allErrs = append(allErrs, validateNetworkingIPVersion(c)...)
 		allErrs = append(allErrs, validateNetworkingClusterNetworkMTU(c, field.NewPath("networking", "clusterNetworkMTU"))...)
 		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, usingAgentMethod, field.NewPath("platform"))...)
 		allErrs = append(allErrs, validateOVNKubernetesConfig(c.Networking, field.NewPath("networking"))...)
@@ -370,8 +370,11 @@ func ipnetworksToStrings(networks []ipnet.IPNet) []string {
 
 // validateNetworkingIPVersion checks parameters for consistency when the user
 // requests single-stack IPv6 or dual-stack modes.
-func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.ErrorList {
+func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
+
+	n := c.Networking
+	p := &c.Platform
 
 	hasIPv4, hasIPv6, presence, addresses := inferIPVersionFromInstallConfig(n)
 
@@ -382,10 +385,17 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		}
 
 		allowV6Primary := false
-		experimentalDualStackEnabled, _ := strconv.ParseBool(os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK"))
 		switch {
-		case p.Azure != nil && experimentalDualStackEnabled:
-			logrus.Warnf("Using experimental Azure dual-stack support")
+		case p.Azure != nil:
+			logrus.Info("Dual Stack support on Azure is still in Dev Preview")
+			// Dualstack is only allowed if platform.azure.ipFamily is set to dual-stack variants
+			if ipFamily := p.Azure.IPFamily; ipFamily.DualStackEnabled() {
+				if ipFamily == network.DualStackIPv6Primary {
+					allowV6Primary = true
+				}
+				break
+			}
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", fmt.Sprintf("dual-stack IPv4/IPv6 can only be specified when platform.azure.ipFamily is %s or %s", network.DualStackIPv4Primary, network.DualStackIPv6Primary)))
 		case p.BareMetal != nil:
 			// We now support ipv6-primary dual stack on baremetal
 			allowV6Primary = true
