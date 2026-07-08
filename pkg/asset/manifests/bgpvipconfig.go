@@ -25,19 +25,16 @@ const (
 	bgpVIPConfigMapDataKey   = "config.json"
 )
 
-// bgpVIPConfigJSON is the JSON structure stored in the ConfigMap.
+// bgpVIPConfigJSON is the JSON structure stored in the ConfigMap. Its field
+// names match baremetal-runtimecfg's FRRPeerMapping so the same JSON can be
+// written verbatim to /etc/kubernetes/static-pod-resources/frr-k8s/frr-peers.json.
 type bgpVIPConfigJSON struct {
-	LocalASN      int64                       `json:"localASN"`
-	Peers         []baremetal.BGPPeerConfig    `json:"peers"`
-	Communities   []string                    `json:"communities,omitempty"`
-	APIVIPs       []string                    `json:"apiVIPs"`
-	IngressVIPs   []string                    `json:"ingressVIPs"`
-	HostOverrides map[string]bgpHostOverride  `json:"hostOverrides,omitempty"`
-}
-
-// bgpHostOverride stores per-host BGP peer overrides.
-type bgpHostOverride struct {
-	Peers []baremetal.BGPPeerConfig `json:"peers"`
+	LocalASN      int64                                `json:"localASN"`
+	DefaultPeers  []baremetal.BGPPeerConfig            `json:"defaultPeers"`
+	Communities   []string                             `json:"communities,omitempty"`
+	APIVIPs       []string                             `json:"apiVIPs"`
+	IngressVIPs   []string                             `json:"ingressVIPs"`
+	HostOverrides map[string][]baremetal.BGPPeerConfig `json:"hostOverrides,omitempty"`
 }
 
 // BGPVIPConfigMap generates the bgp-vip-config ConfigMap for CNO.
@@ -77,20 +74,18 @@ func (b *BGPVIPConfigMap) Generate(_ context.Context, dependencies asset.Parents
 	bgpConfig := bm.BGPVIPConfig
 
 	configData := bgpVIPConfigJSON{
-		LocalASN:    bgpConfig.LocalASN,
-		Peers:       bgpConfig.Peers,
-		Communities: bgpConfig.Communities,
-		APIVIPs:     bm.APIVIPs,
-		IngressVIPs: bm.IngressVIPs,
+		LocalASN:     bgpConfig.LocalASN,
+		DefaultPeers: bgpConfig.Peers,
+		Communities:  bgpConfig.Communities,
+		APIVIPs:      bm.APIVIPs,
+		IngressVIPs:  bm.IngressVIPs,
 	}
 
 	// Collect per-host BGP peer overrides.
-	hostOverrides := make(map[string]bgpHostOverride)
+	hostOverrides := make(map[string][]baremetal.BGPPeerConfig)
 	for _, host := range bm.Hosts {
 		if host != nil && len(host.BGPPeers) > 0 {
-			hostOverrides[host.Name] = bgpHostOverride{
-				Peers: host.BGPPeers,
-			}
+			hostOverrides[host.Name] = host.BGPPeers
 		}
 	}
 	if len(hostOverrides) > 0 {
