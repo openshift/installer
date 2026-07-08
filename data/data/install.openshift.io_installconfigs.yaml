@@ -5462,6 +5462,33 @@ spec:
                       - url
                       type: object
                     type: array
+                  sts:
+                    description: |-
+                      STS configures the use of AWS Security Token Service for
+                      short-term credential provisioning. When set, the cluster
+                      components use IAM roles with OIDC-based web identity tokens
+                      instead of long-lived credentials.
+                    properties:
+                      mode:
+                        description: |-
+                          Mode determines how STS resources are provisioned.
+
+                          Following are the accepted values:
+
+                          * "Managed": The installer creates the OIDC provider, IAM roles,
+                          and credential secrets automatically.
+
+                          * "Manual": The user pre-creates all STS resources (e.g. via ccoctl)
+                          and places the manifests in the install directory.
+
+                          If this field is not set explicitly, the default value is "Manual".
+                          This default is subject to change over time.
+                        enum:
+                        - ""
+                        - Managed
+                        - Manual
+                        type: string
+                    type: object
                   subnets:
                     description: |-
                       Subnets specifies existing subnets (by ID) where cluster

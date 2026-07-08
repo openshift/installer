@@ -59,6 +59,7 @@ func ValidatePlatform(p *aws.Platform, publish types.PublishingStrategy, cm type
 	allErrs = append(allErrs, validateUserTags(p.UserTags, p.PropagateUserTag, fldPath.Child("userTags"))...)
 	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
 	allErrs = append(allErrs, validateLBType(p.LBType, p.IPFamily, fldPath.Child("lbType"))...)
+	allErrs = append(allErrs, validateSTS(p.STS, cm, fldPath.Child("sts"))...)
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, types.MachinePoolDefaultConfig, fldPath.Child("defaultMachinePlatform"))...)
@@ -199,6 +200,27 @@ func validateServiceURL(uri string) error {
 	}
 
 	return nil
+}
+
+func validateSTS(sts *aws.STS, cm types.CredentialsMode, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if sts == nil {
+		return allErrs
+	}
+
+	if cm != types.ManualCredentialsMode {
+		allErrs = append(allErrs, field.Required(field.NewPath("credentialsMode"), "Manual credentials mode is required when STS is configured"))
+	}
+
+	validModes := []string{string(aws.STSModeManaged), string(aws.STSModeManual)}
+	switch sts.Mode {
+	case aws.STSModeManaged, aws.STSModeManual:
+	default:
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("mode"), sts.Mode, validModes))
+	}
+
+	return allErrs
 }
 
 func validateSubnets(subnets []aws.Subnet, publish types.PublishingStrategy, fldPath *field.Path) field.ErrorList {
