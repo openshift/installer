@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/utils/ptr"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
@@ -40,7 +40,7 @@ type createOpts struct {
 	AdminStateUp        *bool  `json:"admin_state_up,omitempty"`
 	Name                string `json:"name,omitempty"`
 	PortSecurityEnabled *bool  `json:"port_security_enabled,omitempty"`
-	MTU                 *int   `json:"mtu,omitempty"`
+	MTU                 *int32 `json:"mtu,omitempty"`
 }
 
 func (c createOpts) ToNetworkCreateMap() (map[string]interface{}, error) {
@@ -51,9 +51,9 @@ func (c createOpts) ToNetworkCreateMap() (map[string]interface{}, error) {
 // The external network can be specified in the cluster spec or will be searched for if not specified.
 // OpenStackCluster.Status.ExternalNetwork will be set to nil if one of these conditions are met:
 // - no external network was given in the cluster spec and no external network was found
-// - the user has set OpenStackCluster.Spec.DisableExternalNetwork to true.
+// - the user has set OpenStackCluster.Spec.EnableExternalNetwork to false.
 func (s *Service) ReconcileExternalNetwork(openStackCluster *infrav1.OpenStackCluster) error {
-	if ptr.Deref(openStackCluster.Spec.DisableExternalNetwork, false) {
+	if !ptr.Deref(openStackCluster.Spec.EnableExternalNetwork, true) {
 		s.scope.Logger().Info("External network is disabled - proceeding with internal network only")
 		openStackCluster.Status.ExternalNetwork = nil
 		return nil
@@ -109,7 +109,7 @@ func (s *Service) ReconcileNetwork(openStackCluster *infrav1.OpenStackCluster, c
 		openStackCluster.Status.Network.ID = res.ID
 		openStackCluster.Status.Network.Name = res.Name
 		openStackCluster.Status.Network.Tags = res.Tags
-		s.scope.Logger().V(6).Info("Reusing existing network", "name", res.Name, "id", res.ID)
+		s.scope.Logger().V(5).Info("Reusing existing network", "name", res.Name, "id", res.ID)
 		return nil
 	}
 
@@ -118,12 +118,16 @@ func (s *Service) ReconcileNetwork(openStackCluster *infrav1.OpenStackCluster, c
 		Name:         networkName,
 	}
 
-	if ptr.Deref(openStackCluster.Spec.DisablePortSecurity, false) {
-		opts.PortSecurityEnabled = gophercloud.Disabled
-	}
+	if openStackCluster.Spec.ManagedNetwork != nil {
+		// Port Security is set to disabled only when EnablePortSecurity is
+		// set and equals false
+		if !ptr.Deref(openStackCluster.Spec.ManagedNetwork.EnablePortSecurity, true) {
+			opts.PortSecurityEnabled = gophercloud.Disabled
+		}
 
-	if openStackCluster.Spec.NetworkMTU != nil {
-		opts.MTU = openStackCluster.Spec.NetworkMTU
+		if openStackCluster.Spec.ManagedNetwork.MTU != nil {
+			opts.MTU = openStackCluster.Spec.ManagedNetwork.MTU
+		}
 	}
 
 	network, err := s.client.CreateNetwork(opts)
@@ -201,7 +205,7 @@ func (s *Service) ReconcileSubnet(openStackCluster *infrav1.OpenStackCluster, cl
 		}
 	} else if len(subnetList) == 1 {
 		subnet = &subnetList[0]
-		s.scope.Logger().V(6).Info("Reusing existing subnet", "name", subnet.Name, "id", subnet.ID)
+		s.scope.Logger().V(5).Info("Reusing existing subnet", "name", subnet.Name, "id", subnet.ID)
 
 		if err := s.updateSubnetDNSNameservers(openStackCluster, subnet); err != nil {
 			return err

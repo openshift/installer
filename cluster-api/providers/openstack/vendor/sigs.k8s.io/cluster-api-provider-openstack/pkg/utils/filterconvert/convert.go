@@ -23,7 +23,7 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 )
 
 func SecurityGroupFilterToListOpts(securityGroupFilter *infrav1.SecurityGroupFilter) securitygroups.ListOpts {
@@ -49,7 +49,7 @@ func SubnetFilterToListOpts(subnetFilter *infrav1.SubnetFilter) subnets.ListOpts
 		Name:            subnetFilter.Name,
 		Description:     subnetFilter.Description,
 		ProjectID:       subnetFilter.ProjectID,
-		IPVersion:       subnetFilter.IPVersion,
+		IPVersion:       int(subnetFilter.IPVersion),
 		GatewayIP:       subnetFilter.GatewayIP,
 		CIDR:            subnetFilter.CIDR,
 		IPv6AddressMode: subnetFilter.IPv6AddressMode,
@@ -93,7 +93,7 @@ func RouterFilterToListOpts(routerFilter *infrav1.RouterFilter) routers.ListOpts
 
 func ImageFilterToListOpts(imageFilter *infrav1.ImageFilter) (listOpts images.ListOpts) {
 	if imageFilter == nil {
-		return
+		return listOpts
 	}
 
 	if imageFilter.Name != nil && *imageFilter.Name != "" {
@@ -103,5 +103,5 @@ func ImageFilterToListOpts(imageFilter *infrav1.ImageFilter) (listOpts images.Li
 	if len(imageFilter.Tags) > 0 {
 		listOpts.Tags = imageFilter.Tags
 	}
-	return
+	return listOpts
 }

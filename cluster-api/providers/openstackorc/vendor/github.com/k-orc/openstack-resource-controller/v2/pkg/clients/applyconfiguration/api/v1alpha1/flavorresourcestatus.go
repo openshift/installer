@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,14 +21,15 @@ package v1alpha1
 // FlavorResourceStatusApplyConfiguration represents a declarative configuration of the FlavorResourceStatus type for use
 // with apply.
 type FlavorResourceStatusApplyConfiguration struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	RAM         *int32  `json:"ram,omitempty"`
-	Vcpus       *int32  `json:"vcpus,omitempty"`
-	Disk        *int32  `json:"disk,omitempty"`
-	Swap        *int32  `json:"swap,omitempty"`
-	IsPublic    *bool   `json:"isPublic,omitempty"`
-	Ephemeral   *int32  `json:"ephemeral,omitempty"`
+	Name        *string                                   `json:"name,omitempty"`
+	Description *string                                   `json:"description,omitempty"`
+	RAM         *int32                                    `json:"ram,omitempty"`
+	Vcpus       *int32                                    `json:"vcpus,omitempty"`
+	Disk        *int32                                    `json:"disk,omitempty"`
+	Swap        *int32                                    `json:"swap,omitempty"`
+	ExtraSpecs  []FlavorExtraSpecStatusApplyConfiguration `json:"extraSpecs,omitempty"`
+	IsPublic    *bool                                     `json:"isPublic,omitempty"`
+	Ephemeral   *int32                                    `json:"ephemeral,omitempty"`
 }
 
 // FlavorResourceStatusApplyConfiguration constructs a declarative configuration of the FlavorResourceStatus type for use with
@@ -82,6 +83,19 @@ func (b *FlavorResourceStatusApplyConfiguration) WithDisk(value int32) *FlavorRe
 // If called multiple times, the Swap field is set to the value of the last call.
 func (b *FlavorResourceStatusApplyConfiguration) WithSwap(value int32) *FlavorResourceStatusApplyConfiguration {
 	b.Swap = &value
+	return b
+}
+
+// WithExtraSpecs adds the given value to the ExtraSpecs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ExtraSpecs field.
+func (b *FlavorResourceStatusApplyConfiguration) WithExtraSpecs(values ...*FlavorExtraSpecStatusApplyConfiguration) *FlavorResourceStatusApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithExtraSpecs")
+		}
+		b.ExtraSpecs = append(b.ExtraSpecs, *values[i])
+	}
 	return b
 }
 

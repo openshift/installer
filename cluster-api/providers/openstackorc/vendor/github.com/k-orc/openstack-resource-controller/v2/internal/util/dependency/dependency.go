@@ -188,7 +188,7 @@ func (d *Dependency[objectTP, _, depTP, _, _, depT]) WatchEventHandler(log logr.
 
 		dependency, ok := obj.(depTP)
 		if !ok {
-			log.Info("Watch got unexpected object type", "type", fmt.Sprintf("%T", obj))
+			log.V(logging.Debug).Info("Watch got unexpected object type", "type", fmt.Sprintf("%T", obj))
 			return nil
 		}
 

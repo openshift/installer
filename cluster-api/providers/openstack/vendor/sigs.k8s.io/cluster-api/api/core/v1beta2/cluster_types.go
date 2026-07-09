@@ -80,17 +80,27 @@ const (
 	// failing due to an error.
 	ClusterTopologyReconciledFailedReason = "ReconcileFailed"
 
+	// ClusterTopologyReconciledClusterCreatingReason documents reconciliation of a Cluster topology
+	// not yet created because the BeforeClusterCreate hook is blocking.
+	ClusterTopologyReconciledClusterCreatingReason = "ClusterCreating"
+
 	// ClusterTopologyReconciledControlPlaneUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because Control Plane is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledControlPlaneUpgradePendingReason = "ControlPlaneUpgradePending"
 
 	// ClusterTopologyReconciledMachineDeploymentsCreatePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachineDeployments is yet to be created.
 	// This generally happens because new MachineDeployment creations are held off while the ControlPlane is not stable.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachineDeploymentsCreatePendingReason = "MachineDeploymentsCreatePending"
 
 	// ClusterTopologyReconciledMachineDeploymentsUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachineDeployments is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachineDeploymentsUpgradePendingReason = "MachineDeploymentsUpgradePending"
 
 	// ClusterTopologyReconciledMachineDeploymentsUpgradeDeferredReason documents reconciliation of a Cluster topology
@@ -99,11 +109,15 @@ const (
 
 	// ClusterTopologyReconciledMachinePoolsUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachinePoolsUpgradePendingReason = "MachinePoolsUpgradePending"
 
 	// ClusterTopologyReconciledMachinePoolsCreatePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is yet to be created.
 	// This generally happens because new MachinePool creations are held off while the ControlPlane is not stable.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachinePoolsCreatePendingReason = "MachinePoolsCreatePending"
 
 	// ClusterTopologyReconciledMachinePoolsUpgradeDeferredReason documents reconciliation of a Cluster topology
@@ -112,8 +126,13 @@ const (
 
 	// ClusterTopologyReconciledHookBlockingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the lifecycle hooks is blocking.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledHookBlockingReason = "LifecycleHookBlocking"
 
+	// ClusterTopologyReconciledClusterUpgradingReason documents reconciliation of a Cluster topology
+	// not yet completed because a cluster upgrade is still in progress.
+	ClusterTopologyReconciledClusterUpgradingReason = "ClusterUpgrading"
 	// ClusterTopologyReconciledClusterClassNotReconciledReason documents reconciliation of a Cluster topology not
 	// yet completed because the ClusterClass has not reconciled yet. If this condition persists there may be an issue
 	// with the ClusterClass surfaced in the ClusterClass status or controller logs.
@@ -484,8 +503,7 @@ type ClusterSpec struct {
 
 	// topology encapsulates the topology for the cluster.
 	// NOTE: It is required to enable the ClusterTopology
-	// feature gate flag to activate managed topologies support;
-	// this feature is highly experimental, and parts of it might still be not implemented.
+	// feature gate flag to activate managed topologies support.
 	// +optional
 	Topology Topology `json:"topology,omitempty,omitzero"`
 
@@ -614,6 +632,10 @@ type ControlPlaneTopology struct {
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
 
+	// rollout allows you to configure the behavior of rolling updates to the control plane.
+	// +optional
+	Rollout ControlPlaneTopologyRolloutSpec `json:"rollout,omitempty,omitzero"`
+
 	// healthCheck allows to enable, disable and override control plane health check
 	// configuration from the ClusterClass for this control plane.
 	// +optional
@@ -622,6 +644,23 @@ type ControlPlaneTopology struct {
 	// deletion contains configuration options for Machine deletion.
 	// +optional
 	Deletion ControlPlaneTopologyMachineDeletionSpec `json:"deletion,omitempty,omitzero"`
+
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
 
 	// readinessGates specifies additional conditions to include when evaluating Machine Ready condition.
 	//
@@ -642,6 +681,18 @@ type ControlPlaneTopology struct {
 	// variables can be used to customize the ControlPlane through patches.
 	// +optional
 	Variables ControlPlaneVariables `json:"variables,omitempty,omitzero"`
+}
+
+// ControlPlaneTopologyRolloutSpec defines the rollout behavior.
+// +kubebuilder:validation:MinProperties=1
+type ControlPlaneTopologyRolloutSpec struct {
+	// after is a field to indicate a rollout should be performed
+	// after the specified time even if no changes have been made to the ControlPlane.
+	// Example: In the YAML the time can be specified in the RFC3339 format.
+	// To specify the rolloutAfter target as March 9, 2023, at 9 am UTC
+	// use "2023-03-09T09:00:00Z".
+	// +optional
+	After metav1.Time `json:"after,omitempty,omitzero"`
 }
 
 // ControlPlaneTopologyHealthCheck defines a MachineHealthCheck for control plane machines.
@@ -725,6 +776,16 @@ type ControlPlaneTopologyHealthCheckChecks struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=100
 	UnhealthyNodeConditions []UnhealthyNodeCondition `json:"unhealthyNodeConditions,omitempty"`
+
+	// unhealthyMachineConditions contains a list of the machine conditions that determine
+	// whether a machine is considered unhealthy.  The conditions are combined in a
+	// logical OR, i.e. if any of the conditions is met, the machine is unhealthy.
+	//
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	UnhealthyMachineConditions []UnhealthyMachineCondition `json:"unhealthyMachineConditions,omitempty"`
 }
 
 // ControlPlaneTopologyHealthCheckRemediation configures if and how remediations are triggered if a control plane Machine is unhealthy.
@@ -862,6 +923,23 @@ type MachineDeploymentTopology struct {
 	// +optional
 	Deletion MachineDeploymentTopologyMachineDeletionSpec `json:"deletion,omitempty,omitzero"`
 
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
+
 	// minReadySeconds is the minimum number of seconds for which a newly created machine should
 	// be ready.
 	// Defaults to 0 (machine will be considered available as soon as it
@@ -975,6 +1053,16 @@ type MachineDeploymentTopologyHealthCheckChecks struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=100
 	UnhealthyNodeConditions []UnhealthyNodeCondition `json:"unhealthyNodeConditions,omitempty"`
+
+	// unhealthyMachineConditions contains a list of the machine conditions that determine
+	// whether a machine is considered unhealthy.  The conditions are combined in a
+	// logical OR, i.e. if any of the conditions is met, the machine is unhealthy.
+	//
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	UnhealthyMachineConditions []UnhealthyMachineCondition `json:"unhealthyMachineConditions,omitempty"`
 }
 
 // MachineDeploymentTopologyHealthCheckRemediation configures if and how remediations are triggered if a MachineDeployment Machine is unhealthy.
@@ -1069,6 +1157,15 @@ type MachineDeploymentTopologyMachineDeletionSpec struct {
 // MachineDeploymentTopologyRolloutSpec defines the rollout behavior.
 // +kubebuilder:validation:MinProperties=1
 type MachineDeploymentTopologyRolloutSpec struct {
+	// after is a field to indicate a rollout should be performed
+	// after the specified time even if no changes have been made to the
+	// MachineDeployment.
+	// Example: In the YAML the time can be specified in the RFC3339 format.
+	// To specify the rolloutAfter target as March 9, 2023, at 9 am UTC
+	// use "2023-03-09T09:00:00Z".
+	// +optional
+	After metav1.Time `json:"after,omitempty,omitzero"`
+
 	// strategy specifies how to roll out control plane Machines.
 	// +optional
 	Strategy MachineDeploymentTopologyRolloutStrategy `json:"strategy,omitempty,omitzero"`
@@ -1163,6 +1260,23 @@ type MachinePoolTopology struct {
 	// deletion contains configuration options for Machine deletion.
 	// +optional
 	Deletion MachinePoolTopologyMachineDeletionSpec `json:"deletion,omitempty,omitzero"`
+
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
 
 	// minReadySeconds is the minimum number of seconds for which a newly created machine pool should
 	// be ready.

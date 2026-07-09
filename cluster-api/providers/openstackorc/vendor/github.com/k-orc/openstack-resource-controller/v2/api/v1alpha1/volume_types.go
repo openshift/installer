@@ -42,6 +42,12 @@ type VolumeResourceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="volumeTypeRef is immutable"
 	VolumeTypeRef *KubernetesNameRef `json:"volumeTypeRef,omitempty"`
 
+	// availabilityZone is the availability zone in which to create the volume.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="availabilityZone is immutable"
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
+
 	// metadata key and value pairs to be associated with the volume.
 	// NOTE(mandre): gophercloud can't clear all metadata at the moment, we thus can't allow
 	// mutability for metadata as we might end up in a state that is not reconciliable
@@ -50,6 +56,13 @@ type VolumeResourceSpec struct {
 	// +listType=atomic
 	// +optional
 	Metadata []VolumeMetadata `json:"metadata,omitempty"`
+
+	// imageRef is a reference to an ORC Image. If specified, creates a
+	// bootable volume from this image. The volume size must be >= the
+	// image's min_disk requirement.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="imageRef is immutable"
+	ImageRef *KubernetesNameRef `json:"imageRef,omitempty"`
 }
 
 // VolumeFilter defines an existing resource by its properties
@@ -69,6 +82,11 @@ type VolumeFilter struct {
 	// +kubebuilder:validation:Minimum=1
 	// +optional
 	Size *int32 `json:"size,omitempty"`
+
+	// availabilityZone is the availability zone of the existing resource
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
 }
 
 type VolumeAttachmentStatus struct {
@@ -164,6 +182,11 @@ type VolumeResourceStatus struct {
 	// bootable indicates whether this is a bootable volume.
 	// +optional
 	Bootable *bool `json:"bootable,omitempty"`
+
+	// imageID is the ID of the image this volume was created from, if any.
+	// +kubebuilder:validation:MaxLength=1024
+	// +optional
+	ImageID string `json:"imageID,omitempty"`
 
 	// encrypted denotes if the volume is encrypted.
 	// +optional

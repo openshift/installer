@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,16 +25,22 @@ import (
 // PortResourceSpecApplyConfiguration represents a declarative configuration of the PortResourceSpec type for use
 // with apply.
 type PortResourceSpecApplyConfiguration struct {
-	Name                *apiv1alpha1.OpenStackName             `json:"name,omitempty"`
-	Description         *apiv1alpha1.NeutronDescription        `json:"description,omitempty"`
-	NetworkRef          *apiv1alpha1.KubernetesNameRef         `json:"networkRef,omitempty"`
-	Tags                []apiv1alpha1.NeutronTag               `json:"tags,omitempty"`
-	AllowedAddressPairs []AllowedAddressPairApplyConfiguration `json:"allowedAddressPairs,omitempty"`
-	Addresses           []AddressApplyConfiguration            `json:"addresses,omitempty"`
-	SecurityGroupRefs   []apiv1alpha1.OpenStackName            `json:"securityGroupRefs,omitempty"`
-	VNICType            *string                                `json:"vnicType,omitempty"`
-	PortSecurity        *apiv1alpha1.PortSecurityState         `json:"portSecurity,omitempty"`
-	ProjectRef          *apiv1alpha1.KubernetesNameRef         `json:"projectRef,omitempty"`
+	Name                  *apiv1alpha1.OpenStackName             `json:"name,omitempty"`
+	Description           *apiv1alpha1.NeutronDescription        `json:"description,omitempty"`
+	NetworkRef            *apiv1alpha1.KubernetesNameRef         `json:"networkRef,omitempty"`
+	Tags                  []apiv1alpha1.NeutronTag               `json:"tags,omitempty"`
+	AllowedAddressPairs   []AllowedAddressPairApplyConfiguration `json:"allowedAddressPairs,omitempty"`
+	Addresses             []AddressApplyConfiguration            `json:"addresses,omitempty"`
+	AdminStateUp          *bool                                  `json:"adminStateUp,omitempty"`
+	SecurityGroupRefs     []apiv1alpha1.KubernetesNameRef        `json:"securityGroupRefs,omitempty"`
+	VNICType              *string                                `json:"vnicType,omitempty"`
+	PortSecurity          *apiv1alpha1.PortSecurityState         `json:"portSecurity,omitempty"`
+	ProjectRef            *apiv1alpha1.KubernetesNameRef         `json:"projectRef,omitempty"`
+	MACAddress            *string                                `json:"macAddress,omitempty"`
+	HostID                *HostIDApplyConfiguration              `json:"hostID,omitempty"`
+	TrustedVIF            *bool                                  `json:"trustedVIF,omitempty"`
+	ValueSpecs            []PortValueSpecApplyConfiguration      `json:"valueSpecs,omitempty"`
+	PropagateUplinkStatus *bool                                  `json:"propagateUplinkStatus,omitempty"`
 }
 
 // PortResourceSpecApplyConfiguration constructs a declarative configuration of the PortResourceSpec type for use with
@@ -103,10 +109,18 @@ func (b *PortResourceSpecApplyConfiguration) WithAddresses(values ...*AddressApp
 	return b
 }
 
+// WithAdminStateUp sets the AdminStateUp field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AdminStateUp field is set to the value of the last call.
+func (b *PortResourceSpecApplyConfiguration) WithAdminStateUp(value bool) *PortResourceSpecApplyConfiguration {
+	b.AdminStateUp = &value
+	return b
+}
+
 // WithSecurityGroupRefs adds the given value to the SecurityGroupRefs field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the SecurityGroupRefs field.
-func (b *PortResourceSpecApplyConfiguration) WithSecurityGroupRefs(values ...apiv1alpha1.OpenStackName) *PortResourceSpecApplyConfiguration {
+func (b *PortResourceSpecApplyConfiguration) WithSecurityGroupRefs(values ...apiv1alpha1.KubernetesNameRef) *PortResourceSpecApplyConfiguration {
 	for i := range values {
 		b.SecurityGroupRefs = append(b.SecurityGroupRefs, values[i])
 	}
@@ -134,5 +148,50 @@ func (b *PortResourceSpecApplyConfiguration) WithPortSecurity(value apiv1alpha1.
 // If called multiple times, the ProjectRef field is set to the value of the last call.
 func (b *PortResourceSpecApplyConfiguration) WithProjectRef(value apiv1alpha1.KubernetesNameRef) *PortResourceSpecApplyConfiguration {
 	b.ProjectRef = &value
+	return b
+}
+
+// WithMACAddress sets the MACAddress field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MACAddress field is set to the value of the last call.
+func (b *PortResourceSpecApplyConfiguration) WithMACAddress(value string) *PortResourceSpecApplyConfiguration {
+	b.MACAddress = &value
+	return b
+}
+
+// WithHostID sets the HostID field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the HostID field is set to the value of the last call.
+func (b *PortResourceSpecApplyConfiguration) WithHostID(value *HostIDApplyConfiguration) *PortResourceSpecApplyConfiguration {
+	b.HostID = value
+	return b
+}
+
+// WithTrustedVIF sets the TrustedVIF field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the TrustedVIF field is set to the value of the last call.
+func (b *PortResourceSpecApplyConfiguration) WithTrustedVIF(value bool) *PortResourceSpecApplyConfiguration {
+	b.TrustedVIF = &value
+	return b
+}
+
+// WithValueSpecs adds the given value to the ValueSpecs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ValueSpecs field.
+func (b *PortResourceSpecApplyConfiguration) WithValueSpecs(values ...*PortValueSpecApplyConfiguration) *PortResourceSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithValueSpecs")
+		}
+		b.ValueSpecs = append(b.ValueSpecs, *values[i])
+	}
+	return b
+}
+
+// WithPropagateUplinkStatus sets the PropagateUplinkStatus field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the PropagateUplinkStatus field is set to the value of the last call.
+func (b *PortResourceSpecApplyConfiguration) WithPropagateUplinkStatus(value bool) *PortResourceSpecApplyConfiguration {
+	b.PropagateUplinkStatus = &value
 	return b
 }

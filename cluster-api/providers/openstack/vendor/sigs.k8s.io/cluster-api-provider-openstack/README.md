@@ -39,10 +39,14 @@ previous cluster managers such as [kops][kops] and
 
 This provider's versions are compatible with the following versions of Cluster API:
 
-|                                    | v1beta1 (v1.x) |
-|------------------------------------| -------------- |
-| OpenStack Provider v1alpha7 (v0.9) | ✓              |
-| OpenStack Provider v1beta1         | ✓              |
+| Minor release | CAPI version |
+|---------------|--------------|
+| v0.14         | >=v1.12      |
+| v0.13         | >=v1.11      |
+| v0.12         | >=v1.9       |
+
+This is based on the version of Cluster API that the provider was built and tested against.
+Older versions may work if the APIs have not changed.
 
 Each version of Cluster API for OpenStack will attempt to support two Kubernetes versions.
 
@@ -94,7 +98,7 @@ involved:
 - via the [cluster-api-openstack channel on Kubernetes Slack][slack]
 - via the [SIG-Cluster-Lifecycle Mailing List](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle).
 - during our Office Hours
-  - bi-weekly on Wednesdays @ 14:00 UTC on Zoom (link in meeting notes)
+  - bi-weekly on Wednesdays @ 12:00 UTC on Zoom (link in meeting notes)
   - Previous meetings:
     - [notes this year][office-hours-notes]
     - [notes in 2023][office-hours-notes-2023]

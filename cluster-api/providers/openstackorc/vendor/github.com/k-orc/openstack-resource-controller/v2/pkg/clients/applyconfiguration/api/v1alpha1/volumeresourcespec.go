@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import (
 // VolumeResourceSpecApplyConfiguration represents a declarative configuration of the VolumeResourceSpec type for use
 // with apply.
 type VolumeResourceSpecApplyConfiguration struct {
-	Name          *apiv1alpha1.OpenStackName         `json:"name,omitempty"`
-	Description   *string                            `json:"description,omitempty"`
-	Size          *int32                             `json:"size,omitempty"`
-	VolumeTypeRef *apiv1alpha1.KubernetesNameRef     `json:"volumeTypeRef,omitempty"`
-	Metadata      []VolumeMetadataApplyConfiguration `json:"metadata,omitempty"`
+	Name             *apiv1alpha1.OpenStackName         `json:"name,omitempty"`
+	Description      *string                            `json:"description,omitempty"`
+	Size             *int32                             `json:"size,omitempty"`
+	VolumeTypeRef    *apiv1alpha1.KubernetesNameRef     `json:"volumeTypeRef,omitempty"`
+	AvailabilityZone *string                            `json:"availabilityZone,omitempty"`
+	Metadata         []VolumeMetadataApplyConfiguration `json:"metadata,omitempty"`
+	ImageRef         *apiv1alpha1.KubernetesNameRef     `json:"imageRef,omitempty"`
 }
 
 // VolumeResourceSpecApplyConfiguration constructs a declarative configuration of the VolumeResourceSpec type for use with
@@ -70,6 +72,14 @@ func (b *VolumeResourceSpecApplyConfiguration) WithVolumeTypeRef(value apiv1alph
 	return b
 }
 
+// WithAvailabilityZone sets the AvailabilityZone field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AvailabilityZone field is set to the value of the last call.
+func (b *VolumeResourceSpecApplyConfiguration) WithAvailabilityZone(value string) *VolumeResourceSpecApplyConfiguration {
+	b.AvailabilityZone = &value
+	return b
+}
+
 // WithMetadata adds the given value to the Metadata field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Metadata field.
@@ -80,5 +90,13 @@ func (b *VolumeResourceSpecApplyConfiguration) WithMetadata(values ...*VolumeMet
 		}
 		b.Metadata = append(b.Metadata, *values[i])
 	}
+	return b
+}
+
+// WithImageRef sets the ImageRef field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ImageRef field is set to the value of the last call.
+func (b *VolumeResourceSpecApplyConfiguration) WithImageRef(value apiv1alpha1.KubernetesNameRef) *VolumeResourceSpecApplyConfiguration {
+	b.ImageRef = &value
 	return b
 }

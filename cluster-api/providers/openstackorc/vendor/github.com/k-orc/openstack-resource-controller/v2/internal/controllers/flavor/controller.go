@@ -19,6 +19,7 @@ package flavor
 import (
 	"context"
 	"errors"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -37,19 +38,24 @@ const controllerName = "flavor"
 // +kubebuilder:rbac:groups=openstack.k-orc.cloud,resources=flavors/status,verbs=get;update;patch
 
 type flavorReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return flavorReconcilerConstructor{scopeFactory: scopeFactory}
+	return &flavorReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (flavorReconcilerConstructor) GetName() string {
 	return controllerName
 }
 
+func (c *flavorReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (c flavorReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *flavorReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := ctrl.LoggerFrom(ctx)
 
 	builder := ctrl.NewControllerManagedBy(mgr).
@@ -63,6 +69,6 @@ func (c flavorReconcilerConstructor) SetupWithManager(ctx context.Context, mgr c
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, flavorHelperFactory{}, flavorStatusWriter{})
+	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, flavorHelperFactory{}, flavorStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 }

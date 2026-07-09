@@ -20,14 +20,23 @@ package v1beta1
 // provider identity to be used to provision cluster resources.
 // +kubebuilder:validation:XValidation:rule="(!has(self.region) && !has(oldSelf.region)) || self.region == oldSelf.region",message="region is immutable"
 type OpenStackIdentityReference struct {
-	// Name is the name of a secret in the same namespace as the resource being provisioned.
-	// The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-	// The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+	// Type specifies the identity reference type. Defaults to Secret for backward compatibility.
+	// +kubebuilder:validation:Enum=Secret;ClusterIdentity
+	// +kubebuilder:default=Secret
 	// +kubebuilder:validation:Required
+	Type string `json:"type,omitempty"`
+
+	// Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+	// or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+	// The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+	// The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
 	// CloudName specifies the name of the entry in the clouds.yaml file to use.
 	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
 	CloudName string `json:"cloudName"`
 
 	// Region specifies an OpenStack region to use. If specified, it overrides

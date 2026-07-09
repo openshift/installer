@@ -97,3 +97,7 @@ type NeutronStatusMetadata struct {
 // +kubebuilder:validation:MinLength:=1
 // +kubebuilder:validation:MaxLength:=253
 type KubernetesNameRef string
+
+// +kubebuilder:validation:MinLength:=1
+// +kubebuilder:validation:MaxLength:=64
+type KeystoneName string

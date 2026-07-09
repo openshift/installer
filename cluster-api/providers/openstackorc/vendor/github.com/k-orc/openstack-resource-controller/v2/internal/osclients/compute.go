@@ -49,8 +49,10 @@ const NovaMinimumMicroversion = "2.71"
 
 type ComputeClient interface {
 	CreateFlavor(ctx context.Context, opts flavors.CreateOptsBuilder) (*flavors.Flavor, error)
+	CreateFlavorExtraSpecs(ctx context.Context, id string, opts flavors.CreateExtraSpecsOptsBuilder) (map[string]string, error)
 	GetFlavor(ctx context.Context, id string) (*flavors.Flavor, error)
 	DeleteFlavor(ctx context.Context, id string) error
+	DeleteFlavorExtraSpec(ctx context.Context, id, key string) error
 	ListFlavors(ctx context.Context, listOpts flavors.ListOptsBuilder) iter.Seq2[*flavors.Flavor, error]
 
 	CreateServer(ctx context.Context, createOpts servers.CreateOptsBuilder, schedulerHints servers.SchedulerHintOptsBuilder) (*servers.Server, error)
@@ -72,6 +74,7 @@ type ComputeClient interface {
 	DeleteAttachedInterface(ctx context.Context, serverID, portID string) error
 
 	ReplaceAllServerAttributesTags(ctx context.Context, resourceID string, opts tags.ReplaceAllOptsBuilder) ([]string, error)
+	ReplaceServerMetadata(ctx context.Context, serverID string, opts servers.MetadataOpts) (map[string]string, error)
 }
 
 type computeClient struct{ client *gophercloud.ServiceClient }
@@ -106,8 +109,16 @@ func (c computeClient) CreateFlavor(ctx context.Context, opts flavors.CreateOpts
 	return flavors.Create(ctx, c.client, opts).Extract()
 }
 
+func (c computeClient) CreateFlavorExtraSpecs(ctx context.Context, id string, opts flavors.CreateExtraSpecsOptsBuilder) (map[string]string, error) {
+	return flavors.CreateExtraSpecs(ctx, c.client, id, opts).Extract()
+}
+
 func (c computeClient) DeleteFlavor(ctx context.Context, id string) error {
 	return flavors.Delete(ctx, c.client, id).ExtractErr()
+}
+
+func (c computeClient) DeleteFlavorExtraSpec(ctx context.Context, id, key string) error {
+	return flavors.DeleteExtraSpec(ctx, c.client, id, key).ExtractErr()
 }
 
 func (c computeClient) ListFlavors(ctx context.Context, opts flavors.ListOptsBuilder) iter.Seq2[*flavors.Flavor, error] {
@@ -187,6 +198,10 @@ func (c computeClient) ReplaceAllServerAttributesTags(ctx context.Context, resou
 	return tags.ReplaceAll(ctx, c.client, resourceID, opts).Extract()
 }
 
+func (c computeClient) ReplaceServerMetadata(ctx context.Context, serverID string, opts servers.MetadataOpts) (map[string]string, error) {
+	return servers.ResetMetadata(ctx, c.client, serverID, opts).Extract()
+}
+
 type computeErrorClient struct{ error }
 
 // NewComputeErrorClient returns a ComputeClient in which every method returns the given error.
@@ -196,10 +211,16 @@ func NewComputeErrorClient(e error) ComputeClient {
 func (e computeErrorClient) CreateFlavor(ctx context.Context, opts flavors.CreateOptsBuilder) (*flavors.Flavor, error) {
 	return nil, e.error
 }
+func (e computeErrorClient) CreateFlavorExtraSpecs(ctx context.Context, id string, opts flavors.CreateExtraSpecsOptsBuilder) (map[string]string, error) {
+	return nil, e.error
+}
 func (e computeErrorClient) GetFlavor(ctx context.Context, id string) (*flavors.Flavor, error) {
 	return nil, e.error
 }
 func (e computeErrorClient) DeleteFlavor(ctx context.Context, id string) error {
+	return e.error
+}
+func (e computeErrorClient) DeleteFlavorExtraSpec(ctx context.Context, id, key string) error {
 	return e.error
 }
 func (e computeErrorClient) ListFlavors(_ context.Context, _ flavors.ListOptsBuilder) iter.Seq2[*flavors.Flavor, error] {
@@ -273,5 +294,9 @@ func (e computeErrorClient) DeleteAttachedInterface(_ context.Context, _, _ stri
 }
 
 func (e computeErrorClient) ReplaceAllServerAttributesTags(_ context.Context, _ string, _ tags.ReplaceAllOptsBuilder) ([]string, error) {
+	return nil, e.error
+}
+
+func (e computeErrorClient) ReplaceServerMetadata(_ context.Context, _ string, _ servers.MetadataOpts) (map[string]string, error) {
 	return nil, e.error
 }

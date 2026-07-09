@@ -202,12 +202,10 @@ func (actuator volumetypeActuator) updateResource(ctx context.Context, obj orcOb
 
 	_, err = actuator.osClient.UpdateVolumeType(ctx, osResource.ID, updateOpts)
 
-	// We should require the spec to be updated before retrying an update which returned a conflict
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
-
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 

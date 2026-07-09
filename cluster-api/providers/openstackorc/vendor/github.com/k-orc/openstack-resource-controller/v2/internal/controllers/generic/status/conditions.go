@@ -40,6 +40,15 @@ func SetCommonConditions[T any](
 	reconcileStatus progress.ReconcileStatus,
 	now metav1.Time,
 ) {
+	// Terminal errors make the resource definitively unavailable.
+	// Override Unknown → False so Available matches the error severity.
+	if availableStatus != metav1.ConditionTrue {
+		var terminalErr *orcerrors.TerminalError
+		if errors.As(reconcileStatus.GetError(), &terminalErr) {
+			availableStatus = metav1.ConditionFalse
+		}
+	}
+
 	availableCondition := applyconfigv1.Condition().
 		WithType(orcv1alpha1.ConditionAvailable).
 		WithStatus(availableStatus).

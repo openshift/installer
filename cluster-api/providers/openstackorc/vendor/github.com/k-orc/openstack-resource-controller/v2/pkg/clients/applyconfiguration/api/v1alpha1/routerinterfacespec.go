@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,16 @@ package v1alpha1
 
 import (
 	apiv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // RouterInterfaceSpecApplyConfiguration represents a declarative configuration of the RouterInterfaceSpec type for use
 // with apply.
 type RouterInterfaceSpecApplyConfiguration struct {
-	Type      *apiv1alpha1.RouterInterfaceType `json:"type,omitempty"`
-	RouterRef *apiv1alpha1.KubernetesNameRef   `json:"routerRef,omitempty"`
-	SubnetRef *apiv1alpha1.KubernetesNameRef   `json:"subnetRef,omitempty"`
+	Type         *apiv1alpha1.RouterInterfaceType `json:"type,omitempty"`
+	RouterRef    *apiv1alpha1.KubernetesNameRef   `json:"routerRef,omitempty"`
+	SubnetRef    *apiv1alpha1.KubernetesNameRef   `json:"subnetRef,omitempty"`
+	ResyncPeriod *v1.Duration                     `json:"resyncPeriod,omitempty"`
 }
 
 // RouterInterfaceSpecApplyConfiguration constructs a declarative configuration of the RouterInterfaceSpec type for use with
@@ -57,5 +59,13 @@ func (b *RouterInterfaceSpecApplyConfiguration) WithRouterRef(value apiv1alpha1.
 // If called multiple times, the SubnetRef field is set to the value of the last call.
 func (b *RouterInterfaceSpecApplyConfiguration) WithSubnetRef(value apiv1alpha1.KubernetesNameRef) *RouterInterfaceSpecApplyConfiguration {
 	b.SubnetRef = &value
+	return b
+}
+
+// WithResyncPeriod sets the ResyncPeriod field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ResyncPeriod field is set to the value of the last call.
+func (b *RouterInterfaceSpecApplyConfiguration) WithResyncPeriod(value v1.Duration) *RouterInterfaceSpecApplyConfiguration {
+	b.ResyncPeriod = &value
 	return b
 }

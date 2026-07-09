@@ -64,6 +64,9 @@ func createStatusUpdate(orcObject *orcv1alpha1.RouterInterface, port *osclients.
 	isAvailable, statusReconcileStatus := getStatusSummary(port)
 	reconcileStatus = reconcileStatus.WithReconcileStatus(statusReconcileStatus)
 	status.SetCommonConditions(orcObject, applyConfigStatus, isAvailable, reconcileStatus, now)
+	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); !needsReschedule {
+		applyConfigStatus.WithLastSyncTime(now)
+	}
 
 	return applyConfig, reconcileStatus
 }

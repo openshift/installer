@@ -25,9 +25,9 @@ import (
 
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsbinding"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsecurity"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portstrustedvif"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,6 +37,7 @@ import (
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	osclients "github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/tags"
 )
@@ -56,6 +57,45 @@ const (
 	// The frequency to poll when waiting for a server to become active
 	serverBuildPollingPeriod = 15 * time.Second
 )
+
+// resolveHostID resolves the actual host ID string to use for port binding.
+// It handles both direct ID specification and server reference.
+// Returns the resolved host ID and a reconcile status (for waiting on dependencies).
+func resolveHostID(
+	ctx context.Context,
+	k8sClient client.Client,
+	obj orcObjectPT,
+	hostIDSpec *orcv1alpha1.HostID,
+) (string, progress.ReconcileStatus) {
+	if hostIDSpec == nil {
+		return "", nil
+	}
+
+	// Direct ID specification
+	if hostIDSpec.ID != "" {
+		return hostIDSpec.ID, nil
+	}
+
+	// Server reference - fetch the server and extract its hostID
+	if hostIDSpec.ServerRef != "" {
+		server, serverDepRS := dependency.FetchDependency(
+			ctx, k8sClient, obj.Namespace, &hostIDSpec.ServerRef, "Server",
+			func(dep *orcv1alpha1.Server) bool {
+				return orcv1alpha1.IsAvailable(dep) &&
+					dep.Status.Resource != nil &&
+					dep.Status.Resource.HostID != ""
+			},
+		)
+		if needsReschedule, _ := serverDepRS.NeedsReschedule(); needsReschedule {
+			return "", serverDepRS
+		}
+		if server != nil && server.Status.Resource != nil {
+			return server.Status.Resource.HostID, nil
+		}
+	}
+
+	return "", nil
+}
 
 type portActuator struct {
 	osClient  osclients.NetworkClient
@@ -78,68 +118,77 @@ func (actuator portActuator) GetOSResourceByID(ctx context.Context, id string) (
 }
 
 func (actuator portActuator) ListOSResourcesForAdoption(ctx context.Context, obj *orcv1alpha1.Port) (portIterator, bool) {
-	if obj.Spec.Resource == nil {
+	resource := obj.Spec.Resource
+	if resource == nil {
 		return nil, false
 	}
 
-	listOpts := ports.ListOpts{Name: getResourceName(obj)}
+	// Resolve the network ID from NetworkRef. Without the network ID,
+	// adoption could match a port on the wrong network.
+	network, rs := dependency.FetchDependency(
+		ctx, actuator.k8sClient, obj.Namespace, &resource.NetworkRef, "Network",
+		func(dep *orcv1alpha1.Network) bool {
+			return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+		},
+	)
+	if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+		return nil, false
+	}
+
+	// Resolve the project ID from ProjectRef if set.
+	var projectID string
+	if resource.ProjectRef != nil {
+		project, rs := dependency.FetchDependency(
+			ctx, actuator.k8sClient, obj.Namespace, resource.ProjectRef, "Project",
+			func(dep *orcv1alpha1.Project) bool {
+				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+			},
+		)
+		if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+			return nil, false
+		}
+		projectID = ptr.Deref(project.Status.ID, "")
+	}
+
+	listOpts := ports.ListOpts{
+		Name:       getResourceName(obj),
+		NetworkID:  ptr.Deref(network.Status.ID, ""),
+		MACAddress: resource.MACAddress,
+		ProjectID:  projectID,
+	}
 	return actuator.osClient.ListPort(ctx, listOpts), true
 }
 
 func (actuator portActuator) ListOSResourcesForImport(ctx context.Context, obj orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
 	var reconcileStatus progress.ReconcileStatus
 
-	network := &orcv1alpha1.Network{}
-	if filter.NetworkRef != "" {
-		networkKey := client.ObjectKey{Name: string(filter.NetworkRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, networkKey, network); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Network", networkKey.Name, progress.WaitingOnCreation))
-			} else {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WrapError(fmt.Errorf("fetching network %s: %w", networkKey.Name, err)))
-			}
-		} else {
-			if !orcv1alpha1.IsAvailable(network) || network.Status.ID == nil {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Network", networkKey.Name, progress.WaitingOnReady))
-			}
-		}
-	}
+	network, rs := dependency.FetchDependency[*orcv1alpha1.Network](
+		ctx, actuator.k8sClient, obj.Namespace, &filter.NetworkRef, "Network",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
 
-	project := &orcv1alpha1.Project{}
-	if filter.ProjectRef != nil {
-		projectKey := client.ObjectKey{Name: string(*filter.ProjectRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, projectKey, project); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnCreation))
-			} else {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WrapError(fmt.Errorf("fetching project %s: %w", projectKey.Name, err)))
-			}
-		} else {
-			if !orcv1alpha1.IsAvailable(project) || project.Status.ID == nil {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnReady))
-			}
-		}
-	}
+	project, rs := dependency.FetchDependency[*orcv1alpha1.Project](
+		ctx, actuator.k8sClient, obj.Namespace, filter.ProjectRef, "Project",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 		return nil, reconcileStatus
 	}
 
 	listOpts := ports.ListOpts{
-		Name:        string(ptr.Deref(filter.Name, "")),
-		Description: string(ptr.Deref(filter.Description, "")),
-		NetworkID:   ptr.Deref(network.Status.ID, ""),
-		ProjectID:   ptr.Deref(project.Status.ID, ""),
-		Tags:        tags.Join(filter.Tags),
-		TagsAny:     tags.Join(filter.TagsAny),
-		NotTags:     tags.Join(filter.NotTags),
-		NotTagsAny:  tags.Join(filter.NotTagsAny),
+		Name:         string(ptr.Deref(filter.Name, "")),
+		Description:  string(ptr.Deref(filter.Description, "")),
+		NetworkID:    ptr.Deref(network.Status.ID, ""),
+		ProjectID:    ptr.Deref(project.Status.ID, ""),
+		Tags:         tags.Join(filter.Tags),
+		TagsAny:      tags.Join(filter.TagsAny),
+		NotTags:      tags.Join(filter.NotTags),
+		NotTagsAny:   tags.Join(filter.NotTagsAny),
+		AdminStateUp: filter.AdminStateUp,
+		MACAddress:   filter.MACAddress,
 	}
 
 	return actuator.osClient.ListPort(ctx, listOpts), nil
@@ -154,19 +203,13 @@ func (actuator portActuator) CreateResource(ctx context.Context, obj *orcv1alpha
 
 	// Fetch all dependencies and ensure they have our finalizer
 	network, networkDepRS := networkDependency.GetDependency(
-		ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Network) bool {
-			return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 	subnetMap, subnetDepRS := subnetDependency.GetDependencies(
-		ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Subnet) bool {
-			return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 	secGroupMap, secGroupDepRS := securityGroupDependency.GetDependencies(
-		ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.SecurityGroup) bool {
-			return dep.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 	reconcileStatus := progress.NewReconcileStatus().
 		WithReconcileStatus(networkDepRS).
@@ -176,9 +219,7 @@ func (actuator portActuator) CreateResource(ctx context.Context, obj *orcv1alpha
 	var projectID string
 	if resource.ProjectRef != nil {
 		project, projectDepRS := projectDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Project) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(projectDepRS)
 		if project != nil {
@@ -186,15 +227,36 @@ func (actuator portActuator) CreateResource(ctx context.Context, obj *orcv1alpha
 		}
 	}
 
+	// Resolve hostID if specified
+	var resolvedHostID string
+	if resource.HostID != nil {
+		var hostIDReconcileStatus progress.ReconcileStatus
+		resolvedHostID, hostIDReconcileStatus = resolveHostID(ctx, actuator.k8sClient, obj, resource.HostID)
+		reconcileStatus = reconcileStatus.WithReconcileStatus(hostIDReconcileStatus)
+	}
+
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 		return nil, reconcileStatus
 	}
 
+	var valueSpecs *map[string]string
+	if len(resource.ValueSpecs) > 0 {
+		vs := make(map[string]string, len(resource.ValueSpecs))
+		for _, valueSpec := range resource.ValueSpecs {
+			vs[valueSpec.Key] = *valueSpec.Value
+		}
+		valueSpecs = &vs
+	}
+
 	createOpts := ports.CreateOpts{
-		NetworkID:   *network.Status.ID,
-		Name:        getResourceName(obj),
-		Description: string(ptr.Deref(resource.Description, "")),
-		ProjectID:   projectID,
+		NetworkID:             *network.Status.ID,
+		Name:                  getResourceName(obj),
+		Description:           string(ptr.Deref(resource.Description, "")),
+		ProjectID:             projectID,
+		AdminStateUp:          resource.AdminStateUp,
+		MACAddress:            resource.MACAddress,
+		ValueSpecs:            valueSpecs,
+		PropagateUplinkStatus: resource.PropagateUplinkStatus,
 	}
 
 	if len(resource.AllowedAddressPairs) > 0 {
@@ -250,6 +312,7 @@ func (actuator portActuator) CreateResource(ctx context.Context, obj *orcv1alpha
 	portsBindingOpts := portsbinding.CreateOptsExt{
 		CreateOptsBuilder: createOpts,
 		VNICType:          resource.VNICType,
+		HostID:            resolvedHostID,
 	}
 
 	portSecurityOpts := portsecurity.PortCreateOptsExt{
@@ -267,10 +330,17 @@ func (actuator portActuator) CreateResource(ctx context.Context, obj *orcv1alpha
 			orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, fmt.Sprintf("Invalid value %s", resource.PortSecurity)))
 	}
 
-	osResource, err := actuator.osClient.CreatePort(ctx, &portSecurityOpts)
+	portTrustedOpts := portstrustedvif.PortCreateOptsExt{
+		CreateOptsBuilder: portSecurityOpts,
+	}
+	if resource.TrustedVIF != nil {
+		portTrustedOpts.PortTrustedVIF = resource.TrustedVIF
+	}
+
+	osResource, err := actuator.osClient.CreatePort(ctx, &portTrustedOpts)
 	if err != nil {
-		// We should require the spec to be updated before retrying a create which returned a conflict
-		if orcerrors.IsConflict(err) {
+		// We should require the spec to be updated before retrying a create which returned a non-retryable error
+		if !orcerrors.IsRetryable(err) {
 			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+err.Error(), err)
 		}
 		return nil, progress.WrapError(err)
@@ -339,9 +409,7 @@ func (actuator portActuator) updateResource(ctx context.Context, obj orcObjectPT
 	}
 
 	secGroupMap, secGroupDepRS := securityGroupDependency.GetDependencies(
-		ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.SecurityGroup) bool {
-			return dep.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 
 	reconcileStatus := progress.NewReconcileStatus().
@@ -361,11 +429,13 @@ func (actuator portActuator) updateResource(ctx context.Context, obj orcObjectPT
 		handleDescriptionUpdate(baseUpdateOpts, resource, osResource)
 		handleAllowedAddressPairsUpdate(baseUpdateOpts, resource, osResource)
 		handleSecurityGroupRefsUpdate(baseUpdateOpts, resource, osResource, secGroupMap)
+		handleAdminStateUpUpdate(baseUpdateOpts, resource, osResource)
 		updateOpts = baseUpdateOpts
 	}
 
 	updateOpts = handlePortBindingUpdate(updateOpts, resource, osResource)
 	updateOpts = handlePortSecurityUpdate(updateOpts, resource, osResource)
+	updateOpts = handlePortTrustedVIFUpdate(updateOpts, resource, osResource)
 
 	needsUpdate, err := needsUpdate(updateOpts)
 	if err != nil {
@@ -379,12 +449,10 @@ func (actuator portActuator) updateResource(ctx context.Context, obj orcObjectPT
 
 	_, err = actuator.osClient.UpdatePort(ctx, osResource.ID, updateOpts)
 
-	// We should require the spec to be updated before retrying an update which returned a conflict
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
-
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 
@@ -499,6 +567,7 @@ func handlePortBindingUpdate(updateOpts ports.UpdateOptsBuilder, resource *resou
 			}
 		}
 	}
+
 	return updateOpts
 }
 
@@ -521,6 +590,29 @@ func handlePortSecurityUpdate(updateOpts ports.UpdateOptsBuilder, resource *reso
 		updateOpts = &portsecurity.PortUpdateOptsExt{
 			UpdateOptsBuilder:   updateOpts,
 			PortSecurityEnabled: desiredState,
+		}
+	}
+
+	return updateOpts
+}
+
+func handleAdminStateUpUpdate(updateOpts *ports.UpdateOpts, resource *resourceSpecT, osResource *osResourceT) {
+	adminStateUp := resource.AdminStateUp
+	if adminStateUp != nil {
+		if *adminStateUp != osResource.AdminStateUp {
+			updateOpts.AdminStateUp = adminStateUp
+		}
+	}
+}
+
+func handlePortTrustedVIFUpdate(updateOpts ports.UpdateOptsBuilder, resource *resourceSpecT, osResource *osResourceT) ports.UpdateOptsBuilder {
+	trusted := resource.TrustedVIF
+	if trusted != nil {
+		if osResource.PortTrustedVIF == nil || *trusted != *osResource.PortTrustedVIF {
+			updateOpts = portstrustedvif.PortUpdateOptsExt{
+				UpdateOptsBuilder: updateOpts,
+				PortTrustedVIF:    trusted,
+			}
 		}
 	}
 

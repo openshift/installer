@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,15 +25,19 @@ import (
 // ServerResourceSpecApplyConfiguration represents a declarative configuration of the ServerResourceSpec type for use
 // with apply.
 type ServerResourceSpecApplyConfiguration struct {
-	Name             *apiv1alpha1.OpenStackName           `json:"name,omitempty"`
-	ImageRef         *apiv1alpha1.KubernetesNameRef       `json:"imageRef,omitempty"`
-	FlavorRef        *apiv1alpha1.KubernetesNameRef       `json:"flavorRef,omitempty"`
-	UserData         *UserDataSpecApplyConfiguration      `json:"userData,omitempty"`
-	Ports            []ServerPortSpecApplyConfiguration   `json:"ports,omitempty"`
-	Volumes          []ServerVolumeSpecApplyConfiguration `json:"volumes,omitempty"`
-	ServerGroupRef   *apiv1alpha1.KubernetesNameRef       `json:"serverGroupRef,omitempty"`
-	AvailabilityZone *string                              `json:"availabilityZone,omitempty"`
-	Tags             []apiv1alpha1.ServerTag              `json:"tags,omitempty"`
+	Name             *apiv1alpha1.OpenStackName              `json:"name,omitempty"`
+	ImageRef         *apiv1alpha1.KubernetesNameRef          `json:"imageRef,omitempty"`
+	FlavorRef        *apiv1alpha1.KubernetesNameRef          `json:"flavorRef,omitempty"`
+	BootVolume       *ServerBootVolumeSpecApplyConfiguration `json:"bootVolume,omitempty"`
+	UserData         *UserDataSpecApplyConfiguration         `json:"userData,omitempty"`
+	Ports            []ServerPortSpecApplyConfiguration      `json:"ports,omitempty"`
+	Volumes          []ServerVolumeSpecApplyConfiguration    `json:"volumes,omitempty"`
+	AvailabilityZone *string                                 `json:"availabilityZone,omitempty"`
+	KeypairRef       *apiv1alpha1.KubernetesNameRef          `json:"keypairRef,omitempty"`
+	Tags             []apiv1alpha1.ServerTag                 `json:"tags,omitempty"`
+	Metadata         []ServerMetadataApplyConfiguration      `json:"metadata,omitempty"`
+	ConfigDrive      *bool                                   `json:"configDrive,omitempty"`
+	SchedulerHints   *ServerSchedulerHintsApplyConfiguration `json:"schedulerHints,omitempty"`
 }
 
 // ServerResourceSpecApplyConfiguration constructs a declarative configuration of the ServerResourceSpec type for use with
@@ -63,6 +67,14 @@ func (b *ServerResourceSpecApplyConfiguration) WithImageRef(value apiv1alpha1.Ku
 // If called multiple times, the FlavorRef field is set to the value of the last call.
 func (b *ServerResourceSpecApplyConfiguration) WithFlavorRef(value apiv1alpha1.KubernetesNameRef) *ServerResourceSpecApplyConfiguration {
 	b.FlavorRef = &value
+	return b
+}
+
+// WithBootVolume sets the BootVolume field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the BootVolume field is set to the value of the last call.
+func (b *ServerResourceSpecApplyConfiguration) WithBootVolume(value *ServerBootVolumeSpecApplyConfiguration) *ServerResourceSpecApplyConfiguration {
+	b.BootVolume = value
 	return b
 }
 
@@ -100,19 +112,19 @@ func (b *ServerResourceSpecApplyConfiguration) WithVolumes(values ...*ServerVolu
 	return b
 }
 
-// WithServerGroupRef sets the ServerGroupRef field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ServerGroupRef field is set to the value of the last call.
-func (b *ServerResourceSpecApplyConfiguration) WithServerGroupRef(value apiv1alpha1.KubernetesNameRef) *ServerResourceSpecApplyConfiguration {
-	b.ServerGroupRef = &value
-	return b
-}
-
 // WithAvailabilityZone sets the AvailabilityZone field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AvailabilityZone field is set to the value of the last call.
 func (b *ServerResourceSpecApplyConfiguration) WithAvailabilityZone(value string) *ServerResourceSpecApplyConfiguration {
 	b.AvailabilityZone = &value
+	return b
+}
+
+// WithKeypairRef sets the KeypairRef field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the KeypairRef field is set to the value of the last call.
+func (b *ServerResourceSpecApplyConfiguration) WithKeypairRef(value apiv1alpha1.KubernetesNameRef) *ServerResourceSpecApplyConfiguration {
+	b.KeypairRef = &value
 	return b
 }
 
@@ -123,5 +135,34 @@ func (b *ServerResourceSpecApplyConfiguration) WithTags(values ...apiv1alpha1.Se
 	for i := range values {
 		b.Tags = append(b.Tags, values[i])
 	}
+	return b
+}
+
+// WithMetadata adds the given value to the Metadata field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Metadata field.
+func (b *ServerResourceSpecApplyConfiguration) WithMetadata(values ...*ServerMetadataApplyConfiguration) *ServerResourceSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMetadata")
+		}
+		b.Metadata = append(b.Metadata, *values[i])
+	}
+	return b
+}
+
+// WithConfigDrive sets the ConfigDrive field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ConfigDrive field is set to the value of the last call.
+func (b *ServerResourceSpecApplyConfiguration) WithConfigDrive(value bool) *ServerResourceSpecApplyConfiguration {
+	b.ConfigDrive = &value
+	return b
+}
+
+// WithSchedulerHints sets the SchedulerHints field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SchedulerHints field is set to the value of the last call.
+func (b *ServerResourceSpecApplyConfiguration) WithSchedulerHints(value *ServerSchedulerHintsApplyConfiguration) *ServerResourceSpecApplyConfiguration {
+	b.SchedulerHints = value
 	return b
 }

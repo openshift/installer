@@ -66,10 +66,10 @@ const (
 	// * KCP adds its own pre-terminate hook on all Machines it controls. This is done to ensure it can later remove
 	//   the etcd member right before Machine termination (i.e. before InfraMachine deletion).
 	// * Starting with Kubernetes v1.31 the KCP pre-terminate hook will wait for all other pre-terminate hooks to finish to
-	//   ensure it runs last (thus ensuring that kubelet is still working while other pre-terminate hooks run). This is only done
-	//   for v1.31 or above because the kubeadm ControlPlaneKubeletLocalMode was introduced with kubeadm 1.31. This feature configures
-	//   the kubelet to communicate with the local apiserver. Only because of that the kubelet immediately starts failing after the etcd
-	//   member is removed. We need the ControlPlaneKubeletLocalMode feature with 1.31 to adhere to the kubelet skew policy.
+	//   ensure it runs last (thus ensuring that kubelet is still working while other pre-terminate hooks run). This is done
+	//   for v1.31 or above because the kubeadm ControlPlaneKubeletLocalMode was introduced with kubeadm 1.31 (graduated to GA in 1.36).
+	//   This feature configures the kubelet to communicate with the local apiserver. Only because of that the kubelet immediately
+	//   starts failing after the etcd member is removed. We need the ControlPlaneKubeletLocalMode feature with 1.31+ to adhere to the kubelet skew policy.
 	PreTerminateDeleteHookAnnotationPrefix = "pre-terminate.delete.hook.machine.cluster.x-k8s.io"
 
 	// MachineCertificatesExpiryDateAnnotation annotation specifies the expiry date of the machine certificates in RFC3339 format.
@@ -458,6 +458,23 @@ type MachineSpec struct {
 	// Defaults to 10 seconds.
 	// +optional
 	NodeDeletionTimeout *metav1.Duration `json:"nodeDeletionTimeout,omitempty"`
+
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
 }
 
 // MachineReadinessGate contains the type of a Machine condition to be used as a readiness gate.

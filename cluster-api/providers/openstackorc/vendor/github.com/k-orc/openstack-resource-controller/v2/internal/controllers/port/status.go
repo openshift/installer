@@ -67,12 +67,12 @@ func (portStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osResou
 		WithNetworkID(osResource.NetworkID).
 		WithTags(osResource.Tags...).
 		WithSecurityGroups(osResource.SecurityGroups...).
-		WithPropagateUplinkStatus(osResource.PropagateUplinkStatus).
 		WithVNICType(osResource.VNICType).
 		WithPortSecurityEnabled(osResource.PortSecurityEnabled).
 		WithRevisionNumber(int64(osResource.RevisionNumber)).
 		WithCreatedAt(metav1.NewTime(osResource.CreatedAt)).
-		WithUpdatedAt(metav1.NewTime(osResource.UpdatedAt))
+		WithUpdatedAt(metav1.NewTime(osResource.UpdatedAt)).
+		WithHostID(osResource.HostID)
 
 	if osResource.Description != "" {
 		resourceStatus.WithDescription(osResource.Description)
@@ -101,6 +101,14 @@ func (portStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osResou
 				WithSubnetID(osResource.FixedIPs[i].SubnetID)
 		}
 		resourceStatus.WithFixedIPs(fixedIPs...)
+	}
+
+	if osResource.PortTrustedVIF != nil {
+		resourceStatus.WithTrustedVIF(*osResource.PortTrustedVIF)
+	}
+
+	if osResource.PropagateUplinkStatusPtr != nil {
+		resourceStatus.WithPropagateUplinkStatus(*osResource.PropagateUplinkStatusPtr)
 	}
 
 	statusApply.WithResource(resourceStatus)

@@ -18,6 +18,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"iter"
 	"maps"
@@ -25,10 +26,10 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/attachinterfaces"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/keypairs"
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/volumeattach"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,6 +39,7 @@ import (
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/tags"
 )
@@ -149,6 +151,98 @@ func (actuator serverActuator) ListOSResourcesForImport(ctx context.Context, obj
 	return wrapServers(actuator.osClient.ListServers(ctx, listOpts)), nil
 }
 
+func (actuator serverActuator) getSchedulerHints(ctx context.Context, obj *orcv1alpha1.Server, resource *orcv1alpha1.ServerResourceSpec) (servers.SchedulerHintOpts, progress.ReconcileStatus) {
+	hints := servers.SchedulerHintOpts{}
+
+	if resource.SchedulerHints == nil {
+		return hints, progress.NewReconcileStatus()
+	}
+
+	schedHints := resource.SchedulerHints
+	reconcileStatus := progress.NewReconcileStatus()
+
+	// Resolve ServerGroupRef to server group ID
+	sg, sgReconcileStatus := dependency.FetchDependency[*orcv1alpha1.ServerGroup](
+		ctx, actuator.k8sClient, obj.Namespace,
+		schedHints.ServerGroupRef, "ServerGroup",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(sgReconcileStatus)
+	if sg.Status.ID != nil {
+		hints.Group = *sg.Status.ID
+	}
+
+	// Resolve differentHostServerRefs to server IDs
+	if len(schedHints.DifferentHostServerRefs) > 0 {
+		differentHost := make([]string, 0, len(schedHints.DifferentHostServerRefs))
+		for i := range schedHints.DifferentHostServerRefs {
+			ref := &schedHints.DifferentHostServerRefs[i]
+			server, serverReconcileStatus := dependency.FetchDependency(
+				ctx, actuator.k8sClient, obj.Namespace,
+				ref, "Server",
+				func(s *orcv1alpha1.Server) bool {
+					return s.Status.ID != nil &&
+						s.Status.Resource != nil &&
+						s.Status.Resource.Status == "ACTIVE"
+				},
+			)
+			reconcileStatus = reconcileStatus.WithReconcileStatus(serverReconcileStatus)
+			if server.Status.ID != nil {
+				differentHost = append(differentHost, *server.Status.ID)
+			}
+		}
+		hints.DifferentHost = differentHost
+	}
+
+	// Resolve sameHostServerRefs to server IDs
+	if len(schedHints.SameHostServerRefs) > 0 {
+		sameHost := make([]string, 0, len(schedHints.SameHostServerRefs))
+		for i := range schedHints.SameHostServerRefs {
+			ref := &schedHints.SameHostServerRefs[i]
+			server, serverReconcileStatus := dependency.FetchDependency(
+				ctx, actuator.k8sClient, obj.Namespace,
+				ref, "Server",
+				func(s *orcv1alpha1.Server) bool {
+					return s.Status.ID != nil &&
+						s.Status.Resource != nil &&
+						s.Status.Resource.Status == "ACTIVE"
+				},
+			)
+			reconcileStatus = reconcileStatus.WithReconcileStatus(serverReconcileStatus)
+			if server.Status.ID != nil {
+				sameHost = append(sameHost, *server.Status.ID)
+			}
+		}
+		hints.SameHost = sameHost
+	}
+
+	if schedHints.Query != "" {
+		var query []any
+		if err := json.Unmarshal([]byte(schedHints.Query), &query); err != nil {
+			return hints, progress.WrapError(orcerrors.Terminal(
+				orcv1alpha1.ConditionReasonInvalidConfiguration,
+				"invalid scheduler hints query: "+err.Error(), err))
+		}
+		hints.Query = query
+	}
+	if schedHints.TargetCell != "" {
+		hints.TargetCell = schedHints.TargetCell
+	}
+	hints.DifferentCell = schedHints.DifferentCell
+	if schedHints.BuildNearHostIP != nil {
+		hints.BuildNearHostIP = string(ptr.Deref(schedHints.BuildNearHostIP, ""))
+	}
+	if schedHints.AdditionalProperties != nil {
+		additionalProps := make(map[string]any, len(schedHints.AdditionalProperties))
+		for k, v := range schedHints.AdditionalProperties {
+			additionalProps[k] = v
+		}
+		hints.AdditionalProperties = additionalProps
+	}
+
+	return hints, reconcileStatus
+}
+
 func (actuator serverActuator) CreateResource(ctx context.Context, obj *orcv1alpha1.Server) (*osResourceT, progress.ReconcileStatus) {
 	resource := obj.Spec.Resource
 	if resource == nil {
@@ -159,37 +253,54 @@ func (actuator serverActuator) CreateResource(ctx context.Context, obj *orcv1alp
 
 	reconcileStatus := progress.NewReconcileStatus()
 
-	var image *orcv1alpha1.Image
-	{
+	// Determine if we're booting from volume or image
+	bootFromVolume := resource.BootVolume != nil
+
+	var imageID string
+	if !bootFromVolume {
+		// Traditional boot from image
 		dep, imageReconcileStatus := imageDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(image *orcv1alpha1.Image) bool {
-				return orcv1alpha1.IsAvailable(image) && image.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(imageReconcileStatus)
-		image = dep
-	}
-
-	flavor := &orcv1alpha1.Flavor{}
-	{
-		flavorKey := client.ObjectKey{Name: string(resource.FlavorRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, flavorKey, flavor); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WaitingOnObject("Flavor", flavorKey.Name, progress.WaitingOnCreation)
-			} else {
-				return nil, reconcileStatus.WithError(fmt.Errorf("fetching flavor %s: %w", flavorKey.Name, err))
-			}
-		} else if !orcv1alpha1.IsAvailable(flavor) || flavor.Status.ID == nil {
-			reconcileStatus = reconcileStatus.WaitingOnObject("Flavor", flavorKey.Name, progress.WaitingOnReady)
+		if dep != nil && dep.Status.ID != nil {
+			imageID = *dep.Status.ID
 		}
 	}
+
+	// Resolve boot volume for boot-from-volume
+	var blockDevices []servers.BlockDevice
+	if bootFromVolume {
+		bootVolume, bvReconcileStatus := bootVolumeDependency.GetDependency(
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
+		)
+		reconcileStatus = reconcileStatus.WithReconcileStatus(bvReconcileStatus)
+
+		if bootVolume != nil && bootVolume.Status.ID != nil {
+			bd := servers.BlockDevice{
+				SourceType:      servers.SourceVolume,
+				DestinationType: servers.DestinationVolume,
+				UUID:            *bootVolume.Status.ID,
+				BootIndex:       0, // Always 0 for boot volume
+			}
+			if resource.BootVolume.Tag != nil {
+				bd.Tag = *resource.BootVolume.Tag
+			}
+			blockDevices = append(blockDevices, bd)
+		}
+	}
+
+	flavor, flavorReconcileStatus := dependency.FetchDependency[*orcv1alpha1.Flavor](
+		ctx, actuator.k8sClient, obj.Namespace,
+		&resource.FlavorRef, "Flavor",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(flavorReconcileStatus)
 
 	portList := make([]servers.Network, len(resource.Ports))
 	{
 		portsMap, portsReconcileStatus := portDependency.GetDependencies(
-			ctx, actuator.k8sClient, obj, func(port *orcv1alpha1.Port) bool {
-				return port.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(portsReconcileStatus)
 		if needsReschedule, _ := portsReconcileStatus.NeedsReschedule(); !needsReschedule {
@@ -211,35 +322,31 @@ func (actuator serverActuator) CreateResource(ctx context.Context, obj *orcv1alp
 			}
 		}
 	}
-	serverGroup := &orcv1alpha1.ServerGroup{}
-	if resource.ServerGroupRef != nil {
-		serverGroupKey := client.ObjectKey{Name: string(*resource.ServerGroupRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, serverGroupKey, serverGroup); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WaitingOnObject("ServerGroup", serverGroupKey.Name, progress.WaitingOnCreation)
-			} else {
-				return nil, reconcileStatus.WithError(fmt.Errorf("fetching server group %s: %w", serverGroupKey.Name, err))
-			}
-		} else if !orcv1alpha1.IsAvailable(serverGroup) || serverGroup.Status.ID == nil {
-			reconcileStatus = reconcileStatus.WaitingOnObject("ServerGroup", serverGroupKey.Name, progress.WaitingOnReady)
-		}
-	}
+
+	schedulerHints, schedulerHintsReconcileStatus := actuator.getSchedulerHints(ctx, obj, resource)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(schedulerHintsReconcileStatus)
+
+	keypair, keypairReconcileStatus := dependency.FetchDependency(
+		ctx, actuator.k8sClient, obj.Namespace,
+		resource.KeypairRef, "KeyPair",
+		func(kp *orcv1alpha1.KeyPair) bool { return orcv1alpha1.IsAvailable(kp) && kp.Status.Resource != nil },
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(keypairReconcileStatus)
 
 	var userData []byte
-	if resource.UserData != nil && resource.UserData.SecretRef != nil {
-		secret := &corev1.Secret{}
-		secretKey := client.ObjectKey{Name: string(*resource.UserData.SecretRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, secretKey, secret); err != nil {
-			if !apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithError(fmt.Errorf("fetching secret %s: %w", secretKey.Name, err))
-			} else {
-				reconcileStatus = reconcileStatus.WaitingOnObject("Secret", secretKey.Name, progress.WaitingOnCreation)
-			}
-		} else {
+	if resource.UserData != nil {
+		secret, secretReconcileStatus := dependency.FetchDependency(
+			ctx, actuator.k8sClient, obj.Namespace,
+			resource.UserData.SecretRef, "Secret",
+			func(*corev1.Secret) bool { return true }, // Secrets don't have availability status
+		)
+		reconcileStatus = reconcileStatus.WithReconcileStatus(secretReconcileStatus)
+		if secretReconcileStatus == nil {
 			var ok bool
 			userData, ok = secret.Data["value"]
 			if !ok {
-				reconcileStatus.WithProgressMessage("User data secret does not contain \"value\" key")
+				reconcileStatus = reconcileStatus.WithReconcileStatus(
+					progress.NewReconcileStatus().WithProgressMessage("User data secret does not contain \"value\" key"))
 			}
 		}
 	}
@@ -255,21 +362,36 @@ func (actuator serverActuator) CreateResource(ctx context.Context, obj *orcv1alp
 	// Sort tags before creation to simplify comparisons
 	slices.Sort(tags)
 
-	createOpts := servers.CreateOpts{
+	metadata := make(map[string]string)
+	for _, m := range resource.Metadata {
+		metadata[m.Key] = m.Value
+	}
+
+	serverCreateOpts := servers.CreateOpts{
 		Name:             getResourceName(obj),
-		ImageRef:         *image.Status.ID,
+		ImageRef:         imageID, // Empty string if boot-from-volume
 		FlavorRef:        *flavor.Status.ID,
 		Networks:         portList,
 		UserData:         userData,
 		Tags:             tags,
+		Metadata:         metadata,
 		AvailabilityZone: resource.AvailabilityZone,
+		ConfigDrive:      resource.ConfigDrive,
+		BlockDevice:      blockDevices, // Boot volume for BFV
 	}
 
-	schedulerHints := servers.SchedulerHintOpts{
-		Group: ptr.Deref(serverGroup.Status.ID, ""),
+	/* keypairs.CreateOptsExt was merged into servers.CreateOpts in gopher cloud V3
+	this section should be merged into the section above after the
+	project moves to V3 */
+	var createOpts servers.CreateOptsBuilder = serverCreateOpts
+	if resource.KeypairRef != nil {
+		createOpts = keypairs.CreateOptsExt{
+			CreateOptsBuilder: serverCreateOpts,
+			KeyName:           keypair.Status.Resource.Name,
+		}
 	}
 
-	server, err := actuator.osClient.CreateServer(ctx, &createOpts, schedulerHints)
+	server, err := actuator.osClient.CreateServer(ctx, createOpts, schedulerHints)
 
 	// We should require the spec to be updated before retrying a create which returned a non-retryable error
 	if err != nil {
@@ -302,6 +424,7 @@ func (actuator serverActuator) GetResourceReconcilers(ctx context.Context, orcOb
 		actuator.checkStatus,
 		actuator.updateResource,
 		actuator.reconcileTags,
+		actuator.reconcileMetadata,
 		actuator.reconcilePortAttachments,
 		actuator.reconcileVolumeAttachments,
 	}, nil
@@ -331,10 +454,10 @@ func (actuator serverActuator) updateResource(ctx context.Context, obj orcObject
 
 	_, err = actuator.osClient.UpdateServer(ctx, osResource.ID, updateOpts)
 
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 
@@ -388,6 +511,39 @@ func (actuator serverActuator) reconcileTags(ctx context.Context, obj orcObjectP
 	return tags.ReconcileTags[orcObjectPT, osResourceT](obj.Spec.Resource.Tags, ptr.Deref(osResource.Tags, []string{}), tags.NewServerTagReplacer(actuator.osClient, osResource.ID))(ctx, obj, osResource)
 }
 
+func (actuator serverActuator) reconcileMetadata(ctx context.Context, obj orcObjectPT, osResource *osResourceT) progress.ReconcileStatus {
+	log := ctrl.LoggerFrom(ctx)
+	resource := obj.Spec.Resource
+	if resource == nil {
+		return progress.WrapError(
+			orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "Update requested, but spec.resource is not set"))
+	}
+
+	// Metadata cannot be set on a server that is still building
+	if osResource.Status == "" || osResource.Status == ServerStatusBuild {
+		return progress.NewReconcileStatus().WaitingOnOpenStack(progress.WaitingOnReady, serverActivePollingPeriod)
+	}
+
+	// Build the desired metadata map from spec
+	desiredMetadata := make(map[string]string)
+	for _, m := range resource.Metadata {
+		desiredMetadata[m.Key] = m.Value
+	}
+
+	// Compare with current metadata
+	if maps.Equal(desiredMetadata, osResource.Metadata) {
+		return nil
+	}
+
+	log.V(logging.Verbose).Info("Updating server metadata")
+	_, err := actuator.osClient.ReplaceServerMetadata(ctx, osResource.ID, desiredMetadata)
+	if err != nil {
+		return progress.WrapError(err)
+	}
+
+	return progress.NeedsRefresh()
+}
+
 func (actuator serverActuator) reconcilePortAttachments(ctx context.Context, obj orcObjectPT, osResource *osResourceT) progress.ReconcileStatus {
 	log := ctrl.LoggerFrom(ctx)
 	resource := obj.Spec.Resource
@@ -398,9 +554,7 @@ func (actuator serverActuator) reconcilePortAttachments(ctx context.Context, obj
 	}
 
 	portDepsMap, reconcileStatus := portDependency.GetDependencies(
-		ctx, actuator.k8sClient, obj, func(port *orcv1alpha1.Port) bool {
-			return port.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
@@ -478,9 +632,7 @@ func (actuator serverActuator) reconcileVolumeAttachments(ctx context.Context, o
 	}
 
 	volumeDepsMap, reconcileStatus := volumeDependency.GetDependencies(
-		ctx, actuator.k8sClient, obj, func(volume *orcv1alpha1.Volume) bool {
-			return orcv1alpha1.IsAvailable(volume) && volume.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {

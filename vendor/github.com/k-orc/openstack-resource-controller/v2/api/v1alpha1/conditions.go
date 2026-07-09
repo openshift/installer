@@ -113,7 +113,7 @@ func GetTerminalError(obj ObjectWithConditions) error {
 	return nil
 }
 
-func IsAvailable(obj ObjectWithConditions) bool {
+func IsAvailable[T ObjectWithConditions](obj T) bool {
 	conditions := obj.GetConditions()
 	available := meta.FindStatusCondition(conditions, ConditionAvailable)
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,15 +19,17 @@ limitations under the License.
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 // FloatingIPStatusApplyConfiguration represents a declarative configuration of the FloatingIPStatus type for use
 // with apply.
 type FloatingIPStatusApplyConfiguration struct {
-	Conditions []v1.ConditionApplyConfiguration            `json:"conditions,omitempty"`
-	ID         *string                                     `json:"id,omitempty"`
-	Resource   *FloatingIPResourceStatusApplyConfiguration `json:"resource,omitempty"`
+	Conditions   []v1.ConditionApplyConfiguration            `json:"conditions,omitempty"`
+	ID           *string                                     `json:"id,omitempty"`
+	Resource     *FloatingIPResourceStatusApplyConfiguration `json:"resource,omitempty"`
+	LastSyncTime *metav1.Time                                `json:"lastSyncTime,omitempty"`
 }
 
 // FloatingIPStatusApplyConfiguration constructs a declarative configuration of the FloatingIPStatus type for use with
@@ -62,5 +64,13 @@ func (b *FloatingIPStatusApplyConfiguration) WithID(value string) *FloatingIPSta
 // If called multiple times, the Resource field is set to the value of the last call.
 func (b *FloatingIPStatusApplyConfiguration) WithResource(value *FloatingIPResourceStatusApplyConfiguration) *FloatingIPStatusApplyConfiguration {
 	b.Resource = value
+	return b
+}
+
+// WithLastSyncTime sets the LastSyncTime field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LastSyncTime field is set to the value of the last call.
+func (b *FloatingIPStatusApplyConfiguration) WithLastSyncTime(value metav1.Time) *FloatingIPStatusApplyConfiguration {
+	b.LastSyncTime = &value
 	return b
 }

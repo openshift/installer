@@ -26,7 +26,7 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/rules"
 	"k8s.io/utils/net"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
 )
@@ -36,7 +36,6 @@ const (
 	controlPlaneSuffix string = "controlplane"
 	workerSuffix       string = "worker"
 	bastionSuffix      string = "bastion"
-	allNodesSuffix     string = "allNodes"
 	remoteGroupIDSelf  string = "self"
 )
 
@@ -99,7 +98,7 @@ func (s *Service) ReconcileSecurityGroups(openStackCluster *infrav1.OpenStackClu
 			if err != nil {
 				return err
 			}
-			s.scope.Logger().V(6).Info("Updated tags for security group", "name", group.Name, "id", group.ID)
+			s.scope.Logger().V(5).Info("Updated tags for security group", "name", group.Name, "id", group.ID)
 		}
 	}
 
@@ -152,8 +151,7 @@ type resolvedSecurityGroupRuleSpec struct {
 }
 
 func (r resolvedSecurityGroupRuleSpec) Matches(other rules.SecGroupRule) bool {
-	return r.Description == other.Description &&
-		r.Direction == other.Direction &&
+	return r.Direction == other.Direction &&
 		r.EtherType == other.EtherType &&
 		r.PortRangeMin == other.PortRangeMin &&
 		r.PortRangeMax == other.PortRangeMax &&
@@ -216,8 +214,8 @@ func (s *Service) generateDesiredSecGroups(openStackCluster *infrav1.OpenStackCl
 	workerRules = append(workerRules, getSGWorkerNodePort(secWorkerGroupID, secControlPlaneGroupID)...)
 
 	// If we set additional ports to LB, we need create secgroup rules those ports, this apply to controlPlaneRules only
-	if openStackCluster.Spec.APIServerLoadBalancer.IsEnabled() {
-		controlPlaneRules = append(controlPlaneRules, getSGControlPlaneAdditionalPorts(openStackCluster.Spec.APIServerLoadBalancer.AdditionalPorts)...)
+	if lbSpec := openStackCluster.Spec.APIServer.GetManagedLoadBalancer(); lbSpec.IsEnabled() {
+		controlPlaneRules = append(controlPlaneRules, getSGControlPlaneAdditionalPorts(lbSpec.AdditionalPorts)...)
 	}
 
 	if openStackCluster.Spec.ManagedSecurityGroups != nil && openStackCluster.Spec.ManagedSecurityGroups.AllowAllInClusterTraffic {
@@ -243,7 +241,7 @@ func (s *Service) generateDesiredSecGroups(openStackCluster *infrav1.OpenStackCl
 
 	// For now, we do not create a separate security group for allNodes.
 	// Instead, we append the rules for allNodes to the control plane and worker security groups.
-	allNodesRules, err := getRulesFromSpecs(remoteManagedGroups, openStackCluster.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules)
+	allNodesRules, err := getRulesFromSpecs(remoteManagedGroups, openStackCluster.Spec.ManagedSecurityGroups.ClusterNodesSecurityGroupRules)
 	if err != nil {
 		return nil, err
 	}
@@ -261,12 +259,12 @@ func (s *Service) generateDesiredSecGroups(openStackCluster *infrav1.OpenStackCl
 			Rules: append(
 				[]resolvedSecurityGroupRuleSpec{
 					{
-						Description:  "SSH",
-						Direction:    "ingress",
-						EtherType:    "IPv4",
+						Description:  securityGroupRuleDescriptionSSH,
+						Direction:    securityGroupRuleDirectionIngress,
+						EtherType:    securityGroupRuleEtherTypeIPv4,
 						PortRangeMin: 22,
 						PortRangeMax: 22,
-						Protocol:     "tcp",
+						Protocol:     securityGroupRuleProtocolTCP,
 					},
 				},
 				defaultRules...,
@@ -303,10 +301,10 @@ func getRulesFromSpecs(remoteManagedGroups map[string]string, securityGroupRules
 			r.EtherType = *rule.EtherType
 		}
 		if rule.PortRangeMin != nil {
-			r.PortRangeMin = *rule.PortRangeMin
+			r.PortRangeMin = int(*rule.PortRangeMin)
 		}
 		if rule.PortRangeMax != nil {
-			r.PortRangeMax = *rule.PortRangeMax
+			r.PortRangeMax = int(*rule.PortRangeMax)
 		}
 		if rule.Protocol != nil {
 			r.Protocol = *rule.Protocol
@@ -471,7 +469,7 @@ func (s *Service) reconcileGroupRules(desired *securityGroupSpec, observed *grou
 	if len(rulesToDelete) > 0 {
 		s.scope.Logger().V(4).Info("Deleting rules not needed anymore for group", "name", observed.Name, "amount", len(rulesToDelete))
 		for _, rule := range rulesToDelete {
-			s.scope.Logger().V(6).Info("Deleting rule", "ID", rule, "name", observed.Name)
+			s.scope.Logger().V(5).Info("Deleting rule", "ID", rule, "name", observed.Name)
 			err := s.client.DeleteSecGroupRule(rule)
 			if err != nil {
 				return err
@@ -502,17 +500,17 @@ func (s *Service) getOrCreateSecurityGroup(openStackCluster *infrav1.OpenStackCl
 		return nil, err
 	}
 	if secGroup != nil {
-		s.scope.Logger().V(6).Info("Reusing existing SecurityGroup", "name", groupName, "id", secGroup.ID)
+		s.scope.Logger().V(5).Info("Reusing existing SecurityGroup", "name", groupName, "id", secGroup.ID)
 		return secGroup, nil
 	}
 
-	s.scope.Logger().V(6).Info("Group doesn't exist, creating it", "name", groupName)
+	s.scope.Logger().V(5).Info("Group doesn't exist, creating it", "name", groupName)
 
 	createOpts := groups.CreateOpts{
 		Name:        groupName,
 		Description: "Cluster API managed group",
 	}
-	s.scope.Logger().V(6).Info("Creating group", "name", groupName)
+	s.scope.Logger().V(5).Info("Creating group", "name", groupName)
 
 	group, err := s.client.CreateSecGroup(createOpts)
 	if err != nil {
@@ -529,7 +527,7 @@ func (s *Service) getSecurityGroupByName(name string) (*groups.SecGroup, error) 
 		Name: name,
 	}
 
-	s.scope.Logger().V(6).Info("Attempting to fetch security group with", "name", name)
+	s.scope.Logger().V(5).Info("Attempting to fetch security group with", "name", name)
 	allGroups, err := s.client.ListSecGroup(opts)
 	if err != nil {
 		return nil, err
@@ -561,7 +559,7 @@ func (s *Service) createRule(securityGroupID string, r resolvedSecurityGroupRule
 		RemoteIPPrefix: r.RemoteIPPrefix,
 		SecGroupID:     securityGroupID,
 	}
-	s.scope.Logger().V(6).Info("Creating rule", "description", r.Description, "direction", dir, "portRangeMin", r.PortRangeMin, "portRangeMax", r.PortRangeMax, "proto", proto, "etherType", etherType, "remoteGroupID", r.RemoteGroupID, "remoteIPPrefix", r.RemoteIPPrefix, "securityGroupID", securityGroupID)
+	s.scope.Logger().V(5).Info("Creating rule", "description", r.Description, "direction", dir, "portRangeMin", r.PortRangeMin, "portRangeMax", r.PortRangeMax, "proto", proto, "etherType", etherType, "remoteGroupID", r.RemoteGroupID, "remoteIPPrefix", r.RemoteIPPrefix, "securityGroupID", securityGroupID)
 	_, err := s.client.CreateSecGroupRule(createOpts)
 	if err != nil {
 		return err

@@ -18,6 +18,8 @@ package server
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,7 +71,8 @@ func (serverStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osRes
 		WithHostID(osResource.HostID).
 		WithAvailabilityZone(osResource.AvailabilityZone).
 		WithServerGroups(ptr.Deref(osResource.ServerGroups, []string{})...).
-		WithTags(ptr.Deref(osResource.Tags, []string{})...)
+		WithTags(ptr.Deref(osResource.Tags, []string{})...).
+		WithConfigDrive(osResource.ConfigDrive)
 
 	if imageID, ok := osResource.Image["id"]; ok {
 		status.WithImageID(fmt.Sprintf("%s", imageID))
@@ -95,6 +98,13 @@ func (serverStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osRes
 		}
 
 		status.WithInterfaces(interfaceStatus)
+	}
+
+	// Sort metadata keys for deterministic output
+	for _, k := range slices.Sorted(maps.Keys(osResource.Metadata)) {
+		status.WithMetadata(orcapplyconfigv1alpha1.ServerMetadataStatus().
+			WithKey(k).
+			WithValue(osResource.Metadata[k]))
 	}
 
 	statusApply.WithResource(status)

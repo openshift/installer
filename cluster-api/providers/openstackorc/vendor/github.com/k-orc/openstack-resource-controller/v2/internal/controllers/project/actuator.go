@@ -25,11 +25,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
 	generic "github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/interfaces"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/tags"
 )
@@ -53,7 +55,8 @@ type projectClient interface {
 }
 
 type projectActuator struct {
-	osClient projectClient
+	osClient  projectClient
+	k8sClient client.Client
 }
 
 var _ createResourceActuator = projectActuator{}
@@ -72,21 +75,52 @@ func (actuator projectActuator) GetOSResourceByID(ctx context.Context, id string
 }
 
 func (actuator projectActuator) ListOSResourcesForAdoption(ctx context.Context, obj orcObjectPT) (iter.Seq2[*osResourceT, error], bool) {
-	if obj.Spec.Resource == nil {
+	resource := obj.Spec.Resource
+	if resource == nil {
 		return nil, false
 	}
 
+	// Resolve the domain ID from DomainRef if set. Without the domain
+	// ID, adoption could match a project in the wrong domain.
+	var domainID string
+	if resource.DomainRef != nil {
+		domain, rs := dependency.FetchDependency(
+			ctx, actuator.k8sClient, obj.Namespace, resource.DomainRef, "Domain",
+			func(dep *orcv1alpha1.Domain) bool {
+				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+			},
+		)
+		if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+			return nil, false
+		}
+		domainID = ptr.Deref(domain.Status.ID, "")
+	}
+
 	listOpts := projects.ListOpts{
-		Name: getResourceName(obj),
-		Tags: tags.Join(obj.Spec.Resource.Tags),
+		Name:     getResourceName(obj),
+		DomainID: domainID,
+		Tags:     tags.Join(resource.Tags),
 	}
 
 	return actuator.osClient.ListProjects(ctx, listOpts), true
 }
 
 func (actuator projectActuator) ListOSResourcesForImport(ctx context.Context, orcObject orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
+	var reconcileStatus progress.ReconcileStatus
+
+	domain, rs := dependency.FetchDependency[*orcv1alpha1.Domain](
+		ctx, actuator.k8sClient, orcObject.Namespace, filter.DomainRef, "Domain",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
+
+	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
+		return nil, reconcileStatus
+	}
+
 	listOpts := projects.ListOpts{
 		Name:       string(ptr.Deref(filter.Name, "")),
+		DomainID:   ptr.Deref(domain.Status.ID, ""),
 		Tags:       tags.Join(filter.Tags),
 		TagsAny:    tags.Join(filter.TagsAny),
 		NotTags:    tags.Join(filter.NotTags),
@@ -104,6 +138,21 @@ func (actuator projectActuator) CreateResource(ctx context.Context, obj orcObjec
 		return nil, progress.WrapError(
 			orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "Creation requested, but spec.resource is not set"))
 	}
+	var reconcileStatus progress.ReconcileStatus
+
+	var domainID string
+	if resource.DomainRef != nil {
+		domain, domainDepRS := domainDependency.GetDependency(
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
+		)
+		reconcileStatus = reconcileStatus.WithReconcileStatus(domainDepRS)
+		if domain != nil {
+			domainID = ptr.Deref(domain.Status.ID, "")
+		}
+	}
+	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
+		return nil, reconcileStatus
+	}
 
 	tags := make([]string, len(resource.Tags))
 	for i := range resource.Tags {
@@ -115,6 +164,7 @@ func (actuator projectActuator) CreateResource(ctx context.Context, obj orcObjec
 	createOpts := projects.CreateOpts{
 		Name:        getResourceName(obj),
 		Description: ptr.Deref(resource.Description, ""),
+		DomainID:    domainID,
 		Enabled:     resource.Enabled,
 		Tags:        tags,
 	}
@@ -168,8 +218,11 @@ func (actuator projectActuator) updateResource(ctx context.Context, obj orcObjec
 
 	_, err = actuator.osClient.UpdateProject(ctx, osResource.ID, updateOpts)
 
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
+		return progress.WrapError(err)
 	}
 	if err != nil {
 		return progress.WrapError(err)
@@ -251,7 +304,8 @@ func newActuator(ctx context.Context, orcObject *orcv1alpha1.Project, controller
 	}
 
 	return projectActuator{
-		osClient: osClient,
+		osClient:  osClient,
+		k8sClient: controller.GetK8sClient(),
 	}, nil
 }
 

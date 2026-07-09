@@ -31,12 +31,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
-	"github.com/k-orc/openstack-resource-controller/v2/pkg/predicates"
-
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/interfaces"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/scope"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcstrings "github.com/k-orc/openstack-resource-controller/v2/internal/util/strings"
+	"github.com/k-orc/openstack-resource-controller/v2/pkg/predicates"
 )
 
 const (
@@ -45,21 +45,27 @@ const (
 )
 
 type routerInterfaceReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return routerInterfaceReconcilerConstructor{scopeFactory: scopeFactory}
+	return &routerInterfaceReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (routerInterfaceReconcilerConstructor) GetName() string {
 	return controllerName
 }
 
+func (c *routerInterfaceReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
+}
+
 // orcRouterInterfaceReconciler reconciles an ORC Subnet.
 type orcRouterInterfaceReconciler struct {
-	client       client.Client
-	scopeFactory scope.Factory
+	client              client.Client
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 const controllerName = "routerinterface"
@@ -89,7 +95,7 @@ var (
 )
 
 // SetupWithManager sets up the controller with the Manager.
-func (c routerInterfaceReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *routerInterfaceReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := mgr.GetLogger().WithValues("controller", controllerName)
 
 	if err := errors.Join(
@@ -105,8 +111,9 @@ func (c routerInterfaceReconcilerConstructor) SetupWithManager(ctx context.Conte
 	// dependencies because it reconciles Routers, not RouterInterfaces.
 
 	reconciler := orcRouterInterfaceReconciler{
-		client:       k8sClient,
-		scopeFactory: c.scopeFactory,
+		client:              k8sClient,
+		scopeFactory:        c.scopeFactory,
+		defaultResyncPeriod: c.defaultResyncPeriod,
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&orcv1alpha1.Router{}, builder.WithPredicates(predicates.NewBecameAvailable(log, &orcv1alpha1.Router{}))).
@@ -116,7 +123,7 @@ func (c routerInterfaceReconcilerConstructor) SetupWithManager(ctx context.Conte
 				log := ctrl.LoggerFrom(ctx).WithValues("watch", "RouterInterface", "name", obj.GetName(), "namespace", obj.GetNamespace())
 				routerInterface, ok := obj.(*orcv1alpha1.RouterInterface)
 				if !ok {
-					log.Info("Watch got unexpected object type", "type", fmt.Sprintf("%T", obj))
+					log.V(logging.Debug).Info("Watch got unexpected object type", "type", fmt.Sprintf("%T", obj))
 					return nil
 				}
 				return []reconcile.Request{
@@ -130,7 +137,7 @@ func (c routerInterfaceReconcilerConstructor) SetupWithManager(ctx context.Conte
 
 				subnet, ok := obj.(*orcv1alpha1.Subnet)
 				if !ok {
-					log.Info("Watch got unexpected object type", "type", fmt.Sprintf("%T", obj))
+					log.V(logging.Debug).Info("Watch got unexpected object type", "type", fmt.Sprintf("%T", obj))
 					return nil
 				}
 

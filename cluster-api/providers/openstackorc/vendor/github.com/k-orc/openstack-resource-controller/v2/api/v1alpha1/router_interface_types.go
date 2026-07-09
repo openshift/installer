@@ -36,8 +36,8 @@ type RouterInterface struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec specifies the desired state of the resource.
-	// +optional
-	Spec RouterInterfaceSpec `json:"spec,omitempty"`
+	// +required
+	Spec RouterInterfaceSpec `json:"spec,omitzero"`
 
 	// status defines the observed state of the resource.
 	// +optional
@@ -74,7 +74,9 @@ const (
 )
 
 // +kubebuilder:validation:XValidation:rule="self.type == 'Subnet' ? has(self.subnetRef) : !has(self.subnetRef)",message="subnetRef is required when type is 'Subnet' and not permitted otherwise"
-// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="RouterInterfaceResourceSpec is immutable"
+// +kubebuilder:validation:XValidation:rule="self.type == oldSelf.type",message="type is immutable"
+// +kubebuilder:validation:XValidation:rule="self.routerRef == oldSelf.routerRef",message="routerRef is immutable"
+// +kubebuilder:validation:XValidation:rule="has(self.subnetRef) == has(oldSelf.subnetRef) && (!has(self.subnetRef) || self.subnetRef == oldSelf.subnetRef)",message="subnetRef is immutable"
 type RouterInterfaceSpec struct {
 	// type specifies the type of the router interface.
 	// +required
@@ -89,6 +91,14 @@ type RouterInterfaceSpec struct {
 	// +unionMember
 	// +optional
 	SubnetRef *KubernetesNameRef `json:"subnetRef,omitempty"`
+
+	// resyncPeriod defines how frequently the controller will re-reconcile
+	// this resource even when no changes have been detected. This overrides
+	// the global default resync period. The value must be a valid Go duration
+	// string, e.g. "10m", "1h". Set to "0s" to disable periodic resync for
+	// this resource. Very low values may cause excessive OpenStack API load.
+	// +optional
+	ResyncPeriod *metav1.Duration `json:"resyncPeriod,omitempty"` //nolint:kubeapilinter // metav1.Duration is appropriate for user-facing duration config
 }
 
 type RouterInterfaceStatus struct {
@@ -118,9 +128,14 @@ type RouterInterfaceStatus struct {
 	// +kubebuilder:validation:MaxLength=1024
 	// +optional
 	ID *string `json:"id,omitempty"`
+
+	// lastSyncTime is the timestamp of the last successful reconciliation
+	// of the resource.
+	// +optional
+	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
 }
 
-var _ ObjectWithConditions = &Router{}
+var _ ObjectWithConditions = &RouterInterface{}
 
 func (i *RouterInterface) GetConditions() []metav1.Condition {
 	return i.Status.Conditions

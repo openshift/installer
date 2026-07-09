@@ -166,8 +166,14 @@ func (q *QuotaDetail) UnmarshalJSON(b []byte) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("reserved has unexpected type: %T", t)
+		return fmt.Errorf("Reserved has unexpected type: %T", t) //nolint:staticcheck
 	}
 
 	return nil
+}
+
+// DeleteResult is the response from a Delete operation. Call its ExtractErr
+// method to determine if the request succeeded or failed.
+type DeleteResult struct {
+	gophercloud.ErrResult
 }

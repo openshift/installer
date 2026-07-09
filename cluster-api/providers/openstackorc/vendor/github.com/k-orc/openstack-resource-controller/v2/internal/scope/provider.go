@@ -137,6 +137,14 @@ func NewCachedProviderScope(cache *cache.LRUExpireCache, cloud clientconfig.Clou
 	return scope, nil
 }
 
+func (s *providerScope) NewAddressScopeClient() (clients.AddressScopeClient, error) {
+	return clients.NewAddressScopeClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewApplicationCredentialClient() (clients.ApplicationCredentialClient, error) {
+	return clients.NewApplicationCredentialClient(s.providerClient, s.providerClientOpts)
+}
+
 func (s *providerScope) NewComputeClient() (clients.ComputeClient, error) {
 	return clients.NewComputeClient(s.providerClient, s.providerClientOpts)
 }
@@ -153,6 +161,10 @@ func (s *providerScope) NewIdentityClient() (clients.IdentityClient, error) {
 	return clients.NewIdentityClient(s.providerClient, s.providerClientOpts)
 }
 
+func (s *providerScope) NewUserClient() (clients.UserClient, error) {
+	return clients.NewUserClient(s.providerClient, s.providerClientOpts)
+}
+
 func (s *providerScope) NewVolumeClient() (clients.VolumeClient, error) {
 	return clients.NewVolumeClient(s.providerClient, s.providerClientOpts)
 }
@@ -161,11 +173,49 @@ func (s *providerScope) NewVolumeTypeClient() (clients.VolumeTypeClient, error) 
 	return clients.NewVolumeTypeClient(s.providerClient, s.providerClientOpts)
 }
 
+func (s *providerScope) NewDomainClient() (clients.DomainClient, error) {
+	return clients.NewDomainClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewServiceClient() (clients.ServiceClient, error) {
+	return clients.NewServiceClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewEndpointClient() (clients.EndpointClient, error) {
+	return clients.NewEndpointClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewShareNetworkClient() (clients.ShareNetworkClient, error) {
+	return clients.NewShareNetworkClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewKeyPairClient() (clients.KeyPairClient, error) {
+	return clients.NewKeyPairClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewGroupClient() (clients.GroupClient, error) {
+	return clients.NewGroupClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewRoleClient() (clients.RoleClient, error) {
+	return clients.NewRoleClient(s.providerClient, s.providerClientOpts)
+}
+
+func (s *providerScope) NewRoleAssignmentClient() (clients.RoleAssignmentClient, error) {
+	return clients.NewRoleAssignmentClient(s.providerClient, s.providerClientOpts)
+}
+
 func (s *providerScope) ExtractToken() (*tokens.Token, error) {
 	client, err := openstack.NewIdentityV3(s.providerClient, gophercloud.EndpointOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("create new identity service client: %w", err)
 	}
+
+	// allows to validate a token derived from application credentials
+	client.MoreHeaders = map[string]string{
+		"OpenStack-Identity-Access-Rules": "1.0",
+	}
+
 	return tokens.Get(context.TODO(), client, s.providerClient.Token()).ExtractToken()
 }
 
@@ -271,11 +321,16 @@ func getCloudFromSecret(ctx context.Context, ctrlClient client.Client, secretNam
 		return emptyCloud, nil, fmt.Errorf("failed to unmarshal clouds credentials stored in secret %v: %v", secretName, err)
 	}
 
+	cloudsYaml, ok := clouds.Clouds[cloudName]
+	if !ok {
+		return emptyCloud, nil, fmt.Errorf("no cloud named: %v, in the provided config", cloudName)
+	}
+
 	// get caCert
 	caCert, ok := secret.Data[orcv1alpha1.CloudCredencialsCASecretKey]
 	if !ok {
-		return clouds.Clouds[cloudName], nil, nil
+		return cloudsYaml, nil, nil
 	}
 
-	return clouds.Clouds[cloudName], caCert, nil
+	return cloudsYaml, caCert, nil
 }

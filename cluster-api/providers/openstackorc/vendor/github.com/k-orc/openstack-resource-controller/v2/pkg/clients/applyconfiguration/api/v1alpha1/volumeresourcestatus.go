@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ type VolumeResourceStatusApplyConfiguration struct {
 	Metadata           []VolumeMetadataStatusApplyConfiguration   `json:"metadata,omitempty"`
 	UserID             *string                                    `json:"userID,omitempty"`
 	Bootable           *bool                                      `json:"bootable,omitempty"`
+	ImageID            *string                                    `json:"imageID,omitempty"`
 	Encrypted          *bool                                      `json:"encrypted,omitempty"`
 	ReplicationStatus  *string                                    `json:"replicationStatus,omitempty"`
 	ConsistencyGroupID *string                                    `json:"consistencyGroupID,omitempty"`
@@ -165,6 +166,14 @@ func (b *VolumeResourceStatusApplyConfiguration) WithUserID(value string) *Volum
 // If called multiple times, the Bootable field is set to the value of the last call.
 func (b *VolumeResourceStatusApplyConfiguration) WithBootable(value bool) *VolumeResourceStatusApplyConfiguration {
 	b.Bootable = &value
+	return b
+}
+
+// WithImageID sets the ImageID field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ImageID field is set to the value of the last call.
+func (b *VolumeResourceStatusApplyConfiguration) WithImageID(value string) *VolumeResourceStatusApplyConfiguration {
+	b.ImageID = &value
 	return b
 }
 

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -127,6 +128,17 @@ var (
 			return []string{string(*resource.Filter.ProjectRef)}
 		},
 	)
+
+	serverDependency = dependency.NewDependency[*orcv1alpha1.PortList, *orcv1alpha1.Server](
+		"spec.resource.hostID.serverRef",
+		func(port *orcv1alpha1.Port) []string {
+			resource := port.Spec.Resource
+			if resource == nil || resource.HostID == nil || resource.HostID.ServerRef == "" {
+				return nil
+			}
+			return []string{string(resource.HostID.ServerRef)}
+		},
+	)
 )
 
 // serverToPortMapFunc creates a mapping function that reconciles ports when:
@@ -138,7 +150,7 @@ func serverToPortMapFunc(ctx context.Context, k8sClient client.Client) handler.M
 	return func(ctx context.Context, obj client.Object) []reconcile.Request {
 		server, ok := obj.(*orcv1alpha1.Server)
 		if !ok {
-			log.Info("serverToPortMapFunc got unexpected object type",
+			log.V(logging.Debug).Info("serverToPortMapFunc got unexpected object type",
 				"got", fmt.Sprintf("%T", obj),
 				"expected", fmt.Sprintf("%T", &orcv1alpha1.Server{}))
 			return nil
@@ -197,6 +209,12 @@ func serverToPortMapFunc(ctx context.Context, k8sClient client.Client) handler.M
 					log.V(logging.Verbose).Info("port needs reconciliation: listed in server status but deviceID not set",
 						"port", client.ObjectKeyFromObject(port),
 						"server", client.ObjectKeyFromObject(server))
+				} else if portStatus.Status == PortStatusDown {
+					shouldReconcile = true
+					reason = "Port attached to server but status is still DOWN"
+					log.V(logging.Verbose).Info("port needs reconciliation: attached to server but status is DOWN",
+						"port", client.ObjectKeyFromObject(port),
+						"server", client.ObjectKeyFromObject(server))
 				}
 			}
 
@@ -245,19 +263,24 @@ func serverToPortMapFunc(ctx context.Context, k8sClient client.Client) handler.M
 }
 
 type portReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return portReconcilerConstructor{scopeFactory: scopeFactory}
+	return &portReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (portReconcilerConstructor) GetName() string {
 	return controllerName
 }
 
+func (c *portReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (c portReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *portReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := mgr.GetLogger().WithValues("controller", controllerName)
 	k8sClient := mgr.GetClient()
 
@@ -291,6 +314,11 @@ func (c portReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctr
 		return err
 	}
 
+	serverWatchEventHandler, err := serverDependency.WatchEventHandler(log, k8sClient)
+	if err != nil {
+		return err
+	}
+
 	builder := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&orcv1alpha1.Port{}).
@@ -314,6 +342,9 @@ func (c portReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctr
 		Watches(&orcv1alpha1.Project{}, projectImportWatchEventHandler,
 			builder.WithPredicates(predicates.NewBecameAvailable(log, &orcv1alpha1.Project{})),
 		).
+		Watches(&orcv1alpha1.Server{}, serverWatchEventHandler,
+			builder.WithPredicates(predicates.NewBecameAvailable(log, &orcv1alpha1.Server{})),
+		).
 		Watches(&orcv1alpha1.Server{}, handler.EnqueueRequestsFromMapFunc(serverToPortMapFunc(ctx, k8sClient)),
 			builder.WithPredicates(predicates.NewServerInterfacesChanged(log)),
 		)
@@ -325,12 +356,13 @@ func (c portReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctr
 		securityGroupDependency.AddToManager(ctx, mgr),
 		projectDependency.AddToManager(ctx, mgr),
 		projectImportDependency.AddToManager(ctx, mgr),
+		serverDependency.AddToManager(ctx, mgr),
 		credentialsDependency.AddToManager(ctx, mgr),
 		credentials.AddCredentialsWatch(log, k8sClient, builder, credentialsDependency),
 	); err != nil {
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, k8sClient, c.scopeFactory, portHelperFactory{}, portStatusWriter{})
+	r := reconciler.NewController(controllerName, k8sClient, c.scopeFactory, portHelperFactory{}, portStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 }

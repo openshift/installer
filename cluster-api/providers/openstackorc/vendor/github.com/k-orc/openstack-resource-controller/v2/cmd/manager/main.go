@@ -27,19 +27,31 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/addressscope"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/applicationcredential"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/domain"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/endpoint"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/flavor"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/floatingip"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/interfaces"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/group"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/image"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/keypair"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/network"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/port"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/project"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/role"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/roleassignment"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/router"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/routerinterface"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/securitygroup"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/server"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/servergroup"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/service"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/sharenetwork"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/subnet"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/trunk"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/user"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/volume"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/volumetype"
 	internalmanager "github.com/k-orc/openstack-resource-controller/v2/internal/manager"
@@ -70,6 +82,9 @@ func main() {
 	flag.IntVar(&orcOpts.ScopeCacheMaxSize, "scope-cache-max-size", 10,
 		"The maximum credentials count the operator should keep in cache. "+
 			"Setting this value to 0 means no cache.")
+	flag.DurationVar(&orcOpts.DefaultResyncPeriod, "default-resync-period", 0,
+		"Default resync period for all resources. Set to 0 to disable. "+
+			"Can be overridden per-resource via spec.resyncPeriod.")
 	flag.StringVar(&defaultCACertsPath, "default-ca-certs", "",
 		"The path to a PEM-encoded CA Certificate file to supply as default for OpenStack API requests.")
 	flag.Func("namespace", "A namespace that the controller watches to reconcile ORC objects. "+
@@ -102,20 +117,32 @@ func main() {
 	scopeFactory := scope.NewFactory(orcOpts.ScopeCacheMaxSize, caCerts)
 
 	controllers := []interfaces.Controller{
+		addressscope.New(scopeFactory),
+		applicationcredential.New(scopeFactory),
+		endpoint.New(scopeFactory),
 		image.New(scopeFactory),
 		network.New(scopeFactory),
 		subnet.New(scopeFactory),
 		router.New(scopeFactory),
 		routerinterface.New(scopeFactory),
 		port.New(scopeFactory),
+		trunk.New(scopeFactory),
 		floatingip.New(scopeFactory),
 		flavor.New(scopeFactory),
 		securitygroup.New(scopeFactory),
 		server.New(scopeFactory),
 		servergroup.New(scopeFactory),
 		project.New(scopeFactory),
+		user.New(scopeFactory),
 		volume.New(scopeFactory),
 		volumetype.New(scopeFactory),
+		domain.New(scopeFactory),
+		service.New(scopeFactory),
+		sharenetwork.New(scopeFactory),
+		keypair.New(scopeFactory),
+		group.New(scopeFactory),
+		role.New(scopeFactory),
+		roleassignment.New(scopeFactory),
 	}
 
 	restConfig := ctrl.GetConfigOrDie()

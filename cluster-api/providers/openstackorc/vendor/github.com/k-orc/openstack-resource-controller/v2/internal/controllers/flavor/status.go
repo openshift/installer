@@ -65,6 +65,11 @@ func (flavorStatusWriter) ApplyResourceStatus(_ logr.Logger, osResource *flavors
 	if osResource.Ephemeral > 0 {
 		resourceStatus.WithEphemeral(int32(osResource.Ephemeral))
 	}
+	for k, v := range osResource.ExtraSpecs {
+		resourceStatus.WithExtraSpecs(orcapplyconfigv1alpha1.FlavorExtraSpecStatus().
+			WithName(k).
+			WithValue(v))
+	}
 	if osResource.Description != "" {
 		resourceStatus.WithDescription(osResource.Description)
 	}

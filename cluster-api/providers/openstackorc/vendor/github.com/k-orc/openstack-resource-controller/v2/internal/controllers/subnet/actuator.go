@@ -37,6 +37,7 @@ import (
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/tags"
 )
@@ -76,53 +77,62 @@ func (actuator subnetActuator) GetOSResourceByID(ctx context.Context, id string)
 }
 
 func (actuator subnetActuator) ListOSResourcesForAdoption(ctx context.Context, obj orcObjectPT) (iter.Seq2[*osResourceT, error], bool) {
-	if obj.Spec.Resource == nil {
+	resource := obj.Spec.Resource
+	if resource == nil {
 		return nil, false
 	}
-	listOpts := subnets.ListOpts{Name: getResourceName(obj)}
+
+	// Resolve the network ID from NetworkRef. Without the network ID,
+	// adoption could match a subnet on the wrong network.
+	network, rs := dependency.FetchDependency(
+		ctx, actuator.k8sClient, obj.Namespace, &resource.NetworkRef, "Network",
+		func(dep *orcv1alpha1.Network) bool {
+			return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+		},
+	)
+	if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+		return nil, false
+	}
+
+	// Resolve the project ID from ProjectRef if set.
+	var projectID string
+	if resource.ProjectRef != nil {
+		project, rs := dependency.FetchDependency(
+			ctx, actuator.k8sClient, obj.Namespace, resource.ProjectRef, "Project",
+			func(dep *orcv1alpha1.Project) bool {
+				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+			},
+		)
+		if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+			return nil, false
+		}
+		projectID = ptr.Deref(project.Status.ID, "")
+	}
+
+	listOpts := subnets.ListOpts{
+		Name:      getResourceName(obj),
+		NetworkID: ptr.Deref(network.Status.ID, ""),
+		CIDR:      string(resource.CIDR),
+		IPVersion: int(resource.IPVersion),
+		ProjectID: projectID,
+	}
 	return actuator.osClient.ListSubnet(ctx, listOpts), true
 }
 
 func (actuator subnetActuator) ListOSResourcesForImport(ctx context.Context, obj orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
 	var reconcileStatus progress.ReconcileStatus
 
-	network := &orcv1alpha1.Network{}
-	if filter.NetworkRef != "" {
-		networkKey := client.ObjectKey{Name: string(filter.NetworkRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, networkKey, network); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Network", networkKey.Name, progress.WaitingOnCreation))
-			} else {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WrapError(fmt.Errorf("fetching network %s: %w", networkKey.Name, err)))
-			}
-		} else {
-			if !orcv1alpha1.IsAvailable(network) || network.Status.ID == nil {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Network", networkKey.Name, progress.WaitingOnReady))
-			}
-		}
-	}
+	network, rs := dependency.FetchDependency[*orcv1alpha1.Network](
+		ctx, actuator.k8sClient, obj.Namespace, &filter.NetworkRef, "Network",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
 
-	project := &orcv1alpha1.Project{}
-	if filter.ProjectRef != nil {
-		projectKey := client.ObjectKey{Name: string(*filter.ProjectRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, projectKey, project); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnCreation))
-			} else {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WrapError(fmt.Errorf("fetching project %s: %w", projectKey.Name, err)))
-			}
-		} else {
-			if !orcv1alpha1.IsAvailable(project) || project.Status.ID == nil {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnReady))
-			}
-		}
-	}
+	project, rs := dependency.FetchDependency[*orcv1alpha1.Project](
+		ctx, actuator.k8sClient, obj.Namespace, filter.ProjectRef, "Project",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 		return nil, reconcileStatus
@@ -158,16 +168,12 @@ func (actuator subnetActuator) CreateResource(ctx context.Context, obj orcObject
 	}
 
 	network, reconcileStatus := networkDependency.GetDependency(
-		ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Network) bool {
-			return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-		},
+		ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 	)
 
 	if resource.RouterRef != nil {
 		_, routerDepRS := routerDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Router) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(routerDepRS)
 	}
@@ -175,9 +181,7 @@ func (actuator subnetActuator) CreateResource(ctx context.Context, obj orcObject
 	var projectID string
 	if resource.ProjectRef != nil {
 		project, projectDepRS := projectDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Project) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(projectDepRS)
 		if project != nil {
@@ -243,12 +247,10 @@ func (actuator subnetActuator) CreateResource(ctx context.Context, obj orcObject
 
 	osResource, err := actuator.osClient.CreateSubnet(ctx, &createOpts)
 
-	// We should require the spec to be updated before retrying a create which returned a conflict
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+err.Error(), err)
-	}
-
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+err.Error(), err)
+		}
 		return nil, progress.WrapError(err)
 	}
 	return osResource, nil
@@ -308,12 +310,10 @@ func (actuator subnetActuator) updateResource(ctx context.Context, obj orcObject
 
 	_, err = actuator.osClient.UpdateSubnet(ctx, osResource.ID, updateOpts)
 
-	// We should require the spec to be updated before retrying an update which returned a conflict
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
-
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 

@@ -54,6 +54,7 @@ func (projectStatusWriter) ResourceAvailableStatus(orcObject *orcv1alpha1.Projec
 func (projectStatusWriter) ApplyResourceStatus(_ logr.Logger, osResource *projects.Project, statusApply *statusApplyT) {
 	resourceStatus := orcapplyconfigv1alpha1.ProjectResourceStatus().
 		WithName(osResource.Name).
+		WithDomainID(osResource.DomainID).
 		WithEnabled(osResource.Enabled).
 		WithTags(osResource.Tags...)
 	if osResource.Description != "" {

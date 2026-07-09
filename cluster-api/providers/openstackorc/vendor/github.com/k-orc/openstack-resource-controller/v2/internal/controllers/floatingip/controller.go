@@ -19,6 +19,7 @@ package floatingip
 import (
 	"context"
 	"errors"
+	"time"
 
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,15 +40,20 @@ import (
 // +kubebuilder:rbac:groups=openstack.k-orc.cloud,resources=floatingips/status,verbs=get;update;patch
 
 type floatingipReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return floatingipReconcilerConstructor{scopeFactory: scopeFactory}
+	return &floatingipReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (floatingipReconcilerConstructor) GetName() string {
 	return controllerName
+}
+
+func (c *floatingipReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
 }
 
 const controllerName = "floatingip"
@@ -136,7 +142,7 @@ var (
 )
 
 // SetupWithManager sets up the controller with the Manager.
-func (c floatingipReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *floatingipReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := mgr.GetLogger().WithValues("controller", controllerName)
 	k8sClient := mgr.GetClient()
 
@@ -217,6 +223,6 @@ func (c floatingipReconcilerConstructor) SetupWithManager(ctx context.Context, m
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, k8sClient, c.scopeFactory, floatingipHelperFactory{}, floatingipStatusWriter{})
+	r := reconciler.NewController(controllerName, k8sClient, c.scopeFactory, floatingipHelperFactory{}, floatingipStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 }
