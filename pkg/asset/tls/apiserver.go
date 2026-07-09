@@ -29,13 +29,13 @@ func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, pare
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(installConfig)
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneYear(installConfig),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityOneYear(installConfig),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -124,13 +124,13 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Dependencies() []asset.Asset {
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityTenYears(),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", nil)
 }
 
 // Load reads the asset files from disk.
@@ -228,13 +228,13 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Dependencies() []asset.Asset 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityTenYears(),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", nil)
 }
 
 // Load reads the asset files from disk.
@@ -341,13 +341,13 @@ func (c *KubeAPIServerLBSignerCertKey) Dependencies() []asset.Asset {
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityTenYears(),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", nil)
 }
 
 // Load reads the asset files from disk.

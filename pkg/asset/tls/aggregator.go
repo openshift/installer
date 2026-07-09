@@ -32,13 +32,13 @@ func (a *AggregatorCA) Generate(ctx context.Context, dependencies asset.Parents)
 	dependencies.Get(installConfig)
 
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay(installConfig),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityOneDay(installConfig),
+		IsCA:     true,
 	}
 
-	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca")
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -102,13 +102,13 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(installConfig)
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay(installConfig),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityOneDay(installConfig),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.

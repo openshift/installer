@@ -23,13 +23,13 @@ func (c *AdminKubeConfigSignerCertKey) Dependencies() []asset.Asset {
 // Generate generates the root-ca key and cert pair.
 func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "admin-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "admin-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityTenYears(),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", nil)
 }
 
 // Load reads the asset files from disk.

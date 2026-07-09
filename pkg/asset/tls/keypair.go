@@ -2,8 +2,7 @@ package tls
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
 )
@@ -27,15 +26,18 @@ type KeyPair struct {
 func (k *KeyPair) Generate(_ context.Context, filenameBase string) error {
 	key, err := PrivateKey()
 	if err != nil {
-		return errors.Wrap(err, "failed to generate private key")
+		return fmt.Errorf("failed to generate private key: %w", err)
 	}
 
 	pubkeyData, err := PublicKeyToPem(&key.PublicKey)
 	if err != nil {
-		return errors.Wrap(err, "failed to get public key data from private key")
+		return fmt.Errorf("failed to get public key data from private key: %w", err)
 	}
 
-	k.Pvt = PrivateKeyToPem(key)
+	k.Pvt, err = PrivateKeyToPem(key)
+	if err != nil {
+		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	}
 	k.Pub = pubkeyData
 
 	k.FileList = []*asset.File{

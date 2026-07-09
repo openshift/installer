@@ -26,13 +26,13 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(installConfig)
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneYear(installConfig),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityOneYear(installConfig),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.

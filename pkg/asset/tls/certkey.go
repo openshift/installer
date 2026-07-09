@@ -3,14 +3,13 @@ package tls
 import (
 	"bytes"
 	"context"
-	"crypto/rsa"
-	"crypto/x509"
+	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // CertInterface contains cert.
@@ -128,29 +127,28 @@ func (c *SignedCertKey) Generate(_ context.Context,
 	filenameBase string,
 	appendParent AppendParentChoice,
 ) error {
-	var key *rsa.PrivateKey
-	var crt *x509.Certificate
-	var err error
-
 	caKey, err := PemToPrivateKey(parentCA.Key())
 	if err != nil {
-		logrus.Debugf("Failed to parse RSA private key: %s", err)
-		return errors.Wrap(err, "failed to parse rsa private key")
+		logrus.Debugf("Failed to parse private key: %s", err)
+		return fmt.Errorf("failed to parse private key: %w", err)
 	}
 
 	caCert, err := PemToCertificate(parentCA.Cert())
 	if err != nil {
 		logrus.Debugf("Failed to parse x509 certificate: %s", err)
-		return errors.Wrap(err, "failed to parse x509 certificate")
+		return fmt.Errorf("failed to parse x509 certificate: %w", err)
 	}
 
-	key, crt, err = GenerateSignedCertificate(caKey, caCert, cfg)
+	key, crt, err := GenerateSignedCertificate(caKey, caCert, cfg)
 	if err != nil {
 		logrus.Debugf("Failed to generate signed cert/key pair: %s", err)
-		return errors.Wrap(err, "failed to generate signed cert/key pair")
+		return fmt.Errorf("failed to generate signed cert/key pair: %w", err)
 	}
 
-	c.KeyRaw = PrivateKeyToPem(key)
+	c.KeyRaw, err = PrivateKeyToPem(key)
+	if err != nil {
+		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	}
 	c.CertRaw = CertToPem(crt)
 
 	if appendParent {
@@ -167,17 +165,23 @@ type SelfSignedCertKey struct {
 	CertKey
 }
 
-// Generate generates a cert/key pair signed by the specified parent CA.
+// Generate generates a self-signed cert/key pair using the specified PKI profile.
 func (c *SelfSignedCertKey) Generate(_ context.Context,
 	cfg *CertCfg,
 	filenameBase string,
+	pkiConfig *types.PKIConfig,
 ) error {
-	key, crt, err := GenerateSelfSignedCertificate(cfg)
+	params := PKIConfigToKeyParams(pkiConfig)
+
+	key, crt, err := GenerateSelfSignedCertificate(cfg, params)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate self-signed cert/key pair")
+		return fmt.Errorf("failed to generate self-signed cert/key pair: %w", err)
 	}
 
-	c.KeyRaw = PrivateKeyToPem(key)
+	c.KeyRaw, err = PrivateKeyToPem(key)
+	if err != nil {
+		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	}
 	c.CertRaw = CertToPem(crt)
 
 	c.generateFiles(filenameBase)
@@ -192,29 +196,28 @@ func RegenerateSignedCertKey(
 	parentCA CertKeyInterface,
 	appendParent AppendParentChoice,
 ) ([]byte, []byte, error) {
-	var key *rsa.PrivateKey
-	var crt *x509.Certificate
-	var err error
-
 	caKey, err := PemToPrivateKey(parentCA.Key())
 	if err != nil {
-		logrus.Debugf("Failed to parse RSA private key: %s", err)
-		return nil, nil, errors.Wrap(err, "failed to parse rsa private key")
+		logrus.Debugf("Failed to parse private key: %s", err)
+		return nil, nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
 	caCert, err := PemToCertificate(parentCA.Cert())
 	if err != nil {
 		logrus.Debugf("Failed to parse x509 certificate: %s", err)
-		return nil, nil, errors.Wrap(err, "failed to parse x509 certificate")
+		return nil, nil, fmt.Errorf("failed to parse x509 certificate: %w", err)
 	}
 
-	key, crt, err = GenerateSignedCertificate(caKey, caCert, cfg)
+	key, crt, generateErr := GenerateSignedCertificate(caKey, caCert, cfg)
+	if generateErr != nil {
+		logrus.Debugf("Failed to generate signed cert/key pair: %s", generateErr)
+		return nil, nil, fmt.Errorf("failed to generate signed cert/key pair: %w", generateErr)
+	}
+
+	keyRaw, err := PrivateKeyToPem(key)
 	if err != nil {
-		logrus.Debugf("Failed to generate signed cert/key pair: %s", err)
-		return nil, nil, errors.Wrap(err, "failed to generate signed cert/key pair")
+		return nil, nil, fmt.Errorf("failed to encode private key to PEM: %w", err)
 	}
-
-	keyRaw := PrivateKeyToPem(key)
 	certRaw := CertToPem(crt)
 
 	if appendParent {
