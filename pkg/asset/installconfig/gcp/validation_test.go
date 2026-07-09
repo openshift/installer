@@ -1451,6 +1451,44 @@ func TestValidateMarketplaceImages(t *testing.T) {
 			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
 		}
 
+		// Sovereign cloud test helpers
+		sovereignCloudWithDefaultImageNoProject = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: "",
+			}
+		}
+		sovereignCloudWithDefaultImageWithProject = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: projectID,
+			}
+		}
+		sovereignCloudWithControlPlaneImageNoProject = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+			ic.ControlPlane.Platform.GCP.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: "",
+			}
+		}
+		sovereignCloudWithComputeImageNoProject = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+			ic.Compute[0].Platform.GCP.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: "",
+			}
+		}
+		sovereignCloudNoDefaultImage = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = nil
+		}
+		sovereignCloudNilDefaultMachinePlatform = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+			ic.Platform.GCP.DefaultMachinePlatform = nil
+		}
+
 		marketplaceImageAPIResult = &compute.Image{
 			Architecture: "X86_64",
 		}
@@ -1536,6 +1574,41 @@ func TestValidateMarketplaceImages(t *testing.T) {
 			edits:           editFunctions{unspecifiedImageArchitecture},
 			expectedError:   false,
 			expectedWarnMsg: "Boot image architecture is unspecified and might not be compatible with amd64 controlPlane nodes",
+		},
+		{
+			name:           "Sovereign cloud without osImage",
+			edits:          editFunctions{sovereignCloudNoDefaultImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Required value: must specify custom image for sovereign cloud controlPlane.platform.gcp.osImage: Required value: must specify custom image for sovereign cloud compute\[0\].platform.gcp.osImage: Required value: must specify custom image for sovereign cloud\]$`,
+		},
+		{
+			name:           "Sovereign cloud with osImage but no project in defaultMachinePlatform",
+			edits:          editFunctions{sovereignCloudWithDefaultImageNoProject},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage.project: Required value: must specify image project for sovereign cloud\]$`,
+		},
+		{
+			name:          "Sovereign cloud with osImage and project in defaultMachinePlatform",
+			edits:         editFunctions{sovereignCloudWithDefaultImageWithProject},
+			expectedError: false,
+		},
+		{
+			name:           "Sovereign cloud with osImage but no project in controlPlane",
+			edits:          editFunctions{sovereignCloudWithControlPlaneImageNoProject, sovereignCloudNoDefaultImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Required value: must specify custom image for sovereign cloud controlPlane.platform.gcp.osImage.project: Required value: must specify image project for sovereign cloud compute\[0\].platform.gcp.osImage: Required value: must specify custom image for sovereign cloud\]$`,
+		},
+		{
+			name:           "Sovereign cloud with osImage but no project in compute",
+			edits:          editFunctions{sovereignCloudWithComputeImageNoProject, sovereignCloudNoDefaultImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Required value: must specify custom image for sovereign cloud controlPlane.platform.gcp.osImage: Required value: must specify custom image for sovereign cloud compute\[0\].platform.gcp.osImage.project: Required value: must specify image project for sovereign cloud\]$`,
+		},
+		{
+			name:           "Sovereign cloud with nil DefaultMachinePlatform",
+			edits:          editFunctions{sovereignCloudNilDefaultMachinePlatform},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Required value: must specify custom image for sovereign cloud controlPlane.platform.gcp.osImage: Required value: must specify custom image for sovereign cloud compute\[0\].platform.gcp.osImage: Required value: must specify custom image for sovereign cloud\]$`,
 		},
 	}
 
