@@ -180,7 +180,7 @@ func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
 	if platform == azure.Name && installConfig.Azure.CloudName != azure.PublicCloud {
 		// https://learn.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16
 		set.Insert("168.63.129.16")
-		if installConfig.Azure.CloudName == azure.StackCloud {
+		if installConfig.Azure.CloudName == azure.StackCloud || installConfig.Azure.CloudName == azure.USSecCloud {
 			set.Insert(installConfig.Config.Azure.ARMEndpoint)
 		}
 	}

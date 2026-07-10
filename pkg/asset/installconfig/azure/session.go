@@ -61,6 +61,84 @@ type Credentials struct {
 	ClientCertificatePassword string `json:"clientCertificatePassword,omitempty"`
 }
 
+// CloudEndpoints holds the resolved Azure endpoint configuration in both the
+// legacy go-autorest representation and the modern azure-sdk-for-go cloud
+// configuration.
+type CloudEndpoints struct {
+	Environment azureenv.Environment
+	CloudConfig cloud.Configuration
+}
+
+// DiscoverEndpointsFromURL dynamically discovers Azure endpoints by querying the
+// ARM metadata endpoint at the given Resource Manager URL. The metadata service
+// at {armEndpoint}/metadata/endpoints?api-version=1.0 returns the login
+// endpoint, token audiences, gallery, and graph endpoints for the environment.
+// It returns both the legacy go-autorest Environment and a modern
+// cloud.Configuration suitable for azure-sdk-for-go clients.
+func DiscoverEndpointsFromURL(armEndpoint string) (*CloudEndpoints, error) {
+	if armEndpoint == "" {
+		return nil, fmt.Errorf("ARM endpoint URL must not be empty for endpoint discovery")
+	}
+
+	env, err := azureenv.EnvironmentFromURL(armEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover endpoints from %q: %w", armEndpoint, err)
+	}
+
+	logrus.Debugf("Discovered Azure endpoints from %s: ActiveDirectory=%s ResourceManager=%s TokenAudience=%s",
+		armEndpoint, env.ActiveDirectoryEndpoint, env.ResourceManagerEndpoint, env.TokenAudience)
+
+	cloudConfig := cloud.Configuration{
+		ActiveDirectoryAuthorityHost: env.ActiveDirectoryEndpoint,
+		Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+			cloud.ResourceManager: {
+				Audience: env.TokenAudience,
+				Endpoint: env.ResourceManagerEndpoint,
+			},
+		},
+	}
+
+	return &CloudEndpoints{
+		Environment: env,
+		CloudConfig: cloudConfig,
+	}, nil
+}
+
+// ResolveCloudEndpoints returns the CloudEndpoints for the given cloud name. For
+// clouds with well-known endpoints (Public, Government, China) it uses the
+// built-in SDK definitions. For clouds that require dynamic discovery (Stack,
+// USSec) it calls DiscoverEndpointsFromURL with the provided ARM endpoint.
+func ResolveCloudEndpoints(cloudName azure.CloudEnvironment, armEndpoint string) (*CloudEndpoints, error) {
+	switch cloudName {
+	case azure.StackCloud, azure.USSecCloud:
+		return DiscoverEndpointsFromURL(armEndpoint)
+	default:
+		return resolveWellKnownEndpoints(cloudName)
+	}
+}
+
+func resolveWellKnownEndpoints(cloudName azure.CloudEnvironment) (*CloudEndpoints, error) {
+	env, err := azureenv.EnvironmentFromName(string(cloudName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Azure environment for the %q cloud: %w", cloudName, err)
+	}
+
+	var cloudConfig cloud.Configuration
+	switch cloudName {
+	case azure.USGovernmentCloud:
+		cloudConfig = cloud.AzureGovernment
+	case azure.ChinaCloud:
+		cloudConfig = cloud.AzureChina
+	default:
+		cloudConfig = cloud.AzurePublic
+	}
+
+	return &CloudEndpoints{
+		Environment: env,
+		CloudConfig: cloudConfig,
+	}, nil
+}
+
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSession(cloudName azure.CloudEnvironment, armEndpoint string) (*Session, error) {
@@ -71,21 +149,9 @@ func GetSession(cloudName azure.CloudEnvironment, armEndpoint string) (*Session,
 // If there are no prepopulated credentials it falls back to reading credentials from file system
 // or from user input.
 func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint string, credentials *Credentials) (*Session, error) {
-	var cloudEnv azureenv.Environment
-	var err error
-	switch cloudName {
-	case azure.StackCloud:
-		cloudEnv, err = azureenv.EnvironmentFromURL(armEndpoint)
-	default:
-		cloudEnv, err = azureenv.EnvironmentFromName(string(cloudName))
-	}
+	endpoints, err := ResolveCloudEndpoints(cloudName, armEndpoint)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Azure environment for the %q cloud: %w", cloudName, err)
-	}
-
-	cloudConfig, err := GetCloudConfiguration(cloudName, armEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cloud configuration for the %q cloud: %w", cloudName, err)
+		return nil, fmt.Errorf("failed to resolve Azure endpoints for the %q cloud: %w", cloudName, err)
 	}
 
 	if credentials == nil {
@@ -99,62 +165,34 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	switch {
 	case credentials.ClientCertificatePath != "":
 		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
-		cred, err = newTokenCredentialFromCertificates(credentials, *cloudConfig)
+		cred, err = newTokenCredentialFromCertificates(credentials, endpoints.CloudConfig)
 		authType = ClientCertificateAuth
 	case credentials.ClientSecret != "":
-		cred, err = newTokenCredentialFromCredentials(credentials, *cloudConfig)
+		cred, err = newTokenCredentialFromCredentials(credentials, endpoints.CloudConfig)
 		authType = ClientSecretAuth
 	default:
-		cred, err = newTokenCredentialFromMSI(credentials, *cloudConfig)
+		cred, err = newTokenCredentialFromMSI(credentials, endpoints.CloudConfig)
 		authType = ManagedIdentityAuth
 	}
 	if err != nil {
 		return nil, err
 	}
-	session, err := newSessionFromCredentials(cloudEnv, credentials, cred)
+	session, err := newSessionFromCredentials(endpoints.Environment, credentials, cred)
 	if err != nil {
 		return nil, err
 	}
-	session.CloudConfig = *cloudConfig
+	session.CloudConfig = endpoints.CloudConfig
 	session.AuthType = authType
 	return session, nil
 }
 
 // GetCloudConfiguration gets a cloud configuration from the cloud name and endpoint.
 func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string) (*cloud.Configuration, error) {
-	var cloudEnv azureenv.Environment
-	var err error
-	switch cloudName {
-	case azure.StackCloud, azure.USSecCloud:
-		cloudEnv, err = azureenv.EnvironmentFromURL(armEndpoint)
-	default:
-		cloudEnv, err = azureenv.EnvironmentFromName(string(cloudName))
-	}
+	endpoints, err := ResolveCloudEndpoints(cloudName, armEndpoint)
 	if err != nil {
 		return nil, err
 	}
-
-	var cloudConfig cloud.Configuration
-	switch cloudName {
-	case azure.StackCloud, azure.USSecCloud:
-		cloudConfig = cloud.Configuration{
-			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
-			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
-				cloud.ResourceManager: {
-					Audience: cloudEnv.TokenAudience,
-					Endpoint: cloudEnv.ResourceManagerEndpoint,
-				},
-			},
-		}
-	case azure.USGovernmentCloud:
-		cloudConfig = cloud.AzureGovernment
-	case azure.ChinaCloud:
-		cloudConfig = cloud.AzureChina
-	default:
-		cloudConfig = cloud.AzurePublic
-	}
-
-	return &cloudConfig, nil
+	return &endpoints.CloudConfig, nil
 }
 
 // credentialsFromFileOrUser returns credentials found
