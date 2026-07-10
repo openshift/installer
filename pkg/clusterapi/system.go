@@ -277,7 +277,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
-					"--feature-gates=MachinePool=false",
+					"--feature-gates=MachinePool=false,ASOAPI=false",
 				},
 				map[string]string{
 					"AZURE_ENVIRONMENT_FILEPATH": envFP,
