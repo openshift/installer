@@ -115,6 +115,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace sigs.k8s.io/cluster-api-provider-openstack => github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260709132825-e1f6b70c6b03
+replace sigs.k8s.io/cluster-api-provider-openstack => github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260710093708-9b2b126af7f4
 
 replace github.com/k-orc/openstack-resource-controller/v2 => github.com/k-orc/openstack-resource-controller/v2 v2.5.1-0.20260708153253-ef6119d9effa

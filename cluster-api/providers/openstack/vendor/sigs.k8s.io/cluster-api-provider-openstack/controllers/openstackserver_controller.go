@@ -211,12 +211,6 @@ func (r *OpenStackServerReconciler) reconcileNormal(ctx context.Context, openSta
 		return ctrl.Result{}, err
 	}
 
-	// Track ORC server name in status.
-	if openStackServer.Status.Resources == nil {
-		openStackServer.Status.Resources = &infrav1alpha1.ServerResources{}
-	}
-	openStackServer.Status.Resources.ORCServerName = orcResult.ORCServerName
-
 	if !orcResult.Done {
 		conditions.Set(openStackServer, metav1.Condition{
 			Type:    infrav1.InstanceReadyCondition,

@@ -1025,8 +1025,8 @@ github.com/securego/gosec/v2 v2.22.2 h1:IXbuI7cJninj0nRpZSLCUlotsj8jGusohfONMrHo
 github.com/securego/gosec/v2 v2.22.2/go.mod h1:UEBGA+dSKb+VqM6TdehR7lnQtIIMorYJ4/9CW1KVQBE=
 github.com/sergi/go-diff v1.3.1 h1:xkr+Oxo4BOQKmkn/B9eMK0g5Kg/983T9DqqPHwYqD+8=
 github.com/sergi/go-diff v1.3.1/go.mod h1:aMJSSKb2lpPvRNec0+w3fl7LP9IOFzdc9Pa4NFbPK1I=
-github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260709132825-e1f6b70c6b03 h1:etmFD2PfunwcwBc4PY0ib//CeOyoWNUneTm19HCS/WE=
-github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260709132825-e1f6b70c6b03/go.mod h1:iGQIcgPCtU4zO4bWjMEZBdJYGjJY6rpf6oCf7GBj0o4=
+github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260710093708-9b2b126af7f4 h1:q+/HlSbWN+VfcXtdhzgjfLK3Iko8csxhgKZvrS2FE50=
+github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260710093708-9b2b126af7f4/go.mod h1:iGQIcgPCtU4zO4bWjMEZBdJYGjJY6rpf6oCf7GBj0o4=
 github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 h1:bUGsEnyNbVPw06Bs80sCeARAlK8lhwqGyi6UT8ymuGk=
 github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749/go.mod h1:ZY1cvUeJuFPAdZ/B6v7RHavJWZn2YPVFQ1OSXhCGOkg=
 github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd h1:ug7PpSOB5RBPK1Kg6qskGBoP3Vnj/aNYFTznWvlkGo0=

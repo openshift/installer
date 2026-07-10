@@ -211,7 +211,7 @@ func buildNetwork(serverName, namespace string, param infrav1.NetworkParam, cred
 
 // buildSubnet builds an unmanaged ORC Subnet for importing an existing
 // Neutron subnet.
-func buildSubnet(serverName, namespace string, param infrav1.SubnetParam, credRef orcv1alpha1.CloudCredentialsReference) *orcv1alpha1.Subnet {
+func buildSubnet(serverName, namespace string, param infrav1.SubnetParam, networkORCName string, credRef orcv1alpha1.CloudCredentialsReference) *orcv1alpha1.Subnet {
 	key := SubnetParamKey(param)
 	obj := &orcv1alpha1.Subnet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -233,6 +233,9 @@ func buildSubnet(serverName, namespace string, param infrav1.SubnetParam, credRe
 			Name:                toOpenStackName(param.Filter.Name),
 			Description:         toNeutronDescription(param.Filter.Description),
 			FilterByNeutronTags: convertNeutronTags(param.Filter.FilterByNeutronTags),
+		}
+		if networkORCName != "" {
+			orcFilter.NetworkRef = orcv1alpha1.KubernetesNameRef(networkORCName)
 		}
 		obj.Spec.Import = &orcv1alpha1.SubnetImport{Filter: orcFilter}
 	}

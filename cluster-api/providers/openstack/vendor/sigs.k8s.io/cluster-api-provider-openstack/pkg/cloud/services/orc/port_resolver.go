@@ -66,11 +66,18 @@ func ResolvePortsToORC(
 		}
 	}
 
-	// Collect and deduplicate subnets from fixed IPs
+	// Collect and deduplicate subnets from fixed IPs.
+	// Each subnet filter requires a networkRef, so we resolve the
+	// port's network ORC name and pass it through.
 	for _, port := range ports {
+		var networkORCName string
+		if port.Network != nil {
+			key := NetworkParamKey(*port.Network)
+			networkORCName = res.NetworkNameMap[key]
+		}
 		for _, fixedIP := range port.FixedIPs {
 			if fixedIP.Subnet != nil {
-				addSubnet(res, serverName, namespace, *fixedIP.Subnet, credRef)
+				addSubnet(res, serverName, namespace, *fixedIP.Subnet, networkORCName, credRef)
 			}
 		}
 	}
@@ -101,7 +108,7 @@ func addNetwork(res *PortResolution, serverName, namespace string, param infrav1
 	res.NetworkNameMap[key] = obj.Name
 }
 
-func addSubnet(res *PortResolution, serverName, namespace string, param infrav1.SubnetParam, credRef orcv1alpha1.CloudCredentialsReference) {
+func addSubnet(res *PortResolution, serverName, namespace string, param infrav1.SubnetParam, networkORCName string, credRef orcv1alpha1.CloudCredentialsReference) {
 	key := SubnetParamKey(param)
 	if key == "" {
 		return
@@ -109,7 +116,7 @@ func addSubnet(res *PortResolution, serverName, namespace string, param infrav1.
 	if _, exists := res.SubnetNameMap[key]; exists {
 		return // deduplicated
 	}
-	obj := buildSubnet(serverName, namespace, param, credRef)
+	obj := buildSubnet(serverName, namespace, param, networkORCName, credRef)
 	res.Subnets = append(res.Subnets, obj)
 	res.SubnetNameMap[key] = obj.Name
 }

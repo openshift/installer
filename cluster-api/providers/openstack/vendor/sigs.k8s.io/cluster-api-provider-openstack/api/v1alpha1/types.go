@@ -44,8 +44,4 @@ type ServerResources struct {
 	// Ports is the status of the ports created for the server.
 	// +optional
 	Ports []infrav1.PortStatus `json:"ports,omitempty"`
-
-	// ORCServerName is the name of the ORC Server object managing this server.
-	// +optional
-	ORCServerName string `json:"orcServerName,omitempty"`
 }

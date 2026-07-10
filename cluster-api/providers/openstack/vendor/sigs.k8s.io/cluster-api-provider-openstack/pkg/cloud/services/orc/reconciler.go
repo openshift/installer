@@ -48,8 +48,6 @@ type ReconcileResult struct {
 	// Done is true when the ORC Server is Available and its status has
 	// been extracted.
 	Done bool
-	// ORCServerName is the name of the ORC Server object.
-	ORCServerName string
 	// ServerID is the OpenStack Nova server UUID (set when Done is true).
 	ServerID string
 	// ServerState is the Nova instance state (set when Done is true).
@@ -224,9 +222,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, openStackServer *infrav1alph
 		return nil, fmt.Errorf("fetching ORC Server: %w", err)
 	}
 
-	result := &ReconcileResult{
-		ORCServerName: ServerName(serverName),
-	}
+	result := &ReconcileResult{}
 
 	if !orcv1alpha1.IsAvailable(orcServer) {
 		return result, nil

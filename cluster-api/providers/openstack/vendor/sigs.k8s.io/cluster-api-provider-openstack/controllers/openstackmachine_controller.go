@@ -713,6 +713,18 @@ func openStackMachineSpecToOpenStackServerSpec(openStackMachineSpec *infrav1.Ope
 		}
 	}
 
+	// Fallback for managedSubnets: use resolved subnets from cluster status.
+	// ORC requires explicit fixed IP allocation, so we must always provide
+	// a subnet reference when creating ports.
+	if len(clusterSubnets) == 0 && openStackCluster.Status.Network != nil {
+		for i := range openStackCluster.Status.Network.Subnets {
+			subnetID := openStackCluster.Status.Network.Subnets[i].ID
+			clusterSubnets = append(clusterSubnets, infrav1.FixedIP{
+				Subnet: &infrav1.SubnetParam{ID: &subnetID},
+			})
+		}
+	}
+
 	for i := range serverPorts {
 		serverPort := &serverPorts[i]
 		// Only inject the default network when we actually have an ID.
@@ -720,7 +732,13 @@ func openStackMachineSpecToOpenStackServerSpec(openStackMachineSpec *infrav1.Ope
 			serverPort.Network = &infrav1.NetworkParam{
 				ID: &openStackCluster.Status.Network.ID,
 			}
-			serverPort.FixedIPs = clusterSubnets
+			// Only inject cluster subnets when the port does not
+			// already specify its own fixedIPs. Overwriting
+			// user-provided fixedIPs would cause ORC to create
+			// the Neutron port with fixed_ips=[] (no allocation).
+			if len(serverPort.FixedIPs) == 0 {
+				serverPort.FixedIPs = clusterSubnets
+			}
 		}
 		// Only inject the default SG when portSecurity is not disabled,
 		// there are no SGs passed by user and defaultSecGroup is set

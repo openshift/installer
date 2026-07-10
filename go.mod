@@ -390,6 +390,6 @@ replace (
 	sigs.k8s.io/cluster-api-provider-azure => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
 )
 
-replace sigs.k8s.io/cluster-api-provider-openstack => github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260709132825-e1f6b70c6b03
+replace sigs.k8s.io/cluster-api-provider-openstack => github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20260710093708-9b2b126af7f4
 
 replace github.com/k-orc/openstack-resource-controller/v2 => github.com/k-orc/openstack-resource-controller/v2 v2.5.1-0.20260708153253-ef6119d9effa
