@@ -77,6 +77,12 @@ function cluster_bootstrap_gather() {
         sed -E -i \
             's/%22auth%22%3A%22([A-Za-z0-9_-]|%3D|%2B|%2F)*%22/%22auth%22%3A%22REDACTED%22/g' \
             "${ARTIFACTS_TEMP}/resources/machineconfigs.json"
+
+        # Redact private keys embedded in MachineConfig Ignition data
+        # as URL-encoded PEM.
+        sed -E -i \
+            's/-----BEGIN%20((RSA|EC|DSA|OPENSSH)%20)?PRIVATE%20KEY-----[^"]*-----END%20((RSA|EC|DSA|OPENSSH)%20)?PRIVATE%20KEY-----/REDACTED/g' \
+            "${ARTIFACTS_TEMP}/resources/machineconfigs.json"
     fi
 
     if (( $(stat -c%s "${ARTIFACTS_TEMP}/resources/openapi.json.gz") <= 20 ))
