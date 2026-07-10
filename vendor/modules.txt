@@ -1606,6 +1606,7 @@ github.com/std-uritemplate/std-uritemplate/go/v2
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
+github.com/stretchr/testify/require
 # github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 ## explicit; go 1.13
 github.com/thedevsaddam/retry
