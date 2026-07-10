@@ -1,4 +1,4 @@
-package tls
+package tls //nolint:revive // pre-existing package name
 
 import (
 	"crypto/ecdsa"
