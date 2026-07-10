@@ -292,6 +292,57 @@ func TestValidatePlatform(t *testing.T) {
 			expected: `^test-path\.userProvisionedDNS: Invalid value: "Enabled": userProvisionedDNS is not supported on Azure Stack Hub$`,
 		},
 		{
+			name: "Azure Stack Hub with http ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.StackCloud
+				p.ARMEndpoint = "http://management.local.azurestack.external"
+				return p
+			}(),
+			expected: `^test-path\.armEndpoint: Invalid value: "http://management.local.azurestack.external": invalid scheme "http", only https is allowed$`,
+		},
+		{
+			name: "Azure Stack Hub with schemeless ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.StackCloud
+				p.ARMEndpoint = "management.local.azurestack.external"
+				return p
+			}(),
+			expected: `^test-path\.armEndpoint: Invalid value: "management.local.azurestack.external": invalid scheme "", only https is allowed$`,
+		},
+		{
+			name: "Azure Stack Hub with path in ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.StackCloud
+				p.ARMEndpoint = "https://management.local.azurestack.external/metadata"
+				return p
+			}(),
+			expected: `^test-path\.armEndpoint: Invalid value: "https://management.local.azurestack.external/metadata": no path or request parameters must be provided, "/metadata" was provided$`,
+		},
+		{
+			name: "Azure Stack Hub with valid https ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.StackCloud
+				p.ARMEndpoint = "https://management.local.azurestack.external"
+				return p
+			}(),
+			expected: "",
+		},
+		{
+			name: "USSec with http ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USSecCloud
+				p.ARMEndpoint = "http://management.azure.microsoft.scloud"
+				p.ClusterOSImage = "https://example.blob.core.microsoft.scloud/vhd/rhcos.vhd"
+				return p
+			}(),
+			expected: `^test-path\.armEndpoint: Invalid value: "http://management.azure.microsoft.scloud": invalid scheme "http", only https is allowed$`,
+		},
+		{
 			name:     "no machine networks specified",
 			platform: validPlatform(),
 			ic: &types.InstallConfig{

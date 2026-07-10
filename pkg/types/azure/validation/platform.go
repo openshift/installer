@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -410,6 +411,8 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	var allErrs field.ErrorList
 	if p.ARMEndpoint == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be set when installing on Azure Stack"))
+	} else {
+		allErrs = append(allErrs, validateARMEndpoint(p.ARMEndpoint, fldPath.Child("armEndpoint"))...)
 	}
 	if p.OutboundType != azure.LoadbalancerOutboundType {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support this routing currently"))
@@ -417,5 +420,41 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	if p.UserProvisionedDNS != "" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "userProvisionedDNS is not supported on Azure Stack Hub"))
 	}
+	return allErrs
+}
+
+func validateAzureSecretCloud(p *azure.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if p.ARMEndpoint == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be provided when installing on Azure Government Secret Cloud"))
+	} else {
+		allErrs = append(allErrs, validateARMEndpoint(p.ARMEndpoint, fldPath.Child("armEndpoint"))...)
+	}
+
+	if p.ClusterOSImage == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "a VHD URL must be provided when installing on Azure Government Secret Cloud"))
+	}
+	return allErrs
+}
+
+// validateARMEndpoint checks that the ARM endpoint is an https URL with a
+// hostname and no path or request parameters.
+func validateARMEndpoint(endpoint string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, endpoint, fmt.Sprintf("failed to parse ARM endpoint: %v", err)))
+	}
+	if s := u.Scheme; s != "https" {
+		return append(allErrs, field.Invalid(fldPath, endpoint, fmt.Sprintf("invalid scheme %q, only https is allowed", s)))
+	}
+	if u.Hostname() == "" {
+		return append(allErrs, field.Invalid(fldPath, endpoint, "host cannot be empty, empty host provided"))
+	}
+	if r := u.RequestURI(); r != "/" {
+		return append(allErrs, field.Invalid(fldPath, endpoint, fmt.Sprintf("no path or request parameters must be provided, %q was provided", r)))
+	}
+
 	return allErrs
 }
