@@ -36,8 +36,6 @@ type nmStateConfig struct {
 const (
 	// ExternalPlatformNameOci is the name of the external platform for Oracle Cloud Infrastructure.
 	ExternalPlatformNameOci = "oci"
-	// ExternalPlatformNameIBMZ is the name of the external platform for IBM Z (s390x).
-	ExternalPlatformNameIBMZ = "ibmz"
 )
 
 // SupportedInstallerPlatforms lists the supported platforms for agent installer.

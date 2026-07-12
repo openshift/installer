@@ -38,6 +38,7 @@ type AgentImage struct {
 	isoFilename          string
 	imageExpiresAt       string
 	minimalISO           bool
+	ccmExternal          bool
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -71,6 +72,10 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 	case workflow.AgentWorkflowTypeInstall:
 		a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
 		a.isoFilename = agentISOFilename
+		if agentManifests.AgentClusterInstall.Spec.ExternalPlatformSpec != nil &&
+			agentManifests.AgentClusterInstall.Spec.ExternalPlatformSpec.CloudControllerManager == hiveext.CloudControllerManagerTypeExternal {
+			a.ccmExternal = true
+		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		authConfig := &gencrypto.AuthConfig{}
@@ -227,9 +232,9 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	if err != nil {
 		return err
 	}
-	// For external platforms (OCI, IBM Z, etc.), add CCM manifests in the openshift directory.
-	if a.platform == hiveext.ExternalPlatformType {
-		logrus.Infof("When using %s platform, always make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, manifests.OpenshiftManifestDir())
+	// When cloudControllerManager is set to External, remind the user to add CCM manifests.
+	if a.ccmExternal {
+		logrus.Infof("When using %s platform with cloudControllerManager set to External, make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, manifests.OpenshiftManifestDir())
 	}
 
 	return nil
