@@ -955,6 +955,209 @@ func (ib *InterfacetBuilder) build() *aiv1beta1.Interface {
 	return &ib.Interface
 }
 
+func TestAgentHosts_FencingCredentialsByHost(t *testing.T) {
+	cases := []struct {
+		name                  string
+		dependencies          []asset.Asset
+		expectedError         string
+		expectedFencingByHost []FencingCredentialHost
+	}{
+		{
+			name: "mac-keyed credentials populate FencingCredentialsByHost",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{MACAddress: "28:d2:44:d2:b2:1a", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigMultiHost("worker"),
+			},
+			expectedFencingByHost: []FencingCredentialHost{
+				{
+					DirName: "test",
+					Credentials: []*types.Credential{
+						{MACAddress: "28:d2:44:d2:b2:1a", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+					},
+				},
+			},
+		},
+		{
+			name: "hostname-keyed credentials are excluded from FencingCredentialsByHost",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{HostName: "master-0", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigMultiHost("worker"),
+			},
+			expectedFencingByHost: nil,
+		},
+		{
+			name: "mixed credentials only include mac-keyed in FencingCredentialsByHost",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{HostName: "master-0", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+					{MACAddress: "28:d2:44:d2:b2:1b", Username: "admin2", Password: "pass2", Address: "redfish+https://10.0.0.2/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigMultiHost("worker"),
+			},
+			expectedFencingByHost: []FencingCredentialHost{
+				{
+					DirName: "test-2",
+					Credentials: []*types.Credential{
+						{MACAddress: "28:d2:44:d2:b2:1b", Username: "admin2", Password: "pass2", Address: "redfish+https://10.0.0.2/redfish/v1/Systems/1"},
+					},
+				},
+			},
+		},
+		{
+			name: "credential with both hostname and mac is treated as hostname-keyed",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{HostName: "master-0", MACAddress: "28:d2:44:d2:b2:1a", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigMultiHost("worker"),
+			},
+			expectedFencingByHost: nil,
+		},
+		{
+			name: "mac with no matching host returns error",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{MACAddress: "FF:FF:FF:FF:FF:FF", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigMultiHost("worker"),
+			},
+			expectedError: "does not match any configured host interface",
+		},
+		{
+			name: "host without hostname uses host-i directory",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{MACAddress: "28:d2:44:d2:b2:1a", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigNoHostname(),
+			},
+			expectedFencingByHost: []FencingCredentialHost{
+				{
+					DirName: "host-0",
+					Credentials: []*types.Credential{
+						{MACAddress: "28:d2:44:d2:b2:1a", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+					},
+				},
+			},
+		},
+		{
+			name: "case-insensitive mac matching",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigWithFencing([]*types.Credential{
+					{MACAddress: "28:D2:44:D2:B2:1A", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				}),
+				getAgentConfigMultiHost("worker"),
+			},
+			expectedFencingByHost: []FencingCredentialHost{
+				{
+					DirName: "test",
+					Credentials: []*types.Credential{
+						{MACAddress: "28:D2:44:D2:B2:1A", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+					},
+				},
+			},
+		},
+		{
+			name: "no fencing config produces empty FencingCredentialsByHost",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigSingleHost(),
+			},
+			expectedFencingByHost: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			parents := asset.Parents{}
+			parents.Add(tc.dependencies...)
+
+			ah := &AgentHosts{}
+			err := ah.Generate(context.Background(), parents)
+
+			if tc.expectedError != "" {
+				assert.ErrorContains(t, err, tc.expectedError)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedFencingByHost, ah.FencingCredentialsByHost)
+		})
+	}
+}
+
+func TestHostConfigFiles_FencingCredentials(t *testing.T) {
+	ah := &AgentHosts{
+		Hosts: []agent.Host{
+			{
+				Hostname: "master-0",
+				Interfaces: []*aiv1beta1.Interface{
+					{MacAddress: "aa:bb:cc:dd:ee:01"},
+				},
+			},
+		},
+		FencingCredentialsByHost: []FencingCredentialHost{
+			{
+				DirName: "master-0",
+				Credentials: []*types.Credential{
+					{MACAddress: "AA:BB:CC:DD:EE:01", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				},
+			},
+		},
+	}
+
+	files, err := ah.HostConfigFiles()
+	assert.NoError(t, err)
+
+	data, ok := files["master-0/fencing-credentials.yaml"]
+	assert.True(t, ok, "expected fencing-credentials.yaml in master-0 directory")
+	assert.Contains(t, string(data), "credentials:")
+	assert.Contains(t, string(data), "username: admin")
+}
+
+func getInstallConfigWithFencing(credentials []*types.Credential) *agentAsset.OptionalInstallConfig {
+	ic := getNoHostsInstallConfig()
+	ic.Config.ControlPlane.Fencing = &types.Fencing{
+		Credentials: credentials,
+	}
+	return ic
+}
+
+func getAgentConfigNoHostname() *AgentConfig {
+	a := getNoHostsAgentConfig()
+	a.Config.Hosts = []agent.Host{
+		{
+			Role: "master",
+			Interfaces: []*aiv1beta1.Interface{
+				{
+					Name:       "eth0",
+					MacAddress: "28:d2:44:d2:b2:1a",
+				},
+			},
+		},
+	}
+	return a
+}
+
 func getInstallConfigWithMismatchedNetworkConfig() *agentAsset.OptionalInstallConfig {
 	a := getInstallConfigSingleHost()
 	a.Config.Platform.BareMetal.Hosts[0].NetworkConfig = &apiextv1.JSON{
