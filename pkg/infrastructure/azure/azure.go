@@ -293,8 +293,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
 	}
 
-	storageURL := *storageAccount.Properties.PrimaryEndpoints.Blob
+	storageURL := strings.TrimSuffix(*storageAccount.Properties.PrimaryEndpoints.Blob, "/")
 	blobURL, err := url.JoinPath(storageURL, containerName, blobName)
+	logrus.Debugf("blobURL=%s", blobURL)
 	if err != nil {
 		return err
 	}
