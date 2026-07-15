@@ -262,6 +262,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 				&azProvider,
 				[]string{
 					"-v=2",
+					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -339,6 +340,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		ibmcloudFlags := []string{
 			"--provider-id-fmt=v2",
 			"-v=2",
+			"--diagnostics-address=0",
 			"--health-addr={{suggestHealthHostPort}}",
 			"--leader-elect=false",
 			"--webhook-port={{.WebhookPort}}",
@@ -436,6 +438,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			[]string{
 				"--provider-id-fmt=v2",
 				"--v=2",
+				"--diagnostics-address=0",
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
