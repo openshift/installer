@@ -76,7 +76,8 @@ konnectivity_cleanup() {
         echo "Cleaning up bootstrap konnectivity resources..."
         oc delete namespace openshift-bootstrap-konnectivity \
             --kubeconfig=/opt/openshift/auth/kubeconfig \
-            --ignore-not-found=true
+            --ignore-not-found=true \
+            --wait=false
         rm -f /etc/kubernetes/manifests/konnectivity-server-pod.yaml
         touch konnectivity-cleanup.done
         record_service_stage_success
