@@ -14,6 +14,11 @@ import (
 	"github.com/openshift/installer/pkg/utils"
 )
 
+const (
+	subnetScopePrivate = "private"
+	subnetScopePublic  = "public"
+)
+
 // ClusterAPIMachineSets returns CAPI MachineSet and AWSMachineTemplate resources.
 // This mirrors the MAPI MachineSets() function but produces CAPI-native types.
 func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []capi.MachineSet, error) {
@@ -68,9 +73,9 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 			publicSubnet = subnet.Public
 			subnetRef.ID = ptr.To(subnet.ID)
 		} else {
-			subnetInternetScope := "private"
+			subnetInternetScope := subnetScopePrivate
 			if publicSubnet {
-				subnetInternetScope = "public"
+				subnetInternetScope = subnetScopePublic
 			}
 			subnetRef.Filters = []capa.Filter{
 				{
