@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -117,6 +118,15 @@ func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *
 		}
 		return osimage, nil
 	case gcp.Name:
+		// For sovereign clouds (non-default universe domain), the pre-built images
+		// in rhcos-cloud are not accessible. Return the download URL so that
+		// PreProvision can upload a cluster-specific image.
+		if needsGCPImageUpload(ctx) {
+			if a, ok := streamArch.Artifacts["gcp"]; ok {
+				return rhcos.FindArtifactURL(a)
+			}
+			return "", fmt.Errorf("%s: No GCP artifact found for image upload", streamArchPrefix)
+		}
 		if streamArch.Images.Gcp != nil {
 			img := streamArch.Images.Gcp
 			return fmt.Sprintf("projects/%s/global/images/%s", img.Project, img.Name), nil
@@ -250,6 +260,23 @@ func MakeAsset(osImage string) *Image {
 		ControlPlane: osImage,
 		Compute:      osImage,
 	}
+}
+
+// needsGCPImageUpload determines whether the installer needs to upload a
+// cluster-specific RHCOS image to GCP. This is required for sovereign clouds
+// where the pre-built images in the rhcos-cloud project are not accessible.
+func needsGCPImageUpload(ctx context.Context) bool {
+	ssn, err := icgcp.GetSession(ctx)
+	if err != nil {
+		logrus.Warnf("Failed to get GCP session for universe domain check: %v; assuming non-sovereign", err)
+		return false
+	}
+	ud, err := ssn.Credentials.GetUniverseDomain()
+	if err != nil {
+		logrus.Warnf("Failed to get universe domain: %v; assuming non-sovereign", err)
+		return false
+	}
+	return gcp.IsNonDefaultUniverseDomain(ud)
 }
 
 func getHyperVGeneration(metadata *icazure.Metadata, role string) (string, error) {

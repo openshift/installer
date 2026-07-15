@@ -102,6 +102,20 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 	}
 
+	// Check if any GCPMachine has an empty image, indicating the RHCOS image
+	// needs to be uploaded to the cluster's project (e.g. sovereign cloud where
+	// rhcos-cloud images are not accessible).
+	if needsImageUpload(in.MachineManifests) {
+		imageRef, err := uploadRHCOSImage(ctx, in)
+		if err != nil {
+			return fmt.Errorf("failed to upload RHCOS image: %w", err)
+		}
+		updateMachineManifestImages(in.MachineManifests, imageRef)
+		if err := updateWorkerMachineSetImages(in.WorkersAsset, imageRef); err != nil {
+			return fmt.Errorf("failed to update worker machineset images: %w", err)
+		}
+	}
+
 	return nil
 }
 

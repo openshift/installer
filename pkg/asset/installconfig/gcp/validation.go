@@ -817,11 +817,6 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"), *defaultOsImage, fmt.Sprintf(errorMessage, err)))
 			}
 		}
-	} else if isSovereignCloud {
-		// For sovereign cloud, osImage must be explicitly configured
-		allErrs = append(allErrs, field.Required(
-			field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"),
-			"must specify custom image for sovereign cloud"))
 	}
 
 	if ic.ControlPlane != nil {
@@ -840,11 +835,6 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 					allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
 				}
 			}
-		} else if isSovereignCloud && defaultOsImage == nil {
-			// Control plane needs osImage if not set in defaultMachinePlatform
-			allErrs = append(allErrs, field.Required(
-				field.NewPath("controlPlane", "platform", "gcp", "osImage"),
-				"must specify custom image for sovereign cloud"))
 		}
 		if image != nil {
 			if errMsg := checkArchitecture(image.Architecture, ic.ControlPlane.Architecture, "controlPlane"); errMsg != "" {
@@ -870,11 +860,6 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 					allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
 				}
 			}
-		} else if isSovereignCloud && defaultOsImage == nil {
-			// Compute needs osImage if not set in defaultMachinePlatform
-			allErrs = append(allErrs, field.Required(
-				fieldPath.Child("platform", "gcp", "osImage"),
-				"must specify custom image for sovereign cloud"))
 		}
 		if image != nil {
 			if errMsg := checkArchitecture(image.Architecture, compute.Architecture, "compute"); errMsg != "" {
