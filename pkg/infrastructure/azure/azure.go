@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -828,6 +829,15 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 			return fmt.Errorf("failed to delete konnectivity security rule: %w", err)
 		}
 	}
+
+	// Clean up bootstrap storage account (ignition container and optionally
+	// the entire account if no image gallery containers remain).
+	if in.Metadata.Azure.CloudName != aztypes.StackCloud {
+		if err := deleteBootstrapIgnition(ctx, session, opts, resourceGroupName, in.Metadata.InfraID); err != nil {
+			logrus.Warnf("Failed to clean up bootstrap storage: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -882,6 +892,71 @@ func randomString(length int) string {
 	}
 
 	return string(s)
+}
+
+// deleteBootstrapIgnition removes the ignition container and, if no other
+// containers remain, deletes the storage account created for bootstrap.
+func deleteBootstrapIgnition(ctx context.Context, session *azconfig.Session, opts *arm.ClientOptions, resourceGroupName, infraID string) error {
+	storageAccountName := aztypes.GetStorageAccountName(infraID)
+
+	storageClientFactory, err := armstorage.NewClientFactory(
+		session.Credentials.SubscriptionID,
+		session.TokenCreds,
+		opts,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create storage client factory: %w", err)
+	}
+
+	blobContainersClient := storageClientFactory.NewBlobContainersClient()
+	_, err = blobContainersClient.Delete(ctx, resourceGroupName, storageAccountName, "ignition", nil)
+	if err != nil {
+		if !isNotFoundError(err) {
+			return fmt.Errorf("failed to delete ignition container: %w", err)
+		}
+		logrus.Debugf("Ignition container already deleted from storage account %s", storageAccountName)
+	} else {
+		logrus.Infof("Deleted bootstrap ignition container from storage account %s", storageAccountName)
+	}
+
+	pager := blobContainersClient.NewListPager(resourceGroupName, storageAccountName, nil)
+	hasContainers := false
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			if isNotFoundError(err) {
+				break
+			}
+			logrus.Warnf("Failed to list containers in storage account %s, skipping account deletion: %v", storageAccountName, err)
+			return nil
+		}
+		if len(page.Value) > 0 {
+			hasContainers = true
+			break
+		}
+	}
+
+	accountsClient := storageClientFactory.NewAccountsClient()
+	if !hasContainers {
+		_, err = accountsClient.Delete(ctx, resourceGroupName, storageAccountName, nil)
+		if err != nil {
+			if isNotFoundError(err) {
+				logrus.Debugf("Storage account %s already deleted", storageAccountName)
+				return nil
+			}
+			return fmt.Errorf("failed to delete storage account %s: %w", storageAccountName, err)
+		}
+		logrus.Infof("Deleted bootstrap storage account %s", storageAccountName)
+	} else {
+		logrus.Infof("Storage account %s has remaining containers, skipping deletion (will be removed with resource group)", storageAccountName)
+	}
+
+	return nil
+}
+
+func isNotFoundError(err error) bool {
+	var respErr *azcore.ResponseError
+	return errors.As(err, &respErr) && respErr.StatusCode == http.StatusNotFound
 }
 
 // Ignition provisions the Azure container that holds the bootstrap ignition
