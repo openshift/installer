@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	googleoauth "golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -24,7 +23,7 @@ import (
 
 // Gather holds options for resources we want to gather.
 type Gather struct {
-	credentials     *googleoauth.Credentials
+	projectID       string
 	clusterName     string
 	clusterID       string
 	infraID         string
@@ -41,13 +40,12 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	session, err := gcpsession.GetSession(ctx)
-	if err != nil {
+	if _, err := gcpsession.GetSession(ctx); err != nil {
 		return nil, err
 	}
 
 	return &Gather{
-		credentials:     session.Credentials,
+		projectID:       metadata.GCP.ProjectID,
 		clusterName:     metadata.ClusterName,
 		clusterID:       metadata.ClusterID,
 		infraID:         metadata.InfraID,
@@ -85,13 +83,13 @@ func (g *Gather) Run() error {
 		return err
 	}
 
-	req := svc.Instances.AggregatedList(g.credentials.ProjectID).Filter(fmt.Sprintf("name = %s-*", g.infraID))
+	req := svc.Instances.AggregatedList(g.projectID).Filter(fmt.Sprintf("name = %s-*", g.infraID))
 	err = req.Pages(ctx, func(list *compute.InstanceAggregatedList) error {
 		for _, aggListItem := range list.Items {
 			for _, instance := range aggListItem.Instances {
 				filename := filepath.Join(filePathDir, fmt.Sprintf("%s-serial.log", instance.Name))
 
-				serialOutput, err := isvc.GetSerialPortOutput(g.credentials.ProjectID, filepath.Base(instance.Zone), instance.Name).Port(1).Do()
+				serialOutput, err := isvc.GetSerialPortOutput(g.projectID, filepath.Base(instance.Zone), instance.Name).Port(1).Do()
 				if err != nil {
 					errs = append(errs, err)
 					continue
