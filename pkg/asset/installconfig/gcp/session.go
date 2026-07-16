@@ -182,7 +182,14 @@ type contentLoader struct {
 }
 
 func (f *contentLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
-	return googleoauth.CredentialsFromJSON(ctx, []byte(f.content), compute.CloudPlatformScope)
+	jsonData := []byte(f.content)
+	var t struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(jsonData, &t); err != nil {
+		return nil, fmt.Errorf("failed to parse credentials JSON: %w", err)
+	}
+	return googleoauth.CredentialsFromJSONWithType(ctx, jsonData, googleoauth.CredentialsType(t.Type), compute.CloudPlatformScope)
 }
 
 func (f *contentLoader) String() string {
