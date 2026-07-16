@@ -203,6 +203,21 @@ func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.Er
 
 // DefaultInstanceTypeForArch returns the appropriate instance type based on the target architecture.
 func DefaultInstanceTypeForArch(arch types.Architecture) string {
+	return DefaultInstanceTypeForArchAndProjectID(arch, "")
+}
+
+// DefaultInstanceTypeForArchAndProjectID returns the appropriate instance type based on the target architecture and project ID.
+// For sovereign cloud environments, it returns c3-standard-4 which is available in those regions.
+// For public GCP, it returns n2-standard-4 (x86) or t2a-standard-4 (ARM64).
+func DefaultInstanceTypeForArchAndProjectID(arch types.Architecture, projectID string) string {
+	cloudEnv := gcp.GetCloudEnvironment(projectID)
+
+	// Sovereign cloud uses c3-standard-4 for all architectures
+	if cloudEnv == gcp.CloudEnvironmentSovereign {
+		return "c3-standard-4"
+	}
+
+	// Public GCP: ARM64 uses t2a, x86 uses n2
 	if arch == types.ArchitectureARM64 {
 		return "t2a-standard-4"
 	}
@@ -786,11 +801,21 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 	var defaultImage *compute.Image
 	var defaultOsImage *gcp.OSImage
 
+	// Check if this is a sovereign cloud installation
+	isSovereignCloud := gcp.GetCloudEnvironment(ic.GCP.ProjectID) == gcp.CloudEnvironmentSovereign
+
 	if ic.GCP.DefaultMachinePlatform != nil && ic.GCP.DefaultMachinePlatform.OSImage != nil {
 		defaultOsImage = ic.GCP.DefaultMachinePlatform.OSImage
-		defaultImage, err = client.GetImage(context.TODO(), defaultOsImage.Name, defaultOsImage.Project)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"), *defaultOsImage, fmt.Sprintf(errorMessage, err)))
+		if isSovereignCloud && defaultOsImage.Project == "" {
+			allErrs = append(allErrs, field.Required(
+				field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage", "project"),
+				"must specify image project for sovereign cloud"))
+		}
+		if defaultOsImage.Project != "" {
+			defaultImage, err = client.GetImage(context.TODO(), defaultOsImage.Name, defaultOsImage.Project)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"), *defaultOsImage, fmt.Sprintf(errorMessage, err)))
+			}
 		}
 	}
 
@@ -799,9 +824,16 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 		osImage := defaultOsImage
 		if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.OSImage != nil {
 			osImage = ic.ControlPlane.Platform.GCP.OSImage
-			image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+			if isSovereignCloud && osImage.Project == "" {
+				allErrs = append(allErrs, field.Required(
+					field.NewPath("controlPlane", "platform", "gcp", "osImage", "project"),
+					"must specify image project for sovereign cloud"))
+			}
+			if osImage.Project != "" {
+				image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
+				if err != nil {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+				}
 			}
 		}
 		if image != nil {
@@ -817,9 +849,16 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 		fieldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.GCP != nil && compute.Platform.GCP.OSImage != nil {
 			osImage = compute.Platform.GCP.OSImage
-			image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+			if isSovereignCloud && osImage.Project == "" {
+				allErrs = append(allErrs, field.Required(
+					fieldPath.Child("platform", "gcp", "osImage", "project"),
+					"must specify image project for sovereign cloud"))
+			}
+			if osImage.Project != "" {
+				image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
+				if err != nil {
+					allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+				}
 			}
 		}
 		if image != nil {

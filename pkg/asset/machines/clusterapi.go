@@ -326,7 +326,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		c.FileList = append(c.FileList, azureMachines...)
 	case gcptypes.Name:
 		// Generate GCP master machines using ControPlane machinepool
-		mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
+		mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region)
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {
@@ -338,11 +338,18 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 		pool.Platform.GCP = &mpool
 
+		// When the RHCOS image is a download URL (sovereign cloud), leave the
+		// image empty so PreProvision uploads a cluster-specific image.
+		controlPlaneImage := rhcosImage.ControlPlane
+		if strings.HasPrefix(controlPlaneImage, "http") {
+			controlPlaneImage = ""
+		}
+
 		gcpMachines, err := gcp.GenerateMachines(
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			rhcosImage.ControlPlane,
+			controlPlaneImage,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects %w", err)
@@ -355,7 +362,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			rhcosImage.ControlPlane,
+			controlPlaneImage,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine objects %w", err)

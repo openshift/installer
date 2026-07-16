@@ -196,7 +196,10 @@ func (f *contentLoader) Content() string {
 type cliLoader struct{}
 
 func (c *cliLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
-	return googleoauth.FindDefaultCredentials(ctx, compute.CloudPlatformScope)
+	// Use FindDefaultCredentialsWithParams to ensure universe domain from credentials is applied
+	return googleoauth.FindDefaultCredentialsWithParams(ctx, googleoauth.CredentialsParams{
+		Scopes: []string{compute.CloudPlatformScope},
+	})
 }
 
 func (c *cliLoader) String() string {

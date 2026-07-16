@@ -308,6 +308,18 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			gAppCredEnvVar: session.Path,
 		}
 
+		// Set universe domain for sovereign cloud environments
+		// The universe domain is extracted from the credentials and must be explicitly
+		// set for the CAPI provider to use the correct GCP API endpoints
+		universeDomain, err := session.Credentials.GetUniverseDomain()
+		if err != nil {
+			return fmt.Errorf("failed to get universe domain from GCP credentials: %w", err)
+		}
+		if gcp.IsNonDefaultUniverseDomain(universeDomain) {
+			capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] = universeDomain
+			logrus.Infof("setting GOOGLE_CLOUD_UNIVERSE_DOMAIN to %s for capg infrastructure controller", universeDomain)
+		}
+
 		if v, ok := capgEnvVars[gAppCredEnvVar]; ok {
 			logrus.Infof("setting %q to %s for capg infrastructure controller", gAppCredEnvVar, v)
 		}
