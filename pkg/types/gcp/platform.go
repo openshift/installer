@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/openshift/installer/pkg/types/dns"
 )
@@ -185,7 +186,15 @@ func GetConfiguredServiceAccount(platform *Platform, mpool *MachinePool) string 
 // GetDefaultServiceAccount returns the default service account email to use based on role.
 // The default should be used when an existing service account is not configured.
 func GetDefaultServiceAccount(platform *Platform, clusterID string, role string) string {
-	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+	projectID := platform.ProjectID
+
+	// Domain-scoped project IDs (e.g. "eu0:openshift") use a reversed
+	// dot-separated format in SA emails: "openshift.eu0".
+	if parts := strings.SplitN(projectID, ":", 2); len(parts) == 2 {
+		projectID = parts[1] + "." + parts[0]
+	}
+
+	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], projectID)
 }
 
 // ShouldUseEndpointForInstaller returns true when the endpoint should be used for GCP api endpoint overrides in the
