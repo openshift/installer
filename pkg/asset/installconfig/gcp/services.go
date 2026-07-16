@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/storage"
@@ -61,8 +62,8 @@ func CreateEndpointOption(endpointName string, service ServiceNameGCP) option.Cl
 
 // CredentialOptions returns the client options for authenticating with GCP,
 // including universe domain support for Google Cloud Dedicated.
-// When credential JSON is available, it is passed via WithCredentialsJSON so
-// the client library can use self-signed JWTs for non-default universe
+// When credential JSON is available, it is passed via WithAuthCredentialsJSON
+// so the client library can use self-signed JWTs for non-default universe
 // domains (where the OAuth2 token endpoint is unavailable). Falls back to
 // WithCredentials for metadata-based credentials that have no JSON.
 func CredentialOptions(ssn *Session) ([]option.ClientOption, error) {
@@ -72,7 +73,16 @@ func CredentialOptions(ssn *Session) ([]option.ClientOption, error) {
 	}
 	var opts []option.ClientOption
 	if len(ssn.Credentials.JSON) > 0 {
-		opts = append(opts, option.WithCredentialsJSON(ssn.Credentials.JSON))
+		// WithAuthCredentialsJSON takes a credentials type argument to allow
+		// restricting which credential types are accepted from external sources.
+		// In this case, there are no restrictions so we simply pass the type through.
+		var f struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(ssn.Credentials.JSON, &f); err != nil {
+			return nil, fmt.Errorf("failed to parse credentials JSON: %w", err)
+		}
+		opts = append(opts, option.WithAuthCredentialsJSON(option.CredentialsType(f.Type), ssn.Credentials.JSON))
 	} else {
 		opts = append(opts, option.WithCredentials(ssn.Credentials))
 	}
