@@ -792,6 +792,11 @@ var (
 	// InstanceStateDeleted is the string representing an instance in a deleted state.
 	InstanceStateDeleted = InstanceState("DELETED")
 
+	// InstanceStateSoftDeleted is the string representing an instance in a soft-deleted state.
+	// This state occurs when OpenStack is configured with a reclaim_instance_interval > 0,
+	// allowing recovery of deleted instances within the reclaim period.
+	InstanceStateSoftDeleted = InstanceState("SOFT_DELETED")
+
 	// InstanceStateUndefined is the string representing an undefined instance state.
 	InstanceStateUndefined = InstanceState("")
 )

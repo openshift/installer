@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import (
 // VolumeFilterApplyConfiguration represents a declarative configuration of the VolumeFilter type for use
 // with apply.
 type VolumeFilterApplyConfiguration struct {
-	Name        *apiv1alpha1.OpenStackName `json:"name,omitempty"`
-	Description *string                    `json:"description,omitempty"`
-	Size        *int32                     `json:"size,omitempty"`
+	Name             *apiv1alpha1.OpenStackName `json:"name,omitempty"`
+	Description      *string                    `json:"description,omitempty"`
+	Size             *int32                     `json:"size,omitempty"`
+	AvailabilityZone *string                    `json:"availabilityZone,omitempty"`
 }
 
 // VolumeFilterApplyConfiguration constructs a declarative configuration of the VolumeFilter type for use with
@@ -57,5 +58,13 @@ func (b *VolumeFilterApplyConfiguration) WithDescription(value string) *VolumeFi
 // If called multiple times, the Size field is set to the value of the last call.
 func (b *VolumeFilterApplyConfiguration) WithSize(value int32) *VolumeFilterApplyConfiguration {
 	b.Size = &value
+	return b
+}
+
+// WithAvailabilityZone sets the AvailabilityZone field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AvailabilityZone field is set to the value of the last call.
+func (b *VolumeFilterApplyConfiguration) WithAvailabilityZone(value string) *VolumeFilterApplyConfiguration {
+	b.AvailabilityZone = &value
 	return b
 }

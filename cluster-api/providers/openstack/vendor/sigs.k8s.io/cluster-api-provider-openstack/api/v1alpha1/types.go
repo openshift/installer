@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 )
 
 // ResolvedServerSpec contains resolved references to resources required by the server.

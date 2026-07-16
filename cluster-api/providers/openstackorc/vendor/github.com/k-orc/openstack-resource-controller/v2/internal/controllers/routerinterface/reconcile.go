@@ -31,6 +31,8 @@ import (
 
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/reconciler"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/resync"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	osclients "github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
@@ -48,7 +50,38 @@ func (r *orcRouterInterfaceReconciler) Reconcile(ctx context.Context, req ctrl.R
 	router := &orcv1alpha1.Router{}
 	if err := r.client.Get(ctx, req.NamespacedName, router); err != nil {
 		if apierrors.IsNotFound(err) {
-			return ctrl.Result{}, nil
+			// The router does not exist (yet). We still need to update the status
+			// on all RouterInterfaces that are associated with that router
+
+			// Creating a dummy router struct with namespace and name will be enough to
+			// retrieve all defined RouterInterfaces for that to-be-created router
+			router.Name = req.Name
+			router.Namespace = req.Namespace
+			routerInterfaces, err := routerDependency.GetObjectsForDependency(ctx, r.client, router)
+
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("fetching router interfaces: %w", err)
+			}
+
+			if len(routerInterfaces) == 0 {
+				return ctrl.Result{}, nil
+			}
+
+			var osResource *osclients.PortExt
+
+			var reconcileStatus progress.ReconcileStatus
+			for i := range routerInterfaces {
+				routerInterface := &routerInterfaces[i]
+				log = log.WithValues("name", routerInterface.Name)
+
+				var ifReconcileStatus progress.ReconcileStatus
+				ifReconcileStatus = progress.WaitingOnObject("Router", req.Name, progress.WaitingOnCreation)
+				ifReconcileStatus = ifReconcileStatus.WithReconcileStatus(r.updateStatus(ctx, routerInterface, osResource, ifReconcileStatus))
+
+				reconcileStatus = reconcileStatus.WithReconcileStatus(ifReconcileStatus)
+			}
+
+			return reconcileStatus.Return(log)
 		}
 		return ctrl.Result{}, err
 	}
@@ -68,6 +101,32 @@ func (r *orcRouterInterfaceReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// We don't need to query neutron for ports if there are no interfaces to reconcile
 	if len(routerInterfaces) == 0 {
 		return ctrl.Result{}, nil
+	}
+
+	var reconcileStatus progress.ReconcileStatus
+	routerInterfacesToReconcile := make([]*orcv1alpha1.RouterInterface, 0, len(routerInterfaces))
+	for i := range routerInterfaces {
+		routerInterface := &routerInterfaces[i]
+
+		if !routerInterface.GetDeletionTimestamp().IsZero() {
+			routerInterfacesToReconcile = append(routerInterfacesToReconcile, routerInterface)
+			continue
+		}
+
+		effectiveResyncPeriod := resync.DetermineResyncPeriod(routerInterface.Spec.ResyncPeriod, r.defaultResyncPeriod)
+		if !reconciler.ShouldReconcile(routerInterface, routerInterface.Status.LastSyncTime, effectiveResyncPeriod) {
+			if remaining := resync.RemainingUntilNextSync(routerInterface.Status.LastSyncTime, effectiveResyncPeriod); remaining > 0 {
+				reconcileStatus = reconcileStatus.WithRequeue(remaining)
+			}
+			continue
+		}
+
+		routerInterfacesToReconcile = append(routerInterfacesToReconcile, routerInterface)
+	}
+
+	if len(routerInterfacesToReconcile) == 0 {
+		log.V(logging.Verbose).Info("Router interfaces are up to date: not reconciling")
+		return reconcileStatus.Return(log)
 	}
 
 	// If there are interfaces, the router should have our finalizer
@@ -103,9 +162,7 @@ func (r *orcRouterInterfaceReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 	}
 
-	var reconcileStatus progress.ReconcileStatus
-	for i := range routerInterfaces {
-		routerInterface := &routerInterfaces[i]
+	for _, routerInterface := range routerInterfacesToReconcile {
 		log = log.WithValues("name", routerInterface.Name)
 
 		var ifReconcileStatus progress.ReconcileStatus
@@ -147,7 +204,7 @@ func (r *orcRouterInterfaceReconciler) reconcileNormal(ctx context.Context, log 
 			r.updateStatus(ctx, routerInterface, osResource, reconcileStatus))
 
 		if needsReschedule, _ := reconcileStatus.NeedsReschedule(); !needsReschedule && osResource != nil {
-			log.V(logging.Status).Info("Router interface is available")
+			log.V(logging.Verbose).Info("Router interface is available")
 		}
 
 		// Don't return a terminal error because we don't aggregate them

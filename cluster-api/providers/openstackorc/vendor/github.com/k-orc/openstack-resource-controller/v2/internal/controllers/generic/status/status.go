@@ -41,7 +41,7 @@ func SetStatusID[
 	objectApplyPT interfaces.ORCApplyConfig[objectApplyPT, statusApplyPT],
 	statusApplyPT interface {
 		*statusApplyT
-		interfaces.ORCStatusApplyConfig[statusApplyPT]
+		interfaces.ORCStatusApplyConfigWithID[statusApplyPT]
 	},
 	statusApplyT any,
 	osResourcePT any,
@@ -62,6 +62,28 @@ func SetStatusID[
 	return controller.GetK8sClient().Status().Patch(ctx, orcObject, applyconfigs.Patch(types.MergePatchType, applyConfig))
 }
 
+// ClearStatusID clears the status.id field of an ORC object using a JSON merge
+// patch. This is necessary when an externally deleted managed resource is
+// detected: clearing the ID allows the next reconciliation to enter the
+// standard creation path and assign a new ID after the resource is recreated.
+//
+// A JSON merge patch with an explicit null value is required because the
+// generated apply configuration types use omitempty on the ID field, meaning a
+// nil pointer would simply omit the field rather than clear it.
+func ClearStatusID(ctx context.Context, controller interfaces.ResourceController, orcObject client.Object) error {
+	patch := client.RawPatch(types.MergePatchType, []byte(`{"status":{"id":null}}`))
+	return controller.GetK8sClient().Status().Patch(ctx, orcObject, patch)
+}
+
+// shouldSetLastSyncTime reports whether lastSyncTime should be set on a status
+// update. It returns true only when the reconciliation completed successfully:
+// the reconcileStatus contains neither errors nor progress messages. A requeue
+// alone (e.g., for a periodic resync) does not prevent the update.
+func shouldSetLastSyncTime(reconcileStatus progress.ReconcileStatus) bool {
+	needsReschedule, _ := reconcileStatus.NeedsReschedule()
+	return !needsReschedule
+}
+
 func UpdateStatus[
 	orcObjectPT interface {
 		client.Object
@@ -70,7 +92,7 @@ func UpdateStatus[
 	osResourcePT *osResourceT,
 	objectApplyPT interfaces.ORCApplyConfig[objectApplyPT, statusApplyPT],
 	statusApplyPT interface {
-		interfaces.ORCStatusApplyConfig[statusApplyPT]
+		interfaces.ORCStatusApplyConfigWithLastSyncTime[statusApplyPT]
 		*statusApply
 	},
 	statusApply any,
@@ -99,6 +121,13 @@ func UpdateStatus[
 	available, availableReconcileStatus := statusWriter.ResourceAvailableStatus(orcObject, osResource)
 	reconcileStatus = reconcileStatus.WithReconcileStatus(availableReconcileStatus)
 	SetCommonConditions(orcObject, applyConfigStatus, available, reconcileStatus, now)
+
+	// Set lastSyncTime only on successful reconciliation: no errors and no
+	// progress messages indicate that the controller successfully fetched the
+	// resource state from OpenStack.
+	if shouldSetLastSyncTime(reconcileStatus) {
+		applyConfigStatus.WithLastSyncTime(now)
+	}
 
 	// Patch orcObject with the status transaction
 	k8sClient := controller.GetK8sClient()

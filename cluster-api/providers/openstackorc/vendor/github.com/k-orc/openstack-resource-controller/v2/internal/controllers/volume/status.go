@@ -25,6 +25,7 @@ import (
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/interfaces"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	orcapplyconfigv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/pkg/clients/applyconfiguration/api/v1alpha1"
 )
 
@@ -85,10 +86,17 @@ func (volumeStatusWriter) ApplyResourceStatus(log logr.Logger, osResource *osRes
 	if osResource.Bootable != "" {
 		boolValue, err := strconv.ParseBool(osResource.Bootable)
 		if err != nil {
-			log.Info("Failed to parse boolean value", err)
+			log.V(logging.Debug).Info("Failed to parse boolean value", "error", err)
 		} else {
 			resourceStatus.WithBootable(boolValue)
 		}
+	}
+
+	// Extract image ID from volume_image_metadata if present.
+	// When a volume is created from an image, OpenStack stores the source
+	// image ID in the volume's metadata under "image_id".
+	if imageID, ok := osResource.VolumeImageMetadata["image_id"]; ok {
+		resourceStatus.WithImageID(imageID)
 	}
 
 	for k, v := range osResource.Metadata {

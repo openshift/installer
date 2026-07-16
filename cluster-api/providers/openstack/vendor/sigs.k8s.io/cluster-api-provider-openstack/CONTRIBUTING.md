@@ -36,17 +36,20 @@ Cluster API Provider OpenStack maintains the most recent release/releases for al
 
 | API Version  | Supported Until       |
 |--------------|-----------------------|
-| **v1beta1**  | TBD (current stable)  |
+| **v1beta2**  | TBD (current stable)  |
+| **v1beta1**  | TBD (still served)    |
 
-- For the current stable API version (v1beta1) we support the two most recent minor releases; older minor releases are immediately unsupported when a new major/minor release is available.
+- For the current stable API version (v1beta2) we support the two most recent minor releases; older minor releases are immediately unsupported when a new major/minor release is available.
 - For older API versions we only support the most recent minor release until the API version reaches EOL.
 - We will maintain test coverage for all supported minor releases and for one additional release for the current stable API version in case we have to do an emergency patch release.
   For example, if v0.11 and v0.12 are currently supported, we will also maintain test coverage for v0.10 for one additional release cycle. When v0.13 is released, tests for v0.10 will be removed.
 
 | Minor Release | API Version  | Supported Until                                |
 |---------------|--------------|------------------------------------------------|
+| v0.14.x       | **v1beta1**  | when v0.16.0 will be released                  |
+| v0.13.x       | **v1beta1**  | when v0.15.0 will be released                  |
 | v0.12.x       | **v1beta1**  | when v0.14.0 will be released                  |
-| v0.11.x       | **v1beta1**  | when v0.13.0 will be released                  |
+| v0.11.x       | **v1beta1**  | EOL since 2025-09-11 - v0.13.0 release date    |
 | v0.10.x       | **v1beta1**  | EOL since 2025-02-06 - v0.12.0 release date    |
 | v0.9.x        | **v1alpha7** | EOL since 2024-10-24 - v0.11.0 release date    |
 | v0.8.x        | **v1alpha7** | EOL since 2024-04-17 - v0.10.0 release date    |
@@ -55,8 +58,11 @@ Cluster API Provider OpenStack maintains the most recent release/releases for al
 
 ### Removal of v1alpha apiVersions
 
-| Minor Release | v1beta1       | v1alpha7   | v1alpha6   | v1alpha5   |
-|---------------|---------------|------------|------------|------------|
+| Minor Release | v1beta2       | v1beta1       | v1alpha7   | v1alpha6   | v1alpha5   |
+|---------------|---------------|---------------|------------|------------|------------|
+| v0.15.x       | **supported** | **supported** |            |            |            |
+| v0.14.x       |               | **supported** |            |            |            |
+| v0.13.x       |               | **supported** |            |            |            |
 | v0.12.x       | **supported** | not served |            |            |
 | v0.11.x       | **supported** | deprecated | not served |            |
 | v0.10.x       | **supported** | supported  | deprecated | not served |

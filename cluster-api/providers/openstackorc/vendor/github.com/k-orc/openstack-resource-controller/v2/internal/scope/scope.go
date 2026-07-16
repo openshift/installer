@@ -48,10 +48,21 @@ type Factory interface {
 
 // Scope contains arguments common to most operations.
 type Scope interface {
+	NewAddressScopeClient() (osclients.AddressScopeClient, error)
+	NewApplicationCredentialClient() (osclients.ApplicationCredentialClient, error)
 	NewComputeClient() (osclients.ComputeClient, error)
-	NewImageClient() (osclients.ImageClient, error)
-	NewNetworkClient() (osclients.NetworkClient, error)
+	NewDomainClient() (osclients.DomainClient, error)
+	NewEndpointClient() (osclients.EndpointClient, error)
+	NewGroupClient() (osclients.GroupClient, error)
 	NewIdentityClient() (osclients.IdentityClient, error)
+	NewImageClient() (osclients.ImageClient, error)
+	NewKeyPairClient() (osclients.KeyPairClient, error)
+	NewNetworkClient() (osclients.NetworkClient, error)
+	NewRoleClient() (osclients.RoleClient, error)
+	NewRoleAssignmentClient() (osclients.RoleAssignmentClient, error)
+	NewServiceClient() (osclients.ServiceClient, error)
+	NewShareNetworkClient() (osclients.ShareNetworkClient, error)
+	NewUserClient() (osclients.UserClient, error)
 	NewVolumeClient() (osclients.VolumeClient, error)
 	NewVolumeTypeClient() (osclients.VolumeTypeClient, error)
 	ExtractToken() (*tokens.Token, error)

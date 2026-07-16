@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import (
 // ProjectResourceSpecApplyConfiguration represents a declarative configuration of the ProjectResourceSpec type for use
 // with apply.
 type ProjectResourceSpecApplyConfiguration struct {
-	Name        *apiv1alpha1.KeystoneName `json:"name,omitempty"`
-	Description *string                   `json:"description,omitempty"`
-	Enabled     *bool                     `json:"enabled,omitempty"`
-	Tags        []apiv1alpha1.KeystoneTag `json:"tags,omitempty"`
+	Name        *apiv1alpha1.KeystoneName      `json:"name,omitempty"`
+	Description *string                        `json:"description,omitempty"`
+	DomainRef   *apiv1alpha1.KubernetesNameRef `json:"domainRef,omitempty"`
+	Enabled     *bool                          `json:"enabled,omitempty"`
+	Tags        []apiv1alpha1.KeystoneTag      `json:"tags,omitempty"`
 }
 
 // ProjectResourceSpecApplyConfiguration constructs a declarative configuration of the ProjectResourceSpec type for use with
@@ -50,6 +51,14 @@ func (b *ProjectResourceSpecApplyConfiguration) WithName(value apiv1alpha1.Keyst
 // If called multiple times, the Description field is set to the value of the last call.
 func (b *ProjectResourceSpecApplyConfiguration) WithDescription(value string) *ProjectResourceSpecApplyConfiguration {
 	b.Description = &value
+	return b
+}
+
+// WithDomainRef sets the DomainRef field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DomainRef field is set to the value of the last call.
+func (b *ProjectResourceSpecApplyConfiguration) WithDomainRef(value apiv1alpha1.KubernetesNameRef) *ProjectResourceSpecApplyConfiguration {
+	b.DomainRef = &value
 	return b
 }
 

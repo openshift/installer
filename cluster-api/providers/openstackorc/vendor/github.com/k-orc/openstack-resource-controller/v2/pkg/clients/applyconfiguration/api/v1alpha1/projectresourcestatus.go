@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package v1alpha1
 type ProjectResourceStatusApplyConfiguration struct {
 	Name        *string  `json:"name,omitempty"`
 	Description *string  `json:"description,omitempty"`
+	DomainID    *string  `json:"domainID,omitempty"`
 	Enabled     *bool    `json:"enabled,omitempty"`
 	Tags        []string `json:"tags,omitempty"`
 }
@@ -46,6 +47,14 @@ func (b *ProjectResourceStatusApplyConfiguration) WithName(value string) *Projec
 // If called multiple times, the Description field is set to the value of the last call.
 func (b *ProjectResourceStatusApplyConfiguration) WithDescription(value string) *ProjectResourceStatusApplyConfiguration {
 	b.Description = &value
+	return b
+}
+
+// WithDomainID sets the DomainID field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DomainID field is set to the value of the last call.
+func (b *ProjectResourceStatusApplyConfiguration) WithDomainID(value string) *ProjectResourceStatusApplyConfiguration {
+	b.DomainID = &value
 	return b
 }
 

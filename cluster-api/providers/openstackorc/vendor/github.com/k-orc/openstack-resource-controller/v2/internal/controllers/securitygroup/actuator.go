@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"time"
 
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/rules"
@@ -29,10 +30,10 @@ import (
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	osclients "github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/tags"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/set"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,6 +49,11 @@ type (
 	resourceReconciler        = interfaces.ResourceReconciler[orcObjectPT, osResourceT]
 	helperFactory             = interfaces.ResourceHelperFactory[orcObjectPT, orcObjectT, resourceSpecT, filterT, osResourceT]
 	securityGroupIterator     = iter.Seq2[*osResourceT, error]
+)
+
+const (
+	// The frequency to poll when waiting for the resource to become available
+	securityGroupAvailablePollingPeriod = 15 * time.Second
 )
 
 type securityGroupActuator struct {
@@ -71,35 +77,44 @@ func (actuator securityGroupActuator) GetOSResourceByID(ctx context.Context, id 
 }
 
 func (actuator securityGroupActuator) ListOSResourcesForAdoption(ctx context.Context, obj *orcv1alpha1.SecurityGroup) (securityGroupIterator, bool) {
-	if obj.Spec.Resource == nil {
+	resource := obj.Spec.Resource
+	if resource == nil {
 		return nil, false
 	}
 
-	listOpts := groups.ListOpts{Name: getResourceName(obj)}
+	// Resolve the project ID from ProjectRef if set. Without the project
+	// ID, adoption with admin-scoped credentials could match a security
+	// group in the wrong project.
+	var projectID string
+	if resource.ProjectRef != nil {
+		project, rs := dependency.FetchDependency(
+			ctx, actuator.k8sClient, obj.Namespace, resource.ProjectRef, "Project",
+			func(dep *orcv1alpha1.Project) bool {
+				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+			},
+		)
+		if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+			return nil, false
+		}
+		projectID = ptr.Deref(project.Status.ID, "")
+	}
+
+	listOpts := groups.ListOpts{
+		Name:      getResourceName(obj),
+		ProjectID: projectID,
+		Stateful:  resource.Stateful,
+	}
 	return actuator.osClient.ListSecGroup(ctx, listOpts), true
 }
 
 func (actuator securityGroupActuator) ListOSResourcesForImport(ctx context.Context, obj orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
 	var reconcileStatus progress.ReconcileStatus
 
-	project := &orcv1alpha1.Project{}
-	if filter.ProjectRef != nil {
-		projectKey := client.ObjectKey{Name: string(*filter.ProjectRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, projectKey, project); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnCreation))
-			} else {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WrapError(fmt.Errorf("fetching project %s: %w", projectKey.Name, err)))
-			}
-		} else {
-			if !orcv1alpha1.IsAvailable(project) || project.Status.ID == nil {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnReady))
-			}
-		}
-	}
+	project, rs := dependency.FetchDependency[*orcv1alpha1.Project](
+		ctx, actuator.k8sClient, obj.Namespace, filter.ProjectRef, "Project",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 		return nil, reconcileStatus
@@ -128,9 +143,7 @@ func (actuator securityGroupActuator) CreateResource(ctx context.Context, obj *o
 	var projectID string
 	if resource.ProjectRef != nil {
 		project, reconcileStatus := projectDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Project) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 			return nil, reconcileStatus
@@ -145,13 +158,10 @@ func (actuator securityGroupActuator) CreateResource(ctx context.Context, obj *o
 		ProjectID:   projectID,
 	}
 
-	// FIXME(mandre) The security group inherits the default security group
-	// rules. This could be a problem when we implement `update` if ORC
-	// does not takes these rules into account.
 	osResource, err := actuator.osClient.CreateSecGroup(ctx, &createOpts)
 	if err != nil {
-		// We should require the spec to be updated before retrying a create which returned a conflict
-		if orcerrors.IsConflict(err) {
+		// We should require the spec to be updated before retrying a create which returned a non-retryable error
+		if !orcerrors.IsRetryable(err) {
 			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+err.Error(), err)
 		}
 		return nil, progress.WrapError(err)
@@ -199,10 +209,10 @@ func (actuator securityGroupActuator) updateResource(ctx context.Context, obj or
 
 	_, err = actuator.osClient.UpdateSecGroup(ctx, osResource.ID, updateOpts)
 
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 
@@ -288,9 +298,7 @@ func (actuator securityGroupActuator) updateRules(ctx context.Context, orcObject
 	var projectID string
 	if resource.ProjectRef != nil {
 		project, reconcileStatus := projectDependency.GetDependency(
-			ctx, actuator.k8sClient, orcObject, func(dep *orcv1alpha1.Project) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, orcObject, orcv1alpha1.IsAvailable,
 		)
 		if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 			return reconcileStatus
@@ -342,7 +350,7 @@ orcRules:
 	if len(ruleCreateOpts) > 0 {
 		if _, createErr := actuator.osClient.CreateSecGroupRules(ctx, ruleCreateOpts); createErr != nil {
 			// We should require the spec to be updated before retrying a create which returned a conflict
-			if orcerrors.IsRetryable(createErr) {
+			if !orcerrors.IsRetryable(createErr) {
 				createErr = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+createErr.Error(), createErr)
 			} else {
 				createErr = fmt.Errorf("creating security group rules: %w", createErr)

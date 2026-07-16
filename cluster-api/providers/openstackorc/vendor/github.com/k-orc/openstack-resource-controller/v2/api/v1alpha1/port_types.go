@@ -36,7 +36,37 @@ type PortFilter struct {
 	// +optional
 	ProjectRef *KubernetesNameRef `json:"projectRef,omitempty"`
 
+	// adminStateUp is the administrative state of the port,
+	// which is up (true) or down (false).
+	// +optional
+	AdminStateUp *bool `json:"adminStateUp,omitempty"`
+
+	// macAddress is the MAC address of the port.
+	// +kubebuilder:validation:MaxLength=32
+	// +optional
+	MACAddress string `json:"macAddress,omitempty"`
+
 	FilterByNeutronTags `json:",inline"`
+}
+
+// HostID specifies how to determine the host ID for port binding.
+// Exactly one of the fields must be set.
+// +kubebuilder:validation:MinProperties:=1
+// +kubebuilder:validation:MaxProperties:=1
+// +kubebuilder:validation:XValidation:rule="(has(self.id) && size(self.id) > 0) != (has(self.serverRef) && size(self.serverRef) > 0)",message="exactly one of id or serverRef must be set"
+type HostID struct {
+	// id is the literal host ID string to use for binding:host_id.
+	// This is mutually exclusive with serverRef.
+	// +kubebuilder:validation:MaxLength=36
+	// +optional
+	ID string `json:"id,omitempty"` //nolint:kubeapilinter // intentionally allow raw ID
+
+	// serverRef is a reference to an ORC Server resource from which to
+	// retrieve the hostID for port binding. The hostID will be read from
+	// the Server's status.resource.hostID field.
+	// This is mutually exclusive with id.
+	// +optional
+	ServerRef KubernetesNameRef `json:"serverRef,omitempty"`
 }
 
 type AllowedAddressPair struct {
@@ -91,6 +121,19 @@ type FixedIPStatus struct {
 	SubnetID string `json:"subnetID,omitempty"`
 }
 
+type PortValueSpec struct {
+	// key is the name of the Neutron API extension parameter.
+	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:MaxLength:=255
+	// +required
+	Key string `json:"key,omitempty"`
+
+	// value is the value of the Neutron API extension parameter.
+	// +kubebuilder:validation:MaxLength:=255
+	// +required
+	Value *string `json:"value,omitempty"`
+}
+
 // +kubebuilder:validation:XValidation:rule="has(self.portSecurity) && self.portSecurity == 'Disabled' ? !has(self.securityGroupRefs) : true",message="securityGroupRefs must be empty when portSecurity is set to Disabled"
 // +kubebuilder:validation:XValidation:rule="has(self.portSecurity) && self.portSecurity == 'Disabled' ? !has(self.allowedAddressPairs) : true",message="allowedAddressPairs must be empty when portSecurity is set to Disabled"
 type PortResourceSpec struct {
@@ -126,12 +169,18 @@ type PortResourceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="addresses is immutable"
 	Addresses []Address `json:"addresses,omitempty"`
 
-	// securityGroupRefs are the names of the security groups associated
+	// adminStateUp is the administrative state of the port,
+	// which is up (true) or down (false). The default value is true.
+	// +kubebuilder:default:=true
+	// +optional
+	AdminStateUp *bool `json:"adminStateUp,omitempty"`
+
+	// securityGroupRefs are references to the security groups associated
 	// with this port.
 	// +kubebuilder:validation:MaxItems:=64
 	// +listType=set
 	// +optional
-	SecurityGroupRefs []OpenStackName `json:"securityGroupRefs,omitempty"`
+	SecurityGroupRefs []KubernetesNameRef `json:"securityGroupRefs,omitempty"`
 
 	// vnicType specifies the type of vNIC which this port should be
 	// attached to. This is used to determine which mechanism driver(s) to
@@ -159,6 +208,51 @@ type PortResourceSpec struct {
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectRef is immutable"
 	ProjectRef *KubernetesNameRef `json:"projectRef,omitempty"`
+
+	// macAddress is the MAC address of the port.
+	// +kubebuilder:validation:MaxLength=32
+	// +optional
+	MACAddress string `json:"macAddress,omitempty"`
+
+	// hostID specifies the host where the port will be bound.
+	// Note that when the port is attached to a server, OpenStack may
+	// rebind the port to the server's actual compute host, which may
+	// differ from the specified hostID if no matching scheduler hint
+	// is used. In this case the port's status will reflect the actual
+	// binding host, not the value specified here.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="hostID is immutable"
+	HostID *HostID `json:"hostID,omitempty"` //nolint:kubeapilinter // HostID provides both raw ID and ServerRef options
+
+	// trustedVIF indicates whether the VF for the port will become
+	// trusted by physical function to perform some privileged
+	// operations. Only admin users can create ports with this field.
+	// +optional
+	TrustedVIF *bool `json:"trustedVIF,omitempty"`
+
+	// valueSpecs are extra parameters to include in the API request
+	// with OpenStack. This is an extension point for the API, so what
+	// they do and if they are supported, depends on the specific
+	// OpenStack implementation. This was meant to work similar to the
+	// property on Heat port resource. Since this depends on the
+	// underlying implementation, we can't predict its fields, and
+	// therefore, we don't know how to reconcile them in advance. Use
+	// this field wisely and be aware of the expected behavior.
+	// +kubebuilder:validation:MaxItems:=128
+	// +listType=map
+	// +listMapKey=key
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="valueSpecs is immutable"
+	ValueSpecs []PortValueSpec `json:"valueSpecs,omitempty"`
+
+	// propagateUplinkStatus represents the uplink status propagation of
+	// the port.
+	// The field is now immutable due to a limitation on
+	// Dalmatian (2024.2) release, we should address this later.
+	// https://github.com/k-orc/openstack-resource-controller/pull/641#discussion_r2694783787
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="propagateUplinkStatus is immutable"
+	PropagateUplinkStatus *bool `json:"propagateUplinkStatus,omitempty"`
 }
 
 type PortResourceStatus struct {
@@ -250,6 +344,17 @@ type PortResourceStatus struct {
 	// portSecurityEnabled indicates whether port security is enabled or not.
 	// +optional
 	PortSecurityEnabled *bool `json:"portSecurityEnabled,omitempty"`
+
+	// hostID is the ID of host where the port resides.
+	// +kubebuilder:validation:MaxLength=128
+	// +optional
+	HostID string `json:"hostID,omitempty"`
+
+	// trustedVIF indicates whether the VF for the port will become
+	// trusted by physical function to perform some privileged
+	// operations.
+	// +optional
+	TrustedVIF *bool `json:"trustedVIF,omitempty"`
 
 	NeutronStatusMetadata `json:",inline"`
 }

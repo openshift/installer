@@ -27,7 +27,11 @@ unexport GOPATH
 TRACE ?= 0
 
 # Go
-GO_VERSION ?= 1.24.6
+GO_VERSION ?= 1.26.4
+
+# Ensure correct toolchain is used
+GOTOOLCHAIN = go$(GO_VERSION)
+export GOTOOLCHAIN
 
 # Directories.
 ARTIFACTS ?= $(REPO_ROOT)/_artifacts
@@ -36,7 +40,7 @@ BIN_DIR := bin
 TOOLS_DIR_DEPS := $(TOOLS_DIR)/go.sum $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/Makefile
 TOOLS_BIN_DIR := $(TOOLS_DIR)/$(BIN_DIR)
 
-REPO_ROOT := $(shell git rev-parse --show-toplevel)
+REPO_ROOT = $(shell git rev-parse --show-toplevel)
 GH_REPO ?= kubernetes-sigs/cluster-api-provider-openstack
 TEST_E2E_DIR := test/e2e
 
@@ -52,27 +56,40 @@ GO_APIDIFF_VER := v0.8.2
 GO_APIDIFF_BIN := go-apidiff
 GO_APIDIFF_PKG := github.com/joelanford/go-apidiff
 
-# govulncheck
-GOVULNCHECK_VER := v1.1.4
-GOVULNCHECK_BIN := govulncheck
-GOVULNCHECK_PKG := golang.org/x/vuln/cmd/govulncheck
+# golangci-lint
+GOLANGCI_LINT_BIN := golangci-lint
+GOLANGCI_LINT_VER = $(shell cd hack/tools && go list -m -f '{{.Version}}' github.com/golangci/golangci-lint/v2)
+GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 
-TRIVY_VER := 0.49.1
+# govulncheck
+GOVULNCHECK_VER := v1.3.0
+GOVULNCHECK_BIN := govulncheck
+GOVULNCHECK_DIR := hack/tools/govulncheck
+GOVULNCHECK_TMP_DIR ?= $(GOVULNCHECK_DIR)/govulncheck.tmp
+
+TRIVY_VER := 0.69.3
 
 # Binaries.
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
+CONVERSION_GEN := $(TOOLS_BIN_DIR)/conversion-gen
 ENVSUBST := $(TOOLS_BIN_DIR)/envsubst
 GINKGO := $(TOOLS_BIN_DIR)/ginkgo
 GOJQ := $(TOOLS_BIN_DIR)/gojq
-GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+GOLANGCI_LINT = $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER))
+GOLANGCI_LINT_KAL := $(abspath $(TOOLS_BIN_DIR)/golangci-lint-kube-api-linter)
 GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 MOCKGEN := $(TOOLS_BIN_DIR)/mockgen
+OPENAPI_GEN := $(TOOLS_BIN_DIR)/openapi-gen
+APPLYCONFIGURATION_GEN := $(TOOLS_BIN_DIR)/applyconfiguration-gen
+CLIENT_GEN := $(TOOLS_BIN_DIR)/client-gen
+LISTER_GEN := $(TOOLS_BIN_DIR)/lister-gen
+INFORMER_GEN := $(TOOLS_BIN_DIR)/informer-gen
 RELEASE_NOTES := $(TOOLS_BIN_DIR)/release-notes
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/setup-envtest
 GEN_CRD_API_REFERENCE_DOCS := $(TOOLS_BIN_DIR)/gen-crd-api-reference-docs
 GO_APIDIFF := $(TOOLS_BIN_DIR)/$(GO_APIDIFF_BIN)-$(GO_APIDIFF_VER)
-GOVULNCHECK := $(TOOLS_BIN_DIR)/$(GOVULNCHECK_BIN)-$(GOVULNCHECK_VER)
+GOVULNCHECK := $(abspath $(TOOLS_BIN_DIR)/$(GOVULNCHECK_BIN))
 
 # Kubebuilder
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.0
@@ -118,7 +135,7 @@ RBAC_ROOT ?= $(MANIFEST_ROOT)/rbac
 PULL_POLICY ?= Always
 
 # Set build time variables including version details
-LDFLAGS := $(shell source ./hack/version.sh; version::ldflags)
+LDFLAGS = $(shell source ./hack/version.sh; version::ldflags)
 
 # Extra arguments for govulncheck, e.g. "-show verbose"
 GOVULNCHECK_ARGS ?=
@@ -142,12 +159,6 @@ endif
 
 $(ARTIFACTS):
 	mkdir -p $@
-
-setup_envtest_extra_args=
-# Use the darwin/amd64 binary until an arm64 version is available
-ifeq ($(shell go env GOOS),darwin)
-	setup_envtest_extra_args += --arch amd64
-endif
 
 # By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share
 # if that is not defined. Set KUBEBUILDER_ASSETS_DIR to override.
@@ -183,11 +194,15 @@ e2e-templates: $(addprefix $(E2E_NO_ARTIFACT_TEMPLATES_DIR)/, \
 		 cluster-template-multi-network.yaml \
 		 cluster-template-without-lb.yaml \
 		 cluster-template.yaml \
+		 cluster-template-topology.yaml \
 		 cluster-template-flatcar.yaml \
-                 cluster-template-k8s-upgrade.yaml \
+		 cluster-template-k8s-upgrade.yaml \
 		 cluster-template-flatcar-sysext.yaml \
 		 cluster-template-no-bastion.yaml \
-		 cluster-template-health-monitor.yaml)
+		 cluster-template-health-monitor.yaml \
+		 cluster-template-capi-v1beta1.yaml \
+		 cluster-template-cluster-identity.yaml \
+		 cluster-template-topology-autoscaler.yaml)
 # Currently no templates that require CI artifacts
 # $(addprefix $(E2E_TEMPLATES_DIR)/, add-templates-here.yaml) \
 
@@ -263,23 +278,60 @@ $(GO_APIDIFF): # Build go-apidiff.
 .PHONY: $(GOVULNCHECK_BIN)
 $(GOVULNCHECK_BIN): $(GOVULNCHECK) ## Build a local copy of govulncheck.
 
-$(GOVULNCHECK): # Build govulncheck.
-	GOBIN=$(abspath $(TOOLS_BIN_DIR)) $(GO_INSTALL) $(GOVULNCHECK_PKG) $(GOVULNCHECK_BIN) $(GOVULNCHECK_VER)
+$(GOVULNCHECK): # Build govulncheck from source with exclusion patch.
+	@if [ -d "$(GOVULNCHECK_TMP_DIR)" ]; then \
+		echo "$(GOVULNCHECK_TMP_DIR) exists, skipping clone"; \
+	else \
+		git clone "https://github.com/golang/vuln.git" "$(GOVULNCHECK_TMP_DIR)"; \
+		cd "$(GOVULNCHECK_TMP_DIR)"; \
+		git checkout "$(GOVULNCHECK_VER)"; \
+		git apply "$(REPO_ROOT)/$(GOVULNCHECK_DIR)/govulncheck.patch"; \
+	fi
+	@cd "$(REPO_ROOT)/$(GOVULNCHECK_TMP_DIR)"; \
+	if [ "$$(git describe --tag 2> /dev/null)" != "$(GOVULNCHECK_VER)" ]; then \
+		echo "ERROR: checked out version does not match expected version $(GOVULNCHECK_VER)"; \
+		exit 1; \
+	fi
+	@rm -f $(GOVULNCHECK)
+	go build -C "$(REPO_ROOT)/$(GOVULNCHECK_TMP_DIR)" -o $(GOVULNCHECK) ./cmd/govulncheck
+
+.PHONY: clean-govulncheck
+clean-govulncheck:
+	rm -fr "$(GOVULNCHECK_TMP_DIR)"
+
+.PHONY: $(GOLANGCI_LINT_BIN)
+$(GOLANGCI_LINT_BIN): $(GOLANGCI_LINT) ## Build a local copy of golangci-lint.
+
+$(GOLANGCI_LINT): # Build golangci-lint.
+	GOBIN=$(abspath $(TOOLS_BIN_DIR)) $(GO_INSTALL) $(GOLANGCI_LINT_PKG) $(GOLANGCI_LINT_BIN) $(GOLANGCI_LINT_VER)
+
+$(GOLANGCI_LINT_KAL): $(GOLANGCI_LINT) $(TOOLS_DIR_DEPS) # Build golangci-lint with KAL plugin.
+	cd $(TOOLS_DIR); $(GOLANGCI_LINT) custom
 
 ## --------------------------------------
 ##@ Linting
 ## --------------------------------------
 
 .PHONY: lint
-lint: $(GOLANGCI_LINT) ## Lint codebase
+lint: $(GOLANGCI_LINT) $(GOLANGCI_LINT_KAL) ## Lint codebase
 	$(GOLANGCI_LINT) run -v
+	$(GOLANGCI_LINT_KAL) run -v --config $(ROOT_DIR_RELATIVE)/.golangci-kal.yml
 
 .PHONY: lint-update
-lint-update: $(GOLANGCI_LINT) ## Lint codebase
+lint-update: $(GOLANGCI_LINT) $(GOLANGCI_LINT_KAL) ## Lint and fix issues
 	$(GOLANGCI_LINT) run -v --fix
+	$(GOLANGCI_LINT_KAL) run -v --fix --config $(ROOT_DIR_RELATIVE)/.golangci-kal.yml
 
 lint-fast: $(GOLANGCI_LINT) ## Run only faster linters to detect possible issues
 	$(GOLANGCI_LINT) run -v --fast-only
+
+.PHONY: lint-api
+lint-api: $(GOLANGCI_LINT_KAL) ## Lint API types with KAL
+	$(GOLANGCI_LINT_KAL) run -v --config $(ROOT_DIR_RELATIVE)/.golangci-kal.yml
+
+.PHONY: lint-api-fix
+lint-api-fix: $(GOLANGCI_LINT_KAL) ## Lint API types with KAL and auto-fix issues
+	$(GOLANGCI_LINT_KAL) run -v --fix --config $(ROOT_DIR_RELATIVE)/.golangci-kal.yml
 
 ## --------------------------------------
 ##@ Generate
@@ -291,11 +343,18 @@ modules: ## Runs go mod to ensure proper vendoring.
 	cd $(TOOLS_DIR); go mod tidy
 
 .PHONY: generate
-generate: templates generate-controller-gen generate-codegen generate-go generate-manifests generate-api-docs ## Generate all generated code
+generate: templates generate-controller-gen generate-codegen generate-conversion-gen generate-go generate-manifests generate-api-docs ## Generate all generated code
 
 .PHONY: generate-go
 generate-go: $(MOCKGEN)
 	go generate ./...
+
+.PHONY: generate-conversion-gen
+generate-conversion-gen: $(CONVERSION_GEN)
+	$(CONVERSION_GEN) \
+		--output-file=zz_generated.conversion.go \
+		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt \
+		./api/v1beta1
 
 .PHONY: generate-controller-gen
 generate-controller-gen: $(CONTROLLER_GEN)
@@ -304,8 +363,70 @@ generate-controller-gen: $(CONTROLLER_GEN)
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt
 
 .PHONY: generate-codegen
-generate-codegen: generate-controller-gen
-	./hack/update-codegen.sh
+generate-codegen: generate-controller-gen $(OPENAPI_GEN) $(APPLYCONFIGURATION_GEN) $(CLIENT_GEN) $(LISTER_GEN) $(INFORMER_GEN)
+	@echo "** Generating OpenAPI definitions **"
+	# The package list includes:
+	# - CAPO's own API packages (v1alpha1, v1beta1, v1beta2) that have // +k8s:openapi-gen= markers
+	# - Dependency packages from CAPI and k8s.io that are referenced by CAPO's APIs
+	# - Base k8s.io/apimachinery packages
+	$(OPENAPI_GEN) \
+		--go-header-file=./hack/boilerplate.go.txt \
+		--output-file=zz_generated.openapi.go \
+		--output-dir=./cmd/models-schema \
+		--output-pkg=main \
+		--report-filename=./api_violations.report \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2 \
+		sigs.k8s.io/cluster-api/api/core/v1beta2 \
+		sigs.k8s.io/cluster-api/api/ipam/v1beta2 \
+		sigs.k8s.io/cluster-api/api/core/v1beta1 \
+		sigs.k8s.io/cluster-api/api/ipam/v1beta1 \
+		k8s.io/api/core/v1 \
+		k8s.io/apimachinery/pkg/apis/meta/v1 \
+		k8s.io/apimachinery/pkg/runtime \
+		k8s.io/apimachinery/pkg/api/resource \
+		k8s.io/apimachinery/pkg/version
+	@echo "** Generating openapi.json **"
+	go run ./cmd/models-schema | jq > ./openapi.json
+	@echo "** Generating applyconfiguration code **"
+	$(APPLYCONFIGURATION_GEN) \
+		--go-header-file=./hack/boilerplate.go.txt \
+		--output-dir=./pkg/generated/applyconfiguration \
+		--output-pkg=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/applyconfiguration \
+		--openapi-schema=./openapi.json \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2
+	@echo "** Generating clientset code **"
+	$(CLIENT_GEN) \
+		--go-header-file=./hack/boilerplate.go.txt \
+		--output-dir=./pkg/generated/clientset \
+		--output-pkg=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/clientset \
+		--clientset-name=clientset \
+		--input-base=sigs.k8s.io/cluster-api-provider-openstack \
+		--apply-configuration-package=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/applyconfiguration \
+		--input=api/v1alpha1 \
+		--input=api/v1beta1 \
+		--input=api/v1beta2
+	@echo "** Generating lister code **"
+	$(LISTER_GEN) \
+		--go-header-file=./hack/boilerplate.go.txt \
+		--output-dir=./pkg/generated/listers \
+		--output-pkg=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/listers \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2
+	@echo "** Generating informer code **"
+	$(INFORMER_GEN) \
+		--go-header-file=./hack/boilerplate.go.txt \
+		--output-dir=./pkg/generated/informers \
+		--output-pkg=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/informers \
+		--versioned-clientset-package=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/clientset/clientset \
+		--listers-package=sigs.k8s.io/cluster-api-provider-openstack/pkg/generated/listers \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1 \
+		sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2
 
 .PHONY: generate-manifests
 generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
@@ -325,7 +446,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		rbac:roleName=manager-role
 
 .PHONY: generate-api-docs
-generate-api-docs: generate-api-docs-v1beta1 generate-api-docs-v1alpha1
+generate-api-docs: generate-api-docs-v1beta2 generate-api-docs-v1beta1 generate-api-docs-v1alpha1
 generate-api-docs-%: $(GEN_CRD_API_REFERENCE_DOCS) FORCE
 	$(GEN_CRD_API_REFERENCE_DOCS) \
 		-api-dir=./api/$* \
@@ -338,8 +459,18 @@ generate-api-docs-%: $(GEN_CRD_API_REFERENCE_DOCS) FORCE
 ## --------------------------------------
 
 .PHONY: docker-build
-docker-build: ## Build the docker image for controller-manager
-	docker build -f Dockerfile --build-arg GO_VERSION=$(GO_VERSION) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAG)
+docker-build: ## Build the docker image for controller-manager without debug info
+	docker build -f Dockerfile --build-arg GO_VERSION=$(GO_VERSION) \
+	--build-arg goproxy=$(GOPROXY) \
+	--build-arg ARCH=$(ARCH) \
+	--build-arg ldflags="$(LDFLAGS) -s -w" . -t $(CONTROLLER_IMG_TAG)
+
+.PHONY: docker-build-debug
+docker-build-debug: ## Build the docker image for controller-manager with debug info
+	docker build -f Dockerfile --build-arg GO_VERSION=$(GO_VERSION) \
+	--build-arg goproxy=$(GOPROXY) \
+	--build-arg ARCH=$(ARCH) \
+	--build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAG)
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
@@ -376,14 +507,14 @@ staging-manifests:
 ## --------------------------------------
 ##@ Release
 ## --------------------------------------
-
 ifneq (,$(findstring -,$(RELEASE_TAG)))
     PRE_RELEASE=true
 endif
-PREVIOUS_TAG ?= $(shell git tag -l | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$$" | sort -V | grep -B1 $(RELEASE_TAG) | head -n 1 2>/dev/null)
+# List all tags, add the new tag to the list, sort and pick the previous one.
+PREVIOUS_TAG ?= $(shell (git tag -l | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$$"; echo "$(RELEASE_TAG)") | sort -V | grep -B1 "^$(RELEASE_TAG)$$" | grep -v "^$(RELEASE_TAG)$$" | head -n 1 2>/dev/null)
 ## set by Prow, ref name of the base branch, e.g., main
 RELEASE_DIR := out
-RELEASE_NOTES_DIR := _releasenotes
+RELEASE_NOTES_DIR := releasenotes
 
 .PHONY: $(RELEASE_DIR)
 $(RELEASE_DIR):
@@ -406,7 +537,7 @@ list-image:
 	gcloud container images list-tags $(STAGING_REGISTRY)/$(IMAGE) --filter="tags=('$(RELEASE_TAG)')" --format=json
 
 .PHONY: release
-release: $(RELEASE_NOTES) clean-release $(RELEASE_DIR)  ## Builds and push container images using the latest git tag for the commit.
+release: $(RELEASE_NOTES) $(RELEASE_DIR)  ## Builds and push container images using the latest git tag for the commit.
 	@if [ -z "${RELEASE_TAG}" ]; then echo "RELEASE_TAG is not set"; exit 1; fi
 	@if ! [ -z "$$(git status --porcelain)" ]; then echo "Your local git repository contains uncommitted changes, use git clean before proceeding."; fi
 	git checkout "${RELEASE_TAG}"
@@ -414,6 +545,7 @@ release: $(RELEASE_NOTES) clean-release $(RELEASE_DIR)  ## Builds and push conta
 	$(MAKE) manifest-modification REGISTRY=$(PROD_REGISTRY)
 	$(MAKE) release-manifests
 	$(MAKE) release-templates
+	$(MAKE) generate-release-notes
 
 .PHONY: manifest-modification
 manifest-modification: # Set the manifest images to the staging/production bucket.
@@ -479,19 +611,20 @@ generate-release-notes: $(RELEASE_NOTES_DIR) $(RELEASE_NOTES)
 	fi
 	"$(RELEASE_NOTES)" --repository=kubernetes-sigs/cluster-api-provider-openstack \
 	  --prefix-area-label=false --add-kubernetes-version-support=false \
-	  --from=$(PREVIOUS_TAG) --release=$(RELEASE_TAG) >> $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md
+	  --from=tags/$(PREVIOUS_TAG) --release=$(RELEASE_TAG) >> $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md
 
 .PHONY: templates
 templates: ## Generate cluster templates
 templates: templates/cluster-template.yaml \
 	templates/cluster-template-without-lb.yaml \
 	templates/cluster-template-flatcar.yaml \
-	templates/cluster-template-flatcar-sysext.yaml
+	templates/cluster-template-flatcar-sysext.yaml \
+	templates/cluster-template-capi-v1beta1.yaml
 
-templates/cluster-template.yaml: kustomize/v1beta1/default $(KUSTOMIZE) FORCE
+templates/cluster-template.yaml: kustomize/default $(KUSTOMIZE) FORCE
 	$(KUSTOMIZE) build "$<" > "$@"
 
-templates/cluster-template-%.yaml: kustomize/v1beta1/% $(KUSTOMIZE) FORCE
+templates/cluster-template-%.yaml: kustomize/% $(KUSTOMIZE) FORCE
 	$(KUSTOMIZE) build "$<" > "$@"
 
 .PHONY: release-templates
@@ -595,11 +728,7 @@ verify-container-images: ## Verify container images
 
 .PHONY: verify-govulncheck
 verify-govulncheck: $(GOVULNCHECK) ## Verify code for vulnerabilities
-	$(GOVULNCHECK) $(GOVULNCHECK_ARGS) ./... && R1=$$? || R1=$$?; \
-	$(GOVULNCHECK) $(GOVULNCHECK_ARGS) -C "$(TOOLS_DIR)" ./... && R2=$$? || R2=$$?; \
-	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ]; then \
-		exit 1; \
-	fi
+	$(GOVULNCHECK) $(GOVULNCHECK_ARGS) ./...
 
 .PHONY: verify-security
 verify-security: ## Verify code and images for vulnerabilities

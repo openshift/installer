@@ -47,6 +47,14 @@ import (
 // interface the installer uses to call this provider.
 var _ infrastructure.Provider = (*InfraProvider)(nil)
 
+// orcResourceKinds lists the ORC resource types that CAPO creates
+// during reconciliation. These are collected as artifacts for debugging.
+var orcResourceKinds = []string{
+	"Server", "Port", "Trunk", "Volume", "VolumeType",
+	"Image", "Flavor", "KeyPair", "ServerGroup",
+	"Network", "Subnet", "SecurityGroup",
+}
+
 const (
 	preProvisionStage        = "Infrastructure Pre-provisioning"
 	infrastructureStage      = "Network-infrastructure Provisioning"
@@ -639,6 +647,52 @@ func (i *InfraProvider) collectManifests(ctx context.Context, cl client.Client) 
 			Data:     objData,
 		})
 	}
+	// Also collect ORC resources created by CAPO controllers.
+	orcFiles, orcErrors := collectORCManifests(ctx, cl)
+	fileList = append(fileList, orcFiles...)
+	errorList = append(errorList, orcErrors...)
+
+	return fileList, errorList
+}
+
+// collectORCManifests lists ORC (OpenStack Resource Controller) objects
+// from the local control plane and returns them as asset files for debugging.
+// This is best-effort: if ORC CRDs are not installed (non-OpenStack platforms),
+// the listing is silently skipped.
+func collectORCManifests(ctx context.Context, cl client.Client) ([]*asset.File, []error) {
+	logrus.Debug("Collecting ORC manifests...")
+	var fileList []*asset.File
+	var errorList []error
+
+	for _, kind := range orcResourceKinds {
+		list := &unstructured.UnstructuredList{}
+		list.SetAPIVersion("openstack.k-orc.cloud/v1alpha1")
+		list.SetKind(kind + "List")
+
+		if err := cl.List(ctx, list, client.InNamespace(capiutils.Namespace)); err != nil {
+			logrus.Debugf("Skipping ORC %s resources: %v", kind, err)
+			continue
+		}
+
+		for i := range list.Items {
+			obj := &list.Items[i]
+			fileName := filepath.Join(clusterapi.ArtifactsDir, fmt.Sprintf("%s-%s-%s.yaml", kind, obj.GetNamespace(), obj.GetName()))
+			objData, err := yaml.Marshal(obj.Object)
+			if err != nil {
+				errorList = append(errorList, fmt.Errorf("failed to marshal ORC manifest %s: %w", fileName, err))
+				continue
+			}
+			fileList = append(fileList, &asset.File{
+				Filename: fileName,
+				Data:     objData,
+			})
+		}
+	}
+
+	if len(fileList) > 0 {
+		logrus.Infof("Collected %d ORC manifests", len(fileList))
+	}
+
 	return fileList, errorList
 }
 

@@ -32,6 +32,7 @@ import (
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 )
 
@@ -80,7 +81,7 @@ func (actuator volumeActuator) ListOSResourcesForAdoption(ctx context.Context, o
 
 	var filters []osclients.ResourceFilter[osResourceT]
 
-	// NOTE: The API doesn't allow filtering by description or size
+	// NOTE: The API doesn't allow filtering by description, size, or availability zone
 	// we'll have to do it client-side.
 	if resourceSpec.Description != nil {
 		filters = append(filters, func(f *volumes.Volume) bool {
@@ -90,6 +91,11 @@ func (actuator volumeActuator) ListOSResourcesForAdoption(ctx context.Context, o
 	filters = append(filters, func(f *volumes.Volume) bool {
 		return f.Size == int(resourceSpec.Size)
 	})
+	if resourceSpec.AvailabilityZone != "" {
+		filters = append(filters, func(f *volumes.Volume) bool {
+			return f.AvailabilityZone == resourceSpec.AvailabilityZone
+		})
+	}
 
 	metadata := make(map[string]string)
 	for _, m := range resourceSpec.Metadata {
@@ -107,7 +113,7 @@ func (actuator volumeActuator) ListOSResourcesForAdoption(ctx context.Context, o
 func (actuator volumeActuator) ListOSResourcesForImport(ctx context.Context, obj orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
 	var filters []osclients.ResourceFilter[osResourceT]
 
-	// NOTE: The API doesn't allow filtering by description or size
+	// NOTE: The API doesn't allow filtering by description, size, or availability zone
 	// we'll have to do it client-side.
 	if filter.Description != nil {
 		filters = append(filters, func(f *volumes.Volume) bool {
@@ -117,6 +123,11 @@ func (actuator volumeActuator) ListOSResourcesForImport(ctx context.Context, obj
 	if filter.Size != nil {
 		filters = append(filters, func(f *volumes.Volume) bool {
 			return f.Size == int(*filter.Size)
+		})
+	}
+	if filter.AvailabilityZone != "" {
+		filters = append(filters, func(f *volumes.Volume) bool {
+			return f.AvailabilityZone == filter.AvailabilityZone
 		})
 	}
 
@@ -145,15 +156,22 @@ func (actuator volumeActuator) CreateResource(ctx context.Context, obj orcObject
 	var volumetypeID string
 	if resource.VolumeTypeRef != nil {
 		volumetype, volumetypeDepRS := volumetypeDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.VolumeType) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(volumetypeDepRS)
 		if volumetype != nil {
 			volumetypeID = ptr.Deref(volumetype.Status.ID, "")
 		}
 	}
+
+	// Resolve image dependency for bootable volumes
+	image, imageDepRS := dependency.FetchDependency[*orcv1alpha1.Image](
+		ctx, actuator.k8sClient, obj.Namespace,
+		resource.ImageRef, "Image",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(imageDepRS)
+	imageID := ptr.Deref(image.Status.ID, "")
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 		return nil, reconcileStatus
@@ -165,11 +183,13 @@ func (actuator volumeActuator) CreateResource(ctx context.Context, obj orcObject
 	}
 
 	createOpts := volumes.CreateOpts{
-		Name:        getResourceName(obj),
-		Description: ptr.Deref(resource.Description, ""),
-		Size:        int(resource.Size),
-		Metadata:    metadata,
-		VolumeType:  volumetypeID,
+		Name:             getResourceName(obj),
+		Description:      ptr.Deref(resource.Description, ""),
+		Size:             int(resource.Size),
+		Metadata:         metadata,
+		VolumeType:       volumetypeID,
+		AvailabilityZone: resource.AvailabilityZone,
+		ImageID:          imageID,
 	}
 
 	osResource, err := actuator.osClient.CreateVolume(ctx, createOpts)
@@ -223,12 +243,10 @@ func (actuator volumeActuator) updateResource(ctx context.Context, obj orcObject
 
 	_, err = actuator.osClient.UpdateVolume(ctx, osResource.ID, updateOpts)
 
-	// We should require the spec to be updated before retrying an update which returned a conflict
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
-
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 

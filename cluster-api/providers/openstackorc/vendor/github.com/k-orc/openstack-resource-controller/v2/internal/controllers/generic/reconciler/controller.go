@@ -19,6 +19,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -29,6 +30,7 @@ import (
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/interfaces"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/resync"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/status"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/scope"
@@ -51,20 +53,22 @@ func NewController[
 	objectApplyPT interfaces.ORCApplyConfig[objectApplyPT, statusApplyPT],
 	statusApplyPT interface {
 		*statusApplyT
-		interfaces.ORCStatusApplyConfig[statusApplyPT]
+		interfaces.ORCStatusApplyConfigWithID[statusApplyPT]
 	}, statusApplyT any,
 	osResourceT any,
 ](
 	name string, k8sClient client.Client, scopeFactory scope.Factory,
 	helperFactory interfaces.ResourceHelperFactory[orcObjectPT, orcObjectT, resourceSpecT, filterT, osResourceT],
 	statusWriter interfaces.ResourceStatusWriter[orcObjectPT, *osResourceT, objectApplyPT, statusApplyPT],
+	defaultResyncPeriod time.Duration,
 ) Controller[orcObjectPT, orcObjectT, resourceSpecT, filterT, objectApplyPT, statusApplyPT, statusApplyT, osResourceT] {
 	return Controller[orcObjectPT, orcObjectT, resourceSpecT, filterT, objectApplyPT, statusApplyPT, statusApplyT, osResourceT]{
-		name:          name,
-		client:        k8sClient,
-		scopeFactory:  scopeFactory,
-		helperFactory: helperFactory,
-		statusWriter:  statusWriter,
+		name:                name,
+		client:              k8sClient,
+		scopeFactory:        scopeFactory,
+		helperFactory:       helperFactory,
+		statusWriter:        statusWriter,
+		defaultResyncPeriod: defaultResyncPeriod,
 	}
 }
 
@@ -80,7 +84,7 @@ type Controller[
 	objectApplyPT interfaces.ORCApplyConfig[objectApplyPT, statusApplyPT],
 	statusApplyPT interface {
 		*statusApplyT
-		interfaces.ORCStatusApplyConfig[statusApplyPT]
+		interfaces.ORCStatusApplyConfigWithID[statusApplyPT]
 	},
 	statusApplyT any,
 	osResourceT any,
@@ -91,6 +95,13 @@ type Controller[
 
 	helperFactory interfaces.ResourceHelperFactory[orcObjectPT, orcObjectT, resourceSpecT, filterT, osResourceT]
 	statusWriter  interfaces.ResourceStatusWriter[orcObjectPT, *osResourceT, objectApplyPT, statusApplyPT]
+
+	// defaultResyncPeriod is the operator-level default resync period passed
+	// from the manager options. It is used as the fallback in
+	// resync.DetermineResyncPeriod when a resource does not specify its own
+	// spec.resyncPeriod. A value of 0 means periodic resync is disabled by
+	// default.
+	defaultResyncPeriod time.Duration
 }
 
 func (c *Controller[_, _, _, _, _, _, _, _]) GetName() string {
@@ -131,7 +142,7 @@ func (c *Controller[
 	return c.reconcileNormal(ctx, adapter).Return(log)
 }
 
-// shouldReconcile filters events when the object status is up to date, and its
+// ShouldReconcile filters events when the object status is up to date, and its
 // status indicates that no further reconciliation is required.
 //
 // Specifically it looks at the Progressing condition. It has the following behaviour:
@@ -140,10 +151,22 @@ func (c *Controller[
 // - Progressing condition is present and False, but observedGeneration is old -> reconcile
 // - Progressing condition is false and observedGeneration is up to date -> do not reconcile
 //
-// If shouldReconcile is preventing an object from being reconciled which should
+// If resyncPeriod > 0, periodic resync is also considered:
+//   - If lastSyncTime is nil (never synced), reconcile immediately.
+//   - If time.Since(lastSyncTime) >= resyncPeriod, a resync is due: reconcile.
+//   - If time.Since(lastSyncTime) < resyncPeriod, the next resync is not yet due:
+//     do not reconcile (unless condition-based logic above requires it).
+//
+// When resyncPeriod <= 0 (disabled), resync logic is not applied and the
+// existing condition-based behaviour is unchanged.
+//
+// The resync check uses the persisted lastSyncTime so that controller restarts
+// respect the time already elapsed, preventing a thundering herd.
+//
+// If ShouldReconcile is preventing an object from being reconciled which should
 // be reconciled, consider if that object's actuator is correctly returning a
 // ProgressStatus indicating that the reconciliation should continue.
-func shouldReconcile(obj orcv1alpha1.ObjectWithConditions) bool {
+func ShouldReconcile(obj orcv1alpha1.ObjectWithConditions, lastSyncTime *metav1.Time, resyncPeriod time.Duration) bool {
 	progressing := meta.FindStatusCondition(obj.GetConditions(), orcv1alpha1.ConditionProgressing)
 	if progressing == nil {
 		return true
@@ -153,7 +176,22 @@ func shouldReconcile(obj orcv1alpha1.ObjectWithConditions) bool {
 		return true
 	}
 
-	return progressing.ObservedGeneration != obj.GetGeneration()
+	if progressing.ObservedGeneration != obj.GetGeneration() {
+		return true
+	}
+
+	// Condition-based check says no reconcile is needed. Now check if a
+	// periodic resync is due.
+	if resyncPeriod > 0 {
+		// Never synced: reconcile immediately.
+		if lastSyncTime == nil {
+			return true
+		}
+		// Resync is due when the elapsed time has reached the period.
+		return time.Since(lastSyncTime.Time) >= resyncPeriod
+	}
+
+	return false
 }
 
 func (c *Controller[
@@ -168,8 +206,12 @@ func (c *Controller[
 	// We do this here rather than in a predicate because predicates only cover
 	// a single watch. Doing it here means we cover all sources of
 	// reconciliation, including our dependencies.
-	if !shouldReconcile(objAdapter.GetObject()) {
+	effectiveResyncPeriod := resync.DetermineResyncPeriod(objAdapter.GetResyncPeriod(), c.defaultResyncPeriod)
+	if !ShouldReconcile(objAdapter.GetObject(), objAdapter.GetLastSyncTime(), effectiveResyncPeriod) {
 		log.V(logging.Verbose).Info("Status is up to date: not reconciling")
+		if remaining := resync.RemainingUntilNextSync(objAdapter.GetLastSyncTime(), effectiveResyncPeriod); remaining > 0 {
+			return reconcileStatus.WithRequeue(remaining)
+		}
 		return reconcileStatus
 	}
 
@@ -192,16 +234,20 @@ func (c *Controller[
 	}
 
 	osResource, getOSResourceRS := GetOrCreateOSResource(ctx, log, c, objAdapter, actuator)
+	if getOSResourceRS.IsExternallyDeleted() {
+		if objAdapter.GetStatusID() != nil {
+			log.V(logging.Info).Info("Clearing status.id after external deletion to enable recreation")
+			if err := status.ClearStatusID(ctx, c, objAdapter.GetObject()); err != nil {
+				return reconcileStatus.WithError(fmt.Errorf("clearing status ID after external deletion: %w", err))
+			}
+		}
+		return reconcileStatus.WithProgressMessage("OpenStack resource was deleted externally; will recreate on next reconcile")
+	}
 	if needsReschedule, err := getOSResourceRS.NeedsReschedule(); needsReschedule {
 		if err == nil {
 			log.V(logging.Verbose).Info("Waiting on events before creation")
 		}
 		return getOSResourceRS.WithReconcileStatus(reconcileStatus)
-	}
-
-	if osResource == nil {
-		// Programming error: if we don't have a resource we should either have an error or be waiting on something
-		return reconcileStatus.WithError(fmt.Errorf("oResource is not set, but no wait events or error"))
 	}
 
 	if objAdapter.GetStatusID() == nil {
@@ -227,6 +273,14 @@ func (c *Controller[
 				reconcileStatus = updaterRS.WithReconcileStatus(reconcileStatus)
 			}
 		}
+	}
+
+	// Schedule a resync requeue when the effective resync period is configured,
+	// there is no terminal error, and no other requeue is already pending.
+	// Positive-only jitter of [0%, +20%] is applied to spread load across
+	// resources sharing the same period.
+	if resync.ShouldScheduleResync(effectiveResyncPeriod, reconcileStatus) {
+		reconcileStatus = reconcileStatus.WithRequeue(resync.CalculateJitteredDuration(effectiveResyncPeriod))
 	}
 
 	return reconcileStatus

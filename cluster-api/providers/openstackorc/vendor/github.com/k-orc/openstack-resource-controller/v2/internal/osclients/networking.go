@@ -18,6 +18,7 @@ package osclients
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"iter"
 
@@ -32,6 +33,7 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/mtu"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsbinding"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsecurity"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portstrustedvif"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/provider"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/rules"
@@ -56,6 +58,42 @@ type PortExt struct {
 	ports.Port
 	portsecurity.PortSecurityExt
 	portsbinding.PortsBindingExt
+	portstrustedvif.PortTrustedVIFExt
+
+	// PropagateUplinkStatusPtr is a pointer variant of ports.Port.PropagateUplinkStatus.
+	// The embedded field is a non-pointer bool that defaults to false, making it
+	// impossible to distinguish "extension not enabled" from "explicitly false".
+	// This pointer allows detecting whether the field was present in the API response.
+	// It won't be needed with Gophercloud v3.
+	PropagateUplinkStatusPtr *bool `json:"propagate_uplink_status,omitempty"`
+}
+
+// TODO(winiciusallan): Drop this custom unmarshaler once Gophercloud is
+// on V3, so we have the following change
+// https://github.com/gophercloud/gophercloud/pull/3609.
+func (p *PortExt) UnmarshalJSON(b []byte) error {
+	if err := json.Unmarshal(b, &p.Port); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, &p.PortSecurityExt); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, &p.PortsBindingExt); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, &p.PortTrustedVIFExt); err != nil {
+		return err
+	}
+
+	var tmp struct {
+		PropagateUplinkStatusPtr *bool `json:"propagate_uplink_status"`
+	}
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return err
+	}
+
+	p.PropagateUplinkStatusPtr = tmp.PropagateUplinkStatusPtr
+	return nil
 }
 
 type NetworkClient interface {
@@ -101,6 +139,14 @@ type NetworkClient interface {
 	DeleteSubnet(ctx context.Context, id string) error
 	GetSubnet(ctx context.Context, id string) (*subnets.Subnet, error)
 	UpdateSubnet(ctx context.Context, id string, opts subnets.UpdateOptsBuilder) (*subnets.Subnet, error)
+
+	ListTrunks(ctx context.Context, listOpts trunks.ListOptsBuilder) iter.Seq2[*trunks.Trunk, error]
+	CreateTrunk(ctx context.Context, opts trunks.CreateOptsBuilder) (*trunks.Trunk, error)
+	DeleteTrunk(ctx context.Context, resourceID string) error
+	GetTrunk(ctx context.Context, resourceID string) (*trunks.Trunk, error)
+	UpdateTrunk(ctx context.Context, id string, opts trunks.UpdateOptsBuilder) (*trunks.Trunk, error)
+	AddSubports(ctx context.Context, id string, opts trunks.AddSubportsOptsBuilder) (*trunks.Trunk, error)
+	RemoveSubports(ctx context.Context, id string, opts trunks.RemoveSubportsOpts) error
 
 	ReplaceAllAttributesTags(ctx context.Context, resourceType string, resourceID string, opts attributestags.ReplaceAllOptsBuilder) ([]string, error)
 }
@@ -179,6 +225,7 @@ func (c networkClient) ListPort(ctx context.Context, opts ports.ListOptsBuilder)
 		}
 		return resources, nil
 	}
+
 	pager := ports.List(c.serviceClient, opts)
 	return func(yield func(*PortExt, error) bool) {
 		_ = pager.EachPage(ctx, yieldPage(extractPortExt, yield))
@@ -212,31 +259,6 @@ func (c networkClient) UpdatePort(ctx context.Context, id string, opts ports.Upd
 		return nil, err
 	}
 	return &portExt, nil
-}
-
-func (c networkClient) CreateTrunk(ctx context.Context, opts trunks.CreateOptsBuilder) (*trunks.Trunk, error) {
-	return trunks.Create(ctx, c.serviceClient, opts).Extract()
-}
-
-func (c networkClient) DeleteTrunk(ctx context.Context, id string) error {
-	return trunks.Delete(ctx, c.serviceClient, id).ExtractErr()
-}
-
-func (c networkClient) ListTrunkSubports(ctx context.Context, trunkID string) ([]trunks.Subport, error) {
-	return trunks.GetSubports(ctx, c.serviceClient, trunkID).Extract()
-}
-
-func (c networkClient) RemoveSubports(ctx context.Context, id string, opts trunks.RemoveSubportsOpts) error {
-	_, err := trunks.RemoveSubports(ctx, c.serviceClient, id, opts).Extract()
-	return err
-}
-
-func (c networkClient) ListTrunk(ctx context.Context, opts trunks.ListOptsBuilder) ([]trunks.Trunk, error) {
-	allPages, err := trunks.List(c.serviceClient, opts).AllPages(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return trunks.ExtractTrunks(allPages)
 }
 
 func (c networkClient) CreateRouter(ctx context.Context, opts routers.CreateOptsBuilder) (*routers.Router, error) {
@@ -371,4 +393,36 @@ func (c networkClient) ListExtensions(ctx context.Context) ([]extensions.Extensi
 		return nil, err
 	}
 	return extensions.ExtractExtensions(allPages)
+}
+
+func (c networkClient) ListTrunks(ctx context.Context, listOpts trunks.ListOptsBuilder) iter.Seq2[*trunks.Trunk, error] {
+	pager := trunks.List(c.serviceClient, listOpts)
+	return func(yield func(*trunks.Trunk, error) bool) {
+		_ = pager.EachPage(ctx, yieldPage(trunks.ExtractTrunks, yield))
+	}
+}
+
+func (c networkClient) CreateTrunk(ctx context.Context, opts trunks.CreateOptsBuilder) (*trunks.Trunk, error) {
+	return trunks.Create(ctx, c.serviceClient, opts).Extract()
+}
+
+func (c networkClient) DeleteTrunk(ctx context.Context, resourceID string) error {
+	return trunks.Delete(ctx, c.serviceClient, resourceID).ExtractErr()
+}
+
+func (c networkClient) GetTrunk(ctx context.Context, resourceID string) (*trunks.Trunk, error) {
+	return trunks.Get(ctx, c.serviceClient, resourceID).Extract()
+}
+
+func (c networkClient) UpdateTrunk(ctx context.Context, id string, opts trunks.UpdateOptsBuilder) (*trunks.Trunk, error) {
+	return trunks.Update(ctx, c.serviceClient, id, opts).Extract()
+}
+
+func (c networkClient) AddSubports(ctx context.Context, id string, opts trunks.AddSubportsOptsBuilder) (*trunks.Trunk, error) {
+	return trunks.AddSubports(ctx, c.serviceClient, id, opts).Extract()
+}
+
+func (c networkClient) RemoveSubports(ctx context.Context, id string, opts trunks.RemoveSubportsOpts) error {
+	_, err := trunks.RemoveSubports(ctx, c.serviceClient, id, opts).Extract()
+	return err
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -92,6 +92,21 @@ func (mr *MockComputeClientMockRecorder) CreateFlavor(ctx, opts any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFlavor", reflect.TypeOf((*MockComputeClient)(nil).CreateFlavor), ctx, opts)
 }
 
+// CreateFlavorExtraSpecs mocks base method.
+func (m *MockComputeClient) CreateFlavorExtraSpecs(ctx context.Context, id string, opts flavors.CreateExtraSpecsOptsBuilder) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFlavorExtraSpecs", ctx, id, opts)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFlavorExtraSpecs indicates an expected call of CreateFlavorExtraSpecs.
+func (mr *MockComputeClientMockRecorder) CreateFlavorExtraSpecs(ctx, id, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFlavorExtraSpecs", reflect.TypeOf((*MockComputeClient)(nil).CreateFlavorExtraSpecs), ctx, id, opts)
+}
+
 // CreateServer mocks base method.
 func (m *MockComputeClient) CreateServer(ctx context.Context, createOpts servers.CreateOptsBuilder, schedulerHints servers.SchedulerHintOptsBuilder) (*servers.Server, error) {
 	m.ctrl.T.Helper()
@@ -163,6 +178,20 @@ func (m *MockComputeClient) DeleteFlavor(ctx context.Context, id string) error {
 func (mr *MockComputeClientMockRecorder) DeleteFlavor(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlavor", reflect.TypeOf((*MockComputeClient)(nil).DeleteFlavor), ctx, id)
+}
+
+// DeleteFlavorExtraSpec mocks base method.
+func (m *MockComputeClient) DeleteFlavorExtraSpec(ctx context.Context, id, key string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFlavorExtraSpec", ctx, id, key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFlavorExtraSpec indicates an expected call of DeleteFlavorExtraSpec.
+func (mr *MockComputeClientMockRecorder) DeleteFlavorExtraSpec(ctx, id, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlavorExtraSpec", reflect.TypeOf((*MockComputeClient)(nil).DeleteFlavorExtraSpec), ctx, id, key)
 }
 
 // DeleteServer mocks base method.
@@ -322,6 +351,21 @@ func (m *MockComputeClient) ReplaceAllServerAttributesTags(ctx context.Context, 
 func (mr *MockComputeClientMockRecorder) ReplaceAllServerAttributesTags(ctx, resourceID, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceAllServerAttributesTags", reflect.TypeOf((*MockComputeClient)(nil).ReplaceAllServerAttributesTags), ctx, resourceID, opts)
+}
+
+// ReplaceServerMetadata mocks base method.
+func (m *MockComputeClient) ReplaceServerMetadata(ctx context.Context, serverID string, opts servers.MetadataOpts) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReplaceServerMetadata", ctx, serverID, opts)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReplaceServerMetadata indicates an expected call of ReplaceServerMetadata.
+func (mr *MockComputeClientMockRecorder) ReplaceServerMetadata(ctx, serverID, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceServerMetadata", reflect.TypeOf((*MockComputeClient)(nil).ReplaceServerMetadata), ctx, serverID, opts)
 }
 
 // UpdateServer mocks base method.

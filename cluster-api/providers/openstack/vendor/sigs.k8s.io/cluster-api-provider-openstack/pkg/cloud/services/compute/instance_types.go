@@ -25,26 +25,8 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	corev1 "k8s.io/api/core/v1"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 )
-
-// InstanceSpec defines the fields which can be set on a new OpenStack instance.
-type InstanceSpec struct {
-	Name                          string
-	ImageID                       string
-	FlavorID                      string
-	SSHKeyName                    string
-	UserData                      string
-	Metadata                      map[string]string
-	ConfigDrive                   bool
-	FailureDomain                 string
-	RootVolume                    *infrav1.RootVolume
-	AdditionalBlockDevices        []infrav1.AdditionalBlockDevice
-	ServerGroupID                 string
-	Trunk                         bool
-	Tags                          []string
-	SchedulerAdditionalProperties []infrav1.SchedulerHintAdditionalProperty
-}
 
 // InstanceIdentifier describes an instance which has not necessarily been fetched.
 type InstanceIdentifier struct {
@@ -146,7 +128,8 @@ func (is *InstanceStatus) NetworkStatus() (*InstanceNetworkStatus, error) {
 			return nil, fmt.Errorf("error unmarshalling addresses for instance %s: %w", is.ID(), err)
 		}
 
-		var IPv4addresses, IPv6addresses []corev1.NodeAddress
+		IPv4addresses := make([]corev1.NodeAddress, 0, len(interfaceList))
+		IPv6addresses := make([]corev1.NodeAddress, 0, len(interfaceList))
 		for i := range interfaceList {
 			address := &interfaceList[i]
 
@@ -157,7 +140,7 @@ func (is *InstanceStatus) NetworkStatus() (*InstanceNetworkStatus, error) {
 			case "fixed":
 				addressType = corev1.NodeInternalIP
 			default:
-				is.logger.V(6).Info("Ignoring address with unknown type", "address", address.Address, "type", address.Type)
+				is.logger.V(5).Info("Ignoring address with unknown type", "address", address.Address, "type", address.Type)
 				continue
 			}
 			if address.Version == 4 {
@@ -194,7 +177,12 @@ func (ns *InstanceNetworkStatus) Addresses() []corev1.NodeAddress {
 	}
 	sort.Strings(networks)
 
-	var addresses []corev1.NodeAddress
+	// Calculate total number of addresses to preallocate
+	totalAddresses := 0
+	for _, addrs := range ns.addresses {
+		totalAddresses += len(addrs)
+	}
+	addresses := make([]corev1.NodeAddress, 0, totalAddresses)
 	for _, network := range networks {
 		addressList := ns.addresses[network]
 		addresses = append(addresses, addressList...)

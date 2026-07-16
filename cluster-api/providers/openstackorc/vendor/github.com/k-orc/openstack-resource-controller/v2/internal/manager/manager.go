@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -49,7 +50,10 @@ type Options struct {
 	TLSOpts              []func(*tls.Config)
 	ScopeCacheMaxSize    int
 	WatchNamespaces      []string
+	DefaultResyncPeriod  time.Duration
 }
+
+const lowDefaultResyncPeriodWarningThreshold = 2 * time.Minute
 
 func Run(ctx context.Context, opts *Options, restConfig *rest.Config, scheme *runtime.Scheme, setupLog, log logr.Logger, controllers []interfaces.Controller) error {
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
@@ -141,7 +145,14 @@ func Run(ctx context.Context, opts *Options, restConfig *rest.Config, scheme *ru
 		return fmt.Errorf("unable to set up ready check: %w", err)
 	}
 
+	if opts.DefaultResyncPeriod > 0 && opts.DefaultResyncPeriod < lowDefaultResyncPeriodWarningThreshold {
+		setupLog.Info("warning: default resync period is very low and may cause excessive OpenStack API load",
+			"defaultResyncPeriod", opts.DefaultResyncPeriod.String(),
+			"recommendedMinimum", lowDefaultResyncPeriodWarningThreshold.String())
+	}
+
 	for _, c := range controllers {
+		c.SetDefaultResyncPeriod(opts.DefaultResyncPeriod)
 		if err := c.SetupWithManager(ctx, mgr, controller.Options{}); err != nil {
 			return fmt.Errorf("unable to create %s controller: %w", c.GetName(), err)
 		}

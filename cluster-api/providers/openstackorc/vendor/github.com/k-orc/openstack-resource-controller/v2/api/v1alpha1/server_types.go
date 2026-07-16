@@ -60,6 +60,20 @@ type ServerPortSpec struct {
 	PortRef *KubernetesNameRef `json:"portRef,omitempty"`
 }
 
+// ServerBootVolumeSpec defines the boot volume for boot-from-volume server creation.
+// When specified, the server boots from this volume instead of an image.
+type ServerBootVolumeSpec struct {
+	// volumeRef is a reference to a Volume object. The volume must be
+	// bootable (created from an image) and available before server creation.
+	// +required
+	VolumeRef KubernetesNameRef `json:"volumeRef,omitempty"`
+
+	// tag is the device tag applied to the volume.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	Tag *string `json:"tag,omitempty"`
+}
+
 // +kubebuilder:validation:MinProperties:=1
 type ServerVolumeSpec struct {
 	// volumeRef is a reference to a Volume object. Server creation will wait for
@@ -122,6 +136,8 @@ type ServerInterfaceStatus struct {
 }
 
 // ServerResourceSpec contains the desired state of a server
+// +kubebuilder:validation:XValidation:rule="has(self.imageRef) || has(self.bootVolume)",message="either imageRef or bootVolume must be specified"
+// +kubebuilder:validation:XValidation:rule="!(has(self.imageRef) && has(self.bootVolume))",message="imageRef and bootVolume are mutually exclusive"
 type ServerResourceSpec struct {
 	// name will be the name of the created resource. If not specified, the
 	// name of the ORC object will be used.
@@ -129,15 +145,22 @@ type ServerResourceSpec struct {
 	Name *OpenStackName `json:"name,omitempty"`
 
 	// imageRef references the image to use for the server instance.
-	// NOTE: This is not required in case of boot from volume.
-	// +required
+	// This field is required unless bootVolume is specified for boot-from-volume.
+	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="imageRef is immutable"
-	ImageRef KubernetesNameRef `json:"imageRef,omitempty"`
+	ImageRef *KubernetesNameRef `json:"imageRef,omitempty"`
 
 	// flavorRef references the flavor to use for the server instance.
 	// +required
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="flavorRef is immutable"
 	FlavorRef KubernetesNameRef `json:"flavorRef,omitempty"`
+
+	// bootVolume specifies a volume to boot from instead of an image.
+	// When specified, imageRef must be omitted. The volume must be
+	// bootable (created from an image using imageRef in the Volume spec).
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="bootVolume is immutable"
+	BootVolume *ServerBootVolumeSpec `json:"bootVolume,omitempty"`
 
 	// userData specifies data which will be made available to the server at
 	// boot time, either via the metadata service or a config drive. It is
@@ -158,27 +181,111 @@ type ServerResourceSpec struct {
 	// +optional
 	Volumes []ServerVolumeSpec `json:"volumes,omitempty"`
 
-	// serverGroupRef is a reference to a ServerGroup object. The server
-	// will be created in the server group.
-	// +optional
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="serverGroupRef is immutable"
-	ServerGroupRef *KubernetesNameRef `json:"serverGroupRef,omitempty"`
-
 	// availabilityZone is the availability zone in which to create the server.
 	// +kubebuilder:validation:MaxLength=255
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="availabilityZone is immutable"
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
+	// keypairRef is a reference to a KeyPair object. The server will be
+	// created with this keypair for SSH access.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="keypairRef is immutable"
+	KeypairRef *KubernetesNameRef `json:"keypairRef,omitempty"`
+
 	// tags is a list of tags which will be applied to the server.
 	// +kubebuilder:validation:MaxItems:=50
 	// +listType=set
 	// +optional
 	Tags []ServerTag `json:"tags,omitempty"`
+
+	// metadata is a list of metadata key-value pairs which will be set on the server.
+	// +kubebuilder:validation:MaxItems:=128
+	// +listType=atomic
+	// +optional
+	Metadata []ServerMetadata `json:"metadata,omitempty"`
+
+	// configDrive specifies whether to attach a config drive to the server.
+	// When true, configuration data will be available via a special drive
+	// instead of the metadata service.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="configDrive is immutable"
+	ConfigDrive *bool `json:"configDrive,omitempty"`
+
+	// schedulerHints provides hints to the Nova scheduler for server placement.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="schedulerHints is immutable"
+	SchedulerHints *ServerSchedulerHints `json:"schedulerHints,omitempty"`
 }
 
-// +kubebuilder:validation:MinProperties:=1
+// ServerMetadata represents a key-value pair for server metadata.
+type ServerMetadata struct {
+	// key is the metadata key.
+	// +kubebuilder:validation:MinLength:=1
+	// +kubebuilder:validation:MaxLength:=255
+	// +required
+	Key string `json:"key,omitempty"`
+
+	// value is the metadata value.
+	// +kubebuilder:validation:MaxLength:=255
+	// +kubebuilder:validation:MinLength:=1
+	// +required
+	Value string `json:"value,omitempty"`
+}
+
+// ServerSchedulerHints provides hints to the Nova scheduler for server placement.
+type ServerSchedulerHints struct {
+	// serverGroupRef is a reference to a ServerGroup object. The server will be
+	// scheduled on a host in the specified server group.
+	// +optional
+	ServerGroupRef *KubernetesNameRef `json:"serverGroupRef,omitempty"`
+
+	// differentHostServerRefs is a list of references to Server objects.
+	// The server will be scheduled on a different host than all specified servers.
+	// +listType=set
+	// +kubebuilder:validation:MaxItems:=64
+	// +optional
+	DifferentHostServerRefs []KubernetesNameRef `json:"differentHostServerRefs,omitempty"`
+
+	// sameHostServerRefs is a list of references to Server objects.
+	// The server will be scheduled on the same host as all specified servers.
+	// +listType=set
+	// +kubebuilder:validation:MaxItems:=64
+	// +optional
+	SameHostServerRefs []KubernetesNameRef `json:"sameHostServerRefs,omitempty"`
+
+	// query is a conditional statement that results in compute nodes
+	// able to host the server.
+	// +kubebuilder:validation:MaxLength:=1024
+	// +optional
+	Query string `json:"query,omitempty"`
+
+	// targetCell is a cell name where the server will be placed.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	TargetCell string `json:"targetCell,omitempty"`
+
+	// differentCell is a list of cell names where the server should not
+	// be placed.
+	// +listType=set
+	// +kubebuilder:validation:MaxItems:=64
+	// +kubebuilder:validation:items:MaxLength=1024
+	// +optional
+	DifferentCell []string `json:"differentCell,omitempty"`
+
+	// buildNearHostIP specifies a subnet of compute nodes to host the server.
+	// The host IP should be provided in an CIDR format like 10.10.10.10/24.
+	// +optional
+	BuildNearHostIP *CIDR `json:"buildNearHostIP,omitempty"`
+
+	// additionalProperties is a map of arbitrary key/value pairs that are
+	// not validated by Nova.
+	// +optional
+	AdditionalProperties map[string]string `json:"additionalProperties,omitempty"`
+}
+
 // +kubebuilder:validation:MaxProperties:=1
+// +kubebuilder:validation:MinProperties:=1
 type UserDataSpec struct {
 	// secretRef is a reference to a Secret containing the user data for this server.
 	// +optional
@@ -255,4 +362,27 @@ type ServerResourceStatus struct {
 	// +listType=atomic
 	// +optional
 	Tags []string `json:"tags,omitempty"`
+
+	// metadata is the list of metadata key-value pairs on the resource.
+	// +kubebuilder:validation:MaxItems:=128
+	// +listType=atomic
+	// +optional
+	Metadata []ServerMetadataStatus `json:"metadata,omitempty"`
+
+	// configDrive indicates whether the server was booted with a config drive.
+	// +optional
+	ConfigDrive bool `json:"configDrive,omitempty"`
+}
+
+// ServerMetadataStatus represents a key-value pair for server metadata in status.
+type ServerMetadataStatus struct {
+	// key is the metadata key.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	Key string `json:"key,omitempty"`
+
+	// value is the metadata value.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	Value string `json:"value,omitempty"`
 }

@@ -45,6 +45,9 @@ type ListOpts struct {
 	// NotTagsAny filters on specific project tags. At least one of the tags must be absent for the project.
 	NotTagsAny string `q:"not-tags-any"`
 
+	// Limit limits the number of projects returned per page.
+	Limit int `q:"limit"`
+
 	// Filters filters the response by custom filters such as
 	// 'name__contains=foo'
 	Filters map[string]string `q:"-"`

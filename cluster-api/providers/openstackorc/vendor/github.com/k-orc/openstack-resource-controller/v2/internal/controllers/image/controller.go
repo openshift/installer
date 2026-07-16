@@ -49,19 +49,24 @@ const (
 )
 
 type imageReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return imageReconcilerConstructor{scopeFactory: scopeFactory}
+	return &imageReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (imageReconcilerConstructor) GetName() string {
 	return controllerName
 }
 
+func (c *imageReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (c imageReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *imageReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := ctrl.LoggerFrom(ctx)
 
 	builder := ctrl.NewControllerManagedBy(mgr).
@@ -75,6 +80,6 @@ func (c imageReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ct
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, imageHelperFactory{}, imageStatusWriter{})
+	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, imageHelperFactory{}, imageStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 }

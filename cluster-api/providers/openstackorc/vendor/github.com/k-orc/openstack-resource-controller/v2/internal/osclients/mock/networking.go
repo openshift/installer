@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import (
 	routers "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/routers"
 	groups "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups"
 	rules "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/rules"
+	trunks "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/trunks"
 	networks "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
 	ports "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
 	subnets "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
@@ -78,6 +79,21 @@ func (m *MockNetworkClient) AddRouterInterface(ctx context.Context, id string, o
 func (mr *MockNetworkClientMockRecorder) AddRouterInterface(ctx, id, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRouterInterface", reflect.TypeOf((*MockNetworkClient)(nil).AddRouterInterface), ctx, id, opts)
+}
+
+// AddSubports mocks base method.
+func (m *MockNetworkClient) AddSubports(ctx context.Context, id string, opts trunks.AddSubportsOptsBuilder) (*trunks.Trunk, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddSubports", ctx, id, opts)
+	ret0, _ := ret[0].(*trunks.Trunk)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddSubports indicates an expected call of AddSubports.
+func (mr *MockNetworkClientMockRecorder) AddSubports(ctx, id, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSubports", reflect.TypeOf((*MockNetworkClient)(nil).AddSubports), ctx, id, opts)
 }
 
 // CreateFloatingIP mocks base method.
@@ -185,6 +201,21 @@ func (mr *MockNetworkClientMockRecorder) CreateSubnet(ctx, opts any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubnet", reflect.TypeOf((*MockNetworkClient)(nil).CreateSubnet), ctx, opts)
 }
 
+// CreateTrunk mocks base method.
+func (m *MockNetworkClient) CreateTrunk(ctx context.Context, opts trunks.CreateOptsBuilder) (*trunks.Trunk, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTrunk", ctx, opts)
+	ret0, _ := ret[0].(*trunks.Trunk)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTrunk indicates an expected call of CreateTrunk.
+func (mr *MockNetworkClientMockRecorder) CreateTrunk(ctx, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrunk", reflect.TypeOf((*MockNetworkClient)(nil).CreateTrunk), ctx, opts)
+}
+
 // DeleteFloatingIP mocks base method.
 func (m *MockNetworkClient) DeleteFloatingIP(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
@@ -281,6 +312,20 @@ func (m *MockNetworkClient) DeleteSubnet(ctx context.Context, id string) error {
 func (mr *MockNetworkClientMockRecorder) DeleteSubnet(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubnet", reflect.TypeOf((*MockNetworkClient)(nil).DeleteSubnet), ctx, id)
+}
+
+// DeleteTrunk mocks base method.
+func (m *MockNetworkClient) DeleteTrunk(ctx context.Context, resourceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTrunk", ctx, resourceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTrunk indicates an expected call of DeleteTrunk.
+func (mr *MockNetworkClientMockRecorder) DeleteTrunk(ctx, resourceID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTrunk", reflect.TypeOf((*MockNetworkClient)(nil).DeleteTrunk), ctx, resourceID)
 }
 
 // GetFloatingIP mocks base method.
@@ -388,6 +433,21 @@ func (mr *MockNetworkClientMockRecorder) GetSubnet(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*MockNetworkClient)(nil).GetSubnet), ctx, id)
 }
 
+// GetTrunk mocks base method.
+func (m *MockNetworkClient) GetTrunk(ctx context.Context, resourceID string) (*trunks.Trunk, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTrunk", ctx, resourceID)
+	ret0, _ := ret[0].(*trunks.Trunk)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTrunk indicates an expected call of GetTrunk.
+func (mr *MockNetworkClientMockRecorder) GetTrunk(ctx, resourceID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTrunk", reflect.TypeOf((*MockNetworkClient)(nil).GetTrunk), ctx, resourceID)
+}
+
 // ListFloatingIP mocks base method.
 func (m *MockNetworkClient) ListFloatingIP(ctx context.Context, opts floatingips.ListOptsBuilder) iter.Seq2[*floatingips.FloatingIP, error] {
 	m.ctrl.T.Helper()
@@ -487,6 +547,20 @@ func (mr *MockNetworkClientMockRecorder) ListSubnet(ctx, opts any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubnet", reflect.TypeOf((*MockNetworkClient)(nil).ListSubnet), ctx, opts)
 }
 
+// ListTrunks mocks base method.
+func (m *MockNetworkClient) ListTrunks(ctx context.Context, listOpts trunks.ListOptsBuilder) iter.Seq2[*trunks.Trunk, error] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTrunks", ctx, listOpts)
+	ret0, _ := ret[0].(iter.Seq2[*trunks.Trunk, error])
+	return ret0
+}
+
+// ListTrunks indicates an expected call of ListTrunks.
+func (mr *MockNetworkClientMockRecorder) ListTrunks(ctx, listOpts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTrunks", reflect.TypeOf((*MockNetworkClient)(nil).ListTrunks), ctx, listOpts)
+}
+
 // RemoveRouterInterface mocks base method.
 func (m *MockNetworkClient) RemoveRouterInterface(ctx context.Context, id string, opts routers.RemoveInterfaceOptsBuilder) (*routers.InterfaceInfo, error) {
 	m.ctrl.T.Helper()
@@ -500,6 +574,20 @@ func (m *MockNetworkClient) RemoveRouterInterface(ctx context.Context, id string
 func (mr *MockNetworkClientMockRecorder) RemoveRouterInterface(ctx, id, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRouterInterface", reflect.TypeOf((*MockNetworkClient)(nil).RemoveRouterInterface), ctx, id, opts)
+}
+
+// RemoveSubports mocks base method.
+func (m *MockNetworkClient) RemoveSubports(ctx context.Context, id string, opts trunks.RemoveSubportsOpts) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveSubports", ctx, id, opts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveSubports indicates an expected call of RemoveSubports.
+func (mr *MockNetworkClientMockRecorder) RemoveSubports(ctx, id, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSubports", reflect.TypeOf((*MockNetworkClient)(nil).RemoveSubports), ctx, id, opts)
 }
 
 // ReplaceAllAttributesTags mocks base method.
@@ -605,4 +693,19 @@ func (m *MockNetworkClient) UpdateSubnet(ctx context.Context, id string, opts su
 func (mr *MockNetworkClientMockRecorder) UpdateSubnet(ctx, id, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSubnet", reflect.TypeOf((*MockNetworkClient)(nil).UpdateSubnet), ctx, id, opts)
+}
+
+// UpdateTrunk mocks base method.
+func (m *MockNetworkClient) UpdateTrunk(ctx context.Context, id string, opts trunks.UpdateOptsBuilder) (*trunks.Trunk, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTrunk", ctx, id, opts)
+	ret0, _ := ret[0].(*trunks.Trunk)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateTrunk indicates an expected call of UpdateTrunk.
+func (mr *MockNetworkClientMockRecorder) UpdateTrunk(ctx, id, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTrunk", reflect.TypeOf((*MockNetworkClient)(nil).UpdateTrunk), ctx, id, opts)
 }

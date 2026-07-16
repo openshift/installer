@@ -18,6 +18,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,6 +30,7 @@ import (
 type Controller interface {
 	SetupWithManager(context.Context, ctrl.Manager, controller.Options) error
 	GetName() string
+	SetDefaultResyncPeriod(time.Duration)
 }
 
 type ResourceController interface {

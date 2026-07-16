@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ import (
 // ProjectFilterApplyConfiguration represents a declarative configuration of the ProjectFilter type for use
 // with apply.
 type ProjectFilterApplyConfiguration struct {
-	Name                                   *apiv1alpha1.KeystoneName `json:"name,omitempty"`
+	Name                                   *apiv1alpha1.KeystoneName      `json:"name,omitempty"`
+	DomainRef                              *apiv1alpha1.KubernetesNameRef `json:"domainRef,omitempty"`
 	FilterByKeystoneTagsApplyConfiguration `json:",inline"`
 }
 
@@ -40,6 +41,14 @@ func ProjectFilter() *ProjectFilterApplyConfiguration {
 // If called multiple times, the Name field is set to the value of the last call.
 func (b *ProjectFilterApplyConfiguration) WithName(value apiv1alpha1.KeystoneName) *ProjectFilterApplyConfiguration {
 	b.Name = &value
+	return b
+}
+
+// WithDomainRef sets the DomainRef field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DomainRef field is set to the value of the last call.
+func (b *ProjectFilterApplyConfiguration) WithDomainRef(value apiv1alpha1.KubernetesNameRef) *ProjectFilterApplyConfiguration {
+	b.DomainRef = &value
 	return b
 }
 

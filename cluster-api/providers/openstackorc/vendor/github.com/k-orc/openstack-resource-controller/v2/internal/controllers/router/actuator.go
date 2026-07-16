@@ -18,12 +18,10 @@ package router
 
 import (
 	"context"
-	"fmt"
 	"iter"
 
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/routers"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,6 +31,7 @@ import (
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	osclients "github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/util/dependency"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/util/tags"
 )
@@ -49,15 +48,11 @@ type (
 )
 
 type routerActuator struct {
-	osClient osclients.NetworkClient
-}
-
-type routerCreateActuator struct {
-	routerActuator
+	osClient  osclients.NetworkClient
 	k8sClient client.Client
 }
 
-var _ createResourceActuator = routerCreateActuator{}
+var _ createResourceActuator = routerActuator{}
 var _ deleteResourceActuator = routerActuator{}
 
 func (routerActuator) GetResourceID(osResource *osResourceT) string {
@@ -73,35 +68,44 @@ func (actuator routerActuator) GetOSResourceByID(ctx context.Context, id string)
 }
 
 func (actuator routerActuator) ListOSResourcesForAdoption(ctx context.Context, obj *orcv1alpha1.Router) (routerIterator, bool) {
-	if obj.Spec.Resource == nil {
+	resource := obj.Spec.Resource
+	if resource == nil {
 		return nil, false
 	}
 
-	listOpts := routers.ListOpts{Name: getResourceName(obj)}
+	// Resolve the project ID from ProjectRef if set. Without the project
+	// ID, adoption with admin-scoped credentials could match a router
+	// in the wrong project.
+	var projectID string
+	if resource.ProjectRef != nil {
+		project, rs := dependency.FetchDependency(
+			ctx, actuator.k8sClient, obj.Namespace, resource.ProjectRef, "Project",
+			func(dep *orcv1alpha1.Project) bool {
+				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
+			},
+		)
+		if needsReschedule, _ := rs.NeedsReschedule(); needsReschedule {
+			return nil, false
+		}
+		projectID = ptr.Deref(project.Status.ID, "")
+	}
+
+	listOpts := routers.ListOpts{
+		Name:        getResourceName(obj),
+		ProjectID:   projectID,
+		Distributed: resource.Distributed,
+	}
 	return actuator.osClient.ListRouter(ctx, listOpts), true
 }
 
-func (actuator routerCreateActuator) ListOSResourcesForImport(ctx context.Context, obj orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
+func (actuator routerActuator) ListOSResourcesForImport(ctx context.Context, obj orcObjectPT, filter filterT) (iter.Seq2[*osResourceT, error], progress.ReconcileStatus) {
 	var reconcileStatus progress.ReconcileStatus
 
-	project := &orcv1alpha1.Project{}
-	if filter.ProjectRef != nil {
-		projectKey := client.ObjectKey{Name: string(*filter.ProjectRef), Namespace: obj.Namespace}
-		if err := actuator.k8sClient.Get(ctx, projectKey, project); err != nil {
-			if apierrors.IsNotFound(err) {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnCreation))
-			} else {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WrapError(fmt.Errorf("fetching project %s: %w", projectKey.Name, err)))
-			}
-		} else {
-			if !orcv1alpha1.IsAvailable(project) || project.Status.ID == nil {
-				reconcileStatus = reconcileStatus.WithReconcileStatus(
-					progress.WaitingOnObject("Project", projectKey.Name, progress.WaitingOnReady))
-			}
-		}
-	}
+	project, rs := dependency.FetchDependency[*orcv1alpha1.Project](
+		ctx, actuator.k8sClient, obj.Namespace, filter.ProjectRef, "Project",
+		orcv1alpha1.IsAvailable,
+	)
+	reconcileStatus = reconcileStatus.WithReconcileStatus(rs)
 
 	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
 		return nil, reconcileStatus
@@ -120,7 +124,7 @@ func (actuator routerCreateActuator) ListOSResourcesForImport(ctx context.Contex
 	return actuator.osClient.ListRouter(ctx, listOpts), nil
 }
 
-func (actuator routerCreateActuator) CreateResource(ctx context.Context, obj *orcv1alpha1.Router) (*osResourceT, progress.ReconcileStatus) {
+func (actuator routerActuator) CreateResource(ctx context.Context, obj *orcv1alpha1.Router) (*osResourceT, progress.ReconcileStatus) {
 	resource := obj.Spec.Resource
 	if resource == nil {
 		// Should have been caught by API validation
@@ -135,9 +139,7 @@ func (actuator routerCreateActuator) CreateResource(ctx context.Context, obj *or
 		var externalGW *orcv1alpha1.Network
 		// Fetch dependencies and ensure they have our finalizer
 		externalGW, reconcileStatus = externalGWDep.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Network) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		if externalGW != nil {
 			gatewayInfo.NetworkID = ptr.Deref(externalGW.Status.ID, "")
@@ -147,9 +149,7 @@ func (actuator routerCreateActuator) CreateResource(ctx context.Context, obj *or
 	var projectID string
 	if resource.ProjectRef != nil {
 		project, projectDepRS := projectDependency.GetDependency(
-			ctx, actuator.k8sClient, obj, func(dep *orcv1alpha1.Project) bool {
-				return orcv1alpha1.IsAvailable(dep) && dep.Status.ID != nil
-			},
+			ctx, actuator.k8sClient, obj, orcv1alpha1.IsAvailable,
 		)
 		reconcileStatus = reconcileStatus.WithReconcileStatus(projectDepRS)
 		if project != nil {
@@ -179,12 +179,10 @@ func (actuator routerCreateActuator) CreateResource(ctx context.Context, obj *or
 
 	osResource, err := actuator.osClient.CreateRouter(ctx, &createOpts)
 
-	// We should require the spec to be updated before retrying a create which returned a conflict
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+err.Error(), err)
-	}
-
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration creating resource: "+err.Error(), err)
+		}
 		return nil, progress.WrapError(err)
 	}
 	return osResource, nil
@@ -222,10 +220,10 @@ func (actuator routerActuator) updateResource(ctx context.Context, obj orcObject
 
 	_, err = actuator.osClient.UpdateRouter(ctx, osResource.ID, updateOpts)
 
-	if orcerrors.IsConflict(err) {
-		err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
-	}
 	if err != nil {
+		if !orcerrors.IsRetryable(err) {
+			err = orcerrors.Terminal(orcv1alpha1.ConditionReasonInvalidConfiguration, "invalid configuration updating resource: "+err.Error(), err)
+		}
 		return progress.WrapError(err)
 	}
 
@@ -286,7 +284,7 @@ func (routerHelperFactory) NewAPIObjectAdapter(obj orcObjectPT) adapterI {
 }
 
 func (routerHelperFactory) NewCreateActuator(ctx context.Context, orcObject orcObjectPT, controller interfaces.ResourceController) (createResourceActuator, progress.ReconcileStatus) {
-	return newCreateActuator(ctx, orcObject, controller)
+	return newActuator(ctx, orcObject, controller)
 }
 
 func (routerHelperFactory) NewDeleteActuator(ctx context.Context, orcObject orcObjectPT, controller interfaces.ResourceController) (deleteResourceActuator, progress.ReconcileStatus) {
@@ -304,26 +302,15 @@ func newActuator(ctx context.Context, orcObject *orcv1alpha1.Router, controller 
 
 	clientScope, err := controller.GetScopeFactory().NewClientScopeFromObject(ctx, controller.GetK8sClient(), log, orcObject)
 	if err != nil {
-		return routerActuator{}, nil
+		return routerActuator{}, progress.WrapError(err)
 	}
 	osClient, err := clientScope.NewNetworkClient()
 	if err != nil {
-		return routerActuator{}, nil
+		return routerActuator{}, progress.WrapError(err)
 	}
 
 	return routerActuator{
-		osClient: osClient,
-	}, nil
-}
-
-func newCreateActuator(ctx context.Context, orcObject *orcv1alpha1.Router, controller interfaces.ResourceController) (routerCreateActuator, progress.ReconcileStatus) {
-	routerActuator, reconcileStatus := newActuator(ctx, orcObject, controller)
-	if needsReschedule, _ := reconcileStatus.NeedsReschedule(); needsReschedule {
-		return routerCreateActuator{}, reconcileStatus
-	}
-
-	return routerCreateActuator{
-		routerActuator: routerActuator,
-		k8sClient:      controller.GetK8sClient(),
+		osClient:  osClient,
+		k8sClient: controller.GetK8sClient(),
 	}, nil
 }

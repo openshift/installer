@@ -28,6 +28,7 @@ import (
 	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
 	generic "github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/interfaces"
 	"github.com/k-orc/openstack-resource-controller/v2/internal/controllers/generic/progress"
+	"github.com/k-orc/openstack-resource-controller/v2/internal/logging"
 	osclients "github.com/k-orc/openstack-resource-controller/v2/internal/osclients"
 	orcerrors "github.com/k-orc/openstack-resource-controller/v2/internal/util/errors"
 )
@@ -36,16 +37,20 @@ import (
 type (
 	osResourceT = flavors.Flavor
 
-	createResourceActuator = generic.CreateResourceActuator[orcObjectPT, orcObjectT, filterT, osResourceT]
-	deleteResourceActuator = generic.DeleteResourceActuator[orcObjectPT, orcObjectT, osResourceT]
-	helperFactory          = generic.ResourceHelperFactory[orcObjectPT, orcObjectT, resourceSpecT, filterT, osResourceT]
+	createResourceActuator    = generic.CreateResourceActuator[orcObjectPT, orcObjectT, filterT, osResourceT]
+	deleteResourceActuator    = generic.DeleteResourceActuator[orcObjectPT, orcObjectT, osResourceT]
+	reconcileResourceActuator = generic.ReconcileResourceActuator[orcObjectPT, osResourceT]
+	resourceReconciler        = generic.ResourceReconciler[orcObjectPT, osResourceT]
+	helperFactory             = generic.ResourceHelperFactory[orcObjectPT, orcObjectT, resourceSpecT, filterT, osResourceT]
 )
 
 type flavorClient interface {
 	GetFlavor(context.Context, string) (*flavors.Flavor, error)
 	ListFlavors(context.Context, flavors.ListOptsBuilder) iter.Seq2[*flavors.Flavor, error]
 	CreateFlavor(context.Context, flavors.CreateOptsBuilder) (*flavors.Flavor, error)
+	CreateFlavorExtraSpecs(context.Context, string, flavors.CreateExtraSpecsOptsBuilder) (map[string]string, error)
 	DeleteFlavor(context.Context, string) error
+	DeleteFlavorExtraSpec(context.Context, string, string) error
 }
 
 type flavorActuator struct {
@@ -152,6 +157,7 @@ func (actuator flavorActuator) CreateResource(ctx context.Context, obj orcObject
 		IsPublic:    resource.IsPublic,
 		Ephemeral:   ptr.To(int(resource.Ephemeral)),
 		Description: ptr.Deref(resource.Description, ""),
+		ID:          resource.ID,
 	}
 
 	osResource, err := actuator.osClient.CreateFlavor(ctx, createOpts)
@@ -168,6 +174,108 @@ func (actuator flavorActuator) CreateResource(ctx context.Context, obj orcObject
 
 func (actuator flavorActuator) DeleteResource(ctx context.Context, _ orcObjectPT, flavor *flavors.Flavor) progress.ReconcileStatus {
 	return progress.WrapError(actuator.osClient.DeleteFlavor(ctx, flavor.ID))
+}
+
+func (actuator flavorActuator) reconcileExtraSpecs(ctx context.Context, obj orcObjectPT, osResource *osResourceT) progress.ReconcileStatus {
+	log := ctrl.LoggerFrom(ctx)
+	resource := obj.Spec.Resource
+	if resource == nil {
+		return nil
+	}
+
+	desiredExtraSpecs := extraSpecsToMap(resource.ExtraSpecs)
+	currentExtraSpecs := osResource.ExtraSpecs
+
+	updates := extraSpecUpdates(desiredExtraSpecs, currentExtraSpecs)
+	deletes := extraSpecDeletes(desiredExtraSpecs, currentExtraSpecs)
+
+	if len(updates) == 0 && len(deletes) == 0 {
+		log.V(logging.Debug).Info("No changes")
+		return nil
+	}
+
+	if len(updates) > 0 {
+		_, err := actuator.osClient.CreateFlavorExtraSpecs(
+			ctx,
+			osResource.ID,
+			flavors.ExtraSpecsOpts(updates),
+		)
+		if err != nil {
+			if !orcerrors.IsRetryable(err) {
+				err = orcerrors.Terminal(
+					orcv1alpha1.ConditionReasonInvalidConfiguration,
+					"invalid configuration updating resource extra specs: "+err.Error(),
+					err,
+				)
+			}
+			return progress.WrapError(err)
+		}
+	}
+
+	for _, d := range deletes {
+		if err := actuator.osClient.DeleteFlavorExtraSpec(
+			ctx,
+			osResource.ID,
+			d,
+		); err != nil {
+			if orcerrors.IsNotFound(err) {
+				continue
+			}
+			if !orcerrors.IsRetryable(err) {
+				err = orcerrors.Terminal(
+					orcv1alpha1.ConditionReasonInvalidConfiguration,
+					"invalid configuration deleting resource extra spec: "+err.Error(),
+					err,
+				)
+			}
+			return progress.WrapError(err)
+		}
+	}
+
+	return progress.NeedsRefresh()
+}
+
+func extraSpecsToMap(extraSpecs []orcv1alpha1.FlavorExtraSpec) map[string]string {
+	specs := make(map[string]string)
+
+	for _, spec := range extraSpecs {
+		specs[spec.Name] = spec.Value
+	}
+
+	return specs
+}
+
+func extraSpecUpdates(desired, current map[string]string) map[string]string {
+	updates := make(map[string]string)
+
+	for k, v := range desired {
+		cur, exists := current[k]
+		if !exists || cur != v {
+			updates[k] = v
+		}
+	}
+
+	return updates
+}
+
+func extraSpecDeletes(desired, current map[string]string) []string {
+	var deletes []string
+
+	for k := range current {
+		if _, found := desired[k]; !found {
+			deletes = append(deletes, k)
+		}
+	}
+
+	return deletes
+}
+
+var _ reconcileResourceActuator = flavorActuator{}
+
+func (actuator flavorActuator) GetResourceReconcilers(ctx context.Context, orcObject orcObjectPT, osResource *osResourceT, controller generic.ResourceController) ([]resourceReconciler, progress.ReconcileStatus) {
+	return []resourceReconciler{
+		actuator.reconcileExtraSpecs,
+	}, nil
 }
 
 type flavorHelperFactory struct{}

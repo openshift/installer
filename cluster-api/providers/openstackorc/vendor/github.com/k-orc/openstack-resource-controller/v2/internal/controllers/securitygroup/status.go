@@ -45,7 +45,24 @@ func (securityGroupStatusWriter) ResourceAvailableStatus(orcObject orcObjectPT, 
 		}
 	}
 
-	// SecurityGroup is available as soon as it exists
+	resourceSpec := orcObject.Spec.Resource
+	if resourceSpec != nil && resourceSpec.Rules != nil {
+		// Make sure specified security group rules exist in resource
+
+		resourceStatus := orcObject.Status.Resource
+		if resourceStatus == nil || resourceStatus.Rules == nil {
+			return metav1.ConditionFalse, progress.WaitingOnOpenStack(progress.WaitingOnReady, securityGroupAvailablePollingPeriod)
+		}
+
+		if len(resourceSpec.Rules) != len(resourceStatus.Rules) {
+			return metav1.ConditionFalse, progress.WaitingOnOpenStack(progress.WaitingOnReady, securityGroupAvailablePollingPeriod)
+		}
+
+		if len(resourceSpec.Rules) != len(osResource.Rules) {
+			return metav1.ConditionFalse, progress.WaitingOnOpenStack(progress.WaitingOnReady, securityGroupAvailablePollingPeriod)
+		}
+	}
+
 	return metav1.ConditionTrue, nil
 }
 

@@ -14,7 +14,10 @@ import (
 )
 
 // SecurityGroups deletes the bootstrap security group which is no longer
-// required after bootstrapping is complete.
+// required after bootstrapping is complete. It first cleans up any
+// orphaned bootstrap ports that still reference the security group,
+// since the ORC port controller may have been terminated before it
+// could delete them.
 func SecurityGroups(ctx context.Context, cloud string, infraID string) error {
 	clusterTag := fmt.Sprintf("openshiftClusterID=%s", infraID)
 	logrus.Debugf("Searching for bootstrap security group with tags: %s, %s", clusterTag, roleTag)
@@ -43,23 +46,31 @@ func SecurityGroups(ctx context.Context, cloud string, infraID string) error {
 		return nil
 	}
 
-	// Should only find one security group with both tags, but delete all if multiple exist
+	// Should only find one security group with both tags, but handle multiple.
 	var errs []error
 	for _, secGroup := range secGroups {
+		// Delete any orphaned ports still referencing this security
+		// group. The ORC port controller may have been killed when
+		// envtest was torn down, leaving the Neutron port behind.
+		if err := deletePorts(ctx, networkClient, secGroup.ID); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
 		logrus.Infof("Deleting bootstrap security group %s (ID: %s)", secGroup.Name, secGroup.ID)
 
 		err = groups.Delete(ctx, networkClient, secGroup.ID).ExtractErr()
 		if err != nil {
-			// Check if it's a "not found" error, which is acceptable
 			if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 				logrus.Debugf("Bootstrap security group %s already deleted", secGroup.ID)
 				continue
 			}
-			logrus.Errorf("failed to delete bootstrap security group %s: %v", secGroup.Name, err)
+			logrus.Errorf("Failed to delete bootstrap security group %s: %v", secGroup.Name, err)
 			errs = append(errs, fmt.Errorf("failed to delete bootstrap security group %s: %w", secGroup.Name, err))
+			continue
 		}
 
-		logrus.Infof("Successfully deleted bootstrap security group(s) %s", secGroup.Name)
+		logrus.Infof("Successfully deleted bootstrap security group %s", secGroup.Name)
 	}
 
 	return errors.Join(errs...)

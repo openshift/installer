@@ -19,6 +19,7 @@ package securitygroup
 import (
 	"context"
 	"errors"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -65,11 +66,12 @@ var (
 )
 
 type securitygroupReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return securitygroupReconcilerConstructor{
+	return &securitygroupReconcilerConstructor{
 		scopeFactory: scopeFactory,
 	}
 }
@@ -78,8 +80,12 @@ func (securitygroupReconcilerConstructor) GetName() string {
 	return controllerName
 }
 
+func (c *securitygroupReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (c securitygroupReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *securitygroupReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := ctrl.LoggerFrom(ctx)
 	k8sClient := mgr.GetClient()
 
@@ -113,7 +119,7 @@ func (c securitygroupReconcilerConstructor) SetupWithManager(ctx context.Context
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, securityGroupHelperFactory{}, securityGroupStatusWriter{})
+	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, securityGroupHelperFactory{}, securityGroupStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,14 +25,16 @@ import (
 // FlavorResourceSpecApplyConfiguration represents a declarative configuration of the FlavorResourceSpec type for use
 // with apply.
 type FlavorResourceSpecApplyConfiguration struct {
-	Name        *apiv1alpha1.OpenStackName `json:"name,omitempty"`
-	Description *string                    `json:"description,omitempty"`
-	RAM         *int32                     `json:"ram,omitempty"`
-	Vcpus       *int32                     `json:"vcpus,omitempty"`
-	Disk        *int32                     `json:"disk,omitempty"`
-	Swap        *int32                     `json:"swap,omitempty"`
-	IsPublic    *bool                      `json:"isPublic,omitempty"`
-	Ephemeral   *int32                     `json:"ephemeral,omitempty"`
+	Name        *apiv1alpha1.OpenStackName          `json:"name,omitempty"`
+	ID          *string                             `json:"id,omitempty"`
+	Description *string                             `json:"description,omitempty"`
+	RAM         *int32                              `json:"ram,omitempty"`
+	Vcpus       *int32                              `json:"vcpus,omitempty"`
+	Disk        *int32                              `json:"disk,omitempty"`
+	Swap        *int32                              `json:"swap,omitempty"`
+	ExtraSpecs  []FlavorExtraSpecApplyConfiguration `json:"extraSpecs,omitempty"`
+	IsPublic    *bool                               `json:"isPublic,omitempty"`
+	Ephemeral   *int32                              `json:"ephemeral,omitempty"`
 }
 
 // FlavorResourceSpecApplyConfiguration constructs a declarative configuration of the FlavorResourceSpec type for use with
@@ -46,6 +48,14 @@ func FlavorResourceSpec() *FlavorResourceSpecApplyConfiguration {
 // If called multiple times, the Name field is set to the value of the last call.
 func (b *FlavorResourceSpecApplyConfiguration) WithName(value apiv1alpha1.OpenStackName) *FlavorResourceSpecApplyConfiguration {
 	b.Name = &value
+	return b
+}
+
+// WithID sets the ID field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ID field is set to the value of the last call.
+func (b *FlavorResourceSpecApplyConfiguration) WithID(value string) *FlavorResourceSpecApplyConfiguration {
+	b.ID = &value
 	return b
 }
 
@@ -86,6 +96,19 @@ func (b *FlavorResourceSpecApplyConfiguration) WithDisk(value int32) *FlavorReso
 // If called multiple times, the Swap field is set to the value of the last call.
 func (b *FlavorResourceSpecApplyConfiguration) WithSwap(value int32) *FlavorResourceSpecApplyConfiguration {
 	b.Swap = &value
+	return b
+}
+
+// WithExtraSpecs adds the given value to the ExtraSpecs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ExtraSpecs field.
+func (b *FlavorResourceSpecApplyConfiguration) WithExtraSpecs(values ...*FlavorExtraSpecApplyConfiguration) *FlavorResourceSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithExtraSpecs")
+		}
+		b.ExtraSpecs = append(b.ExtraSpecs, *values[i])
+	}
 	return b
 }
 

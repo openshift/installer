@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The ORC Authors.
+Copyright The ORC Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package v1alpha1
 
 import (
 	apiv1alpha1 "github.com/k-orc/openstack-resource-controller/v2/api/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // FlavorSpecApplyConfiguration represents a declarative configuration of the FlavorSpec type for use
@@ -29,6 +30,7 @@ type FlavorSpecApplyConfiguration struct {
 	Resource            *FlavorResourceSpecApplyConfiguration        `json:"resource,omitempty"`
 	ManagementPolicy    *apiv1alpha1.ManagementPolicy                `json:"managementPolicy,omitempty"`
 	ManagedOptions      *ManagedOptionsApplyConfiguration            `json:"managedOptions,omitempty"`
+	ResyncPeriod        *v1.Duration                                 `json:"resyncPeriod,omitempty"`
 	CloudCredentialsRef *CloudCredentialsReferenceApplyConfiguration `json:"cloudCredentialsRef,omitempty"`
 }
 
@@ -67,6 +69,14 @@ func (b *FlavorSpecApplyConfiguration) WithManagementPolicy(value apiv1alpha1.Ma
 // If called multiple times, the ManagedOptions field is set to the value of the last call.
 func (b *FlavorSpecApplyConfiguration) WithManagedOptions(value *ManagedOptionsApplyConfiguration) *FlavorSpecApplyConfiguration {
 	b.ManagedOptions = value
+	return b
+}
+
+// WithResyncPeriod sets the ResyncPeriod field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ResyncPeriod field is set to the value of the last call.
+func (b *FlavorSpecApplyConfiguration) WithResyncPeriod(value v1.Duration) *FlavorSpecApplyConfiguration {
+	b.ResyncPeriod = &value
 	return b
 }
 

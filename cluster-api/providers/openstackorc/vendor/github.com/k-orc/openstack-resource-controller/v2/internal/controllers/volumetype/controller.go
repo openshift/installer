@@ -19,6 +19,7 @@ package volumetype
 import (
 	"context"
 	"errors"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -36,19 +37,24 @@ const controllerName = "volumetype"
 // +kubebuilder:rbac:groups=openstack.k-orc.cloud,resources=volumetypes/status,verbs=get;update;patch
 
 type volumetypeReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return volumetypeReconcilerConstructor{scopeFactory: scopeFactory}
+	return &volumetypeReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (volumetypeReconcilerConstructor) GetName() string {
 	return controllerName
 }
 
+func (c *volumetypeReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
+}
+
 // SetupWithManager sets up the controller with the Manager.
-func (c volumetypeReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *volumetypeReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := ctrl.LoggerFrom(ctx)
 
 	builder := ctrl.NewControllerManagedBy(mgr).
@@ -62,6 +68,6 @@ func (c volumetypeReconcilerConstructor) SetupWithManager(ctx context.Context, m
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, volumetypeHelperFactory{}, volumetypeStatusWriter{})
+	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, volumetypeHelperFactory{}, volumetypeStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 }

@@ -59,6 +59,8 @@ type ComputeClient interface {
 	ListAvailabilityZones() ([]availabilityzones.AvailabilityZone, error)
 
 	ListFlavors() ([]flavors.Flavor, error)
+	GetFlavor(flavorID string) (*flavors.Flavor, error)
+
 	CreateServer(createOpts servers.CreateOptsBuilder, schedulerHints servers.SchedulerHintOptsBuilder) (*servers.Server, error)
 	DeleteServer(serverID string) error
 	GetServer(serverID string) (*servers.Server, error)
@@ -124,6 +126,15 @@ func (c computeClient) ListFlavors() ([]flavors.Flavor, error) {
 		return nil, err
 	}
 	return flavors.ExtractFlavors(allPages)
+}
+
+func (c computeClient) GetFlavor(flavorID string) (*flavors.Flavor, error) {
+	mc := metrics.NewMetricPrometheusContext("flavor", "get")
+	flavor, err := flavors.Get(context.TODO(), c.client, flavorID).Extract()
+	if mc.ObserveRequest(err) != nil {
+		return nil, err
+	}
+	return flavor, nil
 }
 
 func (c computeClient) CreateServer(createOpts servers.CreateOptsBuilder, schedulerHints servers.SchedulerHintOptsBuilder) (*servers.Server, error) {
@@ -219,6 +230,10 @@ func (e computeErrorClient) ListAvailabilityZones() ([]availabilityzones.Availab
 }
 
 func (e computeErrorClient) ListFlavors() ([]flavors.Flavor, error) {
+	return nil, e.error
+}
+
+func (e computeErrorClient) GetFlavor(_ string) (*flavors.Flavor, error) {
 	return nil, e.error
 }
 

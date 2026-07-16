@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -51,15 +52,20 @@ const controllerName = "volume"
 // +kubebuilder:rbac:groups=openstack.k-orc.cloud,resources=volumes/status,verbs=get;update;patch
 
 type volumeReconcilerConstructor struct {
-	scopeFactory scope.Factory
+	scopeFactory        scope.Factory
+	defaultResyncPeriod time.Duration
 }
 
 func New(scopeFactory scope.Factory) interfaces.Controller {
-	return volumeReconcilerConstructor{scopeFactory: scopeFactory}
+	return &volumeReconcilerConstructor{scopeFactory: scopeFactory}
 }
 
 func (volumeReconcilerConstructor) GetName() string {
 	return controllerName
+}
+
+func (c *volumeReconcilerConstructor) SetDefaultResyncPeriod(d time.Duration) {
+	c.defaultResyncPeriod = d
 }
 
 var volumetypeDependency = dependency.NewDeletionGuardDependency[*orcv1alpha1.VolumeList, *orcv1alpha1.VolumeType](
@@ -74,6 +80,19 @@ var volumetypeDependency = dependency.NewDeletionGuardDependency[*orcv1alpha1.Vo
 	finalizer, externalObjectFieldOwner,
 )
 
+// No deletion guard for image, because images can be safely deleted while
+// referenced by a volume
+var imageDependency = dependency.NewDependency[*orcv1alpha1.VolumeList, *orcv1alpha1.Image](
+	"spec.resource.imageRef",
+	func(volume *orcv1alpha1.Volume) []string {
+		resource := volume.Spec.Resource
+		if resource == nil || resource.ImageRef == nil {
+			return nil
+		}
+		return []string{string(*resource.ImageRef)}
+	},
+)
+
 // serverToVolumeMapFunc creates a mapping function that reconciles volumes when:
 // - a volume ID appears in server status but the volume doesn't have attachment info for that server
 // - a volume has attachment info for a server, but the server no longer lists that volume
@@ -83,7 +102,7 @@ func serverToVolumeMapFunc(ctx context.Context, k8sClient client.Client) handler
 	return func(ctx context.Context, obj client.Object) []reconcile.Request {
 		server, ok := obj.(*orcv1alpha1.Server)
 		if !ok {
-			log.Info("serverToVolumeMapFunc got unexpected object type",
+			log.V(logging.Debug).Info("serverToVolumeMapFunc got unexpected object type",
 				"got", fmt.Sprintf("%T", obj),
 				"expected", fmt.Sprintf("%T", &orcv1alpha1.Server{}))
 			return nil
@@ -149,6 +168,12 @@ func serverToVolumeMapFunc(ctx context.Context, k8sClient client.Client) handler
 					log.V(logging.Verbose).Info("volume needs reconciliation: listed in server status but no attachment info",
 						"volume", client.ObjectKeyFromObject(volume),
 						"server", client.ObjectKeyFromObject(server))
+				} else if volumeStatus.Status != VolumeStatusInUse {
+					shouldReconcile = true
+					reason = "Volume attached to server but status is not in-use"
+					log.V(logging.Verbose).Info("volume needs reconciliation: attached to server but status is not in-use",
+						"volume", client.ObjectKeyFromObject(volume),
+						"server", client.ObjectKeyFromObject(server))
 				}
 			}
 
@@ -200,11 +225,16 @@ func serverToVolumeMapFunc(ctx context.Context, k8sClient client.Client) handler
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (c volumeReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (c *volumeReconcilerConstructor) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := ctrl.LoggerFrom(ctx)
 	k8sClient := mgr.GetClient()
 
 	volumetypeWatchEventHandler, err := volumetypeDependency.WatchEventHandler(log, k8sClient)
+	if err != nil {
+		return err
+	}
+
+	imageWatchEventHandler, err := imageDependency.WatchEventHandler(log, k8sClient)
 	if err != nil {
 		return err
 	}
@@ -214,6 +244,9 @@ func (c volumeReconcilerConstructor) SetupWithManager(ctx context.Context, mgr c
 		Watches(&orcv1alpha1.VolumeType{}, volumetypeWatchEventHandler,
 			builder.WithPredicates(predicates.NewBecameAvailable(log, &orcv1alpha1.VolumeType{})),
 		).
+		Watches(&orcv1alpha1.Image{}, imageWatchEventHandler,
+			builder.WithPredicates(predicates.NewBecameAvailable(log, &orcv1alpha1.Image{})),
+		).
 		Watches(&orcv1alpha1.Server{}, handler.EnqueueRequestsFromMapFunc(serverToVolumeMapFunc(ctx, k8sClient)),
 			builder.WithPredicates(predicates.NewServerVolumesChanged(log)),
 		).
@@ -221,12 +254,13 @@ func (c volumeReconcilerConstructor) SetupWithManager(ctx context.Context, mgr c
 
 	if err := errors.Join(
 		volumetypeDependency.AddToManager(ctx, mgr),
+		imageDependency.AddToManager(ctx, mgr),
 		credentialsDependency.AddToManager(ctx, mgr),
 		credentials.AddCredentialsWatch(log, mgr.GetClient(), builder, credentialsDependency),
 	); err != nil {
 		return err
 	}
 
-	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, volumeHelperFactory{}, volumeStatusWriter{})
+	r := reconciler.NewController(controllerName, mgr.GetClient(), c.scopeFactory, volumeHelperFactory{}, volumeStatusWriter{}, c.defaultResyncPeriod)
 	return builder.Complete(&r)
 }
