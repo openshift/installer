@@ -16,6 +16,7 @@ import (
 	k8sjson "sigs.k8s.io/json"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
@@ -224,11 +225,11 @@ func enrichNoProxy(installConfig *types.InstallConfig) *types.Proxy {
 	if installConfig.Proxy == nil {
 		return nil
 	}
-	if installConfig.Proxy.NoProxy == "*" {
+
+	set, wildcard := manifests.BuildNoProxySet(installConfig)
+	if wildcard {
 		return installConfig.Proxy
 	}
-
-	set := types.BuildNoProxySet(installConfig)
 
 	return &types.Proxy{
 		HTTPProxy:  installConfig.Proxy.HTTPProxy,

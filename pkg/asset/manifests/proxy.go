@@ -22,6 +22,52 @@ import (
 	"github.com/openshift/installer/pkg/types/powervc"
 )
 
+// BuildNoProxySet creates a set of NoProxy entries from install configuration.
+// It includes localhost entries (.svc, .cluster.local, 127.0.0.1, localhost),
+// all network CIDRs (cluster, service, machine), the internal API server hostname,
+// and user-provided NoProxy values.
+// The caller can add platform-specific entries as needed.
+// When NoProxy is "*", returns nil and true to signal that all traffic should
+// bypass the proxy without computing individual entries.
+func BuildNoProxySet(config *types.InstallConfig) (sets.Set[string], bool) {
+	if config.Proxy != nil && config.Proxy.NoProxy == "*" {
+		return nil, true
+	}
+
+	set := sets.New[string](
+		"127.0.0.1",
+		"localhost",
+		".svc",
+		".cluster.local",
+	)
+
+	for _, network := range config.Networking.ServiceNetwork {
+		set.Insert(network.String())
+	}
+
+	for _, network := range config.Networking.MachineNetwork {
+		set.Insert(network.CIDR.String())
+	}
+
+	for _, network := range config.Networking.ClusterNetwork {
+		set.Insert(network.CIDR.String())
+	}
+
+	// Add internal API server hostname
+	set.Insert("api-int." + config.ClusterDomain())
+
+	if config.Proxy != nil {
+		for _, userValue := range strings.Split(config.Proxy.NoProxy, ",") {
+			trimmed := strings.TrimSpace(userValue)
+			if trimmed != "" {
+				set.Insert(trimmed)
+			}
+		}
+	}
+
+	return set, false
+}
+
 var proxyCfgFilename = path.Join(manifestDir, "cluster-proxy-01-config.yaml")
 
 // Proxy generates the cluster-proxy-*.yml files.
@@ -83,9 +129,6 @@ func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		if installConfig.Config.Proxy.NoProxy == "*" {
-			noProxy = installConfig.Config.Proxy.NoProxy
-		}
 		p.Config.Status = configv1.ProxyStatus{
 			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
@@ -120,7 +163,10 @@ func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
 // https://cloud.google.com/compute/docs/storing-retrieving-metadata
 func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
-	set := types.BuildNoProxySet(installConfig.Config)
+	set, wildcard := BuildNoProxySet(installConfig.Config)
+	if wildcard {
+		return "*", nil
+	}
 
 	platform := installConfig.Config.Platform.Name()
 
