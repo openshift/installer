@@ -2,7 +2,9 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,6 +44,12 @@ func GetSession(ctx context.Context) (*Session, error) {
 	creds, path, err := loadCredentials(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load credentials")
+	}
+
+	if creds.JSON != nil {
+		if err := validateCredentialURLs(creds.JSON); err != nil {
+			return nil, err
+		}
 	}
 
 	return &Session{
@@ -236,4 +244,68 @@ func (u *userLoader) Load(ctx context.Context) (*googleoauth.Credentials, error)
 
 func (u *userLoader) Content() string {
 	return defaultAuthFilePath
+}
+
+// validateCredentialURLs validates external_account (Workload Identity Federation)
+// credential URLs per Google's guidance that callers must validate these fields:
+// https://google.aip.dev/auth/4117
+// https://cloud.google.com/docs/authentication/client-libraries#external-credentials
+//
+// WIF with custom universe domains is not supported in the installer — all
+// Google endpoint URLs are restricted to googleapis.com.
+func validateCredentialURLs(credsJSON []byte) error {
+	var t struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(credsJSON, &t); err != nil {
+		return nil
+	}
+	if t.Type != "external_account" {
+		return nil
+	}
+
+	var creds struct {
+		TokenURL                       string `json:"token_url"`
+		ServiceAccountImpersonationURL string `json:"service_account_impersonation_url"`
+		UniverseDomain                 string `json:"universe_domain"`
+		CredentialSource               struct {
+			URL string `json:"url"`
+		} `json:"credential_source"`
+	}
+	if err := json.Unmarshal(credsJSON, &creds); err != nil {
+		return fmt.Errorf("failed to parse external account credentials: %v", err)
+	}
+
+	if creds.UniverseDomain != "" && creds.UniverseDomain != "googleapis.com" {
+		return fmt.Errorf("Workload Identity Federation (external_account) with custom universe domain %q is not supported. "+
+			"If you need this capability, please open an RFE with Red Hat or a GitHub issue at https://github.com/openshift/installer/issues", creds.UniverseDomain)
+	}
+
+	const expectedTokenURL = "https://sts.googleapis.com/v1/token"
+	const iamPrefix = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
+	const wifNote = "Workload Identity Federation (external_account) credentials are only supported with googleapis.com endpoints"
+
+	if creds.TokenURL != "" && creds.TokenURL != expectedTokenURL {
+		return fmt.Errorf("token_url %q must equal %s. %s", creds.TokenURL, expectedTokenURL, wifNote)
+	}
+	if creds.ServiceAccountImpersonationURL != "" && !strings.HasPrefix(creds.ServiceAccountImpersonationURL, iamPrefix) {
+		return fmt.Errorf("service_account_impersonation_url %q must begin with %s. %s", creds.ServiceAccountImpersonationURL, iamPrefix, wifNote)
+	}
+	if creds.CredentialSource.URL != "" {
+		if err := validateCredSourceURL(creds.CredentialSource.URL); err != nil {
+			return fmt.Errorf("credential_source.url: %v", err)
+		}
+	}
+	return nil
+}
+
+func validateCredSourceURL(rawURL string) error {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL %q: %v", rawURL, err)
+	}
+	if parsed.Scheme != "https" {
+		return fmt.Errorf("%q must use HTTPS", rawURL)
+	}
+	return nil
 }
