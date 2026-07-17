@@ -2,11 +2,13 @@ package defaults
 
 import (
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/gcp"
+	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
 	"github.com/openshift/installer/pkg/version"
 )
 
 // SetMachinePoolDefaults sets the defaults for the machine pool.
-func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
+func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform) {
 	defaultReplicaCount := int64(3)
 	if p.Name == types.MachinePoolEdgeRoleName || p.Name == types.MachinePoolArbiterRoleName {
 		defaultReplicaCount = 0
@@ -19,6 +21,15 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
 	}
 	if p.Architecture == "" {
 		p.Architecture = version.DefaultArch()
+	}
+
+	// Set platform-specific defaults
+	if platform.Name() == gcp.Name {
+		if p.Platform.GCP == nil && platform.GCP.DefaultMachinePlatform != nil {
+			p.Platform.GCP = &gcp.MachinePool{}
+		}
+		gcpdefaults.Apply(platform.GCP.DefaultMachinePlatform, p.Platform.GCP)
+		gcpdefaults.SetMachinePoolDefaults(platform, p.Platform.GCP)
 	}
 }
 
@@ -34,7 +45,7 @@ func hasEdgePoolConfig(pools []types.MachinePool) bool {
 }
 
 // CreateEdgeMachinePoolDefaults create the edge compute pool when it is not already defined.
-func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform string, replicas int64) *types.MachinePool {
+func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform *types.Platform, replicas int64) *types.MachinePool {
 	if hasEdgePoolConfig(pools) {
 		return nil
 	}
