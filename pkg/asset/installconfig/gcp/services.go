@@ -2,7 +2,6 @@ package gcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"cloud.google.com/go/storage"
@@ -76,13 +75,11 @@ func CredentialOptions(ssn *Session) ([]option.ClientOption, error) {
 		// WithAuthCredentialsJSON takes a credentials type argument to allow
 		// restricting which credential types are accepted from external sources.
 		// In this case, there are no restrictions so we simply pass the type through.
-		var f struct {
-			Type string `json:"type"`
+		t, err := credentialType(ssn.Credentials.JSON)
+		if err != nil {
+			return nil, err
 		}
-		if err := json.Unmarshal(ssn.Credentials.JSON, &f); err != nil {
-			return nil, fmt.Errorf("failed to parse credentials JSON: %w", err)
-		}
-		opts = append(opts, option.WithAuthCredentialsJSON(option.CredentialsType(f.Type), ssn.Credentials.JSON))
+		opts = append(opts, option.WithAuthCredentialsJSON(option.CredentialsType(t), ssn.Credentials.JSON))
 	} else {
 		opts = append(opts, option.WithCredentials(ssn.Credentials))
 	}
