@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC.
+// Copyright 2026 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -995,6 +995,50 @@ type GoogleIamV1TestIamPermissionsResponse struct {
 
 func (s GoogleIamV1TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleIamV1TestIamPermissionsResponse
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// GoogleLongrunningOperation: This resource represents a long-running
+// operation that is the result of a network API call.
+type GoogleLongrunningOperation struct {
+	// Done: If the value is `false`, it means the operation is still in progress.
+	// If `true`, the operation is completed, and either `error` or `response` is
+	// available.
+	Done bool `json:"done,omitempty"`
+	// Error: The error result of the operation in case of failure or cancellation.
+	Error *Status `json:"error,omitempty"`
+	// Metadata: Service-specific metadata associated with the operation. It
+	// typically contains progress information and common metadata such as create
+	// time. Some services might not provide such metadata. Any method that returns
+	// a long-running operation should document the metadata type, if any.
+	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
+	// Name: The server-assigned name, which is only unique within the same service
+	// that originally returns it. If you use the default HTTP mapping, the `name`
+	// should be a resource name ending with `operations/{unique_id}`.
+	Name string `json:"name,omitempty"`
+	// Response: The normal, successful response of the operation. If the original
+	// method returns no data on success, such as `Delete`, the response is
+	// `google.protobuf.Empty`. If the original method is standard
+	// `Get`/`Create`/`Update`, the response should be the resource. For other
+	// methods, the response should have the type `XxxResponse`, where `Xxx` is the
+	// original method name. For example, if the original method name is
+	// `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+	Response googleapi.RawMessage `json:"response,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Done") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Done") to include in API requests
+	// with the JSON null value. By default, fields with empty values are omitted
+	// from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleLongrunningOperation) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleLongrunningOperation
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -2689,6 +2733,40 @@ type ResponsePolicyRulesUpdateResponse struct {
 
 func (s ResponsePolicyRulesUpdateResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ResponsePolicyRulesUpdateResponse
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// Status: The `Status` type defines a logical error model that is suitable for
+// different programming environments, including REST APIs and RPC APIs. It is
+// used by gRPC (https://github.com/grpc). Each `Status` message contains three
+// pieces of data: error code, error message, and error details. You can find
+// out more about this error model and how to work with it in the API Design
+// Guide (https://cloud.google.com/apis/design/errors).
+type Status struct {
+	// Code: The status code, which should be an enum value of google.rpc.Code.
+	Code int64 `json:"code,omitempty"`
+	// Details: A list of messages that carry the error details. There is a common
+	// set of message types for APIs to use.
+	Details []googleapi.RawMessage `json:"details,omitempty"`
+	// Message: A developer-facing error message, which should be in English. Any
+	// user-facing error message should be localized and sent in the
+	// google.rpc.Status.details field, or localized by the client.
+	Message string `json:"message,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Code") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Code") to include in API requests
+	// with the JSON null value. By default, fields with empty values are omitted
+	// from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s Status) MarshalJSON() ([]byte, error) {
+	type NoMethod Status
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -5923,6 +6001,21 @@ func (r *ResourceRecordSetsService) List(project string, managedZone string) *Re
 	return c
 }
 
+// Filter sets the optional parameter "filter": Specify a filter expression to
+// view records that exactly match the specified domain. Both the `name` and
+// `type` parameters are not supported and must be omitted when you use
+// `filter`. Your `filter` expression must conform to AIP-160 and you must
+// specify a domain in the `name` field. Optionally, you can include the `type`
+// field to filter records by type. You can also include the `has_suffix`
+// function to view records that match by domain suffix. Examples: *
+// `name`="example.com." * `name`="example.com." AND type="A" *
+// `name`=`has_suffix`("example.com.") * `name`=`has_suffix`("example.com.")
+// AND type="A"
+func (c *ResourceRecordSetsListCall) Filter(filter string) *ResourceRecordSetsListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
 // MaxResults sets the optional parameter "maxResults": Maximum number of
 // results to be returned. If unspecified, the server decides how many results
 // to return.
@@ -5931,9 +6024,9 @@ func (c *ResourceRecordSetsListCall) MaxResults(maxResults int64) *ResourceRecor
 	return c
 }
 
-// Name sets the optional parameter "name": Restricts the list to return only
-// records with this fully qualified domain name. Mutually exclusive with the
-// {@code filter} field.
+// Name sets the optional parameter "name": Specify a fully qualified domain
+// name to view only those records. The `name` parameter is not supported and
+// must be omitted when you use `filter`.
 func (c *ResourceRecordSetsListCall) Name(name string) *ResourceRecordSetsListCall {
 	c.urlParams_.Set("name", name)
 	return c
@@ -5947,9 +6040,9 @@ func (c *ResourceRecordSetsListCall) PageToken(pageToken string) *ResourceRecord
 	return c
 }
 
-// Type sets the optional parameter "type": Restricts the list to return only
-// records of this type. If present, the "name" parameter must also be present.
-// Mutually exclusive with the {@code filter} field.
+// Type sets the optional parameter "type": Specify a record type to view only
+// those records. You must also specify the `name` parameter. The `type`
+// parameter is not supported and must be omitted when you use `filter`.
 func (c *ResourceRecordSetsListCall) Type(type_ string) *ResourceRecordSetsListCall {
 	c.urlParams_.Set("type", type_)
 	return c
