@@ -38,11 +38,13 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"google.golang.org/grpc/internal"
+	"google.golang.org/grpc/internal/envconfig"
 	"google.golang.org/grpc/internal/grpclog"
 	"google.golang.org/grpc/internal/grpcutil"
 	"google.golang.org/grpc/internal/pretty"
 	istatus "google.golang.org/grpc/internal/status"
 	"google.golang.org/grpc/internal/syscall"
+	transportinternal "google.golang.org/grpc/internal/transport/internal"
 	"google.golang.org/grpc/mem"
 
 	"google.golang.org/grpc/codes"
@@ -165,7 +167,13 @@ func NewServerTransport(conn net.Conn, config *ServerConfig) (_ ServerTransport,
 	}
 	writeBufSize := config.WriteBufferSize
 	readBufSize := config.ReadBufferSize
+	// The default header list size is moving from 16MB to 8KB. The 8KB limit
+	// is only used if Enable8KBDefaultHeaderListSize is true; otherwise, the
+	// old 16MB default is used. User-specified options always take precedence.
 	maxHeaderListSize := defaultServerMaxHeaderListSize
+	if envconfig.Enable8KBDefaultHeaderListSize {
+		maxHeaderListSize = upcomingDefaultHeaderListSize
+	}
 	if config.MaxHeaderListSize != nil {
 		maxHeaderListSize = *config.MaxHeaderListSize
 	}
@@ -940,12 +948,16 @@ func (t *http2Server) checkForHeaderListSize(hf []hpack.HeaderField) bool {
 	}
 	var sz int64
 	for _, f := range hf {
-		if sz += int64(f.Size()); sz > int64(*t.maxSendHeaderListSize) {
+		sz += int64(f.Size())
+		if sz > int64(*t.maxSendHeaderListSize) {
 			if t.logger.V(logLevel) {
 				t.logger.Infof("Header list size to send violates the maximum size (%d bytes) set by client", *t.maxSendHeaderListSize)
 			}
 			return false
 		}
+	}
+	if !envconfig.Enable8KBDefaultHeaderListSize && sz > int64(upcomingDefaultHeaderListSize) {
+		t.logger.Warningf("Header list size to send (%d bytes) is larger than the upcoming default limit (%d bytes). In release v1.82.0, GRPC_GO_EXPERIMENTAL_ENABLE_8KB_DEFAULT_HEADER_LIST_SIZE will be enabled by default, enforcing this limit.", sz, upcomingDefaultHeaderListSize)
 	}
 	return true
 }
@@ -1437,14 +1449,14 @@ func (t *http2Server) socketMetrics() *channelz.EphemeralSocketMetrics {
 func (t *http2Server) incrMsgSent() {
 	if channelz.IsOn() {
 		t.channelz.SocketMetrics.MessagesSent.Add(1)
-		t.channelz.SocketMetrics.LastMessageSentTimestamp.Add(1)
+		t.channelz.SocketMetrics.LastMessageSentTimestamp.Store(transportinternal.TimeNowFunc())
 	}
 }
 
 func (t *http2Server) incrMsgRecv() {
 	if channelz.IsOn() {
 		t.channelz.SocketMetrics.MessagesReceived.Add(1)
-		t.channelz.SocketMetrics.LastMessageReceivedTimestamp.Add(1)
+		t.channelz.SocketMetrics.LastMessageReceivedTimestamp.Store(transportinternal.TimeNowFunc())
 	}
 }
 
