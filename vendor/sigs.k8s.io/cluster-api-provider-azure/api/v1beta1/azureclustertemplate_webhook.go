@@ -35,10 +35,9 @@ const AzureClusterTemplateImmutableMsg = "AzureClusterTemplate spec.template.spe
 // SetupWebhookWithManager will set up the webhook to be managed by the specified manager.
 func (c *AzureClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(azureClusterTemplateWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(c).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, c).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

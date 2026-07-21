@@ -39,10 +39,9 @@ var _ = logf.Log.WithName("gcpmachine-resource")
 
 func (m *GCPMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(gcpMachineWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(m).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, m).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

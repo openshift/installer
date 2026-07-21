@@ -35,10 +35,9 @@ import (
 // SetupAzureManagedMachinePoolTemplateWebhookWithManager will set up the webhook to be managed by the specified manager.
 func SetupAzureManagedMachinePoolTemplateWebhookWithManager(mgr ctrl.Manager) error {
 	mpw := &azureManagedMachinePoolTemplateWebhook{Client: mgr.GetClient()}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureManagedMachinePoolTemplate{}).
-		WithDefaulter(mpw).
-		WithValidator(mpw).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureManagedMachinePoolTemplate{}).
+		WithCustomDefaulter(mpw).
+		WithCustomValidator(mpw).
 		Complete()
 }
 

@@ -44,10 +44,9 @@ var _ = ctrl.Log.WithName("awscluster-resource")
 
 func (r *AWSCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(awsClusterWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

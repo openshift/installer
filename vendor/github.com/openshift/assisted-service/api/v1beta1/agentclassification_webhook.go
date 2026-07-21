@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -38,19 +39,26 @@ const (
 // log is for logging in this package.
 var agentclassificationlog = logf.Log.WithName("agentclassification-resource")
 
+// agentClassificationWebhook implements webhook.CustomValidator for AgentClassification.
+type agentClassificationWebhook struct{}
+
+var _ webhook.CustomValidator = &agentClassificationWebhook{}
+
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *AgentClassification) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(&agentClassificationWebhook{}).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/validate-agent-install-openshift-io-v1beta1-agentclassification,mutating=false,failurePolicy=fail,sideEffects=None,groups=agent-install.openshift.io,resources=agentclassifications,verbs=create;update,versions=v1beta1,name=vagentclassification.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &AgentClassification{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *AgentClassification) ValidateCreate() (admission.Warnings, error) {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
+func (w *agentClassificationWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*AgentClassification)
+	if !ok {
+		return nil, fmt.Errorf("object is not an AgentClassification")
+	}
 	agentclassificationlog.Info("validate create", "name", r.Name)
 	f := field.NewPath("spec")
 	errs := validation.ValidateLabels(map[string]string{ClassificationLabelPrefix + r.Spec.LabelKey: r.Spec.LabelValue}, f)
@@ -73,11 +81,15 @@ func (r *AgentClassification) ValidateCreate() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *AgentClassification) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
+func (w *agentClassificationWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	r, ok := newObj.(*AgentClassification)
+	if !ok {
+		return nil, fmt.Errorf("new object is not an AgentClassification")
+	}
 	agentclassificationlog.Info("validate update", "name", r.Name)
 
-	oldAgentClassification, ok := old.(*AgentClassification)
+	oldAgentClassification, ok := oldObj.(*AgentClassification)
 	if !ok {
 		return nil, fmt.Errorf("old object is not an AgentClassification")
 	}
@@ -92,7 +104,7 @@ func (r *AgentClassification) ValidateUpdate(old runtime.Object) (admission.Warn
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *AgentClassification) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
+func (w *agentClassificationWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

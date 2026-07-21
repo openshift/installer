@@ -32,9 +32,8 @@ import (
 // SetupAzureASOManagedMachinePoolWebhookWithManager sets up and registers the webhook with the manager.
 func SetupAzureASOManagedMachinePoolWebhookWithManager(mgr ctrl.Manager) error {
 	azureASOManagedMachinePoolWebhook := &azureASOManagedMachinePoolWebhook{}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureASOManagedMachinePool{}).
-		WithValidator(azureASOManagedMachinePoolWebhook).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureASOManagedMachinePool{}).
+		WithCustomValidator(azureASOManagedMachinePoolWebhook).
 		Complete()
 }
 

@@ -31,10 +31,9 @@ import (
 
 func (r *AWSClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(awsClusterTemplateWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

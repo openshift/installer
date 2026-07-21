@@ -32,9 +32,8 @@ import (
 // SetupAzureASOManagedControlPlaneWebhookWithManager sets up and registers the webhook with the manager.
 func SetupAzureASOManagedControlPlaneWebhookWithManager(mgr ctrl.Manager) error {
 	azureASOManagedControlPlaneWebhook := &azureASOManagedControlPlaneWebhook{}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureASOManagedControlPlane{}).
-		WithValidator(azureASOManagedControlPlaneWebhook).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureASOManagedControlPlane{}).
+		WithCustomValidator(azureASOManagedControlPlaneWebhook).
 		Complete()
 }
 

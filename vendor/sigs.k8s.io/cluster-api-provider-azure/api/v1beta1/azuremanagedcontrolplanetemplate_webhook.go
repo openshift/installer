@@ -34,10 +34,9 @@ import (
 // SetupAzureManagedControlPlaneTemplateWebhookWithManager will set up the webhook to be managed by the specified manager.
 func SetupAzureManagedControlPlaneTemplateWebhookWithManager(mgr ctrl.Manager) error {
 	mcpw := &azureManagedControlPlaneTemplateWebhook{Client: mgr.GetClient()}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureManagedControlPlaneTemplate{}).
-		WithDefaulter(mcpw).
-		WithValidator(mcpw).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureManagedControlPlaneTemplate{}).
+		WithCustomDefaulter(mcpw).
+		WithCustomValidator(mcpw).
 		Complete()
 }
 

@@ -34,10 +34,9 @@ var _ = ctrl.Log.WithName("awsclusterstaticidentity-resource")
 
 func (r *AWSClusterStaticIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(awsClusterStaticIdentityWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

@@ -33,10 +33,9 @@ import (
 // SetupAzureMachineWebhookWithManager sets up and registers the webhook with the manager.
 func SetupAzureMachineWebhookWithManager(mgr ctrl.Manager) error {
 	mw := &azureMachineWebhook{Client: mgr.GetClient()}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureMachine{}).
-		WithDefaulter(mw).
-		WithValidator(mw).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureMachine{}).
+		WithCustomDefaulter(mw).
+		WithCustomValidator(mw).
 		Complete()
 }
 

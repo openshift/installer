@@ -34,10 +34,9 @@ var _ = ctrl.Log.WithName("awsclusterroleidentity-resource")
 
 func (r *AWSClusterRoleIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(awsClusterRoleIdentityWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

@@ -48,10 +48,9 @@ var log = ctrl.Log.WithName("awsmachine-resource")
 
 func (r *AWSMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	w := new(awsMachineWebhook)
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 
