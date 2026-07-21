@@ -3,6 +3,7 @@ package tshelpers
 import (
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +15,7 @@ import (
 	"github.com/cavaliercoder/go-cpio"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/diskfs/go-diskfs"
-	"github.com/go-openapi/errors"
+	goerrors "github.com/go-openapi/errors"
 	"github.com/pkg/diff"
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/vincent-petithory/dataurl"
@@ -392,7 +393,7 @@ func archiveFileNames(isoPath string) (string, string, error) {
 		return "/config.gz", "", nil
 	}
 
-	return "", "", errors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
+	return "", "", goerrors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
 }
 
 func expand(ts *testscript.TestScript, s []byte) string {
@@ -465,7 +466,7 @@ func readFileFromIgnitionCfg(config *igntypes.Config, nodePath string) ([]byte, 
 		}
 	}
 
-	return nil, errors.NotFound(nodePath)
+	return nil, goerrors.NotFound(nodePath)
 }
 
 func extractArchiveFile(isoPath, archive, fileName string) ([]byte, error) {
@@ -511,7 +512,7 @@ func extractArchiveFile(isoPath, archive, fileName string) ([]byte, error) {
 		}
 	}
 
-	return nil, errors.NotFound(fmt.Sprintf("File %s not found within the %s archive", fileName, archive))
+	return nil, goerrors.NotFound(fmt.Sprintf("File %s not found within the %s archive", fileName, archive))
 }
 
 func extractIgnition(isoPath, archiveFile, ignitionFile string) (igntypes.Config, error) {
@@ -554,7 +555,7 @@ func extractCfgStorageData(isoPath, archiveFile, ignitionFile, nodePath string) 
 		}
 	}
 
-	return nil, errors.NotFound(fmt.Sprintf("File %s not found within the %s archive", nodePath, archiveFile))
+	return nil, goerrors.NotFound(fmt.Sprintf("File %s not found within the %s archive", nodePath, archiveFile))
 }
 
 func checkFileFromInitrdImg(isoPath string, fileName string) error {
@@ -582,13 +583,13 @@ func checkFileFromInitrdImg(isoPath string, fileName string) error {
 
 	buff := make([]byte, 4096)
 	for {
-		_, err := initRdImg.Read(buff)
-		if err == io.EOF { //nolint:errorlint
-			break
+		n, err := initRdImg.Read(buff)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
 		}
 
 		foundAt := -1
-		for idx := 0; idx < len(buff)-2; idx++ {
+		for idx := 0; idx < n-2; idx++ {
 			// scan the buffer for a potential gzip header
 			if buff[idx+0] == gzipID1 && buff[idx+1] == gzipID2 && buff[idx+2] == gzipDeflate {
 				foundAt = idx
@@ -598,20 +599,19 @@ func checkFileFromInitrdImg(isoPath string, fileName string) error {
 
 		if foundAt >= 0 {
 			// check if it's really a compressed cpio archive
-			delta := int64(foundAt - len(buff))
+			delta := int64(foundAt - n)
 			newPos, err := initRdImg.Seek(delta, io.SeekCurrent)
 			if err != nil {
-				break
+				return err
 			}
 
 			files, err := lookForCpioFiles(initRdImg)
 			if err != nil {
-				if _, err := initRdImg.Seek(newPos+2, io.SeekStart); err != nil {
-					break
+				if _, err := initRdImg.Seek(newPos+3, io.SeekStart); err != nil {
+					return err
 				}
 				continue
 			}
-
 			// check if the current cpio files match the required ones
 			for _, f := range files {
 				matched, err := filepath.Match(fileName, f)
@@ -622,10 +622,20 @@ func checkFileFromInitrdImg(isoPath string, fileName string) error {
 					return nil
 				}
 			}
+
+			// No match found. The gzip reader buffers ahead, which can skip nearby archives.
+			// Seek past the 3-byte gzip magic header (0x1f 0x8b 0x08) to continue scanning.
+			if _, err := initRdImg.Seek(newPos+3, io.SeekStart); err != nil {
+				return err
+			}
+		}
+
+		if errors.Is(err, io.EOF) {
+			break
 		}
 	}
 
-	return errors.NotFound(fmt.Sprintf("File %s not found within the /images/pxeboot/initrd.img archive", fileName))
+	return goerrors.NotFound(fmt.Sprintf("File %s not found within the /images/pxeboot/initrd.img archive", fileName))
 }
 
 func lookForCpioFiles(r io.Reader) ([]string, error) {
