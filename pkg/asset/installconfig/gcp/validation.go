@@ -83,23 +83,25 @@ func Validate(client API, ic *types.InstallConfig) error {
 	return allErrs.ToAggregate()
 }
 
+func isNonDefaultUniverseDomain(client API) bool {
+	creds := client.GetCredentials()
+	if creds == nil {
+		return false
+	}
+	ud, err := creds.GetUniverseDomain()
+	if err != nil {
+		return false
+	}
+	return gcp.IsNonDefaultUniverseDomain(ud)
+}
+
 func validateSovereignCloudFeatureGate(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	creds := client.GetCredentials()
-	if creds == nil {
-		return allErrs
-	}
-
-	ud, err := creds.GetUniverseDomain()
-	if err != nil {
-		return allErrs
-	}
-
-	if gcp.IsNonDefaultUniverseDomain(ud) && !ic.Enabled(features.FeatureGateGCPSovereignCloudInstall) {
+	if isNonDefaultUniverseDomain(client) && !ic.Enabled(features.FeatureGateGCPSovereignCloudInstall) {
 		allErrs = append(allErrs, field.Forbidden(
 			field.NewPath("platform", "gcp"),
-			fmt.Sprintf("non-default universe domain %q detected; the %s feature gate must be enabled", ud, features.FeatureGateGCPSovereignCloudInstall),
+			fmt.Sprintf("non-default universe domain detected; the %s feature gate must be enabled", features.FeatureGateGCPSovereignCloudInstall),
 		))
 	}
 
@@ -828,8 +830,8 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 	var defaultImage *compute.Image
 	var defaultOsImage *gcp.OSImage
 
-	// Check if this is a sovereign cloud installation
-	isSovereignCloud := gcp.GetCloudEnvironment(ic.GCP.ProjectID) == gcp.CloudEnvironmentSovereign
+	// Check if this is a sovereign cloud installation via project ID prefix or universe domain
+	isSovereignCloud := gcp.GetCloudEnvironment(ic.GCP.ProjectID) == gcp.CloudEnvironmentSovereign || isNonDefaultUniverseDomain(client)
 
 	if ic.GCP.DefaultMachinePlatform != nil && ic.GCP.DefaultMachinePlatform.OSImage != nil {
 		defaultOsImage = ic.GCP.DefaultMachinePlatform.OSImage

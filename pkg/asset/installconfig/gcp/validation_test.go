@@ -1617,6 +1617,8 @@ func TestValidateMarketplaceImages(t *testing.T) {
 
 	gcpClient := mock.NewMockAPI(mockCtrl)
 
+	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{}).AnyTimes()
+
 	// Mocks: valid image with matching architecture
 	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq(validImage), gomock.Any()).Return(marketplaceImageAPIResult, nil).AnyTimes()
 
@@ -1668,7 +1670,7 @@ func TestValidateSovereignCloudFeatureGate(t *testing.T) {
 					return "custom.example.com", nil
 				},
 			},
-			err: "platform.gcp: Forbidden: non-default universe domain \"custom.example.com\" detected",
+			err: "platform.gcp: Forbidden: non-default universe domain detected",
 		},
 		{
 			name:  "nil credentials",
@@ -1694,6 +1696,77 @@ func TestValidateSovereignCloudFeatureGate(t *testing.T) {
 			} else {
 				assert.NotEmpty(t, errs)
 				assert.Regexp(t, tc.err, errs.ToAggregate().Error())
+			}
+		})
+	}
+}
+
+func TestValidateMarketplaceImagesNonDefaultUniverseDomain(t *testing.T) {
+	validImage := "valid-image"
+	projectID := "project-id"
+
+	marketplaceImageAPIResult := &compute.Image{
+		Architecture: "X86_64",
+	}
+
+	cases := []struct {
+		name           string
+		edits          editFunctions
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name: "non-default universe domain without osImage requires custom images",
+			expectedError:  true,
+			expectedErrMsg: `must specify custom image for sovereign cloud`,
+		},
+		{
+			name: "non-default universe domain with valid defaultMachinePlatform osImage",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.Platform.GCP.DefaultMachinePlatform.OSImage = &gcp.OSImage{
+					Name:    validImage,
+					Project: projectID,
+				}
+			}},
+			expectedError: false,
+		},
+		{
+			name: "non-default universe domain with osImage missing project",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.Platform.GCP.DefaultMachinePlatform.OSImage = &gcp.OSImage{
+					Name:    validImage,
+					Project: "",
+				}
+			}},
+			expectedError:  true,
+			expectedErrMsg: `must specify image project for sovereign cloud`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{
+		UniverseDomainProvider: func() (string, error) {
+			return "custom.example.com", nil
+		},
+	}).AnyTimes()
+	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq(validImage), gomock.Any()).Return(marketplaceImageAPIResult, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errs := validateMarketplaceImages(gcpClient, editedInstallConfig)
+			if tc.expectedError {
+				assert.NotEmpty(t, errs)
+				assert.Regexp(t, tc.expectedErrMsg, errs.ToAggregate().Error())
+			} else {
+				assert.Empty(t, errs)
 			}
 		})
 	}
