@@ -1668,9 +1668,9 @@ func TestValidateMarketplaceImagesNonDefaultUniverseDomain(t *testing.T) {
 		expectedErrMsg string
 	}{
 		{
-			name: "non-default universe domain without osImage requires custom images",
+			name:           "non-default universe domain without osImage requires custom images",
 			expectedError:  true,
-			expectedErrMsg: `must specify custom image for sovereign cloud`,
+			expectedErrMsg: `platform.gcp.defaultMachinePlatform.osImage: Required value: must specify custom image for sovereign cloud.*controlPlane.platform.gcp.osImage: Required value: must specify custom image for sovereign cloud.*compute\[0\].platform.gcp.osImage: Required value: must specify custom image for sovereign cloud`,
 		},
 		{
 			name: "non-default universe domain with valid defaultMachinePlatform osImage",
