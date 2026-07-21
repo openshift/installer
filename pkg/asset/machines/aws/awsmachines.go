@@ -169,9 +169,9 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			}
 			subnet.ID = ptr.To(subnetMeta.ID)
 		} else {
-			subnetInternetScope := "private"
+			subnetInternetScope := subnetScopePrivate
 			if in.PublicIP {
-				subnetInternetScope = "public"
+				subnetInternetScope = subnetScopePublic
 			}
 			subnet.Filters = []capa.Filter{
 				{
