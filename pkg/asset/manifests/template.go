@@ -27,6 +27,11 @@ type GCPCredsSecretData struct {
 	Base64encodeServiceAccount string
 }
 
+// GCPWIFCredsSecretData holds encoded WIF external_account credentials.
+type GCPWIFCredsSecretData struct {
+	Base64encodeExternalAccountJSON string
+}
+
 // IBMCloudCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
 type IBMCloudCredsSecretData struct {
 	Base64encodeAPIKey string
@@ -59,6 +64,7 @@ type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
 	Azure     *AzureCredsSecretData
 	GCP       *GCPCredsSecretData
+	GCPWIF    *GCPWIFCredsSecretData
 	IBMCloud  *IBMCloudCredsSecretData
 	OpenStack *OpenStackCredsSecretData
 	VSphere   *[]*VSphereCredsSecretData

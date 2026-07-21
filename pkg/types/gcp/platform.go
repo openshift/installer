@@ -55,6 +55,21 @@ type PSCEndpoint struct {
 	ClusterUseOnly *bool `json:"clusterUseOnly,omitempty"`
 }
 
+// WorkloadIdentityFederation configures GCP Workload Identity Federation
+// for short-lived token authentication.
+type WorkloadIdentityFederation struct {
+	// PoolID is the ID of an existing workload identity pool.
+	// When both poolID and providerID are provided, the installer uses the
+	// existing WIF resources (BYO mode). When both are omitted, the installer
+	// creates new WIF resources.
+	// +optional
+	PoolID string `json:"poolID,omitempty"`
+
+	// ProviderID is the ID of an existing OIDC provider within the pool.
+	// +optional
+	ProviderID string `json:"providerID,omitempty"`
+}
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -127,6 +142,12 @@ type Platform struct {
 	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
+
+	// WorkloadIdentityFederation configures GCP Workload Identity Federation
+	// for short-lived token authentication. When set, the installer generates
+	// external_account credential manifests instead of static service account keys.
+	// +optional
+	WorkloadIdentityFederation *WorkloadIdentityFederation `json:"workloadIdentityFederation,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
@@ -201,4 +222,16 @@ func GetDefaultServiceAccount(platform *Platform, clusterID string, role string)
 // installer.
 func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
+}
+
+// IsWIFEnabled returns true when Workload Identity Federation is configured.
+func (p *Platform) IsWIFEnabled() bool {
+	return p != nil && p.WorkloadIdentityFederation != nil
+}
+
+// IsWIFBYO returns true when the customer is providing their own WIF resources.
+func (p *Platform) IsWIFBYO() bool {
+	return p.IsWIFEnabled() &&
+		p.WorkloadIdentityFederation.PoolID != "" &&
+		p.WorkloadIdentityFederation.ProviderID != ""
 }

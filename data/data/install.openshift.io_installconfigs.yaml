@@ -6773,6 +6773,24 @@ spec:
                       - value
                       type: object
                     type: array
+                  workloadIdentityFederation:
+                    description: |-
+                      WorkloadIdentityFederation configures GCP Workload Identity Federation
+                      for short-lived token authentication. When set, the installer generates
+                      external_account credential manifests instead of static service account keys.
+                    properties:
+                      poolID:
+                        description: |-
+                          PoolID is the ID of an existing workload identity pool.
+                          When both poolID and providerID are provided, the installer uses the
+                          existing WIF resources (BYO mode). When both are omitted, the installer
+                          creates new WIF resources.
+                        type: string
+                      providerID:
+                        description: ProviderID is the ID of an existing OIDC provider
+                          within the pool.
+                        type: string
+                    type: object
                 required:
                 - projectID
                 - region

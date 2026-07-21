@@ -78,6 +78,10 @@ var (
 
 	// userLabelKeyPrefixRegex is for verifying that the label key does not contain restricted prefixes.
 	userLabelKeyPrefixRegex = regexp.MustCompile(`^(?i)(kubernetes\-io|openshift\-io)`)
+
+	// wifResourceIDRegex validates WIF pool and provider IDs.
+	// IDs must be 4-32 lowercase alphanumeric characters or hyphens, starting with a letter.
+	wifResourceIDRegex = regexp.MustCompile(`^[a-z][a-z0-9-]{3,31}$`)
 )
 
 const (
@@ -145,6 +149,8 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
+	allErrs = append(allErrs, validateWorkloadIdentityFederation(p.WorkloadIdentityFederation, fldPath.Child("workloadIdentityFederation"), ic)...)
+
 	if p.FirewallRulesManagement != "" {
 		supportedFirewallRulePolicies := sets.New(gcp.ManagedFirewallRules, gcp.UnmanagedFirewallRules)
 		if !supportedFirewallRulePolicies.Has(p.FirewallRulesManagement) {
@@ -152,6 +158,47 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
+	return allErrs
+}
+
+// validateWorkloadIdentityFederation validates WIF configuration.
+func validateWorkloadIdentityFederation(wif *gcp.WorkloadIdentityFederation, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if wif == nil {
+		return allErrs
+	}
+
+	hasPool := wif.PoolID != ""
+	hasProvider := wif.ProviderID != ""
+	if hasPool != hasProvider {
+		allErrs = append(allErrs, field.Required(fldPath, "both poolID and providerID must be specified together, or both must be omitted"))
+		return allErrs
+	}
+
+	if hasPool {
+		allErrs = append(allErrs, validateWIFResourceID(wif.PoolID, fldPath.Child("poolID"))...)
+		allErrs = append(allErrs, validateWIFResourceID(wif.ProviderID, fldPath.Child("providerID"))...)
+	}
+
+	if ic.CredentialsMode != "" && ic.CredentialsMode != types.ManualCredentialsMode {
+		allErrs = append(allErrs, field.Invalid(fldPath, wif,
+			fmt.Sprintf("workload identity federation requires %q credentials mode", types.ManualCredentialsMode)))
+	}
+
+	return allErrs
+}
+
+// validateWIFResourceID checks that a WIF pool or provider ID is valid.
+func validateWIFResourceID(id string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !wifResourceIDRegex.MatchString(id) {
+		allErrs = append(allErrs, field.Invalid(fldPath, id,
+			"must be 4-32 lowercase letters, digits, or hyphens, starting with a letter"))
+	}
+	if len(id) >= 4 && id[:4] == "gcp-" {
+		allErrs = append(allErrs, field.Invalid(fldPath, id,
+			"must not start with the prefix \"gcp-\""))
+	}
 	return allErrs
 }
 
