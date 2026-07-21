@@ -234,7 +234,9 @@ then
 		--cluster-configmap-file=/assets/manifests/cluster-config.yaml \
 		--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
-		--network-config-file=/assets/manifests/cluster-network-02-config.yml
+		--network-config-file=/assets/manifests/cluster-network-02-config.yml \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
 
 	# Copy configuration required to start etcd
 	cp --recursive etcd-bootstrap/etc-kubernetes/* /etc/kubernetes/
