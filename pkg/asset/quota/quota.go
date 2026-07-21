@@ -12,16 +12,19 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	configpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
+	ibmcloudquota "github.com/openshift/installer/pkg/asset/quota/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/quota/openstack"
 	"github.com/openshift/installer/pkg/diagnostics"
 	"github.com/openshift/installer/pkg/quota"
 	quotaaws "github.com/openshift/installer/pkg/quota/aws"
 	quotagcp "github.com/openshift/installer/pkg/quota/gcp"
+	ibmcloudconstraints "github.com/openshift/installer/pkg/quota/ibmcloud"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -169,7 +172,23 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		if err != nil {
 			return errors.Wrap(err, "failed to create a new PISession")
 		}
-	case azure.Name, baremetal.Name, ibmcloud.Name, external.Name, none.Name, ovirt.Name, vsphere.Name, nutanix.Name:
+	case ibmcloud.Name:
+		client, err := ibmcloudic.NewClient(ic.Config.Platform.IBMCloud.ServiceEndpoints)
+		if err != nil {
+			logrus.Warnf("Failed to create IBM Cloud client for quota check, skipping: %v", err)
+			return nil
+		}
+		q, err := ibmcloudquota.Load(ctx, client, ic.Config)
+		if err != nil {
+			logrus.Warnf("Failed to load IBM Cloud quotas, skipping: %v", err)
+			return nil
+		}
+		reports, err := quota.Check(q, ibmcloudconstraints.Constraints(ic.Config, masters, workers))
+		if err != nil {
+			return summarizeFailingReport(reports)
+		}
+		summarizeReport(reports)
+	case azure.Name, baremetal.Name, external.Name, none.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
