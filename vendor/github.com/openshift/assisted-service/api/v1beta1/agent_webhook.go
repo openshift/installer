@@ -32,30 +32,30 @@ import (
 // log is for logging in this package.
 var agentlog = logf.Log.WithName("agent-resource")
 
-// agentWebhook implements webhook.CustomValidator for Agent.
-type agentWebhook struct{}
-
-var _ webhook.CustomValidator = &agentWebhook{}
+// agentCustomValidator handles validation for the Agent resource.
+type agentCustomValidator struct{}
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *Agent) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, r).
-		WithCustomValidator(&agentWebhook{}).
+		WithCustomValidator(&agentCustomValidator{}).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/validate-agent-install-openshift-io-v1beta1-agent,mutating=false,failurePolicy=fail,sideEffects=None,groups=agent-install.openshift.io,resources=agents,verbs=create;update,versions=v1beta1,name=vagent.kb.io,admissionReviewVersions=v1
 
+var _ webhook.CustomValidator = &agentCustomValidator{}
+
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
-func (w *agentWebhook) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (v *agentCustomValidator) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
-func (w *agentWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*Agent)
+func (v *agentCustomValidator) ValidateUpdate(_ context.Context, oldObj runtime.Object, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*Agent)
 	if !ok {
-		return nil, fmt.Errorf("new object is not an Agent")
+		return nil, fmt.Errorf("expected an Agent object but got %T", obj)
 	}
 	agentlog.Info("validate update", "name", r.Name)
 	oldObject, ok := oldObj.(*Agent)
@@ -81,7 +81,7 @@ func (w *agentWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
-func (w *agentWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (v *agentCustomValidator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
