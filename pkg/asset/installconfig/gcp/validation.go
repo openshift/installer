@@ -16,8 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	features "github.com/openshift/api/features"
-
 	"github.com/openshift/installer/pkg/types"
 	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -78,8 +76,6 @@ func Validate(client API, ic *types.InstallConfig) error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("gcp").Child("userTags"), ic.Platform.GCP.UserTags, err.Error()))
 	}
 
-	allErrs = append(allErrs, validateSovereignCloudFeatureGate(client, ic)...)
-
 	return allErrs.ToAggregate()
 }
 
@@ -93,19 +89,6 @@ func isNonDefaultUniverseDomain(client API) bool {
 		return false
 	}
 	return gcp.IsNonDefaultUniverseDomain(ud)
-}
-
-func validateSovereignCloudFeatureGate(client API, ic *types.InstallConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if isNonDefaultUniverseDomain(client) && !ic.Enabled(features.FeatureGateGCPSovereignCloudInstall) {
-		allErrs = append(allErrs, field.Forbidden(
-			field.NewPath("platform", "gcp"),
-			fmt.Sprintf("non-default universe domain detected; the %s feature gate must be enabled", features.FeatureGateGCPSovereignCloudInstall),
-		))
-	}
-
-	return allErrs
 }
 
 func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, arch string) *field.Error {

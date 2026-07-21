@@ -1653,54 +1653,6 @@ func TestValidateMarketplaceImages(t *testing.T) {
 	}
 }
 
-func TestValidateSovereignCloudFeatureGate(t *testing.T) {
-	cases := []struct {
-		name  string
-		creds *googleoauth.Credentials
-		err   string
-	}{
-		{
-			name:  "default universe domain requires no feature gate",
-			creds: &googleoauth.Credentials{},
-		},
-		{
-			name: "non-default universe domain without feature gate",
-			creds: &googleoauth.Credentials{
-				UniverseDomainProvider: func() (string, error) {
-					return "custom.example.com", nil
-				},
-			},
-			err: "platform.gcp: Forbidden: non-default universe domain detected",
-		},
-		{
-			name:  "nil credentials",
-			creds: nil,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			gcpClient := mock.NewMockAPI(mockCtrl)
-			gcpClient.EXPECT().GetCredentials().Return(tc.creds).AnyTimes()
-
-			ic := types.InstallConfig{
-				Platform: types.Platform{GCP: &gcp.Platform{ProjectID: validProjectName}},
-			}
-
-			errs := validateSovereignCloudFeatureGate(gcpClient, &ic)
-			if tc.err == "" {
-				assert.Empty(t, errs)
-			} else {
-				assert.NotEmpty(t, errs)
-				assert.Regexp(t, tc.err, errs.ToAggregate().Error())
-			}
-		})
-	}
-}
-
 func TestValidateMarketplaceImagesNonDefaultUniverseDomain(t *testing.T) {
 	validImage := "valid-image"
 	projectID := "project-id"
