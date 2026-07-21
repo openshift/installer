@@ -44,10 +44,9 @@ var validNodePublicPrefixID = regexp.MustCompile(`(?i)^/?subscriptions/[0-9a-f]{
 // SetupAzureManagedMachinePoolWebhookWithManager sets up and registers the webhook with the manager.
 func SetupAzureManagedMachinePoolWebhookWithManager(mgr ctrl.Manager) error {
 	mw := &azureManagedMachinePoolWebhook{Client: mgr.GetClient()}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureManagedMachinePool{}).
-		WithDefaulter(mw).
-		WithValidator(mw).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureManagedMachinePool{}).
+		WithCustomDefaulter(mw).
+		WithCustomValidator(mw).
 		Complete()
 }
 

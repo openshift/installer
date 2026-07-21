@@ -40,10 +40,9 @@ const (
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
 func (r *AzureMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(r).
-		WithDefaulter(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(r).
+		WithCustomDefaulter(r).
 		Complete()
 }
 
