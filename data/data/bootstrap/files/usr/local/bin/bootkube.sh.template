@@ -195,6 +195,22 @@ then
 
 	rm --recursive --force cvo-bootstrap
 
+	# Probe the CVO render --help to detect which optional flags the
+	# release image's CVO binary supports, so that a newer installer
+	# can still bootstrap with an older CVO that lacks these flags.
+	CVO_RENDER_FLAGS=()
+	cvo_render_help=$(bootkube_podman_run \
+		--name cvo-render-help \
+		--volume "$PWD:/assets:z" \
+		"${RELEASE_IMAGE_DIGEST}" \
+		render --help 2>&1) || true
+	if grep -q -- --cluster-version-manifest-path <<< "${cvo_render_help}"; then
+		CVO_RENDER_FLAGS+=("--cluster-version-manifest-path=/assets/manifests/cvo-overrides.yaml")
+	fi
+	if grep -q -- --feature-gate-manifest-path <<< "${cvo_render_help}"; then
+		CVO_RENDER_FLAGS+=("--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml")
+	fi
+
 	bootkube_podman_run \
 		--name cvo-render \
 		--volume "$PWD:/assets:z" \
@@ -205,8 +221,7 @@ then
 		render \
 			--output-dir=/assets/cvo-bootstrap \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
-			--cluster-version-manifest-path=/assets/manifests/cvo-overrides.yaml \
-			--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml
+			"${CVO_RENDER_FLAGS[@]}"
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
