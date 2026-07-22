@@ -195,6 +195,21 @@ then
 
 	rm --recursive --force cvo-bootstrap
 
+	ADDITIONAL_FLAGS=()
+	CVO_RENDER_HELP=$(bootkube_podman_run \
+		--name cvo-render-help \
+		--volume "$PWD:/assets:z" \
+		"${RELEASE_IMAGE_DIGEST}" \
+		render --help 2>&1) || true
+
+	if echo "${CVO_RENDER_HELP}" | grep -q -- '--cluster-version-manifest-path'; then
+		ADDITIONAL_FLAGS+=("--cluster-version-manifest-path=/assets/manifests/cvo-overrides.yaml")
+	fi
+
+	if echo "${CVO_RENDER_HELP}" | grep -q -- '--feature-gate-manifest-path'; then
+		ADDITIONAL_FLAGS+=("--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml")
+	fi
+
 	bootkube_podman_run \
 		--name cvo-render \
 		--volume "$PWD:/assets:z" \
@@ -205,8 +220,7 @@ then
 		render \
 			--output-dir=/assets/cvo-bootstrap \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
-			--cluster-version-manifest-path=/assets/manifests/cvo-overrides.yaml \
-			--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml
+			"${ADDITIONAL_FLAGS[@]}"
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
