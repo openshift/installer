@@ -489,6 +489,10 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	// When passed incorrect machine type, the API returns nil.
 	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
 
+	// Mock disk type availability - all disk types available in valid zones
+	gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&compute.DiskType{Name: "available"}, sets.New(validZone), nil).AnyTimes()
+
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
 
@@ -1061,7 +1065,7 @@ func TestValidateInstanceType(t *testing.T) {
 			onHostMaintenance:   "Migrate",
 			confidentialCompute: "Disabled",
 			expectedError:       true,
-			expectedErrMsg:      `\[instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
+			expectedErrMsg:      `\[instance.diskType: Invalid value: "pd\-ssd": disk type pd\-ssd is not available in zones: \[x y\] instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
 		},
 		{
 			name:                "Valid instance fails min requirements and no zones specified",
@@ -1369,11 +1373,103 @@ func TestValidateInstanceType(t *testing.T) {
 	// When passed incorrect machine type, the API returns nil.
 	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
 
+	// Mock disk type availability - all disk types available in all test zones
+	gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&compute.DiskType{Name: "available"}, sets.New("a", "b", "c", "d"), nil).AnyTimes()
+
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.diskType, test.instanceType, controlPlaneReq, test.arch, test.onHostMaintenance, test.confidentialCompute)
 			if test.expectedError {
 				assert.Regexp(t, test.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateDiskTypeAvailability(t *testing.T) {
+	cases := []struct {
+		name           string
+		diskType       string
+		zones          sets.Set[string]
+		mockDiskType   *compute.DiskType
+		mockZones      sets.Set[string]
+		mockErr        error
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:          "Empty disk type is a no-op",
+			diskType:      "",
+			expectedError: false,
+		},
+		{
+			name:          "Disk type available in all zones",
+			diskType:      "pd-ssd",
+			zones:         sets.New("us-east1-b", "us-east1-c"),
+			mockDiskType:  &compute.DiskType{Name: "pd-ssd"},
+			mockZones:     sets.New("us-east1-b", "us-east1-c", "us-east1-d"),
+			expectedError: false,
+		},
+		{
+			name:           "Disk type not available in region",
+			diskType:       "hyperdisk-balanced",
+			zones:          sets.New[string](),
+			mockDiskType:   nil,
+			mockZones:      nil,
+			expectedError:  true,
+			expectedErrMsg: `disk type hyperdisk-balanced is not available in region us-east1`,
+		},
+		{
+			name:           "Disk type not available in specific zones",
+			diskType:       "pd-ssd",
+			zones:          sets.New("us-east1-b", "us-east1-x"),
+			mockDiskType:   &compute.DiskType{Name: "pd-ssd"},
+			mockZones:      sets.New("us-east1-b", "us-east1-c"),
+			expectedError:  true,
+			expectedErrMsg: `disk type pd-ssd is not available in zones: \[us-east1-x\]`,
+		},
+		{
+			name:           "Disk type available in fewer zones than requested",
+			diskType:       "pd-ssd",
+			zones:          sets.New("us-east1-b", "us-east1-c", "us-east1-d"),
+			mockDiskType:   &compute.DiskType{Name: "pd-ssd"},
+			mockZones:      sets.New("us-east1-b", "us-east1-c"),
+			expectedError:  true,
+			expectedErrMsg: `disk type pd-ssd is not available in zones: \[us-east1-d\]`,
+		},
+		{
+			name:           "GCP API error returns field error",
+			diskType:       "pd-ssd",
+			mockErr:        &googleapi.Error{Code: http.StatusForbidden, Message: "forbidden"},
+			expectedError:  true,
+			expectedErrMsg: `forbidden`,
+		},
+		{
+			name:           "Non-API error returns internal error",
+			diskType:       "pd-ssd",
+			mockErr:        fmt.Errorf("network timeout"),
+			expectedError:  true,
+			expectedErrMsg: `network timeout`,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			if test.diskType != "" {
+				gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), "project-id", "us-east1", test.diskType).
+					Return(test.mockDiskType, test.mockZones, test.mockErr).AnyTimes()
+			}
+
+			errs := validateDiskTypeAvailability(gcpClient, field.NewPath("test"), "project-id", "us-east1", test.zones, test.diskType)
+			if test.expectedError {
+				assert.Regexp(t, test.expectedErrMsg, errs.ToAggregate().Error())
 			} else {
 				assert.Empty(t, errs)
 			}
