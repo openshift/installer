@@ -7,7 +7,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/aws"
+	gcp "github.com/openshift/installer/pkg/types/gcp"
 )
 
 func defaultMachinePoolWithReplicaCount(name string, replicaCount int) *types.MachinePool {
@@ -144,53 +145,48 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 }
 
 func TestSetMachinePoolDefaultsWithFeatureGates(t *testing.T) {
+	awsPlatform := &types.Platform{AWS: &aws.Platform{}}
+
 	cases := []struct {
 		name               string
 		pool               *types.MachinePool
 		platform           *types.Platform
-		featureSet         configv1.FeatureSet
+		featureGates       []string
 		expectedManagement types.MachineManagementAPI
 	}{
 		{
-			name:               "control plane with DevPreviewNoUpgrade feature set",
-			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
+			name:               "AWS compute sets ClusterAPI management when ClusterAPIMachineManagementAWS enabled",
+			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
+			platform:           awsPlatform,
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: types.ClusterAPI,
 		},
 		{
-			name:               "control plane with default feature set",
+			name:               "AWS compute management is unchanged when ClusterAPIMachineManagementAWS disabled",
+			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
+			platform:           awsPlatform,
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=False"},
+			expectedManagement: "",
+		},
+		{
+			name:               "AWS control plane is unaffected by ClusterAPIMachineManagementAWS",
 			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.Default,
+			platform:           awsPlatform,
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: "",
 		},
 		{
-			name:               "compute with DevPreviewNoUpgrade feature set",
+			name:               "non-AWS compute is unaffected by ClusterAPIMachineManagementAWS",
 			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
 			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
-			expectedManagement: types.ClusterAPI,
-		},
-		{
-			name:               "compute with default feature set",
-			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.Default,
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: "",
 		},
 		{
-			name:               "control plane with management already set",
-			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName, Management: types.MachineAPI},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
-			expectedManagement: types.MachineAPI,
-		},
-		{
-			name:               "compute with management already set",
+			name:               "AWS compute management is not overwritten when already set",
 			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName, Management: types.MachineAPI},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
+			platform:           awsPlatform,
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: types.MachineAPI,
 		},
 	}
@@ -198,7 +194,8 @@ func TestSetMachinePoolDefaultsWithFeatureGates(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			config := &types.InstallConfig{
-				FeatureSet: tc.featureSet,
+				FeatureSet:   configv1.CustomNoUpgrade,
+				FeatureGates: tc.featureGates,
 			}
 			SetMachinePoolDefaults(tc.pool, tc.platform, config.EnabledFeatureGates())
 			assert.Equal(t, tc.expectedManagement, tc.pool.Management, "unexpected management API")

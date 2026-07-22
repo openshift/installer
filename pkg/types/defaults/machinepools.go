@@ -40,18 +40,11 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform, fgat
 		}
 	}
 
-	// Set management to ClusterAPI if the appropriate feature gate is enabled and management is unspecified
-	if p.Management == "" {
-		if p.Name == types.MachinePoolControlPlaneRoleName && fgates.Enabled(features.FeatureGateClusterAPIControlPlaneInstall) {
-			p.Management = types.ClusterAPI
-		}
-		if p.Name == types.MachinePoolComputeRoleName && fgates.Enabled(features.FeatureGateClusterAPIComputeInstall) {
-			p.Management = types.ClusterAPI
-		}
-	}
-
 	switch platform.Name() {
 	case aws.Name:
+		if p.Management == "" && p.Name == types.MachinePoolComputeRoleName && fgates.Enabled(features.FeatureGateClusterAPIMachineManagementAWS) {
+			p.Management = types.ClusterAPI
+		}
 		if p.Platform.AWS == nil && platform.AWS.DefaultMachinePlatform != nil {
 			p.Platform.AWS = &aws.MachinePool{}
 		}
