@@ -316,6 +316,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.BareMetal.IngressVIPs
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.BareMetal.IngressVIPs[0]
+			if installConfig.Config.Platform.BareMetal.LoadBalancer != nil {
+				agentClusterInstall.Spec.LoadBalancer = &hiveext.LoadBalancer{
+					Type: loadBalancerType(installConfig.Config.Platform.BareMetal.LoadBalancer.Type),
+				}
+			}
 		} else if installConfig.Config.Platform.VSphere != nil {
 			vspherePlatform := vsphere.Platform{}
 			if len(installConfig.Config.Platform.VSphere.APIVIPs) > 1 {
@@ -344,6 +349,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			}
 			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
 			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
+			if installConfig.Config.Platform.VSphere.LoadBalancer != nil {
+				agentClusterInstall.Spec.LoadBalancer = &hiveext.LoadBalancer{
+					Type: loadBalancerType(installConfig.Config.Platform.VSphere.LoadBalancer.Type),
+				}
+			}
 		} else if installConfig.Config.Platform.Nutanix != nil {
 			icNutanixPlatformBytes, err := json.Marshal(*installConfig.Config.Platform.Nutanix)
 			if err != nil {
@@ -647,6 +657,13 @@ func (a *AgentClusterInstall) GetExternalPlatformName() string {
 		return a.Config.Spec.ExternalPlatformSpec.PlatformName
 	}
 	return ""
+}
+
+func loadBalancerType(lbType configv1.PlatformLoadBalancerType) hiveext.LoadBalancerType {
+	if lbType == configv1.LoadBalancerTypeUserManaged {
+		return hiveext.LoadBalancerTypeUserManaged
+	}
+	return hiveext.LoadBalancerTypeClusterManaged
 }
 
 func (a *AgentClusterInstall) validateDiskEncryption() field.ErrorList {

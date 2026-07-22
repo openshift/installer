@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	externaltype "github.com/openshift/installer/pkg/types/external"
+	vspheretype "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
@@ -160,6 +161,35 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodArbiterACI := getGoodACI()
 	goodArbiterACI.Spec.ProvisionRequirements.ArbiterAgents = 1
 	goodArbiterACI.Spec.ProvisionRequirements.WorkerAgents = 0
+
+	installConfigBaremetalUserManagedLB := getValidOptionalInstallConfig()
+	installConfigBaremetalUserManagedLB.Config.Platform.BareMetal.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{
+		Type: configv1.LoadBalancerTypeUserManaged,
+	}
+
+	goodBaremetalUserManagedLBACI := getGoodACI()
+	goodBaremetalUserManagedLBACI.Spec.LoadBalancer = &hiveext.LoadBalancer{
+		Type: hiveext.LoadBalancerTypeUserManaged,
+	}
+
+	installConfigVSphereUserManagedLB := getValidOptionalInstallConfig()
+	installConfigVSphereUserManagedLB.Config.Platform = types.Platform{
+		VSphere: &vspheretype.Platform{
+			APIVIPs:     []string{"192.168.122.10"},
+			IngressVIPs: []string{"192.168.122.11"},
+			LoadBalancer: &configv1.VSpherePlatformLoadBalancer{
+				Type: configv1.LoadBalancerTypeUserManaged,
+			},
+		},
+	}
+
+	goodVSphereUserManagedLBACI := getGoodACI()
+	goodVSphereUserManagedLBACI.Spec.APIVIP = ""
+	goodVSphereUserManagedLBACI.Spec.IngressVIP = ""
+	goodVSphereUserManagedLBACI.Spec.PlatformType = hiveext.VSpherePlatformType
+	goodVSphereUserManagedLBACI.Spec.LoadBalancer = &hiveext.LoadBalancer{
+		Type: hiveext.LoadBalancerTypeUserManaged,
+	}
 
 	cases := []struct {
 		name           string
@@ -336,6 +366,26 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodArbiterACI,
+		},
+		{
+			name: "valid configuration baremetal user-managed load balancer",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigBaremetalUserManagedLB,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodBaremetalUserManagedLBACI,
+		},
+		{
+			name: "valid configuration vsphere user-managed load balancer",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigVSphereUserManagedLB,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodVSphereUserManagedLBACI,
 		},
 	}
 	for _, tc := range cases {
