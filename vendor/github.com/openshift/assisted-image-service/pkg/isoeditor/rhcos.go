@@ -387,15 +387,13 @@ func updateKargs(extractDir, rootFSURL string, includeNmstateRamDisk bool, arch 
 		config = &kargsStruct
 	}
 
-	// ignore grub.cfg for s390x because it uses zipl bootloader instead
-	if arch != "s390x" {
-		if err := fixGrubConfig(rootFSURL, extractDir, includeNmstateRamDisk, config); err != nil {
-			return fmt.Errorf("failed to fix grub config: %v", err)
-		}
+	// Apply bootloader config changes (without tracking size changes)
+	if err := fixGrubConfig(rootFSURL, extractDir, includeNmstateRamDisk, config); err != nil {
+		return fmt.Errorf("failed to fix grub config: %v", err)
 	}
 
-	// ignore isolinux.cfg for ppc64le and s390x because they don't exist
-	if arch != "ppc64le" && arch != "s390x" {
+	// ignore isolinux.cfg for ppc64le because it doesn't exist
+	if arch != "ppc64le" {
 		if err := fixIsolinuxConfig(rootFSURL, extractDir, includeNmstateRamDisk, config); err != nil {
 			return fmt.Errorf("failed to fix isolinux config: %v", err)
 		}
