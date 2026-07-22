@@ -87,7 +87,6 @@ func makeTestCAPIAWSMachine(name, instanceType string, volumeSize int64, volumeT
 	}
 }
 
-
 func TestSyncAWSFields_NoDrift(t *testing.T) {
 	mapi := makeTestMAPIConfig("m6i.xlarge", 120, "gp3")
 	capi := makeTestCAPIAWSMachine("test-cluster-master-0", "m6i.xlarge", 120, "gp3")
