@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/network"
@@ -55,6 +56,7 @@ func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name     string
 		platform *azure.Platform
+		ic       *types.InstallConfig
 		wantSkip func(p *azure.Platform) bool
 		expected string
 	}{
@@ -289,6 +291,124 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expected: `^test-path\.userProvisionedDNS: Invalid value: "Enabled": userProvisionedDNS is not supported on Azure Stack Hub$`,
 		},
+		{
+			name:     "no machine networks specified",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork: Required value: cannot proceed with no machine networks specified\E$`,
+		},
+		{
+			name:     "invalid single-stack IPv6 with /64",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("fd00::/64")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork[0].cidr: Invalid value: "fd00::/64": single-stack IPv6 is not supported on Azure. IPv6 may only be used with dual-stack networking (both IPv4 and IPv6)\E$`,
+		},
+		{
+			name:     "invalid single-stack IPv6 with /56",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("fd00::/56")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork[0].cidr: Invalid value: "fd00::/56": single-stack IPv6 is not supported on Azure. IPv6 may only be used with dual-stack networking (both IPv4 and IPv6)\E$`,
+		},
+		{
+			name: "dual-stack enabled but missing IPv4",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.DualStackIPv4Primary
+				return p
+			}(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("fd00::/56")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork[0].cidr: Invalid value: "fd00::/56": single-stack IPv6 is not supported on Azure. IPv6 may only be used with dual-stack networking (both IPv4 and IPv6)\E$`,
+		},
+		{
+			name: "dual-stack enabled but missing IPv6",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.DualStackIPv4Primary
+				return p
+			}(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork: Required value: at least one IPv6 machine network must be specified when dual-stack is enabled\E$`,
+		},
+		{
+			name:     "valid dual-stack with IPv6 /56",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						{CIDR: *ipnet.MustParseCIDR("fd00::/56")},
+					},
+				},
+			},
+		},
+		{
+			name:     "invalid IPv6 prefix not on nibble boundary /63",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						{CIDR: *ipnet.MustParseCIDR("fd00::/63")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork[1].cidr: Invalid value: "fd00::/63": IPv6 CIDR prefix length must be on a nibble boundary (multiples of 4). Valid prefixes less than /64 are /48, /52, /56, /60\E$`,
+		},
+		{
+			name:     "invalid dual-stack with IPv6 /64",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						{CIDR: *ipnet.MustParseCIDR("fd00::/64")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork[1].cidr: Invalid value: "fd00::/64": in dual-stack configurations, IPv6 machine network CIDRs require prefix lengths shorter than /64 on nibble boundaries (e.g., /48, /52, /56, /60). Azure recommends /56 to allow splitting into multiple /64 subnets\E$`,
+		},
+		{
+			name:     "invalid dual-stack with valid and invalid IPv6",
+			platform: validPlatform(),
+			ic: &types.InstallConfig{
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+						{CIDR: *ipnet.MustParseCIDR("fd00::/56")},
+						{CIDR: *ipnet.MustParseCIDR("fd00::1/128")},
+					},
+				},
+			},
+			expected: `^\Qnetworking.machineNetwork[2].cidr: Invalid value: "fd00::1/128": in dual-stack configurations, IPv6 machine network CIDRs require prefix lengths shorter than /64 on nibble boundaries (e.g., /48, /52, /56, /60). Azure recommends /56 to allow splitting into multiple /64 subnets\E$`,
+		},
 	}
 	ic := types.InstallConfig{}
 	for _, tc := range cases {
@@ -297,7 +417,11 @@ func TestValidatePlatform(t *testing.T) {
 				t.Skip()
 			}
 
-			err := ValidatePlatform(tc.platform, types.ExternalPublishingStrategy, field.NewPath("test-path"), &ic).ToAggregate()
+			testIC := tc.ic
+			if testIC == nil {
+				testIC = &ic
+			}
+			err := ValidatePlatform(tc.platform, types.ExternalPublishingStrategy, field.NewPath("test-path"), testIC).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
