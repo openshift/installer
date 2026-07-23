@@ -125,8 +125,8 @@ func ValidateSupportedPlatforms(platform types.Platform, controlPlaneArch string
 	if platform.Name() != none.Name && controlPlaneArch == types.ArchitecturePPC64LE {
 		allErrs = append(allErrs, field.Invalid(fieldPath, platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitecturePPC64LE, none.Name)))
 	}
-	if platform.Name() != none.Name && controlPlaneArch == types.ArchitectureS390X {
-		allErrs = append(allErrs, field.Invalid(fieldPath, platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitectureS390X, none.Name)))
+	if platform.Name() != none.Name && platform.Name() != external.Name && controlPlaneArch == types.ArchitectureS390X {
+		allErrs = append(allErrs, field.Invalid(fieldPath, platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\" or \"%s\".", types.ArchitectureS390X, none.Name, external.Name)))
 	}
 	return allErrs
 }
@@ -135,6 +135,7 @@ func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.Ins
 	var allErrs field.ErrorList
 
 	if installConfig.Platform.Name() == external.Name {
+		// Validate OCI platform requirements
 		if installConfig.Platform.External.PlatformName == ExternalPlatformNameOci &&
 			installConfig.Platform.External.CloudControllerManager != external.CloudControllerManagerTypeExternal {
 			fieldPath := field.NewPath("platform", "external", "cloudControllerManager")
