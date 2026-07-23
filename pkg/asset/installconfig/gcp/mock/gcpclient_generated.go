@@ -106,6 +106,22 @@ func (mr *MockAPIMockRecorder) GetDNSZoneFromParams(ctx, params any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZoneFromParams", reflect.TypeOf((*MockAPI)(nil).GetDNSZoneFromParams), ctx, params)
 }
 
+// GetDiskTypeWithZones mocks base method.
+func (m *MockAPI) GetDiskTypeWithZones(ctx context.Context, project, region, diskType string) (*compute.DiskType, sets.Set[string], error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDiskTypeWithZones", ctx, project, region, diskType)
+	ret0, _ := ret[0].(*compute.DiskType)
+	ret1, _ := ret[1].(sets.Set[string])
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetDiskTypeWithZones indicates an expected call of GetDiskTypeWithZones.
+func (mr *MockAPIMockRecorder) GetDiskTypeWithZones(ctx, project, region, diskType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiskTypeWithZones", reflect.TypeOf((*MockAPI)(nil).GetDiskTypeWithZones), ctx, project, region, diskType)
+}
+
 // GetEnabledServices mocks base method.
 func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
 	m.ctrl.T.Helper()

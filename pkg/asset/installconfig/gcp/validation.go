@@ -3,12 +3,12 @@ package gcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"slices"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
@@ -140,7 +140,8 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 
 	typeMeta, typeZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
 	if err != nil {
-		if _, ok := err.(*googleapi.Error); ok {
+		var gerr *googleapi.Error
+		if errors.As(err, &gerr) {
 			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
@@ -162,6 +163,9 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 	if len(userZones) == 0 {
 		userZones = typeZones
 	}
+
+	allErrs = append(allErrs, validateDiskTypeAvailability(client, fieldPath, project, region, userZones, diskType)...)
+
 	if diff := userZones.Difference(typeZones); len(diff) > 0 {
 		errMsg := fmt.Sprintf("instance type not available in zones: %v", sets.List(diff))
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
@@ -180,6 +184,37 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 		if typeArch := mapiutil.CPUArchitecture(instanceType); string(typeArch) != arch {
 			errMsg := fmt.Sprintf("instance type architecture %s does not match specified architecture %s", typeArch, arch)
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+		}
+	}
+
+	return allErrs
+}
+
+func validateDiskTypeAvailability(client API, fieldPath *field.Path, project, region string, zones sets.Set[string], diskType string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if diskType == "" {
+		return allErrs
+	}
+
+	dt, dtZones, err := client.GetDiskTypeWithZones(context.TODO(), project, region, diskType)
+	if err != nil {
+		var gerr *googleapi.Error
+		if errors.As(err, &gerr) {
+			return append(allErrs, field.Invalid(fieldPath.Child("diskType"), diskType, err.Error()))
+		}
+		return append(allErrs, field.InternalError(fieldPath.Child("diskType"), err))
+	}
+
+	if dt == nil {
+		errMsg := fmt.Sprintf("disk type %s is not available in region %s", diskType, region)
+		return append(allErrs, field.Invalid(fieldPath.Child("diskType"), diskType, errMsg))
+	}
+
+	if len(zones) > 0 {
+		if diff := zones.Difference(dtZones); len(diff) > 0 {
+			errMsg := fmt.Sprintf("disk type %s is not available in zones: %v", diskType, sets.List(diff))
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("diskType"), diskType, errMsg))
 		}
 	}
 
@@ -662,7 +697,7 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 	projectServices, err := client.GetEnabledServices(ctx, project)
 	if err != nil {
 		if IsForbidden(err) {
-			return errors.Wrap(err, "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled")
+			return fmt.Errorf("unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled: %w", err)
 		}
 		return err
 	}
