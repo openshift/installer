@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -45,4 +46,14 @@ func GetHyperVGenerationVersions(capabilities map[string]string) (sets.Set[strin
 func GetVMNetworkingCapability(capabilities map[string]string) bool {
 	val, ok := capabilities[string(azure.AcceleratedNetworkingEnabled)]
 	return ok && strings.EqualFold(val, "True")
+}
+
+// GetArchitecture returns one of types.ArchitectureARM64 or types.ArchitectureAMD64.
+func GetArchitecture(capabilities map[string]string) types.Architecture {
+	val, ok := capabilities["CpuArchitectureType"]
+	if ok && val == "Arm64" {
+		return types.ArchitectureARM64
+	}
+	// If not ARM, assume x86. We already validated that it's one or the other.
+	return types.ArchitectureAMD64
 }

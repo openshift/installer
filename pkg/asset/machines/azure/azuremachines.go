@@ -63,7 +63,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
 	confidentialVM := mpool.Settings != nil && mpool.Settings.SecurityType != ""
-	image := capzImage(mpool.OSImage, in.Environment, confidentialVM, in.HyperVGen, resourceGroup, subscriptionID, clusterID, in.RHCOS)
+	image := capzImage(mpool.OSImage, in.Environment, confidentialVM, in.Pool.Architecture, in.HyperVGen, resourceGroup, subscriptionID, clusterID, in.RHCOS)
 	// Set up OSDisk
 	osDisk := capz.OSDisk{
 		OSType:     "Linux",
@@ -367,7 +367,7 @@ func bootDiagStorageURIBuilder(diag *aztypes.BootDiagnostics, storageEndpointSuf
 	return ""
 }
 
-func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confidentialVM bool, gen, rg, sub, infraID, rhcosImg string) *capz.Image {
+func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confidentialVM bool, arch types.Architecture, gen, rg, sub, infraID, rhcosImg string) *capz.Image {
 	switch {
 	case osImage.Publisher != "":
 		return &capz.Image{
@@ -400,9 +400,26 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confiden
 			},
 		}
 	case rhcosImg == "" && !confidentialVM:
-		// hive calls the machines function, but may pass an empty
-		// string for rhcos. In which case, allow MAO to choose default.
-		return &capz.Image{} // can't be nil or mapiImage will panic
+		// Hardcode the "oldest" image from marketplace-rhcos.json. MCO should update this.
+		sku := "420-arm"
+		if arch != types.ArchitectureARM64 {
+			if gen == "V2" {
+				sku = "420-v2"
+			} else {
+				sku = "aro_420"
+			}
+		}
+		return &capz.Image{
+			Marketplace: &capz.AzureMarketplaceImage{
+				ImagePlan: capz.ImagePlan{
+					Publisher: "azureopenshift",
+					Offer:     "aro4",
+					SKU:       sku,
+				},
+				Version:         "9.6.20251015",
+				ThirdPartyImage: false,
+			},
+		}
 	default: // Installer-created image gallery, for OKD && confidential VMs.
 		// image gallery names cannot have dashes
 		galleryName := strings.ReplaceAll(infraID, "-", "_")

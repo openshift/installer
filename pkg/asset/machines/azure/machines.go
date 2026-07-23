@@ -183,7 +183,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	rg := platform.ClusterResourceGroupName(clusterID)
 
 	confidentialVM := mpool.Settings != nil && mpool.Settings.SecurityType != ""
-	image := mapiImage(mpool.OSImage, platform.CloudName, confidentialVM, hyperVGen, rg, session.Credentials.SubscriptionID, clusterID, osImage)
+	image := mapiImage(mpool.OSImage, platform.CloudName, confidentialVM, icazure.GetArchitecture(capabilities), hyperVGen, rg, session.Credentials.SubscriptionID, clusterID, osImage)
 
 	if mpool.OSDisk.DiskType == "" {
 		mpool.OSDisk.DiskType = "Premium_LRS"
@@ -434,9 +434,9 @@ func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfi
 	return securityProfile
 }
 
-func mapiImage(osImage azure.OSImage, azEnv azure.CloudEnvironment, confidentialVM bool, gen, rg, sub, infraID, rhcosImg string) machineapi.Image {
+func mapiImage(osImage azure.OSImage, azEnv azure.CloudEnvironment, confidentialVM bool, arch types.Architecture, gen, rg, sub, infraID, rhcosImg string) machineapi.Image {
 	mImg := machineapi.Image{}
-	cImg := capzImage(osImage, azEnv, confidentialVM, gen, rg, sub, infraID, rhcosImg)
+	cImg := capzImage(osImage, azEnv, confidentialVM, arch, gen, rg, sub, infraID, rhcosImg)
 
 	if cImg.ID != nil {
 		mImg.ResourceID = trimSubscriptionPrefix(*cImg.ID)
