@@ -326,7 +326,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		c.FileList = append(c.FileList, azureMachines...)
 	case gcptypes.Name:
 		// Generate GCP master machines using ControPlane machinepool
-		mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
+		mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID)
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {
