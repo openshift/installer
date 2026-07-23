@@ -378,7 +378,7 @@ func TestValidatePlatform(t *testing.T) {
 
 				for i := range p.FailureDomains {
 					p.FailureDomains[i].Topology.ComputeCluster = "/test-datacenter/host/HostClusterFolder/test-cluster"
-					p.FailureDomains[i].Topology.ResourcePool = "/test-datacenter/host/HostClusterFolder/test-cluster/Resources/test-resourcepool"
+					p.FailureDomains[i].Topology.ResourcePool = fmt.Sprintf("/test-datacenter/host/HostClusterFolder/test-cluster/Resources/test-resourcepool-%d", i)
 					p.FailureDomains[i].Topology.Datastore = "/test-datacenter/datastore/StorageFolder/test-datastore"
 					p.FailureDomains[i].Topology.Folder = "/test-datacenter/vm/VMFolder/test-folder"
 				}
@@ -551,6 +551,145 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `test-path\.failureDomains\.name\[1\]: Duplicate value: "test-east-1a"`,
+		},
+		{
+			name: "Multi-zone platform failureDomain duplicate topology",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
+		},
+		{
+			name: "Valid HostGroup failure domains with same topology but different HostGroups",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[0].Topology.HostGroup = "host-group-a"
+				p.FailureDomains[0].Topology.ResourcePool = "/test-datacenter/host/test-cluster/Resources/test-resourcepool"
+
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[1].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[1].Topology.HostGroup = "host-group-b"
+				return p
+			}(),
+		},
+		{
+			name: "Duplicate topology with same networks same order (multi-net)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{"net-a", "net-b"}
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
+		},
+		{
+			name: "Valid: same networks different order (multi-net, order matters)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{"net-a", "net-b"}
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.Networks = []string{"net-b", "net-a"}
+				return p
+			}(),
+		},
+		{
+			name: "Valid: different networks (multi-net)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{"net-a", "net-b"}
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.Networks = []string{"net-a", "net-c"}
+				return p
+			}(),
+		},
+		{
+			name: "Valid: subset networks (different length)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{"net-a"}
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.Networks = []string{"net-a", "net-b"}
+				return p
+			}(),
+		},
+		{
+			name: "Duplicate topology with path normalization (trailing slash)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.ComputeCluster = "/test-datacenter/host/test-cluster/"
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
+		},
+		{
+			name: "Duplicate topology with path normalization (double slash)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.Datastore = "/test-datacenter/datastore//test-datastore"
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
+		},
+		{
+			name: "Valid: different datastore (not duplicate)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.Datastore = "/test-datacenter/datastore/other-datastore"
+				return p
+			}(),
+		},
+		{
+			name: "Valid: different server (not duplicate)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Server = "other-vcenter"
+				return p
+			}(),
+		},
+		{
+			name: "Duplicate topology HostGroup zonal same hostGroup",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[0].ZoneType = vsphere.HostGroupFailureDomain
+				p.FailureDomains[0].Topology.HostGroup = "host-group-a"
+				p.FailureDomains[0].Topology.ResourcePool = "/test-datacenter/host/test-cluster/Resources/test-resourcepool"
+
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].RegionType = vsphere.ComputeClusterFailureDomain
+				p.FailureDomains[1].ZoneType = vsphere.HostGroupFailureDomain
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\[1\]: Invalid value: "test-east-2a": failure domain "test-east-2a" has identical topology .* as "test-east-1a"; this provides no additional fault tolerance`,
+		},
+		{
+			name: "Valid: different resourcePool (not duplicate)",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Server = p.FailureDomains[0].Server
+				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
+				p.FailureDomains[1].Topology.ResourcePool = "/test-datacenter/host/test-cluster/Resources/other-pool"
+				return p
+			}(),
 		},
 		{
 			name: "Multi-zone platform failureDomain zone missing tag category",
