@@ -126,6 +126,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				"Kubeadmin Password":                     true, // read-only
 				"InternalReleaseImageTLSSecret":          true, // no files when NoRegistryClusterInstall feature gate is not set
 				"InternalReleaseImageRegistryAuthSecret": true, // no files when NoRegistryClusterInstall feature gate is not set
+				"Signer Key Parameters":                  true, // no on-disk files; persisted via state file only
 			}
 			for _, a := range tc.targets {
 				name := a.Name()

@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeAPIServerToKubeletSignerCertKey is a key/cert pair that signs the kube-apiserver to kubelet client certs.
@@ -35,7 +36,7 @@ func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, pare
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.
@@ -116,13 +117,20 @@ type KubeAPIServerLocalhostSignerCertKey struct {
 
 var _ asset.WritableAsset = (*KubeAPIServerLocalhostSignerCertKey)(nil)
 
-// Dependencies returns the dependency of the root-ca, which is empty.
+// Dependencies returns SignerKeyParams. Configurable PKI requires
+// reading the PKI config from InstallConfig, but adding InstallConfig
+// as a dependency here would break codepaths that generate signer certs
+// without an install-config on disk (e.g. agent create certificates,
+// node-joiner). SignerKeyParams reads the config directly from disk
+// without triggering InstallConfig validation.
 func (c *KubeAPIServerLocalhostSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -130,7 +138,7 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, pare
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", signerKeyParams.PKIConfig)
 }
 
 // Load reads the asset files from disk.
@@ -220,13 +228,20 @@ type KubeAPIServerServiceNetworkSignerCertKey struct {
 
 var _ asset.WritableAsset = (*KubeAPIServerServiceNetworkSignerCertKey)(nil)
 
-// Dependencies returns the dependency of the root-ca, which is empty.
+// Dependencies returns SignerKeyParams. Configurable PKI requires
+// reading the PKI config from InstallConfig, but adding InstallConfig
+// as a dependency here would break codepaths that generate signer certs
+// without an install-config on disk (e.g. agent create certificates,
+// node-joiner). SignerKeyParams reads the config directly from disk
+// without triggering InstallConfig validation.
 func (c *KubeAPIServerServiceNetworkSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -234,7 +249,7 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context,
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", signerKeyParams.PKIConfig)
 }
 
 // Load reads the asset files from disk.
@@ -333,13 +348,20 @@ type KubeAPIServerLBSignerCertKey struct {
 
 var _ asset.WritableAsset = (*KubeAPIServerLBSignerCertKey)(nil)
 
-// Dependencies returns the dependency of the root-ca, which is empty.
+// Dependencies returns SignerKeyParams. Configurable PKI requires
+// reading the PKI config from InstallConfig, but adding InstallConfig
+// as a dependency here would break codepaths that generate signer certs
+// without an install-config on disk (e.g. agent create certificates,
+// node-joiner). SignerKeyParams reads the config directly from disk
+// without triggering InstallConfig validation.
 func (c *KubeAPIServerLBSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -347,7 +369,7 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents ass
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", signerKeyParams.PKIConfig)
 }
 
 // Load reads the asset files from disk.
