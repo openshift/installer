@@ -309,6 +309,8 @@ NodeIPFamilies=ipv4
 			vpcExists = true
 		} else if vpc, err = client.GetVPCByName(ctx, vpcNameOrID); err == nil {
 			vpcExists = true
+		} else {
+			return err
 		}
 
 		vpcSubnets := installConfig.Config.PowerVS.VPCSubnets
