@@ -76,3 +76,30 @@ func ValidateDefaultDiskType(p *gcp.MachinePool, fldPath *field.Path) field.Erro
 
 	return allErrs
 }
+
+// ValidateOSImageForSovereignCloud checks that an OS image is specified for sovereign cloud environments.
+func ValidateOSImageForSovereignCloud(platform *gcp.Platform, pool *gcp.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if gcp.GetCloudEnvironment(platform.ProjectID) != gcp.CloudEnvironmentSovereign {
+		return allErrs
+	}
+
+	if pool == nil || pool.OSImage == nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("osImage"),
+			"must specify an OS image for sovereign cloud environments (domain-scoped project ID)"))
+		return allErrs
+	}
+
+	osImagePath := fldPath.Child("osImage")
+	if pool.OSImage.Name == "" {
+		allErrs = append(allErrs, field.Required(osImagePath.Child("name"),
+			"must specify an OS image name for sovereign cloud environments"))
+	}
+	if pool.OSImage.Project == "" {
+		allErrs = append(allErrs, field.Required(osImagePath.Child("project"),
+			"must specify an OS image project for sovereign cloud environments"))
+	}
+
+	return allErrs
+}
