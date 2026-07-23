@@ -353,7 +353,9 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		return err
 	}
 
-	addFencingCredentials(&config, fencingCredentials)
+	if err = addFencingCredentialsByHostname(&config, fencingCredentials); err != nil {
+		return err
+	}
 
 	err = addExtraManifests(&config, extraManifests)
 	if err != nil {
@@ -638,20 +640,35 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 	return nil
 }
 
-// addFencingCredentials adds the fencing credentials file to the ignition config.
-// Fencing credentials are host-scoped, so they go under /etc/assisted/hostconfig/
-// rather than /etc/assisted/manifests/ which is for cluster-scoped manifests.
-func addFencingCredentials(config *igntypes.Config, fencingCredentials *agentconfig.FencingCredentials) {
-	if fencingCredentials == nil || fencingCredentials.File == nil {
-		return
+// addFencingCredentialsByHostname adds hostname-keyed fencing credentials to the ignition config
+// at /etc/assisted/hostconfig/fencing-credentials.yaml. MAC-keyed credentials are handled
+// separately through AgentHosts.HostConfigFiles() and addHostConfig().
+func addFencingCredentialsByHostname(config *igntypes.Config, fencingCredentials *agentconfig.FencingCredentials) error {
+	if fencingCredentials == nil || fencingCredentials.Config == nil || len(fencingCredentials.Config.Credentials) == 0 {
+		return nil
 	}
 
-	fencingFile := ignition.FileFromBytes(
+	var hostnameCredentials []*types.Credential
+	for _, cred := range fencingCredentials.Config.Credentials {
+		if cred.HostName != "" {
+			hostnameCredentials = append(hostnameCredentials, cred)
+		}
+	}
+
+	if len(hostnameCredentials) == 0 {
+		return nil
+	}
+
+	cfg := &agentconfig.FencingCredentialsConfig{Credentials: hostnameCredentials}
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal hostname fencing credentials")
+	}
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromBytes(
 		path.Join("/etc/assisted/hostconfig", "fencing-credentials.yaml"),
-		"root", 0644,
-		fencingCredentials.File.Data,
-	)
-	config.Storage.Files = append(config.Storage.Files, fencingFile)
+		"root", 0644, data,
+	))
+	return nil
 }
 
 func addDay2ClusterConfigFiles(config *igntypes.Config, clusterInfo joiner.ClusterInfo, importClusterConfig joiner.ImportClusterConfig) error {

@@ -442,6 +442,8 @@ func TestFencingCredentials_YAMLFormat(t *testing.T) {
 		assert.NotContains(t, yamlContent, "macaddress:")
 	})
 
+	// This subtest verifies YAML format only. Placement into per-host directories
+	// for MAC-keyed credentials is handled by addFencingCredentials() in ignition.go.
 	t.Run("with macaddress", func(t *testing.T) {
 		parents := asset.Parents{}
 		parents.Add(

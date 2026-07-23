@@ -988,3 +988,72 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 		})
 	}
 }
+
+func TestAddFencingCredentialsByHostname(t *testing.T) {
+	cases := []struct {
+		name          string
+		credentials   []*types.Credential
+		expectedFiles int
+	}{
+		{
+			name: "hostname-only credentials go to top-level file",
+			credentials: []*types.Credential{
+				{HostName: "master-0", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				{HostName: "master-1", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.2/redfish/v1/Systems/1"},
+			},
+			expectedFiles: 1,
+		},
+		{
+			name: "mac-only credentials are excluded",
+			credentials: []*types.Credential{
+				{MACAddress: "AA:BB:CC:DD:EE:01", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+			},
+			expectedFiles: 0,
+		},
+		{
+			name: "hostname takes precedence when both set",
+			credentials: []*types.Credential{
+				{HostName: "master-0", MACAddress: "AA:BB:CC:DD:EE:01", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+			},
+			expectedFiles: 1,
+		},
+		{
+			name: "mixed credentials only includes hostname-keyed",
+			credentials: []*types.Credential{
+				{HostName: "master-0", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.1/redfish/v1/Systems/1"},
+				{MACAddress: "AA:BB:CC:DD:EE:02", Username: "admin", Password: "pass", Address: "redfish+https://10.0.0.2/redfish/v1/Systems/1"},
+			},
+			expectedFiles: 1,
+		},
+		{
+			name:          "nil credentials produces no files",
+			credentials:   nil,
+			expectedFiles: 0,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &igntypes.Config{}
+			var fencingCreds *agentconfig.FencingCredentials
+			if tc.credentials != nil {
+				fencingCreds = &agentconfig.FencingCredentials{
+					Config: &agentconfig.FencingCredentialsConfig{
+						Credentials: tc.credentials,
+					},
+				}
+			}
+
+			err := addFencingCredentialsByHostname(config, fencingCreds)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedFiles, len(config.Storage.Files))
+
+			for _, f := range config.Storage.Files {
+				assert.Equal(t, "/etc/assisted/hostconfig/fencing-credentials.yaml", f.Path)
+				actualData, err := dataurl.DecodeString(*f.FileEmbedded1.Contents.Source)
+				assert.NoError(t, err)
+				assert.Contains(t, string(actualData.Data), "credentials:")
+			}
+		})
+	}
+}
