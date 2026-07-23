@@ -654,6 +654,11 @@ logdir /var/log/chrony`,
 				assertExpectedFiles(t, ignitionAsset.Config, tc.expectedFiles, tc.expectedFileContent)
 
 				assertServiceEnabled(t, ignitionAsset.Config, tc.serviceEnabledMap)
+
+				assert.Len(t, ignitionAsset.Config.Passwd.Users, 1)
+				assert.Equal(t, "core", ignitionAsset.Config.Passwd.Users[0].Name)
+				assert.Contains(t, ignitionAsset.Config.Passwd.Users[0].SSHAuthorizedKeys, igntypes.SSHAuthorizedKey("my-ssh-key"))
+				assert.Contains(t, ignitionAsset.Config.Passwd.Users[0].SSHAuthorizedKeys, igntypes.SSHAuthorizedKey("test-bootstrap-ssh-key\n"))
 			}
 		})
 	}
@@ -801,6 +806,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
+		&tls.BootstrapSSHKeyPair{Pub: []byte("test-bootstrap-ssh-key\n")},
 		&gencrypto.AuthConfig{},
 		&common.InfraEnvID{},
 		&agentcommon.OptionalInstallConfig{},
