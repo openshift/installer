@@ -914,9 +914,6 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		case types.MachinePoolComputeRoleName:
 		case types.MachinePoolEdgeRoleName:
 			allErrs = append(allErrs, validateComputeEdge(platform, p.Name, poolFldPath, poolFldPath)...)
-			if p.Management == types.ClusterAPI {
-				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("management"), p.Management, "edge compute pools cannot be managed by Cluster API"))
-			}
 		default:
 			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{types.MachinePoolComputeRoleName, types.MachinePoolEdgeRoleName}))
 		}
