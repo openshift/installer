@@ -9,11 +9,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/thoas/go-funk"
+	"k8s.io/apimachinery/pkg/util/sets"
 	k8sjson "sigs.k8s.io/json"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
@@ -108,7 +111,7 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 		Hostname:              imageBasedConfig.Config.Hostname,
 		InfraID:               clusterID.InfraID,
 		KubeadminPasswordHash: pwdHash,
-		Proxy:                 installConfig.Config.Proxy,
+		Proxy:                 enrichNoProxy(installConfig.Config),
 		PullSecret:            installConfig.Config.PullSecret,
 		ReleaseRegistry:       imageBasedConfig.Config.ReleaseRegistry,
 		SSHKey:                installConfig.Config.SSHKey,
@@ -214,6 +217,25 @@ func (cc *ClusterConfiguration) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 	return nil
+}
+
+// enrichNoProxy adds cluster, service, and machine networks to the NoProxy field
+// to ensure internal cluster communication bypasses the proxy.
+func enrichNoProxy(installConfig *types.InstallConfig) *types.Proxy {
+	if installConfig.Proxy == nil {
+		return nil
+	}
+
+	set, wildcard := manifests.BuildNoProxySet(installConfig)
+	if wildcard {
+		return installConfig.Proxy
+	}
+
+	return &types.Proxy{
+		HTTPProxy:  installConfig.Proxy.HTTPProxy,
+		HTTPSProxy: installConfig.Proxy.HTTPSProxy,
+		NoProxy:    strings.Join(sets.List(set), ","),
+	}
 }
 
 func chronyConfWithAdditionalNTPSources(sources []string) string {
