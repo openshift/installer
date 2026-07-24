@@ -124,15 +124,27 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 			// Load install-config to check if FIPS verification is needed
 			var fipsEnabled bool
+
+			var expectedMasters, expectedWorkers int
 			if installConfigAsset, err := assetStore.Load(&agentasset.OptionalInstallConfig{}); err == nil && installConfigAsset != nil {
 				ic := installConfigAsset.(*agentasset.OptionalInstallConfig)
 				if ic.Config != nil {
 					fipsEnabled = ic.Config.FIPS
+					if ic.Config.ControlPlane != nil && ic.Config.ControlPlane.Replicas != nil {
+						expectedMasters = int(*ic.Config.ControlPlane.Replicas)
+					}
+					for _, pool := range ic.Config.Compute {
+						if pool.Replicas != nil {
+							expectedWorkers += int(*pool.Replicas)
+						}
+					}
 				}
 			}
 
 			options := command.WaitOptions{
-				VerifyFIPS: fipsEnabled,
+				VerifyFIPS:          fipsEnabled,
+				ExpectedMasterNodes: expectedMasters,
+				ExpectedWorkerNodes: expectedWorkers,
 			}
 
 			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, options); err != nil {

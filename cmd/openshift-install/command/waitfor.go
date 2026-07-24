@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -67,6 +68,10 @@ type WaitOptions struct {
 	UserProvisionedDNSEnabled bool
 	// VerifyFIPS verifies that FIPS mode is enabled on the cluster before completing.
 	VerifyFIPS bool
+	// ExpectedMasterNodes is the number of control plane nodes expected from install-config.
+	ExpectedMasterNodes int
+	// ExpectedWorkerNodes is the number of compute nodes expected from install-config.
+	ExpectedWorkerNodes int
 }
 
 // verifyFIPSEnabled checks that the cluster has FIPS enabled by querying
@@ -113,6 +118,70 @@ func verifyFIPSEnabled(ctx context.Context, config *rest.Config) error {
 	return nil
 }
 
+// verifyExpectedNodes checks that the expected number of master and worker nodes
+// are present and in Ready state. Returns an error if verification fails.
+func verifyExpectedNodes(ctx context.Context, config *rest.Config, expectedMasters, expectedWorkers int) error {
+	if expectedMasters == 0 && expectedWorkers == 0 {
+		return nil
+	}
+
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "failed to create Kubernetes client for node verification")
+	}
+
+	if expectedMasters > 0 {
+		masterNodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
+			LabelSelector: "node-role.kubernetes.io/master",
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed to list master nodes")
+		}
+
+		readyMasters := 0
+		for i := range masterNodes.Items {
+			for _, condition := range masterNodes.Items[i].Status.Conditions {
+				if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
+					readyMasters++
+					break
+				}
+			}
+		}
+
+		if readyMasters < expectedMasters {
+			return fmt.Errorf("expected %d master node(s) to be Ready but only %d found", expectedMasters, readyMasters)
+		}
+		logrus.Debugf("Verified %d/%d master node(s) are Ready", readyMasters, expectedMasters)
+	}
+
+	if expectedWorkers > 0 {
+		workerNodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
+			LabelSelector: "node-role.kubernetes.io/worker",
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed to list worker nodes")
+		}
+
+		readyWorkers := 0
+		for i := range workerNodes.Items {
+			for _, condition := range workerNodes.Items[i].Status.Conditions {
+				if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
+					readyWorkers++
+					break
+				}
+			}
+		}
+
+		if readyWorkers < expectedWorkers {
+			return fmt.Errorf("expected %d worker node(s) to be Ready but only %d found", expectedWorkers, readyWorkers)
+		}
+		logrus.Debugf("Verified %d/%d worker node(s) are Ready", readyWorkers, expectedWorkers)
+	}
+
+	logrus.Info("Verified expected nodes are present and Ready")
+	return nil
+}
+
 // WaitForInstallComplete waits for cluster to complete installation, checks for operator stability
 // and logs cluster information when successful.
 func WaitForInstallComplete(ctx context.Context, config *rest.Config, options WaitOptions) error {
@@ -132,6 +201,10 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, options Wa
 		if err := verifyFIPSEnabled(ctx, config); err != nil {
 			return err
 		}
+	}
+
+	if err := verifyExpectedNodes(ctx, config, options.ExpectedMasterNodes, options.ExpectedWorkerNodes); err != nil {
+		return err
 	}
 
 	consoleURL, err := getConsole(ctx, config)
