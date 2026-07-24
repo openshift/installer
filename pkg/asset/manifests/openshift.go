@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
+	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -77,6 +78,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
 		&OSImageStream{},
+		&gcpmanifests.ImageRegistryConfig{},
 	}
 }
 
@@ -89,7 +91,8 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	kubeadminPassword := &password.KubeadminPassword{}
 	openshiftInstall := &openshiftinstall.Config{}
 	featureGate := &FeatureGate{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate)
+	gcpImageRegistry := &gcpmanifests.ImageRegistryConfig{}
+	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate, gcpImageRegistry)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -303,6 +306,7 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	o.FileList = append(o.FileList, openshiftInstall.Files()...)
 	o.FileList = append(o.FileList, featureGate.Files()...)
 	o.FileList = append(o.FileList, osImageStream.Files()...)
+	o.FileList = append(o.FileList, gcpImageRegistry.Files()...)
 
 	asset.SortFiles(o.FileList)
 
