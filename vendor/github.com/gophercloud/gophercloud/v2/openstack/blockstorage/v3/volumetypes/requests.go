@@ -73,6 +73,10 @@ type ListOptsBuilder interface {
 // ListOpts holds options for listing Volume Types. It is passed to the volumetypes.List
 // function.
 type ListOpts struct {
+	// Name will filter by the specified volume type name.
+	Name string `q:"name"`
+	// Description will filter by the specified volume type description.
+	Description string `q:"description"`
 	// Specifies whether the query should include public or private Volume Types.
 	// By default, it queries both types.
 	IsPublic visibility `q:"is_public"`

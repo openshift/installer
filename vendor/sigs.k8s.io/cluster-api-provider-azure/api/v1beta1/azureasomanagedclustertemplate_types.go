@@ -59,5 +59,5 @@ type AzureASOManagedClusterTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureASOManagedClusterTemplate{}, &AzureASOManagedClusterTemplateList{})
+	objectTypes = append(objectTypes, &AzureASOManagedClusterTemplate{}, &AzureASOManagedClusterTemplateList{})
 }

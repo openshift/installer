@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.106.0-09823488-20250707-071701
+ * IBM OpenAPI SDK Code Generator Version: 3.107.1-41b0fbd0-20250825-080732
  */
 
 // Package iampolicymanagementv1 : Operations and models for the IamPolicyManagementV1 service
@@ -4316,6 +4316,1157 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlAssignmentW
 
 	return
 }
+
+// ListRoleTemplates : List role templates by attributes
+// List role templates and filter by attributes by using query parameters. The following attributes are supported:
+// `account_id`, `name`, `role_name`, `role_service_name`, `state`, `limit`, `start`.
+// `account_id` is a required query parameter. Only role templates that have the specified attributes and that the
+// caller has read access to are returned. If the caller does not have read access to any role templates an empty array
+// is returned.
+func (iamPolicyManagement *IamPolicyManagementV1) ListRoleTemplates(listRoleTemplatesOptions *ListRoleTemplatesOptions) (result *RoleTemplateCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ListRoleTemplatesWithContext(context.Background(), listRoleTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListRoleTemplatesWithContext is an alternate form of the ListRoleTemplates method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListRoleTemplatesWithContext(ctx context.Context, listRoleTemplatesOptions *ListRoleTemplatesOptions) (result *RoleTemplateCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listRoleTemplatesOptions, "listRoleTemplatesOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listRoleTemplatesOptions, "listRoleTemplatesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListRoleTemplates")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listRoleTemplatesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listRoleTemplatesOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*listRoleTemplatesOptions.AcceptLanguage))
+	}
+
+	builder.AddQuery("account_id", fmt.Sprint(*listRoleTemplatesOptions.AccountID))
+	if listRoleTemplatesOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listRoleTemplatesOptions.Name))
+	}
+	if listRoleTemplatesOptions.RoleName != nil {
+		builder.AddQuery("role_name", fmt.Sprint(*listRoleTemplatesOptions.RoleName))
+	}
+	if listRoleTemplatesOptions.RoleServiceName != nil {
+		builder.AddQuery("role_service_name", fmt.Sprint(*listRoleTemplatesOptions.RoleServiceName))
+	}
+	if listRoleTemplatesOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*listRoleTemplatesOptions.State))
+	}
+	if listRoleTemplatesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listRoleTemplatesOptions.Limit))
+	}
+	if listRoleTemplatesOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listRoleTemplatesOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_role_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplateCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateRoleTemplate : Create role template
+// Create a role template. Role templates define roles from an existing system or service defined role.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleTemplate(createRoleTemplateOptions *CreateRoleTemplateOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.CreateRoleTemplateWithContext(context.Background(), createRoleTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateRoleTemplateWithContext is an alternate form of the CreateRoleTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleTemplateWithContext(ctx context.Context, createRoleTemplateOptions *CreateRoleTemplateOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createRoleTemplateOptions, "createRoleTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createRoleTemplateOptions, "createRoleTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateRoleTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createRoleTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createRoleTemplateOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*createRoleTemplateOptions.AcceptLanguage))
+	}
+
+	body := make(map[string]interface{})
+	if createRoleTemplateOptions.Name != nil {
+		body["name"] = createRoleTemplateOptions.Name
+	}
+	if createRoleTemplateOptions.AccountID != nil {
+		body["account_id"] = createRoleTemplateOptions.AccountID
+	}
+	if createRoleTemplateOptions.Description != nil {
+		body["description"] = createRoleTemplateOptions.Description
+	}
+	if createRoleTemplateOptions.Committed != nil {
+		body["committed"] = createRoleTemplateOptions.Committed
+	}
+	if createRoleTemplateOptions.Role != nil {
+		body["role"] = createRoleTemplateOptions.Role
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_role_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetRoleTemplate : Retrieve the latest version of a role template
+// Retrieve the latest version of a role template by providing a role template ID.
+func (iamPolicyManagement *IamPolicyManagementV1) GetRoleTemplate(getRoleTemplateOptions *GetRoleTemplateOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetRoleTemplateWithContext(context.Background(), getRoleTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetRoleTemplateWithContext is an alternate form of the GetRoleTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetRoleTemplateWithContext(ctx context.Context, getRoleTemplateOptions *GetRoleTemplateOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getRoleTemplateOptions, "getRoleTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getRoleTemplateOptions, "getRoleTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *getRoleTemplateOptions.RoleTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetRoleTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getRoleTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getRoleTemplateOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*getRoleTemplateOptions.State))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_role_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteRoleTemplate : Delete a Role template
+// Delete a role template by providing the role template ID. This deletes all versions of this template. A role template
+// can't be deleted if any version of the template is assigned to one or more child accounts. You must remove the role
+// assignments first.
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleTemplate(deleteRoleTemplateOptions *DeleteRoleTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.DeleteRoleTemplateWithContext(context.Background(), deleteRoleTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteRoleTemplateWithContext is an alternate form of the DeleteRoleTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleTemplateWithContext(ctx context.Context, deleteRoleTemplateOptions *DeleteRoleTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteRoleTemplateOptions, "deleteRoleTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteRoleTemplateOptions, "deleteRoleTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *deleteRoleTemplateOptions.RoleTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteRoleTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteRoleTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_role_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// CreateRoleTemplateVersion : Create a new role template version
+// Create a new version of a role template. Use this if you need to make updates to a role template that is committed.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleTemplateVersion(createRoleTemplateVersionOptions *CreateRoleTemplateVersionOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.CreateRoleTemplateVersionWithContext(context.Background(), createRoleTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateRoleTemplateVersionWithContext is an alternate form of the CreateRoleTemplateVersion method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleTemplateVersionWithContext(ctx context.Context, createRoleTemplateVersionOptions *CreateRoleTemplateVersionOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createRoleTemplateVersionOptions, "createRoleTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createRoleTemplateVersionOptions, "createRoleTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *createRoleTemplateVersionOptions.RoleTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateRoleTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createRoleTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createRoleTemplateVersionOptions.Name != nil {
+		body["name"] = createRoleTemplateVersionOptions.Name
+	}
+	if createRoleTemplateVersionOptions.Description != nil {
+		body["description"] = createRoleTemplateVersionOptions.Description
+	}
+	if createRoleTemplateVersionOptions.Role != nil {
+		body["role"] = createRoleTemplateVersionOptions.Role
+	}
+	if createRoleTemplateVersionOptions.Committed != nil {
+		body["committed"] = createRoleTemplateVersionOptions.Committed
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_role_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListRoleTemplateVersions : Retrieve role template versions
+// Retrieve the versions of a role template by providing a role template ID.
+func (iamPolicyManagement *IamPolicyManagementV1) ListRoleTemplateVersions(listRoleTemplateVersionsOptions *ListRoleTemplateVersionsOptions) (result *RoleTemplateVersionsCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ListRoleTemplateVersionsWithContext(context.Background(), listRoleTemplateVersionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListRoleTemplateVersionsWithContext is an alternate form of the ListRoleTemplateVersions method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListRoleTemplateVersionsWithContext(ctx context.Context, listRoleTemplateVersionsOptions *ListRoleTemplateVersionsOptions) (result *RoleTemplateVersionsCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listRoleTemplateVersionsOptions, "listRoleTemplateVersionsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listRoleTemplateVersionsOptions, "listRoleTemplateVersionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *listRoleTemplateVersionsOptions.RoleTemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListRoleTemplateVersions")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listRoleTemplateVersionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listRoleTemplateVersionsOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*listRoleTemplateVersionsOptions.State))
+	}
+	if listRoleTemplateVersionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listRoleTemplateVersionsOptions.Limit))
+	}
+	if listRoleTemplateVersionsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listRoleTemplateVersionsOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_role_template_versions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplateVersionsCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ReplaceRoleTemplate : Update a role template version
+// Update a specific version of a role template. You can use this only if the version isn't committed.
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceRoleTemplate(replaceRoleTemplateOptions *ReplaceRoleTemplateOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ReplaceRoleTemplateWithContext(context.Background(), replaceRoleTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ReplaceRoleTemplateWithContext is an alternate form of the ReplaceRoleTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceRoleTemplateWithContext(ctx context.Context, replaceRoleTemplateOptions *ReplaceRoleTemplateOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceRoleTemplateOptions, "replaceRoleTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(replaceRoleTemplateOptions, "replaceRoleTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *replaceRoleTemplateOptions.RoleTemplateID,
+		"version": *replaceRoleTemplateOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceRoleTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range replaceRoleTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if replaceRoleTemplateOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*replaceRoleTemplateOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if replaceRoleTemplateOptions.Name != nil {
+		body["name"] = replaceRoleTemplateOptions.Name
+	}
+	if replaceRoleTemplateOptions.Description != nil {
+		body["description"] = replaceRoleTemplateOptions.Description
+	}
+	if replaceRoleTemplateOptions.Role != nil {
+		body["role"] = replaceRoleTemplateOptions.Role
+	}
+	if replaceRoleTemplateOptions.Committed != nil {
+		body["committed"] = replaceRoleTemplateOptions.Committed
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_role_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteRoleTemplateVersion : Delete a role template version
+// Delete a specific version of a role template by providing a role template ID and version number. You can't delete a
+// role template version that is assigned to one or more child accounts. You must remove the role assignments first.
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleTemplateVersion(deleteRoleTemplateVersionOptions *DeleteRoleTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.DeleteRoleTemplateVersionWithContext(context.Background(), deleteRoleTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteRoleTemplateVersionWithContext is an alternate form of the DeleteRoleTemplateVersion method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleTemplateVersionWithContext(ctx context.Context, deleteRoleTemplateVersionOptions *DeleteRoleTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteRoleTemplateVersionOptions, "deleteRoleTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteRoleTemplateVersionOptions, "deleteRoleTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *deleteRoleTemplateVersionOptions.RoleTemplateID,
+		"version": *deleteRoleTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteRoleTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteRoleTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_role_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetRoleTemplateVersion : Retrieve a role template version
+// Retrieve a role template by providing a role template ID and version number.
+func (iamPolicyManagement *IamPolicyManagementV1) GetRoleTemplateVersion(getRoleTemplateVersionOptions *GetRoleTemplateVersionOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetRoleTemplateVersionWithContext(context.Background(), getRoleTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetRoleTemplateVersionWithContext is an alternate form of the GetRoleTemplateVersion method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetRoleTemplateVersionWithContext(ctx context.Context, getRoleTemplateVersionOptions *GetRoleTemplateVersionOptions) (result *RoleTemplate, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getRoleTemplateVersionOptions, "getRoleTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getRoleTemplateVersionOptions, "getRoleTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *getRoleTemplateVersionOptions.RoleTemplateID,
+		"version": *getRoleTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetRoleTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getRoleTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_role_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleTemplate)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CommitRoleTemplate : Commit a role template version
+// Commit a role template version. You cannot make any further changes to the role template once it's committed. If you
+// have to make updates after committing a version, create a new version.
+func (iamPolicyManagement *IamPolicyManagementV1) CommitRoleTemplate(commitRoleTemplateOptions *CommitRoleTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.CommitRoleTemplateWithContext(context.Background(), commitRoleTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CommitRoleTemplateWithContext is an alternate form of the CommitRoleTemplate method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CommitRoleTemplateWithContext(ctx context.Context, commitRoleTemplateOptions *CommitRoleTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(commitRoleTemplateOptions, "commitRoleTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(commitRoleTemplateOptions, "commitRoleTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"role_template_id": *commitRoleTemplateOptions.RoleTemplateID,
+		"version": *commitRoleTemplateOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_templates/{role_template_id}/versions/{version}/commit`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CommitRoleTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range commitRoleTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_role_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// ListRoleAssignments : Get role template assignments
+// Get role template assignments by attributes. The following attributes are supported:
+// `account_id`, `template_id`, `template_version`, `target`, `target_type`, `limit`, `start`.
+// `account_id` is a required query parameter. Only role template assignments with the specified attributes and
+// accessible by the caller are returned. If the caller does not have read access to any role template assignments, an
+// empty array is returned.
+func (iamPolicyManagement *IamPolicyManagementV1) ListRoleAssignments(listRoleAssignmentsOptions *ListRoleAssignmentsOptions) (result *RoleAssignmentCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.ListRoleAssignmentsWithContext(context.Background(), listRoleAssignmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListRoleAssignmentsWithContext is an alternate form of the ListRoleAssignments method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListRoleAssignmentsWithContext(ctx context.Context, listRoleAssignmentsOptions *ListRoleAssignmentsOptions) (result *RoleAssignmentCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listRoleAssignmentsOptions, "listRoleAssignmentsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listRoleAssignmentsOptions, "listRoleAssignmentsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_assignments`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListRoleAssignments")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listRoleAssignmentsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listRoleAssignmentsOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*listRoleAssignmentsOptions.AcceptLanguage))
+	}
+
+	builder.AddQuery("account_id", fmt.Sprint(*listRoleAssignmentsOptions.AccountID))
+	if listRoleAssignmentsOptions.TemplateID != nil {
+		builder.AddQuery("template_id", fmt.Sprint(*listRoleAssignmentsOptions.TemplateID))
+	}
+	if listRoleAssignmentsOptions.TemplateVersion != nil {
+		builder.AddQuery("template_version", fmt.Sprint(*listRoleAssignmentsOptions.TemplateVersion))
+	}
+	if listRoleAssignmentsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listRoleAssignmentsOptions.Limit))
+	}
+	if listRoleAssignmentsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listRoleAssignmentsOptions.Start))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_role_assignments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleAssignmentCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateRoleTemplateAssignment : Create a role template assignment
+// Assign a role template to child accounts and account groups. This creates the role in the accounts and account groups
+// that you specify.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleTemplateAssignment(createRoleTemplateAssignmentOptions *CreateRoleTemplateAssignmentOptions) (result *RoleAssignmentCollection, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.CreateRoleTemplateAssignmentWithContext(context.Background(), createRoleTemplateAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateRoleTemplateAssignmentWithContext is an alternate form of the CreateRoleTemplateAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleTemplateAssignmentWithContext(ctx context.Context, createRoleTemplateAssignmentOptions *CreateRoleTemplateAssignmentOptions) (result *RoleAssignmentCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createRoleTemplateAssignmentOptions, "createRoleTemplateAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createRoleTemplateAssignmentOptions, "createRoleTemplateAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_assignments`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateRoleTemplateAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createRoleTemplateAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createRoleTemplateAssignmentOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*createRoleTemplateAssignmentOptions.AcceptLanguage))
+	}
+
+	body := make(map[string]interface{})
+	if createRoleTemplateAssignmentOptions.Target != nil {
+		body["target"] = createRoleTemplateAssignmentOptions.Target
+	}
+	if createRoleTemplateAssignmentOptions.Templates != nil {
+		body["templates"] = createRoleTemplateAssignmentOptions.Templates
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_role_template_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleAssignmentCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetRoleAssignment : Retrieve a role assignment
+// Retrieve a role template assignment by providing a role assignment ID.
+func (iamPolicyManagement *IamPolicyManagementV1) GetRoleAssignment(getRoleAssignmentOptions *GetRoleAssignmentOptions) (result *RoleAssignment, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetRoleAssignmentWithContext(context.Background(), getRoleAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetRoleAssignmentWithContext is an alternate form of the GetRoleAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetRoleAssignmentWithContext(ctx context.Context, getRoleAssignmentOptions *GetRoleAssignmentOptions) (result *RoleAssignment, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getRoleAssignmentOptions, "getRoleAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getRoleAssignmentOptions, "getRoleAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *getRoleAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetRoleAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getRoleAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_role_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleAssignment)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateRoleAssignment : Update a role assignment
+// Update a role assignment by providing a role assignment ID.
+func (iamPolicyManagement *IamPolicyManagementV1) UpdateRoleAssignment(updateRoleAssignmentOptions *UpdateRoleAssignmentOptions) (result *RoleAssignment, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.UpdateRoleAssignmentWithContext(context.Background(), updateRoleAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateRoleAssignmentWithContext is an alternate form of the UpdateRoleAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) UpdateRoleAssignmentWithContext(ctx context.Context, updateRoleAssignmentOptions *UpdateRoleAssignmentOptions) (result *RoleAssignment, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateRoleAssignmentOptions, "updateRoleAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateRoleAssignmentOptions, "updateRoleAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *updateRoleAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdateRoleAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateRoleAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateRoleAssignmentOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateRoleAssignmentOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if updateRoleAssignmentOptions.TemplateVersion != nil {
+		body["template_version"] = updateRoleAssignmentOptions.TemplateVersion
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_role_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRoleAssignment)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteRoleAssignment : Remove a role assignment
+// Remove a role template assignment by providing a role assignment ID. You can't delete a role assignment if the status
+// is "in_progress".
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleAssignment(deleteRoleAssignmentOptions *DeleteRoleAssignmentOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamPolicyManagement.DeleteRoleAssignmentWithContext(context.Background(), deleteRoleAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteRoleAssignmentWithContext is an alternate form of the DeleteRoleAssignment method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleAssignmentWithContext(ctx context.Context, deleteRoleAssignmentOptions *DeleteRoleAssignmentOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteRoleAssignmentOptions, "deleteRoleAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteRoleAssignmentOptions, "deleteRoleAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *deleteRoleAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/role_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteRoleAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteRoleAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_role_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
 func getServiceComponentInfo() *core.ProblemComponent {
 	return core.NewProblemComponent(DefaultServiceName, "1.0.1")
 }
@@ -5083,6 +6234,44 @@ func (options *CommitPolicyTemplateOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// CommitRoleTemplateOptions : The CommitRoleTemplate options.
+type CommitRoleTemplateOptions struct {
+	// Role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// The role template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCommitRoleTemplateOptions : Instantiate CommitRoleTemplateOptions
+func (*IamPolicyManagementV1) NewCommitRoleTemplateOptions(roleTemplateID string, version string) *CommitRoleTemplateOptions {
+	return &CommitRoleTemplateOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *CommitRoleTemplateOptions) SetRoleTemplateID(roleTemplateID string) *CommitRoleTemplateOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *CommitRoleTemplateOptions) SetVersion(version string) *CommitRoleTemplateOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CommitRoleTemplateOptions) SetHeaders(param map[string]string) *CommitRoleTemplateOptions {
+	options.Headers = param
+	return options
+}
+
 // ConflictsWith : Details of conflicting resource.
 type ConflictsWith struct {
 	// The revision number of the resource.
@@ -5795,6 +6984,218 @@ func (options *CreateRoleOptions) SetHeaders(param map[string]string) *CreateRol
 	return options
 }
 
+// CreateRoleTemplateAssignmentOptions : The CreateRoleTemplateAssignment options.
+type CreateRoleTemplateAssignmentOptions struct {
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target" validate:"required"`
+
+	// List of role template details for role assignment.
+	Templates []RoleAssignmentTemplate `json:"templates" validate:"required"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateRoleTemplateAssignmentOptions : Instantiate CreateRoleTemplateAssignmentOptions
+func (*IamPolicyManagementV1) NewCreateRoleTemplateAssignmentOptions(target *AssignmentTargetDetails, templates []RoleAssignmentTemplate) *CreateRoleTemplateAssignmentOptions {
+	return &CreateRoleTemplateAssignmentOptions{
+		Target: target,
+		Templates: templates,
+	}
+}
+
+// SetTarget : Allow user to set Target
+func (_options *CreateRoleTemplateAssignmentOptions) SetTarget(target *AssignmentTargetDetails) *CreateRoleTemplateAssignmentOptions {
+	_options.Target = target
+	return _options
+}
+
+// SetTemplates : Allow user to set Templates
+func (_options *CreateRoleTemplateAssignmentOptions) SetTemplates(templates []RoleAssignmentTemplate) *CreateRoleTemplateAssignmentOptions {
+	_options.Templates = templates
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *CreateRoleTemplateAssignmentOptions) SetAcceptLanguage(acceptLanguage string) *CreateRoleTemplateAssignmentOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateRoleTemplateAssignmentOptions) SetHeaders(param map[string]string) *CreateRoleTemplateAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateRoleTemplateOptions : The CreateRoleTemplate options.
+type CreateRoleTemplateOptions struct {
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
+	Name *string `json:"name" validate:"required"`
+
+	// Enterprise account ID where this template is created.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Description of the role template. This is shown to users in the enterprise account. Use this to describe the purpose
+	// or context of the role for enterprise users managing IAM templates.
+	Description *string `json:"description,omitempty"`
+
+	// Committed status of the template. If committed is set to true, then the template version can no longer be updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// The role properties that are created in an action resource when the template is assigned.
+	Role *RoleTemplatePrototypeRole `json:"role,omitempty"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateRoleTemplateOptions : Instantiate CreateRoleTemplateOptions
+func (*IamPolicyManagementV1) NewCreateRoleTemplateOptions(name string, accountID string) *CreateRoleTemplateOptions {
+	return &CreateRoleTemplateOptions{
+		Name: core.StringPtr(name),
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateRoleTemplateOptions) SetName(name string) *CreateRoleTemplateOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *CreateRoleTemplateOptions) SetAccountID(accountID string) *CreateRoleTemplateOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateRoleTemplateOptions) SetDescription(description string) *CreateRoleTemplateOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetCommitted : Allow user to set Committed
+func (_options *CreateRoleTemplateOptions) SetCommitted(committed bool) *CreateRoleTemplateOptions {
+	_options.Committed = core.BoolPtr(committed)
+	return _options
+}
+
+// SetRole : Allow user to set Role
+func (_options *CreateRoleTemplateOptions) SetRole(role *RoleTemplatePrototypeRole) *CreateRoleTemplateOptions {
+	_options.Role = role
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *CreateRoleTemplateOptions) SetAcceptLanguage(acceptLanguage string) *CreateRoleTemplateOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateRoleTemplateOptions) SetHeaders(param map[string]string) *CreateRoleTemplateOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateRoleTemplateVersionOptions : The CreateRoleTemplateVersion options.
+type CreateRoleTemplateVersionOptions struct {
+	// The role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it will
+	// change the name value for all existing versions of the template.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the role template. This is shown to users in the enterprise account. Use this to describe the purpose
+	// or context of the role for enterprise users managing IAM templates.
+	Description *string `json:"description,omitempty"`
+
+	// The role properties that are created in an action resource when the template is assigned.
+	Role *TemplateRole `json:"role,omitempty"`
+
+	// Committed status of the template version. If committed is set to true, then the template version can no longer be
+	// updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateRoleTemplateVersionOptions : Instantiate CreateRoleTemplateVersionOptions
+func (*IamPolicyManagementV1) NewCreateRoleTemplateVersionOptions(roleTemplateID string) *CreateRoleTemplateVersionOptions {
+	return &CreateRoleTemplateVersionOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *CreateRoleTemplateVersionOptions) SetRoleTemplateID(roleTemplateID string) *CreateRoleTemplateVersionOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateRoleTemplateVersionOptions) SetName(name string) *CreateRoleTemplateVersionOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateRoleTemplateVersionOptions) SetDescription(description string) *CreateRoleTemplateVersionOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetRole : Allow user to set Role
+func (_options *CreateRoleTemplateVersionOptions) SetRole(role *TemplateRole) *CreateRoleTemplateVersionOptions {
+	_options.Role = role
+	return _options
+}
+
+// SetCommitted : Allow user to set Committed
+func (_options *CreateRoleTemplateVersionOptions) SetCommitted(committed bool) *CreateRoleTemplateVersionOptions {
+	_options.Committed = core.BoolPtr(committed)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateRoleTemplateVersionOptions) SetHeaders(param map[string]string) *CreateRoleTemplateVersionOptions {
+	options.Headers = param
+	return options
+}
+
 // CreateV2PolicyOptions : The CreateV2Policy options.
 type CreateV2PolicyOptions struct {
 	// Specifies the type of access that is granted by the policy.
@@ -6238,6 +7639,34 @@ func (options *DeletePolicyTemplateVersionOptions) SetHeaders(param map[string]s
 	return options
 }
 
+// DeleteRoleAssignmentOptions : The DeleteRoleAssignment options.
+type DeleteRoleAssignmentOptions struct {
+	// Role template assignment ID.
+	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteRoleAssignmentOptions : Instantiate DeleteRoleAssignmentOptions
+func (*IamPolicyManagementV1) NewDeleteRoleAssignmentOptions(assignmentID string) *DeleteRoleAssignmentOptions {
+	return &DeleteRoleAssignmentOptions{
+		AssignmentID: core.StringPtr(assignmentID),
+	}
+}
+
+// SetAssignmentID : Allow user to set AssignmentID
+func (_options *DeleteRoleAssignmentOptions) SetAssignmentID(assignmentID string) *DeleteRoleAssignmentOptions {
+	_options.AssignmentID = core.StringPtr(assignmentID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteRoleAssignmentOptions) SetHeaders(param map[string]string) *DeleteRoleAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteRoleOptions : The DeleteRole options.
 type DeleteRoleOptions struct {
 	// The role ID.
@@ -6262,6 +7691,72 @@ func (_options *DeleteRoleOptions) SetRoleID(roleID string) *DeleteRoleOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteRoleOptions) SetHeaders(param map[string]string) *DeleteRoleOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteRoleTemplateOptions : The DeleteRoleTemplate options.
+type DeleteRoleTemplateOptions struct {
+	// Role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteRoleTemplateOptions : Instantiate DeleteRoleTemplateOptions
+func (*IamPolicyManagementV1) NewDeleteRoleTemplateOptions(roleTemplateID string) *DeleteRoleTemplateOptions {
+	return &DeleteRoleTemplateOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *DeleteRoleTemplateOptions) SetRoleTemplateID(roleTemplateID string) *DeleteRoleTemplateOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteRoleTemplateOptions) SetHeaders(param map[string]string) *DeleteRoleTemplateOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteRoleTemplateVersionOptions : The DeleteRoleTemplateVersion options.
+type DeleteRoleTemplateVersionOptions struct {
+	// Role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// Role template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteRoleTemplateVersionOptions : Instantiate DeleteRoleTemplateVersionOptions
+func (*IamPolicyManagementV1) NewDeleteRoleTemplateVersionOptions(roleTemplateID string, version string) *DeleteRoleTemplateVersionOptions {
+	return &DeleteRoleTemplateVersionOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *DeleteRoleTemplateVersionOptions) SetRoleTemplateID(roleTemplateID string) *DeleteRoleTemplateVersionOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *DeleteRoleTemplateVersionOptions) SetVersion(version string) *DeleteRoleTemplateVersionOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteRoleTemplateVersionOptions) SetHeaders(param map[string]string) *DeleteRoleTemplateVersionOptions {
 	options.Headers = param
 	return options
 }
@@ -6389,8 +7884,11 @@ const (
 	ErrorObjectCodePolicyTemplateNotFoundConst = "policy_template_not_found"
 	ErrorObjectCodeRequestNotProcessedConst = "request_not_processed"
 	ErrorObjectCodeResourceNotFoundConst = "resource_not_found"
+	ErrorObjectCodeRoleAssignmentNotFoundConst = "role_assignment_not_found"
 	ErrorObjectCodeRoleConflictErrorConst = "role_conflict_error"
 	ErrorObjectCodeRoleNotFoundConst = "role_not_found"
+	ErrorObjectCodeRoleTemplateConflictErrorConst = "role_template_conflict_error"
+	ErrorObjectCodeRoleTemplateNotFoundConst = "role_template_not_found"
 	ErrorObjectCodeTooManyRequestsConst = "too_many_requests"
 	ErrorObjectCodeUnableToProcessConst = "unable_to_process"
 	ErrorObjectCodeUnsupportedContentTypeConst = "unsupported_content_type"
@@ -6735,6 +8233,34 @@ func (options *GetPolicyTemplateVersionOptions) SetHeaders(param map[string]stri
 	return options
 }
 
+// GetRoleAssignmentOptions : The GetRoleAssignment options.
+type GetRoleAssignmentOptions struct {
+	// Role template assignment ID.
+	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetRoleAssignmentOptions : Instantiate GetRoleAssignmentOptions
+func (*IamPolicyManagementV1) NewGetRoleAssignmentOptions(assignmentID string) *GetRoleAssignmentOptions {
+	return &GetRoleAssignmentOptions{
+		AssignmentID: core.StringPtr(assignmentID),
+	}
+}
+
+// SetAssignmentID : Allow user to set AssignmentID
+func (_options *GetRoleAssignmentOptions) SetAssignmentID(assignmentID string) *GetRoleAssignmentOptions {
+	_options.AssignmentID = core.StringPtr(assignmentID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetRoleAssignmentOptions) SetHeaders(param map[string]string) *GetRoleAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
 // GetRoleOptions : The GetRole options.
 type GetRoleOptions struct {
 	// The role ID.
@@ -6759,6 +8285,88 @@ func (_options *GetRoleOptions) SetRoleID(roleID string) *GetRoleOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetRoleOptions) SetHeaders(param map[string]string) *GetRoleOptions {
+	options.Headers = param
+	return options
+}
+
+// GetRoleTemplateOptions : The GetRoleTemplate options.
+type GetRoleTemplateOptions struct {
+	// Role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// The role template state.
+	State *string `json:"state,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the GetRoleTemplateOptions.State property.
+// The role template state.
+const (
+	GetRoleTemplateOptionsStateActiveConst = "active"
+	GetRoleTemplateOptionsStateDeletedConst = "deleted"
+)
+
+// NewGetRoleTemplateOptions : Instantiate GetRoleTemplateOptions
+func (*IamPolicyManagementV1) NewGetRoleTemplateOptions(roleTemplateID string) *GetRoleTemplateOptions {
+	return &GetRoleTemplateOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *GetRoleTemplateOptions) SetRoleTemplateID(roleTemplateID string) *GetRoleTemplateOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *GetRoleTemplateOptions) SetState(state string) *GetRoleTemplateOptions {
+	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetRoleTemplateOptions) SetHeaders(param map[string]string) *GetRoleTemplateOptions {
+	options.Headers = param
+	return options
+}
+
+// GetRoleTemplateVersionOptions : The GetRoleTemplateVersion options.
+type GetRoleTemplateVersionOptions struct {
+	// Role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// Role template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetRoleTemplateVersionOptions : Instantiate GetRoleTemplateVersionOptions
+func (*IamPolicyManagementV1) NewGetRoleTemplateVersionOptions(roleTemplateID string, version string) *GetRoleTemplateVersionOptions {
+	return &GetRoleTemplateVersionOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *GetRoleTemplateVersionOptions) SetRoleTemplateID(roleTemplateID string) *GetRoleTemplateVersionOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *GetRoleTemplateVersionOptions) SetVersion(version string) *GetRoleTemplateVersionOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetRoleTemplateVersionOptions) SetHeaders(param map[string]string) *GetRoleTemplateVersionOptions {
 	options.Headers = param
 	return options
 }
@@ -7757,6 +9365,261 @@ func (_options *ListPolicyTemplatesOptions) SetStart(start string) *ListPolicyTe
 
 // SetHeaders : Allow user to set Headers
 func (options *ListPolicyTemplatesOptions) SetHeaders(param map[string]string) *ListPolicyTemplatesOptions {
+	options.Headers = param
+	return options
+}
+
+// ListRoleAssignmentsOptions : The ListRoleAssignments options.
+type ListRoleAssignmentsOptions struct {
+	// The account GUID in which the role assignment belongs to.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Optional template ID.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// Optional role template version.
+	TemplateVersion *string `json:"template_version,omitempty"`
+
+	// The number of documents to include in the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of the collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListRoleAssignmentsOptions : Instantiate ListRoleAssignmentsOptions
+func (*IamPolicyManagementV1) NewListRoleAssignmentsOptions(accountID string) *ListRoleAssignmentsOptions {
+	return &ListRoleAssignmentsOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListRoleAssignmentsOptions) SetAccountID(accountID string) *ListRoleAssignmentsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *ListRoleAssignmentsOptions) SetAcceptLanguage(acceptLanguage string) *ListRoleAssignmentsOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetTemplateID : Allow user to set TemplateID
+func (_options *ListRoleAssignmentsOptions) SetTemplateID(templateID string) *ListRoleAssignmentsOptions {
+	_options.TemplateID = core.StringPtr(templateID)
+	return _options
+}
+
+// SetTemplateVersion : Allow user to set TemplateVersion
+func (_options *ListRoleAssignmentsOptions) SetTemplateVersion(templateVersion string) *ListRoleAssignmentsOptions {
+	_options.TemplateVersion = core.StringPtr(templateVersion)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListRoleAssignmentsOptions) SetLimit(limit int64) *ListRoleAssignmentsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListRoleAssignmentsOptions) SetStart(start string) *ListRoleAssignmentsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListRoleAssignmentsOptions) SetHeaders(param map[string]string) *ListRoleAssignmentsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListRoleTemplateVersionsOptions : The ListRoleTemplateVersions options.
+type ListRoleTemplateVersionsOptions struct {
+	// The role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// Role template state.
+	State *string `json:"state,omitempty"`
+
+	// The number of documents to include in the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of the collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the ListRoleTemplateVersionsOptions.State property.
+// Role template state.
+const (
+	ListRoleTemplateVersionsOptionsStateActiveConst = "active"
+	ListRoleTemplateVersionsOptionsStateDeletedConst = "deleted"
+)
+
+// NewListRoleTemplateVersionsOptions : Instantiate ListRoleTemplateVersionsOptions
+func (*IamPolicyManagementV1) NewListRoleTemplateVersionsOptions(roleTemplateID string) *ListRoleTemplateVersionsOptions {
+	return &ListRoleTemplateVersionsOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *ListRoleTemplateVersionsOptions) SetRoleTemplateID(roleTemplateID string) *ListRoleTemplateVersionsOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *ListRoleTemplateVersionsOptions) SetState(state string) *ListRoleTemplateVersionsOptions {
+	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListRoleTemplateVersionsOptions) SetLimit(limit int64) *ListRoleTemplateVersionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListRoleTemplateVersionsOptions) SetStart(start string) *ListRoleTemplateVersionsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListRoleTemplateVersionsOptions) SetHeaders(param map[string]string) *ListRoleTemplateVersionsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListRoleTemplatesOptions : The ListRoleTemplates options.
+type ListRoleTemplatesOptions struct {
+	// The account GUID that the role templates belong to.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// The role template name.
+	Name *string `json:"name,omitempty"`
+
+	// The template role name.
+	RoleName *string `json:"role_name,omitempty"`
+
+	// The template role service name.
+	RoleServiceName *string `json:"role_service_name,omitempty"`
+
+	// The role template state.
+	State *string `json:"state,omitempty"`
+
+	// The number of documents to include in the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of the collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the ListRoleTemplatesOptions.State property.
+// The role template state.
+const (
+	ListRoleTemplatesOptionsStateActiveConst = "active"
+	ListRoleTemplatesOptionsStateDeletedConst = "deleted"
+)
+
+// NewListRoleTemplatesOptions : Instantiate ListRoleTemplatesOptions
+func (*IamPolicyManagementV1) NewListRoleTemplatesOptions(accountID string) *ListRoleTemplatesOptions {
+	return &ListRoleTemplatesOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListRoleTemplatesOptions) SetAccountID(accountID string) *ListRoleTemplatesOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *ListRoleTemplatesOptions) SetAcceptLanguage(acceptLanguage string) *ListRoleTemplatesOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ListRoleTemplatesOptions) SetName(name string) *ListRoleTemplatesOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetRoleName : Allow user to set RoleName
+func (_options *ListRoleTemplatesOptions) SetRoleName(roleName string) *ListRoleTemplatesOptions {
+	_options.RoleName = core.StringPtr(roleName)
+	return _options
+}
+
+// SetRoleServiceName : Allow user to set RoleServiceName
+func (_options *ListRoleTemplatesOptions) SetRoleServiceName(roleServiceName string) *ListRoleTemplatesOptions {
+	_options.RoleServiceName = core.StringPtr(roleServiceName)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *ListRoleTemplatesOptions) SetState(state string) *ListRoleTemplatesOptions {
+	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListRoleTemplatesOptions) SetLimit(limit int64) *ListRoleTemplatesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListRoleTemplatesOptions) SetStart(start string) *ListRoleTemplatesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListRoleTemplatesOptions) SetHeaders(param map[string]string) *ListRoleTemplatesOptions {
 	options.Headers = param
 	return options
 }
@@ -9642,9 +11505,9 @@ type ReplacePolicyTemplateOptions struct {
 	// The policy template version.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// The revision number for updating a policy template version and must match the ETag value of the existing policy
+	// The revision number for updating a policy template version and must match the Etag value of the existing policy
 	// template version. The Etag can be retrieved using the GET
-	// /v1/policy_templates/{policy_template_id}/versions/{version} API and looking at the ETag response header.
+	// /v1/policy_templates/{policy_template_id}/versions/{version} API and looking at the Etag response header.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
 	// The core set of properties associated with the template's policy object.
@@ -9788,6 +11651,95 @@ func (_options *ReplaceRoleOptions) SetDescription(description string) *ReplaceR
 
 // SetHeaders : Allow user to set Headers
 func (options *ReplaceRoleOptions) SetHeaders(param map[string]string) *ReplaceRoleOptions {
+	options.Headers = param
+	return options
+}
+
+// ReplaceRoleTemplateOptions : The ReplaceRoleTemplate options.
+type ReplaceRoleTemplateOptions struct {
+	// Role template ID.
+	RoleTemplateID *string `json:"role_template_id" validate:"required,ne="`
+
+	// Role template version.
+	Version *string `json:"version" validate:"required,ne="`
+
+	// The revision number for updating a role template version must match the Etag value of the existing role template
+	// version. The Etag can be retrieved using the GET /v1/role_templates/{template_id}/versions/{version} API and looking
+	// at the Etag response header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it will
+	// change the name value for all existing versions of the template.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the role template. This is shown to users in the enterprise account. Use this to describe the purpose
+	// or context of the role for enterprise users managing IAM templates.
+	Description *string `json:"description,omitempty"`
+
+	// The role properties that are created in an action resource when the template is assigned.
+	Role *TemplateRole `json:"role,omitempty"`
+
+	// Committed status of the template version. If committed is set to true, then the template version can no longer be
+	// updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewReplaceRoleTemplateOptions : Instantiate ReplaceRoleTemplateOptions
+func (*IamPolicyManagementV1) NewReplaceRoleTemplateOptions(roleTemplateID string, version string, ifMatch string) *ReplaceRoleTemplateOptions {
+	return &ReplaceRoleTemplateOptions{
+		RoleTemplateID: core.StringPtr(roleTemplateID),
+		Version: core.StringPtr(version),
+		IfMatch: core.StringPtr(ifMatch),
+	}
+}
+
+// SetRoleTemplateID : Allow user to set RoleTemplateID
+func (_options *ReplaceRoleTemplateOptions) SetRoleTemplateID(roleTemplateID string) *ReplaceRoleTemplateOptions {
+	_options.RoleTemplateID = core.StringPtr(roleTemplateID)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *ReplaceRoleTemplateOptions) SetVersion(version string) *ReplaceRoleTemplateOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *ReplaceRoleTemplateOptions) SetIfMatch(ifMatch string) *ReplaceRoleTemplateOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ReplaceRoleTemplateOptions) SetName(name string) *ReplaceRoleTemplateOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *ReplaceRoleTemplateOptions) SetDescription(description string) *ReplaceRoleTemplateOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetRole : Allow user to set Role
+func (_options *ReplaceRoleTemplateOptions) SetRole(role *TemplateRole) *ReplaceRoleTemplateOptions {
+	_options.Role = role
+	return _options
+}
+
+// SetCommitted : Allow user to set Committed
+func (_options *ReplaceRoleTemplateOptions) SetCommitted(committed bool) *ReplaceRoleTemplateOptions {
+	_options.Committed = core.BoolPtr(committed)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ReplaceRoleTemplateOptions) SetHeaders(param map[string]string) *ReplaceRoleTemplateOptions {
 	options.Headers = param
 	return options
 }
@@ -10089,6 +12041,297 @@ func UnmarshalRoleAction(m map[string]json.RawMessage, result interface{}) (err 
 	return
 }
 
+// RoleAssignment : The set of properties associated with the assigned role template.
+type RoleAssignment struct {
+	// Action control assignment ID.
+	ID *string `json:"id,omitempty"`
+
+	// The account GUID that the role assignments belong to.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// The href URL that links to the role assignments API by role assignment ID.
+	Href *string `json:"href,omitempty"`
+
+	// The UTC timestamp when the role assignment was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The IAM ID of the entity that created the role assignment.
+	CreatedByID *string `json:"created_by_id,omitempty"`
+
+	// The UTC timestamp when the role assignment was last modified.
+	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
+
+	// The IAM ID of the entity that last modified the role assignment.
+	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
+
+	// The current operation of the role assignment.
+	Operation *string `json:"operation,omitempty"`
+
+	// Resources created when role template is assigned.
+	Resources []RoleAssignmentResource `json:"resources,omitempty"`
+
+	// The role template id and version that will be assigned.
+	Template *RoleAssignmentTemplate `json:"template" validate:"required"`
+
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target" validate:"required"`
+
+	// The role assignment status.
+	Status *string `json:"status,omitempty"`
+}
+
+// Constants associated with the RoleAssignment.Operation property.
+// The current operation of the role assignment.
+const (
+	RoleAssignmentOperationApplyConst = "apply"
+	RoleAssignmentOperationCreateConst = "create"
+	RoleAssignmentOperationRemoveConst = "remove"
+	RoleAssignmentOperationUpdateConst = "update"
+)
+
+// Constants associated with the RoleAssignment.Status property.
+// The role assignment status.
+const (
+	RoleAssignmentStatusAcceptedConst = "accepted"
+	RoleAssignmentStatusFailureConst = "failure"
+	RoleAssignmentStatusInProgressConst = "in_progress"
+	RoleAssignmentStatusSupersededConst = "superseded"
+)
+
+// UnmarshalRoleAssignment unmarshals an instance of RoleAssignment from the specified map of raw messages.
+func UnmarshalRoleAssignment(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAssignment)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalRoleAssignmentResource)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalRoleAssignmentTemplate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleAssignmentCollection : A collection of role assignments.
+type RoleAssignmentCollection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
+	// List of role assignments.
+	Assignments []RoleAssignment `json:"assignments" validate:"required"`
+}
+
+// UnmarshalRoleAssignmentCollection unmarshals an instance of RoleAssignmentCollection from the specified map of raw messages.
+func UnmarshalRoleAssignmentCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAssignmentCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "assignments", &obj.Assignments, UnmarshalRoleAssignment)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "assignments-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *RoleAssignmentCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// RoleAssignmentResource : The role assignment resources and target where the template is assigned.
+type RoleAssignmentResource struct {
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target" validate:"required"`
+
+	// Set of properties of the assigned resource or error message if assignment failed.
+	Role *RoleAssignmentResourceRole `json:"role,omitempty"`
+}
+
+// UnmarshalRoleAssignmentResource unmarshals an instance of RoleAssignmentResource from the specified map of raw messages.
+func UnmarshalRoleAssignmentResource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAssignmentResource)
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "role", &obj.Role, UnmarshalRoleAssignmentResourceRole)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleAssignmentResourceCreated : On success, it includes the role assigned.
+type RoleAssignmentResourceCreated struct {
+	// role id.
+	ID *string `json:"id,omitempty"`
+}
+
+// UnmarshalRoleAssignmentResourceCreated unmarshals an instance of RoleAssignmentResourceCreated from the specified map of raw messages.
+func UnmarshalRoleAssignmentResourceCreated(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAssignmentResourceCreated)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleAssignmentResourceRole : Set of properties of the assigned resource or error message if assignment failed.
+type RoleAssignmentResourceRole struct {
+	// On success, it includes the role assigned.
+	ResourceCreated *RoleAssignmentResourceCreated `json:"resource_created,omitempty"`
+
+	// Body parameters for assignment error.
+	ErrorMessage *AssignmentResourceError `json:"error_message,omitempty"`
+}
+
+// UnmarshalRoleAssignmentResourceRole unmarshals an instance of RoleAssignmentResourceRole from the specified map of raw messages.
+func UnmarshalRoleAssignmentResourceRole(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAssignmentResourceRole)
+	err = core.UnmarshalModel(m, "resource_created", &obj.ResourceCreated, UnmarshalRoleAssignmentResourceCreated)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_created-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "error_message", &obj.ErrorMessage, UnmarshalAssignmentResourceError)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "error_message-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleAssignmentTemplate : The role template id and version that will be assigned.
+type RoleAssignmentTemplate struct {
+	// Action control template ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Action control template version.
+	Version *string `json:"version" validate:"required"`
+}
+
+// NewRoleAssignmentTemplate : Instantiate RoleAssignmentTemplate (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewRoleAssignmentTemplate(id string, version string) (_model *RoleAssignmentTemplate, err error) {
+	_model = &RoleAssignmentTemplate{
+		ID: core.StringPtr(id),
+		Version: core.StringPtr(version),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalRoleAssignmentTemplate unmarshals an instance of RoleAssignmentTemplate from the specified map of raw messages.
+func UnmarshalRoleAssignmentTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAssignmentTemplate)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // RoleCollection : A collection of roles returned by the 'list roles' operation.
 type RoleCollection struct {
 	// List of custom roles.
@@ -10121,6 +12364,348 @@ func UnmarshalRoleCollection(m map[string]json.RawMessage, result interface{}) (
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// RoleTemplate : The set of properties associated with the role template.
+type RoleTemplate struct {
+	// Required field when creating a new template. Otherwise, this field is optional. If the field is included, it changes
+	// the name value for all existing versions of the template.
+	Name *string `json:"name" validate:"required"`
+
+	// Description of the role template. This is shown to users in the enterprise account. Use this to describe the purpose
+	// or context of the role for enterprise users managing IAM templates.
+	Description *string `json:"description" validate:"required"`
+
+	// Enterprise account ID where this template is created.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Committed status of the template. If committed is set to true, then the template version can no longer be updated.
+	Committed *bool `json:"committed,omitempty"`
+
+	// The role properties that are created in an action resource when the template is assigned.
+	Role *RoleTemplatePrototypeRole `json:"role,omitempty"`
+
+	// The role template ID.
+	ID *string `json:"id,omitempty"`
+
+	// The href URL that links to the role templates API by role template ID.
+	Href *string `json:"href,omitempty"`
+
+	// The UTC timestamp when the role template was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The IAM ID of the entity that created the role template.
+	CreatedByID *string `json:"created_by_id,omitempty"`
+
+	// The UTC timestamp when the role template was last modified.
+	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
+
+	// The IAM ID of the entity that last modified the role template.
+	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
+
+	// The version number of the template used to identify different versions of same template.
+	Version *string `json:"version" validate:"required"`
+
+	// State of role template.
+	State *string `json:"state" validate:"required"`
+}
+
+// Constants associated with the RoleTemplate.State property.
+// State of role template.
+const (
+	RoleTemplateStateActiveConst = "active"
+	RoleTemplateStateDeletedConst = "deleted"
+)
+
+// UnmarshalRoleTemplate unmarshals an instance of RoleTemplate from the specified map of raw messages.
+func UnmarshalRoleTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleTemplate)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "role", &obj.Role, UnmarshalRoleTemplatePrototypeRole)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleTemplateCollection : A collection of role templates.
+type RoleTemplateCollection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
+	// List of role templates.
+	RoleTemplates []RoleTemplate `json:"role_templates" validate:"required"`
+}
+
+// UnmarshalRoleTemplateCollection unmarshals an instance of RoleTemplateCollection from the specified map of raw messages.
+func UnmarshalRoleTemplateCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleTemplateCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "role_templates", &obj.RoleTemplates, UnmarshalRoleTemplate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "role_templates-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *RoleTemplateCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// RoleTemplatePrototypeRole : The role properties that are created in an action resource when the template is assigned.
+type RoleTemplatePrototypeRole struct {
+	// The name of the role that is used in the CRN. This must be alphanumeric and capitalized.
+	Name *string `json:"name" validate:"required"`
+
+	// The display the name of the role that is shown in the console.
+	DisplayName *string `json:"display_name" validate:"required"`
+
+	// The service name that the role refers.
+	ServiceName *string `json:"service_name,omitempty"`
+
+	// Description of the role.
+	Description *string `json:"description,omitempty"`
+
+	// The actions of the role.
+	Actions []string `json:"actions" validate:"required"`
+}
+
+// NewRoleTemplatePrototypeRole : Instantiate RoleTemplatePrototypeRole (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewRoleTemplatePrototypeRole(name string, displayName string, actions []string) (_model *RoleTemplatePrototypeRole, err error) {
+	_model = &RoleTemplatePrototypeRole{
+		Name: core.StringPtr(name),
+		DisplayName: core.StringPtr(displayName),
+		Actions: actions,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalRoleTemplatePrototypeRole unmarshals an instance of RoleTemplatePrototypeRole from the specified map of raw messages.
+func UnmarshalRoleTemplatePrototypeRole(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleTemplatePrototypeRole)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "actions", &obj.Actions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "actions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleTemplateReferencesItem : A role template reference associated with a policy template.
+type RoleTemplateReferencesItem struct {
+	// The role template ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Role template version.
+	Version *string `json:"version" validate:"required"`
+}
+
+// NewRoleTemplateReferencesItem : Instantiate RoleTemplateReferencesItem (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewRoleTemplateReferencesItem(id string, version string) (_model *RoleTemplateReferencesItem, err error) {
+	_model = &RoleTemplateReferencesItem{
+		ID: core.StringPtr(id),
+		Version: core.StringPtr(version),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalRoleTemplateReferencesItem unmarshals an instance of RoleTemplateReferencesItem from the specified map of raw messages.
+func UnmarshalRoleTemplateReferencesItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleTemplateReferencesItem)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RoleTemplateVersionsCollection : A collection of versions for a specific role template.
+type RoleTemplateVersionsCollection struct {
+	// The number of documents to include per each page of the collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with linking href to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to the following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with linking href to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
+	// List of role templates versions.
+	Versions []RoleTemplate `json:"versions" validate:"required"`
+}
+
+// UnmarshalRoleTemplateVersionsCollection unmarshals an instance of RoleTemplateVersionsCollection from the specified map of raw messages.
+func UnmarshalRoleTemplateVersionsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleTemplateVersionsCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalRoleTemplate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *RoleTemplateVersionsCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
 }
 
 // Roles : A role associated with a policy.
@@ -10312,6 +12897,36 @@ func UnmarshalTemplateActionControl(m map[string]json.RawMessage, result interfa
 	return
 }
 
+// TemplateControl : Specifies the type of access that is granted by the policy.
+type TemplateControl struct {
+	// Permission is granted by the policy.
+	Grant TemplateGrantIntf `json:"grant" validate:"required"`
+}
+
+// NewTemplateControl : Instantiate TemplateControl (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewTemplateControl(grant TemplateGrantIntf) (_model *TemplateControl, err error) {
+	_model = &TemplateControl{
+		Grant: grant,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalTemplateControl unmarshals an instance of TemplateControl from the specified map of raw messages.
+func UnmarshalTemplateControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateControl)
+	err = core.UnmarshalModel(m, "grant", &obj.Grant, UnmarshalTemplateGrant)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "grant-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // TemplateCountData : policy template count details.
 type TemplateCountData struct {
 	// policy template current and limit details with in an account.
@@ -10332,6 +12947,42 @@ func UnmarshalTemplateCountData(m map[string]json.RawMessage, result interface{}
 	err = core.UnmarshalModel(m, "version", &obj.Version, UnmarshalLimitData)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateGrant : Permission is granted by the policy.
+// Models which "extend" this model:
+// - TemplateGrantRoles
+// - TemplateGrantRoleReferences
+type TemplateGrant struct {
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
+	Roles []Roles `json:"roles,omitempty"`
+
+	// A set of role template reference IDs granted by the policy.
+	RoleTemplateReferences []RoleTemplateReferencesItem `json:"role_template_references,omitempty"`
+}
+func (*TemplateGrant) isaTemplateGrant() bool {
+	return true
+}
+
+type TemplateGrantIntf interface {
+	isaTemplateGrant() bool
+}
+
+// UnmarshalTemplateGrant unmarshals an instance of TemplateGrant from the specified map of raw messages.
+func UnmarshalTemplateGrant(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateGrant)
+	err = core.UnmarshalModel(m, "roles", &obj.Roles, UnmarshalRoles)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "roles-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "role_template_references", &obj.RoleTemplateReferences, UnmarshalRoleTemplateReferencesItem)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "role_template_references-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10412,7 +13063,7 @@ type TemplatePolicy struct {
 	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
 
 	// Specifies the type of access that is granted by the policy.
-	Control *Control `json:"control,omitempty"`
+	Control *TemplateControl `json:"control,omitempty"`
 }
 
 // Constants associated with the TemplatePolicy.Type property.
@@ -10467,9 +13118,64 @@ func UnmarshalTemplatePolicy(m map[string]json.RawMessage, result interface{}) (
 		err = core.SDKErrorf(err, "", "rule-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "control", &obj.Control, UnmarshalControl)
+	err = core.UnmarshalModel(m, "control", &obj.Control, UnmarshalTemplateControl)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "control-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateRole : The role properties that are created in an action resource when the template is assigned.
+type TemplateRole struct {
+	// The display the name of the role that is shown in the console.
+	DisplayName *string `json:"display_name" validate:"required"`
+
+	// The service name that the role refers.
+	ServiceName *string `json:"service_name,omitempty"`
+
+	// Description of the role.
+	Description *string `json:"description,omitempty"`
+
+	// The actions of the role.
+	Actions []string `json:"actions" validate:"required"`
+}
+
+// NewTemplateRole : Instantiate TemplateRole (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewTemplateRole(displayName string, actions []string) (_model *TemplateRole, err error) {
+	_model = &TemplateRole{
+		DisplayName: core.StringPtr(displayName),
+		Actions: actions,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalTemplateRole unmarshals an instance of TemplateRole from the specified map of raw messages.
+func UnmarshalTemplateRole(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateRole)
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "actions", &obj.Actions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "actions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10637,6 +13343,56 @@ func (_options *UpdatePolicyStateOptions) SetState(state string) *UpdatePolicySt
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdatePolicyStateOptions) SetHeaders(param map[string]string) *UpdatePolicyStateOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateRoleAssignmentOptions : The UpdateRoleAssignment options.
+type UpdateRoleAssignmentOptions struct {
+	// Role template assignment ID.
+	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
+
+	// The revision number for updating a role assignment and must match the Etag value of the existing role assignment.
+	// The Etag can be retrieved using the GET /v1/role_assignments/{assignment_id} API and looking at the Etag response
+	// header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// The version number of the template used to identify different versions of same template.
+	TemplateVersion *string `json:"template_version" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateRoleAssignmentOptions : Instantiate UpdateRoleAssignmentOptions
+func (*IamPolicyManagementV1) NewUpdateRoleAssignmentOptions(assignmentID string, ifMatch string, templateVersion string) *UpdateRoleAssignmentOptions {
+	return &UpdateRoleAssignmentOptions{
+		AssignmentID: core.StringPtr(assignmentID),
+		IfMatch: core.StringPtr(ifMatch),
+		TemplateVersion: core.StringPtr(templateVersion),
+	}
+}
+
+// SetAssignmentID : Allow user to set AssignmentID
+func (_options *UpdateRoleAssignmentOptions) SetAssignmentID(assignmentID string) *UpdateRoleAssignmentOptions {
+	_options.AssignmentID = core.StringPtr(assignmentID)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateRoleAssignmentOptions) SetIfMatch(ifMatch string) *UpdateRoleAssignmentOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetTemplateVersion : Allow user to set TemplateVersion
+func (_options *UpdateRoleAssignmentOptions) SetTemplateVersion(templateVersion string) *UpdateRoleAssignmentOptions {
+	_options.TemplateVersion = core.StringPtr(templateVersion)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateRoleAssignmentOptions) SetHeaders(param map[string]string) *UpdateRoleAssignmentOptions {
 	options.Headers = param
 	return options
 }
@@ -11840,6 +14596,76 @@ func UnmarshalPolicyTemplateAssignmentItemsPolicyAssignmentV1(m map[string]json.
 	return
 }
 
+// TemplateGrantRoleReferences : TemplateGrantRoleReferences struct
+// This model "extends" TemplateGrant
+type TemplateGrantRoleReferences struct {
+	// A set of role template reference IDs granted by the policy.
+	RoleTemplateReferences []RoleTemplateReferencesItem `json:"role_template_references" validate:"required"`
+}
+
+// NewTemplateGrantRoleReferences : Instantiate TemplateGrantRoleReferences (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewTemplateGrantRoleReferences(roleTemplateReferences []RoleTemplateReferencesItem) (_model *TemplateGrantRoleReferences, err error) {
+	_model = &TemplateGrantRoleReferences{
+		RoleTemplateReferences: roleTemplateReferences,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateGrantRoleReferences) isaTemplateGrant() bool {
+	return true
+}
+
+// UnmarshalTemplateGrantRoleReferences unmarshals an instance of TemplateGrantRoleReferences from the specified map of raw messages.
+func UnmarshalTemplateGrantRoleReferences(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateGrantRoleReferences)
+	err = core.UnmarshalModel(m, "role_template_references", &obj.RoleTemplateReferences, UnmarshalRoleTemplateReferencesItem)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "role_template_references-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateGrantRoles : TemplateGrantRoles struct
+// This model "extends" TemplateGrant
+type TemplateGrantRoles struct {
+	// A set of role Cloud Resource Names (CRNs) granted by the policy.
+	Roles []Roles `json:"roles" validate:"required"`
+}
+
+// NewTemplateGrantRoles : Instantiate TemplateGrantRoles (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewTemplateGrantRoles(roles []Roles) (_model *TemplateGrantRoles, err error) {
+	_model = &TemplateGrantRoles{
+		Roles: roles,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateGrantRoles) isaTemplateGrant() bool {
+	return true
+}
+
+// UnmarshalTemplateGrantRoles unmarshals an instance of TemplateGrantRoles from the specified map of raw messages.
+func UnmarshalTemplateGrantRoles(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateGrantRoles)
+	err = core.UnmarshalModel(m, "roles", &obj.Roles, UnmarshalRoles)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "roles-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // V2PolicyRuleRuleAttribute : Rule that specifies additional access that is granted (For example, time-based condition).
 // This model "extends" V2PolicyRule
 type V2PolicyRuleRuleAttribute struct {
@@ -12662,6 +15488,267 @@ func (pager *ActionControlAssignmentsPager) GetNext() (page []ActionControlAssig
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ActionControlAssignmentsPager) GetAll() (allItems []ActionControlAssignment, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// RoleTemplatesPager can be used to simplify the use of the "ListRoleTemplates" method.
+//
+type RoleTemplatesPager struct {
+	hasNext bool
+	options *ListRoleTemplatesOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewRoleTemplatesPager returns a new RoleTemplatesPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewRoleTemplatesPager(options *ListRoleTemplatesOptions) (pager *RoleTemplatesPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListRoleTemplatesOptions = *options
+	pager = &RoleTemplatesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *RoleTemplatesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *RoleTemplatesPager) GetNextWithContext(ctx context.Context) (page []RoleTemplate, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListRoleTemplatesWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.RoleTemplates
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *RoleTemplatesPager) GetAllWithContext(ctx context.Context) (allItems []RoleTemplate, err error) {
+	for pager.HasNext() {
+		var nextPage []RoleTemplate
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *RoleTemplatesPager) GetNext() (page []RoleTemplate, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *RoleTemplatesPager) GetAll() (allItems []RoleTemplate, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// RoleTemplateVersionsPager can be used to simplify the use of the "ListRoleTemplateVersions" method.
+//
+type RoleTemplateVersionsPager struct {
+	hasNext bool
+	options *ListRoleTemplateVersionsOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewRoleTemplateVersionsPager returns a new RoleTemplateVersionsPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewRoleTemplateVersionsPager(options *ListRoleTemplateVersionsOptions) (pager *RoleTemplateVersionsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListRoleTemplateVersionsOptions = *options
+	pager = &RoleTemplateVersionsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *RoleTemplateVersionsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *RoleTemplateVersionsPager) GetNextWithContext(ctx context.Context) (page []RoleTemplate, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListRoleTemplateVersionsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Versions
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *RoleTemplateVersionsPager) GetAllWithContext(ctx context.Context) (allItems []RoleTemplate, err error) {
+	for pager.HasNext() {
+		var nextPage []RoleTemplate
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *RoleTemplateVersionsPager) GetNext() (page []RoleTemplate, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *RoleTemplateVersionsPager) GetAll() (allItems []RoleTemplate, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// RoleAssignmentsPager can be used to simplify the use of the "ListRoleAssignments" method.
+//
+type RoleAssignmentsPager struct {
+	hasNext bool
+	options *ListRoleAssignmentsOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewRoleAssignmentsPager returns a new RoleAssignmentsPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewRoleAssignmentsPager(options *ListRoleAssignmentsOptions) (pager *RoleAssignmentsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListRoleAssignmentsOptions = *options
+	pager = &RoleAssignmentsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *RoleAssignmentsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *RoleAssignmentsPager) GetNextWithContext(ctx context.Context) (page []RoleAssignment, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListRoleAssignmentsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Assignments
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *RoleAssignmentsPager) GetAllWithContext(ctx context.Context) (allItems []RoleAssignment, err error) {
+	for pager.HasNext() {
+		var nextPage []RoleAssignment
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *RoleAssignmentsPager) GetNext() (page []RoleAssignment, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *RoleAssignmentsPager) GetAll() (allItems []RoleAssignment, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return

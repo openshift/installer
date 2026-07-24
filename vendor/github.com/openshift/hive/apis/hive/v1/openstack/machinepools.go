@@ -14,6 +14,12 @@ type MachinePool struct {
 	// The instances use ephemeral disks if not set.
 	// +optional
 	RootVolume *RootVolume `json:"rootVolume,omitempty"`
+
+	// AdditionalSecurityGroupIDs contains IDs of additional security groups for machines, where each ID
+	// is presented in the UUID format.
+	//
+	// +optional
+	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.

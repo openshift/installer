@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -79,11 +80,15 @@ func (m *HostInfo) validateCores(formats strfmt.Registry) error {
 
 	if m.Cores != nil {
 		if err := m.Cores.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("cores")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("cores")
 			}
+
 			return err
 		}
 	}
@@ -117,11 +122,15 @@ func (m *HostInfo) validateMemory(formats strfmt.Registry) error {
 
 	if m.Memory != nil {
 		if err := m.Memory.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("memory")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("memory")
 			}
+
 			return err
 		}
 	}
@@ -142,11 +151,15 @@ func (m *HostInfo) validatePvmInstances(formats strfmt.Registry) error {
 
 		if m.PvmInstances[i] != nil {
 			if err := m.PvmInstances[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -183,11 +196,15 @@ func (m *HostInfo) contextValidateCores(ctx context.Context, formats strfmt.Regi
 	if m.Cores != nil {
 
 		if err := m.Cores.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("cores")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("cores")
 			}
+
 			return err
 		}
 	}
@@ -200,11 +217,15 @@ func (m *HostInfo) contextValidateMemory(ctx context.Context, formats strfmt.Reg
 	if m.Memory != nil {
 
 		if err := m.Memory.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("memory")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("memory")
 			}
+
 			return err
 		}
 	}
@@ -223,11 +244,15 @@ func (m *HostInfo) contextValidatePvmInstances(ctx context.Context, formats strf
 			}
 
 			if err := m.PvmInstances[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

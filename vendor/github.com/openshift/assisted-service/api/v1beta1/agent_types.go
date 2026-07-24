@@ -165,6 +165,19 @@ type HostSystemVendor struct {
 	Virtual      bool   `json:"virtual,omitempty"`
 }
 
+type HostGpu struct {
+	// Device address (for example "0000:00:02.0")
+	Address string `json:"address,omitempty"`
+	// ID of the device (for example "3ea0")
+	DeviceID string `json:"deviceID,omitempty"`
+	// Product name of the device (for example "UHD Graphics 620 (Whiskey Lake)")
+	Name string `json:"name,omitempty"`
+	// The name of the device vendor (for example "Intel Corporation")
+	Vendor string `json:"vendor,omitempty"`
+	// ID of the vendor (for example "8086")
+	VendorID string `json:"vendorID,omitempty"`
+}
+
 type HostInventory struct {
 	// Name in REST API: timestamp
 	ReportTime   *metav1.Time     `json:"reportTime,omitempty"`
@@ -177,21 +190,48 @@ type HostInventory struct {
 	Disks        []HostDisk       `json:"disks,omitempty"`
 	Boot         HostBoot         `json:"boot,omitempty"`
 	SystemVendor HostSystemVendor `json:"systemVendor,omitempty"`
+	Gpus         []HostGpu        `json:"gpus,omitempty"`
 }
 
-// AgentSpec defines the desired state of Agent
+// AgentSpec defines the desired configuration for an Agent, including its cluster assignment, role,
+// installation disk, and additional customizations.
 type AgentSpec struct {
 	// +optional
 	ClusterDeploymentName *ClusterReference `json:"clusterDeploymentName,omitempty"`
-	Role                  models.HostRole   `json:"role" protobuf:"bytes,1,opt,name=role,casttype=HostRole"`
-	Hostname              string            `json:"hostname,omitempty"`
-	MachineConfigPool     string            `json:"machineConfigPool,omitempty"`
-	Approved              bool              `json:"approved"`
+	// Role specifies the desired OpenShift role for this Agent in the cluster.
+	// Valid values: 'master' (control plane node running API server, etcd, and scheduler),
+	// 'worker' (compute node for running workloads), 'arbiter' (lightweight control plane node
+	// for TNA clusters, running only etcd with reduced resource requirements), or 'auto-assign'
+	// (let the service automatically assign the role based on cluster requirements).
+	// The role affects hardware validation requirements and the node's responsibilities in the cluster.
+	Role models.HostRole `json:"role" protobuf:"bytes,1,opt,name=role,casttype=HostRole"`
+	// Hostname is the desired hostname to be configured for this host when it joins the cluster.
+	// If not specified, the hostname discovered from the host's inventory will be used.
+	// This value is written to the host's network configuration during installation.
+	Hostname string `json:"hostname,omitempty"`
+	// MachineConfigPool specifies the name of a custom MachineConfigPool for this worker node.
+	// Only applicable when role is 'worker'. If set, the node will be labeled to use this
+	// MachineConfigPool instead of the default 'worker' pool, allowing custom machine
+	// configurations to be applied. Leave empty to use the default pool.
+	MachineConfigPool string `json:"machineConfigPool,omitempty"`
+	// Approved indicates whether this Agent is authorized to participate in cluster installation.
+	// When false, the Agent will not be included in installation even if all other requirements
+	// are met. Set to true to allow the Agent to proceed with installation.
+	Approved bool `json:"approved"`
 	// InstallationDiskID defines the installation destination disk (must be equal to the inventory disk id).
+	// +optional
 	InstallationDiskID string `json:"installation_disk_id,omitempty"`
-	// Json formatted string containing the user overrides for the host's coreos installer args
+	// InstallationDiskPath defines the installation destination disk using either its by-id or by-path value.
+	// +optional
+	InstallationDiskPath string `json:"installation_disk_path,omitempty"`
+	// InstallerArgs is a JSON-formatted string containing additional arguments for the coreos-installer
+	// command during installation. Use this to customize installation behavior such as appending kernel
+	// arguments or configuring network settings that persist after installation.
 	InstallerArgs string `json:"installerArgs,omitempty"`
-	// Json formatted string containing the user overrides for the host's ignition config
+	// IgnitionConfigOverrides is a JSON-formatted string containing user-provided Ignition configuration
+	// that will be merged with the base Ignition config generated for this host. Use this to customize
+	// the host's initial configuration (files, systemd units, users, etc.). The override is applied
+	// during installation and takes precedence over generated configuration.
 	IgnitionConfigOverrides string `json:"ignitionConfigOverrides,omitempty"`
 	// IgnitionEndpointTokenReference references a secret containing an Authorization Bearer token to fetch the ignition from ignition_endpoint_url.
 	IgnitionEndpointTokenReference *IgnitionEndpointTokenReference `json:"ignitionEndpointTokenReference,omitempty"`
@@ -199,6 +239,8 @@ type AgentSpec struct {
 	IgnitionEndpointHTTPHeaders map[string]string `json:"ignitionEndpointHTTPHeaders,omitempty"`
 	// NodeLabels are the labels to be applied on the node associated with this agent
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	// FencingCredentialsSecretRef is a name of a secret in the Agent's namespace that contains fencing credentials
+	FencingCredentialsSecretRef string `json:"fencingCredentialsSecretRef,omitempty"`
 }
 
 type IgnitionEndpointTokenReference struct {
@@ -235,14 +277,33 @@ type AgentDeprovisionInfo struct {
 	Message          string `json:"message,omitempty"`
 }
 
-// AgentStatus defines the observed state of Agent
+// AgentStatus represents the observed state of an Agent, including hardware inventory,
+// installation progress, validation results, and readiness conditions.
 type AgentStatus struct {
+	// Bootstrap indicates whether this Agent has been selected as the bootstrap node for the cluster
+	// installation. The bootstrap node coordinates the initial control plane formation by hosting
+	// temporary services that initialize etcd and the Kubernetes API. After the other control plane
+	// nodes complete installation, the bootstrap node transitions to become a regular control plane node.
+	// Only one Agent per cluster will have this field set to true, and it is always assigned to a master-role Agent.
 	Bootstrap bool `json:"bootstrap,omitempty"`
+	// Role is the effective OpenShift role assigned to this Agent. This reflects the actual role
+	// the Agent will use, which may differ from spec.role if spec.role is 'auto-assign'.
+	// Possible values: 'master', 'worker', 'arbiter', 'auto-assign', or 'bootstrap'.
 	// +optional
-	Role       models.HostRole          `json:"role" protobuf:"bytes,1,opt,name=role,casttype=HostRole,omitempty"`
-	Inventory  HostInventory            `json:"inventory,omitempty"`
-	Progress   HostProgressInfo         `json:"progress,omitempty"`
-	NtpSources []HostNTPSources         `json:"ntpSources,omitempty"`
+	Role models.HostRole `json:"role" protobuf:"bytes,1,opt,name=role,casttype=HostRole,omitempty"`
+	// Inventory contains the hardware and system information discovered from this Agent, including CPU,
+	// memory, disks, network interfaces, boot configuration, and system vendor details. This information
+	// is gathered by the discovery image when the host boots and is used for validation and installation
+	// planning. The inventory is continuously updated while the agent is connected.
+	Inventory  HostInventory    `json:"inventory,omitempty"`
+	Progress   HostProgressInfo `json:"progress,omitempty"`
+	NtpSources []HostNTPSources `json:"ntpSources,omitempty"`
+	// Conditions represent the latest available observations of the Agent's state. Standard condition types
+	// include: 'SpecSynced' (whether spec changes were successfully applied), 'Connected' (agent's connection
+	// to the service), 'RequirementsMet' (whether the agent is ready to begin installation), 'Validated'
+	// (whether hardware and configuration validations are passing), 'Installed' (installation completion status),
+	// and 'Bound' (whether the agent is bound to a cluster). Each condition includes a status (True/False/Unknown),
+	// reason code, and human-readable message.
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 	// DebugInfo includes information for debugging the installation process.
 	// +optional
@@ -277,8 +338,12 @@ type DebugInfo struct {
 	// LogsURL specifies a url for download controller logs tar file.
 	// +optional
 	LogsURL string `json:"logsURL,omitempty"`
+	// State is the current lifecycle state of the Agent. Common values include: 'discovering'
+	// (initial hardware discovery), 'known' (ready for installation), 'insufficient' (hardware
+	// requirements not met), 'pending-for-input' (waiting for user input), 'preparing-for-installation',
+	// 'installing', 'installed', 'error' (installation failed), 'cancelled', 'disabled', 'binding'/'unbinding'
+	// (cluster association changes), and various '-unbound' suffixed states for agents not associated with a cluster.
 	// +optional
-	// Current state of the Agent
 	State string `json:"state,omitempty"`
 	//Additional information pertaining to the status of the Agent
 	// +optional
@@ -318,7 +383,8 @@ type CSRStatus struct {
 // +kubebuilder:printcolumn:name="Hostname",type="string",JSONPath=".status.inventory.hostname",description="The hostname of the Agent.",priority=1
 // +kubebuilder:printcolumn:name="Requested Hostname",type="string",JSONPath=".spec.hostname",description="The requested hostname for the Agent.",priority=1
 
-// Agent is the Schema for the hosts API
+// Agent represents a host that has been discovered by booting from an InfraEnv discovery image
+// and can be installed as part of an OpenShift cluster.
 type Agent struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -337,5 +403,5 @@ type AgentList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Agent{}, &AgentList{})
+	objectTypes = append(objectTypes, &Agent{}, &AgentList{})
 }

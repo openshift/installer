@@ -42,6 +42,9 @@ type MonitoredOperator struct {
 	// Blob of operator-dependent parameters that are required for installation.
 	Properties string `json:"properties,omitempty" gorm:"type:text"`
 
+	// IDs of the bundles this operator was selected through. Empty for standalone selections. An operator can belong to multiple bundles.
+	SourceBundles pq.StringArray `json:"source_bundles" gorm:"type:text[]"`
+
 	// status
 	Status OperatorStatus `json:"status,omitempty"`
 

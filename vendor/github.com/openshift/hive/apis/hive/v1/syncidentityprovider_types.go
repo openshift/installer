@@ -19,7 +19,7 @@ type SyncIdentityProviderCommonSpec struct {
 type SelectorSyncIdentityProviderSpec struct {
 	SyncIdentityProviderCommonSpec `json:",inline"`
 
-	// ClusterDeploymentSelector is a LabelSelector indicating which clusters the SelectorIdentityProvider
+	// ClusterDeploymentSelector is a LabelSelector indicating which clusters the SelectorSyncIdentityProvider
 	// applies to in any namespace.
 	// +optional
 	ClusterDeploymentSelector metav1.LabelSelector `json:"clusterDeploymentSelector,omitempty"`
@@ -32,12 +32,12 @@ type SyncIdentityProviderSpec struct {
 	SyncIdentityProviderCommonSpec `json:",inline"`
 
 	// ClusterDeploymentRefs is the list of LocalObjectReference indicating which clusters the
-	// SyncSet applies to in the SyncSet's namespace.
+	// SyncIdentityProvider applies to in the SyncIdentityProvider's namespace.
 	// +required
 	ClusterDeploymentRefs []corev1.LocalObjectReference `json:"clusterDeploymentRefs"`
 }
 
-// IdentityProviderStatus defines the observed state of SyncSet
+// IdentityProviderStatus defines the observed state of the SyncIdentityProvider
 type IdentityProviderStatus struct {
 }
 
@@ -45,7 +45,7 @@ type IdentityProviderStatus struct {
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// SelectorSyncIdentityProvider is the Schema for the SelectorSyncSet API
+// SelectorSyncIdentityProvider is the Schema for the SelectorSyncIdentityProvider API
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:scope=Cluster
 type SelectorSyncIdentityProvider struct {

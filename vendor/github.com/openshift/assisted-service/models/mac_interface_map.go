@@ -82,8 +82,9 @@ type MacInterfaceMapItems0 struct {
 	LogicalNicName string `json:"logical_nic_name,omitempty"`
 
 	// mac address present on the host
+	// Required: true
 	// Pattern: ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
-	MacAddress string `json:"mac_address,omitempty"`
+	MacAddress string `json:"mac_address"`
 }
 
 // Validate validates this mac interface map items0
@@ -101,8 +102,9 @@ func (m *MacInterfaceMapItems0) Validate(formats strfmt.Registry) error {
 }
 
 func (m *MacInterfaceMapItems0) validateMacAddress(formats strfmt.Registry) error {
-	if swag.IsZero(m.MacAddress) { // not required
-		return nil
+
+	if err := validate.RequiredString("mac_address", "body", m.MacAddress); err != nil {
+		return err
 	}
 
 	if err := validate.Pattern("mac_address", "body", m.MacAddress, `^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`); err != nil {

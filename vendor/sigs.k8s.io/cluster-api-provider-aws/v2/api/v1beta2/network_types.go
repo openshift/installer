@@ -35,13 +35,13 @@ const (
 	// DefaultAPIServerHealthCheckPath the API server health check path.
 	DefaultAPIServerHealthCheckPath = "/readyz"
 	// DefaultAPIServerHealthCheckIntervalSec the API server health check interval in seconds.
-	DefaultAPIServerHealthCheckIntervalSec = 10
+	DefaultAPIServerHealthCheckIntervalSec = 5
 	// DefaultAPIServerHealthCheckTimeoutSec the API server health check timeout in seconds.
-	DefaultAPIServerHealthCheckTimeoutSec = 5
+	DefaultAPIServerHealthCheckTimeoutSec = 4
 	// DefaultAPIServerHealthThresholdCount the API server health check threshold count.
-	DefaultAPIServerHealthThresholdCount = 5
+	DefaultAPIServerHealthThresholdCount = 2
 	// DefaultAPIServerUnhealthThresholdCount the API server unhealthy check threshold count.
-	DefaultAPIServerUnhealthThresholdCount = 3
+	DefaultAPIServerUnhealthThresholdCount = 6
 
 	// ZoneTypeAvailabilityZone defines the regular AWS zones in the Region.
 	ZoneTypeAvailabilityZone ZoneType = "availability-zone"

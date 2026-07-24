@@ -20,7 +20,7 @@ import (
 type ServiceNetwork struct {
 
 	// The IP block address pool.
-	Cidr Subnet `json:"cidr,omitempty" gorm:"primaryKey"`
+	Cidr Subnet `json:"cidr,omitempty" gorm:"primaryKey;type:cidr"`
 
 	// A network to use for service IP addresses. If you need to access the services from an external network, configure load balancers and routers to manage the traffic.
 	// Format: uuid

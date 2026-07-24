@@ -76,7 +76,7 @@ type NMStateConfigList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&NMStateConfig{}, &NMStateConfigList{})
+	objectTypes = append(objectTypes, &NMStateConfig{}, &NMStateConfigList{})
 }
 
 // This override the NetConfig type [1] so we can do a custom marshalling of

@@ -87,16 +87,34 @@ type V2ClusterUpdateParams struct {
 	Name *string `json:"name,omitempty"`
 
 	// The desired network type used.
-	// Enum: [OpenShiftSDN OVNKubernetes]
+	// - OVNKubernetes: Default CNI for OpenShift (recommended)
+	// - OpenShiftSDN: Legacy SDN (deprecated in newer versions)
+	// - CiscoACI: Cisco ACI CNI (requires custom manifests)
+	// - Cilium: Isovalent Cilium CNI (requires custom manifests)
+	// - Calico: Tigera Calico CNI (requires custom manifests)
+	// - None: No CNI - user must provide custom CNI manifests
+	// Note: Third-party CNIs (CiscoACI, Cilium, Calico, None) require uploading
+	// CNI manifests via the custom manifests API before installation.
+	//
+	// Enum: [OpenShiftSDN OVNKubernetes CiscoACI Cilium Calico None]
 	NetworkType *string `json:"network_type,omitempty"`
 
 	// An "*" or a comma-separated list of destination domain names, domains, IP addresses, or other network CIDRs to exclude from proxying.
 	NoProxy *string `json:"no_proxy,omitempty"`
 
-	// List of OLM operators to be installed.
+	// A comma-separated list of NTP sources (name or IP) to be used as the only NTP configuration for the cluster hosts.
+	NtpSources *string `json:"ntp_sources,omitempty"`
+
+	// List of standalone OLM operators to be installed (not part of any bundle).
 	// For the full list of supported operators, check the endpoint `/v2/supported-operators`:
 	//
 	OlmOperators []*OperatorCreateParams `json:"olm_operators"`
+
+	// List of operator bundles selected by the user with their optional operator choices.
+	// The backend expands bundles into their required operators, adds selected optional operators,
+	// resolves all dependencies, and tracks bundle membership via source_bundles on monitored operators.
+	//
+	OperatorBundles []*BundleCreateParams `json:"operator_bundles"`
 
 	// platform
 	Platform *Platform `json:"platform,omitempty" gorm:"embedded;embeddedPrefix:platform_"`
@@ -184,6 +202,10 @@ func (m *V2ClusterUpdateParams) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateOlmOperators(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOperatorBundles(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -489,7 +511,7 @@ var v2ClusterUpdateParamsTypeNetworkTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes","CiscoACI","Cilium","Calico","None"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -504,6 +526,18 @@ const (
 
 	// V2ClusterUpdateParamsNetworkTypeOVNKubernetes captures enum value "OVNKubernetes"
 	V2ClusterUpdateParamsNetworkTypeOVNKubernetes string = "OVNKubernetes"
+
+	// V2ClusterUpdateParamsNetworkTypeCiscoACI captures enum value "CiscoACI"
+	V2ClusterUpdateParamsNetworkTypeCiscoACI string = "CiscoACI"
+
+	// V2ClusterUpdateParamsNetworkTypeCilium captures enum value "Cilium"
+	V2ClusterUpdateParamsNetworkTypeCilium string = "Cilium"
+
+	// V2ClusterUpdateParamsNetworkTypeCalico captures enum value "Calico"
+	V2ClusterUpdateParamsNetworkTypeCalico string = "Calico"
+
+	// V2ClusterUpdateParamsNetworkTypeNone captures enum value "None"
+	V2ClusterUpdateParamsNetworkTypeNone string = "None"
 )
 
 // prop value enum
@@ -543,6 +577,32 @@ func (m *V2ClusterUpdateParams) validateOlmOperators(formats strfmt.Registry) er
 					return ve.ValidateName("olm_operators" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("olm_operators" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *V2ClusterUpdateParams) validateOperatorBundles(formats strfmt.Registry) error {
+	if swag.IsZero(m.OperatorBundles) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.OperatorBundles); i++ {
+		if swag.IsZero(m.OperatorBundles[i]) { // not required
+			continue
+		}
+
+		if m.OperatorBundles[i] != nil {
+			if err := m.OperatorBundles[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -643,6 +703,10 @@ func (m *V2ClusterUpdateParams) ContextValidate(ctx context.Context, formats str
 	}
 
 	if err := m.contextValidateOlmOperators(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateOperatorBundles(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -798,6 +862,26 @@ func (m *V2ClusterUpdateParams) contextValidateOlmOperators(ctx context.Context,
 					return ve.ValidateName("olm_operators" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("olm_operators" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *V2ClusterUpdateParams) contextValidateOperatorBundles(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.OperatorBundles); i++ {
+
+		if m.OperatorBundles[i] != nil {
+			if err := m.OperatorBundles[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

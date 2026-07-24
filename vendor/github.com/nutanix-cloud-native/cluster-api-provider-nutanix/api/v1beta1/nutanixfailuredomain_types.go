@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
+	capiv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
 )
 
 const (
@@ -51,7 +51,22 @@ type NutanixFailureDomainSpec struct {
 type NutanixFailureDomainStatus struct {
 	// conditions represent the latest states of the failure domain.
 	// +optional
-	Conditions []capiv1.Condition `json:"conditions,omitempty"`
+	Conditions []capiv1beta1.Condition `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in NutanixCluster's status with the v1beta2 version.
+	// +optional
+	V1Beta2 *NutanixFailureDomainV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// NutanixFailureDomainV1Beta2Status groups all the fields that will be added or modified in NutanixFailureDomainStatus with the v1beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type NutanixFailureDomainV1Beta2Status struct {
+	// conditions represents the observations of a NutanixFailureDomain's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -70,13 +85,29 @@ type NutanixFailureDomain struct {
 }
 
 // GetConditions returns the set of conditions for this object.
-func (nfd *NutanixFailureDomain) GetConditions() capiv1.Conditions {
+func (nfd *NutanixFailureDomain) GetConditions() capiv1beta1.Conditions {
 	return nfd.Status.Conditions
 }
 
 // SetConditions sets the conditions on this object.
-func (nfd *NutanixFailureDomain) SetConditions(conditions capiv1.Conditions) {
+func (nfd *NutanixFailureDomain) SetConditions(conditions capiv1beta1.Conditions) {
 	nfd.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (ncl *NutanixFailureDomain) GetV1Beta2Conditions() []metav1.Condition {
+	if ncl.Status.V1Beta2 == nil {
+		return nil
+	}
+	return ncl.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets the v1beta2 conditions on this object.
+func (ncl *NutanixFailureDomain) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if ncl.Status.V1Beta2 == nil {
+		ncl.Status.V1Beta2 = &NutanixFailureDomainV1Beta2Status{}
+	}
+	ncl.Status.V1Beta2.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true
