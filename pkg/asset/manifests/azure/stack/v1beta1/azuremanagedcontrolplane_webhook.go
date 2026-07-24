@@ -49,10 +49,9 @@ var (
 // SetupAzureManagedControlPlaneWebhookWithManager sets up and registers the webhook with the manager.
 func SetupAzureManagedControlPlaneWebhookWithManager(mgr ctrl.Manager) error {
 	mw := &azureManagedControlPlaneWebhook{Client: mgr.GetClient()}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureManagedControlPlane{}).
-		WithDefaulter(mw).
-		WithValidator(mw).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureManagedControlPlane{}).
+		WithCustomDefaulter(mw).
+		WithCustomValidator(mw).
 		Complete()
 }
 
