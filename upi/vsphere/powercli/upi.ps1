@@ -19,13 +19,28 @@ $viservers = @{}
 
 # Connect to vCenter
 if ($null -eq $vcenters) {
-    $viservers[$vcenter] = Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+    Assert-NotNullOrEmpty -ParameterName "vcenter" -Value $vcenter -Context "Set 'vcenter' in variables.ps1 or provide 'vcenters' JSON."
+    Assert-NotNullOrEmpty -ParameterName "vcentercredpath" -Value $vcentercredpath -Context "Set 'vcentercredpath' in variables.ps1 to the path of your credential XML file."
+    try {
+        $viservers[$vcenter] = Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+    }
+    catch {
+        throw "Failed to connect to vCenter '$vcenter' using credential file '$vcentercredpath'. Verify the server address is correct, the credential file exists, and the credentials are valid. Original error: $($_.Exception.Message)"
+    }
 }
 else {
     $vcenters = $vcenters | ConvertFrom-Json
     foreach ($vc in $vcenters) {
+        if ($null -eq $vc.server -or [string]::IsNullOrWhiteSpace($vc.server)) {
+            throw "A vCenter entry in the 'vcenters' JSON has a null or empty 'server' field. Check your vcenters configuration."
+        }
         Write-Output "Logging into $($vc.server)"
-        $viservers[$($vc.server)] = Connect-VIServer -Server $vc.server -User $vc.user -Password $($vc.password)
+        try {
+            $viservers[$($vc.server)] = Connect-VIServer -Server $vc.server -User $vc.user -Password $($vc.password)
+        }
+        catch {
+            throw "Failed to connect to vCenter '$($vc.server)'. Verify the server address, username, and password are correct. Original error: $($_.Exception.Message)"
+        }
     }
 }
 $cliContext = Get-PowerCLIContext
@@ -164,12 +179,27 @@ foreach ($viserver in $viservers.Keys) {
 $jobs = @()
 $templateInProgress = @()
 
+# Validate all failure domains before processing
+for ($fdIdx = 0; $fdIdx -lt $fds.Count; $fdIdx++) {
+    Assert-FailureDomainFields -FailureDomain $fds[$fdIdx] -Index $fdIdx
+}
+
 # Check each failure domain for ova template
 foreach ($fd in $fds)
 {
     Write-Output "Getting viserver for $($fd.server)"
     $viserver = $viservers[$fd.server]
-    $datastoreInfo = Get-Datastore -Server $viserver -Name $fd.datastore -Location $fd.datacenter
+    if ($null -eq $viserver) {
+        throw "No vCenter connection found for server '$($fd.server)'. The failure domain references a server that was not connected. Connected servers: $($viservers.Keys -join ', '). Check that the 'server' field in your failure domain matches a configured vCenter."
+    }
+
+    $fdContext = "Failure domain: server='$($fd.server)', datacenter='$($fd.datacenter)', cluster='$($fd.cluster)', datastore='$($fd.datastore)'. Check that these values in your failure_domains or variables.ps1 match objects in vCenter."
+    try {
+        $datastoreInfo = Get-Datastore -Server $viserver -Name $fd.datastore -Location $fd.datacenter
+    }
+    catch {
+        throw "Get-Datastore failed: Could not find datastore named '$($fd.datastore)' in datacenter '$($fd.datacenter)' on server '$($fd.server)'. Verify the datastore name and datacenter are correct. Original error: $($_.Exception.Message)"
+    }
 
     # Load tags for this FD.
     $tagCategory = Get-TagCategory -Server $viserver -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
@@ -182,18 +212,35 @@ foreach ($fd in $fds)
     # Otherwise create the folder within the datacenter as defined in the upi-variables
     if (-Not $?) {
         Write-Output "Creating folder $($clustername) in datacenter $($fd.datacenter) of vCenter $($fd.server)"
-        (get-view (Get-Datacenter -Server $viserver -Name $fd.datacenter).ExtensionData.vmfolder).CreateFolder($metadata.infraID)
+        try {
+            $dc = Get-Datacenter -Server $viserver -Name $fd.datacenter
+        }
+        catch {
+            throw "Get-Datacenter failed: Could not find datacenter '$($fd.datacenter)' on server '$($fd.server)'. $fdContext Original error: $($_.Exception.Message)"
+        }
+        try {
+            (get-view $dc.ExtensionData.vmfolder).CreateFolder($metadata.infraID)
+        }
+        catch {
+            throw "Failed to create folder '$($metadata.infraID)' in datacenter '$($fd.datacenter)' on server '$($fd.server)'. Ensure you have permissions to create folders. $fdContext Original error: $($_.Exception.Message)"
+        }
         $folder = Get-Folder -Server $viserver -Name $metadata.infraID -Location $fd.datacenter
         New-TagAssignment -Server $viserver -Entity $folder -Tag $tag > $null
     }
 
     # Create resource pool for all future VMs
     Write-Output "Checking for resource pool in failure domain $($fd.datacenter)/$($fd.cluster)"
-    $rp = Get-ResourcePool -Server $viserver -Name $($metadata.infraID) -Location $(Get-Cluster -Server $viserver -Name $($fd.cluster)) -ErrorAction continue 2>$null
+    try {
+        $clusterObj = Get-Cluster -Server $viserver -Name $($fd.cluster)
+    }
+    catch {
+        throw "Get-Cluster failed: Could not find cluster '$($fd.cluster)' on server '$($fd.server)'. $fdContext Original error: $($_.Exception.Message)"
+    }
+    $rp = Get-ResourcePool -Server $viserver -Name $($metadata.infraID) -Location $clusterObj -ErrorAction continue 2>$null
 
     if (-Not $?) {
         Write-Output "Creating resource pool $($metadata.infraID) in datacenter $($fd.datacenter)"
-        $rp = New-ResourcePool -Server $viserver -Name $($metadata.infraID) -Location $(Get-Cluster -Server $viserver -Name $($fd.cluster))
+        $rp = New-ResourcePool -Server $viserver -Name $($metadata.infraID) -Location $clusterObj
         New-TagAssignment -Server $viserver -Entity $rp -Tag $tag > $null
     }
 
@@ -205,7 +252,17 @@ foreach ($fd in $fds)
     if (-Not $? -And -Not $templateInProgress.Contains($fd.datacenter))
     {
         $templateInProgress += $fd.datacenter
-        $vmhost = Get-Random -InputObject (Get-VMHost -Location (Get-Cluster $fd.cluster))
+        try {
+            $clusterForHost = Get-Cluster -Server $viserver $fd.cluster
+            $vmhosts = Get-VMHost -Server $viserver -Location $clusterForHost
+            if ($null -eq $vmhosts -or @($vmhosts).Count -eq 0) {
+                throw "No ESXi hosts found in cluster '$($fd.cluster)' on server '$($fd.server)'. Ensure the cluster has available hosts."
+            }
+            $vmhost = Get-Random -InputObject $vmhosts
+        }
+        catch {
+            throw "Failed to find an ESXi host in cluster '$($fd.cluster)' on server '$($fd.server)'. $fdContext Original error: $($_.Exception.Message)"
+        }
         $ovfConfig = Get-OvfConfiguration -Server $viserver -Ovf "template-$($Version).ova"
         $ovfConfig.NetworkMapping.VM_Network.Value = $fd.network
         Write-Output "OVF: $($ovfConfig)"
@@ -253,17 +310,44 @@ if ($jobs.count -gt 0)
 Write-Output "Creating LB"
 
 # Data needed for LB VM creation
-$tagCategory = Get-TagCategory -Server $fds[0].server -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
-$tag = Get-Tag -Server $fds[0].server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
-$rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Server $fds[0].server -Name $($fds[0].cluster))
-$datastoreInfo = Get-Datastore -Name $fds[0].datastore -Server $fds[0].server -Location $fds[0].datacenter
-$folder = Get-Folder -Server $fds[0].server -Name $metadata.infraID -Location $fds[0].datacenter
-$template = Get-VM -Server $fds[0].server -Name $vm_template -Location $fds[0].datacenter
+$lbFd = $fds[0]
+$lbContext = "LB VM creation using failure domain [0]: server='$($lbFd.server)', datacenter='$($lbFd.datacenter)', cluster='$($lbFd.cluster)', datastore='$($lbFd.datastore)'. Check your failure_domains or variables.ps1."
+
+$tagCategory = Get-TagCategory -Server $lbFd.server -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
+$tag = Get-Tag -Server $lbFd.server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
+
+try {
+    $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Server $lbFd.server -Name $($lbFd.cluster))
+}
+catch {
+    throw "Failed to get ResourcePool '$($metadata.infraID)' in cluster '$($lbFd.cluster)' on server '$($lbFd.server)'. $lbContext Original error: $($_.Exception.Message)"
+}
+
+try {
+    $datastoreInfo = Get-Datastore -Name $lbFd.datastore -Server $lbFd.server -Location $lbFd.datacenter
+}
+catch {
+    throw "Get-Datastore failed for LB VM: Could not find datastore '$($lbFd.datastore)' in datacenter '$($lbFd.datacenter)' on server '$($lbFd.server)'. $lbContext Original error: $($_.Exception.Message)"
+}
+
+try {
+    $folder = Get-Folder -Server $lbFd.server -Name $metadata.infraID -Location $lbFd.datacenter
+}
+catch {
+    throw "Get-Folder failed for LB VM: Could not find folder '$($metadata.infraID)' in datacenter '$($lbFd.datacenter)' on server '$($lbFd.server)'. The folder should have been created during failure domain processing. $lbContext Original error: $($_.Exception.Message)"
+}
+
+try {
+    $template = Get-VM -Server $lbFd.server -Name $vm_template -Location $lbFd.datacenter
+}
+catch {
+    throw "Get-VM failed for LB VM: Could not find VM template '$vm_template' in datacenter '$($lbFd.datacenter)' on server '$($lbFd.server)'. Ensure the OVA template was successfully uploaded. $lbContext Original error: $($_.Exception.Message)"
+}
 
 # Create LB for Cluster
 $ignition = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((New-LoadBalancerIgnition $sshKey)))
-$network = New-VMNetworkConfig -Server $fds[0].server -Hostname "$($metadata.infraID)-lb" -IPAddress $lb_ip_address -Netmask $netmask -Gateway $gateway -DNS $dns -Network $failure_domains[0].network
-$vm = New-OpenShiftVM -IgnitionData $ignition -Name "$($metadata.infraID)-lb" -Template $template -Server $fds[0].server -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -Tag $tag -Networking $network -Network $($fds[0].network) -SecureBoot $secureboot -StoragePolicy $storagepolicy -MemoryMB $lb_memory -NumCpu $lb_num_cpus -CoresPerSocket $lb_cores_per_socket
+$network = New-VMNetworkConfig -Server $lbFd.server -Hostname "$($metadata.infraID)-lb" -IPAddress $lb_ip_address -Netmask $netmask -Gateway $gateway -DNS $dns -Network $lbFd.network
+$vm = New-OpenShiftVM -IgnitionData $ignition -Name "$($metadata.infraID)-lb" -Template $template -Server $lbFd.server -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -Tag $tag -Networking $network -Network $($lbFd.network) -SecureBoot $secureboot -StoragePolicy $storagepolicy -MemoryMB $lb_memory -NumCpu $lb_num_cpus -CoresPerSocket $lb_cores_per_socket
 $vm | Start-VM
 
 # Take the $virtualmachines defined in upi-variables and convert to a powershell object
