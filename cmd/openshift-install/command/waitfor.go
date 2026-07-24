@@ -130,6 +130,10 @@ func verifyExpectedNodes(ctx context.Context, config *rest.Config, expectedMaste
 		return errors.Wrap(err, "failed to create Kubernetes client for node verification")
 	}
 
+	return verifyExpectedNodesWithClient(ctx, client, expectedMasters, expectedWorkers)
+}
+
+func verifyExpectedNodesWithClient(ctx context.Context, client kubernetes.Interface, expectedMasters, expectedWorkers int) error {
 	if expectedMasters > 0 {
 		masterNodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{
 			LabelSelector: "node-role.kubernetes.io/master",
