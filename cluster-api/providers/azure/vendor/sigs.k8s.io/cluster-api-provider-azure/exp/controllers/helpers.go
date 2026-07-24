@@ -27,8 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -77,7 +76,7 @@ func AzureClusterToAzureMachinePoolsMapper(_ context.Context, c client.Client, s
 			return nil
 		}
 
-		machineList := &expv1.MachinePoolList{}
+		machineList := &clusterv1.MachinePoolList{}
 		machineList.SetGroupVersionKind(gvk)
 		// list all of the requested objects within the cluster namespace with the cluster name label
 		if err := c.List(ctx, machineList, client.InNamespace(azCluster.Namespace), client.MatchingLabels{clusterv1.ClusterNameLabel: clusterName}); err != nil {
@@ -130,7 +129,7 @@ func AzureManagedControlPlaneToAzureMachinePoolsMapper(_ context.Context, c clie
 			return nil
 		}
 
-		machineList := &expv1.MachinePoolList{}
+		machineList := &clusterv1.MachinePoolList{}
 		machineList.SetGroupVersionKind(gvk)
 		// list all of the requested objects within the cluster namespace with the cluster name label
 		if err := c.List(ctx, machineList, client.InNamespace(azControlPlane.Namespace), client.MatchingLabels{clusterv1.ClusterNameLabel: clusterName}); err != nil {
@@ -197,7 +196,7 @@ func AzureMachinePoolMachineMapper(scheme *runtime.Scheme, log logr.Logger) hand
 // MachinePool events and returns reconciliation requests for an infrastructure provider object.
 func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Logger) handler.MapFunc {
 	return func(_ context.Context, o client.Object) []reconcile.Request {
-		m, ok := o.(*expv1.MachinePool)
+		m, ok := o.(*clusterv1.MachinePool)
 		if !ok {
 			log.V(4).Info("attempt to map incorrect type", "type", fmt.Sprintf("%T", o))
 			return nil
@@ -206,7 +205,7 @@ func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Lo
 		gk := gvk.GroupKind()
 		ref := m.Spec.Template.Spec.InfrastructureRef
 		// Return early if the GroupKind doesn't match what we expect.
-		infraGK := ref.GroupVersionKind().GroupKind()
+		infraGK := ref.GroupKind()
 		if gk != infraGK {
 			log.V(4).Info("gk does not match", "gk", gk, "infraGK", infraGK)
 			return nil
@@ -396,7 +395,7 @@ func BootstrapConfigToInfrastructureMapFunc(c client.Client, log logr.Logger) ha
 			Namespace: o.GetNamespace(),
 			Name:      mpName,
 		}
-		mp := &expv1.MachinePool{}
+		mp := &clusterv1.MachinePool{}
 		if err := c.Get(ctx, mpKey, mp); err != nil {
 			if !apierrors.IsNotFound(err) {
 				log.Error(err, "failed to fetch MachinePool to validate Bootstrap.ConfigRef")
@@ -405,20 +404,18 @@ func BootstrapConfigToInfrastructureMapFunc(c client.Client, log logr.Logger) ha
 		}
 
 		ref := mp.Spec.Template.Spec.Bootstrap.ConfigRef
-		if ref == nil {
+		if !ref.IsDefined() {
 			log.V(4).Info("fetched MachinePool has no Bootstrap.ConfigRef")
 			return []reconcile.Request{}
 		}
 		sameKind := ref.Kind == o.GetObjectKind().GroupVersionKind().Kind
 		sameName := ref.Name == o.GetName()
-		sameNamespace := ref.Namespace == o.GetNamespace()
-		if !sameKind || !sameName || !sameNamespace {
+		if !sameKind || !sameName {
 			log.V(4).Info("Bootstrap.ConfigRef does not match",
 				"sameKind", sameKind,
 				"ref kind", ref.Kind,
 				"other kind", o.GetObjectKind().GroupVersionKind().Kind,
 				"sameName", sameName,
-				"sameNamespace", sameNamespace,
 			)
 			return []reconcile.Request{}
 		}

@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -156,7 +156,7 @@ type AzureManagedControlPlaneSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// Immutable, populated by the AKS API at create.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
 
 	// SSHPublicKey is a string literal containing an ssh public key base64 encoded.
 	// Use empty string to autogenerate new key. Use null value to not set key.
@@ -424,7 +424,7 @@ type AzureManagedControlPlaneStatus struct {
 
 	// Conditions defines current service state of the AzureManagedControlPlane.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// LongRunningOperationStates saves the states for Azure long-running operations so they can be continued on the
 	// next reconciliation loop.
@@ -689,12 +689,12 @@ type AzureManagedControlPlaneList struct {
 }
 
 // GetConditions returns the list of conditions for an AzureManagedControlPlane API object.
-func (m *AzureManagedControlPlane) GetConditions() clusterv1.Conditions {
+func (m *AzureManagedControlPlane) GetConditions() clusterv1beta1.Conditions {
 	return m.Status.Conditions
 }
 
 // SetConditions will set the given conditions on an AzureManagedControlPlane object.
-func (m *AzureManagedControlPlane) SetConditions(conditions clusterv1.Conditions) {
+func (m *AzureManagedControlPlane) SetConditions(conditions clusterv1beta1.Conditions) {
 	m.Status.Conditions = conditions
 }
 

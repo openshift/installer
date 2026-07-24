@@ -49,7 +49,7 @@ func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClien
 }
 
 // Get gets the specified network interface.
-func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.AzureClient.Get")
 	defer done()
 
@@ -63,7 +63,7 @@ func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a network interface asynchronously.
 // It sends a PUT request to Azure and if accepted without error, the func will return a poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.InterfacesClientCreateOrUpdateResponse], err error) {
+func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armnetwork.InterfacesClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.AzureClient.CreateOrUpdateAsync")
 	defer done()
 

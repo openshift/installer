@@ -142,7 +142,7 @@ func (l *AzureResourceLocker) acquireLease(
 		// This should be a rare case, otherwise we should not acquire the lease.
 		prevHolder := ptr.Deref(lease.Spec.HolderIdentity, "")
 		if !strings.EqualFold(prevHolder, holder) {
-			errMsg := "Lease has not expired yet, another component such as aks rp may be processing another request. This would be automatically recovered after the lease expires."
+			errMsg := "lease has not expired yet; another component such as aks rp may be processing another request, this should automatically recover after the lease expires"
 			err := errors.New(errMsg)
 			logger.Error(err, "failed to acquire lease")
 			return err

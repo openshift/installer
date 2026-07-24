@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -53,7 +53,7 @@ type AzureClusterSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane. It is not recommended to set
 	// this when creating an AzureCluster as CAPZ will set this for you. However, if it is set, CAPZ will not change it.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
 }
 
 // AzureClusterStatus defines the observed state of AzureCluster.
@@ -65,7 +65,7 @@ type AzureClusterStatus struct {
 	// See: https://learn.microsoft.com/azure/reliability/availability-zones-overview
 	// This list will be used by Cluster API to try and spread the machines across the failure domains.
 	// +optional
-	FailureDomains clusterv1.FailureDomains `json:"failureDomains,omitempty"`
+	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 
 	// Ready is true when the provider resource is ready.
 	// +optional
@@ -73,7 +73,7 @@ type AzureClusterStatus struct {
 
 	// Conditions defines current service state of the AzureCluster.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// LongRunningOperationStates saves the states for Azure long-running operations so they can be continued on the
 	// next reconciliation loop.
@@ -114,12 +114,12 @@ type AzureClusterList struct {
 }
 
 // GetConditions returns the list of conditions for an AzureCluster API object.
-func (c *AzureCluster) GetConditions() clusterv1.Conditions {
+func (c *AzureCluster) GetConditions() clusterv1beta1.Conditions {
 	return c.Status.Conditions
 }
 
 // SetConditions will set the given conditions on an AzureCluster object.
-func (c *AzureCluster) SetConditions(conditions clusterv1.Conditions) {
+func (c *AzureCluster) SetConditions(conditions clusterv1beta1.Conditions) {
 	c.Status.Conditions = conditions
 }
 

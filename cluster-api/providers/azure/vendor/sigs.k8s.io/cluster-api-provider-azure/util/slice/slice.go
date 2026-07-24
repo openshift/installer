@@ -18,16 +18,6 @@ package slice
 
 import "k8s.io/utils/ptr"
 
-// Contains tells whether a Contains x.
-func Contains(a []string, x string) bool {
-	for _, n := range a {
-		if x == n {
-			return true
-		}
-	}
-	return false
-}
-
 // ToPtrs takes a slice of values and returns a slice of pointers to the same values.
 func ToPtrs[T any](in []T) []*T {
 	if in == nil {
