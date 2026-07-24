@@ -72,7 +72,7 @@ func CredentialOptions(ssn *Session) ([]option.ClientOption, error) {
 	}
 	var opts []option.ClientOption
 	if len(ssn.Credentials.JSON) > 0 {
-		opts = append(opts, option.WithCredentialsJSON(ssn.Credentials.JSON))
+		opts = append(opts, option.WithCredentialsJSON(ssn.Credentials.JSON)) //nolint:staticcheck // SA1019: will be replaced in https://github.com/openshift/installer/pull/10694
 	} else {
 		opts = append(opts, option.WithCredentials(ssn.Credentials))
 	}
