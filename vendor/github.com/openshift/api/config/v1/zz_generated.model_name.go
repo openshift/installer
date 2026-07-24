@@ -196,6 +196,26 @@ func (in BuildSpec) OpenAPIModelName() string {
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
+func (in CRIOCredentialProviderConfig) OpenAPIModelName() string {
+	return "com.github.openshift.api.config.v1.CRIOCredentialProviderConfig"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in CRIOCredentialProviderConfigList) OpenAPIModelName() string {
+	return "com.github.openshift.api.config.v1.CRIOCredentialProviderConfigList"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in CRIOCredentialProviderConfigSpec) OpenAPIModelName() string {
+	return "com.github.openshift.api.config.v1.CRIOCredentialProviderConfigSpec"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in CRIOCredentialProviderConfigStatus) OpenAPIModelName() string {
+	return "com.github.openshift.api.config.v1.CRIOCredentialProviderConfigStatus"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
 func (in CertInfo) OpenAPIModelName() string {
 	return "com.github.openshift.api.config.v1.CertInfo"
 }
