@@ -53,7 +53,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via cluster operators.
 			},
 		}
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 

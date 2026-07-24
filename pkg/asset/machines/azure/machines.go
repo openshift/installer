@@ -89,7 +89,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		}
 		*machineSetProvider = *provider
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 
@@ -150,7 +150,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		},
 	}
-	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config)
+	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config, pool)
 
 	if len(failureDomains) > 0 {
 		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = &machinev1.FailureDomains{

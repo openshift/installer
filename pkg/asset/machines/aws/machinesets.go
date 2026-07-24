@@ -159,7 +159,7 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 				},
 			},
 		}
-		utils.SetMachineSetOSStreamLabels(mset, in.Config)
+		utils.SetMachineSetOSStreamLabels(mset, in.Config, in.Pool)
 		machinesets = append(machinesets, mset)
 	}
 

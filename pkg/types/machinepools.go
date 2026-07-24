@@ -141,6 +141,8 @@ type MachinePool struct {
 	// +kubebuilder:validation:Enum=ClusterAPI;MachineAPI
 	// +optional
 	Management MachineManagementAPI `json:"management,omitempty"`
+
+	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine

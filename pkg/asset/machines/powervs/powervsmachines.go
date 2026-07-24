@@ -57,7 +57,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 	for idx := int64(0); idx < total; idx++ {
 		name = fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
 
-		powerVSMachine = GenerateMachine(ic, service, mpool, name, image)
+		powerVSMachine = GenerateMachine(ic, service, mpool, name, image, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", powerVSMachine.Name)},
@@ -65,7 +65,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 		})
 
 		dataSecret = fmt.Sprintf("%s-%s", clusterID, "master")
-		machine = GenerateCAPIMachine(clusterID, powerVSMachine.Name, dataSecret, ic)
+		machine = GenerateCAPIMachine(clusterID, powerVSMachine.Name, dataSecret, ic, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},
@@ -74,7 +74,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 	}
 
 	name = fmt.Sprintf("%s-bootstrap", clusterID)
-	powerVSMachine = GenerateMachine(ic, service, mpool, name, image)
+	powerVSMachine = GenerateMachine(ic, service, mpool, name, image, pool)
 	powerVSMachine.Labels["install.openshift.io/bootstrap"] = ""
 
 	result = append(result, &asset.RuntimeFile{
@@ -83,7 +83,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 	})
 
 	dataSecret = fmt.Sprintf("%s-%s", clusterID, "bootstrap")
-	machine = GenerateCAPIMachine(clusterID, powerVSMachine.Name, dataSecret, ic)
+	machine = GenerateCAPIMachine(clusterID, powerVSMachine.Name, dataSecret, ic, pool)
 	machine.Labels["install.openshift.io/bootstrap"] = ""
 
 	result = append(result, &asset.RuntimeFile{
@@ -95,7 +95,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 }
 
 // GenerateMachine creates a capibm.IBMPowerVSMachine struct.
-func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceReference, mpool *powervs.MachinePool, name string, image string) *capibm.IBMPowerVSMachine {
+func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceReference, mpool *powervs.MachinePool, name string, image string, pool *types.MachinePool) *capibm.IBMPowerVSMachine {
 	machine := &capibm.IBMPowerVSMachine{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: capibm.GroupVersion.String(),
@@ -121,12 +121,12 @@ func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceR
 			MemoryGiB:     mpool.MemoryGiB,
 		},
 	}
-	utils.SetMachineOSStreamLabels(machine, ic)
+	utils.SetMachineOSStreamLabels(machine, ic, pool)
 	return machine
 }
 
 // GenerateCAPIMachine creates a capi.Machine struct.
-func GenerateCAPIMachine(clusterID, name, dataSecret string, config *types.InstallConfig) *capi.Machine {
+func GenerateCAPIMachine(clusterID, name, dataSecret string, config *types.InstallConfig, pool *types.MachinePool) *capi.Machine {
 	machine := &capi.Machine{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Machine",
@@ -150,6 +150,6 @@ func GenerateCAPIMachine(clusterID, name, dataSecret string, config *types.Insta
 			},
 		},
 	}
-	utils.SetMachineOSStreamLabels(machine, config)
+	utils.SetMachineOSStreamLabels(machine, config, pool)
 	return machine
 }

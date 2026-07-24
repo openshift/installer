@@ -25,7 +25,8 @@ func getMachineSetWithPlatform(
 	role,
 	userDataSecret string,
 	hosts []*vsphere.Host,
-	config *types.InstallConfig) (*machineapi.MachineSet, error) {
+	config *types.InstallConfig,
+	pool *types.MachinePool) (*machineapi.MachineSet, error) {
 	provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImage, userDataSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
@@ -93,7 +94,7 @@ func getMachineSetWithPlatform(
 			},
 		},
 	}
-	utils.SetMachineSetOSStreamLabels(mset, config)
+	utils.SetMachineSetOSStreamLabels(mset, config, pool)
 	return mset, nil
 }
 
@@ -178,11 +179,12 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			role,
 			userDataSecret,
 			platform.Hosts,
-			config)
+			config,
+			pool)
 		if err != nil {
 			return machinesets, err
 		}
-		utils.SetMachineSetOSStreamLabels(machineset, config)
+		utils.SetMachineSetOSStreamLabels(machineset, config, pool)
 		machinesets = append(machinesets, machineset)
 	}
 

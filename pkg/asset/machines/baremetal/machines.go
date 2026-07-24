@@ -31,7 +31,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider, err := provider(platform, userDataSecret, config.OSImageStream)
+	provider, err := provider(platform, userDataSecret, pool, config.OSImageStream)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -58,14 +58,19 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via cluster operators.
 			},
 		}
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 
 	return machines, nil
 }
 
-func provider(platform *baremetal.Platform, userDataSecret string, osImageStream types.OSImageStream) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
+func provider(platform *baremetal.Platform, userDataSecret string, pool *types.MachinePool, osImageStream types.OSImageStream) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
+	stream := pool.OSImageStream
+	if stream == "" {
+		stream = osImageStream
+	}
+
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "baremetal.cluster.k8s.io/v1alpha1",
@@ -75,7 +80,7 @@ func provider(platform *baremetal.Platform, userDataSecret string, osImageStream
 			Method: "install_coreos",
 		},
 		UserData:     &corev1.SecretReference{Name: userDataSecret},
-		HostSelector: hostSelectorForStream(osImageStream),
+		HostSelector: hostSelectorForStream(stream),
 	}
 	return config, nil
 }

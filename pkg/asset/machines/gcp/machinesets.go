@@ -84,7 +84,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				},
 			},
 		}
-		utils.SetMachineSetOSStreamLabels(mset, config)
+		utils.SetMachineSetOSStreamLabels(mset, config, pool)
 		machinesets = append(machinesets, mset)
 	}
 

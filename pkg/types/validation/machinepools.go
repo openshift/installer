@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
@@ -73,6 +74,9 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	}
 	if !validArchitectures[p.Architecture] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("architecture"), p.Architecture, validArchitectureValues))
+	}
+	if p.OSImageStream != "" && !slices.Contains(types.OSImageStreamValues(), p.OSImageStream) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("osImageStream"), p.OSImageStream, types.OSImageStreamValues()))
 	}
 	if platform.AWS != nil {
 		allErrs = append(allErrs, awsvalidation.ValidateMachinePoolArchitecture(p, fldPath.Child("architecture"))...)

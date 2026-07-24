@@ -33,10 +33,11 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 
-	provider, err := provider(platform, userDataSecret, config.OSImageStream)
+	provider, err := provider(platform, userDataSecret, pool, config.OSImageStream)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
+
 	name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, 0)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
@@ -78,7 +79,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			},
 		},
 	}
-	utils.SetMachineSetOSStreamLabels(mset, config)
+
+	utils.SetMachineSetOSStreamLabels(mset, config, pool)
 
 	return []*machineapi.MachineSet{mset}, nil
 }

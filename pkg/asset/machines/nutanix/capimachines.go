@@ -43,7 +43,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 		}
 
 		// create the NutanixMachine object.
-		ntxMachine := generateNutanixMachine(machine.Name, providerSpec, categoryIdentifiers, config)
+		ntxMachine := generateNutanixMachine(machine.Name, providerSpec, categoryIdentifiers, config, pool)
 		ntxMachines = append(ntxMachines, ntxMachine)
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", ntxMachine.Name)},
@@ -72,7 +72,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			},
 		}
 		capiMachine.SetGroupVersionKind(capv1.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(capiMachine, config)
+		utils.SetMachineOSStreamLabels(capiMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", capiMachine.Name)},
@@ -103,7 +103,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			Spec: *bootstrapSpec,
 		}
 		bootstrapNtxMachine.SetGroupVersionKind(capnv1.GroupVersion.WithKind("NutanixMachine"))
-		utils.SetMachineOSStreamLabels(bootstrapNtxMachine, config)
+		utils.SetMachineOSStreamLabels(bootstrapNtxMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapNtxMachine.Name)},
@@ -131,7 +131,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			},
 		}
 		bootstrapCapiMachine.SetGroupVersionKind(capv1.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(bootstrapCapiMachine, config)
+		utils.SetMachineOSStreamLabels(bootstrapCapiMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapCapiMachine.Name)},
@@ -142,7 +142,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	return result, nil
 }
 
-func generateNutanixMachine(machineName string, providerSpec *machinev1.NutanixMachineProviderConfig, categoryIdentifiers []capnv1.NutanixCategoryIdentifier, config *types.InstallConfig) *capnv1.NutanixMachine {
+func generateNutanixMachine(machineName string, providerSpec *machinev1.NutanixMachineProviderConfig, categoryIdentifiers []capnv1.NutanixCategoryIdentifier, config *types.InstallConfig, pool *types.MachinePool) *capnv1.NutanixMachine {
 	ntxMachine := &capnv1.NutanixMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: capiutils.Namespace,
@@ -171,7 +171,7 @@ func generateNutanixMachine(machineName string, providerSpec *machinev1.NutanixM
 		},
 	}
 	ntxMachine.SetGroupVersionKind(capnv1.GroupVersion.WithKind("NutanixMachine"))
-	utils.SetMachineOSStreamLabels(ntxMachine, config)
+	utils.SetMachineOSStreamLabels(ntxMachine, config, pool)
 
 	for _, subnet := range providerSpec.Subnets {
 		ntxMachine.Spec.Subnets = append(ntxMachine.Spec.Subnets, capnv1.NutanixResourceIdentifier{
