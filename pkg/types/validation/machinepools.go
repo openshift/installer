@@ -162,6 +162,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 			return azurevalidation.ValidateMachinePool(p.Azure, pool.Name, platform.Azure, pool, f)
 		})
 	}
+	if platform.GCP != nil {
+		allErrs = append(allErrs, gcpvalidation.ValidateOSImageForSovereignCloud(platform.GCP, p.GCP, fldPath.Child("platform", "gcp"))...)
+	}
 	if p.GCP != nil {
 		validate(gcp.Name, p.GCP, func(f *field.Path) field.ErrorList { return validateGCPMachinePool(platform, p, pool, f) })
 	}
