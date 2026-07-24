@@ -240,6 +240,26 @@ RequiredBy=localfs.target
 	}, nil
 }
 
+func buildBootstrapKargs(arch string, fips bool) []byte {
+	consoleDevice := map[string]string{
+		"x86_64":  "ttyS0,115200n8",
+		"aarch64": "ttyAMA0,115200",
+		"s390x":   "ttysclp0",
+		"ppc64le": "hvc0",
+	}
+	var kargs string
+	if dev, ok := consoleDevice[arch]; ok {
+		kargs += " console=" + dev
+	}
+	if fips {
+		kargs += " fips=1"
+	}
+	if kargs == "" {
+		return nil
+	}
+	return []byte(kargs + "\n")
+}
+
 func createLiveVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool) (libvirt.StorageVol, error) {
 	capabilities, err := getHostCapabilities(virConn)
 	if err != nil {
@@ -257,24 +277,12 @@ func createLiveVolume(virConn *libvirt.Libvirt, config baremetalConfig, pool lib
 	if err != nil {
 		return libvirt.StorageVol{}, err
 	}
-	consoleDevice := map[string]string{
-		"x86_64":  "ttyS0",
-		"aarch64": "ttyAMA0",
-		"s390x":   "ttysclp0",
-		"ppc64le": "hvc0",
-	}
-	var kargs string
-	if dev, ok := consoleDevice[arch]; ok {
-		kargs += " console=" + dev
-	}
-	if config.FIPS {
-		kargs += " fips=1"
-	}
+	kargsBytes := buildBootstrapKargs(arch, config.FIPS)
 	stream, err := isoeditor.NewRHCOSStreamReader(
 		isoFile,
 		ignition,
 		nil,
-		[]byte(kargs),
+		kargsBytes,
 	)
 	if err != nil {
 		return libvirt.StorageVol{}, err
