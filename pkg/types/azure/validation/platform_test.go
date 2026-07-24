@@ -289,6 +289,32 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expected: `^test-path\.userProvisionedDNS: Invalid value: "Enabled": userProvisionedDNS is not supported on Azure Stack Hub$`,
 		},
+		{
+			name: "resourceGroupName matches networkResourceGroupName",
+			platform: func() *azure.Platform {
+				p := validNetworkPlatform()
+				p.ResourceGroupName = "networkresourcegroup"
+				return p
+			}(),
+			expected: `^test-path\.resourceGroupName: Invalid value: "networkresourcegroup": resourceGroupName must differ from networkResourceGroupName because the cluster resource group is deleted on cluster destroy, and network resources must not be removed$`,
+		},
+		{
+			name: "resourceGroupName matches networkResourceGroupName (case-insensitive)",
+			platform: func() *azure.Platform {
+				p := validNetworkPlatform()
+				p.ResourceGroupName = "NetworkResourceGroup"
+				return p
+			}(),
+			expected: `^test-path\.resourceGroupName: Invalid value: "NetworkResourceGroup": resourceGroupName must differ from networkResourceGroupName because the cluster resource group is deleted on cluster destroy, and network resources must not be removed$`,
+		},
+		{
+			name: "resourceGroupName differs from networkResourceGroupName",
+			platform: func() *azure.Platform {
+				p := validNetworkPlatform()
+				p.ResourceGroupName = "clusterresourcegroup"
+				return p
+			}(),
+		},
 	}
 	ic := types.InstallConfig{}
 	for _, tc := range cases {

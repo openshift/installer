@@ -141,6 +141,10 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		allErrs = append(allErrs, validateCustomerManagedKeys(p.CloudName, *p.CustomerManagedKey, fldPath.Child("customerManagedKey"))...)
 	}
 
+	if p.ResourceGroupName != "" && p.NetworkResourceGroupName != "" && strings.EqualFold(p.ResourceGroupName, p.NetworkResourceGroupName) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("resourceGroupName"), p.ResourceGroupName, "resourceGroupName must differ from networkResourceGroupName because the cluster resource group is deleted on cluster destroy, and network resources must not be removed"))
+	}
+
 	// support for Azure user-defined tags
 	// is for AzurePublicCloud and USGovernmentCloud only.
 	if !isUserTagsAllowed(p.CloudName) && len(p.UserTags) > 0 {
