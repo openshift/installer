@@ -1673,3 +1673,77 @@ func TestValidateMarketplaceImages(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateServiceEndpointOverride(t *testing.T) {
+	cases := []struct {
+		name           string
+		edits          editFunctions
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:          "No endpoint configured",
+			edits:         editFunctions{},
+			expectedError: false,
+		},
+		{
+			name: "Sovereign cloud project with endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.ProjectID = "eu0:my-project"
+				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "test-endpoint"}
+			}},
+			expectedError:  true,
+			expectedErrMsg: `platform\.gcp\.endpoint\.name: Forbidden: endpoint overrides are not supported in sovereign clouds`,
+		},
+		{
+			name: "Regular project with valid endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "valid-endpoint"}
+			}},
+			expectedError: false,
+		},
+		{
+			name: "Regular project with invalid endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "invalid-endpoint"}
+			}},
+			expectedError:  true,
+			expectedErrMsg: `platform\.gcp\.endpoint\.name: Not found: "invalid-endpoint"`,
+		},
+		{
+			name: "Sovereign cloud project without endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.ProjectID = "s-cloud-domain:my-project"
+			}},
+			expectedError: false,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	gcpClient.EXPECT().GetPrivateServiceConnectEndpoint(gomock.Any(), validProjectName, &gcp.PSCEndpoint{Name: "valid-endpoint"}).
+		Return(&compute.ForwardingRule{Name: "valid-endpoint", Network: "projects/valid-project/global/networks/" + validNetworkName}, nil).AnyTimes()
+	gcpClient.EXPECT().GetPrivateServiceConnectEndpoint(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("not found")).AnyTimes()
+
+	fieldPath := field.NewPath("platform").Child("gcp")
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errs := validateServiceEndpointOverride(gcpClient, editedInstallConfig, fieldPath)
+			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, errs.ToAggregate())
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}

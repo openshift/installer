@@ -963,6 +963,11 @@ func validateServiceEndpointOverride(client API, ic *types.InstallConfig, fieldP
 		return nil
 	}
 
+	if gcp.GetCloudEnvironment(ic.GCP.ProjectID) == gcp.CloudEnvironmentSovereign {
+		// Custom endpoints are not supported for sovereign clouds
+		return append(allErrs, field.Forbidden(fieldPath.Child("endpoint").Child("name"), "endpoint overrides are not supported in sovereign clouds"))
+	}
+
 	endpoint, err := client.GetPrivateServiceConnectEndpoint(context.Background(), ic.GCP.ProjectID, ic.GCP.Endpoint)
 	if err != nil || endpoint == nil {
 		return append(allErrs, field.NotFound(fieldPath.Child("endpoint").Child("name"), ic.GCP.Endpoint.Name))
