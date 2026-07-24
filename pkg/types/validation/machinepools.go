@@ -123,6 +123,11 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 			}
 			foundEtcd = true
 		case types.Swap:
+			if p.Name == "master" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("swap"), dsYaml, "swap is unsupported on control plane nodes"))
+				continue
+			}
+
 			if foundSwap {
 				allErrs = append(allErrs, field.TooMany(fldPath.Child("swap"), 2, 1))
 				continue
