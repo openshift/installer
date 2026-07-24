@@ -82,6 +82,14 @@ func TestVerifyExpectedNodesWithClient(t *testing.T) {
 			errContains:     "expected 2 worker node(s) to be Ready but only 1 found",
 		},
 		{
+			name:            "worker node not ready",
+			nodes:           []*corev1.Node{newNode("worker-0", "worker", true), newNode("worker-1", "worker", false)},
+			expectedMasters: 0,
+			expectedWorkers: 2,
+			expectErr:       true,
+			errContains:     "expected 2 worker node(s) to be Ready but only 1 found",
+		},
+		{
 			name: "masters and workers all ready",
 			nodes: []*corev1.Node{
 				newNode("master-0", "master", true), newNode("master-1", "master", true), newNode("master-2", "master", true),
