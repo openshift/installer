@@ -77,4 +77,74 @@ type KMSEncryptionStatus struct {
 	// +listMapKey=nodeName
 	// +listMapKey=keyId
 	HealthReports []KMSPluginHealthReport `json:"healthReports,omitempty"`
+
+	// preflight contains the state of KMS preflight validation for this operator.
+	// The preflight validates the KMS provider configuration before it is used
+	// to create a new encryption key, catching configuration issues early such
+	// as incorrect login credentials or an unreachable Vault service.
+	// When omitted, no preflight validation is in progress.
+	// +optional
+	Preflight KMSPreflightCheck `json:"preflight,omitzero"`
+}
+
+// KMSPreflightCheck describes a preflight validation request and its result.
+//
+// +kubebuilder:validation:MinProperties=1
+type KMSPreflightCheck struct {
+	// observedConfigHash is a hash of the KMS provider configuration and
+	// its referenced resources that has been observed and requires preflight
+	// validation before a new encryption key can be created.
+	// The value must be exactly 8 characters.
+	// +kubebuilder:validation:MinLength=8
+	// +kubebuilder:validation:MaxLength=8
+	// +kubebuilder:validation:XValidation:rule="self.matches('^[A-Za-z0-9_-]*={0,2}$')",message="must be a valid base64url encoded value"
+	// +required
+	ObservedConfigHash string `json:"observedConfigHash,omitempty"`
+
+	// result contains the outcome of the most recent preflight check.
+	// Preflight is considered passed when result.status is Succeeded and
+	// result.configHash matches observedConfigHash.
+	// When omitted, no preflight check result has been reported yet.
+	// +optional
+	Result KMSPreflightResult `json:"result,omitzero"`
+}
+
+// +kubebuilder:validation:Enum=Succeeded;Failed
+type KMSPreflightResultStatus string
+
+const (
+	KMSPreflightResultSucceeded KMSPreflightResultStatus = "Succeeded"
+
+	KMSPreflightResultFailed KMSPreflightResultStatus = "Failed"
+)
+
+// KMSPreflightResult contains the outcome of a preflight validation.
+//
+// +openshift:compatibility-gen:level=1
+type KMSPreflightResult struct {
+	// status indicates the outcome of the preflight check.
+	// Succeeded means the KMS plugin responded to Status, Encrypt, and
+	// Decrypt calls successfully.
+	// Failed means the validation did not pass.
+	// +required
+	Status KMSPreflightResultStatus `json:"status,omitempty"`
+
+	// configHash is the hash of the configuration that was validated.
+	// This is compared against observedConfigHash to confirm the result
+	// corresponds to the current configuration.
+	// The value must be exactly 8 characters.
+	// +kubebuilder:validation:MinLength=8
+	// +kubebuilder:validation:MaxLength=8
+	// +kubebuilder:validation:XValidation:rule="self.matches('^[A-Za-z0-9_-]*={0,2}$')",message="must be a valid base64url encoded value"
+	// +required
+	ConfigHash string `json:"configHash,omitempty"`
+
+	// remoteKeyID is the remote key encryption key identifier from KMS v2
+	// StatusResponse.key_id. This is not a cryptographic key, but a unique
+	// representation of the remote key used to encrypt data.
+	// The value must be between 1 and 1024 characters.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	// +required
+	RemoteKeyID string `json:"remoteKeyID,omitempty"`
 }

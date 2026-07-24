@@ -162,6 +162,7 @@ var map_ControllerConfigSpec = map[string]string{
 	"pullSecret":                     "pullSecret is the default pull secret that needs to be installed on all machines.",
 	"internalRegistryPullSecret":     "internalRegistryPullSecret is the pull secret for the internal registry, used by rpm-ostree to pull images from the internal registry if present",
 	"images":                         "images is map of images that are used by the controller to render templates under ./templates/",
+	"bgpVIPPeersJSON":                "bgpVIPPeersJSON carries the BGP VIP peer configuration (the config.json payload of the bgp-vip-config ConfigMap) for rendering the frr-k8s static pod peer file on control plane nodes. Only set when BGP-based VIP management is enabled. When omitted, BGP-based VIP management is not configured and no frr-k8s peer file is rendered. When set, the value must be between 1 and 65536 characters long.",
 	"baseOSContainerImage":           "baseOSContainerImage is the new-format container image for operating system updates.",
 	"baseOSExtensionsContainerImage": "baseOSExtensionsContainerImage is the matching extensions container for the new-format container",
 	"osImageURL":                     "osImageURL is the old-format container image that contains the OS update payload.",
@@ -408,6 +409,65 @@ var map_PoolSynchronizerStatus = map[string]string{
 
 func (PoolSynchronizerStatus) SwaggerDoc() map[string]string {
 	return map_PoolSynchronizerStatus
+}
+
+var map_InternalReleaseImage = map[string]string{
+	"":         "InternalReleaseImage is used to keep track and manage a set of release bundles (OCP and OLM operators images) that are stored into the control planes nodes. This is a singleton resource with 'cluster' as the only valid name.\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+	"spec":     "spec describes the configuration of this internal release image.",
+	"status":   "status describes the last observed state of this internal release image.",
+}
+
+func (InternalReleaseImage) SwaggerDoc() map[string]string {
+	return map_InternalReleaseImage
+}
+
+var map_InternalReleaseImageBundleStatus = map[string]string{
+	"":           "InternalReleaseImageBundleStatus describes the observed state of a single release bundle managed by the cluster.",
+	"conditions": "conditions represent the observations of an internal release image current state. Valid types are: Mounted, Installing, Available, Removing and Degraded.\n\nIf Mounted is true, that means that a valid ISO has been discovered and mounted on one of the cluster nodes. If Installing is true, that means that a new release bundle is currently being copied on one (or more) cluster nodes, and not yet completed. If Available is true, it means that the release has been previously installed on all the cluster nodes, and it can be used. If Removing is true, it means that a release deletion is in progress on one (or more) cluster nodes, and not yet completed. If Degraded is true, that means something has gone wrong (possibly on one or more cluster nodes).\n\nIn general, after installing a new release bundle, it is required to wait for the Conditions \"Available\" to become \"True\" (and all the other conditions to be equal to \"False\") before being able to pull its content. When present, conditions must contain at least 1 entry and must not exceed 5 entries.",
+	"name":       "name indicates the desired release bundle identifier. This field is required and must be between 1 and 64 characters long. The expected name format is ocp-release-bundle-<version>-<arch|stream>.",
+	"image":      "image is an OCP release image referenced by digest. The format of the image pull spec is: host[:port][/namespace]/name@sha256:<digest>, where the digest must be 64 characters long, and consist only of lowercase hexadecimal characters, a-f and 0-9. The length of the whole spec must be between 1 to 447 characters. The field is optional, and it will be provided after a release has been successfully installed.",
+}
+
+func (InternalReleaseImageBundleStatus) SwaggerDoc() map[string]string {
+	return map_InternalReleaseImageBundleStatus
+}
+
+var map_InternalReleaseImageList = map[string]string{
+	"":         "InternalReleaseImageList is a list of InternalReleaseImage resources\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"metadata": "metadata is the standard list's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+}
+
+func (InternalReleaseImageList) SwaggerDoc() map[string]string {
+	return map_InternalReleaseImageList
+}
+
+var map_InternalReleaseImageRef = map[string]string{
+	"":     "InternalReleaseImageRef is used to provide a simple reference for a release bundle. Currently it contains only the name field.",
+	"name": "name indicates the desired release bundle identifier. This field is required and must be between 1 and 64 characters long. The expected name format is ocp-release-bundle-<version>-<arch|stream>.",
+}
+
+func (InternalReleaseImageRef) SwaggerDoc() map[string]string {
+	return map_InternalReleaseImageRef
+}
+
+var map_InternalReleaseImageSpec = map[string]string{
+	"":         "InternalReleaseImageSpec defines the desired state of a InternalReleaseImage.",
+	"releases": "releases is a list of release bundle identifiers that the user wants to add/remove to/from the control plane nodes. Entries must be unique, keyed on the name field. releases must contain at least one entry and must not exceed 16 entries.",
+}
+
+func (InternalReleaseImageSpec) SwaggerDoc() map[string]string {
+	return map_InternalReleaseImageSpec
+}
+
+var map_InternalReleaseImageStatus = map[string]string{
+	"":           "InternalReleaseImageStatus describes the current state of a InternalReleaseImage.",
+	"conditions": "conditions represent the observations of the InternalReleaseImage controller current state. Valid types are: Degraded. If Degraded is true, that means something has gone wrong in the controller. The conditions list must contain at most 5 entries.",
+	"releases":   "releases is a list of the release bundles currently owned and managed by the cluster. A release bundle content could be safely pulled only when its Conditions field contains at least an Available entry set to \"True\" and Degraded to \"False\". Entries must be unique, keyed on the name field. releases must contain at least one entry and must not exceed 32 entries.",
+}
+
+func (InternalReleaseImageStatus) SwaggerDoc() map[string]string {
+	return map_InternalReleaseImageStatus
 }
 
 var map_IrreconcilableChangeDiff = map[string]string{
