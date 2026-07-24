@@ -399,6 +399,9 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confiden
 				ThirdPartyImage: false,
 			},
 		}
+	case strings.HasPrefix(rhcosImg, "/subscriptions/"):
+		// An explicit non-marketplace resource path was supplied. Use it as is.
+		return &capz.Image{ID: &rhcosImg}
 	case rhcosImg == "" && !confidentialVM:
 		// hive calls the machines function, but may pass an empty
 		// string for rhcos. In which case, allow MAO to choose default.

@@ -458,5 +458,9 @@ func mapiImage(osImage azure.OSImage, azEnv azure.CloudEnvironment, confidential
 // for MAPI, by removing the /subspcription/ prefix.
 func trimSubscriptionPrefix(image string) string {
 	rgIndex := strings.Index(image, "/resourceGroups/")
+	// Allow invalid inputs to fail downstream
+	if rgIndex < 0 {
+		return image
+	}
 	return image[rgIndex:]
 }
