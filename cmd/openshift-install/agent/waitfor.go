@@ -127,7 +127,9 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			var fipsEnabled bool
 
 			var expectedMasters, expectedWorkers int
-			if installConfigAsset, err := assetStore.Load(&agentasset.OptionalInstallConfig{}); err == nil && installConfigAsset != nil {
+			if installConfigAsset, err := assetStore.Load(&agentasset.OptionalInstallConfig{}); err != nil {
+				logrus.Warnf("Failed to load install-config, skipping FIPS and node verification: %v", err)
+			} else if installConfigAsset != nil {
 				ic := installConfigAsset.(*agentasset.OptionalInstallConfig)
 				if ic.Config != nil {
 					fipsEnabled = ic.Config.FIPS
