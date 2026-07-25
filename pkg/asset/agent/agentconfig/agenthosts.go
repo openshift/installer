@@ -40,18 +40,12 @@ type nmStateInterface struct {
 	} `yaml:"interfaces,omitempty"`
 }
 
-// FencingCredentialHost holds MAC-keyed fencing credentials matched to a host directory.
-type FencingCredentialHost struct {
-	DirName     string
-	Credentials []*types.Credential
-}
-
 // AgentHosts generates the hosts information from the AgentConfig and
 // OptionalInstallConfig assets.
 type AgentHosts struct {
-	Hosts                    []agent.Host
-	FencingCredentialsByHost []FencingCredentialHost
-	rendezvousIP             string
+	Hosts                  []agent.Host
+	FencingCredentialsHost []types.Credential
+	rendezvousIP           string
 }
 
 // Name returns a human friendly name.
@@ -102,9 +96,8 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 			}
 		}
 
-		if err := a.populateFencingCredentialHosts(installConfig); err != nil {
-			return err
-		}
+		// store per host fencing-credentials only when MAC address is used
+		a.populateFencingCredentialHosts(installConfig)
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
@@ -381,34 +374,15 @@ func (a *AgentHosts) HostConfigFiles() (HostConfigFileMap, error) {
 		}
 	}
 
-	for _, fch := range a.FencingCredentialsByHost {
-		cfg := &FencingCredentialsConfig{Credentials: fch.Credentials}
-		data, err := goyaml.Marshal(cfg)
-		if err != nil {
-			return nil, err
-		}
-		files[filepath.Join(fch.DirName, "fencing-credentials.yaml")] = data
-	}
-
-	return files, nil
-}
-
-func (a *AgentHosts) populateFencingCredentialHosts(installConfig *agentAsset.OptionalInstallConfig) error {
-	if installConfig.Config == nil || installConfig.Config.ControlPlane == nil ||
-		installConfig.Config.ControlPlane.Fencing == nil {
-		return nil
-	}
-
 	credsByDir := map[string][]*types.Credential{}
 	var dirOrder []string
 
-	for _, cred := range installConfig.Config.ControlPlane.Fencing.Credentials {
-		if cred.HostName != "" || cred.MACAddress == "" {
-			continue
-		}
-		dirName, err := a.findHostDirForMAC(cred.MACAddress)
-		if err != nil {
-			return err
+	for i := range a.FencingCredentialsHost {
+		cred := &a.FencingCredentialsHost[i]
+		dirName := findHostDirForMAC(files, cred.MACAddress)
+		if dirName == "" {
+			dirName = nextAvailableHostDir(files, len(a.Hosts))
+			files[filepath.Join(dirName, "mac_addresses")] = []byte(strings.ToLower(cred.MACAddress) + "\n")
 		}
 		if _, ok := credsByDir[dirName]; !ok {
 			dirOrder = append(dirOrder, dirName)
@@ -417,25 +391,63 @@ func (a *AgentHosts) populateFencingCredentialHosts(installConfig *agentAsset.Op
 	}
 
 	for _, dir := range dirOrder {
-		a.FencingCredentialsByHost = append(a.FencingCredentialsByHost, FencingCredentialHost{
-			DirName:     dir,
-			Credentials: credsByDir[dir],
-		})
+		cfg := &FencingCredentialsConfig{Credentials: credsByDir[dir]}
+		data, err := goyaml.Marshal(cfg)
+		if err != nil {
+			return nil, err
+		}
+		files[filepath.Join(dir, "fencing-credentials.yaml")] = data
 	}
-	return nil
+
+	return files, nil
 }
 
-func (a *AgentHosts) findHostDirForMAC(macAddress string) (string, error) {
+func (a *AgentHosts) populateFencingCredentialHosts(installConfig *agentAsset.OptionalInstallConfig) {
+	if installConfig.Config == nil || installConfig.Config.ControlPlane == nil ||
+		installConfig.Config.ControlPlane.Fencing == nil {
+		return
+	}
+
+	for _, cred := range installConfig.Config.ControlPlane.Fencing.Credentials {
+		if cred.HostName == "" && cred.MACAddress != "" {
+			a.FencingCredentialsHost = append(a.FencingCredentialsHost, *cred)
+		}
+	}
+}
+
+func findHostDirForMAC(files HostConfigFileMap, macAddress string) string {
 	normalizedMAC := strings.ToLower(macAddress)
-	for i, host := range a.Hosts {
-		for _, iface := range host.Interfaces {
-			if strings.ToLower(iface.MacAddress) == normalizedMAC {
-				if host.Hostname != "" {
-					return host.Hostname, nil
-				}
-				return fmt.Sprintf("host-%d", i), nil
+	for key, content := range files {
+		if !strings.HasSuffix(key, "/mac_addresses") {
+			continue
+		}
+		dirName := strings.TrimSuffix(key, "/mac_addresses")
+		for _, mac := range strings.Split(strings.TrimSpace(string(content)), "\n") {
+			if strings.TrimSpace(mac) == normalizedMAC {
+				return dirName
 			}
 		}
 	}
-	return "", fmt.Errorf("fencing credential references MAC address %s which does not match any configured host interface", macAddress)
+	return ""
+}
+
+func nextAvailableHostDir(files HostConfigFileMap, hostCount int) string {
+	existing := map[string]bool{}
+	for key := range files {
+		parts := strings.SplitN(key, "/", 2)
+		if len(parts) > 0 {
+			existing[parts[0]] = true
+		}
+	}
+	// Reserve host-<i> for every host slot, even those that emitted no
+	// files, so a MAC-only fencing credential never reuses that name.
+	for i := 0; i < hostCount; i++ {
+		existing[fmt.Sprintf("host-%d", i)] = true
+	}
+	for i := 0; ; i++ {
+		name := fmt.Sprintf("host-%d", i)
+		if !existing[name] {
+			return name
+		}
+	}
 }
