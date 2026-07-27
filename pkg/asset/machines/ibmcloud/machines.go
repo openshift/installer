@@ -91,10 +91,15 @@ func provider(clusterID string,
 		resourceGroup = clusterID
 	}
 
-	// Set the ProviderSpec.BootVolume, with encryption key if provided
+	// Set the ProviderSpec.BootVolume from any boot volume options provided.
+	// Fields left unset fall back to the IBM Cloud defaults.
 	bootVolume := ibmcloudprovider.IBMCloudMachineBootVolume{}
-	if mpool.BootVolume != nil && mpool.BootVolume.EncryptionKey != "" {
+	if mpool.BootVolume != nil {
 		bootVolume.EncryptionKey = mpool.BootVolume.EncryptionKey
+		bootVolume.Profile = mpool.BootVolume.Profile
+		bootVolume.SizeGiB = mpool.BootVolume.SizeGiB
+		bootVolume.Iops = mpool.BootVolume.IOPS
+		bootVolume.Bandwidth = mpool.BootVolume.Bandwidth
 	}
 
 	// Set the ProviderSpec.NetworkResourceGroup if NetworkResourceGroupName was provided
