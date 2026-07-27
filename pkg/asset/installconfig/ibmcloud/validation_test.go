@@ -198,6 +198,14 @@ var (
 		Deleted: ptr.To(true),
 	}
 
+	sdpVolumeProfileName     = "sdp"
+	sdpVolumeProfileResponse = &vpcv1.VolumeProfile{
+		Name:         &sdpVolumeProfileName,
+		Iops:         &vpcv1.VolumeProfileIopsRange{Min: core.Int64Ptr(100), Max: core.Int64Ptr(48000)},
+		Bandwidth:    &vpcv1.VolumeProfileBandwidthRange{Min: core.Int64Ptr(1000), Max: core.Int64Ptr(8192)},
+		BootCapacity: &vpcv1.VolumeProfileBootCapacityRange{Min: core.Int64Ptr(10), Max: core.Int64Ptr(32000)},
+	}
+
 	existingDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{
 		{
 			ID: core.StringPtr("valid-dns-record-1"),
@@ -293,6 +301,44 @@ func controlPlaneValidBootVolume(ic *types.InstallConfig) {
 	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
 		BootVolume: &ibmcloudtypes.BootVolume{
 			EncryptionKey: validEncryptionKey,
+		},
+	}
+}
+
+func controlPlaneValidSDPBootVolume(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		BootVolume: &ibmcloudtypes.BootVolume{
+			Profile:   sdpVolumeProfileName,
+			SizeGiB:   500,
+			IOPS:      3000,
+			Bandwidth: 2000,
+		},
+	}
+}
+
+func controlPlaneInvalidSDPBootVolumeIOPS(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		BootVolume: &ibmcloudtypes.BootVolume{
+			Profile: sdpVolumeProfileName,
+			IOPS:    100000,
+		},
+	}
+}
+
+func controlPlaneInvalidSDPBootVolumeBandwidth(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		BootVolume: &ibmcloudtypes.BootVolume{
+			Profile:   sdpVolumeProfileName,
+			Bandwidth: 500,
+		},
+	}
+}
+
+func controlPlaneInvalidSDPBootVolumeSize(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		BootVolume: &ibmcloudtypes.BootVolume{
+			Profile: sdpVolumeProfileName,
+			SizeGiB: 40000,
 		},
 	}
 }
@@ -699,6 +745,33 @@ func TestValidate(t *testing.T) {
 				controlPlaneValidBootVolume,
 			},
 		},
+		{
+			name: "valid control plane machine pool sdp boot volume",
+			edits: editFunctions{
+				controlPlaneValidSDPBootVolume,
+			},
+		},
+		{
+			name: "invalid control plane machine pool sdp boot volume iops",
+			edits: editFunctions{
+				controlPlaneInvalidSDPBootVolumeIOPS,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.iops: Invalid value: 100000: iops for the sdp profile must be between 100 and 48000\E`,
+		},
+		{
+			name: "invalid control plane machine pool sdp boot volume bandwidth",
+			edits: editFunctions{
+				controlPlaneInvalidSDPBootVolumeBandwidth,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.bandwidth: Invalid value: 500: bandwidth for the sdp profile must be between 1000 and 8192\E`,
+		},
+		{
+			name: "invalid control plane machine pool sdp boot volume size",
+			edits: editFunctions{
+				controlPlaneInvalidSDPBootVolumeSize,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.sizeGiB: Invalid value: 40000: sizeGiB for the sdp profile must be between 10 and 32000\E`,
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -882,6 +955,10 @@ func TestValidate(t *testing.T) {
 
 	// Mock: valid control plane machine pool boot volume crn
 	ibmcloudClient.EXPECT().GetEncryptionKey(gomock.Any(), validEncryptionKey).Return(validEncryptionKeyResponse, nil)
+
+	// Mocks: sdp boot volume range validation. The profile advertises the
+	// ranges; each test case supplies its own value to check against them.
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), sdpVolumeProfileName).Return(sdpVolumeProfileResponse, nil).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

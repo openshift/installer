@@ -679,6 +679,21 @@ func (mr *MockAPIMockRecorder) GetVSIProfiles(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSIProfiles", reflect.TypeOf((*MockAPI)(nil).GetVSIProfiles), ctx)
 }
 
+// GetVolumeProfile mocks base method.
+func (m *MockAPI) GetVolumeProfile(ctx context.Context, name string) (*vpcv1.VolumeProfile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVolumeProfile", ctx, name)
+	ret0, _ := ret[0].(*vpcv1.VolumeProfile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVolumeProfile indicates an expected call of GetVolumeProfile.
+func (mr *MockAPIMockRecorder) GetVolumeProfile(ctx, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVolumeProfile", reflect.TypeOf((*MockAPI)(nil).GetVolumeProfile), ctx, name)
+}
+
 // ListCOSBuckets mocks base method.
 func (m *MockAPI) ListCOSBuckets(ctx context.Context, cosInstanceID, region string) (*s3.ListBucketsOutput, error) {
 	m.ctrl.T.Helper()

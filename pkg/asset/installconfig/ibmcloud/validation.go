@@ -182,6 +182,15 @@ func validateMachinePoolZones(client API, region string, zones []string, path *f
 func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	allErrs = append(allErrs, validateBootVolumeEncryptionKey(client, bootVolume, path)...)
+	allErrs = append(allErrs, validateBootVolumeProfileRanges(client, bootVolume, path)...)
+
+	return allErrs
+}
+
+func validateBootVolumeEncryptionKey(client API, bootVolume ibmcloud.BootVolume, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
 	if bootVolume.EncryptionKey == "" {
 		return allErrs
 	}
@@ -209,6 +218,61 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 	}
 
 	return allErrs
+}
+
+// validateBootVolumeProfileRanges checks the user-set iops, bandwidth and size
+// against the live ranges the chosen volume profile advertises, so the numeric
+// limits are never hardcoded and stay correct as IBM Cloud evolves them. The
+// structural rules (which field applies to which profile) are enforced offline;
+// this only runs when a value that a profile constrains was actually set.
+func validateBootVolumeProfileRanges(client API, bootVolume ibmcloud.BootVolume, path *field.Path) field.ErrorList {
+	if bootVolume.IOPS == 0 && bootVolume.Bandwidth == 0 && bootVolume.SizeGiB == 0 {
+		return nil
+	}
+
+	profileName := bootVolume.Profile
+	if profileName == "" {
+		profileName = ibmcloud.DefaultBootVolumeProfile
+	}
+
+	profile, err := client.GetVolumeProfile(context.TODO(), profileName)
+	if err != nil {
+		return field.ErrorList{field.InternalError(path.Child("profile"), err)}
+	}
+
+	allErrs := field.ErrorList{}
+	// A field is only constrained when the profile advertises a range variant
+	// for it; a fixed or system-managed field yields no assertion match, and
+	// the offline validation already rejects setting it in that case.
+	if bootVolume.IOPS != 0 {
+		if iopsRange, ok := profile.Iops.(*vpcv1.VolumeProfileIopsRange); ok {
+			allErrs = append(allErrs, validateInProfileRange(bootVolume.IOPS, iopsRange.Min, iopsRange.Max, path.Child("iops"), "iops", profileName)...)
+		}
+	}
+	if bootVolume.Bandwidth != 0 {
+		if bandwidthRange, ok := profile.Bandwidth.(*vpcv1.VolumeProfileBandwidthRange); ok {
+			allErrs = append(allErrs, validateInProfileRange(bootVolume.Bandwidth, bandwidthRange.Min, bandwidthRange.Max, path.Child("bandwidth"), "bandwidth", profileName)...)
+		}
+	}
+	if bootVolume.SizeGiB != 0 {
+		if capacityRange, ok := profile.BootCapacity.(*vpcv1.VolumeProfileBootCapacityRange); ok {
+			allErrs = append(allErrs, validateInProfileRange(bootVolume.SizeGiB, capacityRange.Min, capacityRange.Max, path.Child("sizeGiB"), "sizeGiB", profileName)...)
+		}
+	}
+	return allErrs
+}
+
+// validateInProfileRange checks a value falls within a profile's advertised
+// min/max. Only the bounds are checked; a step misalignment is left to IBM
+// Cloud to report, rather than risk rejecting a valid value on a guessed rule.
+func validateInProfileRange(value int64, min, max *int64, path *field.Path, fieldName, profileName string) field.ErrorList {
+	if min == nil || max == nil {
+		return nil
+	}
+	if value < *min || value > *max {
+		return field.ErrorList{field.Invalid(path, value, fmt.Sprintf("%s for the %s profile must be between %d and %d", fieldName, profileName, *min, *max))}
+	}
+	return nil
 }
 
 func validateResourceGroup(client API, resourceGroupName string, platformField string, path *field.Path) field.ErrorList {

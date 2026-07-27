@@ -79,6 +79,7 @@ type API interface {
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetVSI(ctx context.Context, instanceID string, region string) (*vpcv1.Instance, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
+	GetVolumeProfile(ctx context.Context, name string) (*vpcv1.VolumeProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
@@ -1195,6 +1196,17 @@ func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, e
 		return nil, errors.Wrapf(err, "failed to list vpc vsi profiles using: %s", c.vpcAPI.Service.Options.URL)
 	}
 	return profiles.Profiles, nil
+}
+
+// GetVolumeProfile gets the named block storage volume profile, whose iops,
+// bandwidth and boot_capacity fields describe the ranges the profile permits.
+func (c *Client) GetVolumeProfile(ctx context.Context, name string) (*vpcv1.VolumeProfile, error) {
+	options := c.vpcAPI.NewGetVolumeProfileOptions(name)
+	profile, _, err := c.vpcAPI.GetVolumeProfileWithContext(ctx, options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get volume profile %s using: %s", name, c.vpcAPI.Service.Options.URL)
+	}
+	return profile, nil
 }
 
 // GetVPC gets a VPC by its ID.
