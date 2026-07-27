@@ -93,6 +93,7 @@ The following machine-pool properties are available:
     * `aws` (optional object): [AWS-specific properties](aws/customization.md#machine-pools).
     * `azure` (optional object): [Azure-specific properties](azure/customization.md#machine-pools).
     * `gcp` (optional object): [GCP-specific properties](gcp/customization.md#machine-pools).
+    * `ibmcloud` (optional object): [IBM Cloud-specific properties](ibmcloud/customization.md#machine-pools).
     * `openstack` (optional object): [OpenStack-specific properties](openstack/customization.md#machine-pools).
     * `ovirt` (optional object): [oVirt-specific properties](ovirt/customization.md#machine-pools).
     * `vsphere` (optional object): [vSphere-specific properties](vsphere/customization.md#machine-pools).
