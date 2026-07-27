@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -41,6 +42,27 @@ func validateBootVolume(bv *ibmcloud.BootVolume, path *field.Path) field.ErrorLi
 			allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bv.EncryptionKey, "encryptionKey is not a valid IBM CRN"))
 		}
 	}
+
+	if bv.Profile != "" && !sets.NewString(ibmcloud.BootVolumeProfiles...).Has(bv.Profile) {
+		allErrs = append(allErrs, field.NotSupported(path.Child("profile"), bv.Profile, ibmcloud.BootVolumeProfiles))
+	}
+
+	// Only the structural rules for which profile a field applies to are
+	// checked here. The permitted numeric ranges for sizeGiB, iops and
+	// bandwidth vary per profile and are validated against the live volume
+	// profile during platform validation, rather than hardcoded.
+
+	// IOPS is only user configurable on the custom and sdp profiles; the other
+	// profiles derive it from the profile itself.
+	if bv.IOPS != 0 && bv.Profile != ibmcloud.BootVolumeProfileCustom && bv.Profile != ibmcloud.BootVolumeProfileSDP {
+		allErrs = append(allErrs, field.Invalid(path.Child("iops"), bv.IOPS, fmt.Sprintf("iops is only supported for the %s and %s profiles", ibmcloud.BootVolumeProfileCustom, ibmcloud.BootVolumeProfileSDP)))
+	}
+
+	// Bandwidth is exclusive to the second generation sdp profile.
+	if bv.Bandwidth != 0 && bv.Profile != ibmcloud.BootVolumeProfileSDP {
+		allErrs = append(allErrs, field.Invalid(path.Child("bandwidth"), bv.Bandwidth, fmt.Sprintf("bandwidth is only supported for the %s profile", ibmcloud.BootVolumeProfileSDP)))
+	}
+
 	return allErrs
 }
 
