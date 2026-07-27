@@ -5,13 +5,33 @@ import (
 	"strings"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
-// ValidateMachinePool validates the MachinePool.
+// ValidateMachinePool validates a control plane or compute pool. Pools reach
+// validation already merged with defaultMachinePlatform, so the effective boot
+// volume profile is known and the profile-dependent checks can run.
 func ValidateMachinePool(platform *ibmcloud.Platform, mp *ibmcloud.MachinePool, path *field.Path) field.ErrorList {
+	allErrs := validateMachinePoolCommon(platform, mp, path)
+	if mp.BootVolume != nil {
+		allErrs = append(allErrs, validateBootVolumeProfileFields(mp.BootVolume, path.Child("bootVolume"))...)
+	}
+	return allErrs
+}
+
+// validateDefaultMachinePool validates defaultMachinePlatform on its own. It
+// skips the profile-dependent checks: a default without a profile can be
+// completed by each pool, and every pool is validated after the merge.
+func validateDefaultMachinePool(platform *ibmcloud.Platform, mp *ibmcloud.MachinePool, path *field.Path) field.ErrorList {
+	return validateMachinePoolCommon(platform, mp, path)
+}
+
+// validateMachinePoolCommon performs the checks that hold for any pool,
+// including defaultMachinePlatform before it is merged into the pools.
+func validateMachinePoolCommon(platform *ibmcloud.Platform, mp *ibmcloud.MachinePool, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for i, zone := range mp.Zones {
 		if !strings.HasPrefix(zone, platform.Region) {
@@ -33,6 +53,9 @@ func ValidateMachinePool(platform *ibmcloud.Platform, mp *ibmcloud.MachinePool, 
 	return allErrs
 }
 
+// validateBootVolume performs the static boot volume checks that do not depend
+// on the profile: the encryption key is a valid CRN and the profile is
+// supported.
 func validateBootVolume(bv *ibmcloud.BootVolume, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if bv.EncryptionKey != "" {
@@ -41,6 +64,36 @@ func validateBootVolume(bv *ibmcloud.BootVolume, path *field.Path) field.ErrorLi
 			allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bv.EncryptionKey, "encryptionKey is not a valid IBM CRN"))
 		}
 	}
+
+	if bv.Profile != "" && !sets.NewString(ibmcloud.BootVolumeProfiles...).Has(bv.Profile) {
+		allErrs = append(allErrs, field.NotSupported(path.Child("profile"), bv.Profile, ibmcloud.BootVolumeProfiles))
+	}
+
+	return allErrs
+}
+
+// validateBootVolumeProfileFields checks that iops and bandwidth are only set
+// on profiles that allow them. It needs the profile the volume will actually
+// use, so it runs on merged pools and never on defaultMachinePlatform alone.
+func validateBootVolumeProfileFields(bv *ibmcloud.BootVolume, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Only the structural rules for which profile a field applies to are
+	// checked here. The permitted numeric ranges for sizeGiB, iops and
+	// bandwidth vary per profile and are validated against the live volume
+	// profile during platform validation, rather than hardcoded.
+
+	// IOPS is only user configurable on the custom and sdp profiles; the other
+	// profiles derive it from the profile itself.
+	if bv.IOPS != 0 && bv.Profile != ibmcloud.BootVolumeProfileCustom && bv.Profile != ibmcloud.BootVolumeProfileSDP {
+		allErrs = append(allErrs, field.Invalid(path.Child("iops"), bv.IOPS, fmt.Sprintf("iops is only supported for the %s and %s profiles", ibmcloud.BootVolumeProfileCustom, ibmcloud.BootVolumeProfileSDP)))
+	}
+
+	// Bandwidth is exclusive to the second generation sdp profile.
+	if bv.Bandwidth != 0 && bv.Profile != ibmcloud.BootVolumeProfileSDP {
+		allErrs = append(allErrs, field.Invalid(path.Child("bandwidth"), bv.Bandwidth, fmt.Sprintf("bandwidth is only supported for the %s profile", ibmcloud.BootVolumeProfileSDP)))
+	}
+
 	return allErrs
 }
 

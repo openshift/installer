@@ -357,6 +357,27 @@ func TestSetMachinePoolDefaultsIBMCloudDefaultMachinePlatform(t *testing.T) {
 			},
 		},
 		{
+			name: "pool boot volume fields override defaultMachinePlatform individually",
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					IBMCloud: &ibmcloud.MachinePool{
+						BootVolume: &ibmcloud.BootVolume{SizeGiB: 400, IOPS: 12000},
+					},
+				},
+			},
+			platform: &types.Platform{
+				IBMCloud: &ibmcloud.Platform{
+					DefaultMachinePlatform: &ibmcloud.MachinePool{
+						BootVolume: &ibmcloud.BootVolume{Profile: "sdp", SizeGiB: 250},
+					},
+				},
+			},
+			expected: &ibmcloud.MachinePool{
+				BootVolume: &ibmcloud.BootVolume{Profile: "sdp", SizeGiB: 400, IOPS: 12000},
+			},
+		},
+		{
 			name:     "no defaultMachinePlatform leaves empty pool unset",
 			pool:     &types.MachinePool{Name: "worker"},
 			platform: &types.Platform{IBMCloud: &ibmcloud.Platform{}},
