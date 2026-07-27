@@ -200,6 +200,37 @@ var (
 		Deleted: ptr.To(true),
 	}
 
+	// The SDK decodes every iops, bandwidth and boot_capacity variant into
+	// the generic VolumeProfileIops, VolumeProfileBandwidth and
+	// VolumeProfileBootCapacity structs, so the fixtures use those, not the
+	// per-variant structs.
+	sdpVolumeProfileName     = "sdp"
+	sdpVolumeProfileResponse = &vpcv1.VolumeProfile{
+		Name:         core.StringPtr("sdp"),
+		Iops:         &vpcv1.VolumeProfileIops{Type: core.StringPtr("range"), Min: core.Int64Ptr(3000), Max: core.Int64Ptr(64000)},
+		Bandwidth:    &vpcv1.VolumeProfileBandwidth{Type: core.StringPtr("range"), Min: core.Int64Ptr(1000), Max: core.Int64Ptr(8192)},
+		BootCapacity: &vpcv1.VolumeProfileBootCapacity{Type: core.StringPtr("dependent_range"), Min: core.Int64Ptr(1), Max: core.Int64Ptr(32000)},
+	}
+	generalPurposeVolumeProfileName     = "general-purpose"
+	generalPurposeVolumeProfileResponse = &vpcv1.VolumeProfile{
+		Name:         core.StringPtr("general-purpose"),
+		Iops:         &vpcv1.VolumeProfileIops{Type: core.StringPtr("dependent_range"), Min: core.Int64Ptr(3000), Max: core.Int64Ptr(48000)},
+		Bandwidth:    &vpcv1.VolumeProfileBandwidth{Type: core.StringPtr("dependent")},
+		BootCapacity: &vpcv1.VolumeProfileBootCapacity{Type: core.StringPtr("dependent_range"), Min: core.Int64Ptr(10), Max: core.Int64Ptr(250)},
+	}
+	// No real profile reports fixed, enum or unknown field types for a boot
+	// volume today, so a synthetic one covers them.
+	syntheticVolumeProfileName     = "synthetic"
+	syntheticVolumeProfileResponse = &vpcv1.VolumeProfile{
+		Name:         core.StringPtr("synthetic"),
+		Iops:         &vpcv1.VolumeProfileIops{Type: core.StringPtr("fixed"), Value: core.Int64Ptr(3000)},
+		Bandwidth:    &vpcv1.VolumeProfileBandwidth{Type: core.StringPtr("enum"), Values: []int64{1000, 2000}},
+		BootCapacity: &vpcv1.VolumeProfileBootCapacity{Type: core.StringPtr("not_yet_known"), Min: core.Int64Ptr(10), Max: core.Int64Ptr(20)},
+	}
+	unavailableVolumeProfileName = "unavailable"
+	// Fetching the failing profile fails with an error other than not found.
+	failingVolumeProfileName = "failing"
+
 	existingDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{
 		{
 			ID: core.StringPtr("valid-dns-record-1"),
@@ -296,6 +327,28 @@ func controlPlaneValidBootVolume(ic *types.InstallConfig) {
 		BootVolume: &ibmcloudtypes.BootVolume{
 			EncryptionKey: validEncryptionKey,
 		},
+	}
+}
+
+// controlPlaneBootVolume returns an edit setting the control plane boot volume.
+func controlPlaneBootVolume(bootVolume ibmcloudtypes.BootVolume) func(ic *types.InstallConfig) {
+	return func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{BootVolume: &bootVolume}
+	}
+}
+
+// computeBootVolume returns an edit setting the first compute pool boot volume.
+func computeBootVolume(bootVolume ibmcloudtypes.BootVolume) func(ic *types.InstallConfig) {
+	return func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.IBMCloud = &ibmcloudtypes.MachinePool{BootVolume: &bootVolume}
+	}
+}
+
+// defaultMachinePlatformBootVolume returns an edit setting the
+// defaultMachinePlatform boot volume.
+func defaultMachinePlatformBootVolume(bootVolume ibmcloudtypes.BootVolume) func(ic *types.InstallConfig) {
+	return func(ic *types.InstallConfig) {
+		ic.Platform.IBMCloud.DefaultMachinePlatform = &ibmcloudtypes.MachinePool{BootVolume: &bootVolume}
 	}
 }
 
@@ -669,6 +722,15 @@ func TestValidate(t *testing.T) {
 			errorMsg: `\QcontrolPlane.platform.ibmcloud.type: Not found: "invalid-instance-type"\E`,
 		},
 		{
+			name: "invalid defaultMachinePlatform type",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.DefaultMachinePlatform = &ibmcloudtypes.MachinePool{InstanceType: "invalid-instance-type"}
+				},
+			},
+			errorMsg: `^\Qplatform.ibmcloud.defaultMachinePlatform.type: Not found: "invalid-instance-type"\E$`,
+		},
+		{
 			name: "valid control plane machine pool type",
 			edits: editFunctions{
 				controlPlaneValidInstanceType,
@@ -700,6 +762,119 @@ func TestValidate(t *testing.T) {
 			edits: editFunctions{
 				controlPlaneValidBootVolume,
 			},
+		},
+		{
+			name: "valid control plane machine pool sdp boot volume",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, SizeGiB: 500, IOPS: 3000, Bandwidth: 2000}),
+			},
+		},
+		{
+			name: "invalid control plane machine pool sdp boot volume iops",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, IOPS: 100000}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.iops: Invalid value: 100000: iops for the sdp profile must be between 3000 and 64000\E`,
+		},
+		{
+			name: "invalid control plane machine pool sdp boot volume bandwidth",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, Bandwidth: 500}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.bandwidth: Invalid value: 500: bandwidth for the sdp profile must be between 1000 and 8192\E`,
+		},
+		{
+			name: "invalid control plane machine pool sdp boot volume size",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, SizeGiB: 40000}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.sizeGiB: Invalid value: 40000: sizeGiB for the sdp profile must be between 1 and 32000\E`,
+		},
+		{
+			name: "invalid control plane machine pool general-purpose boot volume size",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: generalPurposeVolumeProfileName, SizeGiB: 300}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.sizeGiB: Invalid value: 300: sizeGiB for the general-purpose profile must be between 10 and 250\E`,
+		},
+		{
+			name: "invalid control plane machine pool boot volume bandwidth computed by the profile",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: generalPurposeVolumeProfileName, Bandwidth: 2000}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.bandwidth: Invalid value: 2000: bandwidth is computed by IBM Cloud for the general-purpose profile and cannot be set\E`,
+		},
+		{
+			name: "valid control plane machine pool boot volume iops matching a fixed value",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: syntheticVolumeProfileName, IOPS: 3000}),
+			},
+		},
+		{
+			name: "invalid control plane machine pool boot volume iops differing from a fixed value",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: syntheticVolumeProfileName, IOPS: 4000}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.iops: Invalid value: 4000: iops for the synthetic profile is fixed at 3000\E`,
+		},
+		{
+			name: "valid control plane machine pool boot volume bandwidth in an enum",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: syntheticVolumeProfileName, Bandwidth: 2000}),
+			},
+		},
+		{
+			name: "invalid control plane machine pool boot volume bandwidth not in an enum",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: syntheticVolumeProfileName, Bandwidth: 1500}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.bandwidth: Invalid value: 1500: bandwidth for the synthetic profile must be one of [1000 2000]\E`,
+		},
+		{
+			name: "valid control plane machine pool boot volume size for an unknown field type",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: syntheticVolumeProfileName, SizeGiB: 500}),
+			},
+		},
+		{
+			name: "invalid control plane machine pool boot volume profile not available in the region",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: unavailableVolumeProfileName, SizeGiB: 100}),
+			},
+			// Anchored: the range check must not report the missing profile again.
+			errorMsg: `^\QcontrolPlane.platform.ibmcloud.bootVolume.profile: Invalid value: "unavailable": volume profile unavailable is not available in region us-south\E$`,
+		},
+		{
+			name: "invalid control plane machine pool boot volume profile not available in the region without other values",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: unavailableVolumeProfileName}),
+			},
+			errorMsg: `^\QcontrolPlane.platform.ibmcloud.bootVolume.profile: Invalid value: "unavailable": volume profile unavailable is not available in region us-south\E$`,
+		},
+		{
+			name: "valid control plane machine pool boot volume profile available in the region without other values",
+			edits: editFunctions{
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName}),
+			},
+		},
+		// The pools below are already merged with defaultMachinePlatform, as
+		// defaulting does before validation runs.
+		{
+			name: "valid profile-less defaultMachinePlatform boot volume size completed by the pools' sdp profile",
+			edits: editFunctions{
+				defaultMachinePlatformBootVolume(ibmcloudtypes.BootVolume{SizeGiB: 300}),
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, SizeGiB: 300}),
+				computeBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, SizeGiB: 300}),
+			},
+		},
+		{
+			name: "invalid boot volume size inherited from defaultMachinePlatform on a default profile pool",
+			edits: editFunctions{
+				defaultMachinePlatformBootVolume(ibmcloudtypes.BootVolume{SizeGiB: 300}),
+				controlPlaneBootVolume(ibmcloudtypes.BootVolume{SizeGiB: 300}),
+				computeBootVolume(ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName, SizeGiB: 300}),
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.sizeGiB: Invalid value: 300: sizeGiB for the general-purpose profile must be between 10 and 250\E`,
 		},
 	}
 
@@ -885,6 +1060,13 @@ func TestValidate(t *testing.T) {
 	// Mock: valid control plane machine pool boot volume crn
 	ibmcloudClient.EXPECT().GetEncryptionKey(gomock.Any(), validEncryptionKey).Return(validEncryptionKeyResponse, nil)
 
+	// Mocks: boot volume profile validation. Each profile advertises what it
+	// permits; each test case supplies its own value to check against it.
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), sdpVolumeProfileName, validRegion).Return(sdpVolumeProfileResponse, nil).AnyTimes()
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), generalPurposeVolumeProfileName, validRegion).Return(generalPurposeVolumeProfileResponse, nil).AnyTimes()
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), syntheticVolumeProfileName, validRegion).Return(syntheticVolumeProfileResponse, nil).AnyTimes()
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), unavailableVolumeProfileName, validRegion).Return(nil, &VPCResourceNotFoundError{}).AnyTimes()
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()
@@ -897,6 +1079,61 @@ func TestValidate(t *testing.T) {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateBootVolumeProfileAvailability(t *testing.T) {
+	// A region where only sdp is available, so the default profile is not.
+	const region = "eu-test"
+	cases := []struct {
+		name       string
+		bootVolume ibmcloudtypes.BootVolume
+		errorMsg   string
+	}{
+		{
+			name:       "selected profile available",
+			bootVolume: ibmcloudtypes.BootVolume{Profile: sdpVolumeProfileName},
+		},
+		{
+			name:       "selected profile not available",
+			bootVolume: ibmcloudtypes.BootVolume{Profile: generalPurposeVolumeProfileName},
+			errorMsg:   `^\Qpath.profile: Invalid value: "general-purpose": volume profile general-purpose is not available in region eu-test\E$`,
+		},
+		{
+			name:       "default profile not available",
+			bootVolume: ibmcloudtypes.BootVolume{SizeGiB: 100},
+			errorMsg:   `^\Qpath.profile: Invalid value: "": the default volume profile general-purpose is not available in region eu-test\E$`,
+		},
+		{
+			name:       "default profile checked without other values",
+			bootVolume: ibmcloudtypes.BootVolume{EncryptionKey: validEncryptionKey},
+			errorMsg:   `^\Qpath.profile: Invalid value: "": the default volume profile general-purpose is not available in region eu-test\E$`,
+		},
+		{
+			name:       "profile lookup failing",
+			bootVolume: ibmcloudtypes.BootVolume{Profile: failingVolumeProfileName},
+			errorMsg:   `^\Qpath.profile: Internal error: failed to fetch volume profile failing: connection reset\E$`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ibmcloudClient := mock.NewMockAPI(mockCtrl)
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), sdpVolumeProfileName, region).Return(sdpVolumeProfileResponse, nil).AnyTimes()
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), generalPurposeVolumeProfileName, region).Return(nil, &VPCResourceNotFoundError{}).AnyTimes()
+	ibmcloudClient.EXPECT().GetVolumeProfile(gomock.Any(), failingVolumeProfileName, region).Return(nil, errors.New("connection reset")).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, errs := validateBootVolumeProfileAvailability(ibmcloudClient, tc.bootVolume, region, field.NewPath("path"))
+			err := errs.ToAggregate()
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
