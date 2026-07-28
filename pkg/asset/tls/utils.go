@@ -67,6 +67,7 @@ func PublicKeyToPem(key *rsa.PublicKey) ([]byte, error) {
 // EC PARAMETERS that OpenSSL may prepend to EC private keys.
 func PemToPrivateKey(data []byte) (crypto.PrivateKey, error) {
 	rest := data
+	var parseErr error
 	for {
 		var block *pem.Block
 		block, rest = pem.Decode(rest)
@@ -76,13 +77,24 @@ func PemToPrivateKey(data []byte) (crypto.PrivateKey, error) {
 
 		switch block.Type {
 		case "RSA PRIVATE KEY":
-			return x509.ParsePKCS1PrivateKey(block.Bytes)
+			key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+			if err != nil {
+				parseErr = err
+				continue
+			}
+			return key, nil
 		case "EC PRIVATE KEY":
-			return x509.ParseECPrivateKey(block.Bytes)
+			key, err := x509.ParseECPrivateKey(block.Bytes)
+			if err != nil {
+				parseErr = err
+				continue
+			}
+			return key, nil
 		case "PRIVATE KEY":
 			key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 			if err != nil {
-				return nil, err
+				parseErr = err
+				continue
 			}
 			switch key.(type) {
 			case *rsa.PrivateKey, *ecdsa.PrivateKey:
@@ -93,6 +105,9 @@ func PemToPrivateKey(data []byte) (crypto.PrivateKey, error) {
 		default:
 			continue
 		}
+	}
+	if parseErr != nil {
+		return nil, parseErr
 	}
 	return nil, errors.Errorf("could not find a PEM block with a supported private key type")
 }
