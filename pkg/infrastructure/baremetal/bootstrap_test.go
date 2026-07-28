@@ -102,3 +102,76 @@ func TestConfigureDomainArchPreservesOtherFields(t *testing.T) {
 	assert.Equal(t, "hvm", dom.OS.Type.Type, "OS type should remain hvm")
 	assert.Equal(t, "kvm", dom.Type, "domain type should remain kvm")
 }
+
+func TestBuildBootstrapKargs(t *testing.T) {
+	tests := []struct {
+		name           string
+		arch           string
+		fips           bool
+		expectContains []string
+		expectMissing  []string
+	}{
+		{
+			name:           "x86_64 default",
+			arch:           "x86_64",
+			fips:           false,
+			expectContains: []string{"console=ttyS0,115200n8"},
+			expectMissing:  []string{"fips=1"},
+		},
+		{
+			name:           "x86_64 with FIPS",
+			arch:           "x86_64",
+			fips:           true,
+			expectContains: []string{"console=ttyS0,115200n8", "fips=1"},
+		},
+		{
+			name:           "aarch64 default",
+			arch:           "aarch64",
+			fips:           false,
+			expectContains: []string{"console=ttyAMA0,115200"},
+			expectMissing:  []string{"fips=1"},
+		},
+		{
+			name:           "s390x default",
+			arch:           "s390x",
+			fips:           false,
+			expectContains: []string{"console=ttysclp0"},
+			expectMissing:  []string{"fips=1"},
+		},
+		{
+			name:           "ppc64le default",
+			arch:           "ppc64le",
+			fips:           false,
+			expectContains: []string{"console=hvc0"},
+			expectMissing:  []string{"fips=1"},
+		},
+		{
+			name:          "unknown arch returns nil",
+			arch:          "riscv64",
+			fips:          false,
+			expectMissing: []string{"console="},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := buildBootstrapKargs(tc.arch, tc.fips)
+
+			if len(tc.expectContains) == 0 && len(tc.expectMissing) > 0 {
+				assert.Nil(t, result, "kargs should be nil for unknown arch without FIPS")
+				return
+			}
+
+			assert.NotNil(t, result, "kargs should not be nil")
+			kargs := string(result)
+			assert.True(t, kargs[len(kargs)-1] == '\n', "kargs should end with newline")
+
+			for _, s := range tc.expectContains {
+				assert.Contains(t, kargs, s)
+			}
+			for _, s := range tc.expectMissing {
+				assert.NotContains(t, kargs, s)
+			}
+		})
+	}
+}
