@@ -1149,22 +1149,6 @@ func getInstallConfigWithFencing(credentials []*types.Credential) *agentAsset.Op
 	return ic
 }
 
-func getAgentConfigNoHostname() *AgentConfig {
-	a := getNoHostsAgentConfig()
-	a.Config.Hosts = []agent.Host{
-		{
-			Role: "master",
-			Interfaces: []*aiv1beta1.Interface{
-				{
-					Name:       "eth0",
-					MacAddress: "28:d2:44:d2:b2:1a",
-				},
-			},
-		},
-	}
-	return a
-}
-
 func getInstallConfigWithMismatchedNetworkConfig() *agentAsset.OptionalInstallConfig {
 	a := getInstallConfigSingleHost()
 	a.Config.Platform.BareMetal.Hosts[0].NetworkConfig = &apiextv1.JSON{

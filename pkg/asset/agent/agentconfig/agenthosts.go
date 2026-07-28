@@ -374,29 +374,21 @@ func (a *AgentHosts) HostConfigFiles() (HostConfigFileMap, error) {
 		}
 	}
 
-	credsByDir := map[string][]*types.Credential{}
-	var dirOrder []string
-
+	maxNewDirs := len(a.Hosts)
 	for i := range a.FencingCredentialsHost {
 		cred := &a.FencingCredentialsHost[i]
 		dirName := findHostDirForMAC(files, cred.MACAddress)
 		if dirName == "" {
-			dirName = nextAvailableHostDir(files, len(a.Hosts))
+			dirName = fmt.Sprintf("host-%d", maxNewDirs)
+			maxNewDirs++
 			files[filepath.Join(dirName, "mac_addresses")] = []byte(strings.ToLower(cred.MACAddress) + "\n")
 		}
-		if _, ok := credsByDir[dirName]; !ok {
-			dirOrder = append(dirOrder, dirName)
-		}
-		credsByDir[dirName] = append(credsByDir[dirName], cred)
-	}
-
-	for _, dir := range dirOrder {
-		cfg := &FencingCredentialsConfig{Credentials: credsByDir[dir]}
+		cfg := &FencingCredentialsConfig{Credentials: []*types.Credential{cred}}
 		data, err := goyaml.Marshal(cfg)
 		if err != nil {
 			return nil, err
 		}
-		files[filepath.Join(dir, "fencing-credentials.yaml")] = data
+		files[filepath.Join(dirName, "fencing-credentials.yaml")] = data
 	}
 
 	return files, nil
@@ -429,25 +421,4 @@ func findHostDirForMAC(files HostConfigFileMap, macAddress string) string {
 		}
 	}
 	return ""
-}
-
-func nextAvailableHostDir(files HostConfigFileMap, hostCount int) string {
-	existing := map[string]bool{}
-	for key := range files {
-		parts := strings.SplitN(key, "/", 2)
-		if len(parts) > 0 {
-			existing[parts[0]] = true
-		}
-	}
-	// Reserve host-<i> for every host slot, even those that emitted no
-	// files, so a MAC-only fencing credential never reuses that name.
-	for i := 0; i < hostCount; i++ {
-		existing[fmt.Sprintf("host-%d", i)] = true
-	}
-	for i := 0; ; i++ {
-		name := fmt.Sprintf("host-%d", i)
-		if !existing[name] {
-			return name
-		}
-	}
 }
