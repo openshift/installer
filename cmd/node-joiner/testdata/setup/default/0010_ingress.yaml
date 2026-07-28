@@ -1,0 +1,6 @@
+apiVersion: config.openshift.io/v1
+kind: Ingress
+metadata:
+  name: cluster
+spec:
+  domain: apps.ostest.test.metalkube.org

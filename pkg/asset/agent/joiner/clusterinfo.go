@@ -73,6 +73,9 @@ type ClusterInfo struct {
 	Nodes                         *corev1.NodeList
 	ChronyConf                    *igntypes.File
 	BootArtifactsBaseURL          string
+	// IngressDomain is the live application ingress domain from
+	// ingress.config.openshift.io/cluster (spec.appsDomain if set, else spec.domain).
+	IngressDomain string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -126,6 +129,7 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 		ci.retrieveWorkerChronyConfig,
 		ci.retrieveBootArtifactsBaseURL,
 		ci.retrieveNamespace,
+		ci.retrieveIngressDomain,
 	} {
 		if err := f(); err != nil {
 			return err
@@ -208,6 +212,22 @@ func (ci *ClusterInfo) retrieveProxy() error {
 		NoProxy:    noProxy,
 	}
 
+	return nil
+}
+
+// retrieveIngressDomain reads the live cluster ingress domain so Day-2 apps DNS
+// validation can use the current value instead of the install-time default.
+func (ci *ClusterInfo) retrieveIngressDomain() error {
+	ingress, err := ci.OpenshiftClient.ConfigV1().Ingresses().Get(context.Background(), "cluster", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	// Prefer appsDomain when set; otherwise domain (OpenShift apps suffix).
+	if ingress.Spec.AppsDomain != "" {
+		ci.IngressDomain = ingress.Spec.AppsDomain
+		return nil
+	}
+	ci.IngressDomain = ingress.Spec.Domain
 	return nil
 }
 

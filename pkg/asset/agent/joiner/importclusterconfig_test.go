@@ -67,6 +67,22 @@ func TestImportClusterConfig_Generate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "include ingress domain from ClusterInfo",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&ClusterInfo{
+					PlatformType:  v1beta1.BareMetalPlatformType,
+					IngressDomain: "abc.example.com",
+				},
+			},
+			expectedConfig: ClusterConfig{
+				Networking: Networking{
+					UserManagedNetworking: swag.Bool(false),
+				},
+				IngressDomain: "abc.example.com",
+			},
+		},
 	}
 	for _, tc := range cases {
 		icc := &ImportClusterConfig{}

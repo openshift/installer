@@ -477,6 +477,14 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []
 					APIServerURL: "https://api.ostest.test.metalkube.org:6443",
 				},
 			},
+			&configv1.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.IngressSpec{
+					Domain: "apps.ostest.test.metalkube.org",
+				},
+			},
 			&configv1.ImageDigestMirrorSetList{
 				Items: []configv1.ImageDigestMirrorSet{
 					{
@@ -539,7 +547,8 @@ func defaultExpectedClusterInfo() ClusterInfo {
 			URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
 			CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
 		},
-		FIPS: true,
+		FIPS:          true,
+		IngressDomain: "apps.ostest.test.metalkube.org",
 	}
 }
 
@@ -562,4 +571,5 @@ func verifyClusterInfo(t *testing.T, expectedClusterInfo, clusterInfo ClusterInf
 	assert.Equal(t, expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
 	assert.Equal(t, expectedClusterInfo.FIPS, clusterInfo.FIPS)
 	assert.Equal(t, expectedClusterInfo.ChronyConf, clusterInfo.ChronyConf)
+	assert.Equal(t, expectedClusterInfo.IngressDomain, clusterInfo.IngressDomain)
 }

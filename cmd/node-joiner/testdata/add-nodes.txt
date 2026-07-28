@@ -43,4 +43,4 @@ AUTH_TOKEN_EXPIRY=.*
 -- expected/grub.cfg --
 .*fips=1.*
 -- expected/import-cluster-config.json --
-.*"userManagedNetworking": false.*
+.*"userManagedNetworking": false.*"ingressDomain": "apps.ostest.test.metalkube.org".*

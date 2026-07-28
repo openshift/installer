@@ -23,6 +23,9 @@ type ImportClusterConfig struct {
 // ClusterConfig contains any required cluster params.
 type ClusterConfig struct {
 	Networking Networking `json:"networking"`
+	// IngressDomain is consumed by assisted-service as ingress_domain so apps
+	// DNS validation can honor a custom/live ingress domain on Day-2.
+	IngressDomain string `json:"ingressDomain,omitempty"`
 }
 
 // Networking defines the pod network provider in the cluster.
@@ -70,6 +73,7 @@ func (icc *ImportClusterConfig) Generate(_ context.Context, dependencies asset.P
 		Networking: Networking{
 			UserManagedNetworking: agent.GetUserManagedNetworkingByPlatformType(clusterInfo.PlatformType),
 		},
+		IngressDomain: clusterInfo.IngressDomain,
 	}
 	return nil
 }
