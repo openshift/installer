@@ -17,6 +17,125 @@ metadata:
   labels:
     cluster.x-k8s.io/provider: infrastructure-openstack
     cluster.x-k8s.io/v1beta1: v1beta1
+  name: openstackclusteridentities.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: OpenStackClusterIdentity
+    listKind: OpenStackClusterIdentityList
+    plural: openstackclusteridentities
+    shortNames:
+    - osci
+    singular: openstackclusteridentity
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OpenStackClusterIdentity is a cluster-scoped identity that centralizes
+          OpenStack credentials.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OpenStackClusterIdentitySpec defines the desired state for
+              an OpenStackClusterIdentity.
+            properties:
+              namespaceSelector:
+                description: NamespaceSelector limits which namespaces may use this
+                  identity. If nil, all namespaces are allowed.
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+              secretRef:
+                description: SecretRef references the credentials Secret containing
+                  a `clouds.yaml` file.
+                properties:
+                  name:
+                    description: Name of the Secret which contains a `clouds.yaml`
+                      key (and optionally `cacert`).
+                    type: string
+                  namespace:
+                    description: Namespace where the Secret resides.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            required:
+            - secretRef
+            type: object
+        type: object
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: capo-system/capo-serving-cert
+    controller-gen.kubebuilder.io/version: v0.18.0
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-openstack
+    cluster.x-k8s.io/v1beta1: v1beta1
   name: openstackclusters.infrastructure.cluster.x-k8s.io
 spec:
   conversion:
@@ -532,12 +651,15 @@ spec:
                           cloudName:
                             description: CloudName specifies the name of the entry
                               in the clouds.yaml file to use.
+                            minLength: 1
                             type: string
                           name:
                             description: |-
-                              Name is the name of a secret in the same namespace as the resource being provisioned.
-                              The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                              The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                              Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                              or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                              The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                              The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                            minLength: 1
                             type: string
                           region:
                             description: |-
@@ -545,9 +667,18 @@ spec:
                               any value in clouds.yaml. If specified for an OpenStackMachine, its
                               value will be included in providerID.
                             type: string
+                          type:
+                            default: Secret
+                            description: Type specifies the identity reference type.
+                              Defaults to Secret for backward compatibility.
+                            enum:
+                            - Secret
+                            - ClusterIdentity
+                            type: string
                         required:
                         - cloudName
                         - name
+                        - type
                         type: object
                         x-kubernetes-validations:
                         - message: region is immutable
@@ -1307,9 +1438,6 @@ spec:
                     description: port is the port on which the API server is serving.
                     format: int32
                     type: integer
-                required:
-                - host
-                - port
                 type: object
               controlPlaneOmitAvailabilityZone:
                 description: |-
@@ -1542,12 +1670,15 @@ spec:
                   cloudName:
                     description: CloudName specifies the name of the entry in the
                       clouds.yaml file to use.
+                    minLength: 1
                     type: string
                   name:
                     description: |-
-                      Name is the name of a secret in the same namespace as the resource being provisioned.
-                      The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                      The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                      Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                      or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                      The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                      The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                    minLength: 1
                     type: string
                   region:
                     description: |-
@@ -1555,9 +1686,18 @@ spec:
                       any value in clouds.yaml. If specified for an OpenStackMachine, its
                       value will be included in providerID.
                     type: string
+                  type:
+                    default: Secret
+                    description: Type specifies the identity reference type. Defaults
+                      to Secret for backward compatibility.
+                    enum:
+                    - Secret
+                    - ClusterIdentity
+                    type: string
                 required:
                 - cloudName
                 - name
+                - type
                 type: object
                 x-kubernetes-validations:
                 - message: region is immutable
@@ -2461,6 +2601,62 @@ spec:
                 - id
                 - name
                 type: object
+              conditions:
+                description: |-
+                  Conditions defines current service state of the OpenStackCluster.
+                  This field surfaces into Cluster's status.conditions[InfrastructureReady] condition.
+                  The Ready condition must surface issues during the entire lifecycle of the OpenStackCluster
+                  (both during initial provisioning and after the initial provisioning is completed).
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
               controlPlaneSecurityGroup:
                 description: |-
                   ControlPlaneSecurityGroup contains the information about the
@@ -2530,6 +2726,9 @@ spec:
                   Any transient errors that occur during the reconciliation of
                   OpenStackClusters can be added as events to the OpenStackCluster object
                   and/or logged in the controller's output.
+
+                  Deprecated: This field is deprecated and will be removed in a future API version.
+                  Use status.conditions to report failures.
                 type: string
               failureReason:
                 description: |-
@@ -2549,7 +2748,20 @@ spec:
                   Any transient errors that occur during the reconciliation of
                   OpenStackClusters can be added as events to the OpenStackCluster object
                   and/or logged in the controller's output.
+
+                  Deprecated: This field is deprecated and will be removed in a future API version.
+                  Use status.conditions to report failures.
                 type: string
+              initialization:
+                description: Initialization contains information about the initialization
+                  status of the cluster.
+                properties:
+                  provisioned:
+                    description: |-
+                      Provisioned is set to true when the initial provisioning of the cluster infrastructure is completed.
+                      The value of this field is never updated after provisioning is completed.
+                    type: boolean
+                type: object
               network:
                 description: Network contains information about the created OpenStack
                   Network.
@@ -2592,7 +2804,11 @@ spec:
                 type: object
               ready:
                 default: false
-                description: Ready is true when the cluster infrastructure is ready.
+                description: |-
+                  Ready is true when the cluster infrastructure is ready.
+
+                  Deprecated: This field is deprecated and will be removed in a future API version.
+                  Use status.conditions to determine the ready state of the cluster.
                 type: boolean
               router:
                 description: Router describes the default cluster router
@@ -3150,12 +3366,15 @@ spec:
                                   cloudName:
                                     description: CloudName specifies the name of the
                                       entry in the clouds.yaml file to use.
+                                    minLength: 1
                                     type: string
                                   name:
                                     description: |-
-                                      Name is the name of a secret in the same namespace as the resource being provisioned.
-                                      The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                                      The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                                      Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                                      or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                                      The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                                      The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                                    minLength: 1
                                     type: string
                                   region:
                                     description: |-
@@ -3163,9 +3382,18 @@ spec:
                                       any value in clouds.yaml. If specified for an OpenStackMachine, its
                                       value will be included in providerID.
                                     type: string
+                                  type:
+                                    default: Secret
+                                    description: Type specifies the identity reference
+                                      type. Defaults to Secret for backward compatibility.
+                                    enum:
+                                    - Secret
+                                    - ClusterIdentity
+                                    type: string
                                 required:
                                 - cloudName
                                 - name
+                                - type
                                 type: object
                                 x-kubernetes-validations:
                                 - message: region is immutable
@@ -3942,9 +4170,6 @@ spec:
                               is serving.
                             format: int32
                             type: integer
-                        required:
-                        - host
-                        - port
                         type: object
                       controlPlaneOmitAvailabilityZone:
                         description: |-
@@ -4178,12 +4403,15 @@ spec:
                           cloudName:
                             description: CloudName specifies the name of the entry
                               in the clouds.yaml file to use.
+                            minLength: 1
                             type: string
                           name:
                             description: |-
-                              Name is the name of a secret in the same namespace as the resource being provisioned.
-                              The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                              The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                              Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                              or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                              The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                              The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                            minLength: 1
                             type: string
                           region:
                             description: |-
@@ -4191,9 +4419,18 @@ spec:
                               any value in clouds.yaml. If specified for an OpenStackMachine, its
                               value will be included in providerID.
                             type: string
+                          type:
+                            default: Secret
+                            description: Type specifies the identity reference type.
+                              Defaults to Secret for backward compatibility.
+                            enum:
+                            - Secret
+                            - ClusterIdentity
+                            type: string
                         required:
                         - cloudName
                         - name
+                        - type
                         type: object
                         x-kubernetes-validations:
                         - message: region is immutable
@@ -4931,12 +5168,15 @@ spec:
                   cloudName:
                     description: CloudName specifies the name of the entry in the
                       clouds.yaml file to use.
+                    minLength: 1
                     type: string
                   name:
                     description: |-
-                      Name is the name of a secret in the same namespace as the resource being provisioned.
-                      The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                      The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                      Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                      or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                      The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                      The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                    minLength: 1
                     type: string
                   region:
                     description: |-
@@ -4944,9 +5184,18 @@ spec:
                       any value in clouds.yaml. If specified for an OpenStackMachine, its
                       value will be included in providerID.
                     type: string
+                  type:
+                    default: Secret
+                    description: Type specifies the identity reference type. Defaults
+                      to Secret for backward compatibility.
+                    enum:
+                    - Secret
+                    - ClusterIdentity
+                    type: string
                 required:
                 - cloudName
                 - name
+                - type
                 type: object
                 x-kubernetes-validations:
                 - message: region is immutable
@@ -5282,12 +5531,15 @@ spec:
                   cloudName:
                     description: CloudName specifies the name of the entry in the
                       clouds.yaml file to use.
+                    minLength: 1
                     type: string
                   name:
                     description: |-
-                      Name is the name of a secret in the same namespace as the resource being provisioned.
-                      The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                      The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                      Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                      or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                      The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                      The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                    minLength: 1
                     type: string
                   region:
                     description: |-
@@ -5295,9 +5547,18 @@ spec:
                       any value in clouds.yaml. If specified for an OpenStackMachine, its
                       value will be included in providerID.
                     type: string
+                  type:
+                    default: Secret
+                    description: Type specifies the identity reference type. Defaults
+                      to Secret for backward compatibility.
+                    enum:
+                    - Secret
+                    - ClusterIdentity
+                    type: string
                 required:
                 - cloudName
                 - name
+                - type
                 type: object
                 x-kubernetes-validations:
                 - message: region is immutable
@@ -6042,8 +6303,11 @@ spec:
                   type: object
                 type: array
               conditions:
-                description: Conditions provide observations of the operational state
-                  of a Cluster API resource.
+                description: |-
+                  Conditions defines current service state of the OpenStackMachine.
+                  This field surfaces into Machine's status.conditions[InfrastructureReady] condition.
+                  The Ready condition must surface issues during the entire lifecycle of the OpenStackMachine
+                  (both during initial provisioning and after the initial provisioning is completed).
                 items:
                   description: Condition defines an observation of a Cluster API resource
                     operational state.
@@ -6112,11 +6376,27 @@ spec:
                   Any transient errors that occur during the reconciliation of Machines
                   can be added as events to the Machine object and/or logged in the
                   controller's output.
+
+                  Deprecated: This field is deprecated and will be removed in a future API version.
+                  Use status.conditions to report failures.
                 type: string
               failureReason:
-                description: DeprecatedCAPIMachineStatusError defines errors states
-                  for Machine objects.
+                description: |-
+                  FailureReason explains the reson behind a failure.
+
+                  Deprecated: This field is deprecated and will be removed in a future API version.
+                  Use status.conditions to report failures.
                 type: string
+              initialization:
+                description: Initialization contains information about the initialization
+                  status of the machine.
+                properties:
+                  provisioned:
+                    description: |-
+                      Provisioned is set to true when the initial provisioning of the machine infrastructure is completed.
+                      The value of this field is never updated after provisioning is completed.
+                    type: boolean
+                type: object
               instanceID:
                 description: InstanceID is the OpenStack instance ID for this machine.
                 type: string
@@ -6127,7 +6407,11 @@ spec:
                   Instead, it's set by the OpenStackServer controller.
                 type: string
               ready:
-                description: Ready is true when the provider resource is ready.
+                description: |-
+                  Ready is true when the provider resource is ready.
+
+                  Deprecated: This field is deprecated and will be removed in a future API version.
+                  Use status.conditions to determine the ready state of the machine.
                 type: boolean
               resolved:
                 description: |-
@@ -6543,12 +6827,15 @@ spec:
                           cloudName:
                             description: CloudName specifies the name of the entry
                               in the clouds.yaml file to use.
+                            minLength: 1
                             type: string
                           name:
                             description: |-
-                              Name is the name of a secret in the same namespace as the resource being provisioned.
-                              The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                              The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                              Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                              or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                              The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                              The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                            minLength: 1
                             type: string
                           region:
                             description: |-
@@ -6556,9 +6843,18 @@ spec:
                               any value in clouds.yaml. If specified for an OpenStackMachine, its
                               value will be included in providerID.
                             type: string
+                          type:
+                            default: Secret
+                            description: Type specifies the identity reference type.
+                              Defaults to Secret for backward compatibility.
+                            enum:
+                            - Secret
+                            - ClusterIdentity
+                            type: string
                         required:
                         - cloudName
                         - name
+                        - type
                         type: object
                         x-kubernetes-validations:
                         - message: region is immutable
@@ -7295,9 +7591,39 @@ spec:
             required:
             - template
             type: object
+          status:
+            description: OpenStackMachineTemplateStatus defines the observed state
+              of OpenStackMachineTemplate.
+            properties:
+              capacity:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: |-
+                  Capacity defines the resource capacity for this machine.
+                  This value is used for autoscaling from zero operations as defined in:
+                  https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
+                type: object
+              nodeInfo:
+                description: NodeInfo contains information about the node's architecture
+                  and operating system.
+                minProperties: 1
+                properties:
+                  operatingSystem:
+                    description: |-
+                      operatingSystem is a string representing the operating system of the node.
+                      This may be a string like 'linux' or 'windows'.
+                    type: string
+                type: object
+            type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -7496,12 +7822,15 @@ spec:
                   cloudName:
                     description: CloudName specifies the name of the entry in the
                       clouds.yaml file to use.
+                    minLength: 1
                     type: string
                   name:
                     description: |-
-                      Name is the name of a secret in the same namespace as the resource being provisioned.
-                      The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
-                      The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                      Name is the name of a Secret (type=Secret) in the same namespace as the resource being provisioned,
+                      or the name of an OpenStackClusterIdentity (type=ClusterIdentity).
+                      The Secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+                      The Secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+                    minLength: 1
                     type: string
                   region:
                     description: |-
@@ -7509,9 +7838,18 @@ spec:
                       any value in clouds.yaml. If specified for an OpenStackMachine, its
                       value will be included in providerID.
                     type: string
+                  type:
+                    default: Secret
+                    description: Type specifies the identity reference type. Defaults
+                      to Secret for backward compatibility.
+                    enum:
+                    - Secret
+                    - ClusterIdentity
+                    type: string
                 required:
                 - cloudName
                 - name
+                - type
                 type: object
                 x-kubernetes-validations:
                 - message: region is immutable
@@ -8621,10 +8959,22 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - namespaces
   - secrets
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - authentication.k8s.io
@@ -8652,6 +9002,32 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - openstackclusteridentities
+  - openstackclustertemplates
+  - openstackmachinetemplates
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - openstackclusteridentities/status
+  - openstackclusters/status
+  - openstackclustertemplates/status
+  - openstackfloatingippools/status
+  - openstackmachines/status
+  - openstackmachinetemplates/status
+  - openstackservers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
   - openstackclusters
   - openstackfloatingippools
   - openstackmachines
@@ -8664,17 +9040,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - openstackclusters/status
-  - openstackfloatingippools/status
-  - openstackmachines/status
-  - openstackservers/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - ipam.cluster.x-k8s.io
   resources:
@@ -8780,9 +9145,10 @@ spec:
         - --v=2
         - --diagnostics-address=127.0.0.1:8080
         - --insecure-diagnostics=true
+        - --feature-gates=PriorityQueue=${EXP_CAPO_PRIORITY_QUEUE:=false},AutoScaleFromZero=${EXP_CAPO_AUTOSCALE_FROM_ZERO:=false}
         command:
         - /manager
-        image: gcr.io/k8s-staging-capi-openstack/capi-openstack-controller:v0.13.0
+        image: gcr.io/k8s-staging-capi-openstack/capi-openstack-controller:v0.14.6
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
