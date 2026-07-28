@@ -109,7 +109,7 @@ func (s *Service) ReconcileNetwork(openStackCluster *infrav1.OpenStackCluster, c
 		openStackCluster.Status.Network.ID = res.ID
 		openStackCluster.Status.Network.Name = res.Name
 		openStackCluster.Status.Network.Tags = res.Tags
-		s.scope.Logger().V(6).Info("Reusing existing network", "name", res.Name, "id", res.ID)
+		s.scope.Logger().V(5).Info("Reusing existing network", "name", res.Name, "id", res.ID)
 		return nil
 	}
 
@@ -201,7 +201,7 @@ func (s *Service) ReconcileSubnet(openStackCluster *infrav1.OpenStackCluster, cl
 		}
 	} else if len(subnetList) == 1 {
 		subnet = &subnetList[0]
-		s.scope.Logger().V(6).Info("Reusing existing subnet", "name", subnet.Name, "id", subnet.ID)
+		s.scope.Logger().V(5).Info("Reusing existing subnet", "name", subnet.Name, "id", subnet.ID)
 
 		if err := s.updateSubnetDNSNameservers(openStackCluster, subnet); err != nil {
 			return err

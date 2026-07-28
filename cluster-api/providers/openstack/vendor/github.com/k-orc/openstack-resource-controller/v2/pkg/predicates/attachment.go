@@ -39,7 +39,7 @@ func newServerResourceChanged(
 	getServer := func(obj client.Object, event string) *orcv1alpha1.Server {
 		server, ok := obj.(*orcv1alpha1.Server)
 		if !ok {
-			log.Info(fmt.Sprintf("%s got unexpected object type", functionName),
+			log.V(logging.Debug).Info(fmt.Sprintf("%s got unexpected object type", functionName),
 				"got", fmt.Sprintf("%T", obj),
 				"expected", fmt.Sprintf("%T", &orcv1alpha1.Server{}),
 				"event", event)

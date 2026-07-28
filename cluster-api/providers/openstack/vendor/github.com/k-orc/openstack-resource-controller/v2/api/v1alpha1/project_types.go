@@ -51,10 +51,6 @@ type FilterByKeystoneTags struct {
 	NotTagsAny []KeystoneTag `json:"notTagsAny,omitempty"`
 }
 
-// +kubebuilder:validation:MinLength:=1
-// +kubebuilder:validation:MaxLength:=64
-type KeystoneName string
-
 // ProjectResourceSpec contains the desired state of a project
 type ProjectResourceSpec struct {
 	// name will be the name of the created resource. If not specified, the

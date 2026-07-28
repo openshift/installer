@@ -93,7 +93,7 @@ func RouterFilterToListOpts(routerFilter *infrav1.RouterFilter) routers.ListOpts
 
 func ImageFilterToListOpts(imageFilter *infrav1.ImageFilter) (listOpts images.ListOpts) {
 	if imageFilter == nil {
-		return
+		return listOpts
 	}
 
 	if imageFilter.Name != nil && *imageFilter.Name != "" {
@@ -103,5 +103,5 @@ func ImageFilterToListOpts(imageFilter *infrav1.ImageFilter) (listOpts images.Li
 	if len(imageFilter.Tags) > 0 {
 		listOpts.Tags = imageFilter.Tags
 	}
-	return
+	return listOpts
 }
