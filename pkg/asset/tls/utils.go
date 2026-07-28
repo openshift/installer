@@ -63,31 +63,38 @@ func PublicKeyToPem(key *rsa.PublicKey) ([]byte, error) {
 }
 
 // PemToPrivateKey converts a PEM data block to a private key (RSA or ECDSA).
+// It iterates through all PEM blocks to tolerate non-key blocks such as
+// EC PARAMETERS that OpenSSL may prepend to EC private keys.
 func PemToPrivateKey(data []byte) (crypto.PrivateKey, error) {
-	block, _ := pem.Decode(data)
-	if block == nil {
-		return nil, errors.Errorf("could not find a PEM block in the private key")
-	}
+	rest := data
+	for {
+		var block *pem.Block
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
 
-	switch block.Type {
-	case "RSA PRIVATE KEY":
-		return x509.ParsePKCS1PrivateKey(block.Bytes)
-	case "EC PRIVATE KEY":
-		return x509.ParseECPrivateKey(block.Bytes)
-	case "PRIVATE KEY":
-		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-		switch key.(type) {
-		case *rsa.PrivateKey, *ecdsa.PrivateKey:
-			return key, nil
+		switch block.Type {
+		case "RSA PRIVATE KEY":
+			return x509.ParsePKCS1PrivateKey(block.Bytes)
+		case "EC PRIVATE KEY":
+			return x509.ParseECPrivateKey(block.Bytes)
+		case "PRIVATE KEY":
+			key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+			if err != nil {
+				return nil, err
+			}
+			switch key.(type) {
+			case *rsa.PrivateKey, *ecdsa.PrivateKey:
+				return key, nil
+			default:
+				return nil, fmt.Errorf("unsupported PKCS#8 key type: %T", key)
+			}
 		default:
-			return nil, fmt.Errorf("unsupported PKCS#8 key type: %T", key)
+			continue
 		}
-	default:
-		return nil, fmt.Errorf("unsupported PEM block type: %s", block.Type)
 	}
+	return nil, errors.Errorf("could not find a PEM block with a supported private key type")
 }
 
 // PemToPublicKey converts a data block to rsa.PublicKey.
