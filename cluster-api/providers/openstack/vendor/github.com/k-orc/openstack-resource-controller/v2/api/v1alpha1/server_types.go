@@ -170,6 +170,12 @@ type ServerResourceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="availabilityZone is immutable"
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
+	// keypairRef is a reference to a KeyPair object. The server will be
+	// created with this keypair for SSH access.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="keypairRef is immutable"
+	KeypairRef *KubernetesNameRef `json:"keypairRef,omitempty"`
+
 	// tags is a list of tags which will be applied to the server.
 	// +kubebuilder:validation:MaxItems:=50
 	// +listType=set

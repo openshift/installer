@@ -1,0 +1,7 @@
+# Requires a go version bump to fix (golang.org/x/net >= v0.55.0).
+# These vulnerabilities require a compromised OpenStack or Kubernetes API
+# server to exploit, which is not something we defend against.
+# https://pkg.go.dev/vuln/GO-2026-5026
+GO-2026-5026
+# https://pkg.go.dev/vuln/GO-2026-4918
+GO-2026-4918

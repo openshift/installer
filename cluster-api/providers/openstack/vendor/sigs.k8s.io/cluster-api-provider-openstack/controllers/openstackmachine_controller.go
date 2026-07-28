@@ -51,6 +51,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/cloud/services/loadbalancer"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/cloud/services/networking"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
+	controllers "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/controllers"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 )
 
@@ -77,6 +78,8 @@ const (
 // +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddresses;ipaddresses/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackclusteridentities,verbs=get;list;watch
 
 func (r *OpenStackMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
@@ -120,7 +123,7 @@ func (r *OpenStackMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
-	infraCluster, err := r.getInfraCluster(ctx, cluster, openStackMachine)
+	infraCluster, err := controllers.GetInfraCluster(ctx, r.Client, cluster)
 	if err != nil {
 		return ctrl.Result{}, errors.New("error getting infra provider cluster")
 	}
@@ -380,6 +383,7 @@ func (r *OpenStackMachineReconciler) reconcileNormal(ctx context.Context, scope 
 
 	if instanceStatus == nil {
 		v1beta1conditions.MarkFalse(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceDeletedReason, clusterv1beta1.ConditionSeverityError, infrav1.ServerUnexpectedDeletedMessage)
+		v1beta1conditions.MarkFalse(openStackMachine, clusterv1beta1.ReadyCondition, infrav1.InstanceDeletedReason, clusterv1beta1.ConditionSeverityError, infrav1.ServerUnexpectedDeletedMessage)
 		openStackMachine.SetFailure(capoerrors.DeprecatedCAPIUpdateMachineError, errors.New(infrav1.ServerUnexpectedDeletedMessage)) //nolint:staticcheck // This error is not used as an error
 		return ctrl.Result{}, nil
 	}
@@ -435,6 +439,22 @@ func (r *OpenStackMachineReconciler) reconcileMachineState(scope *scope.WithLogg
 		openStackMachine.Spec.ProviderID = ptr.To(fmt.Sprintf("openstack://%s/%s", region, *openStackServer.Status.InstanceID))
 		openStackMachine.Status.InstanceID = openStackServer.Status.InstanceID
 		openStackMachine.Status.Ready = true
+
+		// Set initialization.provisioned to true when initial infrastructure provisioning is complete.
+		// This field should only be set once and never changed afterward, as per CAPI v1beta2 contract.
+		// We set it here when the machine becomes ACTIVE for the first time.
+		if openStackMachine.Status.Initialization == nil {
+			openStackMachine.Status.Initialization = &infrav1.MachineInitialization{}
+		}
+		if !openStackMachine.Status.Initialization.Provisioned {
+			openStackMachine.Status.Initialization.Provisioned = true
+			scope.Logger().Info("Initial machine infrastructure provisioning completed")
+		}
+
+		// Set the Ready condition to True when infrastructure is ready.
+		// This condition surfaces into Machine's status.conditions[InfrastructureReady].
+		// It reflects the current operational state of the machine infrastructure.
+		v1beta1conditions.MarkTrue(openStackMachine, clusterv1beta1.ReadyCondition)
 	case infrav1.InstanceStateError:
 		// If the machine has a NodeRef then it must have been working at some point,
 		// so the error could be something temporary.
@@ -445,20 +465,24 @@ func (r *OpenStackMachineReconciler) reconcileMachineState(scope *scope.WithLogg
 			openStackMachine.SetFailure(capoerrors.DeprecatedCAPIUpdateMachineError, err)
 		}
 		v1beta1conditions.MarkFalse(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceStateErrorReason, clusterv1beta1.ConditionSeverityError, "")
+		v1beta1conditions.MarkFalse(openStackMachine, clusterv1beta1.ReadyCondition, infrav1.InstanceStateErrorReason, clusterv1beta1.ConditionSeverityError, "Instance is in ERROR state")
 		return &ctrl.Result{}
 	case infrav1.InstanceStateDeleted:
 		// we should avoid further actions for DELETED VM
 		scope.Logger().Info("Machine instance state is DELETED, no actions")
 		v1beta1conditions.MarkFalse(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceDeletedReason, clusterv1beta1.ConditionSeverityError, "")
+		v1beta1conditions.MarkFalse(openStackMachine, clusterv1beta1.ReadyCondition, infrav1.InstanceDeletedReason, clusterv1beta1.ConditionSeverityError, "Instance has been deleted")
 		return &ctrl.Result{}
 	case infrav1.InstanceStateBuild, infrav1.InstanceStateUndefined:
 		scope.Logger().Info("Waiting for instance to become ACTIVE", "id", openStackServer.Status.InstanceID, "status", openStackServer.Status.InstanceState)
+		v1beta1conditions.MarkFalse(openStackMachine, clusterv1beta1.ReadyCondition, infrav1.InstanceNotReadyReason, clusterv1beta1.ConditionSeverityInfo, "Instance is building")
 		return &ctrl.Result{RequeueAfter: waitForBuildingInstanceToReconcile}
 	default:
 		// The other state is normal (for example, migrating, shutoff) but we don't want to proceed until it's ACTIVE
 		// due to potential conflict or unexpected actions
 		scope.Logger().Info("Waiting for instance to become ACTIVE", "id", openStackServer.Status.InstanceID, "status", openStackServer.Status.InstanceState)
 		v1beta1conditions.MarkUnknown(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceNotReadyReason, "Instance state is not handled: %v", ptr.Deref(openStackServer.Status.InstanceState, infrav1.InstanceStateUndefined))
+		v1beta1conditions.MarkUnknown(openStackMachine, clusterv1beta1.ReadyCondition, infrav1.InstanceNotReadyReason, "Instance state is: %v", ptr.Deref(openStackServer.Status.InstanceState, infrav1.InstanceStateUndefined))
 
 		return &ctrl.Result{RequeueAfter: waitForInstanceBecomeActiveToReconcile}
 	}
@@ -480,13 +504,15 @@ func (r *OpenStackMachineReconciler) getMachineServer(ctx context.Context, openS
 
 // openStackMachineSpecToOpenStackServerSpec converts an OpenStackMachineSpec to an OpenStackServerSpec.
 // It returns the OpenStackServerSpec object and an error if there is any.
-func openStackMachineSpecToOpenStackServerSpec(openStackMachineSpec *infrav1.OpenStackMachineSpec, identityRef infrav1.OpenStackIdentityReference, tags []string, failureDomain string, userDataRef *corev1.LocalObjectReference, defaultSecGroup *string, clusterNetwork *infrav1.NetworkStatusWithSubnets) (*infrav1alpha1.OpenStackServerSpec, error) {
+func openStackMachineSpecToOpenStackServerSpec(openStackMachineSpec *infrav1.OpenStackMachineSpec, identityRef infrav1.OpenStackIdentityReference, tags []string, failureDomain string, userDataRef *corev1.LocalObjectReference, defaultSecGroup *string, openStackCluster *infrav1.OpenStackCluster) (*infrav1alpha1.OpenStackServerSpec, error) {
 	// Determine default network ID if the cluster status exposes one.
 	var defaultNetworkID string
-	if clusterNetwork != nil {
-		defaultNetworkID = clusterNetwork.ID
+	if openStackCluster != nil {
+		clusterNetwork := openStackCluster.Status.Network
+		if clusterNetwork != nil {
+			defaultNetworkID = clusterNetwork.ID
+		}
 	}
-
 	// If no cluster network is available AND the machine spec did not define any ports with a network, we cannot choose a network.
 	if defaultNetworkID == "" && len(openStackMachineSpec.Ports) == 0 {
 		return nil, capoerrors.Terminal(infrav1.InvalidMachineSpecReason, "no network configured: cluster network is missing and machine spec does not define ports with a network")
@@ -532,22 +558,38 @@ func openStackMachineSpecToOpenStackServerSpec(openStackMachineSpec *infrav1.Ope
 	if len(openStackMachineSpec.Ports) == 0 {
 		serverPorts = make([]infrav1.PortOpts, 1)
 	}
-	for i := range serverPorts {
-		// Only inject the default network when we actually have an ID.
-		if serverPorts[i].Network == nil && defaultNetworkID != "" {
-			serverPorts[i].Network = &infrav1.NetworkParam{
-				ID: &defaultNetworkID,
+
+	var clusterSubnets []infrav1.FixedIP
+	if len(openStackCluster.Spec.Subnets) > 0 {
+		clusterSubnets = make([]infrav1.FixedIP, len(openStackCluster.Spec.Subnets))
+		for idx, sn := range openStackCluster.Spec.Subnets {
+			clusterSubnets[idx] = infrav1.FixedIP{
+				Subnet: &sn,
 			}
 		}
-		if len(serverPorts[i].SecurityGroups) == 0 && defaultSecGroup != nil {
-			serverPorts[i].SecurityGroups = []infrav1.SecurityGroupParam{
+	}
+
+	for i := range serverPorts {
+		serverPort := &serverPorts[i]
+		// Only inject the default network when we actually have an ID.
+		if serverPort.Network == nil && defaultNetworkID != "" {
+			serverPort.Network = &infrav1.NetworkParam{
+				ID: &openStackCluster.Status.Network.ID,
+			}
+			serverPort.FixedIPs = clusterSubnets
+		}
+		// Only inject the default SG when portSecurity is not disabled,
+		// there are no SGs passed by user and defaultSecGroup is set
+		portSecurityDisabled := serverPort.DisablePortSecurity != nil && *serverPort.DisablePortSecurity
+		if !portSecurityDisabled && len(serverPort.SecurityGroups) == 0 && defaultSecGroup != nil {
+			serverPort.SecurityGroups = []infrav1.SecurityGroupParam{
 				{
 					ID: defaultSecGroup,
 				},
 			}
 		}
 		if len(openStackMachineSpec.SecurityGroups) > 0 {
-			serverPorts[i].SecurityGroups = append(serverPorts[i].SecurityGroups, openStackMachineSpec.SecurityGroups...)
+			serverPort.SecurityGroups = append(serverPort.SecurityGroups, openStackMachineSpec.SecurityGroups...)
 		}
 	}
 	openStackServerSpec.Ports = serverPorts
@@ -601,7 +643,7 @@ func (r *OpenStackMachineReconciler) getOrCreateMachineServer(ctx context.Contex
 			}
 			return openStackCluster.Spec.IdentityRef
 		}()
-		machineServerSpec, err := openStackMachineSpecToOpenStackServerSpec(&openStackMachine.Spec, identityRef, compute.InstanceTags(&openStackMachine.Spec, openStackCluster), failureDomain, userDataRef, getManagedSecurityGroup(openStackCluster, machine), openStackCluster.Status.Network)
+		machineServerSpec, err := openStackMachineSpecToOpenStackServerSpec(&openStackMachine.Spec, identityRef, compute.InstanceTags(&openStackMachine.Spec, openStackCluster), failureDomain, userDataRef, getManagedSecurityGroup(openStackCluster, machine), openStackCluster)
 		if err != nil {
 			return nil, err
 		}
@@ -783,16 +825,4 @@ func (r *OpenStackMachineReconciler) requestsForCluster(ctx context.Context, log
 		}
 	}
 	return result
-}
-
-func (r *OpenStackMachineReconciler) getInfraCluster(ctx context.Context, cluster *clusterv1.Cluster, openStackMachine *infrav1.OpenStackMachine) (*infrav1.OpenStackCluster, error) {
-	openStackCluster := &infrav1.OpenStackCluster{}
-	openStackClusterName := client.ObjectKey{
-		Namespace: openStackMachine.Namespace,
-		Name:      cluster.Spec.InfrastructureRef.Name,
-	}
-	if err := r.Client.Get(ctx, openStackClusterName, openStackCluster); err != nil {
-		return nil, err
-	}
-	return openStackCluster, nil
 }

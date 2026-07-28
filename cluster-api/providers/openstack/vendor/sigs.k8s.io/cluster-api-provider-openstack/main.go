@@ -26,6 +26,7 @@ import (
 
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -33,13 +34,16 @@ import (
 	logsv1 "k8s.io/component-base/logs/api/v1"
 	_ "k8s.io/component-base/logs/json/register"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
+	"sigs.k8s.io/cluster-api/controllers/crdmigrator"
 	"sigs.k8s.io/cluster-api/util/flags"
 	ctrl "sigs.k8s.io/controller-runtime"
 	cache "sigs.k8s.io/controller-runtime/pkg/cache"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	clientconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -48,6 +52,7 @@ import (
 	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/controllers"
+	"sigs.k8s.io/cluster-api-provider-openstack/feature"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
@@ -72,30 +77,33 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 
 	// flags.
-	managerOptions              = flags.ManagerOptions{}
-	enableLeaderElection        bool
-	leaderElectionLeaseDuration time.Duration
-	leaderElectionRenewDeadline time.Duration
-	leaderElectionRetryPeriod   time.Duration
-	watchNamespace              string
-	watchFilterValue            string
-	profilerAddress             string
-	openStackClusterConcurrency int
-	openStackMachineConcurrency int
-	syncPeriod                  time.Duration
-	restConfigQPS               float32
-	restConfigBurst             int
-	webhookPort                 int
-	webhookCertDir              string
-	healthAddr                  string
-	lbProvider                  string
-	caCertsPath                 string
-	showVersion                 bool
-	scopeCacheMaxSize           int
-	logOptions                  = logs.NewOptions()
+	managerOptions                      = flags.ManagerOptions{}
+	enableLeaderElection                bool
+	leaderElectionLeaseDuration         time.Duration
+	leaderElectionRenewDeadline         time.Duration
+	leaderElectionRetryPeriod           time.Duration
+	watchNamespace                      string
+	watchFilterValue                    string
+	profilerAddress                     string
+	openStackClusterConcurrency         int
+	openStackMachineConcurrency         int
+	openStackMachineTemplateConcurrency int
+	syncPeriod                          time.Duration
+	restConfigQPS                       float32
+	restConfigBurst                     int
+	webhookPort                         int
+	webhookCertDir                      string
+	healthAddr                          string
+	lbProvider                          string
+	caCertsPath                         string
+	showVersion                         bool
+	scopeCacheMaxSize                   int
+	skipCRDMigrationPhases              []string
+	logOptions                          = logs.NewOptions()
 )
 
 func init() {
+	_ = apiextensionsv1.AddToScheme(scheme)
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 	_ = ipamv1.AddToScheme(scheme)
@@ -141,6 +149,9 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&openStackMachineConcurrency, "openstackmachine-concurrency", 10,
 		"Number of OpenStackMachines to process simultaneously")
 
+	fs.IntVar(&openStackMachineTemplateConcurrency, "openstackmachinetemplate-concurrency", 10,
+		"Number of OpenStackMachineTemplates to process simultaneously")
+
 	fs.DurationVar(&syncPeriod, "sync-period", 10*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
@@ -166,12 +177,21 @@ func InitFlags(fs *pflag.FlagSet) {
 
 	fs.IntVar(&scopeCacheMaxSize, "scope-cache-max-size", 10, "The maximum credentials count the operator should keep in cache. Setting this value to 0 means no cache.")
 
+	fs.StringArrayVar(&skipCRDMigrationPhases, "skip-crd-migration-phases", []string{},
+		"List of CRD migration phases to skip. Valid values are: StorageVersionMigration, CleanupManagedFields.")
 	fs.BoolVar(&showVersion, "version", false, "Show current version and exit.")
+
+	feature.MutableGates.AddFlag(fs)
 }
 
 // Add RBAC for the authorized diagnostics endpoint.
 // +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
 // +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
+// Setup CRD migrator
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions/status,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackclusters;openstackmachines;openstackmachinetemplates;openstackclustertemplates;openstackfloatingippools;openstackservers;openstackclusteridentities,verbs=get;list;watch;patch;update
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackclusters/status;openstackmachines/status;openstackmachinetemplates/status;openstackclustertemplates/status;openstackfloatingippools/status;openstackservers/status;openstackclusteridentities/status,verbs=get;patch;update
 
 func main() {
 	InitFlags(pflag.CommandLine)
@@ -199,7 +219,7 @@ func main() {
 		}()
 	}
 
-	cfg, err := config.GetConfigWithContext(os.Getenv("KUBECONTEXT"))
+	cfg, err := clientconfig.GetConfigWithContext(os.Getenv("KUBECONTEXT"))
 	if err != nil {
 		setupLog.Error(err, "unable to get kubeconfig")
 		os.Exit(1)
@@ -228,6 +248,8 @@ func main() {
 			watchNamespace: {},
 		}
 	}
+
+	setupLog.Info(fmt.Sprintf("Feature gates: %+v\n", feature.Gates))
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:           scheme,
@@ -258,6 +280,9 @@ func main() {
 		),
 		HealthProbeBindAddress:        healthAddr,
 		LeaderElectionReleaseOnCancel: true,
+		Controller: config.Controller{
+			UsePriorityQueue: ptr.To[bool](feature.Gates.Enabled(feature.PriorityQueue)),
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -295,6 +320,43 @@ func setupChecks(mgr ctrl.Manager) {
 
 func setupReconcilers(ctx context.Context, mgr ctrl.Manager, caCerts []byte) {
 	scopeFactory := scope.NewFactory(scopeCacheMaxSize)
+
+	crdMigratorConfig := map[client.Object]crdmigrator.ByObjectConfig{
+		&infrav1.OpenStackCluster{}: {
+			UseCache: true,
+		},
+		&infrav1.OpenStackMachine{}: {
+			UseCache: true,
+		},
+		&infrav1.OpenStackMachineTemplate{}: {
+			UseCache: true,
+		},
+		&infrav1.OpenStackClusterTemplate{}: {
+			UseCache: true,
+		},
+		&infrav1alpha1.OpenStackFloatingIPPool{}: {
+			UseCache: true,
+		},
+		&infrav1alpha1.OpenStackServer{}: {
+			UseCache: true,
+		},
+		&infrav1alpha1.OpenStackClusterIdentity{}: {
+			UseCache: true,
+		},
+	}
+	crdMigratorSkipPhases := []crdmigrator.Phase{}
+	for _, p := range skipCRDMigrationPhases {
+		crdMigratorSkipPhases = append(crdMigratorSkipPhases, crdmigrator.Phase(p))
+	}
+	if err := (&crdmigrator.CRDMigrator{
+		Client:                 mgr.GetClient(),
+		APIReader:              mgr.GetAPIReader(),
+		SkipCRDMigrationPhases: crdMigratorSkipPhases,
+		Config:                 crdMigratorConfig,
+	}).SetupWithManager(ctx, mgr, concurrency(1)); err != nil {
+		setupLog.Error(err, "unable to setup CRD migrator")
+		os.Exit(1)
+	}
 
 	if err := (&controllers.OpenStackClusterReconciler{
 		Client:           mgr.GetClient(),
@@ -336,6 +398,19 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, caCerts []byte) {
 	}).SetupWithManager(ctx, mgr, concurrency(openStackMachineConcurrency)); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackServer")
 		os.Exit(1)
+	}
+
+	if feature.Gates.Enabled(feature.AutoScaleFromZero) {
+		if err := (&controllers.OpenStackMachineTemplateReconciler{
+			Client:           mgr.GetClient(),
+			Recorder:         mgr.GetEventRecorderFor("openstackmachinetemplate-controller"),
+			WatchFilterValue: watchFilterValue,
+			ScopeFactory:     scopeFactory,
+			CaCertificates:   caCerts,
+		}).SetupWithManager(ctx, mgr, concurrency(openStackMachineTemplateConcurrency)); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "OpenStackMachineTemplate")
+			os.Exit(1)
+		}
 	}
 }
 

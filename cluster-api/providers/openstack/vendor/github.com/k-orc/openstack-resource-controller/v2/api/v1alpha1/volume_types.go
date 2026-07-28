@@ -42,6 +42,12 @@ type VolumeResourceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="volumeTypeRef is immutable"
 	VolumeTypeRef *KubernetesNameRef `json:"volumeTypeRef,omitempty"`
 
+	// availabilityZone is the availability zone in which to create the volume.
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="availabilityZone is immutable"
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
+
 	// metadata key and value pairs to be associated with the volume.
 	// NOTE(mandre): gophercloud can't clear all metadata at the moment, we thus can't allow
 	// mutability for metadata as we might end up in a state that is not reconciliable
@@ -69,6 +75,11 @@ type VolumeFilter struct {
 	// +kubebuilder:validation:Minimum=1
 	// +optional
 	Size *int32 `json:"size,omitempty"`
+
+	// availabilityZone is the availability zone of the existing resource
+	// +kubebuilder:validation:MaxLength:=255
+	// +optional
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
 }
 
 type VolumeAttachmentStatus struct {

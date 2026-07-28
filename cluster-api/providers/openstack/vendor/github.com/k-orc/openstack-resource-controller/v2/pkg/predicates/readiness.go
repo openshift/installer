@@ -41,7 +41,7 @@ func NewBecameAvailable(log logr.Logger, specimen orcv1alpha1.ObjectWithConditio
 	getObjWithConditions := func(obj client.Object, event string) orcv1alpha1.ObjectWithConditions {
 		objWithConditions, ok := obj.(orcv1alpha1.ObjectWithConditions)
 		if !ok {
-			log.Info("ReadinessChanged got event object which does not implement ObjectWithConditions",
+			log.V(logging.Debug).Info("ReadinessChanged got event object which does not implement ObjectWithConditions",
 				"got", fmt.Sprintf("%T", obj),
 				"expected", fmt.Sprintf("%T", specimen),
 				"event", event)
