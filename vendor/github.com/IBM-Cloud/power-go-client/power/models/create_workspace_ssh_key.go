@@ -86,7 +86,7 @@ func (m *CreateWorkspaceSSHKey) validateSSHKey(formats strfmt.Registry) error {
 	return nil
 }
 
-var createWorkspaceSshKeyTypeVisibilityPropEnum []interface{}
+var createWorkspaceSshKeyTypeVisibilityPropEnum []any
 
 func init() {
 	var res []string

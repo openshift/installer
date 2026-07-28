@@ -44,7 +44,7 @@ const (
 )
 
 // for schema
-var softwareTierEnum []interface{}
+var softwareTierEnum []any
 
 func init() {
 	var res []SoftwareTier

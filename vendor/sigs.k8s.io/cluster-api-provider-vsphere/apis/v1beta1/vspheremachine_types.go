@@ -81,6 +81,10 @@ const (
 	// Note: This reason is used only in supervisor mode.
 	VSphereMachineVirtualMachinePoweringOnV1Beta2Reason = "PoweringOn"
 
+	// VSphereMachineVirtualMachineWaitingForVirtualMachineGroupV1Beta2Reason surfaces that the VirtualMachine
+	// is waiting for its corresponding VirtualMachineGroup to be created and to include this VM as a member.
+	VSphereMachineVirtualMachineWaitingForVirtualMachineGroupV1Beta2Reason = "WaitingForVirtualMachineGroup"
+
 	// VSphereMachineVirtualMachineWaitingForNetworkAddressV1Beta2Reason surfaces when the VirtualMachine that is controlled
 	// by the VSphereMachine waiting for the machine network settings to be reported after machine being powered on.
 	VSphereMachineVirtualMachineWaitingForNetworkAddressV1Beta2Reason = "WaitingForNetworkAddress"

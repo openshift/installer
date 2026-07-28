@@ -17,6 +17,11 @@ func (in *MachinePool) DeepCopyInto(out *MachinePool) {
 		*out = new(RootVolume)
 		**out = **in
 	}
+	if in.AdditionalSecurityGroupIDs != nil {
+		in, out := &in.AdditionalSecurityGroupIDs, &out.AdditionalSecurityGroupIDs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

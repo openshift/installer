@@ -25,11 +25,15 @@ import (
 )
 
 const (
-	ImageCreatedReason       = "ImageCreated"
-	ImageStateCreated        = "Image has been created"
-	ImageCreationErrorReason = "ImageCreationError"
-	ImageStateFailedToCreate = "Failed to create image"
-	InfraEnvNameLabel        = "infraenvs.agent-install.openshift.io"
+	ImageCreatedReason                = "ImageCreated"
+	ImageStateCreated                 = "Image has been created"
+	ImageCreationErrorReason          = "ImageCreationError"
+	ImageStateFailedToCreate          = "Failed to create image"
+	InfraEnvNameLabel                 = "infraenvs.agent-install.openshift.io"
+	MissingClusterDeploymentReason    = "MissingClusterDeployment"
+	MissingClusterDeploymentReference = "ClusterDeployment is missing"
+	InfraEnvAvailableReason           = "InfraEnvAvailable"
+	InfraEnvAvailableMessage          = "InfraEnv is available"
 )
 
 // ClusterReference represents a Cluster Reference. It has enough information to retrieve cluster
@@ -44,9 +48,13 @@ type ClusterReference struct {
 }
 
 const (
-	ImageCreatedCondition conditionsv1.ConditionType = "ImageCreated"
+	ImageCreatedCondition      conditionsv1.ConditionType = "ImageCreated"
+	ClusterDeploymentReference conditionsv1.ConditionType = "ClusterDeploymentReference"
 )
 
+// InfraEnvSpec defines the desired configuration for the infrastructure environment, including
+// the discovery image type, network settings, and host discovery parameters. These settings are
+// baked into the discovery ISO/iPXE configuration and affect all hosts that boot from this InfraEnv.
 type InfraEnvSpec struct {
 	// Proxy defines the proxy settings for agents and clusters that use the InfraEnv. If
 	// unset, the agents and clusters will not be configured to use a proxy.
@@ -70,8 +78,10 @@ type InfraEnvSpec struct {
 	// +optional
 	AgentLabels map[string]string `json:"agentLabels,omitempty"`
 
-	// NmstateConfigLabelSelector associates NMStateConfigs for hosts that are considered part
-	// of this installation environment.
+	// NMStateConfigLabelSelector uses label matching to associate NMStateConfig resources with this InfraEnv.
+	// Hosts that boot from this InfraEnv and match the NMStateConfig's MAC address will apply the corresponding
+	// static network configuration. This enables pre-configuring network settings for specific hosts before
+	// they boot from the discovery image.
 	// +optional
 	NMStateConfigLabelSelector metav1.LabelSelector `json:"nmStateConfigLabelSelector,omitempty"`
 
@@ -86,7 +96,10 @@ type InfraEnvSpec struct {
 	// +optional
 	IgnitionConfigOverride string `json:"ignitionConfigOverride,omitempty"`
 
-	// CpuArchitecture specifies the target CPU architecture. Default is x86_64
+	// CpuArchitecture specifies the CPU architecture for hosts that will boot from this InfraEnv's
+	// discovery image. Valid values: 'x86_64' (default, Intel/AMD 64-bit), 'aarch64' (ARM 64-bit),
+	// 'arm64' (alias for aarch64), 'ppc64le' (IBM POWER), 's390x' (IBM Z). The architecture must
+	// match both the physical hardware and the desired OpenShift release architecture.
 	// +kubebuilder:default=x86_64
 	// +optional
 	CpuArchitecture string `json:"cpuArchitecture,omitempty"`
@@ -116,11 +129,15 @@ type InfraEnvSpec struct {
 	// OSImageVersion is the version of OS image to use when generating the InfraEnv.
 	// The version should refer to an OSImage specified in the AgentServiceConfig
 	// (i.e. OSImageVersion should equal to an OpenshiftVersion in OSImages list).
-	// Note: OSImageVersion can't be specified along with ClusterRef.
+	// Note: OSImageVersion can't be specified along with ClusterRef while creating an InfraEnv.
 	// +optional
 	OSImageVersion string `json:"osImageVersion,omitempty"`
 
-	// MirrorRegistryRef is a reference to a given MirrorRegistry ConfigMap that holds the registries toml data
+	// MirrorRegistryRef references a ConfigMap containing mirror registry configuration in TOML format.
+	// The referenced ConfigMap should contain 'registries.conf' and optionally 'ca-bundle.crt' keys.
+	// This configuration is embedded into the discovery image so that agents can pull container images
+	// from mirror registries during the discovery and installation process. For the installed cluster
+	// to use mirror registries, you must also configure mirrorRegistryRef on the AgentClusterInstall.
 	// +optional
 	MirrorRegistryRef *v1beta1.MirrorRegistryConfigMapReference `json:"mirrorRegistryRef,omitempty"`
 
@@ -130,6 +147,30 @@ type InfraEnvSpec struct {
 	// - minimal-iso: A lightweight ISO that retrieves the remainder of the RHCOS root file system (rootfs) dynamically from the Internet
 	// +optional
 	ImageType models.ImageType `json:"imageType,omitempty"`
+
+	// AgentApproval defines configuration for automatic approval of Agents
+	// discovered by this InfraEnv.
+	// +optional
+	AgentApproval *AgentApproval `json:"agentApproval,omitempty"`
+
+	// NetworkDiscoveryDelaySeconds is the number of seconds to wait before mapping host MACs
+	// to interfaces when applying static network config on minimal ISO.
+	// This can be used on hosts that need time to discover their NICs.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	NetworkDiscoveryDelaySeconds *int64 `json:"networkDiscoveryDelaySeconds,omitempty"`
+}
+
+// AgentApproval defines configuration for automatic approval of Agents
+// discovered by this InfraEnv.
+type AgentApproval struct {
+	// AutoApprove indicates whether Agents discovered using this InfraEnv
+	// should be automatically approved by the system.
+	// If true, any Agent referencing this InfraEnv may be approved without manual intervention.
+	// Use only in trusted environments.
+	// +optional
+	// +kubebuilder:default=false
+	AutoApprove bool `json:"autoApprove,omitempty"`
 }
 
 type KernelArgument struct {
@@ -212,6 +253,9 @@ type BootArtifacts struct {
 // +kubebuilder:printcolumn:name="ISO Created At",type="string",JSONPath=".status.createdTime",description="The Discovery ISO creation time"
 // +kubebuilder:printcolumn:name="ISO URL",type="string",JSONPath=".status.isoDownloadURL",description="The Discovery ISO download URL",priority=1
 
+// InfraEnv represents an infrastructure environment for discovering and booting hosts. It generates
+// a discovery ISO or iPXE configuration that hosts can boot from to register as Agents. Multiple
+// Agents can be discovered from a single InfraEnv, and can later be assigned to different clusters.
 type InfraEnv struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -242,5 +286,5 @@ const (
 )
 
 func init() {
-	SchemeBuilder.Register(&InfraEnv{}, &InfraEnvList{})
+	objectTypes = append(objectTypes, &InfraEnv{}, &InfraEnvList{})
 }

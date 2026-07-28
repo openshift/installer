@@ -195,11 +195,21 @@ type Cluster struct {
 	Name string `json:"name,omitempty"`
 
 	// The desired network type used.
-	// Enum: [OpenShiftSDN OVNKubernetes]
+	// - OVNKubernetes: Default CNI for OpenShift (recommended)
+	// - OpenShiftSDN: Legacy SDN (deprecated in newer versions)
+	// - CiscoACI: Cisco ACI CNI (requires custom manifests)
+	// - Cilium: Isovalent Cilium CNI (requires custom manifests)
+	// - Calico: Tigera Calico CNI (requires custom manifests)
+	// - None: No CNI - user must provide custom CNI manifests
+	//
+	// Enum: [OpenShiftSDN OVNKubernetes CiscoACI Cilium Calico None]
 	NetworkType *string `json:"network_type,omitempty"`
 
 	// A comma-separated list of destination domain names, domains, IP addresses, or other network CIDRs to exclude from proxying.
 	NoProxy string `json:"no_proxy,omitempty"`
+
+	// A comma-separated list of NTP sources (name or IP) to be used as the only NTP configuration for the cluster hosts.
+	NtpSources string `json:"ntp_sources,omitempty"`
 
 	// OpenShift release image URI.
 	OcpReleaseImage string `json:"ocp_release_image,omitempty"`
@@ -210,6 +220,9 @@ type Cluster struct {
 
 	// Version of the OpenShift cluster.
 	OpenshiftVersion string `json:"openshift_version,omitempty"`
+
+	// Bundles that were selected for this cluster, with the optional operators chosen by the user. Derived from monitored operators' source_bundles. Not persisted directly.
+	OperatorBundles []*BundleCreateParams `json:"operator_bundles" gorm:"-"`
 
 	// org id
 	OrgID string `json:"org_id,omitempty"`
@@ -404,6 +417,10 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateOpenshiftClusterID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOperatorBundles(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -1081,7 +1098,7 @@ var clusterTypeNetworkTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes","CiscoACI","Cilium","Calico","None"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -1096,6 +1113,18 @@ const (
 
 	// ClusterNetworkTypeOVNKubernetes captures enum value "OVNKubernetes"
 	ClusterNetworkTypeOVNKubernetes string = "OVNKubernetes"
+
+	// ClusterNetworkTypeCiscoACI captures enum value "CiscoACI"
+	ClusterNetworkTypeCiscoACI string = "CiscoACI"
+
+	// ClusterNetworkTypeCilium captures enum value "Cilium"
+	ClusterNetworkTypeCilium string = "Cilium"
+
+	// ClusterNetworkTypeCalico captures enum value "Calico"
+	ClusterNetworkTypeCalico string = "Calico"
+
+	// ClusterNetworkTypeNone captures enum value "None"
+	ClusterNetworkTypeNone string = "None"
 )
 
 // prop value enum
@@ -1126,6 +1155,32 @@ func (m *Cluster) validateOpenshiftClusterID(formats strfmt.Registry) error {
 
 	if err := validate.FormatOf("openshift_cluster_id", "body", "uuid", m.OpenshiftClusterID.String(), formats); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Cluster) validateOperatorBundles(formats strfmt.Registry) error {
+	if swag.IsZero(m.OperatorBundles) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.OperatorBundles); i++ {
+		if swag.IsZero(m.OperatorBundles[i]) { // not required
+			continue
+		}
+
+		if m.OperatorBundles[i] != nil {
+			if err := m.OperatorBundles[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -1369,6 +1424,10 @@ func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateOperatorBundles(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidatePlatform(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -1609,6 +1668,26 @@ func (m *Cluster) contextValidateMonitoredOperators(ctx context.Context, formats
 					return ve.ValidateName("monitored_operators" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("monitored_operators" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Cluster) contextValidateOperatorBundles(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.OperatorBundles); i++ {
+
+		if m.OperatorBundles[i] != nil {
+			if err := m.OperatorBundles[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

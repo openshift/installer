@@ -7,6 +7,7 @@ package internal_power_v_s_locations
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 
@@ -22,7 +23,7 @@ type InternalV1PowervsLocationsTagPostReader struct {
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *InternalV1PowervsLocationsTagPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *InternalV1PowervsLocationsTagPostReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
 	switch response.Code() {
 	case 200:
 		result := NewInternalV1PowervsLocationsTagPostOK()
@@ -178,7 +179,7 @@ func (o *InternalV1PowervsLocationsTagPostBadRequest) readResponse(response runt
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -248,7 +249,7 @@ func (o *InternalV1PowervsLocationsTagPostUnauthorized) readResponse(response ru
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -318,7 +319,7 @@ func (o *InternalV1PowervsLocationsTagPostUnprocessableEntity) readResponse(resp
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -388,7 +389,7 @@ func (o *InternalV1PowervsLocationsTagPostInternalServerError) readResponse(resp
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 

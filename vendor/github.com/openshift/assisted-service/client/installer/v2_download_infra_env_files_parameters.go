@@ -63,7 +63,7 @@ type V2DownloadInfraEnvFilesParams struct {
 
 	/* DiscoveryIsoType.
 
-	   Overrides the ISO type for the disovery ignition, either 'full-iso' or 'minimal-iso'.
+	   Overrides the ISO type for the discovery ignition.
 	*/
 	DiscoveryIsoType *string
 

@@ -66,5 +66,5 @@ type AzureManagedClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureManagedCluster{}, &AzureManagedClusterList{})
+	objectTypes = append(objectTypes, &AzureManagedCluster{}, &AzureManagedClusterList{})
 }

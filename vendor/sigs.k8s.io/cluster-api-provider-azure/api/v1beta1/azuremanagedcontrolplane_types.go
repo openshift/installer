@@ -709,5 +709,5 @@ func (m *AzureManagedControlPlane) SetFutures(futures Futures) {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureManagedControlPlane{}, &AzureManagedControlPlaneList{})
+	objectTypes = append(objectTypes, &AzureManagedControlPlane{}, &AzureManagedControlPlaneList{})
 }

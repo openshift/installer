@@ -29,7 +29,10 @@ type API interface {
 	*/
 	DownloadMinimalInitrd(ctx context.Context, params *DownloadMinimalInitrdParams, writer io.Writer) (*DownloadMinimalInitrdOK, *DownloadMinimalInitrdNoContent, error)
 	/*
-	   GetClusterSupportedPlatforms A list of platforms that this cluster can support in its current configuration.*/
+	   GetClusterSupportedPlatforms Deprecated. Returns a list of platforms that this cluster can support in its current configuration.
+	   Prefer deriving platform eligibility from cluster hosts and inventory together with
+	   GET /v2/support-levels/features (or GET /v2/support-levels/features/detailed) for the cluster OpenShift version and CPU architecture.
+	*/
 	GetClusterSupportedPlatforms(ctx context.Context, params *GetClusterSupportedPlatformsParams) (*GetClusterSupportedPlatformsOK, error)
 	/*
 	   GetDetailedSupportedFeatures Retrieves detailed features information including support level, incompatibilities, and operator dependencies.*/
@@ -315,7 +318,9 @@ func (a *Client) DownloadMinimalInitrd(ctx context.Context, params *DownloadMini
 }
 
 /*
-GetClusterSupportedPlatforms A list of platforms that this cluster can support in its current configuration.
+GetClusterSupportedPlatforms Deprecated. Returns a list of platforms that this cluster can support in its current configuration.
+Prefer deriving platform eligibility from cluster hosts and inventory together with
+GET /v2/support-levels/features (or GET /v2/support-levels/features/detailed) for the cluster OpenShift version and CPU architecture.
 */
 func (a *Client) GetClusterSupportedPlatforms(ctx context.Context, params *GetClusterSupportedPlatformsParams) (*GetClusterSupportedPlatformsOK, error) {
 

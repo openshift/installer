@@ -73,7 +73,7 @@ type ClientService interface {
 V1SshkeysDelete deletes ssh key
 */
 func (a *Client) V1SshkeysDelete(params *V1SshkeysDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1SshkeysDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1SshkeysDeleteParams()
 	}
@@ -93,17 +93,22 @@ func (a *Client) V1SshkeysDelete(params *V1SshkeysDeleteParams, authInfo runtime
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1SshkeysDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.sshkeys.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -112,7 +117,7 @@ func (a *Client) V1SshkeysDelete(params *V1SshkeysDeleteParams, authInfo runtime
 V1SshkeysGet gets ssh key information
 */
 func (a *Client) V1SshkeysGet(params *V1SshkeysGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1SshkeysGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1SshkeysGetParams()
 	}
@@ -132,17 +137,22 @@ func (a *Client) V1SshkeysGet(params *V1SshkeysGetParams, authInfo runtime.Clien
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1SshkeysGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.sshkeys.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -151,7 +161,7 @@ func (a *Client) V1SshkeysGet(params *V1SshkeysGetParams, authInfo runtime.Clien
 V1SshkeysGetall lists SSH keys
 */
 func (a *Client) V1SshkeysGetall(params *V1SshkeysGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1SshkeysGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1SshkeysGetallParams()
 	}
@@ -171,17 +181,22 @@ func (a *Client) V1SshkeysGetall(params *V1SshkeysGetallParams, authInfo runtime
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1SshkeysGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.sshkeys.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -190,7 +205,7 @@ func (a *Client) V1SshkeysGetall(params *V1SshkeysGetallParams, authInfo runtime
 V1SshkeysPost adds a new SSH key
 */
 func (a *Client) V1SshkeysPost(params *V1SshkeysPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1SshkeysPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1SshkeysPostParams()
 	}
@@ -210,17 +225,22 @@ func (a *Client) V1SshkeysPost(params *V1SshkeysPostParams, authInfo runtime.Cli
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1SshkeysPostCreated)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.sshkeys.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -229,7 +249,7 @@ func (a *Client) V1SshkeysPost(params *V1SshkeysPostParams, authInfo runtime.Cli
 V1SshkeysPut updates the ssh key
 */
 func (a *Client) V1SshkeysPut(params *V1SshkeysPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1SshkeysPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1SshkeysPutParams()
 	}
@@ -249,17 +269,22 @@ func (a *Client) V1SshkeysPut(params *V1SshkeysPutParams, authInfo runtime.Clien
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1SshkeysPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.sshkeys.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

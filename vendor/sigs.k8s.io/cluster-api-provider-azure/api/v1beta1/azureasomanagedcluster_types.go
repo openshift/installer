@@ -99,5 +99,5 @@ type AzureASOManagedClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureASOManagedCluster{}, &AzureASOManagedClusterList{})
+	objectTypes = append(objectTypes, &AzureASOManagedCluster{}, &AzureASOManagedClusterList{})
 }

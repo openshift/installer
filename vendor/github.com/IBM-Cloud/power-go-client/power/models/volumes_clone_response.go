@@ -21,7 +21,7 @@ type VolumesCloneResponse struct {
 	AdditionalProperties string `json:"additionalProperties,omitempty"`
 
 	// A map of volume IDs to cloned volume IDs
-	ClonedVolumes interface{} `json:"clonedVolumes,omitempty"`
+	ClonedVolumes any `json:"clonedVolumes,omitempty"`
 }
 
 // Validate validates this volumes clone response

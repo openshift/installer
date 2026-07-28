@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -21,6 +22,9 @@ type AddHost struct {
 
 	// Name of the host chosen by the user
 	// Required: true
+	// Max Length: 32
+	// Min Length: 2
+	// Pattern: ^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,30}[A-Za-z0-9])?$
 	DisplayName *string `json:"displayName"`
 
 	// System type
@@ -59,6 +63,18 @@ func (m *AddHost) validateDisplayName(formats strfmt.Registry) error {
 		return err
 	}
 
+	if err := validate.MinLength("displayName", "body", *m.DisplayName, 2); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("displayName", "body", *m.DisplayName, 32); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("displayName", "body", *m.DisplayName, `^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,30}[A-Za-z0-9])?$`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -77,11 +93,15 @@ func (m *AddHost) validateUserTags(formats strfmt.Registry) error {
 	}
 
 	if err := m.UserTags.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 
@@ -105,11 +125,15 @@ func (m *AddHost) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 func (m *AddHost) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 

@@ -57,6 +57,9 @@ type Inventory struct {
 	// tpm version
 	// Enum: [none 1.2 2.0]
 	TpmVersion string `json:"tpm_version,omitempty"`
+
+	// truncation
+	Truncation *InventoryTruncation `json:"truncation,omitempty"`
 }
 
 // Validate validates this inventory
@@ -96,6 +99,10 @@ func (m *Inventory) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTpmVersion(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTruncation(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -330,6 +337,25 @@ func (m *Inventory) validateTpmVersion(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Inventory) validateTruncation(formats strfmt.Registry) error {
+	if swag.IsZero(m.Truncation) { // not required
+		return nil
+	}
+
+	if m.Truncation != nil {
+		if err := m.Truncation.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("truncation")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("truncation")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ContextValidate validate this inventory based on the context it is used
 func (m *Inventory) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -363,6 +389,10 @@ func (m *Inventory) ContextValidate(ctx context.Context, formats strfmt.Registry
 	}
 
 	if err := m.contextValidateSystemVendor(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateTruncation(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -516,6 +546,22 @@ func (m *Inventory) contextValidateSystemVendor(ctx context.Context, formats str
 	return nil
 }
 
+func (m *Inventory) contextValidateTruncation(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Truncation != nil {
+		if err := m.Truncation.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("truncation")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("truncation")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // MarshalBinary interface implementation
 func (m *Inventory) MarshalBinary() ([]byte, error) {
 	if m == nil {
@@ -527,6 +573,100 @@ func (m *Inventory) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *Inventory) UnmarshalBinary(b []byte) error {
 	var res Inventory
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*m = res
+	return nil
+}
+
+// InventoryTruncation inventory truncation
+//
+// swagger:model InventoryTruncation
+type InventoryTruncation struct {
+
+	// Reasons for the truncation
+	Reasons []string `json:"reasons"`
+
+	// type
+	// Required: true
+	// Enum: [partial full]
+	Type string `json:"type"`
+}
+
+// Validate validates this inventory truncation
+func (m *InventoryTruncation) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+var inventoryTruncationTypeTypePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["partial","full"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		inventoryTruncationTypeTypePropEnum = append(inventoryTruncationTypeTypePropEnum, v)
+	}
+}
+
+const (
+
+	// InventoryTruncationTypePartial captures enum value "partial"
+	InventoryTruncationTypePartial string = "partial"
+
+	// InventoryTruncationTypeFull captures enum value "full"
+	InventoryTruncationTypeFull string = "full"
+)
+
+// prop value enum
+func (m *InventoryTruncation) validateTypeEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, inventoryTruncationTypeTypePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *InventoryTruncation) validateType(formats strfmt.Registry) error {
+
+	if err := validate.RequiredString("truncation"+"."+"type", "body", m.Type); err != nil {
+		return err
+	}
+
+	// value enum
+	if err := m.validateTypeEnum("truncation"+"."+"type", "body", m.Type); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validates this inventory truncation based on context it is used
+func (m *InventoryTruncation) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (m *InventoryTruncation) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(m)
+}
+
+// UnmarshalBinary interface implementation
+func (m *InventoryTruncation) UnmarshalBinary(b []byte) error {
+	var res InventoryTruncation
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

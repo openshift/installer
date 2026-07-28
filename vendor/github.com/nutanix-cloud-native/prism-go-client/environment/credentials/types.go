@@ -13,6 +13,8 @@ type CredentialType string
 const (
 	// BasicAuthCredentialType is username/password based authentication.
 	BasicAuthCredentialType CredentialType = "basic_auth"
+	// APIKeyCredentialType is API key based authentication.
+	APIKeyCredentialType CredentialType = "api_key"
 
 	// KeyName is secret
 	KeyName = "credentials"
@@ -39,6 +41,14 @@ type BasicAuthCredential struct {
 	PrismElements []PrismElementBasicAuth `json:"prismElements"`
 }
 
+// APIKeyCredential is payload in Credential.Data for type of APIKeyCredentialType.
+// API Key can obtained from Prism Central by creating Service Account and then generating API Key.
+// Refer https://portal.nutanix.com/page/documents/details?targetId=Nutanix-Security-Guide-v7_5:mul-service-account-configure-pc-t.html
+type APIKeyCredential struct {
+	// The API key for the Prism Central.
+	PrismCentral PrismCentralAPIKey `json:"prismCentral"`
+}
+
 // +kubebuilder:object:generate=true
 type BasicAuth struct {
 	Username string `json:"username"`
@@ -48,6 +58,13 @@ type BasicAuth struct {
 // +kubebuilder:object:generate=true
 type PrismCentralBasicAuth struct {
 	BasicAuth `json:",inline"`
+}
+
+// APIKey is a string that represents an Service Account API key.
+type APIKey string
+
+type PrismCentralAPIKey struct {
+	APIKey APIKey `json:"apiKey"`
 }
 
 // +kubebuilder:object:generate=true

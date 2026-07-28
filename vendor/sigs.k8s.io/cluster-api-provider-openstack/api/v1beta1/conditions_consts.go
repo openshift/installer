@@ -69,3 +69,32 @@ const (
 	// UnableToFindFloatingIPNetworkReason is used when the floating ip network is not found.
 	UnableToFindFloatingIPNetworkReason = "UnableToFindFloatingIPNetwork"
 )
+
+const (
+	// NetworkReadyCondition reports on the current status of the cluster network infrastructure.
+	// Ready indicates that the network, subnets, and related resources have been successfully provisioned.
+	NetworkReadyCondition clusterv1beta1.ConditionType = "NetworkReady"
+
+	// RouterReadyCondition reports on the current status of the cluster router infrastructure.
+	// Ready indicates that the router and its interfaces have been successfully provisioned.
+	RouterReadyCondition clusterv1beta1.ConditionType = "RouterReady"
+
+	// SecurityGroupsReadyCondition reports on the current status of the cluster security groups.
+	// Ready indicates that all required security groups have been successfully provisioned.
+	SecurityGroupsReadyCondition clusterv1beta1.ConditionType = "SecurityGroupsReady"
+
+	// APIEndpointReadyCondition reports on the current status of the cluster API endpoint.
+	// Ready indicates that the control plane endpoint has been successfully configured.
+	APIEndpointReadyCondition clusterv1beta1.ConditionType = "APIEndpointReady"
+
+	// NetworkReconcileFailedReason is used when network reconciliation fails.
+	NetworkReconcileFailedReason = "NetworkCreateFailed"
+	// SubnetReconcileFailedReason is used when subnet reconciliation fails.
+	SubnetReconcileFailedReason = "SubnetCreateFailed"
+	// RouterReconcileFailedReason is used when router reconciliation fails.
+	RouterReconcileFailedReason = "RouterCreateFailed"
+	// SecurityGroupReconcileFailedReason is used when security group reconciliation fails.
+	SecurityGroupReconcileFailedReason = "SecurityGroupCreateFailed"
+	// APIEndpointConfigFailedReason is used when API endpoint configuration fails.
+	APIEndpointConfigFailedReason = "APIEndpointConfigFailed"
+)

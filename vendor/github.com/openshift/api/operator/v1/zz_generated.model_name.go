@@ -66,8 +66,18 @@ func (in Authentication) OpenAPIModelName() string {
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
+func (in AuthenticationConfigMapReference) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.AuthenticationConfigMapReference"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
 func (in AuthenticationList) OpenAPIModelName() string {
 	return "com.github.openshift.api.operator.v1.AuthenticationList"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in AuthenticationProxyConfig) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.AuthenticationProxyConfig"
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
@@ -263,6 +273,11 @@ func (in ConsoleStatus) OpenAPIModelName() string {
 // OpenAPIModelName returns the OpenAPI model name for this type.
 func (in ContainerLoggingDestinationParameters) OpenAPIModelName() string {
 	return "com.github.openshift.api.operator.v1.ContainerLoggingDestinationParameters"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in CustomSecretRotation) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.CustomSecretRotation"
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
@@ -611,6 +626,16 @@ func (in KMSPluginHealthReport) OpenAPIModelName() string {
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
+func (in KMSPreflightCheck) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.KMSPreflightCheck"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in KMSPreflightResult) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.KMSPreflightResult"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
 func (in KubeAPIServer) OpenAPIModelName() string {
 	return "com.github.openshift.api.operator.v1.KubeAPIServer"
 }
@@ -748,6 +773,11 @@ func (in MachineManagerSelector) OpenAPIModelName() string {
 // OpenAPIModelName returns the OpenAPI model name for this type.
 func (in ManagedBootImages) OpenAPIModelName() string {
 	return "com.github.openshift.api.operator.v1.ManagedBootImages"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in ManagedTokenRequests) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.ManagedTokenRequests"
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.
@@ -1038,6 +1068,26 @@ func (in RouteAdmissionPolicy) OpenAPIModelName() string {
 // OpenAPIModelName returns the OpenAPI model name for this type.
 func (in SFlowConfig) OpenAPIModelName() string {
 	return "com.github.openshift.api.operator.v1.SFlowConfig"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in SecretsStoreCSIDriverConfigSpec) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.SecretsStoreCSIDriverConfigSpec"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in SecretsStoreSecretRotation) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.SecretsStoreSecretRotation"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in SecretsStoreTokenRequest) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.SecretsStoreTokenRequest"
+}
+
+// OpenAPIModelName returns the OpenAPI model name for this type.
+func (in SecretsStoreTokenRequests) OpenAPIModelName() string {
+	return "com.github.openshift.api.operator.v1.SecretsStoreTokenRequests"
 }
 
 // OpenAPIModelName returns the OpenAPI model name for this type.

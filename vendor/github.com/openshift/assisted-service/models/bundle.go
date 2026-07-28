@@ -24,8 +24,11 @@ type Bundle struct {
 	// Unique identifier of the bundle, for example `virtualization` or `openshift-ai-nvidia`.
 	ID string `json:"id,omitempty"`
 
-	// List of operators associated with the bundle.
+	// List of operators always included in the bundle.
 	Operators []string `json:"operators"`
+
+	// List of operators that can be optionally selected by the user for this bundle. All are selected by default.
+	OptionalOperators []string `json:"optional_operators"`
 
 	// Short human friendly description for the bundle, usually only a few words, for example `Virtualization` or
 	// `OpenShift AI (NVIDIA)`.

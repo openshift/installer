@@ -29,7 +29,7 @@ type Operations struct {
 	OperatingMode string `json:"operatingMode,omitempty"`
 
 	// Name of the job task to execute
-	// Enum: ["dston","retrydump","consoleservice","iopreset","remotedstoff","remotedston","iopdump","dumprestart"]
+	// Enum: ["consoleservice","dston","dumprestart","iopdump","iopreset","remotedstoff","remotedston","retrydump"]
 	Task string `json:"task,omitempty"`
 }
 
@@ -55,7 +55,7 @@ func (m *Operations) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var operationsTypeBootModePropEnum []interface{}
+var operationsTypeBootModePropEnum []any
 
 func init() {
 	var res []string
@@ -103,7 +103,7 @@ func (m *Operations) validateBootMode(formats strfmt.Registry) error {
 	return nil
 }
 
-var operationsTypeOperatingModePropEnum []interface{}
+var operationsTypeOperatingModePropEnum []any
 
 func init() {
 	var res []string
@@ -145,11 +145,11 @@ func (m *Operations) validateOperatingMode(formats strfmt.Registry) error {
 	return nil
 }
 
-var operationsTypeTaskPropEnum []interface{}
+var operationsTypeTaskPropEnum []any
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["dston","retrydump","consoleservice","iopreset","remotedstoff","remotedston","iopdump","dumprestart"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["consoleservice","dston","dumprestart","iopdump","iopreset","remotedstoff","remotedston","retrydump"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -159,14 +159,17 @@ func init() {
 
 const (
 
+	// OperationsTaskConsoleservice captures enum value "consoleservice"
+	OperationsTaskConsoleservice string = "consoleservice"
+
 	// OperationsTaskDston captures enum value "dston"
 	OperationsTaskDston string = "dston"
 
-	// OperationsTaskRetrydump captures enum value "retrydump"
-	OperationsTaskRetrydump string = "retrydump"
+	// OperationsTaskDumprestart captures enum value "dumprestart"
+	OperationsTaskDumprestart string = "dumprestart"
 
-	// OperationsTaskConsoleservice captures enum value "consoleservice"
-	OperationsTaskConsoleservice string = "consoleservice"
+	// OperationsTaskIopdump captures enum value "iopdump"
+	OperationsTaskIopdump string = "iopdump"
 
 	// OperationsTaskIopreset captures enum value "iopreset"
 	OperationsTaskIopreset string = "iopreset"
@@ -177,11 +180,8 @@ const (
 	// OperationsTaskRemotedston captures enum value "remotedston"
 	OperationsTaskRemotedston string = "remotedston"
 
-	// OperationsTaskIopdump captures enum value "iopdump"
-	OperationsTaskIopdump string = "iopdump"
-
-	// OperationsTaskDumprestart captures enum value "dumprestart"
-	OperationsTaskDumprestart string = "dumprestart"
+	// OperationsTaskRetrydump captures enum value "retrydump"
+	OperationsTaskRetrydump string = "retrydump"
 )
 
 // prop value enum
