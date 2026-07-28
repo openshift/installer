@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeletCSRSignerCertKey is a key/cert pair that signs the kubelet client certs.
@@ -32,7 +33,7 @@ func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.
@@ -108,13 +109,20 @@ type KubeletBootstrapCertSigner struct {
 
 var _ asset.WritableAsset = (*KubeletBootstrapCertSigner)(nil)
 
-// Dependencies returns the dependency of the root-ca, which is empty.
+// Dependencies returns SignerKeyParams. Configurable PKI requires
+// reading the PKI config from InstallConfig, but adding InstallConfig
+// as a dependency here would break codepaths that generate signer certs
+// without an install-config on disk (e.g. agent create certificates,
+// node-joiner). SignerKeyParams reads the config directly from disk
+// without triggering InstallConfig validation.
 func (c *KubeletBootstrapCertSigner) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -122,7 +130,7 @@ func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", signerKeyParams.PKIConfig)
 }
 
 // Name returns the human-friendly name of the asset.

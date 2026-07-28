@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeControlPlaneSignerCertKey is a key/cert pair that signs the kube control-plane client certs.
@@ -32,7 +33,7 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.

@@ -15,13 +15,20 @@ type AdminKubeConfigSignerCertKey struct {
 
 var _ asset.WritableAsset = (*AdminKubeConfigSignerCertKey)(nil)
 
-// Dependencies returns the dependency of the root-ca, which is empty.
+// Dependencies returns SignerKeyParams. Configurable PKI requires
+// reading the PKI config from InstallConfig, but adding InstallConfig
+// as a dependency here would break codepaths that generate signer certs
+// without an install-config on disk (e.g. agent create certificates,
+// node-joiner). SignerKeyParams reads the config directly from disk
+// without triggering InstallConfig validation.
 func (c *AdminKubeConfigSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "admin-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -29,7 +36,7 @@ func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents ass
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", signerKeyParams.PKIConfig)
 }
 
 // Load reads the asset files from disk.
