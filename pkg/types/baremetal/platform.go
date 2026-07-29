@@ -247,7 +247,6 @@ type Platform struct {
 	BootstrapExternalStaticGateway string `json:"bootstrapExternalStaticGateway,omitempty"`
 
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
-	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.BareMetalPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 
