@@ -122,7 +122,9 @@ func TestPemToPrivateKeyFormats(t *testing.T) {
 			Type:  "EC PRIVATE KEY",
 			Bytes: ecDER,
 		})
-		combined := append(paramBlock, keyBlock...)
+		combined := make([]byte, 0, len(paramBlock)+len(keyBlock))
+		combined = append(combined, paramBlock...)
+		combined = append(combined, keyBlock...)
 
 		decoded, err := PemToPrivateKey(combined)
 		assert.NoError(t, err)
@@ -149,7 +151,9 @@ func TestPemToPrivateKeyFormats(t *testing.T) {
 		assert.NoError(t, err)
 		goodPem, err := PrivateKeyToPem(key)
 		assert.NoError(t, err)
-		combined := append(badBlock, goodPem...)
+		combined := make([]byte, 0, len(badBlock)+len(goodPem))
+		combined = append(combined, badBlock...)
+		combined = append(combined, goodPem...)
 
 		decoded, err := PemToPrivateKey(combined)
 		assert.NoError(t, err)
