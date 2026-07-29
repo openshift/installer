@@ -41,11 +41,8 @@ func (f *OSImageStream) Generate(_ context.Context, dependencies asset.Parents) 
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 
-	// If one of the following are true the OSImageStream CR is not generated
-	// 1. The feature is not enabled
-	// 2. The target is CentOS Stream CoreOS
-	if ic := installConfig.Config; !ic.Enabled(features.FeatureGateOSStreams) || ic.IsSCOS() {
-		// FG disabled or not OCP
+	// If OS Image Streams are not enabled don't generate the OSImageStream CR
+	if ic := installConfig.Config; !ic.Enabled(features.FeatureGateOSStreams) {
 		return nil
 	}
 
