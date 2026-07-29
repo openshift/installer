@@ -29,6 +29,7 @@ func newAgentCmd(ctx context.Context) *cobra.Command {
 	agentCmd.AddCommand(newAgentCreateCmd(ctx))
 	agentCmd.AddCommand(agent.NewWaitForCmd())
 	agentCmd.AddCommand(newAgentGraphCmd())
+	agentCmd.AddCommand(agent.NewGatherCmd())
 	return agentCmd
 }
 
