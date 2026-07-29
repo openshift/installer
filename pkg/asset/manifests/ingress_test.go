@@ -46,8 +46,17 @@ func installConfigFromTopologies(t *testing.T, options []icOption,
 		}
 	}
 
+	// Compute mastersSchedulable based on worker count (same logic as Scheduler)
+	computeReplicas := int64(0)
+	for _, pool := range installConfig.Compute {
+		if pool.Replicas != nil {
+			computeReplicas += *pool.Replicas
+		}
+	}
+	mastersSchedulable := computeReplicas == 0
+
 	// Assert that this function actually works
-	generatedControlPlaneTopology, generatedInfrastructureTopology := determineTopologies(installConfig)
+	generatedControlPlaneTopology, generatedInfrastructureTopology := determineTopologies(installConfig, mastersSchedulable)
 	assert.Equal(t, generatedControlPlaneTopology, controlPlaneTopology)
 	assert.Equal(t, generatedInfrastructureTopology, infrastructureTopology)
 
