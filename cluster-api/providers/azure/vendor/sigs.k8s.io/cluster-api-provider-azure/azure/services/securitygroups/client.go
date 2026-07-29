@@ -51,7 +51,7 @@ func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClien
 }
 
 // Get gets the specified network security group.
-func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "securitygroups.azureClient.Get")
 	defer done()
 
@@ -65,7 +65,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a network security group in the specified resource group.
 // It sends a PUT request to Azure and if accepted without error, the func will return a Poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.SecurityGroupsClientCreateOrUpdateResponse], err error) {
+func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armnetwork.SecurityGroupsClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "securitygroups.azureClient.CreateOrUpdate")
 	defer done()
 

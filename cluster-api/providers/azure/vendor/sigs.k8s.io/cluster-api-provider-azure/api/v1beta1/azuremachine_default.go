@@ -27,7 +27,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
@@ -189,7 +189,7 @@ func GetOwnerAzureClusterNameAndNamespace(cli client.Client, clusterName string,
 		break
 	}
 
-	return ownerCluster.Spec.InfrastructureRef.Name, ownerCluster.Spec.InfrastructureRef.Namespace, nil
+	return ownerCluster.Spec.InfrastructureRef.Name, ownerCluster.Namespace, nil
 }
 
 // GetSubscriptionID returns the subscription ID for the AzureCluster given the cluster name and namespace.

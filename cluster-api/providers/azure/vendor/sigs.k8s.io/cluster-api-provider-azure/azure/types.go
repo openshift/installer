@@ -99,7 +99,7 @@ type (
 	VMSSVM struct {
 		ID                 string                        `json:"id,omitempty"`
 		InstanceID         string                        `json:"instanceID,omitempty"`
-		Image              infrav1.Image                 `json:"image,omitempty"`
+		Image              infrav1.Image                 `json:"image"`
 		Name               string                        `json:"name,omitempty"`
 		AvailabilityZone   string                        `json:"availabilityZone,omitempty"`
 		State              infrav1.ProvisioningState     `json:"vmState,omitempty"`
@@ -114,7 +114,7 @@ type (
 		Sku       string                    `json:"sku,omitempty"`
 		Capacity  int64                     `json:"capacity,omitempty"`
 		Zones     []string                  `json:"zones,omitempty"`
-		Image     infrav1.Image             `json:"image,omitempty"`
+		Image     infrav1.Image             `json:"image"`
 		State     infrav1.ProvisioningState `json:"vmState,omitempty"`
 		Identity  infrav1.VMIdentity        `json:"identity,omitempty"`
 		Tags      infrav1.Tags              `json:"tags,omitempty"`

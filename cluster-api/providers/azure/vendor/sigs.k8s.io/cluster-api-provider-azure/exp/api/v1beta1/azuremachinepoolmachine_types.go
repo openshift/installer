@@ -19,7 +19,7 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
@@ -84,7 +84,7 @@ type (
 
 		// Conditions defines current service state of the AzureMachinePool.
 		// +optional
-		Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+		Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 		// LongRunningOperationStates saves the state for Azure long running operations so they can be continued on the
 		// next reconciliation loop.
@@ -133,12 +133,12 @@ type (
 )
 
 // GetConditions returns the list of conditions for an AzureMachinePool API object.
-func (ampm *AzureMachinePoolMachine) GetConditions() clusterv1.Conditions {
+func (ampm *AzureMachinePoolMachine) GetConditions() clusterv1beta1.Conditions {
 	return ampm.Status.Conditions
 }
 
 // SetConditions will set the given conditions on an AzureMachinePool object.
-func (ampm *AzureMachinePoolMachine) SetConditions(conditions clusterv1.Conditions) {
+func (ampm *AzureMachinePoolMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	ampm.Status.Conditions = conditions
 }
 

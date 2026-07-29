@@ -35,8 +35,8 @@ type TagScope interface {
 	azure.Authorizer
 	ClusterName() string
 	TagsSpecs() []azure.TagsSpec
-	AnnotationJSON(string) (map[string]interface{}, error)
-	UpdateAnnotationJSON(string, map[string]interface{}) error
+	AnnotationJSON(string) (map[string]any, error)
+	UpdateAnnotationJSON(string, map[string]any) error
 }
 
 // Service provides operations on Azure resources.
@@ -143,7 +143,7 @@ func (s *Service) Delete(ctx context.Context) error {
 }
 
 // TagsChanged determines which tags to delete and which to add.
-func TagsChanged(lastAppliedTags map[string]interface{}, desiredTags map[string]string, currentTags map[string]*string) (change bool, createOrUpdates map[string]string, deletes map[string]string, annotation map[string]interface{}) {
+func TagsChanged(lastAppliedTags map[string]any, desiredTags map[string]string, currentTags map[string]*string) (change bool, createOrUpdates map[string]string, deletes map[string]string, annotation map[string]any) {
 	// Bool tracking if we found any changed state.
 	changed := false
 
@@ -154,7 +154,7 @@ func TagsChanged(lastAppliedTags map[string]interface{}, desiredTags map[string]
 	deleted := map[string]string{}
 
 	// The new annotation that we need to set if anything is created/updated.
-	newAnnotation := map[string]interface{}{}
+	newAnnotation := map[string]any{}
 
 	// Loop over lastAppliedTags, checking if entries are in desiredTags.
 	// If an entry is present in lastAppliedTags but not in desiredTags, it has been deleted
