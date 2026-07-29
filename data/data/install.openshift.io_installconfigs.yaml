@@ -5065,6 +5065,7 @@ spec:
             enum:
             - rhel-9
             - rhel-10
+            - centos-10
             type: string
           pki:
             description: |-

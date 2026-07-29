@@ -771,7 +771,7 @@ func (c *InstallConfig) PublicIngress() bool {
 }
 
 // OSImageStream represents the name of an OS Image Stream to use in a pool.
-// +kubebuilder:validation:Enum=rhel-9;rhel-10
+// +kubebuilder:validation:Enum=rhel-9;rhel-10;centos-10
 type OSImageStream string
 
 const (
