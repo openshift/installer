@@ -1399,6 +1399,7 @@ func TestValidateDiskTypeAvailability(t *testing.T) {
 		mockErr        error
 		expectedError  bool
 		expectedErrMsg string
+		expectedWarn   string
 	}{
 		{
 			name:          "Empty disk type is a no-op",
@@ -1448,16 +1449,22 @@ func TestValidateDiskTypeAvailability(t *testing.T) {
 			expectedErrMsg: `forbidden`,
 		},
 		{
-			name:           "Non-API error returns internal error",
-			diskType:       "pd-ssd",
-			mockErr:        fmt.Errorf("network timeout"),
-			expectedError:  true,
-			expectedErrMsg: `network timeout`,
+			name:         "GCP 503 server error degrades gracefully",
+			diskType:     "pd-ssd",
+			mockErr:      &googleapi.Error{Code: http.StatusServiceUnavailable, Message: "backend error"},
+			expectedWarn: `could not verify disk type pd-ssd availability`,
+		},
+		{
+			name:         "Non-API error degrades gracefully",
+			diskType:     "pd-ssd",
+			mockErr:      fmt.Errorf("network timeout"),
+			expectedWarn: `could not verify disk type pd-ssd availability`,
 		},
 	}
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
+			hook := logrusTest.NewGlobal()
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 			gcpClient := mock.NewMockAPI(mockCtrl)
@@ -1472,6 +1479,10 @@ func TestValidateDiskTypeAvailability(t *testing.T) {
 				assert.Regexp(t, test.expectedErrMsg, errs.ToAggregate().Error())
 			} else {
 				assert.Empty(t, errs)
+			}
+			if test.expectedWarn != "" {
+				assert.NotEmpty(t, hook.Entries)
+				assert.Regexp(t, test.expectedWarn, hook.LastEntry().Message)
 			}
 		})
 	}

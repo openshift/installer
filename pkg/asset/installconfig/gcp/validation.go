@@ -200,10 +200,11 @@ func validateDiskTypeAvailability(client API, fieldPath *field.Path, project, re
 	dt, dtZones, err := client.GetDiskTypeWithZones(context.TODO(), project, region, diskType)
 	if err != nil {
 		var gerr *googleapi.Error
-		if errors.As(err, &gerr) {
+		if errors.As(err, &gerr) && gerr.Code < 500 {
 			return append(allErrs, field.Invalid(fieldPath.Child("diskType"), diskType, err.Error()))
 		}
-		return append(allErrs, field.InternalError(fieldPath.Child("diskType"), err))
+		logrus.Warnf("could not verify disk type %s availability in %s, skipping API check: %v", diskType, region, err)
+		return allErrs
 	}
 
 	if dt == nil {
