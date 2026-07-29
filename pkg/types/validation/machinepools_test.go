@@ -342,6 +342,24 @@ func TestValidateMachinePool(t *testing.T) {
 			valid: true,
 		},
 		{
+			name:     "invalid swap disk on master machine pool",
+			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "swap",
+					UserDefined: nil,
+					Etcd:        nil,
+					Swap:        &types.DiskSwap{PlatformDiskID: "swap"},
+				})
+				p.Platform = types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{},
+				}
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\.swap: Invalid value: "swap:\\n  platformDiskID: swap\\ntype: swap\\n": swap is unsupported on control plane nodes$`,
+		},
+		{
 			name:     "invalid swap disk with nil Swap field",
 			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
 			pool: func() *types.MachinePool {

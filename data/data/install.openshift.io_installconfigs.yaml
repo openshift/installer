@@ -390,8 +390,8 @@ spec:
                         - type
                         type: object
                       dataDisks:
-                        description: DataDisk specifies the parameters that are used
-                          to add one or more data disks to the machine.
+                        description: DataDisks holds information of the data disks
+                          to attach to the machine.
                         items:
                           description: DataDisk specifies the parameters that are
                             used to add one or more data disks to the machine.
@@ -1996,8 +1996,8 @@ spec:
                           - type
                           type: object
                         dataDisks:
-                          description: DataDisk specifies the parameters that are
-                            used to add one or more data disks to the machine.
+                          description: DataDisks holds information of the data disks
+                            to attach to the machine.
                           items:
                             description: DataDisk specifies the parameters that are
                               used to add one or more data disks to the machine.
@@ -3560,8 +3560,8 @@ spec:
                         - type
                         type: object
                       dataDisks:
-                        description: DataDisk specifies the parameters that are used
-                          to add one or more data disks to the machine.
+                        description: DataDisks holds information of the data disks
+                          to attach to the machine.
                         items:
                           description: DataDisk specifies the parameters that are
                             used to add one or more data disks to the machine.
@@ -5659,8 +5659,8 @@ spec:
                         - type
                         type: object
                       dataDisks:
-                        description: DataDisk specifies the parameters that are used
-                          to add one or more data disks to the machine.
+                        description: DataDisks holds information of the data disks
+                          to attach to the machine.
                         items:
                           description: DataDisk specifies the parameters that are
                             used to add one or more data disks to the machine.
