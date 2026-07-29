@@ -44,5 +44,17 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 		}
 	}
 
+	// Check if any compute pool has ClusterAPI management configured
+	for idx, compute := range c.Compute {
+		if compute.Management == types.ClusterAPI {
+			gatedFeatures = append(gatedFeatures, featuregates.GatedInstallConfigFeature{
+				FeatureGateName: features.FeatureGateClusterAPIMachineManagementAWS,
+				Condition:       true,
+				Field:           field.NewPath("compute").Index(idx).Child("management"),
+			})
+			break
+		}
+	}
+
 	return gatedFeatures
 }
