@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -40,6 +41,8 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 // Ensure that clusterapi.InfraProvider implements
@@ -528,7 +531,7 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 	manifestsDir := filepath.Join(dir, clusterapi.ArtifactsDir)
 	logrus.Debugf("Looking for machine manifests in %s", manifestsDir)
 
-	addr, err := i.getBootstrapAddress(config, manifestsDir)
+	addr, err := i.getBootstrapAddress(config, dir)
 	if err != nil {
 		return fmt.Errorf("failed to get bootstrap address: %w", err)
 	}
@@ -558,13 +561,18 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 	return nil
 }
 
-func (i *InfraProvider) getBootstrapAddress(config *types.InstallConfig, manifestsDir string) (string, error) {
+func (i *InfraProvider) getBootstrapAddress(config *types.InstallConfig, dir string) (string, error) {
 	// If the bootstrap node cannot have a public IP address, we
 	// SSH through the load balancer, as is this case on Azure.
 	if i.impl.PublicGatherEndpoint() == APILoadBalancer && config.Publish != types.InternalPublishingStrategy {
+		// When using custom DNS, the api hostname won't resolve, use the LB IP instead.
+		if isCustomDNS(config) {
+			return getCustomDNSLBIP(dir)
+		}
 		return fmt.Sprintf("api.%s", config.ClusterDomain()), nil
 	}
 
+	manifestsDir := filepath.Join(dir, clusterapi.ArtifactsDir)
 	bootstrapFiles, err := filepath.Glob(filepath.Join(manifestsDir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-bootstrap.yaml"))
 	if err != nil {
 		return "", fmt.Errorf("failed to list bootstrap manifests: %w", err)
@@ -580,6 +588,39 @@ func (i *InfraProvider) getBootstrapAddress(config *types.InstallConfig, manifes
 	}
 	logrus.Debugf("found bootstrap address: %s", addrs)
 	return prioritizeIPv4(config, addrs), nil
+}
+
+// isCustomDNS returns true if the platform has user-provisioned DNS enabled.
+// Currently only Azure uses the API load balancer for gather and supports custom DNS.
+func isCustomDNS(config *types.InstallConfig) bool {
+	return config.Platform.Name() == azuretypes.Name &&
+		config.Azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled
+}
+
+// getCustomDNSLBIP reads the load balancer IP from the persisted openshift-lb-config.yaml file.
+func getCustomDNSLBIP(dir string) (string, error) {
+	lbConfigPath := filepath.Join(dir, lbconfig.ConfigPath)
+
+	data, err := os.ReadFile(lbConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read lb-config %s: %w", lbConfigPath, err)
+	}
+
+	lbCfg := &lbconfig.Config{
+		File: &asset.File{
+			Filename: lbconfig.ConfigPath,
+			Data:     data,
+		},
+	}
+
+	_, ipAddrs, err := lbCfg.ParseDNSDataFromConfig(lbconfig.PublicLoadBalancer)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse lb-config: %w", err)
+	}
+	if len(ipAddrs) == 0 {
+		return "", fmt.Errorf("no IP address found in lb-config")
+	}
+	return ipAddrs[0].String(), nil
 }
 
 // IgnitionSecret provides the basic formatting for creating the
