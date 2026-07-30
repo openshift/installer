@@ -70,14 +70,12 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return errors.Wrap(errorList.ToAggregate(), "validating credentials")
 		}
 	case ibmcloud.Name:
-		// A pre-existing installConfig with potential serviceEndpoints would be required,
-		// but doesn't exist at this time (generating an installConfig), so we pass nil
-		_, err = ibmcloudconfig.NewClient(nil)
+		_, err = ibmcloudconfig.NewClient(ic.Config.Platform.IBMCloud.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
 	case powervs.Name:
-		_, err = powervsconfig.NewClient()
+		_, err = powervsconfig.NewClientWithEndpoints(ic.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}

@@ -25,11 +25,6 @@ import (
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	var (
-		manifests          []*asset.RuntimeFile
-		network            string
-		dhcpSubnetCIDR     string
-		service            capibm.ResourceIdentifier
-		workspaceSource    capibm.WorkspaceSource
 		vpcNameOrID        string
 		vpcStruct          *vpcv1.VPC
 		vpcRegion          string
@@ -37,8 +32,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		cosRegion          string
 		bucketName         string
 		transitGatewayName string
-		client             *powervsconfig.Client
-		err                error
 		powerVSCluster     *capibm.IBMPowerVSCluster
 	)
 
@@ -54,39 +47,25 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		logrus.Debugf("GenerateClusterAssets: cosName = %v", cosName)
 		logrus.Debugf("GenerateClusterAssets: cosRegion = %v", cosRegion)
 		logrus.Debugf("GenerateClusterAssets: bucketName = %v", bucketName)
-		logrus.Debugf("GenerateClusterAssets: powerVSCluster.Spec.ControlPlaneEndpoint.Host = %v", powerVSCluster.Spec.ControlPlaneEndpoint.Host)
+		if powerVSCluster != nil {
+			logrus.Debugf("GenerateClusterAssets: powerVSCluster.Spec.ControlPlaneEndpoint.Host = %v", powerVSCluster.Spec.ControlPlaneEndpoint.Host)
+		}
 	}()
 
-	manifests = []*asset.RuntimeFile{}
+	manifests := []*asset.RuntimeFile{}
 
-	network = fmt.Sprintf("%s-network", clusterID.InfraID)
+	network := fmt.Sprintf("%s-network", clusterID.InfraID)
 
 	logrus.Debugf("GenerateClusterAssets: len MachineNetwork = %d", len(installConfig.Config.Networking.MachineNetwork))
-	dhcpSubnetCIDR = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	dhcpSubnetCIDR := installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 	if numNetworks := len(installConfig.Config.Networking.MachineNetwork); numNetworks > 1 {
 		logrus.Infof("Warning: %d machineNetwork found! Ignoring all except the first.", numNetworks)
 	}
 	logrus.Debugf("GenerateClusterAssets: dhcpSubnetCIDR = %s", dhcpSubnetCIDR)
 
-	// Build v1beta3 WorkspaceSource
-	if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
-		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
-		service = capibm.ResourceIdentifier{Name: serviceName}
-		workspaceSource = capibm.WorkspaceSource{
-			Type:      capibm.SourceTypeProvision,
-			Provision: capibm.WorkspaceProvisionConfig{Name: serviceName},
-		}
-	} else {
-		service = capibm.ResourceIdentifier{
-			ID: installConfig.Config.PowerVS.ServiceInstanceGUID,
-		}
-		workspaceSource = capibm.WorkspaceSource{
-			Type:      capibm.SourceTypeReference,
-			Reference: service,
-		}
-	}
+	workspaceSource, service := buildWorkspaceSource(installConfig.Config.PowerVS.ServiceInstanceGUID, clusterID.InfraID)
 
-	client, err = powervsconfig.NewClient()
+	client, err := powervsconfig.NewClientWithEndpoints(installConfig.Config.Platform.PowerVS.ServiceEndpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -101,59 +80,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	// Build v1beta3 VPCSource
-	// The VPC specified can be either:
-	// 1) blank - CAPI will create one for us.
-	// 2) an id of an existing VPC.
-	// 3) a name of an existing VPC.
-	vpcNameOrID = installConfig.Config.Platform.PowerVS.VPC
-	var vpcSource capibm.VPCSource
-	if vpcStruct, err = client.GetVPCByID(ctx, vpcNameOrID, vpcRegion); err == nil {
-		// #2 — ID
-		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC ID is valid")
-		vpcSource = capibm.VPCSource{
-			Type:   capibm.SourceTypeReference,
-			Region: vpcRegion,
-			Reference: capibm.ResourceIdentifier{
-				ID: installConfig.Config.Platform.PowerVS.VPC,
-			},
-		}
-	} else if vpcStruct, err = client.GetVPCByName(ctx, vpcNameOrID); err == nil {
-		// #3 — Name
-		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC Name is valid")
-		vpcSource = capibm.VPCSource{
-			Type:   capibm.SourceTypeReference,
-			Region: vpcRegion,
-			Reference: capibm.ResourceIdentifier{
-				Name: vpcNameOrID,
-			},
-		}
-	} else {
-		if vpcNameOrID == "" {
-			// #1 — provision
-			logrus.Debugf("GenerateClusterAssets: PowerVS.VPC is empty")
-			vpcNameOrID = fmt.Sprintf("vpc-%s", clusterID.InfraID)
-			vpcStruct = nil
-			vpcSource = capibm.VPCSource{
-				Type:   capibm.SourceTypeProvision,
-				Region: vpcRegion,
-				Provision: capibm.VPCProvision{
-					Name: vpcNameOrID,
-				},
-			}
-		} else {
-			return nil, fmt.Errorf("generateClusterAssets could not handle vpc")
-		}
+	vpcSource, vpcStruct, vpcNameOrID, err := buildVPCSource(ctx, client, installConfig.Config.Platform.PowerVS.VPC, vpcRegion, clusterID.InfraID)
+	if err != nil {
+		return nil, err
 	}
 
-	// Build VPC Security Groups (unchanged — uses powervs/v1beta2 compatible type via getVPCSecurityGroups)
 	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID)
 
 	// Build v1beta3 TransitGatewaySource
-	// The Transit Gateway can be either:
-	// 1) blank - CAPI will create one for us.
-	// 2) an id of an existing TG.
-	// 3) a name of an existing TG.
 	transitGatewayName = installConfig.Config.Platform.PowerVS.TransitGateway
 	tgIsID := false
 	if transitGatewayName != "" {
@@ -176,63 +110,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 	tgSource := buildTransitGatewaySource(transitGatewayName, tgIsID, clusterID.InfraID)
 
-	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
-
-	if cosRegion, err = powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
-		return nil, fmt.Errorf("unable to derive cosRegion from region: %s %w", installConfig.Config.PowerVS.Region, err)
+	var cosSource capibm.COSInstanceSource
+	cosSource, cosName, cosRegion, bucketName, err = buildCOSSource(ctx, client, installConfig.Config.PowerVS.COSInstanceCRN, installConfig.Config.PowerVS.Region, clusterID.InfraID)
+	if err != nil {
+		return nil, err
 	}
 
-	bucketName = fmt.Sprintf("%s-bootstrap-ign", clusterID.InfraID)
-
-	cosSource := capibm.COSInstanceSource{
-		Type:         capibm.SourceTypeProvision,
-		BucketName:   bucketName,
-		BucketRegion: cosRegion,
-		Provision: capibm.COSInstanceProvision{
-			Name: cosName,
-		},
-	}
-
-	// useDHCPServer is true when the user has explicitly requested the legacy DHCPServer mode.
-	// Default (empty string) means DHCPSubnet.
 	useDHCPServer := installConfig.Config.Platform.PowerVS.NetworkType == powervstypes.NetworkTypeDHCPServer
 
-	// Build v1beta3 NetworkSource.
-	//
-	// DHCPSubnet (default): creates a plain PowerVS network with DHCP natively enabled.
-	// No separate DHCP server VM is created. Enables the full new networking model.
-	//
-	// DHCPServer (legacy): creates a dedicated DHCP Service VM. The DHCP Server handles its
-	// own SNAT/egress so the route-mode NLB, Routing Table, and Public Gateway are omitted.
-	var networkSource capibm.NetworkSource
-	if useDHCPServer {
-		networkSource = capibm.NetworkSource{
-			Type: capibm.SourceTypeProvision,
-			Provision: capibm.NetworkProvisionConfig{
-				Type: capibm.NetworkProvisionTypeDHCPServer,
-				DHCPServer: capibm.DHCPServer{
-					Name: network,
-					CIDR: dhcpSubnetCIDR,
-					Snat: capibm.DHCPSnatPolicyEnabled,
-				},
-			},
-		}
-	} else {
-		networkSource = capibm.NetworkSource{
-			Type: capibm.SourceTypeProvision,
-			Provision: capibm.NetworkProvisionConfig{
-				Type: capibm.NetworkProvisionTypeDHCPSubnet,
-				DHCPSubnet: capibm.DHCPSubnet{
-					Name: network,
-					CIDR: dhcpSubnetCIDR,
-				},
-			},
-		}
-	}
-
+	networkSource := buildNetworkSource(useDHCPServer, network, dhcpSubnetCIDR)
 	loadBalancers := buildLoadBalancers(clusterID.InfraID, useDHCPServer, installConfig.Config.Publish)
 
-	// ResourceGroup
 	rgSource := capibm.ResourceGroupSource{
 		Type: capibm.SourceTypeReference,
 		Reference: capibm.ResourceIdentifier{
@@ -304,9 +192,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 		Spec: capibm.IBMPowerVSClusterSpec{
-			// Topology must be set so the CAPIBM webhook accepts the object.
-			// Both DHCPSubnet and DHCPServer paths use a VPC and Load Balancer,
-			// so PowerVSLoadBalancerTopology is always correct here.
 			Topology:          capibm.PowerVSLoadBalancerTopology,
 			Workspace:         workspaceSource,
 			Network:           networkSource,
@@ -325,73 +210,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}
 
-	// DHCPSubnet path: explicitly provision all three VPC subnets (one per zone) so that
-	// CAPIBM does not auto-expand them without a PublicGateway reference. Only the subnet
-	// in the same zone as the PGW gets the PublicGateway field set — IBM Cloud only supports
-	// one PGW per zone, and the route-mode NLB also selects this zone.
-	if !useDHCPServer && vpcStruct == nil {
-		allVPCZones, vpcZonesErr := powervstypes.VPCZonesForVPCRegion(vpcRegion)
-		if vpcZonesErr != nil {
-			return nil, fmt.Errorf("unable to derive VPC zones: %w", vpcZonesErr)
-		}
-		for _, zone := range allVPCZones {
-			subnetName := fmt.Sprintf("%s-subnet-%s", clusterID.InfraID, zone)
-			subnetSource := capibm.VPCSubnetSource{
-				Type: capibm.SourceTypeProvision,
-				Zone: zone,
-				Provision: capibm.VPCSubnetProvision{
-					Name: subnetName,
-				},
-			}
-			// Attach the PGW only to the subnet that shares its zone.
-			if zone == pgwVPCZone {
-				subnetSource.PublicGateway = egress.attach
-			}
-			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets, subnetSource)
-		}
-		logrus.Debugf("GenerateClusterAssets: VPCSubnets with PGW attachment = %+v", powerVSCluster.Spec.VPCSubnets)
+	vpcSubnets, err := buildVPCSubnets(ctx, installConfig, vpcStruct, existingSubnets, useDHCPServer, egress.attach, pgwVPCZone, vpcRegion, clusterID.InfraID)
+	if err != nil {
+		return nil, err
 	}
+	powerVSCluster.Spec.VPCSubnets = vpcSubnets
 
-	// Use a custom DNS resolver for Internal publishing strategy
-	if installConfig.Config.Publish == types.InternalPublishingStrategy {
-		var dnsServerIP string
-		err = installConfig.PowerVS.EnsureVPCNameIsSpecifiedForInternal(installConfig.Config.PowerVS.VPC)
-		if err != nil {
-			return nil, err
-		}
-		dnsServerIP, err = installConfig.PowerVS.GetDNSServerIP(ctx, installConfig.Config.PowerVS.VPC)
-		if err != nil {
-			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPC, err)
-		}
-		// Inject the DNS server IP into the network provision config.
-		// DHCPSubnet uses a []string slice; DHCPServer uses a single string field.
-		if useDHCPServer {
-			powerVSCluster.Spec.Network.Provision.DHCPServer.DNSServer = dnsServerIP
-			// Disable SNAT for disconnected scenario.
-			powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = dhcpServerSnatPolicy(installConfig.Config)
-		} else {
-			powerVSCluster.Spec.Network.Provision.DHCPSubnet.DNSServers = []string{dnsServerIP}
-		}
-	}
-
-	// If a VPC was specified, pass all subnets in it to cluster API
-	if vpcStruct != nil {
-		if installConfig.Config.Publish == types.InternalPublishingStrategy {
-			err = installConfig.PowerVS.EnsureVPCIsPermittedNetwork(ctx, vpcStruct)
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error ensuring VPC is permitted: %s %w", *vpcStruct.Name, err)
-		}
-		for _, subnet := range existingSubnets {
-			subnetSource := existingSubnetSource(subnet)
-			// For DHCPSubnet mode, attach the PGW to the subnet in the matching zone.
-			// Leave a gateway the user already attached to the subnet untouched.
-			if !useDHCPServer && subnet.PublicGateway == nil && subnetInZone(subnet, pgwVPCZone) {
-				subnetSource.PublicGateway = egress.attach
-			}
-			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets, subnetSource)
-		}
-		logrus.Debugf("GenerateClusterAssets: subnets = %+v", powerVSCluster.Spec.VPCSubnets)
+	if err = configureInternalDNS(ctx, installConfig, powerVSCluster, useDHCPServer); err != nil {
+		return nil, err
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{
@@ -399,37 +225,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		File:   asset.File{Filename: "02_powervs-cluster.yaml"},
 	})
 
-	// When osImage is set, import the image from COS into the workspace; otherwise
-	// the machines use a stock catalog image and no image manifest is needed.
-	if osImage := installConfig.Config.Platform.PowerVS.OSImage; osImage != "" {
-		imageBucket, imageObject, imageRegion, err := powervstypes.ParseOSImageURL(osImage)
-		if err != nil {
-			return nil, fmt.Errorf("invalid platform.powervs.osImage %q: %w", osImage, err)
-		}
-		logrus.Infof("Importing PowerVS image from bucket %s, object %s, region %s", imageBucket, imageObject, imageRegion)
-
-		manifests = append(manifests, &asset.RuntimeFile{
-			Object: &capibm.IBMPowerVSImage{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: capibm.GroupVersion.String(),
-					Kind:       "IBMPowerVSImage",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      machinespowervs.ImportedImageName(clusterID.InfraID),
-					Namespace: capiutils.Namespace,
-				},
-				Spec: capibm.IBMPowerVSImageSpec{
-					ClusterName: clusterID.InfraID,
-					Workspace:   service,
-					Bucket:      imageBucket,
-					Object:      imageObject,
-					Region:      imageRegion,
-				},
-			},
-			File: asset.File{Filename: "03_powervs-image.yaml"},
-		})
-	} else {
-		logrus.Infof("Using PowerVS stock image: %s", machinespowervs.OSImageNameFromStream(installConfig.Config.OSImageStream))
+	imageManifest, err := buildImageManifest(installConfig, clusterID.InfraID, service)
+	if err != nil {
+		return nil, err
+	}
+	if imageManifest != nil {
+		manifests = append(manifests, imageManifest)
 	}
 
 	return &capiutils.GenerateClusterAssetsOutput{
@@ -443,6 +244,57 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}, nil
+}
+
+func buildWorkspaceSource(serviceInstanceGUID, infraID string) (capibm.WorkspaceSource, capibm.ResourceIdentifier) {
+	if serviceInstanceGUID == "" {
+		serviceName := fmt.Sprintf("%s-power-iaas", infraID)
+		service := capibm.ResourceIdentifier{Name: serviceName}
+		return capibm.WorkspaceSource{
+			Type:      capibm.SourceTypeProvision,
+			Provision: capibm.WorkspaceProvisionConfig{Name: serviceName},
+		}, service
+	}
+	service := capibm.ResourceIdentifier{
+		ID: serviceInstanceGUID,
+	}
+	return capibm.WorkspaceSource{
+		Type:      capibm.SourceTypeReference,
+		Reference: service,
+	}, service
+}
+
+func buildVPCSource(ctx context.Context, client *powervsconfig.Client, vpcNameOrID string, vpcRegion string, infraID string) (capibm.VPCSource, *vpcv1.VPC, string, error) {
+	if vpcStruct, err := client.GetVPCByID(ctx, vpcNameOrID, vpcRegion); err == nil {
+		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC ID is valid")
+		return capibm.VPCSource{
+			Type:   capibm.SourceTypeReference,
+			Region: vpcRegion,
+			Reference: capibm.ResourceIdentifier{
+				ID: vpcNameOrID,
+			},
+		}, vpcStruct, vpcNameOrID, nil
+	} else if vpcStruct, err := client.GetVPCByName(ctx, vpcNameOrID); err == nil {
+		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC Name is valid")
+		return capibm.VPCSource{
+			Type:   capibm.SourceTypeReference,
+			Region: vpcRegion,
+			Reference: capibm.ResourceIdentifier{
+				Name: vpcNameOrID,
+			},
+		}, vpcStruct, vpcNameOrID, nil
+	} else if vpcNameOrID == "" {
+		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC is empty")
+		provisionedVPC := fmt.Sprintf("vpc-%s", infraID)
+		return capibm.VPCSource{
+			Type:   capibm.SourceTypeProvision,
+			Region: vpcRegion,
+			Provision: capibm.VPCProvision{
+				Name: provisionedVPC,
+			},
+		}, nil, provisionedVPC, nil
+	}
+	return capibm.VPCSource{}, nil, "", fmt.Errorf("generateClusterAssets could not handle vpc")
 }
 
 // buildTransitGatewaySource builds the Transit Gateway source. isID reports whether
@@ -471,6 +323,66 @@ func buildTransitGatewaySource(name string, isID bool, infraID string) capibm.Tr
 		source.Reference = capibm.ResourceIdentifier{Name: name}
 	}
 	return source
+}
+
+func buildCOSSource(ctx context.Context, client *powervsconfig.Client, cosInstanceCRN string, region string, infraID string) (capibm.COSInstanceSource, string, string, string, error) {
+	var cosName string
+	if cosInstanceCRN != "" {
+		logrus.Debugf("Using existing COS instance from CRN: %s", cosInstanceCRN)
+		cosInstance, err := client.GetResourceInstanceByCRN(ctx, cosInstanceCRN)
+		if err != nil {
+			return capibm.COSInstanceSource{}, "", "", "", fmt.Errorf("failed to get COS instance details from CRN %s: %w", cosInstanceCRN, err)
+		}
+		if cosInstance == nil || cosInstance.Name == nil {
+			return capibm.COSInstanceSource{}, "", "", "", fmt.Errorf("COS instance not found or has no name for CRN: %s", cosInstanceCRN)
+		}
+		cosName = *cosInstance.Name
+		logrus.Infof("Using existing COS instance: %s", cosName)
+	} else {
+		cosName = fmt.Sprintf("%s-cos", infraID)
+		logrus.Debugf("Will create new COS instance: %s", cosName)
+	}
+
+	cosRegion, err := powervstypes.COSRegionForPowerVSRegion(region)
+	if err != nil {
+		return capibm.COSInstanceSource{}, "", "", "", fmt.Errorf("unable to derive cosRegion from region: %s %w", region, err)
+	}
+
+	bucketName := fmt.Sprintf("%s-bootstrap-ign", infraID)
+	return capibm.COSInstanceSource{
+		Type:         capibm.SourceTypeProvision,
+		BucketName:   bucketName,
+		BucketRegion: cosRegion,
+		Provision: capibm.COSInstanceProvision{
+			Name: cosName,
+		},
+	}, cosName, cosRegion, bucketName, nil
+}
+
+func buildNetworkSource(useDHCPServer bool, network string, dhcpSubnetCIDR string) capibm.NetworkSource {
+	if useDHCPServer {
+		return capibm.NetworkSource{
+			Type: capibm.SourceTypeProvision,
+			Provision: capibm.NetworkProvisionConfig{
+				Type: capibm.NetworkProvisionTypeDHCPServer,
+				DHCPServer: capibm.DHCPServer{
+					Name: network,
+					CIDR: dhcpSubnetCIDR,
+					Snat: capibm.DHCPSnatPolicyEnabled,
+				},
+			},
+		}
+	}
+	return capibm.NetworkSource{
+		Type: capibm.SourceTypeProvision,
+		Provision: capibm.NetworkProvisionConfig{
+			Type: capibm.NetworkProvisionTypeDHCPSubnet,
+			DHCPSubnet: capibm.DHCPSubnet{
+				Name: network,
+				CIDR: dhcpSubnetCIDR,
+			},
+		},
+	}
 }
 
 // subnetInZone reports whether the subnet is in the named VPC zone.
@@ -622,6 +534,106 @@ func existingSubnetSource(subnet vpcv1.Subnet) capibm.VPCSubnetSource {
 			ID: ptr.Deref(subnet.ID, ""),
 		},
 	}
+}
+
+func buildVPCSubnets(ctx context.Context, installConfig *installconfig.InstallConfig, vpcStruct *vpcv1.VPC, existingSubnets []vpcv1.Subnet, useDHCPServer bool, pgwAttach capibm.ResourceIdentifier, pgwVPCZone string, vpcRegion string, infraID string) ([]capibm.VPCSubnetSource, error) {
+	var subnets []capibm.VPCSubnetSource
+
+	if !useDHCPServer && vpcStruct == nil {
+		allVPCZones, vpcZonesErr := powervstypes.VPCZonesForVPCRegion(vpcRegion)
+		if vpcZonesErr != nil {
+			return nil, fmt.Errorf("unable to derive VPC zones: %w", vpcZonesErr)
+		}
+		for _, zone := range allVPCZones {
+			subnetName := fmt.Sprintf("%s-subnet-%s", infraID, zone)
+			subnetSource := capibm.VPCSubnetSource{
+				Type: capibm.SourceTypeProvision,
+				Zone: zone,
+				Provision: capibm.VPCSubnetProvision{
+					Name: subnetName,
+				},
+			}
+			if zone == pgwVPCZone {
+				subnetSource.PublicGateway = pgwAttach
+			}
+			subnets = append(subnets, subnetSource)
+		}
+		logrus.Debugf("GenerateClusterAssets: VPCSubnets with PGW attachment = %+v", subnets)
+	}
+
+	if vpcStruct != nil {
+		if installConfig.Config.Publish == types.InternalPublishingStrategy {
+			if err := installConfig.PowerVS.EnsureVPCIsPermittedNetwork(ctx, vpcStruct); err != nil {
+				return nil, fmt.Errorf("error ensuring VPC is permitted: %s %w", *vpcStruct.Name, err)
+			}
+		}
+		for _, subnet := range existingSubnets {
+			subnetSource := existingSubnetSource(subnet)
+			if !useDHCPServer && subnet.PublicGateway == nil && subnetInZone(subnet, pgwVPCZone) {
+				subnetSource.PublicGateway = pgwAttach
+			}
+			subnets = append(subnets, subnetSource)
+		}
+		logrus.Debugf("GenerateClusterAssets: subnets = %+v", subnets)
+	}
+
+	return subnets, nil
+}
+
+func configureInternalDNS(ctx context.Context, installConfig *installconfig.InstallConfig, powerVSCluster *capibm.IBMPowerVSCluster, useDHCPServer bool) error {
+	if installConfig.Config.Publish != types.InternalPublishingStrategy {
+		return nil
+	}
+
+	if err := installConfig.PowerVS.EnsureVPCNameIsSpecifiedForInternal(installConfig.Config.PowerVS.VPC); err != nil {
+		return err
+	}
+	dnsServerIP, err := installConfig.PowerVS.GetDNSServerIP(ctx, installConfig.Config.PowerVS.VPC)
+	if err != nil {
+		return fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPC, err)
+	}
+	if useDHCPServer {
+		powerVSCluster.Spec.Network.Provision.DHCPServer.DNSServer = dnsServerIP
+		powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = dhcpServerSnatPolicy(installConfig.Config)
+	} else {
+		powerVSCluster.Spec.Network.Provision.DHCPSubnet.DNSServers = []string{dnsServerIP}
+	}
+	return nil
+}
+
+func buildImageManifest(installConfig *installconfig.InstallConfig, infraID string, service capibm.ResourceIdentifier) (*asset.RuntimeFile, error) {
+	osImage := installConfig.Config.Platform.PowerVS.OSImage
+	if osImage == "" {
+		logrus.Infof("Using PowerVS stock image: %s", machinespowervs.OSImageNameFromStream(installConfig.Config.OSImageStream))
+		return nil, nil
+	}
+
+	imageBucket, imageObject, imageRegion, err := powervstypes.ParseOSImageURL(osImage)
+	if err != nil {
+		return nil, fmt.Errorf("invalid platform.powervs.osImage %q: %w", osImage, err)
+	}
+	logrus.Infof("Importing PowerVS image from bucket %s, object %s, region %s", imageBucket, imageObject, imageRegion)
+
+	return &asset.RuntimeFile{
+		Object: &capibm.IBMPowerVSImage{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: capibm.GroupVersion.String(),
+				Kind:       "IBMPowerVSImage",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      machinespowervs.ImportedImageName(infraID),
+				Namespace: capiutils.Namespace,
+			},
+			Spec: capibm.IBMPowerVSImageSpec{
+				ClusterName: infraID,
+				Workspace:   service,
+				Bucket:      imageBucket,
+				Object:      imageObject,
+				Region:      imageRegion,
+			},
+		},
+		File: asset.File{Filename: "03_powervs-image.yaml"},
+	}, nil
 }
 
 // dhcpServerSnatPolicy returns the SNAT policy for the legacy DHCPServer network.
