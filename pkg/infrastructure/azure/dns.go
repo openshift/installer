@@ -38,7 +38,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, intIPv6IP, resourceGroup string, opts *arm.ClientOptions) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, publicIPv6, resourceGroup string, opts *arm.ClientOptions) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -123,18 +123,19 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	// Create the records for api and api-int in the private zone and api.<clustername> for public zone.
 	// CAPI currently creates a record called "apiserver" instead of "api" so creating "api" for the installer in the private zone.
 	if in.InstallConfig.Config.PublicAPI() {
-		cnameRecordName := apiExternalName
-		// if useIPv6 {
-		// 	cnameRecordName = apiExternalNameV6
-		// }
-		publicRecords := createRecordSet(cnameRecordName, azureTags, ttl, cname, "", extLBFQDN)
-		_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, publicRecords.Name, publicRecords.RecordType, publicRecords.RecordSet, nil)
-		if err != nil {
-			return fmt.Errorf("failed to create public record set: %w", err)
-		}
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
-			apiExternalNameV6 := fmt.Sprintf("api.%s", in.InstallConfig.Config.ObjectMeta.Name)
-			publicRecords := createRecordSet(apiExternalNameV6, azureTags, ttl, cname, "", extLBFQDN)
+			aRecord := createRecordSet(apiExternalName, azureTags, ttl, arecord, publicIP, "")
+			_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, aRecord.Name, aRecord.RecordType, aRecord.RecordSet, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create public A record set: %w", err)
+			}
+			aaaaRecord := createRecordSet(apiExternalName, azureTags, ttl, aaaarecord, publicIPv6, "")
+			_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, aaaaRecord.Name, aaaaRecord.RecordType, aaaaRecord.RecordSet, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create public AAAA record set: %w", err)
+			}
+		} else {
+			publicRecords := createRecordSet(apiExternalName, azureTags, ttl, cname, "", extLBFQDN)
 			_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, publicRecords.Name, publicRecords.RecordType, publicRecords.RecordSet, nil)
 			if err != nil {
 				return fmt.Errorf("failed to create public record set: %w", err)
