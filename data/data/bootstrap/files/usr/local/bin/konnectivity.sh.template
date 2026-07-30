@@ -31,8 +31,9 @@ konnectivity_setup() {
     if [ ! -f konnectivity-server-bootstrap.done ]; then
         record_service_stage_start "konnectivity-server-bootstrap"
         echo "Creating Konnectivity server static pod manifest..."
-        export KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
-        envsubst < /opt/openshift/konnectivity-server-pod.yaml > /etc/kubernetes/manifests/konnectivity-server-pod.yaml
+        KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
+        sed "s|\${KONNECTIVITY_IMAGE}|${KONNECTIVITY_IMAGE}|g" \
+            /opt/openshift/konnectivity-server-pod.yaml > /etc/kubernetes/manifests/konnectivity-server-pod.yaml
         touch konnectivity-server-bootstrap.done
         record_service_stage_success
     fi
@@ -48,17 +49,22 @@ konnectivity_manifests() {
         record_service_stage_start "konnectivity-agent-manifest"
         echo "Creating Konnectivity agent manifests..."
 
-        export KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
+        KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
         KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
 
         cp /opt/openshift/konnectivity-namespace.yaml manifests/konnectivity-namespace.yaml
 
-        export KONNECTIVITY_AGENT_CERT_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.crt")
-        export KONNECTIVITY_AGENT_KEY_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.key")
-        export KONNECTIVITY_CA_CERT_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/ca.crt")
-        envsubst < /opt/openshift/konnectivity-agent-certs-secret.yaml > manifests/konnectivity-agent-certs.yaml
+        KONNECTIVITY_AGENT_CERT_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.crt")
+        KONNECTIVITY_AGENT_KEY_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.key")
+        KONNECTIVITY_CA_CERT_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/ca.crt")
+        sed -e "s|\${KONNECTIVITY_AGENT_CERT_BASE64}|${KONNECTIVITY_AGENT_CERT_BASE64}|g" \
+            -e "s|\${KONNECTIVITY_AGENT_KEY_BASE64}|${KONNECTIVITY_AGENT_KEY_BASE64}|g" \
+            -e "s|\${KONNECTIVITY_CA_CERT_BASE64}|${KONNECTIVITY_CA_CERT_BASE64}|g" \
+            /opt/openshift/konnectivity-agent-certs-secret.yaml > manifests/konnectivity-agent-certs.yaml
 
-        envsubst < /opt/openshift/konnectivity-agent-daemonset.yaml > manifests/konnectivity-agent-daemonset.yaml
+        sed -e "s|\${KONNECTIVITY_IMAGE}|${KONNECTIVITY_IMAGE}|g" \
+            -e "s|\${BOOTSTRAP_NODE_IP}|${BOOTSTRAP_NODE_IP}|g" \
+            /opt/openshift/konnectivity-agent-daemonset.yaml > manifests/konnectivity-agent-daemonset.yaml
 
         touch konnectivity-agent-manifest.done
         record_service_stage_success
