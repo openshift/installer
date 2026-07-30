@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/resourcecontroller"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
@@ -78,7 +79,9 @@ func NewPowerVSImageScope(ctx context.Context, params PowerVSImageScopeParams) (
 	scope.IBMPowerVSImage = params.IBMPowerVSImage
 
 	// Create Resource Controller client.
-	var serviceOption resourcecontroller.ServiceOptions
+	serviceOption := resourcecontroller.ServiceOptions{
+		ResourceControllerV2Options: &resourcecontrollerv2.ResourceControllerV2Options{},
+	}
 	// Fetch the resource controller endpoint.
 	rcEndpoint := endpoints.FetchEndpoints(string(endpoints.RC), params.ServiceEndpoint)
 	if rcEndpoint != "" {
@@ -132,11 +135,20 @@ func NewPowerVSImageScope(ctx context.Context, params PowerVSImageScopeParams) (
 		},
 	}
 
-	// Fetch the service endpoint.
-	if svcEndpoint := endpoints.FetchPVSEndpoint(endpoints.ConstructRegionFromZone(*res.RegionID), params.ServiceEndpoint); svcEndpoint != "" {
+	// Use FetchEndpoints (ID-only match) so that PowerVS service URL overrides are applied
+	// regardless of whether res.RegionID round-trips through ConstructRegionFromZone to the
+	// same region string stored in the ServiceEndpoint list.
+	if svcEndpoint := endpoints.FetchEndpoints(string(endpoints.PowerVS), params.ServiceEndpoint); svcEndpoint != "" {
 		options.IBMPIOptions.URL = svcEndpoint
 		log.V(3).Info("Overriding the default PowerVS service endpoint", "serviceEndpoint", svcEndpoint)
 	}
+
+	// Get the authenticator to ensure IAM endpoint overrides are respected.
+	auth, err := authenticator.GetIAMAuthenticator()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create authenticator: %w", err)
+	}
+	options.Authenticator = auth
 
 	c, err := powervs.NewService(options)
 	if err != nil {

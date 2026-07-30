@@ -41,6 +41,7 @@ import (
 	"github.com/IBM/ibm-cos-sdk-go/aws"
 	cosSession "github.com/IBM/ibm-cos-sdk-go/aws/session"
 	"github.com/IBM/ibm-cos-sdk-go/service/s3"
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -140,7 +141,9 @@ func NewPowerVSMachineScope(params PowerVSMachineScopeParams) (scope *PowerVSMac
 	}
 
 	// Create Resource Controller client.
-	var serviceOption resourcecontroller.ServiceOptions
+	serviceOption := resourcecontroller.ServiceOptions{
+		ResourceControllerV2Options: &resourcecontrollerv2.ResourceControllerV2Options{},
+	}
 	// Fetch the resource controller endpoint.
 	rcEndpoint := endpoints.FetchEndpoints(string(endpoints.RC), params.ServiceEndpoint)
 	if rcEndpoint != "" {
@@ -190,8 +193,10 @@ func NewPowerVSMachineScope(params PowerVSMachineScopeParams) (scope *PowerVSMac
 		CloudInstanceID: serviceInstanceID,
 	}
 
-	// Fetch the service endpoint.
-	if svcEndpoint := endpoints.FetchPVSEndpoint(region, params.ServiceEndpoint); svcEndpoint != "" {
+	// Use FetchEndpoints (ID-only match) so that PowerVS service URL overrides are applied
+	// regardless of whether res.RegionID round-trips through ConstructRegionFromZone to the
+	// same region string stored in the ServiceEndpoint list.
+	if svcEndpoint := endpoints.FetchEndpoints(string(endpoints.PowerVS), params.ServiceEndpoint); svcEndpoint != "" {
 		serviceOptions.IBMPIOptions.URL = svcEndpoint
 		params.Logger.V(3).Info("Overriding the default PowerVS service endpoint", "serviceEndpoint", svcEndpoint)
 	}
@@ -559,7 +564,7 @@ func (m *PowerVSMachineScope) createCOSClient(ctx context.Context) (cos.Cos, err
 		cosInstanceName = m.IBMPowerVSCluster.Spec.CosInstance.Name
 	}
 
-	serviceInstance, err := m.ResourceClient.GetInstanceByName(cosInstanceName, resourcecontroller.CosResourceID, resourcecontroller.CosResourcePlanID)
+	serviceInstance, err := m.ResourceClient.GetInstanceByName(cosInstanceName, resourcecontroller.CosResourceID, resourcecontroller.GetCOSResourcePlanID())
 	if err != nil {
 		log.Error(err, "failed to get COS service instance", "name", cosInstanceName)
 		return nil, err

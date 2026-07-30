@@ -48,9 +48,8 @@ type IBMPowerVSMachineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Deprecated: use ServiceInstance instead
-	//
 	// ServiceInstanceID is the id of the power cloud instance where the vsi instance will get deployed.
+	// Deprecated: use ServiceInstance instead
 	ServiceInstanceID string `json:"serviceInstanceID"`
 
 	// serviceInstance is the reference to the Power VS workspace on which the server instance(VM) will be created.

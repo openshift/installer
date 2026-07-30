@@ -389,7 +389,7 @@ github.com/opentracing/opentracing-go/log
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/ppc64le-cloud/powervs-utils v0.0.0-20260320143638-bc9d769bbbfc
+# github.com/ppc64le-cloud/powervs-utils v0.0.0-20260417184652-84e90bc52f3d
 ## explicit; go 1.25.8
 github.com/ppc64le-cloud/powervs-utils
 # github.com/prometheus/client_golang v1.22.0
@@ -449,8 +449,8 @@ go.opentelemetry.io/auto/sdk/internal/telemetry
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/request
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconv
-# go.opentelemetry.io/otel v1.40.0
-## explicit; go 1.24.0
+# go.opentelemetry.io/otel v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel
 go.opentelemetry.io/otel/attribute
 go.opentelemetry.io/otel/attribute/internal
@@ -458,6 +458,7 @@ go.opentelemetry.io/otel/attribute/internal/xxhash
 go.opentelemetry.io/otel/baggage
 go.opentelemetry.io/otel/codes
 go.opentelemetry.io/otel/internal/baggage
+go.opentelemetry.io/otel/internal/errorhandler
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
 go.opentelemetry.io/otel/semconv/internal/v2
@@ -467,6 +468,8 @@ go.opentelemetry.io/otel/semconv/v1.37.0
 go.opentelemetry.io/otel/semconv/v1.39.0
 go.opentelemetry.io/otel/semconv/v1.39.0/httpconv
 go.opentelemetry.io/otel/semconv/v1.39.0/otelconv
+go.opentelemetry.io/otel/semconv/v1.40.0
+go.opentelemetry.io/otel/semconv/v1.40.0/otelconv
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0
 ## explicit; go 1.24.0
 go.opentelemetry.io/otel/exporters/otlp/otlptrace
@@ -481,13 +484,13 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/observ
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/retry
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/x
-# go.opentelemetry.io/otel/metric v1.40.0
-## explicit; go 1.24.0
+# go.opentelemetry.io/otel/metric v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
 go.opentelemetry.io/otel/metric/noop
-# go.opentelemetry.io/otel/sdk v1.40.0
-## explicit; go 1.24.0
+# go.opentelemetry.io/otel/sdk v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
 go.opentelemetry.io/otel/sdk/internal/x
@@ -495,8 +498,8 @@ go.opentelemetry.io/otel/sdk/resource
 go.opentelemetry.io/otel/sdk/trace
 go.opentelemetry.io/otel/sdk/trace/internal/env
 go.opentelemetry.io/otel/sdk/trace/internal/observ
-# go.opentelemetry.io/otel/trace v1.40.0
-## explicit; go 1.24.0
+# go.opentelemetry.io/otel/trace v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
 go.opentelemetry.io/otel/trace/internal/telemetry
@@ -553,8 +556,8 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.24.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.40.0
-## explicit; go 1.24.0
+# golang.org/x/sys v0.42.0
+## explicit; go 1.25.0
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
@@ -1290,7 +1293,7 @@ sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/log
 sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.12.2
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.13.0-alpha.0.0.20260729144403-83818de8b90e
 ## explicit; go 1.25.8
 sigs.k8s.io/cluster-api-provider-ibmcloud
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1
