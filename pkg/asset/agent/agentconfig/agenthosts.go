@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	goyaml "gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
@@ -16,6 +17,7 @@ import (
 	agentAsset "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
@@ -41,8 +43,9 @@ type nmStateInterface struct {
 // AgentHosts generates the hosts information from the AgentConfig and
 // OptionalInstallConfig assets.
 type AgentHosts struct {
-	Hosts        []agent.Host
-	rendezvousIP string
+	Hosts                  []agent.Host
+	FencingCredentialsHost []types.Credential
+	rendezvousIP           string
 }
 
 // Name returns a human friendly name.
@@ -92,6 +95,9 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 				logrus.Warnf("hosts from %s are ignored", agentAsset.InstallConfigFilename)
 			}
 		}
+
+		// store per host fencing-credentials only when MAC address is used
+		a.populateFencingCredentialHosts(installConfig)
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
@@ -367,5 +373,52 @@ func (a *AgentHosts) HostConfigFiles() (HostConfigFileMap, error) {
 			files[filepath.Join(name, "role")] = []byte(host.Role)
 		}
 	}
+
+	maxNewDirs := len(a.Hosts)
+	for i := range a.FencingCredentialsHost {
+		cred := &a.FencingCredentialsHost[i]
+		dirName := findHostDirForMAC(files, cred.MACAddress)
+		if dirName == "" {
+			dirName = fmt.Sprintf("host-%d", maxNewDirs)
+			maxNewDirs++
+			files[filepath.Join(dirName, "mac_addresses")] = []byte(strings.ToLower(cred.MACAddress) + "\n")
+		}
+		cfg := &FencingCredentialsConfig{Credentials: []*types.Credential{cred}}
+		data, err := goyaml.Marshal(cfg)
+		if err != nil {
+			return nil, err
+		}
+		files[filepath.Join(dirName, "fencing-credentials.yaml")] = data
+	}
+
 	return files, nil
+}
+
+func (a *AgentHosts) populateFencingCredentialHosts(installConfig *agentAsset.OptionalInstallConfig) {
+	if installConfig.Config == nil || installConfig.Config.ControlPlane == nil ||
+		installConfig.Config.ControlPlane.Fencing == nil {
+		return
+	}
+
+	for _, cred := range installConfig.Config.ControlPlane.Fencing.Credentials {
+		if cred.HostName == "" && cred.MACAddress != "" {
+			a.FencingCredentialsHost = append(a.FencingCredentialsHost, *cred)
+		}
+	}
+}
+
+func findHostDirForMAC(files HostConfigFileMap, macAddress string) string {
+	normalizedMAC := strings.ToLower(macAddress)
+	for key, content := range files {
+		if !strings.HasSuffix(key, "/mac_addresses") {
+			continue
+		}
+		dirName := strings.TrimSuffix(key, "/mac_addresses")
+		for _, mac := range strings.Split(strings.TrimSpace(string(content)), "\n") {
+			if strings.TrimSpace(mac) == normalizedMAC {
+				return dirName
+			}
+		}
+	}
+	return ""
 }
