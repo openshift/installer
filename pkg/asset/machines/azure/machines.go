@@ -253,6 +253,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		dataDisks = append(dataDisks, dataDisk)
 	}
 
+	capacityReservationGroupID := ""
+	if mpool.CapacityReservationGroup != nil {
+		capacityReservationGroupID = mpool.CapacityReservationGroup.ToID()
+	}
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -284,7 +289,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		AcceleratedNetworking:      getVMNetworkingType(mpool.VMNetworkingType),
 		Tags:                       platform.UserTags,
 		DataDisks:                  dataDisks,
-		CapacityReservationGroupID: mpool.CapacityReservationGroupID,
+		CapacityReservationGroupID: capacityReservationGroupID,
 	}
 	var bootDiagnostics *machineapi.AzureDiagnostics
 	if platform.DefaultMachinePlatform != nil {
