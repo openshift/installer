@@ -9,7 +9,7 @@ import (
 // Platform collects powervs-specific configuration.
 func Platform() (*powervs.Platform, error) {
 
-	bxCli, err := NewBxClient(true)
+	bxCli, err := NewBxClient(true, nil)
 	if err != nil {
 		return nil, err
 	}
