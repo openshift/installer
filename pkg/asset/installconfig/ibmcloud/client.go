@@ -60,6 +60,7 @@ type API interface {
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.Bucket, error)
 	GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetResourceInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
 	GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error)
@@ -129,7 +130,7 @@ const (
 	cosDefaultURLTemplate = "s3.%s.cloud-object-storage.appdomain.cloud"
 	// hyperProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Hyper Protect service.
 	hyperProtectDefaultURLTemplate = "https://api.%s.hs-crypto.cloud.ibm.com"
-	// iamTokenDefaultURL is the default URL endpoint for IBM Cloud IAM token service.
+	// iamTokenDefaultURL is the default (production) URL endpoint for IBM Cloud IAM token service.
 	iamTokenDefaultURL = "https://iam.cloud.ibm.com/identity/token" // #nosec G101 // this is the URL for IBM Cloud IAM tokens, not a credential
 	// iamTokenPath is the URL path, to add to override IAM endpoints, for the IBM Cloud IAM token service.
 	iamTokenPath = "identity/token" // #nosec G101 // this is the URI path for IBM Cloud IAM tokens, not a credential
@@ -715,6 +716,20 @@ func (c *Client) GetDNSInstance(ctx context.Context, crnstr string) (*resourceco
 	return c.getInstance(ctx, crnstr, DNSInstanceType)
 }
 
+// GetResourceInstance gets a specific resource instance by its CRN.
+func (c *Client) GetResourceInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	options := c.controllerAPI.NewGetResourceInstanceOptions(crnstr)
+	resourceInstance, _, err := c.controllerAPI.GetResourceInstanceWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get resource instance: %w", err)
+	}
+
+	return resourceInstance, nil
+}
+
 // GetDNSInstancePermittedNetworks gets the permitted VPC networks for a DNS Services instance
 func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -985,7 +1000,7 @@ func (c *Client) GetChildrenFromParents(ctx context.Context, parentList []global
 
 	for num, parent := range parentList {
 		if parent.ID == nil {
-			fmt.Printf("skipping parent num %d of type %s due to unexpected nil ID\n", num, kind)
+			logrus.Warnf("skipping parent num %d of type %s due to unexpected nil ID", num, kind)
 			continue
 		}
 
@@ -1336,6 +1351,7 @@ func (c *Client) loadGlobalCatalogAPI() error {
 }
 
 func (c *Client) loadResourceManagementAPI() error {
+
 	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 	if err != nil {
 		return err
@@ -1487,15 +1503,30 @@ func (c *Client) getDNSRecordsAPI(instanceCRN string, zoneID string) (*dnsrecord
 	return dnsRecordsService, nil
 }
 
+// iamTokenURLForEndpoint returns the IAM token URL to use for key service clients.
+// If an IAM endpoint override is provided the token URL is constructed from it.
+// If no override is provided, the production default is used.
+func iamTokenURLForEndpoint(iamEndpointOverride string) string {
+	if iamEndpointOverride == "" {
+		return iamTokenDefaultURL
+	}
+	return fmt.Sprintf("%s/%s", iamEndpointOverride, iamTokenPath)
+}
+
 func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 	var clientConfig kpclient.ClientConfig
+
+	// Determine the IAM token URL: if an IAM service endpoint override was provided, use it;
+	// otherwise fall back to production
+	iamOverride := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, c.serviceEndpoints)
+	tokenURL := iamTokenURLForEndpoint(iamOverride)
 
 	switch crn.ServiceName {
 	case hyperProtectCRNServiceName:
 		clientConfig = kpclient.ClientConfig{
 			BaseURL:    fmt.Sprintf(hyperProtectDefaultURLTemplate, crn.Region),
 			APIKey:     c.apiKey,
-			TokenURL:   iamTokenDefaultURL,
+			TokenURL:   tokenURL,
 			InstanceID: crn.ServiceInstance,
 		}
 
@@ -1507,7 +1538,7 @@ func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 		clientConfig = kpclient.ClientConfig{
 			BaseURL:    fmt.Sprintf(keyProtectDefaultURLTemplate, crn.Region),
 			APIKey:     c.apiKey,
-			TokenURL:   iamTokenDefaultURL,
+			TokenURL:   tokenURL,
 			InstanceID: crn.ServiceInstance,
 		}
 
@@ -1517,12 +1548,6 @@ func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 		}
 	default:
 		return nil, fmt.Errorf("unknown key service for provided encryption key: %s", crn)
-	}
-
-	// Override IAM token URL, if an IAM service override URL was provided
-	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, c.serviceEndpoints); overrideURL != "" {
-		// Construct the token URL using the overridden IAM URL and the token path
-		clientConfig.TokenURL = fmt.Sprintf("%s/%s", overrideURL, iamTokenPath)
 	}
 
 	return kpclient.New(clientConfig, kpclient.DefaultTransport())
