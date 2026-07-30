@@ -389,11 +389,28 @@ spec:
                         - storageAccountName
                         - type
                         type: object
-                      capacityReservationGroupID:
+                      capacityReservationGroup:
                         description: |-
-                          CapacityReservationGroupID specifies the capacity reservation group resource id that should be
-                          used for allocating the virtual machine.
-                        type: string
+                          CapacityReservationGroup specifies the capacity reservation group that should be used
+                          for allocating the virtual machine.
+                        properties:
+                          name:
+                            description: Name is the name of the capacity reservation
+                              group.
+                            type: string
+                          resourceGroup:
+                            description: ResourceGroup defines the Azure resource
+                              group containing the capacity reservation group.
+                            type: string
+                          subscriptionId:
+                            description: |-
+                              SubscriptionID defines the Azure subscription containing the capacity reservation group.
+                              If omitted, the cluster subscription is used.
+                            type: string
+                        required:
+                        - name
+                        - resourceGroup
+                        type: object
                       dataDisks:
                         description: DataDisk specifies the parameters that are used
                           to add one or more data disks to the machine.
@@ -2000,11 +2017,28 @@ spec:
                           - storageAccountName
                           - type
                           type: object
-                        capacityReservationGroupID:
+                        capacityReservationGroup:
                           description: |-
-                            CapacityReservationGroupID specifies the capacity reservation group resource id that should be
-                            used for allocating the virtual machine.
-                          type: string
+                            CapacityReservationGroup specifies the capacity reservation group that should be used
+                            for allocating the virtual machine.
+                          properties:
+                            name:
+                              description: Name is the name of the capacity reservation
+                                group.
+                              type: string
+                            resourceGroup:
+                              description: ResourceGroup defines the Azure resource
+                                group containing the capacity reservation group.
+                              type: string
+                            subscriptionId:
+                              description: |-
+                                SubscriptionID defines the Azure subscription containing the capacity reservation group.
+                                If omitted, the cluster subscription is used.
+                              type: string
+                          required:
+                          - name
+                          - resourceGroup
+                          type: object
                         dataDisks:
                           description: DataDisk specifies the parameters that are
                             used to add one or more data disks to the machine.
@@ -3569,11 +3603,28 @@ spec:
                         - storageAccountName
                         - type
                         type: object
-                      capacityReservationGroupID:
+                      capacityReservationGroup:
                         description: |-
-                          CapacityReservationGroupID specifies the capacity reservation group resource id that should be
-                          used for allocating the virtual machine.
-                        type: string
+                          CapacityReservationGroup specifies the capacity reservation group that should be used
+                          for allocating the virtual machine.
+                        properties:
+                          name:
+                            description: Name is the name of the capacity reservation
+                              group.
+                            type: string
+                          resourceGroup:
+                            description: ResourceGroup defines the Azure resource
+                              group containing the capacity reservation group.
+                            type: string
+                          subscriptionId:
+                            description: |-
+                              SubscriptionID defines the Azure subscription containing the capacity reservation group.
+                              If omitted, the cluster subscription is used.
+                            type: string
+                        required:
+                        - name
+                        - resourceGroup
+                        type: object
                       dataDisks:
                         description: DataDisk specifies the parameters that are used
                           to add one or more data disks to the machine.
@@ -5673,11 +5724,28 @@ spec:
                         - storageAccountName
                         - type
                         type: object
-                      capacityReservationGroupID:
+                      capacityReservationGroup:
                         description: |-
-                          CapacityReservationGroupID specifies the capacity reservation group resource id that should be
-                          used for allocating the virtual machine.
-                        type: string
+                          CapacityReservationGroup specifies the capacity reservation group that should be used
+                          for allocating the virtual machine.
+                        properties:
+                          name:
+                            description: Name is the name of the capacity reservation
+                              group.
+                            type: string
+                          resourceGroup:
+                            description: ResourceGroup defines the Azure resource
+                              group containing the capacity reservation group.
+                            type: string
+                          subscriptionId:
+                            description: |-
+                              SubscriptionID defines the Azure subscription containing the capacity reservation group.
+                              If omitted, the cluster subscription is used.
+                            type: string
+                        required:
+                        - name
+                        - resourceGroup
+                        type: object
                       dataDisks:
                         description: DataDisk specifies the parameters that are used
                           to add one or more data disks to the machine.

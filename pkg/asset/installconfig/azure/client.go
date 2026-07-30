@@ -39,6 +39,7 @@ type API interface {
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
+	GetCapacityReservationGroup(ctx context.Context, subscriptionID, groupName, capacityReservationGroupName string) (*azenc.CapacityReservationGroup, error)
 	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
@@ -331,6 +332,20 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 		return nil, fmt.Errorf("failed to get disk encryption set: %w", err)
 	}
 	return &diskEncryptionSet, nil
+}
+
+// GetCapacityReservationGroup retrieves the specified capacity reservation group.
+func (c *Client) GetCapacityReservationGroup(ctx context.Context, subscriptionID, groupName, capacityReservationGroupName string) (*azenc.CapacityReservationGroup, error) {
+	client := azenc.NewCapacityReservationGroupsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, subscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	group, err := client.Get(ctx, groupName, capacityReservationGroupName, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get capacity reservation group: %w", err)
+	}
+	return &group, nil
 }
 
 // GetVirtualMachineFamily retrieves the VM family of an instance type.
