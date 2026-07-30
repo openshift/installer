@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,6 +27,24 @@ func TestValidateCapacityReservationGroup(t *testing.T) {
 		expected  string
 	}{
 		{name: "valid", group: valid(), cloudName: azure.PublicCloud},
+		{
+			name: "valid one-character name",
+			group: func() *azure.CapacityReservationGroup {
+				group := valid()
+				group.Name = "a"
+				return group
+			}(),
+			cloudName: azure.PublicCloud,
+		},
+		{
+			name: "valid 80-character name",
+			group: func() *azure.CapacityReservationGroup {
+				group := valid()
+				group.Name = strings.Repeat("a", 80)
+				return group
+			}(),
+			cloudName: azure.PublicCloud,
+		},
 		{
 			name:      "unsupported on Azure Stack",
 			group:     valid(),
@@ -61,6 +80,26 @@ func TestValidateCapacityReservationGroup(t *testing.T) {
 			}(),
 			cloudName: azure.PublicCloud,
 			expected:  `capacityReservationGroup.name: Invalid value: "": invalid capacity reservation group name format`,
+		},
+		{
+			name: "invalid 81-character name",
+			group: func() *azure.CapacityReservationGroup {
+				group := valid()
+				group.Name = strings.Repeat("a", 81)
+				return group
+			}(),
+			cloudName: azure.PublicCloud,
+			expected:  fmt.Sprintf(`capacityReservationGroup.name: Invalid value: %q: invalid capacity reservation group name format`, strings.Repeat("a", 81)),
+		},
+		{
+			name: "invalid name character",
+			group: func() *azure.CapacityReservationGroup {
+				group := valid()
+				group.Name = "reservation/group"
+				return group
+			}(),
+			cloudName: azure.PublicCloud,
+			expected:  `capacityReservationGroup.name: Invalid value: "reservation/group": invalid capacity reservation group name format`,
 		},
 	}
 
