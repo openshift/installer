@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
@@ -204,12 +205,30 @@ NodeIPFamilies=ipv4
 			firewallManagement = gcpmanifests.FirewallManagementDisabled
 		}
 
+		// TODO(padillon): The universe domain comparison can be removed (always set token-url = nil)
+		// when we want to switch all installs to use the credentialsrequest. Or, when
+		// https://github.com/kubernetes/cloud-provider-gcp/pull/1261 merges, we can remove this
+		// entirely from the cloud config.
+		var tokenURL string
+		session, err := gcpic.GetSession(ctx)
+		if err != nil {
+			return fmt.Errorf("could not get GCP session: %w", err)
+		}
+		ud, err := session.Credentials.GetUniverseDomain()
+		if err != nil {
+			return fmt.Errorf("could not get GCP universe domain: %w", err)
+		}
+		if ud != "" && ud != "googleapis.com" {
+			tokenURL = "nil"
+		}
+
 		gcpConfig, err := gcpmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			installConfig.Config.GCP.ProjectID,
 			subnet,
 			installConfig.Config.GCP.NetworkProjectID,
 			firewallManagement,
+			tokenURL,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
