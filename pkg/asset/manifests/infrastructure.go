@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -345,10 +346,10 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			// TransitGateway is a CAPI-only endpoint — not a valid configv1.PowerVSServiceEndpoint name.
 			// POWER is a case-incorrect alias for Power — normalise it.
 			name := service.Name
-			if name == "POWER" {
+			if strings.EqualFold(name, "Power") {
 				name = "Power"
 			}
-			if name == "TransitGateway" {
+			if strings.EqualFold(name, "TransitGateway") {
 				continue
 			}
 			config.Spec.PlatformSpec.PowerVS.ServiceEndpoints = append(config.Spec.PlatformSpec.PowerVS.ServiceEndpoints, configv1.PowerVSServiceEndpoint{
