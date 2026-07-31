@@ -71,6 +71,25 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			return fmt.Errorf("failed to add master roles: %w", err)
 		}
 
+		// Grant master SA KMS permissions scoped to the specific storage key.
+		// Master nodes need these for bootstrap ignition bucket and registry operator.
+		if storageKMSKey := gcptypes.GetStorageKMSKey(in.InstallConfig.Config.GCP); storageKMSKey != nil {
+			if err = GrantKMSKeyIAMPermission(ctx, storageKMSKey, projectID, masterSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter", in.InstallConfig.Config.GCP.Endpoint); err != nil {
+				return fmt.Errorf("failed to grant master SA KMS permission: %w", err)
+			}
+		}
+
+		// Grant Compute Engine service account permission to use OS disk KMS key if configured.
+		if controlPlaneMpool.OSDisk.EncryptionKey != nil && controlPlaneMpool.OSDisk.EncryptionKey.KMSKey != nil {
+			computeEngineSA, err := GetComputeEngineServiceAccount(ctx, projectID, in.InstallConfig.Config.GCP.Endpoint)
+			if err != nil {
+				return fmt.Errorf("failed to get Compute Engine service account for project %s: %w", projectID, err)
+			}
+			if err = GrantKMSKeyIAMPermission(ctx, controlPlaneMpool.OSDisk.EncryptionKey.KMSKey, projectID, computeEngineSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter", in.InstallConfig.Config.GCP.Endpoint); err != nil {
+				return fmt.Errorf("failed to grant Compute Engine SA KMS permission for control plane: %w", err)
+			}
+		}
+
 		// Add additional roles for shared VPC
 		if len(in.InstallConfig.Config.Platform.GCP.NetworkProjectID) > 0 {
 			projID := in.InstallConfig.Config.Platform.GCP.NetworkProjectID
@@ -99,6 +118,49 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 		if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles(), in.InstallConfig.Config.GCP.Endpoint); err != nil {
 			return fmt.Errorf("failed to add worker roles: %w", err)
+		}
+	}
+
+	// Grant Compute Engine SA permission to use OS disk KMS keys for compute nodes.
+	// Deduplicate across compute pools that share the same key.
+	grantedComputeKMSKeys := make(map[string]struct{})
+	var computeEngineSA string
+	for _, compute := range in.InstallConfig.Config.Compute {
+		computeMpool := &gcptypes.MachinePool{}
+		computeMpool.Set(in.InstallConfig.Config.GCP.DefaultMachinePlatform)
+		computeMpool.Set(compute.Platform.GCP)
+
+		if computeMpool.OSDisk.EncryptionKey == nil || computeMpool.OSDisk.EncryptionKey.KMSKey == nil {
+			continue
+		}
+
+		keyPath := gcptypes.FormatKMSKeyResourcePath(computeMpool.OSDisk.EncryptionKey.KMSKey, projectID)
+		if _, granted := grantedComputeKMSKeys[keyPath]; granted {
+			continue
+		}
+
+		if computeEngineSA == "" {
+			sa, err := GetComputeEngineServiceAccount(ctx, projectID, in.InstallConfig.Config.GCP.Endpoint)
+			if err != nil {
+				return fmt.Errorf("failed to get Compute Engine service account for project %s: %w", projectID, err)
+			}
+			computeEngineSA = sa
+		}
+
+		if err := GrantKMSKeyIAMPermission(ctx, computeMpool.OSDisk.EncryptionKey.KMSKey, projectID, computeEngineSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter", in.InstallConfig.Config.GCP.Endpoint); err != nil {
+			return fmt.Errorf("failed to grant Compute Engine SA KMS permission for compute key %s: %w", keyPath, err)
+		}
+		grantedComputeKMSKeys[keyPath] = struct{}{}
+	}
+
+	// Grant Cloud Storage SA permission to use KMS keys for bucket encryption.
+	if storageKMSKey := gcptypes.GetStorageKMSKey(platform); storageKMSKey != nil {
+		cloudStorageSA, err := GetCloudStorageServiceAccount(ctx, projectID, in.InstallConfig.Config.GCP.Endpoint)
+		if err != nil {
+			return fmt.Errorf("failed to get Cloud Storage service account for project %s: %w", projectID, err)
+		}
+		if err = GrantKMSKeyIAMPermission(ctx, storageKMSKey, projectID, cloudStorageSA, "roles/cloudkms.cryptoKeyEncrypterDecrypter", in.InstallConfig.Config.GCP.Endpoint); err != nil {
+			return fmt.Errorf("failed to grant Cloud Storage SA KMS permission: %w", err)
 		}
 	}
 
@@ -311,3 +373,4 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	return nil
 }
+
