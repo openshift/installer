@@ -226,15 +226,16 @@ func validateDualStackMachineNetworks(ic *types.InstallConfig, ipFamily network.
 			ipv6Indices = append(ipv6Indices, i)
 
 			prefixLen, bits := machineNetwork.Mask.Size()
-			if bits == 0 {
+			switch {
+			case bits == 0:
 				allErrs = append(allErrs, field.Invalid(
 					fldPath.Child("machineNetwork").Index(i).Child("cidr"),
 					machineNetworks[i].String(),
 					"CIDR has a non-canonical network mask",
 				))
-			} else if prefixLen >= 64 {
+			case prefixLen >= 64:
 				ipv6TooLongIndices = append(ipv6TooLongIndices, i)
-			} else if prefixLen%4 != 0 {
+			case prefixLen%4 != 0:
 				ipv6NotNibbleBoundaryIndices = append(ipv6NotNibbleBoundaryIndices, i)
 			}
 		}
