@@ -104,8 +104,10 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				return nil, fmt.Errorf("unable to get network inventory path: %w", err)
 			}
 			deviceSpec := capv.NetworkDeviceSpec{
-				NetworkName: networkName,
-				DHCP4:       true,
+				NetworkName:      networkName,
+				DHCP4:            true,
+				DHCP6:            true,
+				SkipIPAllocation: true,
 			}
 
 			// Static IP configured.  Add kargs.
