@@ -416,6 +416,32 @@ func (b icBuildNamespace) withLBType(lbType configv1.AWSLBType) icOption {
 	}
 }
 
+func (b icBuildNamespace) withGCPRegion(region string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forGCP()(ic)
+		ic.Platform.GCP.Region = region
+	}
+}
+
+func (b icBuildNamespace) withGCPProjectID(projectID string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forGCP()(ic)
+		ic.Platform.GCP.ProjectID = projectID
+	}
+}
+
+func (b icBuildNamespace) withGCPDefaultMachineKMSKey(kmsKey *gcptypes.KMSKeyReference) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forGCP()(ic)
+		if ic.Platform.GCP.DefaultMachinePlatform == nil {
+			ic.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{}
+		}
+		ic.Platform.GCP.DefaultMachinePlatform.OSDisk.EncryptionKey = &gcptypes.EncryptionKeyReference{
+			KMSKey: kmsKey,
+		}
+	}
+}
+
 func (b icBuildNamespace) withGCPUserProvisionedDNS(enabled string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forGCP()(ic)
