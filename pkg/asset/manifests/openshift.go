@@ -77,6 +77,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
 		&OSImageStream{},
+		&ImageRegistryConfig{},
 	}
 }
 
@@ -89,7 +90,8 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	kubeadminPassword := &password.KubeadminPassword{}
 	openshiftInstall := &openshiftinstall.Config{}
 	featureGate := &FeatureGate{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate)
+	imageRegistryConfig := &ImageRegistryConfig{}
+	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate, imageRegistryConfig)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -303,6 +305,7 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	o.FileList = append(o.FileList, openshiftInstall.Files()...)
 	o.FileList = append(o.FileList, featureGate.Files()...)
 	o.FileList = append(o.FileList, osImageStream.Files()...)
+	o.FileList = append(o.FileList, imageRegistryConfig.Files()...)
 
 	asset.SortFiles(o.FileList)
 
