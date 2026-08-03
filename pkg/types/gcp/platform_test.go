@@ -106,6 +106,7 @@ func TestFormatKMSKeyResourcePath(t *testing.T) {
 		})
 	}
 }
+
 func TestGetDefaultServiceAccount(t *testing.T) {
 	cases := []struct {
 		name      string
