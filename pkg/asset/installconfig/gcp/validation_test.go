@@ -133,6 +133,36 @@ var (
 		ProjectID: "validProjectID",
 	}
 
+	globalKeyRing = gcp.KMSKeyReference{
+		Name:      "validKeyName",
+		KeyRing:   "validKeyRingName",
+		Location:  "global",
+		ProjectID: "validProjectID",
+	}
+
+	globalCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+	globalComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+	globalDefaultMachineKeyRing = func(ic *types.InstallConfig) {
+		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+
 	invalidDefaultMachineKeyRing = func(ic *types.InstallConfig) {
 		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
 		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
@@ -447,6 +477,27 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
 			expectedErrMsg: "compute\\[0\\].platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:           "Global Control Plane KMS Key Location",
+			edits:          editFunctions{globalCPKMSKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `controlPlane.platform.gcp.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
+		},
+		{
+			name:           "Global Compute KMS Key Location",
+			edits:          editFunctions{globalComputeKMSKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.gcp.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
+		},
+		{
+			name:           "Global Default Machine KMS Key Location",
+			edits:          editFunctions{globalDefaultMachineKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
 		},
 		{
 			name:           "Invalid Base Domain",
