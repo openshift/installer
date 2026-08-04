@@ -20,7 +20,7 @@ subnetwork-name = uid-worker-subnet
 firewall-rules-management = Enabled
 
 `
-	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "", FirewallManagementEnabled)
+	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "", FirewallManagementEnabled, "")
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }
@@ -40,7 +40,7 @@ network-project-id = test-network-project-id
 firewall-rules-management = Enabled
 
 `
-	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "test-network-project-id", FirewallManagementEnabled)
+	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "test-network-project-id", FirewallManagementEnabled, "")
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }
@@ -59,7 +59,27 @@ subnetwork-name = uid-worker-subnet
 firewall-rules-management = Enabled
 
 `
-	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "", FirewallManagementEnabled)
+	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "", FirewallManagementEnabled, "")
+	assert.NoError(t, err, "failed to create cloud provider config")
+	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
+}
+
+func TestCloudProviderConfigWithTokenURL(t *testing.T) {
+	expectedConfig := `[global]
+project-id      = test-project-id
+regional        = true
+multizone       = true
+node-tags       = uid-master
+node-tags       = uid-control-plane
+node-tags       = uid-worker
+node-instance-prefix = uid
+external-instance-groups-prefix = uid
+subnetwork-name = uid-worker-subnet
+firewall-rules-management = Enabled
+token-url = nil
+
+`
+	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet", "", FirewallManagementEnabled, "nil")
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }
