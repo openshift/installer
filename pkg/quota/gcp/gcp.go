@@ -132,3 +132,16 @@ func IsUnauthorized(err error) bool {
 	}
 	return false
 }
+
+// IsTransient checks if the error is caused by a transient HTTP failure.
+func IsTransient(err error) bool {
+	if err == nil {
+		return false
+	}
+	var gErr *googleapi.Error
+	if !errors.As(err, &gErr) {
+		return false
+	}
+	return gErr.Code == http.StatusTooManyRequests ||
+		(gErr.Code >= http.StatusInternalServerError && gErr.Code <= 599)
+}
