@@ -238,6 +238,12 @@ func (o *ClusterUninstaller) destroyServiceInstance(item cloudResource) error {
 // destroyServiceInstances removes all service instances have a name containing
 // the cluster's infra ID.
 func (o *ClusterUninstaller) destroyServiceInstances() error {
+	// If the service instance was preconfigured (user-provided), skip deletion
+	if o.siPreconfigured {
+		o.Logger.Infof("Skipping service instance deletion - instance was preconfigured")
+		return nil
+	}
+
 	firstPassList, err := o.listServiceInstances()
 	if err != nil {
 		return err

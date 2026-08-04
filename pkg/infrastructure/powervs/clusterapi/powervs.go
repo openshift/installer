@@ -66,6 +66,10 @@ func (p Provider) NetworkTimeout() time.Duration {
 // ProvisionTimeout allows platform provider to override the timeout
 // when waiting for the machines to provision.
 func (p Provider) ProvisionTimeout() time.Duration {
+	if powervsconfig.IsStagingMode() {
+		// Staging Power systems provision more slowly; allow extra time.
+		return 60 * time.Minute
+	}
 	return 15 * time.Minute
 }
 
@@ -93,6 +97,30 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	if err = in.Client.Get(ctx, key, powerVSCluster); err != nil {
 		return fmt.Errorf("failed to get PowerVS cluster in InfraReady: %w", err)
 	}
+
+	// (staging only): make the bootstrap ignition bucket publicly readable.
+	// Uncomment this block when testing in a staging environment if nodes cannot
+	// exchange IAM tokens and must fetch bootstrap.ign via public COS access.
+	// DO NOT enable for production — this grants unauthenticated read on the ignition bucket.
+	//
+	// if powervsconfig.IsStagingMode() {
+	// 	if powerVSCluster.Spec.CosInstance != nil &&
+	// 		powerVSCluster.Status.COSInstance != nil &&
+	// 		powerVSCluster.Status.COSInstance.ID != nil {
+	// 		infraClient, clientErr := powervsconfig.NewClient()
+	// 		if clientErr != nil {
+	// 			return fmt.Errorf("failed to create PowerVS client for COS ACL: %w", clientErr)
+	// 		}
+	// 		cosGUID := *powerVSCluster.Status.COSInstance.ID
+	// 		cosBucket := powerVSCluster.Spec.CosInstance.BucketName
+	// 		logrus.Infof("InfraReady (staging): granting public IAM access on COS bucket %s", cosBucket)
+	// 		if err = infraClient.SetCOSBucketPublicIAMPolicy(ctx, cosGUID, cosBucket); err != nil {
+	// 			return fmt.Errorf("failed to set public IAM policy on bootstrap ignition bucket: %w", err)
+	// 		}
+	// 	} else {
+	// 		logrus.Warnf("InfraReady (staging): skipping public-read ACL – COS instance status not populated")
+	// 	}
+	// }
 	logrus.Debugf("InfraReady: powerVSCluster = %+v", powerVSCluster)
 	logrus.Debugf("InfraReady: powerVSCluster.Status = %+v", powerVSCluster.Status)
 	if powerVSCluster.Status.VPC == nil || powerVSCluster.Status.VPC.ID == nil {

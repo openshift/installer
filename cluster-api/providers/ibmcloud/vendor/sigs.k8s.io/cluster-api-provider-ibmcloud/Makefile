@@ -84,7 +84,7 @@ RELEASE_NOTES_DIR := CHANGELOG
 OUTPUT_TYPE ?= type=registry
 
 # Go
-GO_VERSION ?=1.25.8
+GO_VERSION ?=1.25.10
 GO_CONTAINER_IMAGE ?= golang:$(GO_VERSION)
 
 # Trivy
@@ -355,12 +355,12 @@ release-notes: $(RELEASE_NOTES) $(RELEASE_NOTES_DIR) ## Generate/update release 
 	@echo "generating release notes from $(PREVIOUS_TAG) to $(RELEASE_TAG) with start sha $(START_SHA) and end sha $(END_SHA)"
 	@if [ -n "${PRE_RELEASE}" ]; then \
 		echo ":rotating_light: This is a RELEASE CANDIDATE. Use it only for testing purposes. If you find any bugs, file an [issue](https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/issues/new)." > $(RELEASE_NOTES_DIR)/release-notes-$(RELEASE_TAG).md; \
-		$(RELEASE_NOTES) --org $(GIT_ORG_NAME) --repo $(GIT_REPO_NAME) --branch $(RELEASE_BRANCH) --required-author "" --start-sha $(START_SHA) --end-sha $(END_SHA) --markdown-links true --dependencies false --output $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md; \
+		$(RELEASE_NOTES) --org $(GIT_ORG_NAME) --repo $(GIT_REPO_NAME) --branch $(RELEASE_BRANCH) --repo-path $(REPO_ROOT) --start-sha $(START_SHA) --end-sha $(END_SHA) --markdown-links true --dependencies false --output $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md; \
 		(cat $(RELEASE_NOTES_DIR)/release-notes-$(RELEASE_TAG).md; echo ""; cat $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md) > $(RELEASE_NOTES_DIR)/tmp-release-notes.md; \
 		mv $(RELEASE_NOTES_DIR)/tmp-release-notes.md $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md; \
 		rm -f $(RELEASE_NOTES_DIR)/release-notes-$(RELEASE_TAG).md; \
 	else \
-		$(RELEASE_NOTES) --org $(GIT_ORG_NAME) --repo $(GIT_REPO_NAME) --branch $(RELEASE_BRANCH) --required-author "" --start-sha $(START_SHA) --end-sha $(END_SHA) --markdown-links true --output $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md; \
+		$(RELEASE_NOTES) --org $(GIT_ORG_NAME) --repo $(GIT_REPO_NAME) --branch $(RELEASE_BRANCH) --repo-path $(REPO_ROOT) --start-sha $(START_SHA) --end-sha $(END_SHA) --markdown-links true --output $(RELEASE_NOTES_DIR)/$(RELEASE_TAG).md; \
 	fi
 
 .PHONY: staging-manifests
@@ -561,7 +561,7 @@ verify-container-images: ## Verify container images
 .PHONY: verify-govulncheck
 verify-govulncheck: $(GOVULNCHECK) ## Verify code for vulnerabilities
 	$(GOVULNCHECK) ./... && R1=$$? || R1=$$?; \
-	$(GOVULNCHECK) -C "$(TOOLS_DIR)" ./... && R2=$$? || R2=$$?; \
+	cd $(TOOLS_DIR) && echo 'package tools' > temp_govulncheck.go && $(REPO_ROOT)/$(GOVULNCHECK) ./... && R2=$$? || R2=$$? && rm -f temp_govulncheck.go; \
 	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ]; then \
 		exit 1; \
 	fi

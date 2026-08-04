@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	// RootOpts holds the log directory and log level configuration.
+	// RootOpts holds the log directory, log level, and staging mode configuration.
 	RootOpts struct {
 		Dir      string
 		LogLevel string
+		Staging  bool
 	}
 
 	// logCmdOnce logs the invoked openshift-install command details once.

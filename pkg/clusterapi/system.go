@@ -353,22 +353,31 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
 		}
 
-		iamEndpoint := "https://iam.cloud.ibm.com"
-		// Override IAM endpoint if an override was provided.
+		// Use staging IAM endpoint if IBMCLOUD_STAGING is set, otherwise use production
+		iamEndpoint := powervsic.GetIAMURL()
+		// Override IAM endpoint if an override was provided in service endpoints
 		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, metadata.IBMCloud.ServiceEndpoints); overrideURL != "" {
 			iamEndpoint = overrideURL
+		}
+
+		envVars := map[string]string{
+			"IBMCLOUD_AUTH_TYPE":        "iam",
+			"IBMCLOUD_APIKEY":           os.Getenv("IC_API_KEY"),
+			"IBMCLOUD_AUTH_URL":         iamEndpoint,
+			"IBMCLOUD_IAM_API_ENDPOINT": iamEndpoint,
+			"LOGLEVEL":                  "5",
+		}
+
+		// Pass IBMCLOUD_STAGING to CAPI controllers if set
+		if stagingEnv := os.Getenv("IBMCLOUD_STAGING"); stagingEnv != "" {
+			envVars["IBMCLOUD_STAGING"] = stagingEnv
 		}
 
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&IBMCloud,
 				ibmcloudFlags,
-				map[string]string{
-					"IBMCLOUD_AUTH_TYPE": "iam",
-					"IBMCLOUD_APIKEY":    os.Getenv("IC_API_KEY"),
-					"IBMCLOUD_AUTH_URL":  iamEndpoint,
-					"LOGLEVEL":           "5",
-				},
+				envVars,
 			),
 		)
 	case nutanix.Name:
@@ -433,6 +442,22 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		}
 		APIKey := bxClient.GetBxClientAPIKey()
 
+		// Use staging IAM endpoint if IBMCLOUD_STAGING is set
+		iamEndpoint := powervsic.GetIAMURL()
+
+		envVars := map[string]string{
+			"IBMCLOUD_AUTH_TYPE":        "iam",
+			"IBMCLOUD_APIKEY":           APIKey,
+			"IBMCLOUD_AUTH_URL":         iamEndpoint,
+			"IBMCLOUD_IAM_API_ENDPOINT": iamEndpoint,
+			"LOGLEVEL":                  "2",
+		}
+
+		// Pass IBMCLOUD_STAGING to CAPI controllers if set
+		if stagingEnv := os.Getenv("IBMCLOUD_STAGING"); stagingEnv != "" {
+			envVars["IBMCLOUD_STAGING"] = stagingEnv
+		}
+
 		controller := c.getInfrastructureController(
 			&IBMCloud,
 			[]string{
@@ -443,12 +468,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
 			},
-			map[string]string{
-				"IBMCLOUD_AUTH_TYPE": "iam",
-				"IBMCLOUD_APIKEY":    APIKey,
-				"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
-				"LOGLEVEL":           "2",
-			},
+			envVars,
 		)
 		if cfg := metadata.PowerVS; cfg != nil {
 			overrides := bxClient.MapServiceEndpointsForCAPI(cfg)
