@@ -123,6 +123,10 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `roles/servicemanagement.quotaViewer` assigned to the user.", err)
 			return nil
 		}
+		if quotagcp.IsTransient(err) {
+			logrus.Warnf("Unable to fetch Quotas due to a transient API error and therefore will skip checking them: %v", err)
+			return nil
+		}
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
