@@ -37,7 +37,7 @@ func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parent
 		Validity:     ValidityTenYears(),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.

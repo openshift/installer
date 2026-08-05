@@ -36,7 +36,7 @@ func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents ass
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", nil)
 }
 
 // Load reads the asset files from disk.
@@ -107,7 +107,7 @@ func (a *AdminKubeConfigClientCertKey) Generate(ctx context.Context, dependencie
 		Validity:     ValidityTenYears(),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "admin-kubeconfig-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "admin-kubeconfig-client", DoNotAppendParent, nil)
 }
 
 // Load reads the asset files from disk.
