@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // AggregatorCA is the asset that generates the aggregator-ca key/cert pair.
@@ -33,14 +34,26 @@ func (a *AggregatorCA) Generate(ctx context.Context, dependencies asset.Parents)
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(signerKeyParams, installConfig)
 
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityOneDay(installConfig),
+			IsCA:      true,
+		}
+		return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.aggregator-front-proxy-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		Validity: ValidityOneDay(installConfig),
 		IsCA:     true,
 	}
-
-	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", nil)
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -63,6 +76,7 @@ func (a *APIServerProxyCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AggregatorCA{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -70,16 +84,30 @@ func (a *APIServerProxyCertKey) Dependencies() []asset.Asset {
 func (a *APIServerProxyCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	aggregatorCA := &AggregatorCA{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(aggregatorCA, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(aggregatorCA, installConfig, pkiCfg)
 
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneDay(installConfig),
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			Validity:     ValidityOneDay(installConfig),
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent, nil)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent, nil)
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.aggregator-front-proxy-client")
+	if err != nil {
+		return err
+	}
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Validity:     ValidityOneDay(installConfig),
+		CertType:     libpki.CertificateTypeClient,
+	}
+	return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -104,14 +132,27 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 	signerKeyParams := &SignerKeyParams{}
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(signerKeyParams, installConfig)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityOneDay(installConfig),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.aggregator-front-proxy-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityOneDay(installConfig),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -161,6 +202,7 @@ func (a *AggregatorClientCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AggregatorSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -168,16 +210,30 @@ func (a *AggregatorClientCertKey) Dependencies() []asset.Asset {
 func (a *AggregatorClientCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &AggregatorSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneDay(installConfig),
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			Validity:     ValidityOneDay(installConfig),
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent, nil)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent, nil)
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.aggregator-front-proxy-client")
+	if err != nil {
+		return err
+	}
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Validity:     ValidityOneDay(installConfig),
+		CertType:     libpki.CertificateTypeClient,
+	}
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // KubeControlPlaneSignerCertKey is a key/cert pair that signs the kube control-plane client certs.
@@ -26,14 +27,27 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 	signerKeyParams := &SignerKeyParams{}
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(signerKeyParams, installConfig)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityOneYear(installConfig),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.control-plane-client-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityOneYear(installConfig),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -86,6 +100,7 @@ func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Dependencies() []as
 	return []asset.Asset{
 		&KubeControlPlaneSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -93,16 +108,30 @@ func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Dependencies() []as
 func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeControlPlaneSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneYear(installConfig),
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			Validity:     ValidityOneYear(installConfig),
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent, nil)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent, nil)
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.kube-controller-manager-client")
+	if err != nil {
+		return err
+	}
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Validity:     ValidityOneYear(installConfig),
+		CertType:     libpki.CertificateTypeClient,
+	}
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -122,6 +151,7 @@ func (a *KubeControlPlaneKubeSchedulerClientCertKey) Dependencies() []asset.Asse
 	return []asset.Asset{
 		&KubeControlPlaneSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -129,16 +159,30 @@ func (a *KubeControlPlaneKubeSchedulerClientCertKey) Dependencies() []asset.Asse
 func (a *KubeControlPlaneKubeSchedulerClientCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeControlPlaneSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneYear(installConfig),
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			Validity:     ValidityOneYear(installConfig),
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent, nil)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent, nil)
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.kube-scheduler-client")
+	if err != nil {
+		return err
+	}
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Validity:     ValidityOneYear(installConfig),
+		CertType:     libpki.CertificateTypeClient,
+	}
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
