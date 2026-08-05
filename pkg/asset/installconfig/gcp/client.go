@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	kms "cloud.google.com/go/kms/apiv1"
 	"cloud.google.com/go/kms/apiv1/kmspb"
 	googleoauth "golang.org/x/oauth2/google"
@@ -59,6 +60,7 @@ type API interface {
 	GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error)
 	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
 	GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
+	GetKMSCryptoKeyIamPolicy(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference, defaultProjectID string) (*iampb.Policy, error)
 	UpdateDNSPrivateZoneLabels(ctx context.Context, baseDomain, project, zoneName string, labels map[string]string) error
 	GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error)
 }
@@ -811,6 +813,30 @@ func (c *Client) GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyRefer
 		}
 	}
 	return nil, fmt.Errorf("failed to find kms key ring with name %s", keyRingName)
+}
+
+// GetKMSCryptoKeyIamPolicy returns the IAM policy for a KMS crypto key.
+// The defaultProjectID is used if the kmsKeyRef.ProjectID is empty.
+func (c *Client) GetKMSCryptoKeyIamPolicy(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference, defaultProjectID string) (*iampb.Policy, error) {
+	if kmsKeyRef == nil {
+		return nil, fmt.Errorf("kms key reference cannot be empty")
+	}
+
+	kmsClient, err := c.getKeyManagementClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KMS client: %w", err)
+	}
+	defer kmsClient.Close()
+
+	keyResourcePath := gcptypes.FormatKMSKeyResourcePath(kmsKeyRef, defaultProjectID)
+	policy, err := kmsClient.GetIamPolicy(ctx, &iampb.GetIamPolicyRequest{
+		Resource: keyResourcePath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get IAM policy for KMS key %s: %w", keyResourcePath, err)
+	}
+
+	return policy, nil
 }
 
 // GetPrivateServiceConnectEndpoint finds the GCP compute forwarding rule that is associated with the endpoint.

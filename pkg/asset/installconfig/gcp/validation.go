@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
@@ -70,6 +71,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic)...)
+	allErrs = append(allErrs, validateKMSKeyServiceAgentAccess(client, ic)...)
 	allErrs = append(allErrs, validateServiceEndpointOverride(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {

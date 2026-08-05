@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
 	gcp "github.com/openshift/installer/pkg/types/gcp"
 	gomock "go.uber.org/mock/gomock"
@@ -165,6 +166,21 @@ func (m *MockAPI) GetKeyRing(ctx context.Context, kmsKeyRef *gcp.KMSKeyReference
 func (mr *MockAPIMockRecorder) GetKeyRing(ctx, kmsKeyRef any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeyRing", reflect.TypeOf((*MockAPI)(nil).GetKeyRing), ctx, kmsKeyRef)
+}
+
+// GetKMSCryptoKeyIamPolicy mocks base method.
+func (m *MockAPI) GetKMSCryptoKeyIamPolicy(ctx context.Context, kmsKeyRef *gcp.KMSKeyReference, defaultProjectID string) (*iampb.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetKMSCryptoKeyIamPolicy", ctx, kmsKeyRef, defaultProjectID)
+	ret0, _ := ret[0].(*iampb.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetKMSCryptoKeyIamPolicy indicates an expected call of GetKMSCryptoKeyIamPolicy.
+func (mr *MockAPIMockRecorder) GetKMSCryptoKeyIamPolicy(ctx, kmsKeyRef, defaultProjectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKMSCryptoKeyIamPolicy", reflect.TypeOf((*MockAPI)(nil).GetKMSCryptoKeyIamPolicy), ctx, kmsKeyRef, defaultProjectID)
 }
 
 // GetMachineType mocks base method.

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	"cloud.google.com/go/kms/apiv1/kmspb"
 	"github.com/jarcoal/httpmock"
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
@@ -587,6 +588,19 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	}
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+
+	// Default: both service agents have the encrypter/decrypter role on the KMS key
+	gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(&iampb.Policy{
+		Bindings: []*iampb.Binding{
+			{
+				Role: "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+				Members: []string{
+					"serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com",
+					"serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com",
+				},
+			},
+		},
+	}, nil).AnyTimes()
 
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), invalidProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
