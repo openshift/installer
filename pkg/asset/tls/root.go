@@ -42,7 +42,7 @@ func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", nil)
 }
 
 // Name returns the human-friendly name of the asset.

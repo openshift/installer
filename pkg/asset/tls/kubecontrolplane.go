@@ -33,7 +33,7 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -102,7 +102,7 @@ func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Generate(ctx contex
 		Validity:     ValidityOneYear(installConfig),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -138,7 +138,7 @@ func (a *KubeControlPlaneKubeSchedulerClientCertKey) Generate(ctx context.Contex
 		Validity:     ValidityOneYear(installConfig),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.

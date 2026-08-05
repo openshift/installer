@@ -86,7 +86,7 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "internal-release-image", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "internal-release-image", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.

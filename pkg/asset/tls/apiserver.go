@@ -36,7 +36,7 @@ func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, pare
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -102,7 +102,7 @@ func (a *KubeAPIServerToKubeletClientCertKey) Generate(ctx context.Context, depe
 		Validity:     ValidityOneYear(installConfig),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-to-kubelet-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-to-kubelet-client", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -138,7 +138,7 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, pare
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", nil)
 }
 
 // Load reads the asset files from disk.
@@ -213,7 +213,7 @@ func (a *KubeAPIServerLocalhostServerCertKey) Generate(ctx context.Context, depe
 		IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-localhost-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-localhost-server", AppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -249,7 +249,7 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context,
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", nil)
 }
 
 // Load reads the asset files from disk.
@@ -333,7 +333,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context,
 		IPAddresses: []net.IP{net.ParseIP(serviceAddress)},
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -369,7 +369,7 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents ass
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", nil)
 }
 
 // Load reads the asset files from disk.
@@ -443,7 +443,7 @@ func (a *KubeAPIServerExternalLBServerCertKey) Generate(ctx context.Context, dep
 		},
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-lb-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-lb-server", AppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -482,7 +482,7 @@ func (a *KubeAPIServerInternalLBServerCertKey) Generate(ctx context.Context, dep
 		},
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-internal-lb-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-internal-lb-server", AppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.

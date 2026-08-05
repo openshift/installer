@@ -33,7 +33,7 @@ func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -130,7 +130,7 @@ func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -197,7 +197,7 @@ func (a *KubeletClientCertKey) Generate(ctx context.Context, dependencies asset.
 		Validity:     ValidityTenYears(),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kubelet-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kubelet-client", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.

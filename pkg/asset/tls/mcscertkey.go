@@ -68,7 +68,7 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		cfg.DNSNames = append(cfg.DNSNames, vip)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.

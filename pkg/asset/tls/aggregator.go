@@ -40,7 +40,7 @@ func (a *AggregatorCA) Generate(ctx context.Context, dependencies asset.Parents)
 		IsCA:     true,
 	}
 
-	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", signerKeyParams.LegacyPKIConfig())
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -79,7 +79,7 @@ func (a *APIServerProxyCertKey) Generate(ctx context.Context, dependencies asset
 		Validity:     ValidityOneDay(installConfig),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -111,7 +111,7 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", signerKeyParams.LegacyPKIConfig())
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", nil)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -177,7 +177,7 @@ func (a *AggregatorClientCertKey) Generate(ctx context.Context, dependencies ass
 		Validity:     ValidityOneDay(installConfig),
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent, nil)
 }
 
 // Name returns the human-friendly name of the asset.
