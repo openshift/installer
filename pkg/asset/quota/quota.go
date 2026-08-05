@@ -124,7 +124,7 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return nil
 		}
 		if quotagcp.IsTransient(err) {
-			logrus.Warn("Unable to fetch Quotas due to a transient API error, skipping quota checks")
+			logrus.Warnf("Unable to fetch Quotas due to a transient API error and therefore will skip checking them: %v", err)
 			return nil
 		}
 		if err != nil {
