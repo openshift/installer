@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
 )
 
 func TestSignedCertKeyGenerate(t *testing.T) {
@@ -124,5 +126,39 @@ func TestSelfSignedCertKeyGenerateLegacyPath(t *testing.T) {
 }
 
 func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
-	t.Skip("library-go path will be tested in Task 6 when keyGen is wired to real profiles")
+	testCases := []struct {
+		name            string
+		keyGen          libcrypto.KeyPairGenerator
+		expectPubKeyAlg x509.PublicKeyAlgorithm
+	}{
+		{
+			name:            "RSA 4096",
+			keyGen:          libcrypto.RSAKeyPairGenerator{Bits: 4096},
+			expectPubKeyAlg: x509.RSA,
+		},
+		{
+			name:            "ECDSA P384",
+			keyGen:          libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
+			expectPubKeyAlg: x509.ECDSA,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test-pki-ca", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				IsCA:     true,
+			}
+
+			ca := &SelfSignedCertKey{}
+			err := ca.Generate(context.Background(), cfg, "test-pki-ca", tc.keyGen)
+			assert.NoError(t, err)
+
+			cert, err := PemToCertificate(ca.Cert())
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectPubKeyAlg, cert.PublicKeyAlgorithm)
+			assert.True(t, cert.IsCA)
+		})
+	}
 }

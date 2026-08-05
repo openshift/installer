@@ -9,17 +9,18 @@ import (
 	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
-// JournalCertKey is the asset that generates the key/cert pair that is used to
-// authenticate with journal-gatewayd on the bootstrap node.
+// JournalCertKey is the asset that generates the key/cert pair for
+// journal-gatewayd on the bootstrap node. This is a peer certificate:
+// journal-gatewayd uses it to serve HTTPS (ServerAuth), and the
+// installer uses the same cert/key to authenticate as a client when
+// streaming logs via curl (ClientAuth).
 type JournalCertKey struct {
 	SignedCertKey
 }
 
 var _ asset.WritableAsset = (*JournalCertKey)(nil)
 
-// Dependencies returns the dependency of the the cert/key pair, which includes
-// the parent CA, and install config if it depends on the install config for
-// DNS names, etc.
+// Dependencies returns the dependencies.
 func (a *JournalCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&RootCA{},
@@ -43,7 +44,7 @@ func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parent
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "installer.journal-gateway")
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypePeer, "installer.journal-gateway")
 	if err != nil {
 		return err
 	}
@@ -51,7 +52,8 @@ func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parent
 		Subject:      pkix.Name{CommonName: "journal-gatewayd", Organization: []string{"OpenShift Bootstrap"}},
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears(),
-		CertType:     libpki.CertificateTypeClient,
+		DNSNames:     []string{"journal-gatewayd"},
+		CertType:     libpki.CertificateTypePeer,
 	}
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent, keyGen)
 }
