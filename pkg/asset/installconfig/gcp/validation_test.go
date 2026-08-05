@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	"cloud.google.com/go/kms/apiv1/kmspb"
 	"github.com/jarcoal/httpmock"
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
@@ -587,6 +588,19 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	}
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+
+	// Default: both service agents have the encrypter/decrypter role on the KMS key
+	gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(&iampb.Policy{
+		Bindings: []*iampb.Binding{
+			{
+				Role: "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+				Members: []string{
+					"serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com",
+					"serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com",
+				},
+			},
+		},
+	}, nil).AnyTimes()
 
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZone(gomock.Any(), invalidProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
@@ -1821,3 +1835,231 @@ func TestValidateServiceEndpointOverride(t *testing.T) {
 	}
 }
 
+func TestValidateKMSKeyServiceAgentAccess(t *testing.T) {
+	validKMSKey := gcp.KMSKeyReference{
+		Name:      "myKey",
+		KeyRing:   "myKeyRing",
+		Location:  "us-east1",
+		ProjectID: "valid-project",
+	}
+
+	computeAgent := "serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com"
+	gcsAgent := "serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com"
+
+	setDefaultMachineKMS := func(key *gcp.KMSKeyReference) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+			ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+				EncryptionKey: &gcp.EncryptionKeyReference{
+					KMSKey: key,
+				},
+			}
+		}
+	}
+
+	setControlPlaneKMS := func(key *gcp.KMSKeyReference) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+				EncryptionKey: &gcp.EncryptionKeyReference{
+					KMSKey: key,
+				},
+			}
+		}
+	}
+
+	cases := []struct {
+		name          string
+		edits         editFunctions
+		policy        *iampb.Policy
+		policyErr     error
+		expectedError bool
+		expectedMsg   string
+	}{
+		{
+			name:          "No encryption key configured",
+			expectedError: false,
+		},
+		{
+			name:  "All agents have access on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{computeAgent, gcsAgent},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:  "Compute agent missing on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{gcsAgent},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:  "GCS agent missing on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{computeAgent},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Cloud Storage service agent.*does not have",
+		},
+		{
+			name:  "Both agents missing on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:  "Compute agent has access on controlPlane key",
+			edits: editFunctions{setControlPlaneKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{computeAgent},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:  "Compute agent missing on controlPlane key",
+			edits: editFunctions{setControlPlaneKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:          "Policy retrieval fails gracefully",
+			edits:         editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policyErr:     fmt.Errorf("permission denied"),
+			expectedError: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			gcpClient := mock.NewMockAPI(mockCtrl)
+			gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(
+				&cloudresourcemanager.Project{Name: "projects/123456789"}, nil,
+			).AnyTimes()
+			gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				tc.policy, tc.policyErr,
+			).AnyTimes()
+
+			ic := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(ic)
+			}
+
+			errs := validateKMSKeyServiceAgentAccess(gcpClient, ic)
+			if tc.expectedError {
+				assert.NotEmpty(t, errs)
+				assert.Regexp(t, tc.expectedMsg, errs.ToAggregate().Error())
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateKMSKeyServiceAgentAccessDomainScoped(t *testing.T) {
+	validKMSKey := gcp.KMSKeyReference{
+		Name:     "myKey",
+		KeyRing:  "myKeyRing",
+		Location: "us-east1",
+	}
+
+	domainScopedComputeAgent := "serviceAccount:service-123456789@compute-system.eu0.iam.gserviceaccount.com"
+	domainScopedGCSAgent := "serviceAccount:service-123456789@gs-project-accounts.eu0.iam.gserviceaccount.com"
+
+	cases := []struct {
+		name          string
+		policy        *iampb.Policy
+		expectedError bool
+		expectedMsg   string
+	}{
+		{
+			name: "Domain-scoped agents have access",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{domainScopedComputeAgent, domainScopedGCSAgent},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name: "Domain-scoped compute agent missing",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{domainScopedGCSAgent},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			gcpClient := mock.NewMockAPI(mockCtrl)
+			gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(
+				&cloudresourcemanager.Project{Name: "projects/123456789"}, nil,
+			).AnyTimes()
+			gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				tc.policy, nil,
+			).AnyTimes()
+
+			ic := validInstallConfig()
+			ic.GCP.ProjectID = "eu0:openshift"
+			ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+			ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+				EncryptionKey: &gcp.EncryptionKeyReference{
+					KMSKey: &validKMSKey,
+				},
+			}
+
+			errs := validateKMSKeyServiceAgentAccess(gcpClient, ic)
+			if tc.expectedError {
+				assert.NotEmpty(t, errs)
+				assert.Regexp(t, tc.expectedMsg, errs.ToAggregate().Error())
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
