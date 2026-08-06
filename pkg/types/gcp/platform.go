@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
@@ -23,15 +21,6 @@ const (
 
 	// CloudEnvironmentSovereign is the cloud environment identifier for GCP sovereign clouds.
 	CloudEnvironmentSovereign = "sovereign"
-)
-
-var (
-	// sovereignCloudProjectPrefixes contains known project ID prefixes for sovereign clouds.
-	// Project IDs in sovereign clouds use the format: <prefix>:<project-id>
-	// This list helps distinguish from organization-scoped public GCP projects (orgname:project-id).
-	sovereignCloudProjectPrefixes = []string{
-		"eu0", // European sovereign cloud (Germany)
-	}
 )
 
 // DNS contains the gcp dns zone information for the cluster.
@@ -217,18 +206,14 @@ func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
 }
 
-// GetCloudEnvironment determines the cloud environment from the project ID format.
+// GetCloudEnvironment determines the cloud environment from the project ID and region.
 // Returns CloudEnvironmentSovereign for sovereign cloud environments, empty string for public GCP.
-// Uses known sovereign cloud project ID prefixes to distinguish from organization-scoped
-// public GCP projects (orgname:project-id).
-func GetCloudEnvironment(projectID string) string {
-	// Check if project ID has a known sovereign cloud prefix
-	parts := strings.SplitN(projectID, ":", 2)
-	if len(parts) == 2 && sets.New(sovereignCloudProjectPrefixes...).Has(parts[0]) {
-		// Known sovereign prefix is definitive - this IS a sovereign cloud project
+// Sovereign cloud is identified by both a domain-scoped project ID (containing ":")
+// and a sovereign region (prefixed with "u-").
+func GetCloudEnvironment(projectID, region string) string {
+	if strings.Contains(projectID, ":") && strings.HasPrefix(region, "u-") {
 		return CloudEnvironmentSovereign
 	}
-	// No known sovereign prefix found
 	return ""
 }
 
