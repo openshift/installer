@@ -6,6 +6,53 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetCloudEnvironment(t *testing.T) {
+	cases := []struct {
+		name      string
+		projectID string
+		region    string
+		expected  string
+	}{
+		{
+			name:      "standard project",
+			projectID: "my-project",
+			region:    "us-central1",
+			expected:  "",
+		},
+		{
+			name:      "eu0 sovereign cloud",
+			projectID: "eu0:my-project",
+			region:    "u-de-1",
+			expected:  CloudEnvironmentSovereign,
+		},
+		{
+			name:      "s3ns sovereign cloud",
+			projectID: "s3ns:my-project",
+			region:    "u-fr-1",
+			expected:  CloudEnvironmentSovereign,
+		},
+		{
+			name:      "domain-scoped project without sovereign region is not sovereign",
+			projectID: "other-prefix:my-project",
+			region:    "us-central1",
+			expected:  "",
+		},
+		{
+			name:      "sovereign region without domain-scoped project is not sovereign",
+			projectID: "my-project",
+			region:    "u-de-1",
+			expected:  "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := GetCloudEnvironment(tc.projectID, tc.region)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
 func TestFormatKMSKeyResourcePath(t *testing.T) {
 	cases := []struct {
 		name         string

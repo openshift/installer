@@ -20,41 +20,52 @@ func TestValidateOSImageForSovereignCloud(t *testing.T) {
 	}{
 		{
 			name:     "non-sovereign cloud skips validation",
-			platform: &gcp.Platform{ProjectID: "my-project"},
+			platform: &gcp.Platform{ProjectID: "my-project", Region: "us-central1"},
 			pool:     &gcp.MachinePool{},
 		},
 		{
 			name:     "sovereign cloud with os image on pool",
-			platform: &gcp.Platform{ProjectID: "eu0:my-project"},
+			platform: &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-de-1"},
 			pool:     &gcp.MachinePool{OSImage: validOSImage},
 		},
 		{
 			name:          "sovereign cloud missing os image on pool",
-			platform:      &gcp.Platform{ProjectID: "eu0:my-project"},
+			platform:      &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-de-1"},
 			pool:          &gcp.MachinePool{},
-			expectedError: `test-path.osImage: Required value: must specify an OS image for sovereign cloud environments (domain-scoped project ID)`,
+			expectedError: `test-path.osImage: Required value: must specify an OS image for sovereign cloud environments (domain-scoped project ID and u- region prefix)`,
 		},
 		{
 			name:          "sovereign cloud nil pool",
-			platform:      &gcp.Platform{ProjectID: "eu0:my-project"},
+			platform:      &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-de-1"},
 			pool:          nil,
-			expectedError: `test-path.osImage: Required value: must specify an OS image for sovereign cloud environments (domain-scoped project ID)`,
+			expectedError: `test-path.osImage: Required value: must specify an OS image for sovereign cloud environments (domain-scoped project ID and u- region prefix)`,
 		},
 		{
 			name:          "sovereign cloud os image missing name",
-			platform:      &gcp.Platform{ProjectID: "eu0:my-project"},
+			platform:      &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-de-1"},
 			pool:          &gcp.MachinePool{OSImage: &gcp.OSImage{Project: "my-project"}},
 			expectedError: `test-path.osImage.name: Required value: must specify an OS image name for sovereign cloud environments`,
 		},
 		{
 			name:          "sovereign cloud os image missing project",
-			platform:      &gcp.Platform{ProjectID: "eu0:my-project"},
+			platform:      &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-de-1"},
 			pool:          &gcp.MachinePool{OSImage: &gcp.OSImage{Name: "my-image"}},
 			expectedError: `test-path.osImage.project: Required value: must specify an OS image project for sovereign cloud environments`,
 		},
 		{
-			name:     "org-scoped project ID is not sovereign",
-			platform: &gcp.Platform{ProjectID: "myorg:my-project"},
+			name:          "domain-scoped project ID is sovereign",
+			platform:      &gcp.Platform{ProjectID: "s3ns:my-project", Region: "u-fr-1"},
+			pool:          &gcp.MachinePool{},
+			expectedError: `test-path.osImage: Required value: must specify an OS image for sovereign cloud environments (domain-scoped project ID and u- region prefix)`,
+		},
+		{
+			name:     "domain-scoped project ID with os image",
+			platform: &gcp.Platform{ProjectID: "s3ns:my-project", Region: "u-fr-1"},
+			pool:     &gcp.MachinePool{OSImage: validOSImage},
+		},
+		{
+			name:     "domain-scoped project without sovereign region is not sovereign",
+			platform: &gcp.Platform{ProjectID: "myorg:my-project", Region: "us-central1"},
 			pool:     &gcp.MachinePool{},
 		},
 	}

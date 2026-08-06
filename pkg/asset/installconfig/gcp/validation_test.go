@@ -1777,6 +1777,7 @@ func TestValidateServiceEndpointOverride(t *testing.T) {
 			name: "Sovereign cloud project with endpoint",
 			edits: editFunctions{func(ic *types.InstallConfig) {
 				ic.GCP.ProjectID = "eu0:my-project"
+				ic.GCP.Region = "u-de-1"
 				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "test-endpoint"}
 			}},
 			expectedError:  true,
@@ -1801,6 +1802,7 @@ func TestValidateServiceEndpointOverride(t *testing.T) {
 			name: "Sovereign cloud project without endpoint",
 			edits: editFunctions{func(ic *types.InstallConfig) {
 				ic.GCP.ProjectID = "s-cloud-domain:my-project"
+				ic.GCP.Region = "u-fr-1"
 			}},
 			expectedError: false,
 		},
