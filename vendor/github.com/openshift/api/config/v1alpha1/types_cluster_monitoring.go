@@ -133,6 +133,15 @@ type ClusterMonitoringSpec struct {
 	// When set, at least one field must be specified within telemeterClientConfig.
 	// +optional
 	TelemeterClientConfig TelemeterClientConfig `json:"telemeterClientConfig,omitempty,omitzero"`
+	// thanosQuerierConfig is an optional field that can be used to configure the Thanos Querier
+	// component that runs in the openshift-monitoring namespace. The Thanos Querier provides
+	// a global query view by aggregating and deduplicating metrics from multiple Prometheus instances.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+	// The current default deploys the Thanos Querier on linux nodes with 5m CPU and 12Mi memory
+	// requests, and no custom tolerations or topology spread constraints.
+	// When set, at least one field must be specified within thanosQuerierConfig.
+	// +optional
+	ThanosQuerierConfig ThanosQuerierConfig `json:"thanosQuerierConfig,omitempty,omitzero"`
 }
 
 // OpenShiftStateMetricsConfig provides configuration options for the openshift-state-metrics agent
@@ -422,6 +431,7 @@ type ContainerResource struct {
 	// request is the minimum amount of the resource required (e.g. "2Mi", "1Gi").
 	// This field is optional.
 	// When limit is specified, request cannot be greater than limit.
+	// The value must be greater than 0 when specified.
 	// +optional
 	// +kubebuilder:validation:XIntOrString
 	// +kubebuilder:validation:MaxLength=20
@@ -1816,6 +1826,79 @@ type TelemeterClientConfig struct {
 	// When omitted, this means no opinion and the platform is left to choose a default, which is subject to change over time.
 	// This field maps directly to the `topologySpreadConstraints` field in the Pod spec.
 	// Default is empty list.
+	// Maximum length for this list is 10.
+	// Minimum length for this list is 1.
+	// Entries must have unique topologyKey and whenUnsatisfiable pairs.
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	// +listType=map
+	// +listMapKey=topologyKey
+	// +listMapKey=whenUnsatisfiable
+	// +optional
+	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+}
+
+// ThanosQuerierConfig provides configuration options for the Thanos Querier component
+// that runs in the `openshift-monitoring` namespace.
+// At least one field must be specified; an empty thanosQuerierConfig object is not allowed.
+// +kubebuilder:validation:MinProperties=1
+type ThanosQuerierConfig struct {
+	// nodeSelector defines the nodes on which the Pods are scheduled.
+	// nodeSelector is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// The current default value is `kubernetes.io/os: linux`.
+	// When specified, nodeSelector must contain at least 1 entry and must not contain more than 10 entries.
+	// +optional
+	// +kubebuilder:validation:MinProperties=1
+	// +kubebuilder:validation:MaxProperties=10
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// resources defines the compute resource requests and limits for the Thanos Querier container.
+	// resources is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// Requests cannot exceed limits.
+	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// This is a simplified API that maps to Kubernetes ResourceRequirements.
+	// The current default values are:
+	//   resources:
+	//    - name: cpu
+	//      request: 5m
+	//    - name: memory
+	//      request: 12Mi
+	// Maximum length for this list is 5.
+	// Minimum length for this list is 1.
+	// Each resource name must be unique within this list.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=5
+	// +kubebuilder:validation:MinItems=1
+	Resources []ContainerResource `json:"resources,omitempty"`
+	// tolerations defines tolerations for the pods.
+	// tolerations is optional.
+	//
+	// When omitted, this means the user has no opinion and the platform is left
+	// to choose reasonable defaults. These defaults are subject to change over time.
+	// Defaults are empty/unset.
+	// Maximum length for this list is 10.
+	// Minimum length for this list is 1.
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MinItems=1
+	// +listType=atomic
+	// +optional
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+	// topologySpreadConstraints defines rules for how Thanos Querier Pods should be distributed
+	// across topology domains such as zones, nodes, or other user-defined labels.
+	// topologySpreadConstraints is optional.
+	// This helps improve high availability and resource efficiency by avoiding placing
+	// too many replicas in the same failure domain.
+	//
+	// When omitted, this means no opinion and the platform is left to choose a default, which is subject to change over time.
+	// This field maps directly to the `topologySpreadConstraints` field in the Pod spec.
+	// Defaults are empty/unset.
 	// Maximum length for this list is 10.
 	// Minimum length for this list is 1.
 	// Entries must have unique topologyKey and whenUnsatisfiable pairs.

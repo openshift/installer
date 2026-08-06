@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
-	cloudconfig "k8s.io/cloud-provider-vsphere/pkg/common/config"
+	"sigs.k8s.io/yaml"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	cloudconfig "github.com/openshift/library-go/pkg/cloudprovider/vsphere"
 )
 
 const (
@@ -22,38 +24,73 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 	}
 }
 
+// setNodes sets Nodes section in vsphere-cloud-provider config according passed VSpherePlatformNodeNetworking spec.
+func setNodes(cfg *cloudconfig.CPIConfig, nodeNetworking *configv1.VSpherePlatformNodeNetworking) {
+	cfg.Nodes.ExternalVMNetworkName = nodeNetworking.External.Network
+	cfg.Nodes.ExternalNetworkSubnetCIDR = strings.Join(nodeNetworking.External.NetworkSubnetCIDR, ",")
+	cfg.Nodes.ExcludeExternalNetworkSubnetCIDR = strings.Join(nodeNetworking.External.ExcludeNetworkSubnetCIDR, ",")
+
+	cfg.Nodes.InternalVMNetworkName = nodeNetworking.Internal.Network
+	cfg.Nodes.InternalNetworkSubnetCIDR = strings.Join(nodeNetworking.Internal.NetworkSubnetCIDR, ",")
+	cfg.Nodes.ExcludeInternalNetworkSubnetCIDR = strings.Join(nodeNetworking.Internal.ExcludeNetworkSubnetCIDR, ",")
+}
+
 // CloudProviderConfigYaml generates the yaml out of tree cloud provider config for the vSphere platform.
-func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, error) {
-	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)
+func CloudProviderConfigYaml(infraID string, ic *installconfig.InstallConfig) (string, error) {
+	p := ic.Config.Platform.VSphere
+	vCenters := make(map[string]*cloudconfig.VirtualCenterConfig)
 
 	for _, vCenter := range p.VCenters {
-		vCenterPort := int32(443)
-		if vCenter.Port != 0 {
-			vCenterPort = vCenter.Port
+		vCenterConfig := cloudconfig.VirtualCenterConfig{
+			VCenterIP:   vCenter.Server,
+			Datacenters: vCenter.Datacenters,
+			// We are setting this in global so lets remove from here
+			//InsecureFlag: true,
 		}
-		vCenterConfig := cloudconfig.VirtualCenterConfigYAML{
-			VCenterIP:    vCenter.Server,
-			VCenterPort:  uint(vCenterPort),
-			Datacenters:  vCenter.Datacenters,
-			InsecureFlag: true,
+		// Only set port if it is configured in the install-config.  infrastructure/cluster will do the same which results
+		// in the 3CMO not setting port if not configured in infrastructure/cluster.
+		if vCenter.Port != 0 {
+			vCenterConfig.VCenterPort = uint(vCenter.Port)
 		}
 		vCenters[vCenter.Server] = &vCenterConfig
 	}
 
-	cloudProviderConfig := cloudconfig.CommonConfigYAML{
-		Global: cloudconfig.GlobalYAML{
-			SecretName:      "vsphere-creds",
+	cloudProviderConfig := cloudconfig.CPIConfig{CommonConfig: cloudconfig.CommonConfig{
+		Global: cloudconfig.Global{
+			SecretName:      "vsphere-creds", // #nosec G101 -- this is the name of a Kubernetes secret, not a credential
 			SecretNamespace: "kube-system",
 			InsecureFlag:    true,
 		},
 		Vcenter: vCenters,
-	}
+	}}
 
 	if len(p.FailureDomains) > 1 {
-		cloudProviderConfig.Labels = cloudconfig.LabelsYAML{
+		cloudProviderConfig.Labels = &cloudconfig.Labels{
 			Zone:   vspheretypes.TagCategoryZone,
 			Region: vspheretypes.TagCategoryRegion,
 		}
+	}
+
+	// Populate the nodes section with networking information mirroring the logic
+	// in GetInfraPlatformSpec. If nodeNetworking is explicitly set in the
+	// install-config, use it directly; otherwise fall back to the machine
+	// network CIDRs (which should encompass the VIPs).
+	if p.NodeNetworking != nil {
+		setNodes(&cloudProviderConfig, p.NodeNetworking)
+	} else {
+		var cidrs []string
+		for _, machineNetwork := range ic.Config.MachineNetwork {
+			cidrs = append(cidrs, machineNetwork.CIDR.String())
+		}
+		nodeNetworking := &configv1.VSpherePlatformNodeNetworking{
+			External: configv1.VSpherePlatformNodeNetworkingSpec{
+				NetworkSubnetCIDR: cidrs,
+			},
+			Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+				NetworkSubnetCIDR: cidrs,
+			},
+		}
+		setNodes(&cloudProviderConfig, nodeNetworking)
 	}
 
 	cloudProviderConfigYaml, err := yaml.Marshal(cloudProviderConfig)

@@ -180,6 +180,7 @@ var map_ClusterMonitoringSpec = map[string]string{
 	"prometheusOperatorAdmissionWebhookConfig": "prometheusOperatorAdmissionWebhookConfig is an optional field that can be used to configure the admission webhook component of Prometheus Operator that runs in the openshift-monitoring namespace. The admission webhook validates PrometheusRule and AlertmanagerConfig objects to ensure they are semantically valid, mutates PrometheusRule annotations, and converts AlertmanagerConfig objects between API versions. When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.",
 	"openShiftStateMetricsConfig":              "openShiftStateMetricsConfig is an optional field that can be used to configure the openshift-state-metrics agent that runs in the openshift-monitoring namespace. The openshift-state-metrics agent generates metrics about the state of OpenShift-specific Kubernetes objects, such as routes, builds, and deployments. When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.",
 	"telemeterClientConfig":                    "telemeterClientConfig is an optional field that can be used to configure the Telemeter Client component that runs in the openshift-monitoring namespace. The Telemeter Client collects selected monitoring metrics and forwards them to Red Hat for telemetry purposes. When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time. When set, at least one field must be specified within telemeterClientConfig.",
+	"thanosQuerierConfig":                      "thanosQuerierConfig is an optional field that can be used to configure the Thanos Querier component that runs in the openshift-monitoring namespace. The Thanos Querier provides a global query view by aggregating and deduplicating metrics from multiple Prometheus instances. When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time. The current default deploys the Thanos Querier on linux nodes with 5m CPU and 12Mi memory requests, and no custom tolerations or topology spread constraints. When set, at least one field must be specified within thanosQuerierConfig.",
 }
 
 func (ClusterMonitoringSpec) SwaggerDoc() map[string]string {
@@ -197,7 +198,7 @@ func (ClusterMonitoringStatus) SwaggerDoc() map[string]string {
 var map_ContainerResource = map[string]string{
 	"":        "ContainerResource defines a single resource requirement for a container.",
 	"name":    "name of the resource (e.g. \"cpu\", \"memory\", \"hugepages-2Mi\"). This field is required. name must consist only of alphanumeric characters, `-`, `_` and `.` and must start and end with an alphanumeric character.",
-	"request": "request is the minimum amount of the resource required (e.g. \"2Mi\", \"1Gi\"). This field is optional. When limit is specified, request cannot be greater than limit.",
+	"request": "request is the minimum amount of the resource required (e.g. \"2Mi\", \"1Gi\"). This field is optional. When limit is specified, request cannot be greater than limit. The value must be greater than 0 when specified.",
 	"limit":   "limit is the maximum amount of the resource allowed (e.g. \"2Mi\", \"1Gi\"). This field is optional. When request is specified, limit cannot be less than request. The value must be greater than 0 when specified.",
 }
 
@@ -527,6 +528,18 @@ var map_TelemeterClientConfig = map[string]string{
 
 func (TelemeterClientConfig) SwaggerDoc() map[string]string {
 	return map_TelemeterClientConfig
+}
+
+var map_ThanosQuerierConfig = map[string]string{
+	"":                          "ThanosQuerierConfig provides configuration options for the Thanos Querier component that runs in the `openshift-monitoring` namespace. At least one field must be specified; an empty thanosQuerierConfig object is not allowed.",
+	"nodeSelector":              "nodeSelector defines the nodes on which the Pods are scheduled. nodeSelector is optional.\n\nWhen omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time. The current default value is `kubernetes.io/os: linux`. When specified, nodeSelector must contain at least 1 entry and must not contain more than 10 entries.",
+	"resources":                 "resources defines the compute resource requests and limits for the Thanos Querier container. resources is optional.\n\nWhen omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time. Requests cannot exceed limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ This is a simplified API that maps to Kubernetes ResourceRequirements. The current default values are:\n  resources:\n   - name: cpu\n     request: 5m\n   - name: memory\n     request: 12Mi\nMaximum length for this list is 5. Minimum length for this list is 1. Each resource name must be unique within this list.",
+	"tolerations":               "tolerations defines tolerations for the pods. tolerations is optional.\n\nWhen omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time. Defaults are empty/unset. Maximum length for this list is 10. Minimum length for this list is 1.",
+	"topologySpreadConstraints": "topologySpreadConstraints defines rules for how Thanos Querier Pods should be distributed across topology domains such as zones, nodes, or other user-defined labels. topologySpreadConstraints is optional. This helps improve high availability and resource efficiency by avoiding placing too many replicas in the same failure domain.\n\nWhen omitted, this means no opinion and the platform is left to choose a default, which is subject to change over time. This field maps directly to the `topologySpreadConstraints` field in the Pod spec. Defaults are empty/unset. Maximum length for this list is 10. Minimum length for this list is 1. Entries must have unique topologyKey and whenUnsatisfiable pairs.",
+}
+
+func (ThanosQuerierConfig) SwaggerDoc() map[string]string {
+	return map_ThanosQuerierConfig
 }
 
 var map_UppercaseActionConfig = map[string]string{
