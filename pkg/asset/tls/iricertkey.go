@@ -6,7 +6,6 @@ import (
 	"crypto/x509/pkix"
 	"net"
 
-	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
@@ -39,10 +38,6 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 	installConfig := &installconfig.InstallConfig{}
 	iri := &manifests.InternalReleaseImage{}
 	dependencies.Get(ca, installConfig, iri)
-
-	if !installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
-		return nil
-	}
 
 	// Skip if InternalReleaseImage manifest wasn't found.
 	if len(iri.FileList) == 0 {

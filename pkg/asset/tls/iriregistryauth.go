@@ -8,7 +8,6 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
@@ -51,11 +50,6 @@ func (a *IRIRegistryCredentials) Generate(ctx context.Context, dependencies asse
 	installConfig := &installconfig.InstallConfig{}
 	iri := &manifests.InternalReleaseImage{}
 	dependencies.Get(installConfig, iri)
-
-	// Only generate if NoRegistryClusterInstall feature is enabled
-	if !installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateNoRegistryClusterInstall) {
-		return nil
-	}
 
 	// Skip if InternalReleaseImage manifest wasn't found
 	if len(iri.FileList) == 0 {
