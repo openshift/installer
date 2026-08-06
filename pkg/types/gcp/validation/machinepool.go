@@ -81,13 +81,13 @@ func ValidateDefaultDiskType(p *gcp.MachinePool, fldPath *field.Path) field.Erro
 func ValidateOSImageForSovereignCloud(platform *gcp.Platform, pool *gcp.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if gcp.GetCloudEnvironment(platform.ProjectID) != gcp.CloudEnvironmentSovereign {
+	if gcp.GetCloudEnvironment(platform.ProjectID, platform.Region) != gcp.CloudEnvironmentSovereign {
 		return allErrs
 	}
 
 	if pool == nil || pool.OSImage == nil {
 		allErrs = append(allErrs, field.Required(fldPath.Child("osImage"),
-			"must specify an OS image for sovereign cloud environments (domain-scoped project ID)"))
+			"must specify an OS image for sovereign cloud environments (domain-scoped project ID and u- region prefix)"))
 		return allErrs
 	}
 

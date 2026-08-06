@@ -373,21 +373,21 @@ func GetGCPInstanceFamily(instanceType string) string {
 
 // DefaultDiskTypeForInstance returns the default disk type for a GCP instance type. If instance type is not
 // recognized, pd-ssd is returned. For sovereign cloud instances, hyperdisk-balanced is preferred when available.
-func DefaultDiskTypeForInstance(instanceType, projectID string) string {
-	return DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID)
+func DefaultDiskTypeForInstance(instanceType, projectID, region string) string {
+	return DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID, region)
 }
 
 // DefaultDiskTypeForInstanceAndProjectID returns the default disk type for a GCP instance type and project ID.
-// The cloud environment is automatically detected from the project ID.
+// The cloud environment is automatically detected from the project ID and region.
 // For sovereign cloud, hyperdisk-balanced is preferred. For public GCP, pd-ssd is preferred.
-func DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID string) string {
+func DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID, region string) string {
 	diskTypes, ok := GetDiskTypes(instanceType)
 	if !ok {
 		return PDSSD
 	}
 
 	preferred := []string{PDSSD, HyperDiskBalanced}
-	if GetCloudEnvironment(projectID) == CloudEnvironmentSovereign {
+	if GetCloudEnvironment(projectID, region) == CloudEnvironmentSovereign {
 		preferred = []string{HyperDiskBalanced, PDSSD}
 	}
 
