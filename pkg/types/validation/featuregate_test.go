@@ -267,15 +267,6 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Control Plane CAPI machine management is allowed with DevPreviewNoUpgrade Feature Set",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = v1.DevPreviewNoUpgrade
-				c.ControlPlane.Management = types.ClusterAPI
-				return c
-			}(),
-		},
-		{
 			name: "Compute CAPI machine management is allowed with DevPreviewNoUpgrade Feature Set",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -285,13 +276,33 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Control Plane CAPI machine management is not allowed with Default Feature Set",
+			name: "Edge Compute CAPI machine management is allowed with DevPreviewNoUpgrade Feature Set",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ControlPlane.Management = types.ClusterAPI
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.Compute = append(c.Compute, *validMachinePool("edge"))
+				c.Compute[1].Management = types.ClusterAPI
 				return c
 			}(),
-			expected: `^controlPlane.management: Forbidden: this field is protected by the ClusterAPIControlPlaneInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "Compute CAPI machine management is allowed with TechPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.Compute[0].Management = types.ClusterAPI
+				return c
+			}(),
+		},
+		{
+			name: "Edge Compute CAPI machine management is allowed with TechPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.Compute = append(c.Compute, *validMachinePool("edge"))
+				c.Compute[1].Management = types.ClusterAPI
+				return c
+			}(),
 		},
 		{
 			name: "Compute CAPI machine management is not allowed with the Default Feature Set",
@@ -300,7 +311,17 @@ func TestFeatureGates(t *testing.T) {
 				c.Compute[0].Management = types.ClusterAPI
 				return c
 			}(),
-			expected: `^compute.management: Forbidden: this field is protected by the ClusterAPIComputeInstall feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^\Qcompute[0].management: Forbidden: this field is protected by the ClusterAPIMachineManagementAWS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set\E$`,
+		},
+		{
+			name: "Edge compute CAPI machine management is not allowed with the Default Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = append(c.Compute, *validMachinePool("edge"))
+				c.Compute[1].Management = types.ClusterAPI
+				return c
+			}(),
+			expected: `^\Qcompute[1].management: Forbidden: this field is protected by the ClusterAPIMachineManagementAWS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set\E$`,
 		},
 	}
 

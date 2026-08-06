@@ -78,3 +78,9 @@ func Update(ctx context.Context, c *gophercloud.ServiceClient, projectID string,
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
+
+func Delete(ctx context.Context, c *gophercloud.ServiceClient, projectID string) (r DeleteResult) {
+	resp, err := c.Delete(ctx, deleteURL(c, projectID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}

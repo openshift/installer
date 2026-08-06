@@ -44,20 +44,6 @@ const (
 	CreateOrUpdateSyncSetApplyBehavior SyncSetApplyBehavior = "CreateOrUpdate"
 )
 
-// SyncSetPatchApplyMode is a string representing the mode with which to apply
-// SyncSet Patches.
-type SyncSetPatchApplyMode string
-
-const (
-	// ApplyOncePatchApplyMode indicates that the patch should be applied
-	// only once.
-	ApplyOncePatchApplyMode SyncSetPatchApplyMode = "ApplyOnce"
-
-	// AlwaysApplyPatchApplyMode indicates that the patch should be
-	// continuously applied.
-	AlwaysApplyPatchApplyMode SyncSetPatchApplyMode = "AlwaysApply"
-)
-
 // SyncObjectPatch represents a patch to be applied to a specific object
 type SyncObjectPatch struct {
 	// APIVersion is the Group and Version of the object to be patched.
@@ -243,6 +229,25 @@ type SyncSetCommonSpec struct {
 	// labels, and other map entries in general.
 	// +optional
 	ApplyBehavior SyncSetApplyBehavior `json:"applyBehavior,omitempty"`
+
+	// EnableResourceTemplates, if True, causes hive to honor golang text/templates in Resources.
+	// While the standard syntax is supported, it won't do you a whole lot of good as the parser
+	// does not pass a data object (i.e. there is no "dot" for you to use). This currently exists
+	// to expose a single function: {{ fromCDLabel "some.label/key" }} will
+	// be substituted with the string value of ClusterDeployment.Labels["some.label/key"]. The
+	// empty string is interpolated if there are no labels, or if the indicated key does not exist.
+	// Note that this only works in values (not e.g. map keys) that are of type string.
+	EnableResourceTemplates bool `json:"enableResourceTemplates,omitempty"`
+
+	// EnablePatchTemplates, if True, causes hive to honor golang text/templates in Patches[].Patch
+	// strings. While the standard syntax is supported, it won't do you a whole lot of good as the
+	// parser does not pass a data object (i.e. there is no "dot" for you to use). This currently
+	// exists to expose a single function: {{ fromCDLabel "some.label/key" }} will be substituted
+	// with the string value of ClusterDeployment.Labels["some.label/key"]. The empty string is
+	// interpolated if there are no labels, or if the indicated key does not exist. Note that the
+	// patch string must be valid JSON after interpolation. This may make for odd-looking quoting
+	// in the uninterpolated string.
+	EnablePatchTemplates bool `json:"enablePatchTemplates,omitempty"`
 }
 
 // SelectorSyncSetSpec defines the SyncSetCommonSpec resources and patches to sync along

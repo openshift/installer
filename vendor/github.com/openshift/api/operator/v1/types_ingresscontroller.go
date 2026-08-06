@@ -385,6 +385,31 @@ type IngressControllerSpec struct {
 	// +kubebuilder:default:="Continue"
 	// +default="Continue"
 	ClosedClientConnectionPolicy IngressControllerClosedClientConnectionPolicy `json:"closedClientConnectionPolicy,omitempty"`
+
+	// haproxyVersion specifies the HAProxy version to use for this
+	// IngressController.
+	//
+	// OpenShift 5.0 introduces HAProxy 3.2 as its default version and supports
+	// HAProxy 2.8 from OpenShift 4.22 for migration purposes. When an OpenShift
+	// release introduces a new default HAProxy version, that HAProxy version
+	// becomes available as a pinnable value in subsequent OpenShift releases,
+	// providing a smooth migration path for administrators who want to defer
+	// HAProxy upgrades.
+	//
+	// Valid values for OpenShift 5.0:
+	// - Unset (default): Uses HAProxy 3.2 (the default for OpenShift 5.0)
+	// - "3.2": Explicitly pins HAProxy 3.2 for preservation during cluster
+	//   upgrades to future OpenShift releases
+	// - "2.8": Uses HAProxy 2.8 from OpenShift 4.22 (migration support, will
+	//   be dropped in the next OpenShift release)
+	//
+	// If a specific HAProxy version is set and would become unsupported in a
+	// target cluster upgrade, a preflight check will block the cluster upgrade
+	// until this field is updated to unset or a supported version.
+	//
+	// +optional
+	// +openshift:enable:FeatureGate=IngressControllerMultipleHAProxyVersions
+	HAProxyVersion HAProxyVersion `json:"haproxyVersion,omitempty"`
 }
 
 // httpCompressionPolicy turns on compression for the specified MIME types.
@@ -898,7 +923,52 @@ type AWSNetworkLoadBalancerParameters struct {
 	// +kubebuilder:validation:XValidation:rule=`self.all(x, self.exists_one(y, x == y))`,message="eipAllocations cannot contain duplicates"
 	// +kubebuilder:validation:MaxItems=10
 	EIPAllocations []EIPAllocation `json:"eipAllocations"`
+
+	// protocol specifies whether the Network Load Balancer uses PROXY
+	// protocol to forward connections to the IngressController.
+	//
+	// When set to "TCP", the NLB uses AWS's native client IP preservation.
+	// This may cause hairpin connection failures for internal load
+	// balancers when connections are made from pods to router pods on
+	// the same node.
+	//
+	// When set to "PROXY", the NLB disables native client IP preservation
+	// and uses PROXY protocol v2. The IngressController enables PROXY
+	// protocol on HAProxy so that it can parse PROXY protocol headers to
+	// obtain the original client IP. This avoids hairpin connection
+	// failures.
+	//
+	// The following values are valid for this field:
+	//
+	// * "TCP".
+	// * "PROXY".
+	//
+	// When omitted, this means the user has no opinion and the value is
+	// left to the platform to choose a reasonable default, which is subject to
+	// change over time. The current default is "PROXY".
+	//
+	// Note that changing this field may cause brief connection failures
+	// during the transition as the NLB attribute change and router rollout
+	// occur independently.
+	//
+	// +optional
+	Protocol NLBProtocol `json:"protocol,omitempty"`
 }
+
+// NLBProtocol specifies whether the AWS Network Load Balancer uses
+// PROXY protocol to forward connections to the IngressController.
+// +kubebuilder:validation:Enum=TCP;PROXY
+// +enum
+type NLBProtocol string
+
+const (
+	// NLBProtocolTCP instructs the NLB to forward connections using TCP
+	// without PROXY protocol.
+	NLBProtocolTCP NLBProtocol = "TCP"
+	// NLBProtocolProxy instructs the NLB to forward connections using
+	// PROXY protocol v2.
+	NLBProtocolProxy NLBProtocol = "PROXY"
+)
 
 // EIPAllocation is an ID for an Elastic IP (EIP) address that can be allocated to an ELB in the AWS environment.
 // Values must begin with `eipalloc-` followed by exactly 17 hexadecimal (`[0-9a-fA-F]`) characters.
@@ -2218,6 +2288,19 @@ type IngressControllerStatus struct {
 	// routeSelector is the actual routeSelector in use.
 	// +optional
 	RouteSelector *metav1.LabelSelector `json:"routeSelector,omitempty"`
+
+	// effectiveHAProxyVersion reports the HAProxy version currently in use by
+	// this IngressController. This reflects the resolved value of the
+	// spec.haproxyVersion field. When omitted, the effective value has not yet
+	// been resolved by the operator or the feature is not enabled for this cluster.
+	//
+	// Examples for OpenShift 5.0:
+	// - "3.2": Using HAProxy 3.2
+	// - "2.8": Using HAProxy 2.8
+	//
+	// +optional
+	// +openshift:enable:FeatureGate=IngressControllerMultipleHAProxyVersions
+	EffectiveHAProxyVersion HAProxyVersion `json:"effectiveHAProxyVersion,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -2285,4 +2368,19 @@ const (
 	// The router will complete the TLS handshake and wait for the backend
 	// server's response regardless of the client having closed the connection.
 	IngressControllerClosedClientConnectionPolicyContinue IngressControllerClosedClientConnectionPolicy = "Continue"
+)
+
+// HAProxyVersion is a string representing a HAProxy minor version in "X.Y"
+// format. The allowed values are constrained by enum validation and vary by
+// OpenShift release.
+//
+// +kubebuilder:validation:Enum="2.8";"3.2"
+type HAProxyVersion string
+
+const (
+	// HAProxyVersion28 represents HAProxy 2.8, shipped with OpenShift 4.22.
+	HAProxyVersion28 HAProxyVersion = "2.8"
+
+	// HAProxyVersion32 represents HAProxy 3.2, introduced in OpenShift 5.0.
+	HAProxyVersion32 HAProxyVersion = "3.2"
 )

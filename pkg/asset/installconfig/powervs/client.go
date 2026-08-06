@@ -1479,12 +1479,6 @@ func (c *Client) AddIPToLoadBalancerPool(ctx context.Context, lbID string, poolN
 				logrus.Debugf("AddIPToLoadBalancerPool: found %s", ip)
 				return nil
 			}
-		case *vpcv1.LoadBalancerPoolMemberTargetIP:
-			logrus.Debugf("AddIPToLoadBalancerPool: pmt.Address = %+v", *pmt.Address)
-			if ip == *pmt.Address {
-				logrus.Debugf("AddIPToLoadBalancerPool: found %s", ip)
-				return nil
-			}
 		case *vpcv1.LoadBalancerPoolMemberTargetInstanceReference:
 			// No IP address, ignore
 		default:

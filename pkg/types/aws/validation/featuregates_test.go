@@ -45,6 +45,65 @@ func TestGatedFeatures(t *testing.T) {
 			expectedFeatureGates: []configv1.FeatureGateName{},
 		},
 		{
+			name: "CAPI management configured for worker pool",
+			installConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region: "us-east-1",
+					},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:       types.MachinePoolComputeRoleName,
+						Management: types.ClusterAPI,
+						Platform: types.MachinePoolPlatform{
+							AWS: &aws.MachinePool{},
+						},
+					},
+				},
+			},
+			expectedFeatureGates: []configv1.FeatureGateName{features.FeatureGateClusterAPIMachineManagementAWS},
+		},
+		{
+			name: "CAPI management configured for edge pool",
+			installConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region: "us-east-1",
+					},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:       types.MachinePoolComputeRoleName,
+						Management: types.MachineAPI,
+						Platform: types.MachinePoolPlatform{
+							AWS: &aws.MachinePool{},
+						},
+					},
+					{
+						Name:       types.MachinePoolEdgeRoleName,
+						Management: types.ClusterAPI,
+						Platform: types.MachinePoolPlatform{
+							AWS: &aws.MachinePool{},
+						},
+					},
+				},
+			},
+			expectedFeatureGates: []configv1.FeatureGateName{features.FeatureGateClusterAPIMachineManagementAWS},
+		},
+		{
 			name: "dedicated hosts configured",
 			installConfig: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{

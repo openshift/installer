@@ -142,14 +142,6 @@ const (
 	ConfidentialComputePolicyTDX ConfidentialComputePolicy = "IntelTrustedDomainExtensions"
 )
 
-// Confidential VM Technology support depends on the configured machine types.
-// reference: https://cloud.google.com/compute/confidential-vm/docs/os-and-machine-type#machine-type
-var (
-	confidentialMachineSeriesSupportingSev    = []string{"n2d", "c2d", "c3d"}
-	confidentialMachineSeriesSupportingSevsnp = []string{"n2d"}
-	confidentialMachineSeriesSupportingTdx    = []string{"c3"}
-)
-
 // HostMaintenancePolicy represents the desired behavior ase of a host maintenance event.
 type HostMaintenancePolicy string
 

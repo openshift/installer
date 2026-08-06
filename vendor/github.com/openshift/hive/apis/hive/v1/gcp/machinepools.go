@@ -25,14 +25,41 @@ type MachinePool struct {
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	SecureBoot string `json:"secureBoot,omitempty"`
+
+	// OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
+	// This is required to be set to "Terminate" if you want to provision machine with attached GPUs.
+	// Otherwise, allowed values are "Migrate" and "Terminate".
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
+	// +kubebuilder:validation:Enum=Migrate;Terminate;
+	// +optional
+	OnHostMaintenance string `json:"onHostMaintenance,omitempty"`
+
+	// ServiceAccount is the email of a gcp service account to be attached to worker nodes
+	// in order to provide the permissions required by the cloud provider. For the default
+	// worker MachinePool, it is the user's responsibility to match this to the value
+	// provided in the install-config.
+	//
+	// +optional
+	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// userTags has additional keys and values that we will add as tags to the providerSpec of
+	// MachineSets that we creates on GCP. Tag key and tag value should be the shortnames of the
+	// tag key and tag value resource. Consumer is responsible for using this only for spokes
+	// where custom tags are supported.
+	UserTags []UserTag `json:"userTags,omitempty"`
+
+	// Tags defines a set of network tags which will be added to instances in the machineset.
+	// Not to be confused with UserTags.
+	//
+	// +optional
+	Tags []string `json:"tags,omitempty"`
 }
 
 // OSDisk defines the disk for machines on GCP.
 type OSDisk struct {
 	// DiskType defines the type of disk.
-	// The valid values are pd-standard and pd-ssd.
+	// The valid values at this time are: pd-standard, pd-ssd, local-ssd, pd-balanced, hyperdisk-balanced.
 	// Defaulted internally to pd-ssd.
-	// +kubebuilder:validation:Enum=pd-ssd;pd-standard
 	// +optional
 	DiskType string `json:"diskType,omitempty"`
 
@@ -83,4 +110,28 @@ type EncryptionKeyReference struct {
 	//
 	// +optional
 	KMSKeyServiceAccount string `json:"kmsKeyServiceAccount,omitempty"`
+}
+
+// UserTag is a tag to apply to GCP resources created for the cluster.
+type UserTag struct {
+	// parentID is the ID of the hierarchical resource where the tags are defined,
+	// e.g. at the Organization or the Project level. To find the Organization ID or Project ID refer to the following pages:
+	// https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id,
+	// https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects.
+	// An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+	// A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+	// numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
+	ParentID string `json:"parentID"`
+
+	// key is the key part of the tag. A tag key can have a maximum of 63 characters and
+	// cannot be empty. Tag key must begin and end with an alphanumeric character, and
+	// must contain only uppercase, lowercase alphanumeric characters, and the following
+	// special characters `._-`.
+	Key string `json:"key"`
+
+	// value is the value part of the tag. A tag value can have a maximum of 63 characters
+	// and cannot be empty. Tag value must begin and end with an alphanumeric character, and
+	// must contain only uppercase, lowercase alphanumeric characters, and the following
+	// special characters `_-.@%=+:,*#&(){}[]` and spaces.
+	Value string `json:"value"`
 }

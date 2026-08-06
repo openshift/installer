@@ -20,6 +20,10 @@ type MachinePool struct {
 
 	// OSDisk defines the storage for instance.
 	OSDisk `json:"osDisk"`
+
+	// TagIDs is a list of up to 10 tags to add to the VMs that this machine set provisions in vSphere.
+	// +kubebuilder:validation:MaxItems:=10
+	TagIDs []string `json:"tagIDs,omitempty"`
 }
 
 // OSDisk defines the disk for a virtual machine.

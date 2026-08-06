@@ -9,6 +9,11 @@ package vsphere
 func (in *MachinePool) DeepCopyInto(out *MachinePool) {
 	*out = *in
 	out.OSDisk = in.OSDisk
+	if in.TagIDs != nil {
+		in, out := &in.TagIDs, &out.TagIDs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

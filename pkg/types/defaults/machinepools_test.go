@@ -7,6 +7,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -148,49 +149,63 @@ func TestSetMachinePoolDefaultsWithFeatureGates(t *testing.T) {
 		name               string
 		pool               *types.MachinePool
 		platform           *types.Platform
-		featureSet         configv1.FeatureSet
+		featureGates       []string
 		expectedManagement types.MachineManagementAPI
 	}{
 		{
-			name:               "control plane with DevPreviewNoUpgrade feature set",
-			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
+			name:               "AWS compute sets ClusterAPI management when ClusterAPIMachineManagementAWS enabled",
+			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: types.ClusterAPI,
 		},
 		{
-			name:               "control plane with default feature set",
-			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.Default,
+			name:               "AWS compute management is unchanged when ClusterAPIMachineManagementAWS disabled",
+			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=False"},
 			expectedManagement: "",
 		},
 		{
-			name:               "compute with DevPreviewNoUpgrade feature set",
-			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
+			name:               "AWS edge compute sets ClusterAPI management when ClusterAPIMachineManagementAWS enabled",
+			pool:               &types.MachinePool{Name: types.MachinePoolEdgeRoleName},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: types.ClusterAPI,
 		},
 		{
-			name:               "compute with default feature set",
-			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
-			platform:           &types.Platform{},
-			featureSet:         configv1.Default,
+			name:               "AWS edge compute management is unchanged when ClusterAPIMachineManagementAWS disabled",
+			pool:               &types.MachinePool{Name: types.MachinePoolEdgeRoleName},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=False"},
 			expectedManagement: "",
 		},
 		{
-			name:               "control plane with management already set",
-			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName, Management: types.MachineAPI},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
+			name:               "AWS control plane is unaffected by ClusterAPIMachineManagementAWS",
+			pool:               &types.MachinePool{Name: types.MachinePoolControlPlaneRoleName},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
+			expectedManagement: "",
+		},
+		{
+			name:               "non-AWS compute is unaffected by ClusterAPIMachineManagementAWS",
+			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName},
+			platform:           &types.Platform{GCP: &gcp.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
+			expectedManagement: "",
+		},
+		{
+			name:               "AWS compute management is not overwritten when already set",
+			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName, Management: types.MachineAPI},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: types.MachineAPI,
 		},
 		{
-			name:               "compute with management already set",
-			pool:               &types.MachinePool{Name: types.MachinePoolComputeRoleName, Management: types.MachineAPI},
-			platform:           &types.Platform{},
-			featureSet:         configv1.DevPreviewNoUpgrade,
+			name:               "AWS edge compute management is not overwritten when already set",
+			pool:               &types.MachinePool{Name: types.MachinePoolEdgeRoleName, Management: types.MachineAPI},
+			platform:           &types.Platform{AWS: &aws.Platform{}},
+			featureGates:       []string{"ClusterAPIMachineManagementAWS=True"},
 			expectedManagement: types.MachineAPI,
 		},
 	}
@@ -198,7 +213,8 @@ func TestSetMachinePoolDefaultsWithFeatureGates(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			config := &types.InstallConfig{
-				FeatureSet: tc.featureSet,
+				FeatureSet:   configv1.CustomNoUpgrade,
+				FeatureGates: tc.featureGates,
 			}
 			SetMachinePoolDefaults(tc.pool, tc.platform, config.EnabledFeatureGates())
 			assert.Equal(t, tc.expectedManagement, tc.pool.Management, "unexpected management API")

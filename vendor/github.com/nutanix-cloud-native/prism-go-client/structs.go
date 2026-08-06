@@ -1,8 +1,10 @@
 package prismgoclient
 
-// Credentials needed username and password
+// Credentials can include either username and password for basic authentication
+// or an API key for API key-based authentication
 type Credentials struct {
 	URL                string
+	APIKey             string
 	Username           string
 	Password           string
 	Endpoint           string

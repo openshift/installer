@@ -3,9 +3,8 @@
 
 Go client for Nutanix Prism APIs. Currently includes the following APIs:
 - Nutanix v3 APIs for Prism Central
-- Foundation
-- Foundation Central
-- Karbon
+- Select Nutanix v4 APIs for Prism Central
+- Konnector
 
 ## Contributing
 See the [contributing docs](CONTRIBUTING.md).

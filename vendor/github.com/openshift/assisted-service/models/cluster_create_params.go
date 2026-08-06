@@ -91,16 +91,28 @@ type ClusterCreateParams struct {
 	Name *string `json:"name"`
 
 	// The desired network type used.
-	// Enum: [OpenShiftSDN OVNKubernetes]
+	// - OVNKubernetes: Default CNI for OpenShift (recommended)
+	// - OpenShiftSDN: Legacy SDN (deprecated in newer versions)
+	// - CiscoACI: Cisco ACI CNI (requires custom manifests)
+	// - Cilium: Isovalent Cilium CNI (requires custom manifests)
+	// - Calico: Tigera Calico CNI (requires custom manifests)
+	// - None: No CNI - user must provide custom CNI manifests
+	// Note: Third-party CNIs (CiscoACI, Cilium, Calico, None) require uploading
+	// CNI manifests via the custom manifests API before installation.
+	//
+	// Enum: [OpenShiftSDN OVNKubernetes CiscoACI Cilium Calico None]
 	NetworkType *string `json:"network_type,omitempty"`
 
 	// An "*" or a comma-separated list of destination domain names, domains, IP addresses, or other network CIDRs to exclude from proxying.
 	NoProxy *string `json:"no_proxy,omitempty"`
 
+	// A comma-separated list of NTP sources (name or IP) to be used as the only NTP configuration for the cluster hosts.
+	NtpSources *string `json:"ntp_sources,omitempty"`
+
 	// OpenShift release image URI.
 	OcpReleaseImage string `json:"ocp_release_image,omitempty"`
 
-	// List of OLM operators to be installed.
+	// List of standalone OLM operators to be installed (not part of any bundle).
 	// For the full list of supported operators, check the endpoint `/v2/supported-operators`:
 	//
 	OlmOperators []*OperatorCreateParams `json:"olm_operators"`
@@ -108,6 +120,12 @@ type ClusterCreateParams struct {
 	// Version of the OpenShift cluster.
 	// Required: true
 	OpenshiftVersion *string `json:"openshift_version"`
+
+	// List of operator bundles selected by the user with their optional operator choices.
+	// The backend expands bundles into their required operators, adds selected optional operators,
+	// resolves all dependencies, and tracks bundle membership via source_bundles on monitored operators.
+	//
+	OperatorBundles []*BundleCreateParams `json:"operator_bundles"`
 
 	// platform
 	Platform *Platform `json:"platform,omitempty" gorm:"embedded;embeddedPrefix:platform_"`
@@ -204,6 +222,10 @@ func (m *ClusterCreateParams) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateOpenshiftVersion(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOperatorBundles(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -598,7 +620,7 @@ var clusterCreateParamsTypeNetworkTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes","CiscoACI","Cilium","Calico","None"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -613,6 +635,18 @@ const (
 
 	// ClusterCreateParamsNetworkTypeOVNKubernetes captures enum value "OVNKubernetes"
 	ClusterCreateParamsNetworkTypeOVNKubernetes string = "OVNKubernetes"
+
+	// ClusterCreateParamsNetworkTypeCiscoACI captures enum value "CiscoACI"
+	ClusterCreateParamsNetworkTypeCiscoACI string = "CiscoACI"
+
+	// ClusterCreateParamsNetworkTypeCilium captures enum value "Cilium"
+	ClusterCreateParamsNetworkTypeCilium string = "Cilium"
+
+	// ClusterCreateParamsNetworkTypeCalico captures enum value "Calico"
+	ClusterCreateParamsNetworkTypeCalico string = "Calico"
+
+	// ClusterCreateParamsNetworkTypeNone captures enum value "None"
+	ClusterCreateParamsNetworkTypeNone string = "None"
 )
 
 // prop value enum
@@ -666,6 +700,32 @@ func (m *ClusterCreateParams) validateOpenshiftVersion(formats strfmt.Registry) 
 
 	if err := validate.Required("openshift_version", "body", m.OpenshiftVersion); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *ClusterCreateParams) validateOperatorBundles(formats strfmt.Registry) error {
+	if swag.IsZero(m.OperatorBundles) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.OperatorBundles); i++ {
+		if swag.IsZero(m.OperatorBundles[i]) { // not required
+			continue
+		}
+
+		if m.OperatorBundles[i] != nil {
+			if err := m.OperatorBundles[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -770,6 +830,10 @@ func (m *ClusterCreateParams) ContextValidate(ctx context.Context, formats strfm
 	}
 
 	if err := m.contextValidateOlmOperators(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateOperatorBundles(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -925,6 +989,26 @@ func (m *ClusterCreateParams) contextValidateOlmOperators(ctx context.Context, f
 					return ve.ValidateName("olm_operators" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("olm_operators" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreateParams) contextValidateOperatorBundles(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.OperatorBundles); i++ {
+
+		if m.OperatorBundles[i] != nil {
+			if err := m.OperatorBundles[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("operator_bundles" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

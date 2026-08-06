@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"slices"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/net"
@@ -414,6 +416,7 @@ type IPTag struct {
 }
 
 // VMState describes the state of an Azure virtual machine.
+//
 // Deprecated: use ProvisioningState.
 type VMState string
 
@@ -449,6 +452,7 @@ type Image struct {
 	ID *string `json:"id,omitempty"`
 
 	// SharedGallery specifies an image to use from an Azure Shared Image Gallery
+	//
 	// Deprecated: use ComputeGallery instead.
 	// +optional
 	SharedGallery *AzureSharedGalleryImage `json:"sharedGallery,omitempty"`
@@ -909,12 +913,7 @@ func (s SubnetSpec) IsNatGatewayEnabled() bool {
 
 // IsIPv6Enabled returns whether or not IPv6 is enabled on the subnet.
 func (s SubnetSpec) IsIPv6Enabled() bool {
-	for _, cidr := range s.CIDRBlocks {
-		if net.IsIPv6CIDRString(cidr) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(s.CIDRBlocks, net.IsIPv6CIDRString)
 }
 
 // GetSecurityRuleByDestination returns security group rule, which matches provided destination ports.
@@ -949,7 +948,6 @@ type SecurityProfile struct {
 
 // UefiSettings specifies the security settings like secure boot and vTPM used while creating the virtual
 // machine.
-// +optional
 type UefiSettings struct {
 	// SecureBootEnabled specifies whether secure boot should be enabled on the virtual machine.
 	// Secure Boot verifies the digital signature of all boot components and halts the boot process if signature verification fails.
@@ -967,8 +965,8 @@ type UefiSettings struct {
 
 // AddressRecord specifies a DNS record mapping a hostname to an IPV4 or IPv6 address.
 type AddressRecord struct {
-	Hostname string
-	IP       string
+	Hostname string `json:"hostname"`
+	IP       string `json:"ip"`
 }
 
 // CloudProviderConfigOverrides represents the fields that can be overridden in azure cloud provider config.

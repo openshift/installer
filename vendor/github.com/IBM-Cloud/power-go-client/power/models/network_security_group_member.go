@@ -80,7 +80,7 @@ func (m *NetworkSecurityGroupMember) validateTarget(formats strfmt.Registry) err
 	return nil
 }
 
-var networkSecurityGroupMemberTypeTypePropEnum []interface{}
+var networkSecurityGroupMemberTypeTypePropEnum []any
 
 func init() {
 	var res []string

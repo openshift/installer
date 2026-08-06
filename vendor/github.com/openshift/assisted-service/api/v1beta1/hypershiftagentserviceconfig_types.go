@@ -62,5 +62,5 @@ type HypershiftAgentServiceConfigList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&HypershiftAgentServiceConfig{}, &HypershiftAgentServiceConfigList{})
+	objectTypes = append(objectTypes, &HypershiftAgentServiceConfig{}, &HypershiftAgentServiceConfigList{})
 }

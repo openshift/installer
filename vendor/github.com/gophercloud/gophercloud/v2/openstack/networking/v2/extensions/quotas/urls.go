@@ -24,3 +24,7 @@ func getDetailURL(c *gophercloud.ServiceClient, projectID string) string {
 func updateURL(c *gophercloud.ServiceClient, projectID string) string {
 	return resourceURL(c, projectID)
 }
+
+func deleteURL(c *gophercloud.ServiceClient, projectID string) string {
+	return getURL(c, projectID)
+}

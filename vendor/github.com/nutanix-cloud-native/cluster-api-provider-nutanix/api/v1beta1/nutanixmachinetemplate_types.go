@@ -17,8 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
+	capiv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -33,8 +34,18 @@ type NutanixMachineTemplateSpec struct {
 	Template NutanixMachineTemplateResource `json:"template"`
 }
 
+// NutanixMachineTemplateStatus defines the observed state of a NutanixMachineTemplate.
+type NutanixMachineTemplateStatus struct {
+	// capacity defines the resource capacity for this NutanixMachineTemplate.
+	// This value is used by the Cluster Autoscaler for autoscaling from zero operations as defined in:
+	// https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
+	// +optional
+	Capacity corev1.ResourceList `json:"capacity,omitempty"`
+}
+
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=nutanixmachinetemplates,shortName=nmtmpl,scope=Namespaced,categories=cluster-api
+//+kubebuilder:subresource:status
 //+kubebuilder:storageversion
 
 // NutanixMachineTemplate is the Schema for the nutanixmachinetemplates API
@@ -42,7 +53,8 @@ type NutanixMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec NutanixMachineTemplateSpec `json:"spec,omitempty"`
+	Spec   NutanixMachineTemplateSpec   `json:"spec,omitempty"`
+	Status NutanixMachineTemplateStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -63,7 +75,7 @@ type NutanixMachineTemplateResource struct {
 	// Standard object metadata.
 	// Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	ObjectMeta capiv1.ObjectMeta `json:"metadata,omitempty"`
+	ObjectMeta capiv1beta1.ObjectMeta `json:"metadata,omitempty"`
 	// Spec is the specification of the desired behavior of the machine.
 	Spec NutanixMachineSpec `json:"spec"`
 }

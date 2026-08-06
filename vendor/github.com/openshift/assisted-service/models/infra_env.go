@@ -80,6 +80,14 @@ type InfraEnv struct {
 	// Required: true
 	Name *string `json:"name"`
 
+	// The number of seconds to wait before mapping host MACs to interfaces when applying static network config on minimal ISO.
+	// This can be used on hosts that need time to discover their NICs.
+	// Minimum: 0
+	NetworkDiscoveryDelaySeconds *int64 `json:"network_discovery_delay_seconds,omitempty"`
+
+	// A comma-separated list of NTP sources (name or IP) to be used as the only NTP configuration for hosts in this infra-env.
+	NtpSources string `json:"ntp_sources,omitempty"`
+
 	// Version of the OpenShift cluster (used to infer the RHCOS version - temporary until generic logic implemented).
 	OpenshiftVersion string `json:"openshift_version,omitempty"`
 
@@ -91,6 +99,12 @@ type InfraEnv struct {
 
 	// True if the pull secret has been added to the cluster.
 	PullSecretSet bool `json:"pull_secret_set,omitempty"`
+
+	// The IP address of the host that will act as the rendezvous (bootstrap) node for agent-based installations.
+	// This is optional for disconnected-iso image type and specifies which host will run the assisted service
+	// during the bootstrap phase. All other hosts will connect to this IP to coordinate the installation.
+	// Pattern: ^(?:$|(?:(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:(:[0-9a-fA-F]{1,4}){1,6}|:(:[0-9a-fA-F]{1,4}){1,7}|:|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))))$
+	RendezvousIP *string `json:"rendezvous_ip,omitempty"`
 
 	// size bytes
 	// Minimum: 0
@@ -151,7 +165,15 @@ func (m *InfraEnv) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateNetworkDiscoveryDelaySeconds(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateProxy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRendezvousIP(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -332,6 +354,18 @@ func (m *InfraEnv) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *InfraEnv) validateNetworkDiscoveryDelaySeconds(formats strfmt.Registry) error {
+	if swag.IsZero(m.NetworkDiscoveryDelaySeconds) { // not required
+		return nil
+	}
+
+	if err := validate.MinimumInt("network_discovery_delay_seconds", "body", *m.NetworkDiscoveryDelaySeconds, 0, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *InfraEnv) validateProxy(formats strfmt.Registry) error {
 	if swag.IsZero(m.Proxy) { // not required
 		return nil
@@ -346,6 +380,18 @@ func (m *InfraEnv) validateProxy(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *InfraEnv) validateRendezvousIP(formats strfmt.Registry) error {
+	if swag.IsZero(m.RendezvousIP) { // not required
+		return nil
+	}
+
+	if err := validate.Pattern("rendezvous_ip", "body", *m.RendezvousIP, `^(?:$|(?:(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:(:[0-9a-fA-F]{1,4}){1,6}|:(:[0-9a-fA-F]{1,4}){1,7}|:|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))))$`); err != nil {
+		return err
 	}
 
 	return nil

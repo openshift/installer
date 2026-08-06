@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
@@ -167,6 +168,12 @@ type VirtualMachineCloneSpec struct {
 	// virtual machine is cloned.
 	// +optional
 	NumCoresPerSocket int32 `json:"numCoresPerSocket,omitempty"`
+
+	// resources is the definition of the VM's cpu and memory
+	// reservations, limits and shares.
+	// +optional
+	Resources VirtualMachineResources `json:"resources,omitempty,omitzero"`
+
 	// MemoryMiB is the size of a virtual machine's memory, in MiB.
 	// Defaults to the eponymous property value in the template from which the
 	// virtual machine is cloned.
@@ -209,6 +216,51 @@ type VirtualMachineCloneSpec struct {
 	// +listMapKey=name
 	// +kubebuilder:validation:MaxItems=29
 	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
+}
+
+// VirtualMachineResources is the definition of the VM's cpu and memory
+// reservations, limits and shares.
+// +kubebuilder:validation:MinProperties=1
+type VirtualMachineResources struct {
+	// requests is the definition of the VM's cpu (in hertz, rounded up to the nearest MHz)
+	// and memory (in bytes, rounded up to the nearest MiB) reservations
+	// +optional
+	Requests VirtualMachineResourceSpec `json:"requests,omitempty,omitzero"`
+	// limits is the definition of the VM's cpu (in hertz, rounded up to the nearest MHz)
+	// and memory (in bytes, rounded up to the nearest MiB) limits
+	// +optional
+	Limits VirtualMachineResourceSpec `json:"limits,omitempty,omitzero"`
+	// shares is the definition of the VM's cpu and memory shares
+	// +optional
+	Shares VirtualMachineResourceShares `json:"shares,omitempty,omitzero"`
+}
+
+// VirtualMachineResourceSpec is the numerical definition of memory and cpu quantity for the
+// given VM hardware policy.
+// +kubebuilder:validation:MinProperties=1
+type VirtualMachineResourceSpec struct {
+	// cpu is the definition of the cpu quantity for the given VM hardware policy
+	// +optional
+	CPU resource.Quantity `json:"cpu,omitempty"`
+
+	// memory is the definition of the memory quantity for the given VM hardware policy
+	// +optional
+	Memory resource.Quantity `json:"memory,omitempty"`
+}
+
+// VirtualMachineResourceShares is the numerical definition of memory and cpu shares for the
+// given VM
+// +kubebuilder:validation:MinProperties=1
+type VirtualMachineResourceShares struct {
+	// cpu is the number of spu shares to assign to the VM
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	CPU int32 `json:"cpu,omitempty"`
+
+	// memory is the number of memory shares to assign to the VM
+	// +kubebuilder:validation:Minimum=1
+	// +optional
+	Memory int32 `json:"memory,omitempty"`
 }
 
 // VSphereDisk is an additional disk to add to the VM that is not part of the VM OVA template.
@@ -269,9 +321,11 @@ const (
 // APIEndpoint represents a reachable Kubernetes API endpoint.
 type APIEndpoint struct {
 	// The hostname on which the API server is serving.
+	// +optional
 	Host string `json:"host"`
 
 	// The port on which the API server is serving.
+	// +optional
 	Port int32 `json:"port"`
 }
 

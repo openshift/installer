@@ -40,7 +40,7 @@ func (m *VolumeGroupActionReset) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var volumeGroupActionResetTypeStatusPropEnum []interface{}
+var volumeGroupActionResetTypeStatusPropEnum []any
 
 func init() {
 	var res []string

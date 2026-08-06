@@ -82,6 +82,13 @@ func (in *MachinePoolPlatform) DeepCopyInto(out *MachinePoolPlatform) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.UserTags != nil {
+		in, out := &in.UserTags, &out.UserTags
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

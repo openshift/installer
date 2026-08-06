@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -99,7 +100,7 @@ func (m *RouteCreate) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var routeCreateTypeActionPropEnum []interface{}
+var routeCreateTypeActionPropEnum []any
 
 func init() {
 	var res []string
@@ -138,7 +139,7 @@ func (m *RouteCreate) validateAction(formats strfmt.Registry) error {
 	return nil
 }
 
-var routeCreateTypeAdvertisePropEnum []interface{}
+var routeCreateTypeAdvertisePropEnum []any
 
 func init() {
 	var res []string
@@ -189,7 +190,7 @@ func (m *RouteCreate) validateDestination(formats strfmt.Registry) error {
 	return nil
 }
 
-var routeCreateTypeDestinationTypePropEnum []interface{}
+var routeCreateTypeDestinationTypePropEnum []any
 
 func init() {
 	var res []string
@@ -254,7 +255,7 @@ func (m *RouteCreate) validateNextHop(formats strfmt.Registry) error {
 	return nil
 }
 
-var routeCreateTypeNextHopTypePropEnum []interface{}
+var routeCreateTypeNextHopTypePropEnum []any
 
 func init() {
 	var res []string
@@ -299,11 +300,15 @@ func (m *RouteCreate) validateUserTags(formats strfmt.Registry) error {
 	}
 
 	if err := m.UserTags.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 
@@ -327,11 +332,15 @@ func (m *RouteCreate) ContextValidate(ctx context.Context, formats strfmt.Regist
 func (m *RouteCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 

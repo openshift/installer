@@ -79,7 +79,7 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	}
 
 	allErrs = append(allErrs, validateDiskSetup(p, fldPath.Child("diskSetup"))...)
-
+	allErrs = append(allErrs, validateMachineManagement(platform, p, fldPath.Child("management"))...)
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
 	return allErrs
 }
@@ -161,6 +161,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(azure.Name, p.Azure, func(f *field.Path) field.ErrorList {
 			return azurevalidation.ValidateMachinePool(p.Azure, pool.Name, platform.Azure, pool, f)
 		})
+	}
+	if platform.GCP != nil {
+		allErrs = append(allErrs, gcpvalidation.ValidateOSImageForSovereignCloud(platform.GCP, p.GCP, fldPath.Child("gcp"))...)
 	}
 	if p.GCP != nil {
 		validate(gcp.Name, p.GCP, func(f *field.Path) field.ErrorList { return validateGCPMachinePool(platform, p, pool, f) })

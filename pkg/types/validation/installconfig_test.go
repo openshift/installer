@@ -318,7 +318,7 @@ func TestValidateInstallConfig(t *testing.T) {
 		name             string
 		installConfig    *types.InstallConfig
 		expectedError    string
-		restoreFnFactory func(*types.InstallConfig) func()
+		restoreFnFactory func(*testing.T, *types.InstallConfig) func()
 	}{
 		{
 			name:          "minimal",
@@ -855,19 +855,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^compute\[1\]\.name: Duplicate value: "worker"$`,
-		},
-		{
-			name: "edge compute with cluster api",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Compute = append(c.Compute, func() types.MachinePool {
-					p := *validMachinePool("edge")
-					p.Management = types.ClusterAPI
-					return p
-				}())
-				return c
-			}(),
-			expectedError: `^compute\[1\]\.management: Invalid value: "ClusterAPI": edge compute pools cannot be managed by Cluster API$`,
 		},
 		{
 			name: "no compute replicas",
@@ -1977,6 +1964,80 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
 		},
 		{
+			name: "azure: valid dual-stack with DualStackIPv6Primary and IPv4-first serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("172.30.0.0/16"),
+					*ipnet.MustParseCIDR("ffd1::/112"),
+				}
+				return c
+			}(),
+			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
+				t.Helper()
+				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {}
+			},
+		},
+		{
+			name: "azure: valid dual-stack with DualStackIPv4Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
+				t.Helper()
+				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {}
+			},
+		},
+		{
+			name: "azure: invalid dual-stack with IPv6-first serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4`,
+			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
+				t.Helper()
+				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {}
+			},
+		},
+		{
+			name: "azure: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `^\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4\E$`,
+			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
+				t.Helper()
+				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {}
+			},
+		},
+		{
 			name: "invalid IPv6 hostprefix",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -3063,7 +3124,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "osImageStream: Unsupported value: \"rhel-10\": supported values: \"centos-10\"",
-			restoreFnFactory: func(config *types.InstallConfig) func() {
+			restoreFnFactory: func(_ *testing.T, config *types.InstallConfig) func() {
 				old := types.SCOS
 				types.SCOS = true
 				return func() {
@@ -3150,7 +3211,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			if tc.restoreFnFactory != nil {
 				// Call the FN getter to allow restore function to grab
 				// pre-test values if needed
-				fn := tc.restoreFnFactory(tc.installConfig)
+				fn := tc.restoreFnFactory(t, tc.installConfig)
 				defer fn()
 			}
 

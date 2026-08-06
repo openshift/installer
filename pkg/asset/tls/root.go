@@ -21,13 +21,20 @@ type RootCA struct {
 
 var _ asset.WritableAsset = (*RootCA)(nil)
 
-// Dependencies returns nothing.
+// Dependencies returns SignerKeyParams. Configurable PKI requires
+// reading the PKI config from InstallConfig, but adding InstallConfig
+// as a dependency here would break codepaths that generate signer certs
+// without an install-config on disk (e.g. agent create certificates,
+// node-joiner). SignerKeyParams reads the config directly from disk
+// without triggering InstallConfig validation.
 func (c *RootCA) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&SignerKeyParams{}}
 }
 
 // Generate generates the MCS/Ignition CA.
 func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
+	parents.Get(signerKeyParams)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -35,7 +42,7 @@ func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", nil)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", signerKeyParams.PKIConfig)
 }
 
 // Name returns the human-friendly name of the asset.

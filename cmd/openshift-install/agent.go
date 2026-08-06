@@ -57,6 +57,7 @@ var (
 			&manifests.AgentManifests{},
 			&mirror.RegistriesConf{},
 			&mirror.CaBundle{},
+			&tls.SignerKeyParams{},
 		},
 	}
 

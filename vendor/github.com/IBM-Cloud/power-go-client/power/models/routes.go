@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -52,11 +53,15 @@ func (m *Routes) validateRoutes(formats strfmt.Registry) error {
 
 		if m.Routes[i] != nil {
 			if err := m.Routes[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("routes" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("routes" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -91,11 +96,15 @@ func (m *Routes) contextValidateRoutes(ctx context.Context, formats strfmt.Regis
 			}
 
 			if err := m.Routes[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("routes" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("routes" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

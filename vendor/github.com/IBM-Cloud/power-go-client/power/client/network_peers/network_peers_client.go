@@ -56,28 +56,44 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	V1NetworkPeersList(params *V1NetworkPeersListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersListOK, error)
+	V1NetworkPeersGetall(params *V1NetworkPeersGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersGetallOK, error)
+
+	V1NetworkPeersIDDelete(params *V1NetworkPeersIDDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersIDDeleteOK, error)
+
+	V1NetworkPeersIDGet(params *V1NetworkPeersIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersIDGetOK, error)
+
+	V1NetworkPeersIDPut(params *V1NetworkPeersIDPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersIDPutOK, error)
+
+	V1NetworkPeersInterfacesGetall(params *V1NetworkPeersInterfacesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersInterfacesGetallOK, error)
+
+	V1NetworkPeersPost(params *V1NetworkPeersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersPostOK, error)
+
+	V1NetworkPeersRouteFilterIDDelete(params *V1NetworkPeersRouteFilterIDDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersRouteFilterIDDeleteOK, error)
+
+	V1NetworkPeersRouteFilterIDGet(params *V1NetworkPeersRouteFilterIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersRouteFilterIDGetOK, error)
+
+	V1NetworkPeersRouteFiltersPost(params *V1NetworkPeersRouteFiltersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersRouteFiltersPostOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
 
 /*
-V1NetworkPeersList lists all network peers available in the workspace
+V1NetworkPeersGetall gets the list of network peers
 */
-func (a *Client) V1NetworkPeersList(params *V1NetworkPeersListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersListOK, error) {
-	// TODO: Validate the params before sending
+func (a *Client) V1NetworkPeersGetall(params *V1NetworkPeersGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersGetallOK, error) {
+	// NOTE: parameters are not validated before sending
 	if params == nil {
-		params = NewV1NetworkPeersListParams()
+		params = NewV1NetworkPeersGetallParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "v1.networkPeers.list",
+		ID:                 "v1.networkPeers.getall",
 		Method:             "GET",
 		PathPattern:        "/v1/network-peers",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
 		Params:             params,
-		Reader:             &V1NetworkPeersListReader{formats: a.formats},
+		Reader:             &V1NetworkPeersGetallReader{formats: a.formats},
 		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
@@ -85,18 +101,375 @@ func (a *Client) V1NetworkPeersList(params *V1NetworkPeersListParams, authInfo r
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*V1NetworkPeersListOK)
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.list: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersIDDelete deletes a network peer
+*/
+func (a *Client) V1NetworkPeersIDDelete(params *V1NetworkPeersIDDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersIDDeleteOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersIDDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.id.delete",
+		Method:             "DELETE",
+		PathPattern:        "/v1/network-peers/{network_peer_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersIDDeleteReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersIDDeleteOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.id.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersIDGet gets the details of a network peer
+*/
+func (a *Client) V1NetworkPeersIDGet(params *V1NetworkPeersIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersIDGetOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersIDGetParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.id.get",
+		Method:             "GET",
+		PathPattern:        "/v1/network-peers/{network_peer_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersIDGetReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersIDGetOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.id.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersIDPut updates a network peer
+*/
+func (a *Client) V1NetworkPeersIDPut(params *V1NetworkPeersIDPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersIDPutOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersIDPutParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.id.put",
+		Method:             "PUT",
+		PathPattern:        "/v1/network-peers/{network_peer_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersIDPutReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersIDPutOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.id.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersInterfacesGetall gets the list of interfaces for network peer
+*/
+func (a *Client) V1NetworkPeersInterfacesGetall(params *V1NetworkPeersInterfacesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersInterfacesGetallOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersInterfacesGetallParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.interfaces.getall",
+		Method:             "GET",
+		PathPattern:        "/v1/network-peers/interfaces",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersInterfacesGetallReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersInterfacesGetallOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.interfaces.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersPost creates a new network peer
+*/
+func (a *Client) V1NetworkPeersPost(params *V1NetworkPeersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersPostOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersPostParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.post",
+		Method:             "POST",
+		PathPattern:        "/v1/network-peers",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersPostReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersPostOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersRouteFilterIDDelete deletes a route filter
+*/
+func (a *Client) V1NetworkPeersRouteFilterIDDelete(params *V1NetworkPeersRouteFilterIDDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersRouteFilterIDDeleteOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersRouteFilterIDDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.routeFilter.id.delete",
+		Method:             "DELETE",
+		PathPattern:        "/v1/network-peers/{network_peer_id}/route-filters/{route_filter_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersRouteFilterIDDeleteReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersRouteFilterIDDeleteOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.routeFilter.id.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersRouteFilterIDGet gets the details of a route filter
+*/
+func (a *Client) V1NetworkPeersRouteFilterIDGet(params *V1NetworkPeersRouteFilterIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersRouteFilterIDGetOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersRouteFilterIDGetParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.routeFilter.id.get",
+		Method:             "GET",
+		PathPattern:        "/v1/network-peers/{network_peer_id}/route-filters/{route_filter_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersRouteFilterIDGetReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersRouteFilterIDGetOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.routeFilter.id.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+V1NetworkPeersRouteFiltersPost creates a new route filter
+*/
+func (a *Client) V1NetworkPeersRouteFiltersPost(params *V1NetworkPeersRouteFiltersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkPeersRouteFiltersPostOK, error) {
+	// NOTE: parameters are not validated before sending
+	if params == nil {
+		params = NewV1NetworkPeersRouteFiltersPostParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "v1.networkPeers.routeFilters.post",
+		Method:             "POST",
+		PathPattern:        "/v1/network-peers/{network_peer_id}/route-filters",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &V1NetworkPeersRouteFiltersPostReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+
+	// only one success response has to be checked
+	success, ok := result.(*V1NetworkPeersRouteFiltersPostOK)
+	if ok {
+		return success, nil
+	}
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for v1.networkPeers.routeFilters.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

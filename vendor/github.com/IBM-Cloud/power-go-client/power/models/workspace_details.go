@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -93,11 +94,15 @@ func (m *WorkspaceDetails) validateNetworkSecurityGroups(formats strfmt.Registry
 
 	if m.NetworkSecurityGroups != nil {
 		if err := m.NetworkSecurityGroups.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("networkSecurityGroups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("networkSecurityGroups")
 			}
+
 			return err
 		}
 	}
@@ -112,11 +117,15 @@ func (m *WorkspaceDetails) validatePowerEdgeRouter(formats strfmt.Registry) erro
 
 	if m.PowerEdgeRouter != nil {
 		if err := m.PowerEdgeRouter.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("powerEdgeRouter")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("powerEdgeRouter")
 			}
+
 			return err
 		}
 	}
@@ -151,11 +160,15 @@ func (m *WorkspaceDetails) contextValidateNetworkSecurityGroups(ctx context.Cont
 		}
 
 		if err := m.NetworkSecurityGroups.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("networkSecurityGroups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("networkSecurityGroups")
 			}
+
 			return err
 		}
 	}
@@ -172,11 +185,15 @@ func (m *WorkspaceDetails) contextValidatePowerEdgeRouter(ctx context.Context, f
 		}
 
 		if err := m.PowerEdgeRouter.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("powerEdgeRouter")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("powerEdgeRouter")
 			}
+
 			return err
 		}
 	}

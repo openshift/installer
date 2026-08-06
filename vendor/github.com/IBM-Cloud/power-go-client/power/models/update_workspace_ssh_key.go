@@ -70,7 +70,7 @@ func (m *UpdateWorkspaceSSHKey) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
-var updateWorkspaceSshKeyTypeVisibilityPropEnum []interface{}
+var updateWorkspaceSshKeyTypeVisibilityPropEnum []any
 
 func init() {
 	var res []string

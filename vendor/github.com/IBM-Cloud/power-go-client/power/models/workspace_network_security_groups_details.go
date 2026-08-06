@@ -40,7 +40,7 @@ func (m *WorkspaceNetworkSecurityGroupsDetails) Validate(formats strfmt.Registry
 	return nil
 }
 
-var workspaceNetworkSecurityGroupsDetailsTypeStatePropEnum []interface{}
+var workspaceNetworkSecurityGroupsDetailsTypeStatePropEnum []any
 
 func init() {
 	var res []string

@@ -1,9 +1,8 @@
+version: 2
+
 linters:
   enable:
     - errcheck
-    - gofmt
-    - gofumpt
-    - gosimple
     - govet
     - ineffassign
     - nolintlint

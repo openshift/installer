@@ -141,13 +141,13 @@ func defaultAzureMachinePoolPlatform(env azuretypes.CloudEnvironment) azuretypes
 	}
 }
 
-func defaultGCPMachinePoolPlatform(arch types.Architecture) gcptypes.MachinePool {
-	instanceType := icgcp.DefaultInstanceTypeForArch(arch)
+func defaultGCPMachinePoolPlatform(arch types.Architecture, projectID string) gcptypes.MachinePool {
+	instanceType := icgcp.DefaultInstanceTypeForArchAndProjectID(arch, projectID)
 	return gcptypes.MachinePool{
 		InstanceType: instanceType,
 		OSDisk: gcptypes.OSDisk{
 			DiskSizeGB: powerOfTwoRootVolumeSize,
-			DiskType:   gcptypes.DefaultDiskTypeForInstance(instanceType),
+			DiskType:   gcptypes.DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID),
 		},
 	}
 }
@@ -684,7 +684,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				}
 			}
 		case gcptypes.Name:
-			mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
+			mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID)
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.GCP)
 			if len(mpool.Zones) == 0 {
