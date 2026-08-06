@@ -695,7 +695,11 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName)
+			computeImage := rhcosImage.Compute
+			if gcptypes.NeedsRHCOSUpload(ic.Platform.GCP.ProjectID, &mpool) {
+				computeImage = gcptypes.RHCOSImageRef(ic.Platform.GCP.ProjectID, clusterID.InfraID)
+			}
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, computeImage, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

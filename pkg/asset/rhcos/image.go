@@ -117,6 +117,15 @@ func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *
 		}
 		return osimage, nil
 	case gcp.Name:
+		// For sovereign clouds, the pre-built images in rhcos-cloud are not
+		// accessible. Return the download URL so that PreProvision can upload
+		// a cluster-specific image.
+		if gcp.GetCloudEnvironment(ic.Config.Platform.GCP.ProjectID) == gcp.CloudEnvironmentSovereign {
+			if a, ok := streamArch.Artifacts["gcp"]; ok {
+				return rhcos.FindArtifactURL(a)
+			}
+			return "", fmt.Errorf("%s: No GCP artifact found for image upload", streamArchPrefix)
+		}
 		if streamArch.Images.Gcp != nil {
 			img := streamArch.Images.Gcp
 			return fmt.Sprintf("projects/%s/global/images/%s", img.Project, img.Name), nil
@@ -251,6 +260,7 @@ func MakeAsset(osImage string) *Image {
 		Compute:      osImage,
 	}
 }
+
 
 func getHyperVGeneration(metadata *icazure.Metadata, role string) (string, error) {
 	if role == types.MachinePoolControlPlaneRoleName {
