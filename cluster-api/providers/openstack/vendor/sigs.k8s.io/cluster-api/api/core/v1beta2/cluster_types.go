@@ -80,17 +80,27 @@ const (
 	// failing due to an error.
 	ClusterTopologyReconciledFailedReason = "ReconcileFailed"
 
+	// ClusterTopologyReconciledClusterCreatingReason documents reconciliation of a Cluster topology
+	// not yet created because the BeforeClusterCreate hook is blocking.
+	ClusterTopologyReconciledClusterCreatingReason = "ClusterCreating"
+
 	// ClusterTopologyReconciledControlPlaneUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because Control Plane is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledControlPlaneUpgradePendingReason = "ControlPlaneUpgradePending"
 
 	// ClusterTopologyReconciledMachineDeploymentsCreatePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachineDeployments is yet to be created.
 	// This generally happens because new MachineDeployment creations are held off while the ControlPlane is not stable.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachineDeploymentsCreatePendingReason = "MachineDeploymentsCreatePending"
 
 	// ClusterTopologyReconciledMachineDeploymentsUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachineDeployments is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachineDeploymentsUpgradePendingReason = "MachineDeploymentsUpgradePending"
 
 	// ClusterTopologyReconciledMachineDeploymentsUpgradeDeferredReason documents reconciliation of a Cluster topology
@@ -99,11 +109,15 @@ const (
 
 	// ClusterTopologyReconciledMachinePoolsUpgradePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachinePoolsUpgradePendingReason = "MachinePoolsUpgradePending"
 
 	// ClusterTopologyReconciledMachinePoolsCreatePendingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is yet to be created.
 	// This generally happens because new MachinePool creations are held off while the ControlPlane is not stable.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledMachinePoolsCreatePendingReason = "MachinePoolsCreatePending"
 
 	// ClusterTopologyReconciledMachinePoolsUpgradeDeferredReason documents reconciliation of a Cluster topology
@@ -112,8 +126,13 @@ const (
 
 	// ClusterTopologyReconciledHookBlockingReason documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the lifecycle hooks is blocking.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	ClusterTopologyReconciledHookBlockingReason = "LifecycleHookBlocking"
 
+	// ClusterTopologyReconciledClusterUpgradingReason documents reconciliation of a Cluster topology
+	// not yet completed because a cluster upgrade is still in progress.
+	ClusterTopologyReconciledClusterUpgradingReason = "ClusterUpgrading"
 	// ClusterTopologyReconciledClusterClassNotReconciledReason documents reconciliation of a Cluster topology not
 	// yet completed because the ClusterClass has not reconciled yet. If this condition persists there may be an issue
 	// with the ClusterClass surfaced in the ClusterClass status or controller logs.
@@ -725,6 +744,16 @@ type ControlPlaneTopologyHealthCheckChecks struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=100
 	UnhealthyNodeConditions []UnhealthyNodeCondition `json:"unhealthyNodeConditions,omitempty"`
+
+	// unhealthyMachineConditions contains a list of the machine conditions that determine
+	// whether a machine is considered unhealthy.  The conditions are combined in a
+	// logical OR, i.e. if any of the conditions is met, the machine is unhealthy.
+	//
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	UnhealthyMachineConditions []UnhealthyMachineCondition `json:"unhealthyMachineConditions,omitempty"`
 }
 
 // ControlPlaneTopologyHealthCheckRemediation configures if and how remediations are triggered if a control plane Machine is unhealthy.
@@ -975,6 +1004,16 @@ type MachineDeploymentTopologyHealthCheckChecks struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=100
 	UnhealthyNodeConditions []UnhealthyNodeCondition `json:"unhealthyNodeConditions,omitempty"`
+
+	// unhealthyMachineConditions contains a list of the machine conditions that determine
+	// whether a machine is considered unhealthy.  The conditions are combined in a
+	// logical OR, i.e. if any of the conditions is met, the machine is unhealthy.
+	//
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	UnhealthyMachineConditions []UnhealthyMachineCondition `json:"unhealthyMachineConditions,omitempty"`
 }
 
 // MachineDeploymentTopologyHealthCheckRemediation configures if and how remediations are triggered if a MachineDeployment Machine is unhealthy.

@@ -24,4 +24,7 @@ resources:
   kind: OpenStackServer
   version: v1alpha1
 - group: infrastructure
+  kind: OpenStackClusterIdentity
+  version: v1alpha1
+- group: infrastructure
 version: "2"

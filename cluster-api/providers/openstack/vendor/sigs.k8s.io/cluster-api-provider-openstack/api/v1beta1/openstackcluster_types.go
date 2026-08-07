@@ -196,11 +196,26 @@ type OpenStackClusterSpec struct {
 	IdentityRef OpenStackIdentityReference `json:"identityRef"`
 }
 
+// ClusterInitialization represents the initialization status of the cluster.
+type ClusterInitialization struct {
+	// Provisioned is set to true when the initial provisioning of the cluster infrastructure is completed.
+	// The value of this field is never updated after provisioning is completed.
+	// +optional
+	Provisioned bool `json:"provisioned,omitempty"`
+}
+
 // OpenStackClusterStatus defines the observed state of OpenStackCluster.
 type OpenStackClusterStatus struct {
 	// Ready is true when the cluster infrastructure is ready.
+	//
+	// Deprecated: This field is deprecated and will be removed in a future API version.
+	// Use status.conditions to determine the ready state of the cluster.
 	// +kubebuilder:default=false
 	Ready bool `json:"ready"`
+
+	// Initialization contains information about the initialization status of the cluster.
+	// +optional
+	Initialization *ClusterInitialization `json:"initialization,omitempty"`
 
 	// Network contains information about the created OpenStack Network.
 	// +optional
@@ -257,6 +272,9 @@ type OpenStackClusterStatus struct {
 	// Any transient errors that occur during the reconciliation of
 	// OpenStackClusters can be added as events to the OpenStackCluster object
 	// and/or logged in the controller's output.
+	//
+	// Deprecated: This field is deprecated and will be removed in a future API version.
+	// Use status.conditions to report failures.
 	// +optional
 	FailureReason *capoerrors.DeprecatedCAPIClusterStatusError `json:"failureReason,omitempty"`
 
@@ -276,8 +294,18 @@ type OpenStackClusterStatus struct {
 	// Any transient errors that occur during the reconciliation of
 	// OpenStackClusters can be added as events to the OpenStackCluster object
 	// and/or logged in the controller's output.
+	//
+	// Deprecated: This field is deprecated and will be removed in a future API version.
+	// Use status.conditions to report failures.
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// Conditions defines current service state of the OpenStackCluster.
+	// This field surfaces into Cluster's status.conditions[InfrastructureReady] condition.
+	// The Ready condition must surface issues during the entire lifecycle of the OpenStackCluster
+	// (both during initial provisioning and after the initial provisioning is completed).
+	// +optional
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +genclient
@@ -343,6 +371,16 @@ type ManagedSecurityGroups struct {
 }
 
 var _ IdentityRefProvider = &OpenStackCluster{}
+
+// GetConditions returns the observations of the operational state of the OpenStackCluster resource.
+func (c *OpenStackCluster) GetConditions() clusterv1beta1.Conditions {
+	return c.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the OpenStackCluster to the predescribed clusterv1.Conditions.
+func (c *OpenStackCluster) SetConditions(conditions clusterv1beta1.Conditions) {
+	c.Status.Conditions = conditions
+}
 
 // GetIdentifyRef returns the cluster's namespace and IdentityRef.
 func (c *OpenStackCluster) GetIdentityRef() (*string, *OpenStackIdentityReference) {
