@@ -44,6 +44,7 @@ type Host struct {
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`
 	NetworkConfig   *apiextv1.JSON   `json:"networkConfig,omitempty"`
+	OSImageStream   string           `json:"osImageStream,omitempty"`
 }
 
 // IsMaster checks if the current host is a master

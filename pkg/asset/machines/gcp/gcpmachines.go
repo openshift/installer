@@ -51,7 +51,7 @@ func GenerateMachines(installConfig *installconfig.InstallConfig, infraID string
 	// Create GCP and CAPI machines for all master replicas in pool
 	for idx := int64(0); idx < total; idx++ {
 		name := fmt.Sprintf("%s-%s-%d", infraID, pool.Name, idx)
-		gcpMachine, err := createGCPMachine(name, installConfig, infraID, mpool, imageName)
+		gcpMachine, err := createGCPMachine(name, installConfig, infraID, mpool, imageName, pool)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create control plane (%d): %w", idx, err)
 		}
@@ -62,7 +62,7 @@ func GenerateMachines(installConfig *installconfig.InstallConfig, infraID string
 		})
 
 		dataSecret := fmt.Sprintf("%s-%s", infraID, masterRole)
-		capiMachine := createCAPIMachine(gcpMachine.Name, dataSecret, infraID, installConfig.Config)
+		capiMachine := createCAPIMachine(gcpMachine.Name, dataSecret, infraID, installConfig.Config, pool)
 
 		if len(mpool.Zones) > 0 {
 			// When there are fewer zones than the number of control plane instances,
@@ -88,7 +88,7 @@ func GenerateBootstrapMachines(name string, installConfig *installconfig.Install
 	mpool := pool.Platform.GCP
 
 	// Create one GCP and CAPI machine for bootstrap
-	bootstrapGCPMachine, err := createGCPMachine(name, installConfig, infraID, mpool, imageName)
+	bootstrapGCPMachine, err := createGCPMachine(name, installConfig, infraID, mpool, imageName, pool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bootstrap machine: %w", err)
 	}
@@ -105,7 +105,7 @@ func GenerateBootstrapMachines(name string, installConfig *installconfig.Install
 	})
 
 	dataSecret := fmt.Sprintf("%s-%s", infraID, "bootstrap")
-	bootstrapCapiMachine := createCAPIMachine(bootstrapGCPMachine.Name, dataSecret, infraID, installConfig.Config)
+	bootstrapCapiMachine := createCAPIMachine(bootstrapGCPMachine.Name, dataSecret, infraID, installConfig.Config, pool)
 
 	result = append(result, &asset.RuntimeFile{
 		File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapCapiMachine.Name)},
@@ -115,7 +115,7 @@ func GenerateBootstrapMachines(name string, installConfig *installconfig.Install
 }
 
 // Create a CAPG-specific machine.
-func createGCPMachine(name string, installConfig *installconfig.InstallConfig, infraID string, mpool *gcptypes.MachinePool, imageName string) (*capg.GCPMachine, error) {
+func createGCPMachine(name string, installConfig *installconfig.InstallConfig, infraID string, mpool *gcptypes.MachinePool, imageName string, pool *types.MachinePool) (*capg.GCPMachine, error) {
 	// Use the rhcosImage as image name if not defined
 	osImage := imageName
 	if mpool.OSImage != nil {
@@ -148,7 +148,7 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 		},
 	}
 	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
-	utils.SetMachineOSStreamLabels(gcpMachine, installConfig.Config)
+	utils.SetMachineOSStreamLabels(gcpMachine, installConfig.Config, pool)
 	// Set optional values from machinepool
 	if mpool.OnHostMaintenance != "" {
 		gcpMachine.Spec.OnHostMaintenance = ptr.To(capg.HostMaintenancePolicy(mpool.OnHostMaintenance))
@@ -192,7 +192,7 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 }
 
 // Create a CAPI machine based on the CAPG machine.
-func createCAPIMachine(name, dataSecret, infraID string, config *types.InstallConfig) *capi.Machine {
+func createCAPIMachine(name, dataSecret, infraID string, config *types.InstallConfig, pool *types.MachinePool) *capi.Machine {
 	machine := &capi.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -213,7 +213,7 @@ func createCAPIMachine(name, dataSecret, infraID string, config *types.InstallCo
 		},
 	}
 	machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-	utils.SetMachineOSStreamLabels(machine, config)
+	utils.SetMachineOSStreamLabels(machine, config, pool)
 
 	return machine
 }

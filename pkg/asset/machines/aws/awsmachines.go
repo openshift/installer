@@ -205,7 +205,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			}),
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
-		utils.SetMachineOSStreamLabels(awsMachine, in.Config)
+		utils.SetMachineOSStreamLabels(awsMachine, in.Config, in.Pool)
 
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)
@@ -245,7 +245,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			},
 		}
 		machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(machine, in.Config)
+		utils.SetMachineOSStreamLabels(machine, in.Config, in.Pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},

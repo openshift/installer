@@ -66,7 +66,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		}
 		*machineSetProvider = *provider
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 	replicas := int32(total)
@@ -125,7 +125,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		},
 	}
-	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config)
+	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config, pool)
 
 	return machines, controlPlaneMachineSet, nil
 }

@@ -108,7 +108,7 @@ func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 
@@ -189,7 +189,7 @@ func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *
 			},
 		},
 	}
-	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config)
+	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config, pool)
 	return machines, controlPlaneMachineSet, nil
 }
 

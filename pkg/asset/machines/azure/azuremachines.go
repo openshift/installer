@@ -199,7 +199,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 				DataDisks:              mpool.DataDisks,
 			},
 		}
-		utils.SetMachineOSStreamLabels(azureMachine, in.Config)
+		utils.SetMachineOSStreamLabels(azureMachine, in.Config, in.Pool)
 
 		if len(zone) == 0 {
 			// FailureDomain must be nil (not empty) to trigger availability set.
@@ -246,7 +246,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			},
 		}
 		controlPlaneMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(controlPlaneMachine, in.Config)
+		utils.SetMachineOSStreamLabels(controlPlaneMachine, in.Config, in.Pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", azureMachine.Name)},
@@ -278,7 +278,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			UserAssignedIdentities:     userAssignedIdentities,
 		},
 	}
-	utils.SetMachineOSStreamLabels(bootstrapAzureMachine, in.Config)
+	utils.SetMachineOSStreamLabels(bootstrapAzureMachine, in.Config, in.Pool)
 
 	if len(mpool.Zones[0]) == 0 {
 		// FailureDomain must be nil (not empty) to trigger availability set.
@@ -326,7 +326,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		},
 	}
 	bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-	utils.SetMachineOSStreamLabels(bootstrapMachine, in.Config)
+	utils.SetMachineOSStreamLabels(bootstrapMachine, in.Config, in.Pool)
 
 	result = append(result, &asset.RuntimeFile{
 		File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},

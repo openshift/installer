@@ -80,7 +80,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, subnets map[stri
 				},
 			},
 		}
-		utils.SetMachineSetOSStreamLabels(mset, config)
+		utils.SetMachineSetOSStreamLabels(mset, config, pool)
 		machinesets = append(machinesets, mset)
 	}
 	return machinesets, nil
