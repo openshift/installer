@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
@@ -69,7 +70,8 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, ValidatePrivateDNSZone(client, ic)...)
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
-	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic)...)
+	allErrs = append(allErrs, validateKMSKeyServiceAgentAccess(client, ic)...)
 	allErrs = append(allErrs, validateServiceEndpointOverride(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
@@ -909,31 +911,53 @@ func validateUserTags(client API, projectID string, userTags []gcp.UserTag) erro
 	return NewTagManager(client).validateAndPersistUserTags(context.Background(), projectID, userTags)
 }
 
+// validateKMSKeyReference validates a KMS key reference by checking if the key ring exists.
+// Returns a field.Error on failure, or nil on success.
+// The defaultProjectID is used if the kmsKeyRef.ProjectID is empty.
+// Global KMS key locations are not allowed because GCS bucket encryption
+// does not support global keys.
+func validateKMSKeyReference(client API, kmsKeyRef *gcp.KMSKeyReference, defaultProjectID string, fldPath *field.Path) *field.Error {
+	if kmsKeyRef == nil {
+		return nil
+	}
+
+	if strings.EqualFold(kmsKeyRef.Location, "global") {
+		return field.Invalid(fldPath.Child("location"), kmsKeyRef.Location,
+			fmt.Sprintf("KMS key %q has a global location which is not supported; a regional location is required", kmsKeyRef.Name))
+	}
+
+	// Create a copy with the project ID filled in if not specified
+	kmsKeyRefCopy := *kmsKeyRef
+	if kmsKeyRefCopy.ProjectID == "" {
+		kmsKeyRefCopy.ProjectID = defaultProjectID
+	}
+
+	if _, err := client.GetKeyRing(context.TODO(), &kmsKeyRefCopy); err != nil {
+		return field.Invalid(fldPath.Child("keyRing"), kmsKeyRef.KeyRing, err.Error())
+	}
+	return nil
+}
+
 // validatePlatformKMSKeys checks for encryption keys for all the machine pools. The encryption key rings are
 // checked against the API for validity/availability.
-func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+func validatePlatformKMSKeys(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+	platformPath := field.NewPath("platform", "gcp")
 
 	cp := ic.ControlPlane
 	validatedControlPlaneKey := false
-	if cp != nil && cp.Platform.GCP != nil && cp.Platform.GCP.EncryptionKey != nil && cp.Platform.GCP.EncryptionKey.KMSKey != nil {
-		if _, err := client.GetKeyRing(context.TODO(), cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey); err != nil {
-			return append(allErrs, field.Invalid(fieldPath.Child("controlPlane").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
-				cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
-				err.Error(),
-			))
+	if cp != nil && cp.Platform.GCP != nil && cp.Platform.GCP.OSDisk.EncryptionKey != nil && cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey != nil {
+		if err := validateKMSKeyReference(client, cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, field.NewPath("controlPlane", "platform", "gcp", "osDisk", "encryptionKey", "kmsKey")); err != nil {
+			return append(allErrs, err)
 		}
 		validatedControlPlaneKey = true
 	}
 
 	validatedComputeKeys := false
-	for _, mp := range ic.Compute {
-		if mp.Platform.GCP != nil && mp.Platform.GCP.EncryptionKey != nil && mp.Platform.GCP.EncryptionKey.KMSKey != nil {
-			if _, err := client.GetKeyRing(context.TODO(), mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey); err != nil {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("compute").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
-					mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
-					err.Error(),
-				))
+	for idx, mp := range ic.Compute {
+		if mp.Platform.GCP != nil && mp.Platform.GCP.OSDisk.EncryptionKey != nil && mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey != nil {
+			if err := validateKMSKeyReference(client, mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, field.NewPath("compute").Index(idx).Child("platform", "gcp", "osDisk", "encryptionKey", "kmsKey")); err != nil {
+				allErrs = append(allErrs, err)
 			} else {
 				validatedComputeKeys = true
 			}
@@ -941,20 +965,143 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 	}
 
 	defaultMp := ic.GCP.DefaultMachinePlatform
-	if defaultMp != nil && defaultMp.EncryptionKey != nil && defaultMp.EncryptionKey.KMSKey != nil {
-		if _, err := client.GetKeyRing(context.TODO(), defaultMp.EncryptionKey.KMSKey); err != nil {
+	if defaultMp != nil && defaultMp.OSDisk.EncryptionKey != nil && defaultMp.OSDisk.EncryptionKey.KMSKey != nil {
+		if err := validateKMSKeyReference(client, defaultMp.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, platformPath.Child("defaultMachinePlatform", "osDisk", "encryptionKey", "kmsKey")); err != nil {
 			if validatedControlPlaneKey && (validatedComputeKeys && len(allErrs) == 0) {
-				logrus.Warn("defaultMachinePool.encryptionKey.KMSKey.KeyRing is not valid, but compute and control plane key rings are valid")
+				logrus.Warn("defaultMachinePlatform.osDisk.encryptionKey.kmsKey is not valid, but compute and control plane keys are valid")
 			} else {
-				return append(allErrs, field.Invalid(fieldPath.Child("defaultMachinePool").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
-					defaultMp.EncryptionKey.KMSKey.KeyRing,
-					err.Error(),
-				))
+				return append(allErrs, err)
 			}
 		}
 	}
 
 	return allErrs
+}
+
+// validateKMSKeyServiceAgentAccess checks that Google-managed service agents
+// have the CryptoKey Encrypter/Decrypter role on configured KMS keys.
+// The Compute Engine service agent needs access on every KMS key used for disk
+// encryption (controlPlane, compute, and defaultMachinePlatform). The Cloud
+// Storage service agent additionally needs access on the defaultMachinePlatform
+// key, which is used for bootstrap GCS bucket encryption.
+func validateKMSKeyServiceAgentAccess(client API, ic *types.InstallConfig) field.ErrorList {
+	projectID := ic.GCP.ProjectID
+	platformPath := field.NewPath("platform", "gcp")
+
+	type kmsKeyEntry struct {
+		key     *gcp.KMSKeyReference
+		fldPath *field.Path
+		needGCS bool
+	}
+
+	var keys []kmsKeyEntry
+
+	if defaultMp := ic.GCP.DefaultMachinePlatform; defaultMp != nil &&
+		defaultMp.OSDisk.EncryptionKey != nil &&
+		defaultMp.OSDisk.EncryptionKey.KMSKey != nil {
+		keys = append(keys, kmsKeyEntry{
+			key:     defaultMp.OSDisk.EncryptionKey.KMSKey,
+			fldPath: platformPath.Child("defaultMachinePlatform", "osDisk", "encryptionKey", "kmsKey"),
+			needGCS: true,
+		})
+	}
+
+	if cp := ic.ControlPlane; cp != nil &&
+		cp.Platform.GCP != nil &&
+		cp.Platform.GCP.OSDisk.EncryptionKey != nil &&
+		cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey != nil {
+		keys = append(keys, kmsKeyEntry{
+			key:     cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey,
+			fldPath: field.NewPath("controlPlane", "platform", "gcp", "osDisk", "encryptionKey", "kmsKey"),
+		})
+	}
+
+	for idx, mp := range ic.Compute {
+		if mp.Platform.GCP != nil &&
+			mp.Platform.GCP.OSDisk.EncryptionKey != nil &&
+			mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey != nil {
+			keys = append(keys, kmsKeyEntry{
+				key:     mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey,
+				fldPath: field.NewPath("compute").Index(idx).Child("platform", "gcp", "osDisk", "encryptionKey", "kmsKey"),
+			})
+		}
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	project, err := client.GetProjectByID(context.TODO(), projectID)
+	if err != nil {
+		logrus.Warnf("Could not verify KMS key service agent access: failed to get project: %v", err)
+		return nil
+	}
+
+	projectNumber := strings.TrimPrefix(project.Name, "projects/")
+
+	// Domain-scoped project IDs (e.g. "eu0:openshift") append the domain
+	// prefix to the service agent domain, mirroring GetDefaultServiceAccount.
+	domainSuffix := ""
+	if parts := strings.SplitN(projectID, ":", 2); len(parts) == 2 {
+		domainSuffix = "." + parts[0]
+	}
+	computeAgent := fmt.Sprintf("serviceAccount:service-%s@compute-system%s.iam.gserviceaccount.com", projectNumber, domainSuffix)
+	gcsAgent := fmt.Sprintf("serviceAccount:service-%s@gs-project-accounts%s.iam.gserviceaccount.com", projectNumber, domainSuffix)
+
+	allErrs := field.ErrorList{}
+	for _, entry := range keys {
+		policy, err := client.GetKMSCryptoKeyIamPolicy(context.TODO(), entry.key, projectID)
+		if err != nil {
+			logrus.Warnf("Could not verify KMS key service agent access for %s: %v",
+				gcp.FormatKMSKeyResourcePath(entry.key, projectID), err)
+			continue
+		}
+
+		keyProject := projectID
+		if entry.key.ProjectID != "" {
+			keyProject = entry.key.ProjectID
+		}
+		keyPath := gcp.FormatKMSKeyResourcePath(entry.key, projectID)
+
+		for _, agent := range []struct {
+			name   string
+			member string
+			needed bool
+		}{
+			{"Compute Engine", computeAgent, true},
+			{"Cloud Storage", gcsAgent, entry.needGCS},
+		} {
+			if !agent.needed {
+				continue
+			}
+			if !kmsKeyPolicyHasMember(policy, "roles/cloudkms.cryptoKeyEncrypterDecrypter", agent.member) {
+				allErrs = append(allErrs, field.Invalid(entry.fldPath, keyPath,
+					fmt.Sprintf("the %s service agent (%s) does not have roles/cloudkms.cryptoKeyEncrypterDecrypter on this key; "+
+						"grant it with: gcloud kms keys add-iam-policy-binding %s --keyring=%s --location=%s --project=%s "+
+						"--member=%s --role=roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						agent.name, agent.member, entry.key.Name, entry.key.KeyRing, entry.key.Location,
+						keyProject, agent.member)))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+// kmsKeyPolicyHasMember returns true if the IAM policy contains a binding
+// with the given role that includes the specified member.
+func kmsKeyPolicyHasMember(policy *iampb.Policy, role, member string) bool {
+	for _, binding := range policy.Bindings {
+		if binding.Role != role {
+			continue
+		}
+		for _, m := range binding.Members {
+			if m == member {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // validateServiceEndpointOverride validates the endpoint that is provided by the user.

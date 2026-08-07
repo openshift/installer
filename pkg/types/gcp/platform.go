@@ -238,3 +238,32 @@ func GetCloudEnvironment(projectID string) string {
 func IsNonDefaultUniverseDomain(universeDomain string) bool {
 	return universeDomain != "" && universeDomain != "googleapis.com"
 }
+
+// GetDefaultEncryptionKey returns the KMS key to use for GCS bucket encryption.
+// Returns the key from defaultMachinePlatform.osDisk.encryptionKey.kmsKey if configured,
+// otherwise returns nil.
+func GetDefaultEncryptionKey(platform *Platform) *KMSKeyReference {
+	if platform != nil &&
+		platform.DefaultMachinePlatform != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey != nil {
+		return platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey
+	}
+	return nil
+}
+
+// FormatKMSKeyResourcePath formats a KMSKeyReference into a full GCP resource path.
+// If the KMSKeyReference specifies a ProjectID, it uses that; otherwise, it uses the provided default projectID.
+func FormatKMSKeyResourcePath(kmsKey *KMSKeyReference, projectID string) string {
+	if kmsKey == nil {
+		return ""
+	}
+
+	keyProjectID := projectID
+	if kmsKey.ProjectID != "" {
+		keyProjectID = kmsKey.ProjectID
+	}
+
+	return fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
+		keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
+}
