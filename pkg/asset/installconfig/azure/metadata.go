@@ -22,7 +22,7 @@ type Metadata struct {
 	dnsCfg            *DNSConfig
 	availabilityZones []string
 	vmZones           []string
-	region            string
+	Region            string `json:"region,omitempty"`
 	ZonesSubnetMap    map[string][]string
 
 	controlPlane    *types.MachinePool
@@ -64,7 +64,7 @@ func NewMetadataWithCredentials(az *typesazure.Platform, controlPlane, compute *
 		Credentials:     credentials,
 		controlPlane:    controlPlane,
 		compute:         compute,
-		region:          az.Region,
+		Region:          az.Region,
 		defaultPlatform: az.DefaultMachinePlatform,
 	}
 }
@@ -126,7 +126,7 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	defer m.mutex.Unlock()
 
 	if len(m.availabilityZones) == 0 {
-		zones, err := m.client.GetRegionAvailabilityZones(ctx, m.region)
+		zones, err := m.client.GetRegionAvailabilityZones(ctx, m.Region)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
 		}
@@ -145,7 +145,7 @@ func (m *Metadata) VMAvailabilityZones(ctx context.Context, instanceType string)
 	defer m.mutex.Unlock()
 
 	if len(m.vmZones) == 0 {
-		zones, err := m.client.GetAvailabilityZones(ctx, m.region, instanceType)
+		zones, err := m.client.GetAvailabilityZones(ctx, m.Region, instanceType)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
 		}
@@ -263,7 +263,7 @@ func (m *Metadata) getCapabilities(mPool *types.MachinePool, defaultInstanceType
 	if mPool == nil {
 		return nil, fmt.Errorf("unable to get capabilities because machinepool is not populated in metadata")
 	}
-	instType := defaultInstanceType(m.CloudName, m.region, mPool.Architecture)
+	instType := defaultInstanceType(m.CloudName, m.Region, mPool.Architecture)
 	if dmp := m.defaultPlatform; dmp != nil && dmp.InstanceType != "" {
 		instType = dmp.InstanceType
 	}
@@ -274,7 +274,7 @@ func (m *Metadata) getCapabilities(mPool *types.MachinePool, defaultInstanceType
 	if err != nil {
 		return nil, fmt.Errorf("failed to get azure client %w", err)
 	}
-	caps, err := client.GetVMCapabilities(context.TODO(), instType, m.region)
+	caps, err := client.GetVMCapabilities(context.TODO(), instType, m.Region)
 	if err != nil {
 		return nil, err
 	}
