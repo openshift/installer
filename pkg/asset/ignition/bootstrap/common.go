@@ -385,10 +385,9 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	pullSecret := installConfig.Config.PullSecret
 
 	// Merge IRI registry credentials into pull secret if available.
-	// IRIRegistryCredentials generates credentials only when the NoRegistryClusterInstall
-	// feature gate is enabled and an InternalReleaseImage manifest is present.
-	// This ensures kubelet/CRI-O on bootstrap and cluster nodes can
-	// authenticate to the IRI registry on master nodes.
+	// IRIRegistryCredentials generates credentials when an InternalReleaseImage
+	// manifest is present. This ensures kubelet/CRI-O on bootstrap and cluster
+	// nodes can authenticate to the IRI registry on master nodes.
 	iriAuth := &tls.IRIRegistryCredentials{}
 	dependencies.Get(iriAuth)
 	if iriAuth.Password != "" {

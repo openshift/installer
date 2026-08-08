@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content"
@@ -42,10 +41,6 @@ func (t *InternalReleaseImageTLSSecret) Generate(_ context.Context, dependencies
 	iri := &manifests.InternalReleaseImage{}
 
 	dependencies.Get(installConfig, iri)
-
-	if !installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
-		return nil
-	}
 
 	// Skip if InternalReleaseImage manifest wasn't found.
 	if len(iri.FileList) == 0 {
