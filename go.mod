@@ -70,18 +70,18 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.10.3
 	github.com/nutanix-cloud-native/prism-go-client v0.8.0
 	github.com/onsi/gomega v1.42.0
-	github.com/openshift/api v0.0.0-20260724095150-18550f1a6d13
+	github.com/openshift/api v0.0.0-20260728120005-8ba0b25b0f29
 	github.com/openshift/assisted-image-service v0.0.0-20260428115106-2b81dd8e7120
 	github.com/openshift/assisted-service/api v0.0.0-20260722223301-f50c5b20c7e1
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
-	github.com/openshift/client-go v0.0.0-20260603140539-6892dc3e1ffc
+	github.com/openshift/client-go v0.0.0-20260728123811-92b24dd0dd1f
 	github.com/openshift/cloud-credential-operator v0.0.0-20250925191450-a3e50aeacc55
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20260415205034-aa1db747a6ba
-	github.com/openshift/library-go v0.0.0-20260505113324-de46cb8e2ddc
+	github.com/openshift/library-go v0.0.0-20260805150626-28f2ae3765d1
 	github.com/openshift/machine-api-provider-gcp v0.0.1-0.20260113091719-80740861bb2a
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
@@ -115,13 +115,13 @@ require (
 	gopkg.in/ini.v1 v1.67.3
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.36.2
-	k8s.io/apiextensions-apiserver v0.36.0
+	k8s.io/apiextensions-apiserver v0.36.2
 	k8s.io/apimachinery v0.36.2
-	k8s.io/client-go v0.36.0
-	k8s.io/code-generator v0.36.0
+	k8s.io/client-go v0.36.2
+	k8s.io/code-generator v0.36.2
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
+	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.13.4
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.12.1
@@ -330,8 +330,8 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
 	golang.org/x/mod v0.36.0
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/net v0.55.1-0.20260602153038-42abb857022c // indirect
+	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20260128011058-8636f8732409 // indirect
@@ -343,10 +343,10 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
-	k8s.io/apiserver v0.36.0 // indirect
+	k8s.io/apiserver v0.36.2
 	k8s.io/cli-runtime v0.36.0 // indirect
 	k8s.io/cluster-bootstrap v0.35.5 // indirect
-	k8s.io/component-base v0.36.0 // indirect
+	k8s.io/component-base v0.36.2 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
 	k8s.io/kube-openapi v0.0.0-20260519202549-bbf5c5577288 // indirect
 	k8s.io/kubectl v0.36.0 // indirect

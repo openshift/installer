@@ -4,34 +4,41 @@ import (
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
-// DefaultPKIProfile returns the default PKI profile for OpenShift clusters.
-// Currently uses RSA-4096 until all day-2 operators (CKAO, CKMO, etc.) support
-// ECDSA certificate rotation. Once operator support lands, switch to ECDSA P-384
-// signers and ECDSA P-256 defaults to match the upstream library-go profile:
-// https://github.com/openshift/library-go/blob/12d8376369b7c5b76f688d01089882ca28e351c3/pkg/pki/profile.go#L11-L26
-func DefaultPKIProfile() configv1alpha1.PKIProfile {
-	return configv1alpha1.PKIProfile{
-		Defaults: configv1alpha1.DefaultCertificateConfig{
-			Key: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+// EffectiveProfile returns the resolved PKI profile and whether ConfigurablePKI is enabled.
+//   - Feature gate off: returns an explicit RSA-2048 profile (legacy behavior) and false.
+//   - Feature gate on, no user PKI: returns library-go's DefaultPKIProfile() and true.
+//   - Feature gate on, user PKI set: returns DefaultPKIProfile() with user's signerCertificates overlaid, and true.
+func EffectiveProfile(ic *types.InstallConfig) (configv1alpha1.PKIProfile, bool) {
+	if ic == nil || !ic.Enabled(features.FeatureGateConfigurablePKI) {
+		rsa2048 := configv1alpha1.KeyConfig{
+			Algorithm: configv1alpha1.KeyAlgorithmRSA,
+			RSA:       configv1alpha1.RSAKeyConfig{KeySize: 2048},
+		}
+		return configv1alpha1.PKIProfile{
+			Defaults: configv1alpha1.DefaultCertificateConfig{
+				Key: rsa2048,
 			},
-		},
-		SignerCertificates: configv1alpha1.CertificateConfig{
-			Key: configv1alpha1.KeyConfig{
-				Algorithm: configv1alpha1.KeyAlgorithmRSA,
-				RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
+			SignerCertificates: configv1alpha1.CertificateConfig{
+				Key: rsa2048,
 			},
-		},
+		}, false
 	}
+
+	profile := libpki.DefaultPKIProfile()
+
+	if ic.PKI != nil {
+		profile.SignerCertificates = toAPICertificateConfig(ic.PKI.SignerCertificates)
+	}
+
+	return profile, true
 }
 
 // EffectiveSignerPKIConfig returns the effective PKI config for signer certificate generation.
-//   - If ConfigurablePKI feature gate is disabled, returns nil (RSA-2048 legacy path).
-//   - If user specified pki in install-config, returns that config unchanged.
-//   - If pki is nil, returns a PKIConfig derived from DefaultPKIProfile().SignerCertificates.
+//
+// Deprecated: Use EffectiveProfile via the SignerKeyParams asset instead.
 func EffectiveSignerPKIConfig(ic *types.InstallConfig) *types.PKIConfig {
 	if ic == nil {
 		return nil
@@ -45,19 +52,25 @@ func EffectiveSignerPKIConfig(ic *types.InstallConfig) *types.PKIConfig {
 		return ic.PKI
 	}
 
-	profile := DefaultPKIProfile()
-	keyConfig := types.KeyConfig{
-		Algorithm: types.KeyAlgorithm(profile.SignerCertificates.Key.Algorithm),
-	}
-	switch keyConfig.Algorithm {
-	case types.KeyAlgorithmRSA:
-		keyConfig.RSA = &types.RSAKeyConfig{KeySize: profile.SignerCertificates.Key.RSA.KeySize}
-	case types.KeyAlgorithmECDSA:
-		keyConfig.ECDSA = &types.ECDSAKeyConfig{Curve: types.ECDSACurve(profile.SignerCertificates.Key.ECDSA.Curve)}
-	}
 	return &types.PKIConfig{
 		SignerCertificates: types.CertificateConfig{
-			Key: keyConfig,
+			Key: types.KeyConfig{
+				Algorithm: types.KeyAlgorithmECDSA,
+				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
+			},
 		},
 	}
+}
+
+func toAPICertificateConfig(local types.CertificateConfig) configv1alpha1.CertificateConfig {
+	apiKey := configv1alpha1.KeyConfig{
+		Algorithm: configv1alpha1.KeyAlgorithm(local.Key.Algorithm),
+	}
+	if local.Key.RSA != nil {
+		apiKey.RSA = configv1alpha1.RSAKeyConfig{KeySize: local.Key.RSA.KeySize}
+	}
+	if local.Key.ECDSA != nil {
+		apiKey.ECDSA = configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurve(local.Key.ECDSA.Curve)}
+	}
+	return configv1alpha1.CertificateConfig{Key: apiKey}
 }
