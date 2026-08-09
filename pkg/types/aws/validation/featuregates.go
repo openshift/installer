@@ -7,7 +7,6 @@ import (
 
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/featuregates"
 )
 
@@ -15,16 +14,6 @@ import (
 // be validated to ensure that the proper featuregate is enabled when the field is used.
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
 	gatedFeatures := []featuregates.GatedInstallConfigFeature{
-		{
-			FeatureGateName: features.FeatureGateAWSClusterHostedDNSInstall,
-			Condition:       c.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
-			Field:           field.NewPath("platform", "aws", "userProvisionedDNS"),
-		},
-		{
-			FeatureGateName: features.FeatureGateAWSDualStackInstall,
-			Condition:       c.AWS.IPFamily.DualStackEnabled(),
-			Field:           field.NewPath("platform", "aws", "ipFamily"),
-		},
 		{
 			FeatureGateName: features.FeatureGateAWSEuropeanSovereignCloudInstall,
 			Condition:       strings.HasPrefix(c.AWS.Region, "eusc-"),
