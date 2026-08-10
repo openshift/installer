@@ -1997,34 +1997,71 @@ func TestValidateKMSKeyServiceAgentAccessDomainScoped(t *testing.T) {
 		Location: "us-east1",
 	}
 
-	domainScopedComputeAgent := "serviceAccount:service-123456789@compute-system.eu0.iam.gserviceaccount.com"
-	domainScopedGCSAgent := "serviceAccount:service-123456789@gs-project-accounts.eu0.iam.gserviceaccount.com"
+	sovereignComputeAccount := "serviceAccount:service-123456789@compute-system.eu0-system.iam.gserviceaccount.com"
+	sovereignGCSAccount := "serviceAccount:service-123456789@gs-project-accounts.eu0-system.iam.gserviceaccount.com"
+	nonSovereignComputeAccount := "serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com"
+	nonSovereignGCSAccount := "serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com"
 
 	cases := []struct {
 		name          string
+		projectID     string
+		region        string
 		policy        *iampb.Policy
 		expectedError bool
 		expectedMsg   string
 	}{
 		{
-			name: "Domain-scoped agents have access",
+			name:      "Sovereign domain-scoped agents have access",
+			projectID: "eu0:openshift",
+			region:    "u-de-1",
 			policy: &iampb.Policy{
 				Bindings: []*iampb.Binding{
 					{
 						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
-						Members: []string{domainScopedComputeAgent, domainScopedGCSAgent},
+						Members: []string{sovereignComputeAccount, sovereignGCSAccount},
 					},
 				},
 			},
 			expectedError: false,
 		},
 		{
-			name: "Domain-scoped compute agent missing",
+			name:      "Sovereign domain-scoped compute agent missing",
+			projectID: "eu0:openshift",
+			region:    "u-de-1",
 			policy: &iampb.Policy{
 				Bindings: []*iampb.Binding{
 					{
 						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
-						Members: []string{domainScopedGCSAgent},
+						Members: []string{sovereignGCSAccount},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:      "Non-sovereign domain-scoped agents have access with unsuffixed domains",
+			projectID: "myorg:myproject",
+			region:    "us-central1",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{nonSovereignComputeAccount, nonSovereignGCSAccount},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:      "Non-sovereign domain-scoped compute agent missing",
+			projectID: "myorg:myproject",
+			region:    "us-central1",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{nonSovereignGCSAccount},
 					},
 				},
 			},
@@ -2047,7 +2084,8 @@ func TestValidateKMSKeyServiceAgentAccessDomainScoped(t *testing.T) {
 			).AnyTimes()
 
 			ic := validInstallConfig()
-			ic.GCP.ProjectID = "eu0:openshift"
+			ic.GCP.ProjectID = tc.projectID
+			ic.GCP.Region = tc.region
 			ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
 			ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
 				EncryptionKey: &gcp.EncryptionKeyReference{
