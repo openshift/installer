@@ -12,9 +12,10 @@
 ## Description
 
 These test cases cover the installer's behavior when targeting a Google Cloud
-Dedicated (GCD) sovereign cloud environment. GCD is detected via the `eu0:`
-project ID prefix and differs from public GCP in machine types, disk types,
-DNS, OS image requirements, and credential handling.
+Dedicated (GCD) sovereign cloud environment. GCD is detected by two conditions:
+a domain-scoped project ID (containing `:`) and a sovereign region (prefixed
+with `u-`). Both must be present. It differs from public GCP in machine types,
+disk types, DNS, OS image requirements, and credential handling.
 
 The cases are organized into groups: sovereign cloud detection, default values,
 validation rules, configuration generation, and end-to-end installation.
@@ -23,8 +24,8 @@ validation rules, configuration generation, and end-to-end installation.
 
 | # | Scenario | Status |
 |---|----------|--------|
-| 1 | [Sovereign cloud detection from project ID](#1-sovereign-cloud-detection-from-project-id) | Automated (unit test) |
-| 2 | [Organization-scoped project is not sovereign](#2-organization-scoped-project-is-not-sovereign) | Automated (unit test) |
+| 1 | [Sovereign cloud detection from project ID and region](#1-sovereign-cloud-detection-from-project-id-and-region) | Automated (unit test) |
+| 2 | [Domain-scoped project or sovereign region alone is not sovereign](#2-domain-scoped-project-or-sovereign-region-alone-is-not-sovereign) | Automated (unit test) |
 | 3 | [Non-default universe domain detection](#3-non-default-universe-domain-detection) | Automated (unit test) |
 | 4 | [Default instance type for sovereign cloud](#4-default-instance-type-for-sovereign-cloud) | Automated (unit test) |
 | 5 | [Default disk type for sovereign cloud](#5-default-disk-type-for-sovereign-cloud) | Automated (unit test) |
@@ -43,71 +44,81 @@ validation rules, configuration generation, and end-to-end installation.
 
 ---
 
-## 1. Sovereign cloud detection from project ID
+## 1. Sovereign cloud detection from project ID and region
 
 - **Test file:** `pkg/types/gcp/platform_test.go`
-- **Function under test:** `GetCloudEnvironment()`
+- **Function under test:** `GetCloudEnvironment(projectID, region)`
 - **Automation status:** Automated (unit test)
 
 ### Description
 
-Verifies that a project ID with the `eu0:` prefix is correctly identified as a
-sovereign cloud environment.
+Verifies that a sovereign cloud environment is correctly identified when both
+conditions are met: the project ID is domain-scoped (contains `:`) and the
+region has the sovereign prefix `u-`. Neither condition alone is sufficient.
 
 ### Execution
 
 ```go
-env := gcp.GetCloudEnvironment("eu0:my-project")
+env := gcp.GetCloudEnvironment("eu0:my-project", "u-germany-northeast1")
+// Expected: "sovereign"
+
+env = gcp.GetCloudEnvironment("s3ns:my-project", "u-france-east1")
 // Expected: "sovereign"
 ```
 
 ### Expected Result
 
-- `GetCloudEnvironment("eu0:my-project")` returns `"sovereign"`
-- `GetCloudEnvironment("eu0:openshift")` returns `"sovereign"`
+- `GetCloudEnvironment("eu0:my-project", "u-germany-northeast1")` returns `"sovereign"`
+- `GetCloudEnvironment("s3ns:my-project", "u-france-east1")` returns `"sovereign"`
 
 ### Pass/Fail Criteria
 
-| Input | Expected Output |
-|-------|-----------------|
-| `"eu0:my-project"` | `"sovereign"` |
-| `"eu0:openshift"` | `"sovereign"` |
-| `"my-project"` | `""` (empty - public GCP) |
+| Project ID | Region | Expected Output |
+|-----------|--------|-----------------|
+| `"eu0:my-project"` | `"u-germany-northeast1"` | `"sovereign"` |
+| `"s3ns:my-project"` | `"u-france-east1"` | `"sovereign"` |
+| `"my-project"` | `"us-central1"` | `""` (empty - public GCP) |
 
 ---
 
-## 2. Organization-scoped project is not sovereign
+## 2. Domain-scoped project or sovereign region alone is not sovereign
 
-- **Test file:** `pkg/types/gcp/validation/machinepool_test.go`
-- **Function under test:** `GetCloudEnvironment()`
+- **Test file:** `pkg/types/gcp/platform_test.go`
+- **Function under test:** `GetCloudEnvironment(projectID, region)`
 - **Automation status:** Automated (unit test)
 
 ### Description
 
-Organization-scoped public GCP projects use a `orgname:project-id` format that
-looks similar to sovereign project IDs. The installer must only treat known
-prefixes (`eu0`) as sovereign, not arbitrary organization names.
+A domain-scoped project ID without a sovereign region, or a sovereign region
+without a domain-scoped project ID, must not be classified as sovereign. Both
+conditions are required together. This prevents false positives from
+organization-scoped public GCP projects or mistyped regions.
 
 ### Execution
 
 ```go
-env := gcp.GetCloudEnvironment("myorg:my-project")
+// Domain-scoped project but public GCP region - not sovereign
+env := gcp.GetCloudEnvironment("other-prefix:my-project", "us-central1")
+// Expected: "" (not sovereign)
+
+// Sovereign region but standard project ID - not sovereign
+env = gcp.GetCloudEnvironment("my-project", "u-germany-northeast1")
 // Expected: "" (not sovereign)
 ```
 
 ### Expected Result
 
-- `GetCloudEnvironment("myorg:my-project")` returns `""` (empty string)
-- No sovereign-specific validation or defaults are applied
-- The `sovereignCloudProjectPrefixes` list is checked, not just the presence of `:`
+- `GetCloudEnvironment("other-prefix:my-project", "us-central1")` returns `""`
+- `GetCloudEnvironment("my-project", "u-germany-northeast1")` returns `""`
+- Only the combination of both triggers sovereign detection
 
 ### Pass/Fail Criteria
 
-| Input | Expected Output |
-|-------|-----------------|
-| `"myorg:my-project"` | `""` (public GCP) |
-| `"example-org:project"` | `""` (public GCP) |
-| `"eu0:project"` | `"sovereign"` (only known prefix) |
+| Project ID | Region | Expected Output |
+|-----------|--------|-----------------|
+| `"other-prefix:my-project"` | `"us-central1"` | `""` (not sovereign - no `u-` region) |
+| `"my-project"` | `"u-germany-northeast1"` | `""` (not sovereign - no `:` in project) |
+| `"eu0:my-project"` | `"u-germany-northeast1"` | `"sovereign"` (both conditions met) |
 
 ---
 
@@ -143,7 +154,7 @@ result := gcp.IsNonDefaultUniverseDomain("apis-berlin-build0.goog")
 ## 4. Default instance type for sovereign cloud
 
 - **Test file:** `pkg/asset/installconfig/gcp/validation_test.go`
-- **Function under test:** `DefaultInstanceTypeForArchAndProjectID()`
+- **Function under test:** `DefaultInstanceTypeForArchAndProjectID(arch, projectID, region)`
 - **Automation status:** Automated (unit test)
 
 ### Description
@@ -157,32 +168,32 @@ x86, `t2a-standard-4` for ARM64).
 
 ```go
 // Sovereign cloud - always c3-standard-4
-instanceType := DefaultInstanceTypeForArchAndProjectID(types.ArchitectureAMD64, "eu0:my-project")
+instanceType := DefaultInstanceTypeForArchAndProjectID(types.ArchitectureAMD64, "eu0:my-project", "u-germany-northeast1")
 // Expected: "c3-standard-4"
 
-instanceType = DefaultInstanceTypeForArchAndProjectID(types.ArchitectureARM64, "eu0:my-project")
+instanceType = DefaultInstanceTypeForArchAndProjectID(types.ArchitectureARM64, "eu0:my-project", "u-germany-northeast1")
 // Expected: "c3-standard-4"
 
 // Public GCP - architecture-specific
-instanceType = DefaultInstanceTypeForArchAndProjectID(types.ArchitectureAMD64, "my-project")
+instanceType = DefaultInstanceTypeForArchAndProjectID(types.ArchitectureAMD64, "my-project", "us-central1")
 // Expected: "n2-standard-4"
 ```
 
 ### Pass/Fail Criteria
 
-| Architecture | Project ID | Expected Instance Type |
-|-------------|------------|----------------------|
-| x86_64 | `eu0:my-project` | `c3-standard-4` |
-| ARM64 | `eu0:my-project` | `c3-standard-4` |
-| x86_64 | `my-project` | `n2-standard-4` |
-| ARM64 | `my-project` | `t2a-standard-4` |
+| Architecture | Project ID | Region | Expected Instance Type |
+|-------------|------------|--------|----------------------|
+| x86_64 | `eu0:my-project` | `u-germany-northeast1` | `c3-standard-4` |
+| ARM64 | `eu0:my-project` | `u-germany-northeast1` | `c3-standard-4` |
+| x86_64 | `my-project` | `us-central1` | `n2-standard-4` |
+| ARM64 | `my-project` | `us-central1` | `t2a-standard-4` |
 
 ---
 
 ## 5. Default disk type for sovereign cloud
 
 - **Test file:** `pkg/types/gcp/machinepools_test.go`
-- **Function under test:** `DefaultDiskTypeForInstanceAndProjectID()`
+- **Function under test:** `DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID, region)`
 - **Automation status:** Automated (unit test)
 
 ### Description
@@ -195,24 +206,24 @@ prefer `hyperdisk-balanced` for sovereign cloud projects, while preferring
 
 ```go
 // Sovereign cloud
-diskType := gcp.DefaultDiskTypeForInstanceAndProjectID("c3-standard-4", "eu0:my-project")
+diskType := gcp.DefaultDiskTypeForInstanceAndProjectID("c3-standard-4", "eu0:my-project", "u-germany-northeast1")
 // Expected: "hyperdisk-balanced"
 
 // Public GCP
-diskType = gcp.DefaultDiskTypeForInstanceAndProjectID("c3-standard-4", "my-project")
+diskType = gcp.DefaultDiskTypeForInstanceAndProjectID("c3-standard-4", "my-project", "us-central1")
 // Expected: "hyperdisk-balanced" (C3 only supports hyperdisk-balanced)
 
-diskType = gcp.DefaultDiskTypeForInstanceAndProjectID("n2-standard-4", "my-project")
+diskType = gcp.DefaultDiskTypeForInstanceAndProjectID("n2-standard-4", "my-project", "us-central1")
 // Expected: "pd-ssd"
 ```
 
 ### Pass/Fail Criteria
 
-| Instance Type | Project ID | Expected Disk Type |
-|--------------|------------|-------------------|
-| `c3-standard-4` | `eu0:my-project` | `hyperdisk-balanced` |
-| `n2-standard-4` | `eu0:my-project` | `hyperdisk-balanced` (sovereign prefers it) |
-| `n2-standard-4` | `my-project` | `pd-ssd` |
+| Instance Type | Project ID | Region | Expected Disk Type |
+|--------------|------------|--------|-------------------|
+| `c3-standard-4` | `eu0:my-project` | `u-germany-northeast1` | `hyperdisk-balanced` |
+| `n2-standard-4` | `eu0:my-project` | `u-germany-northeast1` | `hyperdisk-balanced` (sovereign prefers it) |
+| `n2-standard-4` | `my-project` | `us-central1` | `pd-ssd` |
 
 ---
 
@@ -232,7 +243,7 @@ sovereign cloud environment. Without it, the cluster nodes cannot boot.
 
 ```go
 // Sovereign cloud without OS image - must fail
-platform := &gcp.Platform{ProjectID: "eu0:my-project"}
+platform := &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-germany-northeast1"}
 pool := &gcp.MachinePool{} // no OSImage
 errs := ValidateOSImageForSovereignCloud(platform, pool, field.NewPath("test"))
 // Expected: error "must specify an OS image for sovereign cloud environments"
@@ -267,7 +278,7 @@ missing field.
 
 ```go
 // Missing name
-platform := &gcp.Platform{ProjectID: "eu0:my-project"}
+platform := &gcp.Platform{ProjectID: "eu0:my-project", Region: "u-germany-northeast1"}
 pool := &gcp.MachinePool{OSImage: &gcp.OSImage{Project: "eu0-system:rhcos"}}
 errs := ValidateOSImageForSovereignCloud(platform, pool, field.NewPath("test"))
 // Expected: error on "test.osImage.name"
@@ -449,7 +460,7 @@ highest-level validation that all sovereign cloud code paths work together.
 | Validate GCD credentials | `gce.json` contains `universe_domain` field |
 | Provision VPC in `u-germany-northeast1` | VPC, subnets, Cloud NAT, firewall rules created |
 | Provision C3 bastion with GVNIC image | Bastion accessible, proxy configured |
-| Generate install-config | Config uses `eu0:` project, `c3-standard-4`, `hyperdisk-balanced`, RHCOS OS image, `Internal` publish |
+| Generate install-config | Config uses domain-scoped project, `u-germany-northeast1`, `c3-standard-4`, `hyperdisk-balanced`, RHCOS OS image, `Internal` publish |
 | Run `openshift-install create cluster` | Cluster installs successfully on GCD |
 | Run conformance tests | Core OpenShift functionality works on GCD |
 | Deprovision cluster | All GCD resources destroyed cleanly |
@@ -513,7 +524,7 @@ as requested.
 ### Prerequisites
 
 - A GCD cluster deployed via `openshift-install create cluster` with a
-  sovereign cloud project (`eu0:` prefix)
+  domain-scoped project ID and sovereign region (`u-` prefix)
 - `oc` CLI authenticated to the cluster
 - `gcloud` CLI authenticated to the GCD project with universe domain configured
 
