@@ -9,17 +9,19 @@ OpenShift IPI (Installer-Provisioned Infrastructure) support on Google Cloud
 Dedicated (GCD), also known as Trusted Partner Cloud sovereign regions.
 
 GCD is a fully isolated sovereign cloud environment with no network path to
-public Google Cloud. It uses region-specific API endpoints, domain-scoped
-project IDs, and a restricted subset of GCP services. The installer must detect
-sovereign cloud environments, apply correct defaults, enforce constraints, and
-propagate configuration to the cluster components.
+public Google Cloud. It uses region-specific API endpoints (universe domain),
+domain-scoped project IDs, sovereign regions (prefixed with `u-`), and a
+restricted subset of GCP services. The installer detects sovereign cloud
+environments by the combination of a domain-scoped project ID (containing `:`)
+and a sovereign region (prefixed with `u-`), then applies correct defaults,
+enforces constraints, and propagates configuration to the cluster components.
 
 ### 1.2. Scope
 
 **In Scope**
 
 - Install-config validation for sovereign cloud environments
-- Sovereign cloud detection via project ID prefix (`eu0:`)
+- Sovereign cloud detection via domain-scoped project ID and `u-` region prefix
 - Default machine type selection (C3 series for sovereign, N2 for public GCP)
 - Default disk type selection (Hyperdisk Balanced for sovereign, PD-SSD for public GCP)
 - OS image requirement enforcement for sovereign cloud
@@ -42,7 +44,7 @@ propagate configuration to the cluster components.
 ### 1.3. Key Features
 
 - **OCPSTRAT-3006** - Google Cloud Dedicated support in OpenShift
-- Sovereign cloud auto-detection from `eu0:` project ID prefix
+- Sovereign cloud auto-detection from domain-scoped project ID + `u-` region
 - Constrained defaults for machine types, disk types, and OS images
 - Private DNS-only deployment (GCD does not support public DNS zones)
 - Universe domain-aware credential handling
@@ -117,11 +119,11 @@ test file that covers it.
 
 | Behavior | Source | Test File |
 |----------|--------|-----------|
-| Sovereign cloud detection from project ID | `pkg/types/gcp/platform.go` `GetCloudEnvironment()` | `pkg/types/gcp/platform_test.go` |
+| Sovereign cloud detection from project ID and region | `pkg/types/gcp/platform.go` `GetCloudEnvironment(projectID, region)` | `pkg/types/gcp/platform_test.go` |
 | Non-default universe domain check | `pkg/types/gcp/platform.go` `IsNonDefaultUniverseDomain()` | `pkg/types/gcp/platform_test.go` |
 | Service account email for domain-scoped projects | `pkg/types/gcp/platform.go` `GetDefaultServiceAccount()` | `pkg/types/gcp/platform_test.go` |
-| Default machine type (C3 for sovereign) | `pkg/asset/installconfig/gcp/validation.go` `DefaultInstanceTypeForArchAndProjectID()` | `pkg/asset/installconfig/gcp/validation_test.go` |
-| Default disk type (Hyperdisk Balanced for sovereign) | `pkg/types/gcp/machinepools.go` `DefaultDiskTypeForInstanceAndProjectID()` | `pkg/types/gcp/machinepools_test.go` |
+| Default machine type (C3 for sovereign) | `pkg/asset/installconfig/gcp/validation.go` `DefaultInstanceTypeForArchAndProjectID(arch, projectID, region)` | `pkg/asset/installconfig/gcp/validation_test.go` |
+| Default disk type (Hyperdisk Balanced for sovereign) | `pkg/types/gcp/machinepools.go` `DefaultDiskTypeForInstanceAndProjectID(instanceType, projectID, region)` | `pkg/types/gcp/machinepools_test.go` |
 | OS image required for sovereign cloud | `pkg/types/gcp/validation/machinepool.go` `ValidateOSImageForSovereignCloud()` | `pkg/types/gcp/validation/machinepool_test.go` |
 | PSC endpoint forbidden for sovereign cloud | `pkg/asset/installconfig/gcp/validation.go` `validateServiceEndpointOverride()` | `pkg/asset/installconfig/gcp/validation_test.go` |
 | Universe domain credential options | `pkg/asset/installconfig/gcp/services.go` `CredentialOptions()` | `pkg/asset/installconfig/gcp/services_test.go` |
@@ -132,13 +134,15 @@ test file that covers it.
 
 ### 4.1. Sovereign Cloud Detection
 
-The installer identifies GCD environments by inspecting the project ID prefix.
-Project IDs with the `eu0:` prefix are classified as sovereign cloud. This
-detection drives all downstream defaults and validation.
+The installer identifies GCD environments by checking two conditions together:
+the project ID must be domain-scoped (containing `:`) and the region must have
+the sovereign prefix `u-`. Both conditions must be met. This detection drives
+all downstream defaults and validation.
 
-**Key invariant:** Organization-scoped public GCP projects (e.g.,
-`myorg:my-project`) must NOT be classified as sovereign. Only the known prefix
-`eu0` triggers sovereign behavior.
+**Key invariant:** Neither condition alone is sufficient. A domain-scoped
+project ID with a standard region (e.g., `myorg:my-project` in `us-central1`)
+is not sovereign. A sovereign region with a standard project ID (e.g.,
+`my-project` in `u-germany-northeast1`) is also not sovereign.
 
 ### 4.2. Default Values for Sovereign Cloud
 
@@ -181,7 +185,7 @@ installation on GCD. The workflow:
 | DNS: private zones only | `PUBLISH=Internal` in job config |
 | Images: must exist in GCD project | `DEFAULT_MACHINE_OSIMAGE=rhcos10` (pre-uploaded) |
 | Bastion needs GVNIC | Fedora CoreOS image uploaded with `--guest-os-features=GVNIC` |
-| Project IDs use `eu0:` prefix | Cluster profile provides `eu0:` project |
+| Domain-scoped project IDs | Cluster profile provides domain-scoped project (e.g., `eu0:`) |
 | Single region | `u-germany-northeast1` |
 | Universe domain | Read from `gce.json` credentials, set via `gcloud config` and env var |
 
@@ -192,7 +196,7 @@ installation on GCD. The workflow:
 | GCD environment availability | E2E tests cannot run if GCD region is down | Unit tests cover all logic without cloud access |
 | RHCOS image not uploaded to GCD | Install fails on missing boot image | Pre-upload RHCOS to GCD project, track in CI config |
 | OAuth2 token endpoint unavailable in GCD | Credential refresh fails | Use `WithCredentialsJSON` for self-signed JWT (PR #10630) |
-| New `eu0:` prefix not in known list | Future sovereign prefixes not detected | `sovereignCloudProjectPrefixes` slice is extensible |
+| New sovereign region or project prefix | Detection logic may need updates | Detection uses generic `:` + `u-` checks, not hardcoded prefixes |
 | C3 machine quota in GCD | Insufficient quota blocks install | Monitor quota, request increases proactively |
 
 ## 6. Exit Criteria
