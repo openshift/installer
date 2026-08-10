@@ -4,6 +4,7 @@ package aws
 import (
 	"fmt"
 	"maps"
+	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -210,6 +211,21 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 		// Machine labels will be synced from the Machine to the corresponding Node
 		maps.Copy(machineSet.Spec.Template.ObjectMeta.Labels, nodeLabels)
 		utils.SetCAPIMachineSetOSStreamLabels(&machineSet, in.Config)
+
+		if info, ok := in.InstanceTypes[instanceType]; ok && in.Architecture != "" {
+			machineSet.ObjectMeta.Annotations = map[string]string{
+				// Legacy keys (Machine API provider)
+				"machine.openshift.io/vCPU":     strconv.FormatInt(info.DefaultVCpus, 10),
+				"machine.openshift.io/memoryMb": strconv.FormatInt(info.MemInMiB, 10),
+				// TODO: GPU count is not yet available in InstanceType metadata; default to 0
+				"machine.openshift.io/GPU": "0",
+				// CAPI keys (cluster-autoscaler CAPI provider)
+				"capacity.cluster-autoscaler.kubernetes.io/cpu":       strconv.FormatInt(info.DefaultVCpus, 10),
+				"capacity.cluster-autoscaler.kubernetes.io/memory":    fmt.Sprintf("%dMi", info.MemInMiB),
+				"capacity.cluster-autoscaler.kubernetes.io/gpu-count": "0",
+				"capacity.cluster-autoscaler.kubernetes.io/labels":    fmt.Sprintf("kubernetes.io/arch=%s", in.Architecture),
+			}
+		}
 
 		machineSets = append(machineSets, machineSet)
 	}

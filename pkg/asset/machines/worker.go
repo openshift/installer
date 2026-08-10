@@ -560,6 +560,15 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 
 			pool.Platform.AWS = &mpool
 
+			computeArch := string(pool.Architecture)
+			if computeArch == "" {
+				computeArch = string(installConfig.Config.ControlPlane.Architecture)
+			}
+			allInstanceTypes, itErr := installConfig.AWS.InstanceTypes(ctx)
+			if itErr != nil {
+				logrus.Warn("failed to look up instance type info for scale-from-zero annotations")
+			}
+
 			input := &aws.MachineSetInput{
 				ClusterID:                clusterID.InfraID,
 				InstallConfigPlatformAWS: installConfig.Config.Platform.AWS,
@@ -571,6 +580,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				UserDataSecret:           workerUserDataSecretName,
 				Hosts:                    dHosts,
 				Config:                   installConfig.Config,
+				InstanceTypes:            allInstanceTypes,
+				Architecture:             computeArch,
 			}
 
 			if pool.Management == types.ClusterAPI {

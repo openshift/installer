@@ -259,6 +259,112 @@ func TestClusterAPIMachineSets(t *testing.T) {
 			validate: validateAdditionalSecurityGroups,
 		},
 		{
+			name: "scale-from-zero annotations set when instance type info and architecture provided",
+			input: func() *MachineSetInput {
+				in := defaultMachineSetInput()
+				in.Pool.Platform.AWS.Zones = []string{"us-east-1a"}
+				in.Pool.Replicas = ptr.To(int64(1))
+				in.Architecture = "amd64"
+				in.InstanceTypes = map[string]icaws.InstanceType{
+					"m5.xlarge": {DefaultVCpus: 4, MemInMiB: 16384},
+				}
+				return in
+			}(),
+			validate: func(t *testing.T, _ []capa.AWSMachineTemplate, machineSets []capi.MachineSet) {
+				t.Helper()
+				if len(machineSets) != 1 {
+					t.Fatalf("expected 1 machineset, got %d", len(machineSets))
+				}
+				ann := machineSets[0].ObjectMeta.Annotations
+				wantAnnotations := map[string]string{
+					"machine.openshift.io/vCPU":                           "4",
+					"machine.openshift.io/memoryMb":                       "16384",
+					"machine.openshift.io/GPU":                            "0",
+					"capacity.cluster-autoscaler.kubernetes.io/cpu":       "4",
+					"capacity.cluster-autoscaler.kubernetes.io/memory":    "16384Mi",
+					"capacity.cluster-autoscaler.kubernetes.io/gpu-count": "0",
+					"capacity.cluster-autoscaler.kubernetes.io/labels":    "kubernetes.io/arch=amd64",
+				}
+				for k, want := range wantAnnotations {
+					if got, ok := ann[k]; !ok || got != want {
+						t.Errorf("annotation %s = %q (present=%v), want %q", k, got, ok, want)
+					}
+				}
+			},
+		},
+		{
+			name: "no annotations when instance types map is nil",
+			input: func() *MachineSetInput {
+				in := defaultMachineSetInput()
+				in.Pool.Platform.AWS.Zones = []string{"us-east-1a"}
+				in.Pool.Replicas = ptr.To(int64(1))
+				in.Architecture = "amd64"
+				return in
+			}(),
+			validate: func(t *testing.T, _ []capa.AWSMachineTemplate, machineSets []capi.MachineSet) {
+				t.Helper()
+				if len(machineSets[0].ObjectMeta.Annotations) != 0 {
+					t.Errorf("expected no annotations, got %v", machineSets[0].ObjectMeta.Annotations)
+				}
+			},
+		},
+		{
+			name: "no annotations when architecture is empty",
+			input: func() *MachineSetInput {
+				in := defaultMachineSetInput()
+				in.Pool.Platform.AWS.Zones = []string{"us-east-1a"}
+				in.Pool.Replicas = ptr.To(int64(1))
+				in.InstanceTypes = map[string]icaws.InstanceType{
+					"m5.xlarge": {DefaultVCpus: 4, MemInMiB: 16384},
+				}
+				return in
+			}(),
+			validate: func(t *testing.T, _ []capa.AWSMachineTemplate, machineSets []capi.MachineSet) {
+				t.Helper()
+				if len(machineSets[0].ObjectMeta.Annotations) != 0 {
+					t.Errorf("expected no annotations, got %v", machineSets[0].ObjectMeta.Annotations)
+				}
+			},
+		},
+		{
+			name: "edge pool annotations use per-zone preferred instance type",
+			input: func() *MachineSetInput {
+				in := defaultMachineSetInput()
+				in.Pool.Name = types.MachinePoolEdgeRoleName
+				in.Pool.Replicas = ptr.To(int64(1))
+				in.Pool.Platform.AWS.InstanceType = ""
+				in.Pool.Platform.AWS.Zones = []string{"us-east-1-bos-1a"}
+				in.Architecture = "amd64"
+				in.Zones = icaws.Zones{
+					"us-east-1-bos-1a": &icaws.Zone{
+						Name:                  "us-east-1-bos-1a",
+						Type:                  "local-zone",
+						GroupName:             "us-east-1-bos-1",
+						ParentZoneName:        "us-east-1c",
+						PreferredInstanceType: "c5.xlarge",
+					},
+				}
+				in.InstanceTypes = map[string]icaws.InstanceType{
+					"m5.xlarge": {DefaultVCpus: 4, MemInMiB: 16384},
+					"c5.xlarge": {DefaultVCpus: 4, MemInMiB: 8192},
+				}
+				return in
+			}(),
+			validate: func(t *testing.T, _ []capa.AWSMachineTemplate, machineSets []capi.MachineSet) {
+				t.Helper()
+				if len(machineSets) != 1 {
+					t.Fatalf("expected 1 machineset, got %d", len(machineSets))
+				}
+				ann := machineSets[0].ObjectMeta.Annotations
+				if got := ann["machine.openshift.io/memoryMb"]; got != "8192" {
+					t.Errorf("expected memoryMb=8192 (c5.xlarge), got %q", got)
+				}
+				if got := ann["capacity.cluster-autoscaler.kubernetes.io/memory"]; got != "8192Mi" {
+					t.Errorf("expected memory=8192Mi (c5.xlarge), got %q", got)
+				}
+			},
+		},
+		{
 			name: "edge pool adds labels taints and preferred instance type",
 			input: func() *MachineSetInput {
 				in := defaultMachineSetInput()

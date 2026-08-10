@@ -28,6 +28,8 @@ type MachineSetInput struct {
 	UserDataSecret           string
 	Hosts                    map[string]icaws.Host
 	Config                   *types.InstallConfig
+	InstanceTypes            map[string]icaws.InstanceType
+	Architecture             string
 }
 
 // MachineSets returns a list of machinesets for a machinepool.
