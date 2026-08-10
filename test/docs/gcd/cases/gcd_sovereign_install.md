@@ -140,6 +140,11 @@ result := gcp.IsNonDefaultUniverseDomain("apis-berlin-build0.goog")
 // Expected: true
 ```
 
+### Expected Result
+
+- `IsNonDefaultUniverseDomain("apis-berlin-build0.goog")` returns `true`
+- `IsNonDefaultUniverseDomain("googleapis.com")` returns `false`
+
 ### Pass/Fail Criteria
 
 | Input | Expected Output |
@@ -179,6 +184,11 @@ instanceType = DefaultInstanceTypeForArchAndProjectID(types.ArchitectureAMD64, "
 // Expected: "n2-standard-4"
 ```
 
+### Expected Result
+
+- Sovereign cloud projects always get `c3-standard-4` regardless of architecture
+- Public GCP projects get architecture-specific defaults
+
 ### Pass/Fail Criteria
 
 | Architecture | Project ID | Region | Expected Instance Type |
@@ -216,6 +226,11 @@ diskType = gcp.DefaultDiskTypeForInstanceAndProjectID("c3-standard-4", "my-proje
 diskType = gcp.DefaultDiskTypeForInstanceAndProjectID("n2-standard-4", "my-project", "us-central1")
 // Expected: "pd-ssd"
 ```
+
+### Expected Result
+
+- Sovereign cloud projects prefer `hyperdisk-balanced` over `pd-ssd`
+- Public GCP projects prefer `pd-ssd` when the instance type supports both
 
 ### Pass/Fail Criteria
 
@@ -289,6 +304,11 @@ errs = ValidateOSImageForSovereignCloud(platform, pool, field.NewPath("test"))
 // Expected: error on "test.osImage.project"
 ```
 
+### Expected Result
+
+- Each missing field produces a specific `Required` error on the corresponding path
+- Both fields present produces no errors
+
 ### Pass/Fail Criteria
 
 | OS Image State | Expected Error Field |
@@ -361,6 +381,11 @@ sa := gcp.GetDefaultServiceAccount(platform, "test-cluster", "master")
 // Expected: "test-cluster-m@my-project.eu0.iam.gserviceaccount.com"
 ```
 
+### Expected Result
+
+- Domain-scoped project IDs produce reversed dot-separated SA email domains
+- Standard project IDs produce the standard SA email format
+
 ### Pass/Fail Criteria
 
 | Project ID | Cluster ID | Role | Expected SA Email |
@@ -384,11 +409,26 @@ configuration must set `tokenURL` to the literal string `"nil"`. This disables
 the standard OAuth2 token endpoint, which is not available in GCD sovereign
 regions. Instead, the workload uses self-signed JWTs.
 
+### Execution
+
+```go
+// Generate cloud provider config with a non-default universe domain
+// The generated config should contain tokenURL = "nil"
+```
+
 ### Expected Result
 
 - Cloud provider config generated for a sovereign cloud install-config contains
   `tokenURL = "nil"`
 - Cloud provider config for public GCP does not set `tokenURL` to `"nil"`
+
+### Pass/Fail Criteria
+
+| Universe Domain | Expected tokenURL |
+|----------------|-------------------|
+| `apis-berlin-build0.goog` | `"nil"` |
+| `googleapis.com` | Standard OAuth2 URL |
+| (empty) | Standard OAuth2 URL |
 
 ---
 
@@ -404,12 +444,27 @@ When deploying on a non-default universe domain, the Cluster API Provider for
 GCP (CAPG) controller must receive the `GOOGLE_CLOUD_UNIVERSE_DOMAIN`
 environment variable so it can reach the correct sovereign cloud API endpoints.
 
+### Execution
+
+```go
+// Start CAPG controller with sovereign cloud credentials
+// Verify GOOGLE_CLOUD_UNIVERSE_DOMAIN env var is set
+```
+
 ### Expected Result
 
 - When universe domain is `apis-berlin-build0.goog`, the CAPG controller
   process has `GOOGLE_CLOUD_UNIVERSE_DOMAIN=apis-berlin-build0.goog` set
 - When universe domain is `googleapis.com` or empty, the environment variable
   is not set
+
+### Pass/Fail Criteria
+
+| Universe Domain | Env Var Set |
+|----------------|-------------|
+| `apis-berlin-build0.goog` | Yes, set to `apis-berlin-build0.goog` |
+| `googleapis.com` | No |
+| (empty) | No |
 
 ---
 
@@ -427,11 +482,26 @@ libraries and use `WithCredentialsJSON` for self-signed JWT authentication,
 since the standard OAuth2 token endpoint (`oauth2.googleapis.com`) is not
 reachable from GCD.
 
+### Execution
+
+```go
+// Load GCD service account key with universe_domain field
+opts := CredentialOptions(ctx, credJSON)
+// Inspect returned client options
+```
+
 ### Expected Result
 
 - `CredentialOptions()` extracts the universe domain from the SA key JSON
 - Client options include `WithCredentialsJSON` (not `WithTokenSource`)
 - Client options include `WithUniverseDomain` set to the credential's domain
+
+### Pass/Fail Criteria
+
+| Credential Field | Expected Client Option |
+|-----------------|----------------------|
+| `universe_domain: apis-berlin-build0.goog` | `WithUniverseDomain("apis-berlin-build0.goog")` |
+| SA key JSON present | `WithCredentialsJSON` used (not `WithTokenSource`) |
 
 ---
 
@@ -612,7 +682,7 @@ gcloud dns managed-zones list \
 
 ```bash
 # From outside the VPC (not through bastion):
-curl -k https://api.<cluster-name>.<base-domain>:6443/healthz
+curl -k "https://api.${CLUSTER_NAME}.${BASE_DOMAIN}:6443/healthz"
 # Expected: connection timeout or DNS resolution failure
 ```
 
@@ -686,7 +756,7 @@ gcloud compute firewall-rules list \
 
 ```bash
 gcloud dns record-sets list \
-  --zone=<cluster-zone> \
+  --zone="${CLUSTER_ZONE}" \
   --filter="name~${INFRA_ID}" \
   --project="eu0:<project-id>"
 # Expected: no results (or zone itself deleted)
@@ -714,6 +784,33 @@ gcloud compute forwarding-rules list \
 # Expected: no results for both
 ```
 
+7. Check for leftover VPC networks:
+
+```bash
+gcloud compute networks list \
+  --filter="name~${INFRA_ID}" \
+  --project="eu0:<project-id>"
+# Expected: no results
+```
+
+8. Check for leftover subnets:
+
+```bash
+gcloud compute networks subnets list \
+  --filter="name~${INFRA_ID}" \
+  --project="eu0:<project-id>"
+# Expected: no results
+```
+
+9. Check for leftover Cloud NAT and routers:
+
+```bash
+gcloud compute routers list \
+  --filter="name~${INFRA_ID}" \
+  --project="eu0:<project-id>"
+# Expected: no results
+```
+
 ### Pass/Fail Criteria
 
 | Resource Type | Pass Condition |
@@ -725,6 +822,9 @@ gcloud compute forwarding-rules list \
 | Service accounts | Zero SAs matching `INFRA_ID` |
 | Health checks | Zero health checks matching `INFRA_ID` |
 | Forwarding rules | Zero forwarding rules matching `INFRA_ID` |
+| VPC networks | Zero networks matching `INFRA_ID` |
+| Subnets | Zero subnets matching `INFRA_ID` |
+| Cloud NAT / Routers | Zero routers matching `INFRA_ID` |
 
 ---
 
@@ -736,9 +836,9 @@ gcloud compute forwarding-rules list \
 ### Description
 
 GCD only supports private DNS zones. Attempting to create a cluster with
-`publish: External` should be rejected during install-config validation. This
-test verifies the installer catches the misconfiguration before attempting
-any cloud API calls.
+`publish: External` should be rejected during install-config validation.
+Running `create manifests` triggers validation without provisioning any cloud
+resources, confirming the installer catches the misconfiguration early.
 
 ### Prerequisites
 
@@ -777,13 +877,14 @@ publish: External
 pullSecret: '<pull-secret>'
 ```
 
-2. Run `openshift-install create cluster --dir=<dir>` and observe the output.
+2. Run `openshift-install create manifests --dir="${DIR}"` and observe the output.
 
 ### Expected Result
 
-- The installer rejects the configuration with an error indicating that
-  public/external publish is not supported for sovereign cloud environments
-- No cloud resources are created
+- The installer rejects the configuration during manifest generation with an
+  error indicating that public/external publish is not supported for sovereign
+  cloud environments
+- No cloud resources are created (validation fails before any provisioning)
 
 ### Pass/Fail Criteria
 
@@ -835,6 +936,9 @@ files with manual tests.
   - [ ] Zero leftover DNS records
   - [ ] Zero leftover service accounts
   - [ ] Zero leftover health checks and forwarding rules
+  - [ ] Zero leftover VPC networks
+  - [ ] Zero leftover subnets
+  - [ ] Zero leftover Cloud NAT and routers
 
 - [ ] **17. Verify install-config validation rejects public publish on GCD**
   - [ ] Installer rejects `publish: External` with validation error

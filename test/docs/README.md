@@ -11,7 +11,7 @@ the automated test that verifies it.
 
 ## Directory Structure
 
-```
+```text
 test/docs/
   README.md                          # This file
   <platform-or-topic>/
@@ -26,7 +26,7 @@ higher-level test plans and `cases/` holds detailed test case documents.
 
 ### Current contents
 
-```
+```text
 test/docs/
   gcd/
     plans/
@@ -39,7 +39,7 @@ test/docs/
 
 As test documentation expands, add directories following the same pattern:
 
-```
+```text
 test/docs/
   gcd/           # Google Cloud Dedicated (sovereign cloud)
   gcp/           # Google Cloud Platform (public cloud)
@@ -221,7 +221,7 @@ using relative links:
 
 Create `test/docs/<platform>/cases/<name>.md` using this template:
 
-```markdown
+````markdown
 # Test Case: <Case Name>
 
 ## Metadata
@@ -258,10 +258,10 @@ Create `test/docs/<platform>/cases/<name>.md` using this template:
 
 ### Execution
 
-\```go
+```go
 result := pkg.FunctionUnderTest(input)
 // Expected: <expected value>
-\```
+```
 
 ### Expected Result
 
@@ -302,12 +302,12 @@ result := pkg.FunctionUnderTest(input)
 
 ## Manual Test Checklist
 
-<\!-- MANUAL_TESTS_START -->
+<!-- MANUAL_TESTS_START -->
 
 - [ ] **2. <Scenario title>**
   - [ ] <Sub-check from pass/fail criteria>
 
-<\!-- MANUAL_TESTS_END -->
+<!-- MANUAL_TESTS_END -->
 
 ---
 
@@ -315,7 +315,7 @@ result := pkg.FunctionUnderTest(input)
 
 - Feature test plan: [<plan-name>.md](../plans/<plan-name>.md)
 - <JIRA links, PR links>
-```
+````
 
 ### 2. Add the case to the test plan
 
