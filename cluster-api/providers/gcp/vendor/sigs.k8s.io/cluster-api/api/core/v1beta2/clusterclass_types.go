@@ -135,6 +135,22 @@ type ClusterClassSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=1000
 	Patches []ClusterClassPatch `json:"patches,omitempty"`
+
+	// upgrade defines the upgrade configuration for clusters using this ClusterClass.
+	// +optional
+	Upgrade ClusterClassUpgrade `json:"upgrade,omitempty,omitzero"`
+
+	// kubernetesVersions is the list of Kubernetes versions that can be
+	// used for clusters using this ClusterClass.
+	// The list of version must be ordered from the older to the newer version, and there should be
+	// at least one version for every minor in between the first and the last version.
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=256
+	KubernetesVersions []string `json:"kubernetesVersions,omitempty"`
 }
 
 // InfrastructureClass defines the class for the infrastructure cluster.
@@ -186,6 +202,23 @@ type ControlPlaneClass struct {
 	// deletion contains configuration options for Machine deletion.
 	// +optional
 	Deletion ControlPlaneClassMachineDeletionSpec `json:"deletion,omitempty,omitzero"`
+
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
 
 	// readinessGates specifies additional conditions to include when evaluating Machine Ready condition.
 	//
@@ -265,6 +298,16 @@ type ControlPlaneClassHealthCheckChecks struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=100
 	UnhealthyNodeConditions []UnhealthyNodeCondition `json:"unhealthyNodeConditions,omitempty"`
+
+	// unhealthyMachineConditions contains a list of the machine conditions that determine
+	// whether a machine is considered unhealthy.  The conditions are combined in a
+	// logical OR, i.e. if any of the conditions is met, the machine is unhealthy.
+	//
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	UnhealthyMachineConditions []UnhealthyMachineCondition `json:"unhealthyMachineConditions,omitempty"`
 }
 
 // ControlPlaneClassHealthCheckRemediation configures if and how remediations are triggered if a control plane Machine is unhealthy.
@@ -436,6 +479,23 @@ type MachineDeploymentClass struct {
 	// +optional
 	Deletion MachineDeploymentClassMachineDeletionSpec `json:"deletion,omitempty,omitzero"`
 
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
+
 	// minReadySeconds is the minimum number of seconds for which a newly created machine should
 	// be ready.
 	// Defaults to 0 (machine will be considered available as soon as it
@@ -526,6 +586,16 @@ type MachineDeploymentClassHealthCheckChecks struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=100
 	UnhealthyNodeConditions []UnhealthyNodeCondition `json:"unhealthyNodeConditions,omitempty"`
+
+	// unhealthyMachineConditions contains a list of the machine conditions that determine
+	// whether a machine is considered unhealthy.  The conditions are combined in a
+	// logical OR, i.e. if any of the conditions is met, the machine is unhealthy.
+	//
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	UnhealthyMachineConditions []UnhealthyMachineCondition `json:"unhealthyMachineConditions,omitempty"`
 }
 
 // MachineDeploymentClassHealthCheckRemediation configures if and how remediations are triggered if a MachineDeployment Machine is unhealthy.
@@ -738,6 +808,23 @@ type MachinePoolClass struct {
 	// deletion contains configuration options for Machine deletion.
 	// +optional
 	Deletion MachinePoolClassMachineDeletionSpec `json:"deletion,omitempty,omitzero"`
+
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []MachineTaint `json:"taints,omitempty"`
 
 	// minReadySeconds is the minimum number of seconds for which a newly created machine pool should
 	// be ready.
@@ -1238,6 +1325,24 @@ type ClusterClassPatch struct {
 	// Note: Exactly one of Definitions or External must be set.
 	// +optional
 	External *ExternalPatchDefinition `json:"external,omitempty"`
+}
+
+// ClusterClassUpgrade defines the upgrade configuration for clusters using the ClusterClass.
+// +kubebuilder:validation:MinProperties=1
+type ClusterClassUpgrade struct {
+	// external defines external runtime extensions for upgrade operations.
+	// +optional
+	External ClusterClassUpgradeExternal `json:"external,omitempty,omitzero"`
+}
+
+// ClusterClassUpgradeExternal defines external runtime extensions for upgrade operations.
+// +kubebuilder:validation:MinProperties=1
+type ClusterClassUpgradeExternal struct {
+	// generateUpgradePlanExtension references an extension which is called to generate upgrade plan.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
+	GenerateUpgradePlanExtension string `json:"generateUpgradePlanExtension,omitempty"`
 }
 
 // PatchDefinition defines a patch which is applied to customize the referenced templates.

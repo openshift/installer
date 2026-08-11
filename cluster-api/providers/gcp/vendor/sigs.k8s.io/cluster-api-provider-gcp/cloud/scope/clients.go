@@ -18,6 +18,8 @@ package scope
 
 import (
 	"context"
+	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"time"
 
@@ -27,6 +29,7 @@ import (
 	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 	"k8s.io/client-go/pkg/version"
@@ -42,6 +45,12 @@ type GCPServices struct {
 
 // GCPRateLimiter implements cloud.RateLimiter.
 type GCPRateLimiter struct{}
+
+// credentialHeader is a helper struct used for determining the type of
+// GCP credentials from JSON data.
+type credentialHeader struct {
+	Type string `json:"type"`
+}
 
 // Accept blocks until the operation can be performed.
 func (rl *GCPRateLimiter) Accept(ctx context.Context, key *cloud.RateLimitKey) error {
@@ -83,7 +92,47 @@ func defaultClientOptions(ctx context.Context, credentialsRef *infrav1.ObjectRef
 		if err != nil {
 			return nil, fmt.Errorf("getting gcp credentials from reference %s: %w", credentialsRef, err)
 		}
-		opts = append(opts, option.WithCredentialsJSON(rawData))
+
+		header := &credentialHeader{}
+		if err := json.Unmarshal(rawData, header); err != nil {
+			return nil, fmt.Errorf("parsing gcp credential type from reference %s: %w", credentialsRef, err)
+		}
+
+		var optCredType option.CredentialsType
+		var googleCredType google.CredentialsType
+		switch header.Type {
+		case "service_account":
+			optCredType = option.ServiceAccount
+			googleCredType = google.ServiceAccount
+		case "external_account":
+			optCredType = option.ExternalAccount
+			googleCredType = google.ExternalAccount
+		case "impersonated_service_account":
+			optCredType = option.ImpersonatedServiceAccount
+			googleCredType = google.ImpersonatedServiceAccount
+		default:
+			optCredType = option.ServiceAccount
+			googleCredType = google.ServiceAccount
+		}
+		opts = append(opts, option.WithAuthCredentialsJSON(optCredType, rawData))
+
+		// Extract credentials to get universe domain for sovereign clouds
+		// Use CredentialsFromJSONWithType to avoid deprecated CredentialsFromJSON
+		creds, err := google.CredentialsFromJSONWithType(ctx, rawData, googleCredType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract credentials from JSON: %w", err)
+		}
+
+		// CredentialsFromJSONWithType never returns (nil, nil), but guard defensively.
+		if creds == nil {
+			return nil, stderrors.New("credentials are nil after parsing JSON")
+		}
+
+		universeDomain, err := creds.GetUniverseDomain()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get universe domain from credentials: %w", err)
+		}
+		opts = append(opts, option.WithUniverseDomain(universeDomain))
 	}
 
 	return opts, nil
