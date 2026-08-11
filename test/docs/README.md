@@ -31,6 +31,7 @@ higher-level test plans and `cases/` holds detailed test case documents.
 
 ```text
 test/docs/
+  install_config_field_index.md       # Install-config field to feature mapping
   platform_feature_matrix.md          # Cross-platform feature test coverage matrix
   gcd/
     plans/

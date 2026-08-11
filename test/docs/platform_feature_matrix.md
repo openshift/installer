@@ -2,8 +2,10 @@
 
 This matrix shows which installer features are tested for each platform and
 how they are tested. Use it to identify coverage gaps and prioritize new test
-documentation. The matrix is maintained manually and should be updated when
-features, tests, or CI jobs change.
+documentation. For a field-level view of which install-config fields drive each
+feature, see the [Install Config Field Index](install_config_field_index.md).
+The matrix is maintained manually and should be updated when features, tests,
+or CI jobs change.
 
 ## Platform Key
 
@@ -162,6 +164,7 @@ explanation to the Footnotes section. Keep footnotes factual and brief.
 
 ## References
 
+- [Install config field index](install_config_field_index.md)
 - [Test documentation structure and conventions](README.md)
 - [GCD feature test plan](gcd/plans/gcd-feature.md)
 - [GCD sovereign install test cases](gcd/cases/gcd_sovereign_install.md)

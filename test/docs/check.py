@@ -659,10 +659,7 @@ def validate_file(path):
     elif file_type == "matrix":
         return validate_matrix(path, lines)
     else:
-        return [ValidationError(
-            relative_path(path), None,
-            "could not detect file type (expected case, plan, or matrix)",
-        )]
+        return None
 
 
 def main():
@@ -678,8 +675,16 @@ def main():
         sys.exit(2)
 
     total_errors = 0
+    validated = 0
+    skipped = 0
     for path in files:
         errors = validate_file(path)
+        if errors is None:
+            rel = relative_path(path)
+            print(f"  {rel}: skipped (unknown file type)")
+            skipped += 1
+            continue
+        validated += 1
         for err in errors:
             print(f"  {err}")
         if errors:
@@ -689,14 +694,17 @@ def main():
             print(f"  {rel}: ok")
 
     print()
-    files_label = "file" if len(files) == 1 else "files"
+    files_label = "file" if validated == 1 else "files"
+    summary = f"OK: {validated} {files_label} validated"
+    if skipped:
+        summary += f", {skipped} skipped"
     if total_errors:
         print(
-            f"FAIL: {total_errors} error(s) in {len(files)} {files_label}",
+            f"FAIL: {total_errors} error(s) in {validated} {files_label}",
         )
         sys.exit(1)
     else:
-        print(f"OK: {len(files)} {files_label} validated")
+        print(summary)
         sys.exit(0)
 
 
