@@ -9,6 +9,9 @@ The goal is traceability: every testable behavior should have a documented
 scenario that links to a JIRA feature or bug, the source code under test, and
 the automated test that verifies it.
 
+For a cross-platform overview of which features are tested and how, see the
+[Platform Feature Matrix](platform_feature_matrix.md).
+
 ## Directory Structure
 
 ```text
@@ -28,6 +31,7 @@ higher-level test plans and `cases/` holds detailed test case documents.
 
 ```text
 test/docs/
+  platform_feature_matrix.md          # Cross-platform feature test coverage matrix
   gcd/
     plans/
       gcd-feature.md                 # Feature test plan for GCD (OCPSTRAT-3006)
