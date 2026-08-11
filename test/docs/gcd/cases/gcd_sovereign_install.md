@@ -412,8 +412,20 @@ regions. Instead, the workload uses self-signed JWTs.
 ### Execution
 
 ```go
-// Generate cloud provider config with a non-default universe domain
-// The generated config should contain tokenURL = "nil"
+session, _ := gcpic.GetSession(ctx)
+ud, _ := session.Credentials.GetUniverseDomain()
+// ud == "apis-berlin-build0.goog" for GCD
+
+var tokenURL string
+if ud != "" && ud != "googleapis.com" {
+    tokenURL = "nil"
+}
+
+gcpConfig, _ := gcpmanifests.CloudProviderConfig(
+    infraID, projectID, subnet, networkProjectID,
+    firewallManagement, tokenURL,
+)
+// gcpConfig contains tokenURL = "nil" for sovereign cloud
 ```
 
 ### Expected Result
@@ -447,8 +459,15 @@ environment variable so it can reach the correct sovereign cloud API endpoints.
 ### Execution
 
 ```go
-// Start CAPG controller with sovereign cloud credentials
-// Verify GOOGLE_CLOUD_UNIVERSE_DOMAIN env var is set
+session, _ := gcpic.GetSession(ctx)
+ud, _ := session.Credentials.GetUniverseDomain()
+
+capgEnvVars := map[string]string{}
+if ud != "googleapis.com" {
+    capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] = ud
+}
+// For GCD: capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] == "apis-berlin-build0.goog"
+// For public GCP: capgEnvVars is empty (no GOOGLE_CLOUD_UNIVERSE_DOMAIN key)
 ```
 
 ### Expected Result
@@ -604,12 +623,13 @@ as requested.
 
 ```bash
 export GOOGLE_CLOUD_UNIVERSE_DOMAIN=apis-berlin-build0.goog
+export PROJECT_ID="eu0:<your-gcd-project>"
 export INFRA_ID=$(oc get -o jsonpath='{.status.infrastructureName}' infrastructure cluster)
 
 gcloud compute instances list \
   --filter="name~${INFRA_ID}" \
   --format="table(name, machineType.basename(), zone)" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 ```
 
 2. Verify disk types for the instances:
@@ -618,7 +638,7 @@ gcloud compute instances list \
 gcloud compute disks list \
   --filter="name~${INFRA_ID}" \
   --format="table(name, type.basename(), sizeGb, zone)" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 ```
 
 3. Verify from the OpenShift side:
@@ -659,6 +679,13 @@ API and ingress endpoints are only reachable through private networking.
 
 ### Execution
 
+Set up environment variables:
+
+```bash
+export GOOGLE_CLOUD_UNIVERSE_DOMAIN=apis-berlin-build0.goog
+export PROJECT_ID="eu0:<your-gcd-project>"
+```
+
 1. Verify the cluster's publish strategy:
 
 ```bash
@@ -673,7 +700,7 @@ oc get dns cluster -o jsonpath='{.spec.privateZone}'
 
 ```bash
 gcloud dns managed-zones list \
-  --project="eu0:<project-id>" \
+  --project="${PROJECT_ID}" \
   --format="table(name, dnsName, visibility)"
 # Expected: only "private" visibility zones
 ```
@@ -725,12 +752,20 @@ and leftover resources can block future installs and incur costs.
 
 ### Execution
 
+Set up environment variables:
+
+```bash
+export GOOGLE_CLOUD_UNIVERSE_DOMAIN=apis-berlin-build0.goog
+export PROJECT_ID="eu0:<your-gcd-project>"
+export INFRA_ID="<cluster-infra-id-from-metadata>"
+```
+
 1. Check for leftover compute instances:
 
 ```bash
 gcloud compute instances list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
@@ -739,7 +774,7 @@ gcloud compute instances list \
 ```bash
 gcloud compute disks list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
@@ -748,7 +783,7 @@ gcloud compute disks list \
 ```bash
 gcloud compute firewall-rules list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
@@ -758,7 +793,7 @@ gcloud compute firewall-rules list \
 gcloud dns record-sets list \
   --zone="${CLUSTER_ZONE}" \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results (or zone itself deleted)
 ```
 
@@ -767,7 +802,7 @@ gcloud dns record-sets list \
 ```bash
 gcloud iam service-accounts list \
   --filter="email~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
@@ -776,11 +811,11 @@ gcloud iam service-accounts list \
 ```bash
 gcloud compute health-checks list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 
 gcloud compute forwarding-rules list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results for both
 ```
 
@@ -789,7 +824,7 @@ gcloud compute forwarding-rules list \
 ```bash
 gcloud compute networks list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
@@ -798,7 +833,7 @@ gcloud compute networks list \
 ```bash
 gcloud compute networks subnets list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
@@ -807,7 +842,7 @@ gcloud compute networks subnets list \
 ```bash
 gcloud compute routers list \
   --filter="name~${INFRA_ID}" \
-  --project="eu0:<project-id>"
+  --project="${PROJECT_ID}"
 # Expected: no results
 ```
 
