@@ -331,15 +331,12 @@ type Host struct {
 type NetworkDeviceSpec struct {
 	// gateway is an IPv4 or IPv6 address which represents the subnet gateway,
 	// for example, 192.168.1.1.
-	// +kubebuilder:validation:Format=ipv4
-	// +kubebuilder:validation:Format=ipv6
+	// +kubebuilder:validation:Format=ip
 	Gateway string `json:"gateway,omitempty"`
 
 	// ipAddrs is a list of one or more IPv4 and/or IPv6 addresses and CIDR to assign to
 	// this device, for example, 192.168.1.100/24. IP addresses provided via ipAddrs are
 	// intended to allow explicit assignment of a machine's IP address.
-	// +kubebuilder:validation:Format=ipv4
-	// +kubebuilder:validation:Format=ipv6
 	// +kubebuilder:example=`192.168.1.100/24`
 	// +kubebuilder:example=`2001:DB8:0000:0000:244:17FF:FEB6:D37D/64`
 	// +kubebuilder:validation:Required
@@ -348,8 +345,7 @@ type NetworkDeviceSpec struct {
 	// nameservers is a list of IPv4 and/or IPv6 addresses used as DNS nameservers, for example,
 	// 8.8.8.8. a nameserver is not provided by a fulfilled IPAddressClaim. If DHCP is not the
 	// source of IP addresses for this network device, nameservers should include a valid nameserver.
-	// +kubebuilder:validation:Format=ipv4
-	// +kubebuilder:validation:Format=ipv6
+	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:example=`8.8.8.8`
 	Nameservers []string `json:"nameservers,omitempty"`
 }

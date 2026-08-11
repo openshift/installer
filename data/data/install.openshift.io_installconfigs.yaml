@@ -8648,7 +8648,7 @@ spec:
                               description: |-
                                 gateway is an IPv4 or IPv6 address which represents the subnet gateway,
                                 for example, 192.168.1.1.
-                              format: ipv6
+                              format: ip
                               type: string
                             ipAddrs:
                               description: |-
@@ -8656,7 +8656,6 @@ spec:
                                 this device, for example, 192.168.1.100/24. IP addresses provided via ipAddrs are
                                 intended to allow explicit assignment of a machine's IP address.
                               example: 2001:DB8:0000:0000:244:17FF:FEB6:D37D/64
-                              format: ipv6
                               items:
                                 type: string
                               type: array
@@ -8666,7 +8665,7 @@ spec:
                                 8.8.8.8. a nameserver is not provided by a fulfilled IPAddressClaim. If DHCP is not the
                                 source of IP addresses for this network device, nameservers should include a valid nameserver.
                               example: 8.8.8.8
-                              format: ipv6
+                              format: ip
                               items:
                                 type: string
                               type: array
