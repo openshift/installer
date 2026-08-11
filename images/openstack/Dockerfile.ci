@@ -57,8 +57,8 @@ RUN yum update -y && \
     git config --system user.email test@example.com && \
     chmod g+w /etc/passwd
 
-# Pin argcomplete: 3.7.1+ breaks on Python 3.9 (PEP604 annotations).
-RUN python3 -m pip install 'yq' 'argcomplete<3.7.1'
+# Exclude argcomplete 3.7.1: PEP604 annotations crash on Python 3.9.
+RUN python3 -m pip install 'yq' 'argcomplete!=3.7.1'
 
 # The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
