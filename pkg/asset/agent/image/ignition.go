@@ -180,7 +180,11 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		clusterName = fmt.Sprintf("%s.%s", agentManifests.ClusterDeployment.Spec.ClusterName, agentManifests.ClusterDeployment.Spec.BaseDomain)
 		if (agentConfigAsset.Config != nil && agentConfigAsset.Config.MinimalISO) ||
 			(agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType) {
-			imageTypeISO = "minimal-iso"
+			// s390x uses the zipl bootloader and does not support minimal ISO
+			// (no grub/isolinux to patch for kernel arguments).
+			if infraEnv.Spec.CpuArchitecture != types.ArchitectureS390X {
+				imageTypeISO = "minimal-iso"
+			}
 		}
 		// Fetch the required number of master and worker nodes.
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
