@@ -397,6 +397,16 @@
                 "Decrypt"
               ]
             },
+            "DeleteCryptoKey": {
+              "methods": [
+                "DeleteCryptoKey"
+              ]
+            },
+            "DeleteCryptoKeyVersion": {
+              "methods": [
+                "DeleteCryptoKeyVersion"
+              ]
+            },
             "DestroyCryptoKeyVersion": {
               "methods": [
                 "DestroyCryptoKeyVersion"
@@ -452,6 +462,11 @@
                 "GetPublicKey"
               ]
             },
+            "GetRetiredResource": {
+              "methods": [
+                "GetRetiredResource"
+              ]
+            },
             "ImportCryptoKeyVersion": {
               "methods": [
                 "ImportCryptoKeyVersion"
@@ -480,6 +495,11 @@
             "ListLocations": {
               "methods": [
                 "ListLocations"
+              ]
+            },
+            "ListRetiredResources": {
+              "methods": [
+                "ListRetiredResources"
               ]
             },
             "MacSign": {
@@ -572,6 +592,16 @@
                 "Decrypt"
               ]
             },
+            "DeleteCryptoKey": {
+              "methods": [
+                "DeleteCryptoKey"
+              ]
+            },
+            "DeleteCryptoKeyVersion": {
+              "methods": [
+                "DeleteCryptoKeyVersion"
+              ]
+            },
             "DestroyCryptoKeyVersion": {
               "methods": [
                 "DestroyCryptoKeyVersion"
@@ -627,6 +657,11 @@
                 "GetPublicKey"
               ]
             },
+            "GetRetiredResource": {
+              "methods": [
+                "GetRetiredResource"
+              ]
+            },
             "ImportCryptoKeyVersion": {
               "methods": [
                 "ImportCryptoKeyVersion"
@@ -655,6 +690,11 @@
             "ListLocations": {
               "methods": [
                 "ListLocations"
+              ]
+            },
+            "ListRetiredResources": {
+              "methods": [
+                "ListRetiredResources"
               ]
             },
             "MacSign": {

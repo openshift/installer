@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import (
 
 	computepb "cloud.google.com/go/compute/apiv1/computepb"
 	gax "github.com/googleapis/gax-go/v2"
+	"github.com/googleapis/gax-go/v2/callctx"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
@@ -415,7 +416,7 @@ type InstancesClient struct {
 
 // Wrapper methods routed to the internal client.
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *InstancesClient) Close() error {
 	return c.internalClient.Close()
@@ -446,27 +447,42 @@ func (c *InstancesClient) AddNetworkInterface(ctx context.Context, req *computep
 	return c.internalClient.AddNetworkInterface(ctx, req, opts...)
 }
 
-// AddResourcePolicies adds existing resource policies to an instance. You can only add one policy right now which will be applied to this instance for scheduling live migrations.
+// AddResourcePolicies adds existing resource policies to an instance. You can only add one
+// policy right now which will be applied to this instance for scheduling live
+// migrations.
 func (c *InstancesClient) AddResourcePolicies(ctx context.Context, req *computepb.AddResourcePoliciesInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.AddResourcePolicies(ctx, req, opts...)
 }
 
-// AggregatedList retrieves an aggregated list of all of the instances in your project across all regions and zones. The performance of this method degrades when a filter is specified on a project that has a very large number of instances. To prevent failure, Google recommends that you set the returnPartialSuccess parameter to true.
+// AggregatedList retrieves an aggregated list of all of the instances in your project
+// across all regions and zones.
+//
+// The performance of this method degrades when a filter is specified on a
+// project that has a very large number of instances.
+//
+// To prevent failure, Google recommends that you set the
+// returnPartialSuccess parameter to true.
 func (c *InstancesClient) AggregatedList(ctx context.Context, req *computepb.AggregatedListInstancesRequest, opts ...gax.CallOption) *InstancesScopedListPairIterator {
 	return c.internalClient.AggregatedList(ctx, req, opts...)
 }
 
-// AttachDisk attaches an existing Disk resource to an instance. You must first create the disk before you can attach it. It is not possible to create and attach a disk at the same time. For more information, read Adding a persistent disk to your instance.
+// AttachDisk attaches an existing Disk resource to an instance. You must first
+// create the disk before you can attach it. It is not possible to create
+// and attach a disk at the same time. For more information, readAdding a
+// persistent disk to your instance.
 func (c *InstancesClient) AttachDisk(ctx context.Context, req *computepb.AttachDiskInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.AttachDisk(ctx, req, opts...)
 }
 
-// BulkInsert creates multiple instances. Count specifies the number of instances to create. For more information, see About bulk creation of VMs.
+// BulkInsert creates multiple instances. Count specifies the number of instances to
+// create. For more information, seeAbout bulk
+// creation of VMs.
 func (c *InstancesClient) BulkInsert(ctx context.Context, req *computepb.BulkInsertInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.BulkInsert(ctx, req, opts...)
 }
 
-// Delete deletes the specified Instance resource. For more information, see Deleting an instance.
+// Delete deletes the specified Instance resource. For more information, seeDeleting
+// an instance.
 func (c *InstancesClient) Delete(ctx context.Context, req *computepb.DeleteInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Delete(ctx, req, opts...)
 }
@@ -476,7 +492,13 @@ func (c *InstancesClient) DeleteAccessConfig(ctx context.Context, req *computepb
 	return c.internalClient.DeleteAccessConfig(ctx, req, opts...)
 }
 
-// DeleteNetworkInterface deletes one dynamic network interface from an active instance. InstancesDeleteNetworkInterfaceRequest indicates: - instance from which to delete, using project+zone+resource_id fields; - dynamic network interface to be deleted, using network_interface_name field;
+// DeleteNetworkInterface deletes one dynamic network interface from an active instance.
+// InstancesDeleteNetworkInterfaceRequest indicates:
+//
+//	instance from which to delete, using project+zone+resource_id fields;
+//
+//	dynamic network interface to be deleted, using network_interface_name
+//	field;
 func (c *InstancesClient) DeleteNetworkInterface(ctx context.Context, req *computepb.DeleteNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.DeleteNetworkInterface(ctx, req, opts...)
 }
@@ -501,7 +523,8 @@ func (c *InstancesClient) GetGuestAttributes(ctx context.Context, req *computepb
 	return c.internalClient.GetGuestAttributes(ctx, req, opts...)
 }
 
-// GetIamPolicy gets the access control policy for a resource. May be empty if no such policy or resource exists.
+// GetIamPolicy gets the access control policy for a resource. May be empty if no such
+// policy or resource exists.
 func (c *InstancesClient) GetIamPolicy(ctx context.Context, req *computepb.GetIamPolicyInstanceRequest, opts ...gax.CallOption) (*computepb.Policy, error) {
 	return c.internalClient.GetIamPolicy(ctx, req, opts...)
 }
@@ -521,17 +544,23 @@ func (c *InstancesClient) GetShieldedInstanceIdentity(ctx context.Context, req *
 	return c.internalClient.GetShieldedInstanceIdentity(ctx, req, opts...)
 }
 
-// Insert creates an instance resource in the specified project using the data included in the request.
+// Insert creates an instance resource in the specified project using the data
+// included in the request.
 func (c *InstancesClient) Insert(ctx context.Context, req *computepb.InsertInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Insert(ctx, req, opts...)
 }
 
-// List retrieves the list of instances contained within the specified zone.
+// List retrieves the list of instances contained within
+// the specified zone.
 func (c *InstancesClient) List(ctx context.Context, req *computepb.ListInstancesRequest, opts ...gax.CallOption) *InstanceIterator {
 	return c.internalClient.List(ctx, req, opts...)
 }
 
-// ListReferrers retrieves a list of resources that refer to the VM instance specified in the request. For example, if the VM instance is part of a managed or unmanaged instance group, the referrers list includes the instance group. For more information, read Viewing referrers to VM instances.
+// ListReferrers retrieves a list of resources that refer to the VM instance specified in
+// the request. For example, if the VM instance is part of a managed or
+// unmanaged instance group, the referrers list includes the instance group.
+// For more information, readViewing
+// referrers to VM instances.
 func (c *InstancesClient) ListReferrers(ctx context.Context, req *computepb.ListReferrersInstancesRequest, opts ...gax.CallOption) *ReferenceIterator {
 	return c.internalClient.ListReferrers(ctx, req, opts...)
 }
@@ -551,12 +580,15 @@ func (c *InstancesClient) ReportHostAsFaulty(ctx context.Context, req *computepb
 	return c.internalClient.ReportHostAsFaulty(ctx, req, opts...)
 }
 
-// Reset performs a reset on the instance. This is a hard reset. The VM does not do a graceful shutdown. For more information, see Resetting an instance.
+// Reset performs a reset on the instance. This is a hard reset. The VM
+// does not do a graceful shutdown. For more information, seeResetting
+// an instance.
 func (c *InstancesClient) Reset(ctx context.Context, req *computepb.ResetInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Reset(ctx, req, opts...)
 }
 
-// Resume resumes an instance that was suspended using the instances().suspend method.
+// Resume resumes an instance that was suspended using theinstances().suspend
+// method.
 func (c *InstancesClient) Resume(ctx context.Context, req *computepb.ResumeInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Resume(ctx, req, opts...)
 }
@@ -576,32 +608,40 @@ func (c *InstancesClient) SetDiskAutoDelete(ctx context.Context, req *computepb.
 	return c.internalClient.SetDiskAutoDelete(ctx, req, opts...)
 }
 
-// SetIamPolicy sets the access control policy on the specified resource. Replaces any existing policy.
+// SetIamPolicy sets the access control policy on the specified resource.
+// Replaces any existing policy.
 func (c *InstancesClient) SetIamPolicy(ctx context.Context, req *computepb.SetIamPolicyInstanceRequest, opts ...gax.CallOption) (*computepb.Policy, error) {
 	return c.internalClient.SetIamPolicy(ctx, req, opts...)
 }
 
-// SetLabels sets labels on an instance. To learn more about labels, read the Labeling Resources documentation.
+// SetLabels sets labels on an instance.  To learn more about labels, read theLabeling
+// Resources documentation.
 func (c *InstancesClient) SetLabels(ctx context.Context, req *computepb.SetLabelsInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetLabels(ctx, req, opts...)
 }
 
-// SetMachineResources changes the number and/or type of accelerator for a stopped instance to the values specified in the request.
+// SetMachineResources changes the number and/or type of accelerator for a stopped instance to the
+// values specified in the request.
 func (c *InstancesClient) SetMachineResources(ctx context.Context, req *computepb.SetMachineResourcesInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetMachineResources(ctx, req, opts...)
 }
 
-// SetMachineType changes the machine type for a stopped instance to the machine type specified in the request.
+// SetMachineType changes the machine type for a stopped instance to the machine
+// type specified in the request.
 func (c *InstancesClient) SetMachineType(ctx context.Context, req *computepb.SetMachineTypeInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetMachineType(ctx, req, opts...)
 }
 
-// SetMetadata sets metadata for the specified instance to the data included in the request.
+// SetMetadata sets metadata for the specified instance to the data included
+// in the request.
 func (c *InstancesClient) SetMetadata(ctx context.Context, req *computepb.SetMetadataInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetMetadata(ctx, req, opts...)
 }
 
-// SetMinCpuPlatform changes the minimum CPU platform that this instance should use. This method can only be called on a stopped instance. For more information, read Specifying a Minimum CPU Platform.
+// SetMinCpuPlatform changes the minimum CPU platform that this instance should use.
+// This method can only
+// be called on a stopped instance. For more information, readSpecifying a
+// Minimum CPU Platform.
 func (c *InstancesClient) SetMinCpuPlatform(ctx context.Context, req *computepb.SetMinCpuPlatformInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetMinCpuPlatform(ctx, req, opts...)
 }
@@ -611,52 +651,81 @@ func (c *InstancesClient) SetName(ctx context.Context, req *computepb.SetNameIns
 	return c.internalClient.SetName(ctx, req, opts...)
 }
 
-// SetScheduling sets an instance’s scheduling options. You can only call this method on a stopped instance, that is, a VM instance that is in a TERMINATED state. See Instance Life Cycle for more information on the possible instance states. For more information about setting scheduling options for a VM, see Set VM host maintenance policy.
+// SetScheduling sets an instance’s scheduling options. You can only call this method on astopped instance,
+// that is, a VM instance that is in a TERMINATED state. SeeInstance Life
+// Cycle for more information on the possible instance states.
+// For more information about setting scheduling options for a VM, seeSet
+// VM host maintenance policy.
 func (c *InstancesClient) SetScheduling(ctx context.Context, req *computepb.SetSchedulingInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetScheduling(ctx, req, opts...)
 }
 
-// SetSecurityPolicy sets the Google Cloud Armor security policy for the specified instance. For more information, see Google Cloud Armor Overview
+// SetSecurityPolicy sets the Google Cloud Armor security policy for the specified instance.
+// For more information, seeGoogle
+// Cloud Armor Overview
 func (c *InstancesClient) SetSecurityPolicy(ctx context.Context, req *computepb.SetSecurityPolicyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetSecurityPolicy(ctx, req, opts...)
 }
 
-// SetServiceAccount sets the service account on the instance. For more information, read Changing the service account and access scopes for an instance.
+// SetServiceAccount sets the service account on the instance. For more information,
+// readChanging
+// the service account and access scopes for an instance.
 func (c *InstancesClient) SetServiceAccount(ctx context.Context, req *computepb.SetServiceAccountInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetServiceAccount(ctx, req, opts...)
 }
 
-// SetShieldedInstanceIntegrityPolicy sets the Shielded Instance integrity policy for an instance. You can only use this method on a running instance. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// SetShieldedInstanceIntegrityPolicy sets the Shielded Instance integrity policy for an instance. You can
+// only use this method on a running instance. This method
+// supports PATCH semantics and uses the JSON merge
+// patch format and processing rules.
 func (c *InstancesClient) SetShieldedInstanceIntegrityPolicy(ctx context.Context, req *computepb.SetShieldedInstanceIntegrityPolicyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetShieldedInstanceIntegrityPolicy(ctx, req, opts...)
 }
 
-// SetTags sets network tags for the specified instance to the data included in the request.
+// SetTags sets network tags
+// for the specified instance to the data included in the request.
 func (c *InstancesClient) SetTags(ctx context.Context, req *computepb.SetTagsInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetTags(ctx, req, opts...)
 }
 
-// SimulateMaintenanceEvent simulates a host maintenance event on a VM. For more information, see Simulate a host maintenance event.
+// SimulateMaintenanceEvent simulates a host maintenance event on a VM. For more information, see
+// Simulate a host maintenance event.
 func (c *InstancesClient) SimulateMaintenanceEvent(ctx context.Context, req *computepb.SimulateMaintenanceEventInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SimulateMaintenanceEvent(ctx, req, opts...)
 }
 
-// Start starts an instance that was stopped using the instances().stop method. For more information, see Restart an instance.
+// Start starts an instance that was stopped using theinstances().stop
+// method. For more information, seeRestart an
+// instance.
 func (c *InstancesClient) Start(ctx context.Context, req *computepb.StartInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Start(ctx, req, opts...)
 }
 
-// StartWithEncryptionKey starts an instance that was stopped using the instances().stop method. For more information, see Restart an instance.
+// StartWithEncryptionKey starts an instance that was stopped using theinstances().stop
+// method. For more information, seeRestart an
+// instance.
 func (c *InstancesClient) StartWithEncryptionKey(ctx context.Context, req *computepb.StartWithEncryptionKeyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.StartWithEncryptionKey(ctx, req, opts...)
 }
 
-// Stop stops a running instance, shutting it down cleanly, and allows you to restart the instance at a later time. Stopped instances do not incur VM usage charges while they are stopped. However, resources that the VM is using, such as persistent disks and static IP addresses, will continue to be charged until they are deleted. For more information, see Stopping an instance.
+// Stop stops a running instance, shutting it down cleanly, and allows
+// you to restart the instance at a later time. Stopped instances do not incur
+// VM usage charges while they are stopped. However, resources that the VM is
+// using, such as persistent disks and static IP addresses, will continue to
+// be charged until they are deleted. For more information, seeStopping
+// an instance.
 func (c *InstancesClient) Stop(ctx context.Context, req *computepb.StopInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Stop(ctx, req, opts...)
 }
 
-// Suspend this method suspends a running instance, saving its state to persistent storage, and allows you to resume the instance at a later time. Suspended instances have no compute costs (cores or RAM), and incur only storage charges for the saved VM memory and localSSD data. Any charged resources the virtual machine was using, such as persistent disks and static IP addresses, will continue to be charged while the instance is suspended. For more information, see Suspending and resuming an instance.
+// Suspend this method suspends a running instance, saving its state to persistent
+// storage, and allows you to resume the instance at a later time. Suspended
+// instances have no compute costs (cores or RAM), and incur only storage
+// charges for the saved VM memory and localSSD data. Any charged resources
+// the virtual machine was using, such as persistent disks and static IP
+// addresses, will continue to be charged while the instance is suspended.
+// For more information, see
+// Suspending and resuming an instance.
 func (c *InstancesClient) Suspend(ctx context.Context, req *computepb.SuspendInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Suspend(ctx, req, opts...)
 }
@@ -666,27 +735,44 @@ func (c *InstancesClient) TestIamPermissions(ctx context.Context, req *computepb
 	return c.internalClient.TestIamPermissions(ctx, req, opts...)
 }
 
-// Update updates an instance only if the necessary resources are available. This method can update only a specific set of instance properties. See Updating a running instance for a list of updatable instance properties.
+// Update updates an instance only if the necessary resources are available. This
+// method can update only a specific set of instance properties. See
+// Updating a running instance for a list of updatable instance
+// properties.
 func (c *InstancesClient) Update(ctx context.Context, req *computepb.UpdateInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Update(ctx, req, opts...)
 }
 
-// UpdateAccessConfig updates the specified access config from an instance’s network interface with the data included in the request. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// UpdateAccessConfig updates the specified access config from an instance’s network interface
+// with the data included in the request. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
 func (c *InstancesClient) UpdateAccessConfig(ctx context.Context, req *computepb.UpdateAccessConfigInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.UpdateAccessConfig(ctx, req, opts...)
 }
 
-// UpdateDisplayDevice updates the Display config for a VM instance. You can only use this method on a stopped VM instance. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// UpdateDisplayDevice updates the Display config for a VM instance. You can
+// only use this method on a stopped VM instance. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
 func (c *InstancesClient) UpdateDisplayDevice(ctx context.Context, req *computepb.UpdateDisplayDeviceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.UpdateDisplayDevice(ctx, req, opts...)
 }
 
-// UpdateNetworkInterface updates an instance’s network interface. This method can only update an interface’s alias IP range and attached network. See Modifying alias IP ranges for an existing instance for instructions on changing alias IP ranges. See Migrating a VM between networks for instructions on migrating an interface. This method follows PATCH semantics.
+// UpdateNetworkInterface updates an instance’s network interface. This method can only update an
+// interface’s alias IP range and attached network. See Modifying
+// alias IP ranges for an existing instance for instructions on
+// changing alias IP ranges. See Migrating
+// a VM between networks for instructions on migrating an interface.
+// This method follows PATCH semantics.
 func (c *InstancesClient) UpdateNetworkInterface(ctx context.Context, req *computepb.UpdateNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.UpdateNetworkInterface(ctx, req, opts...)
 }
 
-// UpdateShieldedInstanceConfig updates the Shielded Instance config for an instance. You can only use this method on a stopped instance. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// UpdateShieldedInstanceConfig updates the Shielded Instance config for an instance. You can
+// only use this method on a stopped instance. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
 func (c *InstancesClient) UpdateShieldedInstanceConfig(ctx context.Context, req *computepb.UpdateShieldedInstanceConfigInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.UpdateShieldedInstanceConfig(ctx, req, opts...)
 }
@@ -716,6 +802,16 @@ type instancesRESTClient struct {
 // The Instances API.
 func NewInstancesRESTClient(ctx context.Context, opts ...option.ClientOption) (*InstancesClient, error) {
 	clientOpts := append(defaultInstancesRESTClientOptions(), opts...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		clientOpts = append(clientOpts, internaloption.WithTelemetryAttributes(map[string]string{
+			"gcp.client.service":  "compute",
+			"gcp.client.version":  getVersionClient(),
+			"gcp.client.repo":     "googleapis/google-cloud-go",
+			"gcp.client.artifact": "cloud.google.com/go/compute/apiv1",
+			"gcp.client.language": "go",
+			"url.domain":          "compute.googleapis.com",
+		}))
+	}
 	httpClient, endpoint, err := httptransport.NewClient(ctx, clientOpts...)
 	if err != nil {
 		return nil, err
@@ -729,6 +825,71 @@ func NewInstancesRESTClient(ctx context.Context, opts ...option.ClientOption) (*
 		logger:      internaloption.GetLogger(opts),
 	}
 	c.setGoogleClientInfo()
+
+	if gax.IsFeatureEnabled("METRICS") {
+		metrics := gax.NewClientMetrics(
+			gax.WithTelemetryLogger(c.logger),
+			gax.WithTelemetryAttributes(map[string]string{
+				gax.ClientService:  "compute",
+				gax.ClientVersion:  getVersionClient(),
+				gax.ClientArtifact: "cloud.google.com/go/compute/apiv1",
+				gax.RPCSystem:      "http",
+				gax.URLDomain:      "compute.googleapis.com",
+			}),
+		)
+
+		callOpts.AddAccessConfig = append(callOpts.AddAccessConfig, gax.WithClientMetrics(metrics))
+		callOpts.AddNetworkInterface = append(callOpts.AddNetworkInterface, gax.WithClientMetrics(metrics))
+		callOpts.AddResourcePolicies = append(callOpts.AddResourcePolicies, gax.WithClientMetrics(metrics))
+		callOpts.AggregatedList = append(callOpts.AggregatedList, gax.WithClientMetrics(metrics))
+		callOpts.AttachDisk = append(callOpts.AttachDisk, gax.WithClientMetrics(metrics))
+		callOpts.BulkInsert = append(callOpts.BulkInsert, gax.WithClientMetrics(metrics))
+		callOpts.Delete = append(callOpts.Delete, gax.WithClientMetrics(metrics))
+		callOpts.DeleteAccessConfig = append(callOpts.DeleteAccessConfig, gax.WithClientMetrics(metrics))
+		callOpts.DeleteNetworkInterface = append(callOpts.DeleteNetworkInterface, gax.WithClientMetrics(metrics))
+		callOpts.DetachDisk = append(callOpts.DetachDisk, gax.WithClientMetrics(metrics))
+		callOpts.Get = append(callOpts.Get, gax.WithClientMetrics(metrics))
+		callOpts.GetEffectiveFirewalls = append(callOpts.GetEffectiveFirewalls, gax.WithClientMetrics(metrics))
+		callOpts.GetGuestAttributes = append(callOpts.GetGuestAttributes, gax.WithClientMetrics(metrics))
+		callOpts.GetIamPolicy = append(callOpts.GetIamPolicy, gax.WithClientMetrics(metrics))
+		callOpts.GetScreenshot = append(callOpts.GetScreenshot, gax.WithClientMetrics(metrics))
+		callOpts.GetSerialPortOutput = append(callOpts.GetSerialPortOutput, gax.WithClientMetrics(metrics))
+		callOpts.GetShieldedInstanceIdentity = append(callOpts.GetShieldedInstanceIdentity, gax.WithClientMetrics(metrics))
+		callOpts.Insert = append(callOpts.Insert, gax.WithClientMetrics(metrics))
+		callOpts.List = append(callOpts.List, gax.WithClientMetrics(metrics))
+		callOpts.ListReferrers = append(callOpts.ListReferrers, gax.WithClientMetrics(metrics))
+		callOpts.PerformMaintenance = append(callOpts.PerformMaintenance, gax.WithClientMetrics(metrics))
+		callOpts.RemoveResourcePolicies = append(callOpts.RemoveResourcePolicies, gax.WithClientMetrics(metrics))
+		callOpts.ReportHostAsFaulty = append(callOpts.ReportHostAsFaulty, gax.WithClientMetrics(metrics))
+		callOpts.Reset = append(callOpts.Reset, gax.WithClientMetrics(metrics))
+		callOpts.Resume = append(callOpts.Resume, gax.WithClientMetrics(metrics))
+		callOpts.SendDiagnosticInterrupt = append(callOpts.SendDiagnosticInterrupt, gax.WithClientMetrics(metrics))
+		callOpts.SetDeletionProtection = append(callOpts.SetDeletionProtection, gax.WithClientMetrics(metrics))
+		callOpts.SetDiskAutoDelete = append(callOpts.SetDiskAutoDelete, gax.WithClientMetrics(metrics))
+		callOpts.SetIamPolicy = append(callOpts.SetIamPolicy, gax.WithClientMetrics(metrics))
+		callOpts.SetLabels = append(callOpts.SetLabels, gax.WithClientMetrics(metrics))
+		callOpts.SetMachineResources = append(callOpts.SetMachineResources, gax.WithClientMetrics(metrics))
+		callOpts.SetMachineType = append(callOpts.SetMachineType, gax.WithClientMetrics(metrics))
+		callOpts.SetMetadata = append(callOpts.SetMetadata, gax.WithClientMetrics(metrics))
+		callOpts.SetMinCpuPlatform = append(callOpts.SetMinCpuPlatform, gax.WithClientMetrics(metrics))
+		callOpts.SetName = append(callOpts.SetName, gax.WithClientMetrics(metrics))
+		callOpts.SetScheduling = append(callOpts.SetScheduling, gax.WithClientMetrics(metrics))
+		callOpts.SetSecurityPolicy = append(callOpts.SetSecurityPolicy, gax.WithClientMetrics(metrics))
+		callOpts.SetServiceAccount = append(callOpts.SetServiceAccount, gax.WithClientMetrics(metrics))
+		callOpts.SetShieldedInstanceIntegrityPolicy = append(callOpts.SetShieldedInstanceIntegrityPolicy, gax.WithClientMetrics(metrics))
+		callOpts.SetTags = append(callOpts.SetTags, gax.WithClientMetrics(metrics))
+		callOpts.SimulateMaintenanceEvent = append(callOpts.SimulateMaintenanceEvent, gax.WithClientMetrics(metrics))
+		callOpts.Start = append(callOpts.Start, gax.WithClientMetrics(metrics))
+		callOpts.StartWithEncryptionKey = append(callOpts.StartWithEncryptionKey, gax.WithClientMetrics(metrics))
+		callOpts.Stop = append(callOpts.Stop, gax.WithClientMetrics(metrics))
+		callOpts.Suspend = append(callOpts.Suspend, gax.WithClientMetrics(metrics))
+		callOpts.TestIamPermissions = append(callOpts.TestIamPermissions, gax.WithClientMetrics(metrics))
+		callOpts.Update = append(callOpts.Update, gax.WithClientMetrics(metrics))
+		callOpts.UpdateAccessConfig = append(callOpts.UpdateAccessConfig, gax.WithClientMetrics(metrics))
+		callOpts.UpdateDisplayDevice = append(callOpts.UpdateDisplayDevice, gax.WithClientMetrics(metrics))
+		callOpts.UpdateNetworkInterface = append(callOpts.UpdateNetworkInterface, gax.WithClientMetrics(metrics))
+		callOpts.UpdateShieldedInstanceConfig = append(callOpts.UpdateShieldedInstanceConfig, gax.WithClientMetrics(metrics))
+	}
 
 	o := []option.ClientOption{
 		option.WithHTTPClient(httpClient),
@@ -766,7 +927,7 @@ func (c *instancesRESTClient) setGoogleClientInfo(keyval ...string) {
 	}
 }
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *instancesRESTClient) Close() error {
 	// Replace httpClient with nil to force cleanup.
@@ -813,6 +974,13 @@ func (c *instancesRESTClient) AddAccessConfig(ctx context.Context, req *computep
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/AddAccessConfig")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/addAccessConfig")
+	}
 	opts = append((*c.CallOptions).AddAccessConfig[0:len((*c.CallOptions).AddAccessConfig):len((*c.CallOptions).AddAccessConfig)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -880,6 +1048,13 @@ func (c *instancesRESTClient) AddNetworkInterface(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/AddNetworkInterface")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/addNetworkInterface")
+	}
 	opts = append((*c.CallOptions).AddNetworkInterface[0:len((*c.CallOptions).AddNetworkInterface):len((*c.CallOptions).AddNetworkInterface)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -919,7 +1094,9 @@ func (c *instancesRESTClient) AddNetworkInterface(ctx context.Context, req *comp
 	return op, nil
 }
 
-// AddResourcePolicies adds existing resource policies to an instance. You can only add one policy right now which will be applied to this instance for scheduling live migrations.
+// AddResourcePolicies adds existing resource policies to an instance. You can only add one
+// policy right now which will be applied to this instance for scheduling live
+// migrations.
 func (c *instancesRESTClient) AddResourcePolicies(ctx context.Context, req *computepb.AddResourcePoliciesInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesAddResourcePoliciesRequestResource()
@@ -947,6 +1124,13 @@ func (c *instancesRESTClient) AddResourcePolicies(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/AddResourcePolicies")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/addResourcePolicies")
+	}
 	opts = append((*c.CallOptions).AddResourcePolicies[0:len((*c.CallOptions).AddResourcePolicies):len((*c.CallOptions).AddResourcePolicies)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -986,10 +1170,17 @@ func (c *instancesRESTClient) AddResourcePolicies(ctx context.Context, req *comp
 	return op, nil
 }
 
-// AggregatedList retrieves an aggregated list of all of the instances in your project across all regions and zones. The performance of this method degrades when a filter is specified on a project that has a very large number of instances. To prevent failure, Google recommends that you set the returnPartialSuccess parameter to true.
+// AggregatedList retrieves an aggregated list of all of the instances in your project
+// across all regions and zones.
+//
+// The performance of this method degrades when a filter is specified on a
+// project that has a very large number of instances.
+//
+// To prevent failure, Google recommends that you set the
+// returnPartialSuccess parameter to true.
 func (c *instancesRESTClient) AggregatedList(ctx context.Context, req *computepb.AggregatedListInstancesRequest, opts ...gax.CallOption) *InstancesScopedListPairIterator {
 	it := &InstancesScopedListPairIterator{}
-	req = proto.Clone(req).(*computepb.AggregatedListInstancesRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]InstancesScopedListPair, string, error) {
 		resp := &computepb.InstanceAggregatedList{}
@@ -1085,7 +1276,10 @@ func (c *instancesRESTClient) AggregatedList(ctx context.Context, req *computepb
 	return it
 }
 
-// AttachDisk attaches an existing Disk resource to an instance. You must first create the disk before you can attach it. It is not possible to create and attach a disk at the same time. For more information, read Adding a persistent disk to your instance.
+// AttachDisk attaches an existing Disk resource to an instance. You must first
+// create the disk before you can attach it. It is not possible to create
+// and attach a disk at the same time. For more information, readAdding a
+// persistent disk to your instance.
 func (c *instancesRESTClient) AttachDisk(ctx context.Context, req *computepb.AttachDiskInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetAttachedDiskResource()
@@ -1116,6 +1310,13 @@ func (c *instancesRESTClient) AttachDisk(ctx context.Context, req *computepb.Att
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/AttachDisk")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/attachDisk")
+	}
 	opts = append((*c.CallOptions).AttachDisk[0:len((*c.CallOptions).AttachDisk):len((*c.CallOptions).AttachDisk)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1155,7 +1356,9 @@ func (c *instancesRESTClient) AttachDisk(ctx context.Context, req *computepb.Att
 	return op, nil
 }
 
-// BulkInsert creates multiple instances. Count specifies the number of instances to create. For more information, see About bulk creation of VMs.
+// BulkInsert creates multiple instances. Count specifies the number of instances to
+// create. For more information, seeAbout bulk
+// creation of VMs.
 func (c *instancesRESTClient) BulkInsert(ctx context.Context, req *computepb.BulkInsertInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetBulkInsertInstanceResourceResource()
@@ -1183,6 +1386,13 @@ func (c *instancesRESTClient) BulkInsert(ctx context.Context, req *computepb.Bul
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v", req.GetProject(), req.GetZone()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/BulkInsert")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/bulkInsert")
+	}
 	opts = append((*c.CallOptions).BulkInsert[0:len((*c.CallOptions).BulkInsert):len((*c.CallOptions).BulkInsert)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1222,7 +1432,8 @@ func (c *instancesRESTClient) BulkInsert(ctx context.Context, req *computepb.Bul
 	return op, nil
 }
 
-// Delete deletes the specified Instance resource. For more information, see Deleting an instance.
+// Delete deletes the specified Instance resource. For more information, seeDeleting
+// an instance.
 func (c *instancesRESTClient) Delete(ctx context.Context, req *computepb.DeleteInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -1243,6 +1454,13 @@ func (c *instancesRESTClient) Delete(ctx context.Context, req *computepb.DeleteI
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Delete")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}")
+	}
 	opts = append((*c.CallOptions).Delete[0:len((*c.CallOptions).Delete):len((*c.CallOptions).Delete)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1305,6 +1523,13 @@ func (c *instancesRESTClient) DeleteAccessConfig(ctx context.Context, req *compu
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/DeleteAccessConfig")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/deleteAccessConfig")
+	}
 	opts = append((*c.CallOptions).DeleteAccessConfig[0:len((*c.CallOptions).DeleteAccessConfig):len((*c.CallOptions).DeleteAccessConfig)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1344,7 +1569,13 @@ func (c *instancesRESTClient) DeleteAccessConfig(ctx context.Context, req *compu
 	return op, nil
 }
 
-// DeleteNetworkInterface deletes one dynamic network interface from an active instance. InstancesDeleteNetworkInterfaceRequest indicates: - instance from which to delete, using project+zone+resource_id fields; - dynamic network interface to be deleted, using network_interface_name field;
+// DeleteNetworkInterface deletes one dynamic network interface from an active instance.
+// InstancesDeleteNetworkInterfaceRequest indicates:
+//
+//	instance from which to delete, using project+zone+resource_id fields;
+//
+//	dynamic network interface to be deleted, using network_interface_name
+//	field;
 func (c *instancesRESTClient) DeleteNetworkInterface(ctx context.Context, req *computepb.DeleteNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -1366,6 +1597,13 @@ func (c *instancesRESTClient) DeleteNetworkInterface(ctx context.Context, req *c
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/DeleteNetworkInterface")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/deleteNetworkInterface")
+	}
 	opts = append((*c.CallOptions).DeleteNetworkInterface[0:len((*c.CallOptions).DeleteNetworkInterface):len((*c.CallOptions).DeleteNetworkInterface)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1427,6 +1665,13 @@ func (c *instancesRESTClient) DetachDisk(ctx context.Context, req *computepb.Det
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/DetachDisk")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/detachDisk")
+	}
 	opts = append((*c.CallOptions).DetachDisk[0:len((*c.CallOptions).DetachDisk):len((*c.CallOptions).DetachDisk)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1480,6 +1725,13 @@ func (c *instancesRESTClient) Get(ctx context.Context, req *computepb.GetInstanc
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Get")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}")
+	}
 	opts = append((*c.CallOptions).Get[0:len((*c.CallOptions).Get):len((*c.CallOptions).Get)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Instance{}
@@ -1530,6 +1782,13 @@ func (c *instancesRESTClient) GetEffectiveFirewalls(ctx context.Context, req *co
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/GetEffectiveFirewalls")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/getEffectiveFirewalls")
+	}
 	opts = append((*c.CallOptions).GetEffectiveFirewalls[0:len((*c.CallOptions).GetEffectiveFirewalls):len((*c.CallOptions).GetEffectiveFirewalls)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.InstancesGetEffectiveFirewallsResponse{}
@@ -1585,6 +1844,13 @@ func (c *instancesRESTClient) GetGuestAttributes(ctx context.Context, req *compu
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/GetGuestAttributes")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/getGuestAttributes")
+	}
 	opts = append((*c.CallOptions).GetGuestAttributes[0:len((*c.CallOptions).GetGuestAttributes):len((*c.CallOptions).GetGuestAttributes)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.GuestAttributes{}
@@ -1616,7 +1882,8 @@ func (c *instancesRESTClient) GetGuestAttributes(ctx context.Context, req *compu
 	return resp, nil
 }
 
-// GetIamPolicy gets the access control policy for a resource. May be empty if no such policy or resource exists.
+// GetIamPolicy gets the access control policy for a resource. May be empty if no such
+// policy or resource exists.
 func (c *instancesRESTClient) GetIamPolicy(ctx context.Context, req *computepb.GetIamPolicyInstanceRequest, opts ...gax.CallOption) (*computepb.Policy, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -1637,6 +1904,13 @@ func (c *instancesRESTClient) GetIamPolicy(ctx context.Context, req *computepb.G
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetResource()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/GetIamPolicy")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{resource}/getIamPolicy")
+	}
 	opts = append((*c.CallOptions).GetIamPolicy[0:len((*c.CallOptions).GetIamPolicy):len((*c.CallOptions).GetIamPolicy)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Policy{}
@@ -1682,6 +1956,13 @@ func (c *instancesRESTClient) GetScreenshot(ctx context.Context, req *computepb.
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/GetScreenshot")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/screenshot")
+	}
 	opts = append((*c.CallOptions).GetScreenshot[0:len((*c.CallOptions).GetScreenshot):len((*c.CallOptions).GetScreenshot)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Screenshot{}
@@ -1737,6 +2018,13 @@ func (c *instancesRESTClient) GetSerialPortOutput(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/GetSerialPortOutput")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/serialPort")
+	}
 	opts = append((*c.CallOptions).GetSerialPortOutput[0:len((*c.CallOptions).GetSerialPortOutput):len((*c.CallOptions).GetSerialPortOutput)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.SerialPortOutput{}
@@ -1782,6 +2070,13 @@ func (c *instancesRESTClient) GetShieldedInstanceIdentity(ctx context.Context, r
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/GetShieldedInstanceIdentity")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/getShieldedInstanceIdentity")
+	}
 	opts = append((*c.CallOptions).GetShieldedInstanceIdentity[0:len((*c.CallOptions).GetShieldedInstanceIdentity):len((*c.CallOptions).GetShieldedInstanceIdentity)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.ShieldedInstanceIdentity{}
@@ -1813,7 +2108,8 @@ func (c *instancesRESTClient) GetShieldedInstanceIdentity(ctx context.Context, r
 	return resp, nil
 }
 
-// Insert creates an instance resource in the specified project using the data included in the request.
+// Insert creates an instance resource in the specified project using the data
+// included in the request.
 func (c *instancesRESTClient) Insert(ctx context.Context, req *computepb.InsertInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstanceResource()
@@ -1847,6 +2143,13 @@ func (c *instancesRESTClient) Insert(ctx context.Context, req *computepb.InsertI
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v", req.GetProject(), req.GetZone()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Insert")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances")
+	}
 	opts = append((*c.CallOptions).Insert[0:len((*c.CallOptions).Insert):len((*c.CallOptions).Insert)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1886,10 +2189,11 @@ func (c *instancesRESTClient) Insert(ctx context.Context, req *computepb.InsertI
 	return op, nil
 }
 
-// List retrieves the list of instances contained within the specified zone.
+// List retrieves the list of instances contained within
+// the specified zone.
 func (c *instancesRESTClient) List(ctx context.Context, req *computepb.ListInstancesRequest, opts ...gax.CallOption) *InstanceIterator {
 	it := &InstanceIterator{}
-	req = proto.Clone(req).(*computepb.ListInstancesRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.Instance, string, error) {
 		resp := &computepb.InstanceList{}
@@ -1972,10 +2276,14 @@ func (c *instancesRESTClient) List(ctx context.Context, req *computepb.ListInsta
 	return it
 }
 
-// ListReferrers retrieves a list of resources that refer to the VM instance specified in the request. For example, if the VM instance is part of a managed or unmanaged instance group, the referrers list includes the instance group. For more information, read Viewing referrers to VM instances.
+// ListReferrers retrieves a list of resources that refer to the VM instance specified in
+// the request. For example, if the VM instance is part of a managed or
+// unmanaged instance group, the referrers list includes the instance group.
+// For more information, readViewing
+// referrers to VM instances.
 func (c *instancesRESTClient) ListReferrers(ctx context.Context, req *computepb.ListReferrersInstancesRequest, opts ...gax.CallOption) *ReferenceIterator {
 	it := &ReferenceIterator{}
-	req = proto.Clone(req).(*computepb.ListReferrersInstancesRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.Reference, string, error) {
 		resp := &computepb.InstanceListReferrers{}
@@ -2079,6 +2387,13 @@ func (c *instancesRESTClient) PerformMaintenance(ctx context.Context, req *compu
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/PerformMaintenance")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/performMaintenance")
+	}
 	opts = append((*c.CallOptions).PerformMaintenance[0:len((*c.CallOptions).PerformMaintenance):len((*c.CallOptions).PerformMaintenance)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2146,6 +2461,13 @@ func (c *instancesRESTClient) RemoveResourcePolicies(ctx context.Context, req *c
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/RemoveResourcePolicies")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/removeResourcePolicies")
+	}
 	opts = append((*c.CallOptions).RemoveResourcePolicies[0:len((*c.CallOptions).RemoveResourcePolicies):len((*c.CallOptions).RemoveResourcePolicies)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2213,6 +2535,13 @@ func (c *instancesRESTClient) ReportHostAsFaulty(ctx context.Context, req *compu
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/ReportHostAsFaulty")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/reportHostAsFaulty")
+	}
 	opts = append((*c.CallOptions).ReportHostAsFaulty[0:len((*c.CallOptions).ReportHostAsFaulty):len((*c.CallOptions).ReportHostAsFaulty)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2252,7 +2581,9 @@ func (c *instancesRESTClient) ReportHostAsFaulty(ctx context.Context, req *compu
 	return op, nil
 }
 
-// Reset performs a reset on the instance. This is a hard reset. The VM does not do a graceful shutdown. For more information, see Resetting an instance.
+// Reset performs a reset on the instance. This is a hard reset. The VM
+// does not do a graceful shutdown. For more information, seeResetting
+// an instance.
 func (c *instancesRESTClient) Reset(ctx context.Context, req *computepb.ResetInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -2273,6 +2604,13 @@ func (c *instancesRESTClient) Reset(ctx context.Context, req *computepb.ResetIns
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Reset")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/reset")
+	}
 	opts = append((*c.CallOptions).Reset[0:len((*c.CallOptions).Reset):len((*c.CallOptions).Reset)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2312,7 +2650,8 @@ func (c *instancesRESTClient) Reset(ctx context.Context, req *computepb.ResetIns
 	return op, nil
 }
 
-// Resume resumes an instance that was suspended using the instances().suspend method.
+// Resume resumes an instance that was suspended using theinstances().suspend
+// method.
 func (c *instancesRESTClient) Resume(ctx context.Context, req *computepb.ResumeInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -2333,6 +2672,13 @@ func (c *instancesRESTClient) Resume(ctx context.Context, req *computepb.ResumeI
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Resume")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/resume")
+	}
 	opts = append((*c.CallOptions).Resume[0:len((*c.CallOptions).Resume):len((*c.CallOptions).Resume)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2386,6 +2732,13 @@ func (c *instancesRESTClient) SendDiagnosticInterrupt(ctx context.Context, req *
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SendDiagnosticInterrupt")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/sendDiagnosticInterrupt")
+	}
 	opts = append((*c.CallOptions).SendDiagnosticInterrupt[0:len((*c.CallOptions).SendDiagnosticInterrupt):len((*c.CallOptions).SendDiagnosticInterrupt)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.SendDiagnosticInterruptInstanceResponse{}
@@ -2441,6 +2794,13 @@ func (c *instancesRESTClient) SetDeletionProtection(ctx context.Context, req *co
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetResource()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetDeletionProtection")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{resource}/setDeletionProtection")
+	}
 	opts = append((*c.CallOptions).SetDeletionProtection[0:len((*c.CallOptions).SetDeletionProtection):len((*c.CallOptions).SetDeletionProtection)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2503,6 +2863,13 @@ func (c *instancesRESTClient) SetDiskAutoDelete(ctx context.Context, req *comput
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetDiskAutoDelete")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setDiskAutoDelete")
+	}
 	opts = append((*c.CallOptions).SetDiskAutoDelete[0:len((*c.CallOptions).SetDiskAutoDelete):len((*c.CallOptions).SetDiskAutoDelete)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2542,7 +2909,8 @@ func (c *instancesRESTClient) SetDiskAutoDelete(ctx context.Context, req *comput
 	return op, nil
 }
 
-// SetIamPolicy sets the access control policy on the specified resource. Replaces any existing policy.
+// SetIamPolicy sets the access control policy on the specified resource.
+// Replaces any existing policy.
 func (c *instancesRESTClient) SetIamPolicy(ctx context.Context, req *computepb.SetIamPolicyInstanceRequest, opts ...gax.CallOption) (*computepb.Policy, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetZoneSetPolicyRequestResource()
@@ -2563,6 +2931,13 @@ func (c *instancesRESTClient) SetIamPolicy(ctx context.Context, req *computepb.S
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetResource()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetIamPolicy")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{resource}/setIamPolicy")
+	}
 	opts = append((*c.CallOptions).SetIamPolicy[0:len((*c.CallOptions).SetIamPolicy):len((*c.CallOptions).SetIamPolicy)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Policy{}
@@ -2594,7 +2969,8 @@ func (c *instancesRESTClient) SetIamPolicy(ctx context.Context, req *computepb.S
 	return resp, nil
 }
 
-// SetLabels sets labels on an instance. To learn more about labels, read the Labeling Resources documentation.
+// SetLabels sets labels on an instance.  To learn more about labels, read theLabeling
+// Resources documentation.
 func (c *instancesRESTClient) SetLabels(ctx context.Context, req *computepb.SetLabelsInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesSetLabelsRequestResource()
@@ -2622,6 +2998,13 @@ func (c *instancesRESTClient) SetLabels(ctx context.Context, req *computepb.SetL
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetLabels")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setLabels")
+	}
 	opts = append((*c.CallOptions).SetLabels[0:len((*c.CallOptions).SetLabels):len((*c.CallOptions).SetLabels)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2661,7 +3044,8 @@ func (c *instancesRESTClient) SetLabels(ctx context.Context, req *computepb.SetL
 	return op, nil
 }
 
-// SetMachineResources changes the number and/or type of accelerator for a stopped instance to the values specified in the request.
+// SetMachineResources changes the number and/or type of accelerator for a stopped instance to the
+// values specified in the request.
 func (c *instancesRESTClient) SetMachineResources(ctx context.Context, req *computepb.SetMachineResourcesInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesSetMachineResourcesRequestResource()
@@ -2689,6 +3073,13 @@ func (c *instancesRESTClient) SetMachineResources(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetMachineResources")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setMachineResources")
+	}
 	opts = append((*c.CallOptions).SetMachineResources[0:len((*c.CallOptions).SetMachineResources):len((*c.CallOptions).SetMachineResources)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2728,7 +3119,8 @@ func (c *instancesRESTClient) SetMachineResources(ctx context.Context, req *comp
 	return op, nil
 }
 
-// SetMachineType changes the machine type for a stopped instance to the machine type specified in the request.
+// SetMachineType changes the machine type for a stopped instance to the machine
+// type specified in the request.
 func (c *instancesRESTClient) SetMachineType(ctx context.Context, req *computepb.SetMachineTypeInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesSetMachineTypeRequestResource()
@@ -2756,6 +3148,13 @@ func (c *instancesRESTClient) SetMachineType(ctx context.Context, req *computepb
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetMachineType")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setMachineType")
+	}
 	opts = append((*c.CallOptions).SetMachineType[0:len((*c.CallOptions).SetMachineType):len((*c.CallOptions).SetMachineType)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2795,7 +3194,8 @@ func (c *instancesRESTClient) SetMachineType(ctx context.Context, req *computepb
 	return op, nil
 }
 
-// SetMetadata sets metadata for the specified instance to the data included in the request.
+// SetMetadata sets metadata for the specified instance to the data included
+// in the request.
 func (c *instancesRESTClient) SetMetadata(ctx context.Context, req *computepb.SetMetadataInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetMetadataResource()
@@ -2823,6 +3223,13 @@ func (c *instancesRESTClient) SetMetadata(ctx context.Context, req *computepb.Se
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetMetadata")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setMetadata")
+	}
 	opts = append((*c.CallOptions).SetMetadata[0:len((*c.CallOptions).SetMetadata):len((*c.CallOptions).SetMetadata)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2862,7 +3269,10 @@ func (c *instancesRESTClient) SetMetadata(ctx context.Context, req *computepb.Se
 	return op, nil
 }
 
-// SetMinCpuPlatform changes the minimum CPU platform that this instance should use. This method can only be called on a stopped instance. For more information, read Specifying a Minimum CPU Platform.
+// SetMinCpuPlatform changes the minimum CPU platform that this instance should use.
+// This method can only
+// be called on a stopped instance. For more information, readSpecifying a
+// Minimum CPU Platform.
 func (c *instancesRESTClient) SetMinCpuPlatform(ctx context.Context, req *computepb.SetMinCpuPlatformInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesSetMinCpuPlatformRequestResource()
@@ -2890,6 +3300,13 @@ func (c *instancesRESTClient) SetMinCpuPlatform(ctx context.Context, req *comput
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetMinCpuPlatform")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setMinCpuPlatform")
+	}
 	opts = append((*c.CallOptions).SetMinCpuPlatform[0:len((*c.CallOptions).SetMinCpuPlatform):len((*c.CallOptions).SetMinCpuPlatform)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2957,6 +3374,13 @@ func (c *instancesRESTClient) SetName(ctx context.Context, req *computepb.SetNam
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetName")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setName")
+	}
 	opts = append((*c.CallOptions).SetName[0:len((*c.CallOptions).SetName):len((*c.CallOptions).SetName)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -2996,7 +3420,11 @@ func (c *instancesRESTClient) SetName(ctx context.Context, req *computepb.SetNam
 	return op, nil
 }
 
-// SetScheduling sets an instance’s scheduling options. You can only call this method on a stopped instance, that is, a VM instance that is in a TERMINATED state. See Instance Life Cycle for more information on the possible instance states. For more information about setting scheduling options for a VM, see Set VM host maintenance policy.
+// SetScheduling sets an instance’s scheduling options. You can only call this method on astopped instance,
+// that is, a VM instance that is in a TERMINATED state. SeeInstance Life
+// Cycle for more information on the possible instance states.
+// For more information about setting scheduling options for a VM, seeSet
+// VM host maintenance policy.
 func (c *instancesRESTClient) SetScheduling(ctx context.Context, req *computepb.SetSchedulingInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetSchedulingResource()
@@ -3024,6 +3452,13 @@ func (c *instancesRESTClient) SetScheduling(ctx context.Context, req *computepb.
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetScheduling")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setScheduling")
+	}
 	opts = append((*c.CallOptions).SetScheduling[0:len((*c.CallOptions).SetScheduling):len((*c.CallOptions).SetScheduling)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3063,7 +3498,9 @@ func (c *instancesRESTClient) SetScheduling(ctx context.Context, req *computepb.
 	return op, nil
 }
 
-// SetSecurityPolicy sets the Google Cloud Armor security policy for the specified instance. For more information, see Google Cloud Armor Overview
+// SetSecurityPolicy sets the Google Cloud Armor security policy for the specified instance.
+// For more information, seeGoogle
+// Cloud Armor Overview
 func (c *instancesRESTClient) SetSecurityPolicy(ctx context.Context, req *computepb.SetSecurityPolicyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesSetSecurityPolicyRequestResource()
@@ -3091,6 +3528,13 @@ func (c *instancesRESTClient) SetSecurityPolicy(ctx context.Context, req *comput
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetSecurityPolicy")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setSecurityPolicy")
+	}
 	opts = append((*c.CallOptions).SetSecurityPolicy[0:len((*c.CallOptions).SetSecurityPolicy):len((*c.CallOptions).SetSecurityPolicy)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3130,7 +3574,9 @@ func (c *instancesRESTClient) SetSecurityPolicy(ctx context.Context, req *comput
 	return op, nil
 }
 
-// SetServiceAccount sets the service account on the instance. For more information, read Changing the service account and access scopes for an instance.
+// SetServiceAccount sets the service account on the instance. For more information,
+// readChanging
+// the service account and access scopes for an instance.
 func (c *instancesRESTClient) SetServiceAccount(ctx context.Context, req *computepb.SetServiceAccountInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesSetServiceAccountRequestResource()
@@ -3158,6 +3604,13 @@ func (c *instancesRESTClient) SetServiceAccount(ctx context.Context, req *comput
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetServiceAccount")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setServiceAccount")
+	}
 	opts = append((*c.CallOptions).SetServiceAccount[0:len((*c.CallOptions).SetServiceAccount):len((*c.CallOptions).SetServiceAccount)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3197,7 +3650,10 @@ func (c *instancesRESTClient) SetServiceAccount(ctx context.Context, req *comput
 	return op, nil
 }
 
-// SetShieldedInstanceIntegrityPolicy sets the Shielded Instance integrity policy for an instance. You can only use this method on a running instance. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// SetShieldedInstanceIntegrityPolicy sets the Shielded Instance integrity policy for an instance. You can
+// only use this method on a running instance. This method
+// supports PATCH semantics and uses the JSON merge
+// patch format and processing rules.
 func (c *instancesRESTClient) SetShieldedInstanceIntegrityPolicy(ctx context.Context, req *computepb.SetShieldedInstanceIntegrityPolicyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetShieldedInstanceIntegrityPolicyResource()
@@ -3225,6 +3681,13 @@ func (c *instancesRESTClient) SetShieldedInstanceIntegrityPolicy(ctx context.Con
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetShieldedInstanceIntegrityPolicy")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setShieldedInstanceIntegrityPolicy")
+	}
 	opts = append((*c.CallOptions).SetShieldedInstanceIntegrityPolicy[0:len((*c.CallOptions).SetShieldedInstanceIntegrityPolicy):len((*c.CallOptions).SetShieldedInstanceIntegrityPolicy)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3264,7 +3727,8 @@ func (c *instancesRESTClient) SetShieldedInstanceIntegrityPolicy(ctx context.Con
 	return op, nil
 }
 
-// SetTags sets network tags for the specified instance to the data included in the request.
+// SetTags sets network tags
+// for the specified instance to the data included in the request.
 func (c *instancesRESTClient) SetTags(ctx context.Context, req *computepb.SetTagsInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetTagsResource()
@@ -3292,6 +3756,13 @@ func (c *instancesRESTClient) SetTags(ctx context.Context, req *computepb.SetTag
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SetTags")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/setTags")
+	}
 	opts = append((*c.CallOptions).SetTags[0:len((*c.CallOptions).SetTags):len((*c.CallOptions).SetTags)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3331,7 +3802,8 @@ func (c *instancesRESTClient) SetTags(ctx context.Context, req *computepb.SetTag
 	return op, nil
 }
 
-// SimulateMaintenanceEvent simulates a host maintenance event on a VM. For more information, see Simulate a host maintenance event.
+// SimulateMaintenanceEvent simulates a host maintenance event on a VM. For more information, see
+// Simulate a host maintenance event.
 func (c *instancesRESTClient) SimulateMaintenanceEvent(ctx context.Context, req *computepb.SimulateMaintenanceEventInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -3355,6 +3827,13 @@ func (c *instancesRESTClient) SimulateMaintenanceEvent(ctx context.Context, req 
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/SimulateMaintenanceEvent")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/simulateMaintenanceEvent")
+	}
 	opts = append((*c.CallOptions).SimulateMaintenanceEvent[0:len((*c.CallOptions).SimulateMaintenanceEvent):len((*c.CallOptions).SimulateMaintenanceEvent)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3394,7 +3873,9 @@ func (c *instancesRESTClient) SimulateMaintenanceEvent(ctx context.Context, req 
 	return op, nil
 }
 
-// Start starts an instance that was stopped using the instances().stop method. For more information, see Restart an instance.
+// Start starts an instance that was stopped using theinstances().stop
+// method. For more information, seeRestart an
+// instance.
 func (c *instancesRESTClient) Start(ctx context.Context, req *computepb.StartInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -3415,6 +3896,13 @@ func (c *instancesRESTClient) Start(ctx context.Context, req *computepb.StartIns
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Start")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/start")
+	}
 	opts = append((*c.CallOptions).Start[0:len((*c.CallOptions).Start):len((*c.CallOptions).Start)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3454,7 +3942,9 @@ func (c *instancesRESTClient) Start(ctx context.Context, req *computepb.StartIns
 	return op, nil
 }
 
-// StartWithEncryptionKey starts an instance that was stopped using the instances().stop method. For more information, see Restart an instance.
+// StartWithEncryptionKey starts an instance that was stopped using theinstances().stop
+// method. For more information, seeRestart an
+// instance.
 func (c *instancesRESTClient) StartWithEncryptionKey(ctx context.Context, req *computepb.StartWithEncryptionKeyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstancesStartWithEncryptionKeyRequestResource()
@@ -3482,6 +3972,13 @@ func (c *instancesRESTClient) StartWithEncryptionKey(ctx context.Context, req *c
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/StartWithEncryptionKey")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/startWithEncryptionKey")
+	}
 	opts = append((*c.CallOptions).StartWithEncryptionKey[0:len((*c.CallOptions).StartWithEncryptionKey):len((*c.CallOptions).StartWithEncryptionKey)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3521,7 +4018,12 @@ func (c *instancesRESTClient) StartWithEncryptionKey(ctx context.Context, req *c
 	return op, nil
 }
 
-// Stop stops a running instance, shutting it down cleanly, and allows you to restart the instance at a later time. Stopped instances do not incur VM usage charges while they are stopped. However, resources that the VM is using, such as persistent disks and static IP addresses, will continue to be charged until they are deleted. For more information, see Stopping an instance.
+// Stop stops a running instance, shutting it down cleanly, and allows
+// you to restart the instance at a later time. Stopped instances do not incur
+// VM usage charges while they are stopped. However, resources that the VM is
+// using, such as persistent disks and static IP addresses, will continue to
+// be charged until they are deleted. For more information, seeStopping
+// an instance.
 func (c *instancesRESTClient) Stop(ctx context.Context, req *computepb.StopInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -3545,6 +4047,13 @@ func (c *instancesRESTClient) Stop(ctx context.Context, req *computepb.StopInsta
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Stop")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/stop")
+	}
 	opts = append((*c.CallOptions).Stop[0:len((*c.CallOptions).Stop):len((*c.CallOptions).Stop)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3584,7 +4093,14 @@ func (c *instancesRESTClient) Stop(ctx context.Context, req *computepb.StopInsta
 	return op, nil
 }
 
-// Suspend this method suspends a running instance, saving its state to persistent storage, and allows you to resume the instance at a later time. Suspended instances have no compute costs (cores or RAM), and incur only storage charges for the saved VM memory and localSSD data. Any charged resources the virtual machine was using, such as persistent disks and static IP addresses, will continue to be charged while the instance is suspended. For more information, see Suspending and resuming an instance.
+// Suspend this method suspends a running instance, saving its state to persistent
+// storage, and allows you to resume the instance at a later time. Suspended
+// instances have no compute costs (cores or RAM), and incur only storage
+// charges for the saved VM memory and localSSD data. Any charged resources
+// the virtual machine was using, such as persistent disks and static IP
+// addresses, will continue to be charged while the instance is suspended.
+// For more information, see
+// Suspending and resuming an instance.
 func (c *instancesRESTClient) Suspend(ctx context.Context, req *computepb.SuspendInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -3608,6 +4124,13 @@ func (c *instancesRESTClient) Suspend(ctx context.Context, req *computepb.Suspen
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Suspend")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/suspend")
+	}
 	opts = append((*c.CallOptions).Suspend[0:len((*c.CallOptions).Suspend):len((*c.CallOptions).Suspend)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3668,6 +4191,13 @@ func (c *instancesRESTClient) TestIamPermissions(ctx context.Context, req *compu
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetResource()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/TestIamPermissions")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{resource}/testIamPermissions")
+	}
 	opts = append((*c.CallOptions).TestIamPermissions[0:len((*c.CallOptions).TestIamPermissions):len((*c.CallOptions).TestIamPermissions)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.TestPermissionsResponse{}
@@ -3699,7 +4229,10 @@ func (c *instancesRESTClient) TestIamPermissions(ctx context.Context, req *compu
 	return resp, nil
 }
 
-// Update updates an instance only if the necessary resources are available. This method can update only a specific set of instance properties. See Updating a running instance for a list of updatable instance properties.
+// Update updates an instance only if the necessary resources are available. This
+// method can update only a specific set of instance properties. See
+// Updating a running instance for a list of updatable instance
+// properties.
 func (c *instancesRESTClient) Update(ctx context.Context, req *computepb.UpdateInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstanceResource()
@@ -3715,6 +4248,9 @@ func (c *instancesRESTClient) Update(ctx context.Context, req *computepb.UpdateI
 	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance())
 
 	params := url.Values{}
+	if req != nil && req.DiscardLocalSsd != nil {
+		params.Add("discardLocalSsd", fmt.Sprintf("%v", req.GetDiscardLocalSsd()))
+	}
 	if req != nil && req.MinimalAction != nil {
 		params.Add("minimalAction", fmt.Sprintf("%v", req.GetMinimalAction()))
 	}
@@ -3733,6 +4269,13 @@ func (c *instancesRESTClient) Update(ctx context.Context, req *computepb.UpdateI
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/Update")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}")
+	}
 	opts = append((*c.CallOptions).Update[0:len((*c.CallOptions).Update):len((*c.CallOptions).Update)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3772,7 +4315,10 @@ func (c *instancesRESTClient) Update(ctx context.Context, req *computepb.UpdateI
 	return op, nil
 }
 
-// UpdateAccessConfig updates the specified access config from an instance’s network interface with the data included in the request. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// UpdateAccessConfig updates the specified access config from an instance’s network interface
+// with the data included in the request. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
 func (c *instancesRESTClient) UpdateAccessConfig(ctx context.Context, req *computepb.UpdateAccessConfigInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetAccessConfigResource()
@@ -3801,6 +4347,13 @@ func (c *instancesRESTClient) UpdateAccessConfig(ctx context.Context, req *compu
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/UpdateAccessConfig")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/updateAccessConfig")
+	}
 	opts = append((*c.CallOptions).UpdateAccessConfig[0:len((*c.CallOptions).UpdateAccessConfig):len((*c.CallOptions).UpdateAccessConfig)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3840,7 +4393,10 @@ func (c *instancesRESTClient) UpdateAccessConfig(ctx context.Context, req *compu
 	return op, nil
 }
 
-// UpdateDisplayDevice updates the Display config for a VM instance. You can only use this method on a stopped VM instance. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// UpdateDisplayDevice updates the Display config for a VM instance. You can
+// only use this method on a stopped VM instance. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
 func (c *instancesRESTClient) UpdateDisplayDevice(ctx context.Context, req *computepb.UpdateDisplayDeviceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetDisplayDeviceResource()
@@ -3868,6 +4424,13 @@ func (c *instancesRESTClient) UpdateDisplayDevice(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/UpdateDisplayDevice")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/updateDisplayDevice")
+	}
 	opts = append((*c.CallOptions).UpdateDisplayDevice[0:len((*c.CallOptions).UpdateDisplayDevice):len((*c.CallOptions).UpdateDisplayDevice)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3907,7 +4470,12 @@ func (c *instancesRESTClient) UpdateDisplayDevice(ctx context.Context, req *comp
 	return op, nil
 }
 
-// UpdateNetworkInterface updates an instance’s network interface. This method can only update an interface’s alias IP range and attached network. See Modifying alias IP ranges for an existing instance for instructions on changing alias IP ranges. See Migrating a VM between networks for instructions on migrating an interface. This method follows PATCH semantics.
+// UpdateNetworkInterface updates an instance’s network interface. This method can only update an
+// interface’s alias IP range and attached network. See Modifying
+// alias IP ranges for an existing instance for instructions on
+// changing alias IP ranges. See Migrating
+// a VM between networks for instructions on migrating an interface.
+// This method follows PATCH semantics.
 func (c *instancesRESTClient) UpdateNetworkInterface(ctx context.Context, req *computepb.UpdateNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetNetworkInterfaceResource()
@@ -3936,6 +4504,13 @@ func (c *instancesRESTClient) UpdateNetworkInterface(ctx context.Context, req *c
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/UpdateNetworkInterface")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/updateNetworkInterface")
+	}
 	opts = append((*c.CallOptions).UpdateNetworkInterface[0:len((*c.CallOptions).UpdateNetworkInterface):len((*c.CallOptions).UpdateNetworkInterface)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -3975,7 +4550,10 @@ func (c *instancesRESTClient) UpdateNetworkInterface(ctx context.Context, req *c
 	return op, nil
 }
 
-// UpdateShieldedInstanceConfig updates the Shielded Instance config for an instance. You can only use this method on a stopped instance. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.
+// UpdateShieldedInstanceConfig updates the Shielded Instance config for an instance. You can
+// only use this method on a stopped instance. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
 func (c *instancesRESTClient) UpdateShieldedInstanceConfig(ctx context.Context, req *computepb.UpdateShieldedInstanceConfigInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetShieldedInstanceConfigResource()
@@ -4003,6 +4581,13 @@ func (c *instancesRESTClient) UpdateShieldedInstanceConfig(ctx context.Context, 
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/zones/%v/instances/%v", req.GetProject(), req.GetZone(), req.GetInstance()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.Instances/UpdateShieldedInstanceConfig")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/zones/{zone}/instances/{instance}/updateShieldedInstanceConfig")
+	}
 	opts = append((*c.CallOptions).UpdateShieldedInstanceConfig[0:len((*c.CallOptions).UpdateShieldedInstanceConfig):len((*c.CallOptions).UpdateShieldedInstanceConfig)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}

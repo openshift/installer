@@ -29,8 +29,9 @@ const (
 
 // expoHistogramDataPoint is a single data point in an exponential histogram.
 type expoHistogramDataPoint[N int64 | float64] struct {
-	attrs attribute.Set
-	res   FilteredExemplarReservoir[N]
+	attrs         attribute.Set
+	res           FilteredExemplarReservoir[N]
+	dropExemplars bool
 
 	min N
 	max N
@@ -355,13 +356,18 @@ func (e *expoHistogram[N]) measure(
 		v, ok = e.values[fltrAttr.Equivalent()]
 		if !ok {
 			v = newExpoHistogramDataPoint[N](fltrAttr, e.maxSize, e.maxScale, e.noMinMax, e.noSum)
-			v.res = e.newRes(fltrAttr)
+			r := e.newRes(fltrAttr)
+			_, isDrop := r.(*dropRes[N])
+			v.res = r
+			v.dropExemplars = isDrop
 
 			e.values[fltrAttr.Equivalent()] = v
 		}
 	}
 	v.record(value)
-	v.res.Offer(ctx, value, droppedAttr)
+	if !v.dropExemplars {
+		v.res.Offer(ctx, value, droppedAttr)
+	}
 }
 
 func (e *expoHistogram[N]) delta(

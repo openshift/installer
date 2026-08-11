@@ -175,7 +175,7 @@ type ManagedKey struct {
 	// KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
 	// "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern=`projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+`
+	// +kubebuilder:validation:Pattern=`projects\/[-_:[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+`
 	// +kubebuilder:validation:MaxLength=160
 	KMSKeyName string `json:"kmsKeyName,omitempty"`
 }
@@ -215,7 +215,7 @@ type CustomerEncryptionKey struct {
 	// The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
 	// suffix ("iam.gserviceaccount.com").
 	// +kubebuilder:validation:MaxLength=85
-	// +kubebuilder:validation:Pattern=`[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com`
+	// +kubebuilder:validation:Pattern=`[-_.[A-Za-z0-9]+@[-_.[A-Za-z0-9]+.iam.gserviceaccount.com`
 	// +optional
 	KMSKeyServiceAccount *string `json:"kmsKeyServiceAccount,omitempty"`
 	// ManagedKey references keys managed by the Cloud Key Management Service. This should be set when KeyType is Managed.

@@ -53,7 +53,7 @@ func (in Labels) GetRole() string {
 func (in Labels) ToComputeFilter() string {
 	var builder strings.Builder
 	for k, v := range in {
-		builder.WriteString(fmt.Sprintf("(labels.%s = %q) ", k, v))
+		fmt.Fprintf(&builder, "(labels.%s = %q) ", k, v)
 	}
 
 	return builder.String()

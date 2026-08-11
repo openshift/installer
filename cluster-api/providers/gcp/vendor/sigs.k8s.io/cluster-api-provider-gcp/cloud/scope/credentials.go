@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -44,6 +45,7 @@ type Credential struct {
 }
 
 func getCredentials(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client) (*Credential, error) {
+	logger := log.FromContext(ctx)
 	var credentialData []byte
 	var err error
 
@@ -55,8 +57,19 @@ func getCredentials(ctx context.Context, credentialsRef *infrav1.ObjectReference
 	if err != nil {
 		return nil, fmt.Errorf("getting credential data: %w", err)
 	}
+	if credentialData == nil {
+		// No explicit credentials configured; the GCP client libraries will use
+		// implicit ADC (e.g. Workload Identity Federation via the GKE metadata server).
+		logger.Info("No explicit credentials found; using implicit ADC (e.g. Workload Identity Federation)")
+		return nil, nil
+	}
 
-	return parseCredential(credentialData)
+	cred, err := parseCredential(credentialData)
+	if err != nil {
+		return nil, err
+	}
+	logger.Info("Loaded explicit GCP credentials", "credentialType", cred.Type)
+	return cred, nil
 }
 
 func getCredentialDataFromRef(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client) ([]byte, error) {
@@ -81,7 +94,9 @@ func getCredentialDataFromRef(ctx context.Context, credentialsRef *infrav1.Objec
 func getCredentialDataUsingADC() ([]byte, error) {
 	credsPath := os.Getenv(ConfigFileEnvVar)
 	if credsPath == "" {
-		return nil, fmt.Errorf("no ADC environment variable found for credentials (expect %s)", ConfigFileEnvVar)
+		// No explicit credentials file configured; signal to callers to use
+		// implicit ADC (Workload Identity Federation, instance metadata, etc.).
+		return nil, nil
 	}
 
 	byteValue, err := os.ReadFile(credsPath) //nolint:gosec // We need to read a file here
