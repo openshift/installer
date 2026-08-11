@@ -412,8 +412,11 @@ regions. Instead, the workload uses self-signed JWTs.
 ### Execution
 
 ```go
-session, _ := gcpic.GetSession(ctx)
-ud, _ := session.Credentials.GetUniverseDomain()
+session, err := gcpic.GetSession(ctx)
+// err != nil -> fail: "could not get GCP session"
+
+ud, err := session.Credentials.GetUniverseDomain()
+// err != nil -> fail: "could not get GCP universe domain"
 // ud == "apis-berlin-build0.goog" for GCD
 
 var tokenURL string
@@ -421,10 +424,11 @@ if ud != "" && ud != "googleapis.com" {
     tokenURL = "nil"
 }
 
-gcpConfig, _ := gcpmanifests.CloudProviderConfig(
+gcpConfig, err := gcpmanifests.CloudProviderConfig(
     infraID, projectID, subnet, networkProjectID,
     firewallManagement, tokenURL,
 )
+// err != nil -> fail: "could not create cloud provider config"
 // gcpConfig contains tokenURL = "nil" for sovereign cloud
 ```
 
@@ -459,11 +463,14 @@ environment variable so it can reach the correct sovereign cloud API endpoints.
 ### Execution
 
 ```go
-session, _ := gcpic.GetSession(ctx)
-ud, _ := session.Credentials.GetUniverseDomain()
+session, err := gcpic.GetSession(ctx)
+// err != nil -> fail: "could not get GCP session"
+
+ud, err := session.Credentials.GetUniverseDomain()
+// err != nil -> fail: "could not get GCP universe domain"
 
 capgEnvVars := map[string]string{}
-if ud != "googleapis.com" {
+if ud != "" && ud != "googleapis.com" {
     capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] = ud
 }
 // For GCD: capgEnvVars["GOOGLE_CLOUD_UNIVERSE_DOMAIN"] == "apis-berlin-build0.goog"
@@ -758,6 +765,7 @@ Set up environment variables:
 export GOOGLE_CLOUD_UNIVERSE_DOMAIN=apis-berlin-build0.goog
 export PROJECT_ID="eu0:<your-gcd-project>"
 export INFRA_ID="<cluster-infra-id-from-metadata>"
+export CLUSTER_ZONE="${INFRA_ID}-private-zone"
 ```
 
 1. Check for leftover compute instances:
@@ -787,14 +795,19 @@ gcloud compute firewall-rules list \
 # Expected: no results
 ```
 
-4. Check for leftover DNS records:
+4. Check for leftover DNS records (skip if the zone was already deleted):
 
 ```bash
-gcloud dns record-sets list \
-  --zone="${CLUSTER_ZONE}" \
-  --filter="name~${INFRA_ID}" \
-  --project="${PROJECT_ID}"
-# Expected: no results (or zone itself deleted)
+if gcloud dns managed-zones describe "${CLUSTER_ZONE}" \
+    --project="${PROJECT_ID}" &>/dev/null; then
+  gcloud dns record-sets list \
+    --zone="${CLUSTER_ZONE}" \
+    --filter="name~${INFRA_ID}" \
+    --project="${PROJECT_ID}"
+  # Expected: no results
+else
+  echo "Zone ${CLUSTER_ZONE} already deleted - OK"
+fi
 ```
 
 5. Check for leftover service accounts:

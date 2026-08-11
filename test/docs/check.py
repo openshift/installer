@@ -188,13 +188,13 @@ def validate_case(path, lines):
         for row_idx, row in enumerate(rows):
             if len(row) < 2:
                 errors.append(ValidationError(
-                    rel, line_num + row_idx + 1,
+                    rel, line_num + row_idx + 2,
                     f"metadata row has fewer than 2 columns: {row}",
                 ))
                 continue
             field_name = strip_bold(row[0])
             field_value = row[1].strip()
-            found_fields[field_name] = (field_value, line_num + row_idx + 1)
+            found_fields[field_name] = (field_value, line_num + row_idx + 2)
 
         for required in CASE_METADATA_FIELDS:
             if required not in found_fields:
@@ -234,6 +234,7 @@ def validate_case(path, lines):
                 ))
 
     # 3. Scenarios table
+    table_statuses = {}  # scenario number -> status from table
     result = find_table_after_heading(lines, "Scenarios")
     if result is None:
         errors.append(ValidationError(rel, None, "missing '## Scenarios' section with table"))
@@ -251,22 +252,22 @@ def validate_case(path, lines):
             status = row[2].strip()
             if status not in AUTOMATION_STATUSES:
                 errors.append(ValidationError(
-                    rel, line_num + row_idx + 1,
+                    rel, line_num + row_idx + 2,
                     f"invalid automation status '{status}' "
                     f"(expected one of: {', '.join(sorted(AUTOMATION_STATUSES))})",
                 ))
             if status == "Manual":
                 has_manual = True
 
-            # Scenario number should be a positive integer.
             num_str = row[0].strip()
             if not num_str.isdigit() or int(num_str) < 1:
                 errors.append(ValidationError(
-                    rel, line_num + row_idx + 1,
+                    rel, line_num + row_idx + 2,
                     f"scenario number must be a positive integer (got '{num_str}')",
                 ))
+            else:
+                table_statuses[int(num_str)] = status
 
-        # If there are manual scenarios, MANUAL_TESTS_START must exist.
         if has_manual:
             full_text = "\n".join(lines)
             if "MANUAL_TESTS_START" not in full_text:
@@ -282,12 +283,13 @@ def validate_case(path, lines):
                     "<!-- MANUAL_TESTS_END --> marker",
                 ))
 
-    # 4. Per-scenario automation status must match scenarios table.
+    # 4. Per-scenario automation status - cross-check with scenarios table.
+    detail_statuses = {}  # scenario number -> (status, line)
     scenario_pattern = re.compile(r"^##\s+(\d+)\.\s+")
     for i, line in enumerate(lines):
         m = scenario_pattern.match(line)
         if m:
-            # Look for "Automation status:" in the next few lines.
+            num = int(m.group(1))
             found_status = False
             for j in range(i + 1, min(i + 8, len(lines))):
                 if "**Automation status:**" in lines[j]:
@@ -298,12 +300,30 @@ def validate_case(path, lines):
                             rel, j + 1,
                             f"invalid per-scenario automation status '{status_val}'",
                         ))
+                    detail_statuses[num] = (status_val, j + 1)
                     break
             if not found_status:
                 errors.append(ValidationError(
                     rel, i + 1,
-                    f"scenario {m.group(1)} missing '**Automation status:**' field",
+                    f"scenario {num} missing '**Automation status:**' field",
                 ))
+
+    # Cross-check: statuses in the table must match per-scenario statuses.
+    for num, table_status in table_statuses.items():
+        if num in detail_statuses:
+            detail_status, detail_line = detail_statuses[num]
+            if table_status != detail_status:
+                errors.append(ValidationError(
+                    rel, detail_line,
+                    f"scenario {num} status mismatch: table says "
+                    f"'{table_status}' but detail says '{detail_status}'",
+                ))
+        elif num not in detail_statuses:
+            errors.append(ValidationError(
+                rel, None,
+                f"scenario {num} listed in table but has no "
+                f"'## {num}. ...' detail section",
+            ))
 
     # 5. Related Links section should exist.
     if not any(line.strip().startswith("## Related Links") for line in lines):
@@ -384,13 +404,30 @@ def validate_plan(path, lines):
             "Testing Strategy should describe unit test coverage",
         ))
 
-    # 6. Test Cases table should exist in section 3.
+    # 6. Test Cases table should exist in section 3.2, with valid case links.
     result = find_table_after_heading(lines, "Test Cases")
     if result is None:
         errors.append(ValidationError(
             rel, None,
             "section 3 should contain a 'Test Cases' table linking to case docs",
         ))
+    else:
+        _, case_rows, case_line_num = result
+        link_pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+        for row_idx, row in enumerate(case_rows):
+            for cell in row:
+                for match in link_pattern.finditer(cell):
+                    link_target = match.group(2)
+                    if link_target.startswith("http://") or link_target.startswith("https://"):
+                        continue
+                    if link_target.startswith("/") or ".." not in link_target:
+                        pass  # relative path, check it resolves
+                    resolved = (path.parent / link_target).resolve()
+                    if not resolved.exists():
+                        errors.append(ValidationError(
+                            rel, case_line_num + row_idx + 2,
+                            f"case link target does not exist: '{link_target}'",
+                        ))
 
     # 7. Exit Criteria should have at least one bullet.
     in_exit = False
@@ -484,7 +521,7 @@ def validate_matrix(path, lines):
     footnote_ref_pattern = re.compile(r"\[(\d+)\]")
 
     for row_idx, row in enumerate(rows):
-        row_line = line_num + row_idx + 1  # +1 for separator row
+        row_line = line_num + row_idx + 2  # +2: 1-based + separator row
         feature = row[0].strip() if row else ""
 
         # Section header rows have bold text and empty platform cells.
@@ -593,6 +630,16 @@ def find_files(filter_arg=None):
     target = Path(filter_arg)
     if not target.is_absolute():
         target = DOCS_DIR / target
+    target = target.resolve()
+
+    docs_root = DOCS_DIR.resolve()
+    if not str(target).startswith(str(docs_root) + "/") and target != docs_root:
+        print(
+            f"error: path is outside docs directory: {filter_arg}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     if target.exists():
         return [target]
 
@@ -614,7 +661,7 @@ def validate_file(path):
     else:
         return [ValidationError(
             relative_path(path), None,
-            f"could not detect file type (expected case, plan, or matrix)",
+            "could not detect file type (expected case, plan, or matrix)",
         )]
 
 
