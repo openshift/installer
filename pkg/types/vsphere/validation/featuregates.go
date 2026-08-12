@@ -14,26 +14,7 @@ import (
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
 	v := c.VSphere
 
-	multiNetworksFound := false
-	nodeNetworkingDefined := v.NodeNetworking != nil
-
-	for _, fd := range v.FailureDomains {
-		if len(fd.Topology.Networks) > 1 {
-			multiNetworksFound = true
-		}
-	}
-
 	return []featuregates.GatedInstallConfigFeature{
-		{
-			FeatureGateName: features.FeatureGateVSphereMultiNetworks,
-			Condition:       multiNetworksFound,
-			Field:           field.NewPath("platform", "vsphere", "failureDomains", "topology", "networks"),
-		},
-		{
-			FeatureGateName: features.FeatureGateVSphereMultiNetworks,
-			Condition:       nodeNetworkingDefined,
-			Field:           field.NewPath("platform", "vsphere", "nodeNetworking"),
-		},
 		{
 			FeatureGateName: features.FeatureGateOnPremDNSRecords,
 			Condition:       v.DNSRecordsType == configv1.DNSRecordsTypeExternal,
