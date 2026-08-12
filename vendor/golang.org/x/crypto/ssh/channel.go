@@ -11,7 +11,6 @@ import (
 	"io"
 	"log"
 	"sync"
-	"sync/atomic"
 )
 
 const (
@@ -132,17 +131,11 @@ func (r RejectionReason) String() string {
 	return fmt.Sprintf("unknown reason %d", int(r))
 }
 
-// minPayloadSize returns min(limit, length) clamped to a uint32. It is used
-// to compute the size of the next channel data packet from the remaining
-// payload. The comparison is done in int64 because length is an int — on
-// 64-bit systems len(data) can exceed 2^32, and a direct uint32(length)
-// cast would silently truncate to 0 at every multiple of 2^32, causing
-// WriteExtended's loop to spin without making progress.
-func minPayloadSize(limit uint32, length int) uint32 {
-	if int64(length) > int64(limit) {
-		return limit
+func min(a uint32, b int) uint32 {
+	if a < uint32(b) {
+		return a
 	}
-	return uint32(length)
+	return uint32(b)
 }
 
 type channelDirection uint8
@@ -184,12 +177,6 @@ type channel struct {
 	// with WantReply=true outstanding.  This lock is held by a
 	// goroutine that has such an outgoing request pending.
 	sentRequestMu sync.Mutex
-	// sentRequestPending is set to true while a SendRequest call with
-	// WantReply=true is in flight. handlePacket uses it as a gate: responses
-	// arriving while no request is pending are dropped to prevent a
-	// misbehaving peer from stalling the mux read loop by filling ch.msg
-	// with unsolicited channelRequestSuccess/Failure messages.
-	sentRequestPending atomic.Bool
 
 	incomingRequests chan *Request
 
@@ -264,7 +251,7 @@ func (ch *channel) WriteExtended(data []byte, extendedCode uint32) (n int, err e
 	ch.writeMu.Unlock()
 
 	for len(data) > 0 {
-		space := minPayloadSize(ch.maxRemotePayload, len(data))
+		space := min(ch.maxRemotePayload, len(data))
 		if space, err = ch.remoteWin.reserve(space); err != nil {
 			return n, err
 		}
@@ -473,18 +460,6 @@ func (ch *channel) handlePacket(packet []byte) error {
 		}
 
 		ch.incomingRequests <- &req
-	case *channelRequestSuccessMsg, *channelRequestFailureMsg:
-		// Drop responses that arrive when no SendRequest is waiting, to
-		// prevent a malicious peer from filling ch.msg and stalling the
-		// mux read loop. The non-blocking send additionally protects the
-		// loop if a well-behaved caller is slow to read.
-		if !ch.sentRequestPending.Load() {
-			return nil
-		}
-		select {
-		case ch.msg <- msg:
-		default:
-		}
 	default:
 		ch.msg <- msg
 	}
@@ -555,17 +530,7 @@ func (ch *channel) Reject(reason RejectionReason, message string) error {
 		Language: "en",
 	}
 	ch.decided = true
-	err := ch.sendMessage(reject)
-
-	// Remove the channel from the mux to prevent memory leaks.
-	// Do not call ch.close() here: no goroutine holds a reference to a
-	// rejected channel's internal channels (msg, incomingRequests), so
-	// removing it from chanList is sufficient for GC. Calling close()
-	// would race with the mux loop goroutine (handlePacket or dropAll),
-	// causing a panic from closing an already-closed channel.
-	ch.mux.chanList.remove(ch.localId)
-
-	return err
+	return ch.sendMessage(reject)
 }
 
 func (ch *channel) Read(data []byte) (int, error) {
@@ -621,24 +586,6 @@ func (ch *channel) SendRequest(name string, wantReply bool, payload []byte) (boo
 	if wantReply {
 		ch.sentRequestMu.Lock()
 		defer ch.sentRequestMu.Unlock()
-
-		// Open the gate so that responses arriving while this request is in
-		// flight are allowed to reach ch.msg. Responses arriving while no
-		// request is pending are dropped by handlePacket.
-		ch.sentRequestPending.Store(true)
-		defer ch.sentRequestPending.Store(false)
-
-		// Drain any spurious responses that may have been buffered. This
-		// prevents a previously buffered unexpected response from being
-		// consumed instead of the actual response for this request.
-	drain:
-		for {
-			select {
-			case <-ch.msg:
-			default:
-				break drain
-			}
-		}
 	}
 
 	msg := channelRequestMsg{
