@@ -652,13 +652,26 @@ func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.Er
 			"must be between 1 and 65535, or omitted for the default 179"))
 	}
 
+	// FRR's "timers <keepalive> <hold>" takes whole seconds and requires the
+	// pair; the install-config accepts human-friendly duration strings and
+	// the manifest generation converts them to bare seconds for rendering.
+	if (peer.HoldTime == "") != (peer.KeepaliveTime == "") {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("holdTime"), peer.HoldTime,
+			"holdTime and keepaliveTime must be set together"))
+	}
 	for name, value := range map[string]string{"holdTime": peer.HoldTime, "keepaliveTime": peer.KeepaliveTime} {
 		if value == "" {
 			continue
 		}
-		if _, err := time.ParseDuration(value); err != nil {
+		d, err := time.ParseDuration(value)
+		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child(name), value,
 				"must be a valid duration (e.g. 90s)"))
+			continue
+		}
+		if d != d.Truncate(time.Second) || d < 0 || d > 65535*time.Second {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child(name), value,
+				"must be a whole number of seconds between 0 and 65535 (BGP timers are second-granular)"))
 		}
 	}
 

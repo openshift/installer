@@ -1227,6 +1227,32 @@ func TestValidateBGPVIP(t *testing.T) {
 			expected: `must be a valid duration`,
 		},
 		{
+			name: "holdTime without keepaliveTime",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "90s"
+			}),
+			network:  ovnNetwork(),
+			expected: `holdTime and keepaliveTime must be set together`,
+		},
+		{
+			name: "fractional-second holdTime",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "1500ms"
+				p.BGPVIPConfig.Peers[0].KeepaliveTime = "500ms"
+			}),
+			network:  ovnNetwork(),
+			expected: `must be a whole number of seconds`,
+		},
+		{
+			name: "holdTime above the BGP 16-bit ceiling",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "65536s"
+				p.BGPVIPConfig.Peers[0].KeepaliveTime = "30s"
+			}),
+			network:  ovnNetwork(),
+			expected: `must be a whole number of seconds between 0 and 65535`,
+		},
+		{
 			name: "invalid community",
 			platform: bgpPlatform(func(p *baremetal.Platform) {
 				p.BGPVIPConfig.Communities = []string{"no-export"}

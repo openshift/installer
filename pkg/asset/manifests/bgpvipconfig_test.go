@@ -70,3 +70,29 @@ func TestBGPVIPConfigMapSchemaMatchesRuntimecfg(t *testing.T) {
 	}
 	assert.Equal(t, "192.168.1.1", overrides["master-0"][0].PeerAddress)
 }
+
+// FRR's "timers <keepalive> <hold>" takes bare seconds; the install-config
+// carries human-friendly duration strings, so the generated peer data must
+// carry whole-second decimal strings (installer#10718 review 4919561631).
+func TestBGPVIPConfigMapTimersConvertedToSeconds(t *testing.T) {
+	ic := bgpInstallConfig()
+	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].HoldTime = "1m30s"
+	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].KeepaliveTime = "30s"
+	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].HoldTime = "90s"
+	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].KeepaliveTime = "30s"
+
+	cm := &BGPVIPConfigMap{}
+	parents := asset.Parents{}
+	parents.Add(ic)
+	assert.NoError(t, cm.Generate(context.Background(), parents))
+
+	var data bgpVIPConfigJSON
+	assert.NoError(t, json.Unmarshal([]byte(cm.ConfigMap.Data["config.json"]), &data))
+	assert.Equal(t, "90", data.DefaultPeers[0].HoldTime)
+	assert.Equal(t, "30", data.DefaultPeers[0].KeepaliveTime)
+	assert.Equal(t, "90", data.HostOverrides["master-0"][0].HoldTime)
+	assert.Equal(t, "30", data.HostOverrides["master-0"][0].KeepaliveTime)
+
+	// The install-config object itself must not be mutated.
+	assert.Equal(t, "1m30s", ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].HoldTime)
+}
