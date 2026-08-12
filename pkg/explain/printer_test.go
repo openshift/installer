@@ -136,7 +136,7 @@ the cluster.
       OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
 
     osImageStream <string>
-      Valid Values: "rhel-9","rhel-10"
+      Valid Values: "rhel-9","rhel-10","centos-10"
       OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
 
     pki <object>
