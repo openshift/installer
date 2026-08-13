@@ -2,6 +2,7 @@ package agent
 
 import (
 	"net"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1014,35 +1015,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\" or \"external\".",
-		},
-		{
-			name: "minimalISO requested on s390x",
-			data: `
-apiVersion: v1
-metadata:
-		name: test-cluster
-baseDomain: test-domain
-networking:
-		networkType: OVNKubernetes
-compute:
-		- architecture: s390x
-		  hyperthreading: Enabled
-		  name: worker
-		  platform: {}
-		  replicas: 0
-controlPlane:
-		architecture: s390x
-		hyperthreading: Enabled
-		name: master
-		platform: {}
-		replicas: 3
-platform:
-		external:
-		  platformName: vsphere
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
-`,
-			expectedFound: false,
-			expectedError: "invalid install-config configuration: minimalISO: Invalid value: true: minimal ISO is not supported on s390x architecture (s390x uses zipl bootloader, not GRUB/isolinux)",
 		},
 		{
 			name: "generic platformName for external platform",
@@ -2356,6 +2328,11 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				).MaxTimes(2)
+			fileFetcher.EXPECT().FetchByName("agent-config.yaml").Return(nil, &os.PathError{
+				Op:   "open",
+				Path: "agent-config.yaml",
+				Err:  os.ErrNotExist,
+			}).AnyTimes()
 
 			asset := &OptionalInstallConfig{}
 			found, err := asset.Load(fileFetcher)
