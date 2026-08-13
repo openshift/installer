@@ -12,6 +12,7 @@ type Metadata struct {
 	AccountID         string                             `json:"accountID"`
 	BaseDomain        string                             `json:"baseDomain"`
 	CISInstanceCRN    string                             `json:"cisInstanceCRN,omitempty"`
+	COSInstanceCRN    string                             `json:"cosInstanceCRN,omitempty"`
 	DNSInstanceID     string                             `json:"dnsInstanceID,omitempty"`
 	Region            string                             `json:"region,omitempty"`
 	ResourceGroupName string                             `json:"resourceGroupName,omitempty"`
@@ -43,6 +44,12 @@ func (m *Metadata) GetRegionAndEndpointsFlag() string {
 			serviceName = "rm"
 		case configv1.IBMCloudServiceVPC:
 			serviceName = "vpc"
+		// IBMCloudServiceTransitGateway and IBMCloudServicePowerVS are not yet in
+		// the upstream openshift/api module. Match by value until they are upstreamed.
+		case "TransitGateway":
+			serviceName = "transitgateway"
+		case "PowerVS":
+			serviceName = "powervs"
 		default:
 			// Any additional Service Endpoint overrides should be ignored, as they are not supported by CAPI.
 			// https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/blob/91d63f492c4b9b16a67b0312be26325056953111/pkg/endpoints/endpoints.go#L48

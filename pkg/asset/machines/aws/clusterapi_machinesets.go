@@ -70,9 +70,9 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 			publicSubnet = subnet.Public
 			subnetRef.ID = ptr.To(subnet.ID)
 		} else {
-			subnetInternetScope := "private"
+			subnetInternetScope := subnetScopePrivate
 			if publicSubnet {
-				subnetInternetScope = "public"
+				subnetInternetScope = subnetScopePublic
 			}
 			subnetRef.Filters = []capa.Filter{
 				{

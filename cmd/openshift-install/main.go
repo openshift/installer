@@ -80,12 +80,19 @@ func newRootCmd() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVar(&command.RootOpts.Dir, "dir", ".", "assets directory")
 	cmd.PersistentFlags().StringVar(&command.RootOpts.LogLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
+	cmd.PersistentFlags().BoolVar(&command.RootOpts.Staging, "staging", false, "use IBM Cloud staging environment for PowerVS installations")
 	return cmd
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {
 	logrus.SetOutput(io.Discard)
 	logrus.SetLevel(logrus.TraceLevel)
+
+	// Set staging environment variable if flag is provided
+	if command.RootOpts.Staging {
+		logrus.Warn("Using IBM Cloud staging environment")
+		os.Setenv("IBMCLOUD_STAGING", "true")
+	}
 
 	level, err := logrus.ParseLevel(command.RootOpts.LogLevel)
 	if err != nil {

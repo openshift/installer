@@ -61,7 +61,7 @@ type SessionVars struct {
 }
 
 func authenticateAPIKey(apikey string) (string, error) {
-	a, err := core.NewIamAuthenticatorBuilder().SetApiKey(apikey).Build()
+	a, err := core.NewIamAuthenticatorBuilder().SetApiKey(apikey).SetURL(GetIAMURL()).Build()
 	if err != nil {
 		return "", err
 	}
@@ -88,6 +88,10 @@ func FetchUserDetails(apikey string) (*User, error) {
 		bluemixToken = iamToken
 	}
 
+	// We use jwt.Parse with a key function that returns a wrong type.
+	// the library still decodes the claims but returns "key is of invalid type", which we suppress.
+	// Any other error (malformed token, expired, etc.) is a real failure.
+	// This works for both production and staging IAM endpoints.
 	token, err := jwt.Parse(bluemixToken, func(token *jwt.Token) (interface{}, error) {
 		return "", nil
 	})
@@ -199,8 +203,12 @@ func getSessionVars(survey bool) (SessionVars, error) {
 
 // NewPISession updates pisession details, return error on fail.
 func (c *BxClient) NewPISession() error {
-	var authenticator core.Authenticator = &core.IamAuthenticator{
-		ApiKey: c.APIKey,
+	authenticator, autherr := core.NewIamAuthenticatorBuilder().
+		SetApiKey(c.APIKey).
+		SetURL(GetIAMURL()).
+		Build()
+	if autherr != nil {
+		return fmt.Errorf("failed to create IAM authenticator: %w", autherr)
 	}
 
 	// Create the session
@@ -210,6 +218,7 @@ func (c *BxClient) NewPISession() error {
 		Region:        c.Region,
 		Zone:          c.Zone,
 		Debug:         false,
+		URL:           GetPowerURL(c.Zone, c.Region),
 	}
 
 	// Avoid by defining err as a variable: non-name c.PISession on left side of :=
@@ -472,9 +481,10 @@ func (c *BxClient) MapServiceEndpointsForCAPI(cfg *powervs.Metadata) []string {
 	capiSupported := map[string]string{
 		"COS":                "cos",
 		"Power":              "powervs",
-		"ResourceController": "", // FIXME CAPI recognizes "rc," but crashes if passed in...
-		"ResourceManager":    "", // FIXME? masters unable to get their ignition if "rm" override is present...
+		"ResourceController": "rc",
+		"ResourceManager":    "rm",
 		"VPC":                "vpc",
+		"TransitGateway":     "transitgateway",
 	}
 	overrides := make([]string, 0, len(cfg.ServiceEndpoints))
 	// CAPI expects name=url pairs of service endpoints

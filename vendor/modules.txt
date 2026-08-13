@@ -2814,8 +2814,8 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.12.0
 ## explicit; go 1.24.0
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.13.1
-## explicit; go 1.24.0
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.13.0-alpha.0.0.20260729144403-83818de8b90e
+## explicit; go 1.25.8
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
 # sigs.k8s.io/cluster-api-provider-openstack v0.14.6
 ## explicit; go 1.24.0

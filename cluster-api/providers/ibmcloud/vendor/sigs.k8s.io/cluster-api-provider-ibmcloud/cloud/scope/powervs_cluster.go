@@ -2377,7 +2377,7 @@ func (s *PowerVSClusterScope) createCOSBucket() error {
 func (s *PowerVSClusterScope) checkCOSServiceInstance(ctx context.Context) (*resourcecontrollerv2.ResourceInstance, error) {
 	log := ctrl.LoggerFrom(ctx)
 	// check cos service instance
-	serviceInstance, err := s.ResourceClient.GetInstanceByName(*s.GetServiceName(infrav1.ResourceTypeCOSInstance), resourcecontroller.CosResourceID, resourcecontroller.CosResourcePlanID)
+	serviceInstance, err := s.ResourceClient.GetInstanceByName(*s.GetServiceName(infrav1.ResourceTypeCOSInstance), resourcecontroller.CosResourceID, resourcecontroller.GetCOSResourcePlanID())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get COS service instance: %w", err)
 	}
@@ -2404,7 +2404,7 @@ func (s *PowerVSClusterScope) createCOSServiceInstance() (*resourcecontrollerv2.
 		Name:           s.GetServiceName(infrav1.ResourceTypeCOSInstance),
 		Target:         &target,
 		ResourceGroup:  &resourceGroupID,
-		ResourcePlanID: ptr.To(resourcecontroller.CosResourcePlanID),
+		ResourcePlanID: ptr.To(resourcecontroller.GetCOSResourcePlanID()),
 	})
 	if err != nil {
 		return nil, err
