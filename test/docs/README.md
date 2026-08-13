@@ -12,6 +12,65 @@ the automated test that verifies it.
 For a cross-platform overview of which features are tested and how, see the
 [Platform Feature Matrix](platform_feature_matrix.md).
 
+## Traceability
+
+The test documentation supports end-to-end traceability through this chain:
+
+```text
+JIRA issue -> Feature -> Test Plan -> Test Cases -> Scenarios -> CI Job (Prow)
+```
+
+Each link in the chain is navigable:
+
+| From | To | How |
+|------|----|-----|
+| JIRA issue | Test plan | JIRA issue description should link to the test plan file (see [JIRA linking](#jira-linking)) |
+| Test plan | JIRA issue | `References` section contains JIRA links |
+| Test plan | Test cases | Section 3.2 links to case files in `../cases/` |
+| Test case | Test plan | `Related Links` section links back to the parent plan |
+| Test case | Scenarios | Scenarios table at the top with anchor links |
+| Scenario | Source code | `Test file` field with repo-relative path |
+| Scenario | CI job logs | `CI job history` field with Prow URL (for Prow CI scenarios) |
+
+### Navigating to Prow logs
+
+For scenarios with status `Automated (Prow CI)`, include a `CI job history`
+link using this URL pattern:
+
+```text
+https://prow.ci.openshift.org/job-history/gs/test-platform-results/logs/<full-job-name>
+```
+
+The full job name follows the Prow naming convention:
+
+```text
+periodic-ci-openshift-release-<branch>-ci-<version>-<job-suffix>
+```
+
+For example, the GCD E2E job `e2e-gcd-ovn-private-techpreview` on the `main`
+branch for version `5.0` becomes:
+
+```text
+periodic-ci-openshift-release-main-ci-5.0-e2e-gcd-ovn-private-techpreview
+```
+
+To find the full job name for a CI job, search the
+[openshift/release](https://github.com/openshift/release) repo for the job
+suffix in `ci-operator/config/openshift/installer/openshift-installer-main.yaml`.
+
+### JIRA linking
+
+To complete the reverse link from JIRA to test docs, add a comment or update
+the JIRA issue description with a link to the test plan in the repo:
+
+```text
+Test plan: https://github.com/openshift/installer/blob/main/test/docs/<platform>/plans/<plan>.md
+Test cases: https://github.com/openshift/installer/blob/main/test/docs/<platform>/cases/<case>.md
+```
+
+This makes the chain navigable in both directions: from JIRA into the test
+docs, and from the test docs back to JIRA.
+
 ## Directory Structure
 
 ```text
@@ -244,10 +303,10 @@ Create `test/docs/<platform>/cases/<name>.md` using this template:
 
 ## Scenarios
 
-| # | Scenario | Status |
-|---|----------|--------|
-| 1 | [<Scenario title>](#1-scenario-title) | Automated (unit test) |
-| 2 | [<Scenario title>](#2-scenario-title) | Manual |
+| # | Scenario | Status | Priority |
+|---|----------|--------|----------|
+| 1 | [<Scenario title>](#1-scenario-title) | Automated (unit test) | |
+| 2 | [<Scenario title>](#2-scenario-title) | Manual | P1 |
 
 ---
 
@@ -377,6 +436,28 @@ Every scenario must have an automation status in two places:
 1. **Scenarios table** - the `Status` column at the top of the case file
 2. **Per-scenario metadata** - the `Automation status` field in the scenario
 
+### Automation priority
+
+The Scenarios table has an optional `Priority` column for tracking which
+Manual or TBD scenarios should be automated and when:
+
+| Value | Meaning |
+|-------|---------|
+| P1 | Automate next sprint |
+| P2 | Automate soon (next 1-2 sprints) |
+| P3 | Keep manual (automation not cost-effective) |
+| (empty) | Already automated, or priority not yet assessed |
+
+Leave the Priority column empty for already-automated scenarios. Use this
+column to help Technical Leads and Software Engineers prioritize automation
+work during sprint planning.
+
+To list all scenarios awaiting automation, sorted by priority:
+
+```bash
+grep -n "| P[123]" test/docs/*/cases/*.md | sort -t'|' -k5
+```
+
 ### Manual tests
 
 Manual test scenarios are tests that cannot be (or are not yet) automated and
@@ -468,6 +549,97 @@ Test documentation should be updated when:
 
 The documentation does not need to mirror every individual Go test function.
 Focus on documenting behaviors and scenarios, not individual assertions.
+
+## Execution Status and Reporting
+
+This section helps Engineering Managers and Technical Leads assess test
+execution status and coverage readiness.
+
+### Checking CI execution status
+
+View recent Prow job runs for the installer:
+
+- **All installer jobs:** [Prow job list](https://prow.ci.openshift.org/?repo=openshift%2Finstaller)
+- **Specific job history:** Use the URL pattern from the [Traceability](#navigating-to-prow-logs) section
+
+### Generating a coverage report
+
+Use `check.py` and `grep` to produce a quick coverage summary:
+
+```bash
+# Validate all test docs and show errors
+python3 test/docs/check.py
+
+# Count scenarios by automation status across all platforms
+echo "=== Scenario counts ==="
+echo "Automated (unit): $(grep -rc '| Automated (unit test)' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
+echo "Automated (Prow): $(grep -rc '| Automated (Prow CI)' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
+echo "Manual:           $(grep -rc '| Manual' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
+echo "TBD:              $(grep -rc '| TBD' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
+
+# List scenarios awaiting automation, sorted by priority
+echo "=== Automation backlog ==="
+grep -n "| P[123]" test/docs/*/cases/*.md | sort -t'|' -k5
+
+# Count platforms with test documentation
+echo "=== Platform coverage ==="
+grep -c "| Yes" test/docs/platform_feature_matrix.md
+```
+
+### Release readiness assessment
+
+Use the [Platform Feature Matrix](platform_feature_matrix.md) to assess
+readiness. Key indicators:
+
+- **NT (Not Tested)** cells for features being shipped indicate coverage gaps
+- **Test Documentation** rows (bottom of matrix) show which platforms have
+  documented test plans and cases
+- Footnotes provide context on CI job counts and known limitations
+
+## Test Lifecycle
+
+### When to update test documentation
+
+Update scenario documentation when:
+
+- A test file is renamed, moved, or deleted
+- The function under test changes signature or behavior
+- A CI job is renamed or reconfigured in the release repo
+- A Manual scenario is automated (change status and add test file reference)
+
+### When to retire a scenario
+
+Remove a scenario when:
+
+- The feature it tests is removed from the installer
+- The scenario is fully replaced by a different scenario (not just refactored)
+- The CI job it references is permanently deleted
+
+Before removing, check that no other documents link to the scenario's anchor.
+
+### Deprecation process
+
+When a scenario will be retired but is not yet removed:
+
+1. Add `(deprecated)` to the scenario title in the Scenarios table
+2. Add a note at the top of the scenario detail section explaining why and
+   what replaces it
+3. Remove the scenario in the next PR that touches the same case file
+
+Do not leave deprecated scenarios for more than one release cycle.
+
+### Keeping source references current
+
+When a test file or function is renamed, update all references to it across
+the test docs. Use grep to find stale references:
+
+```bash
+# Find references to a specific test file
+grep -rn "old_file_test.go" test/docs/
+
+# Find references to a specific function
+grep -rn "OldFunctionName" test/docs/
+```
 
 ## References
 
