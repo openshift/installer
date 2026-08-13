@@ -22,25 +22,25 @@ validation rules, configuration generation, and end-to-end installation.
 
 ## Scenarios
 
-| # | Scenario | Status |
-|---|----------|--------|
-| 1 | [Sovereign cloud detection from project ID and region](#1-sovereign-cloud-detection-from-project-id-and-region) | Automated (unit test) |
-| 2 | [Domain-scoped project or sovereign region alone is not sovereign](#2-domain-scoped-project-or-sovereign-region-alone-is-not-sovereign) | Automated (unit test) |
-| 3 | [Non-default universe domain detection](#3-non-default-universe-domain-detection) | Automated (unit test) |
-| 4 | [Default instance type for sovereign cloud](#4-default-instance-type-for-sovereign-cloud) | Automated (unit test) |
-| 5 | [Default disk type for sovereign cloud](#5-default-disk-type-for-sovereign-cloud) | Automated (unit test) |
-| 6 | [OS image required for sovereign cloud](#6-os-image-required-for-sovereign-cloud) | Automated (unit test) |
-| 7 | [OS image with missing name or project](#7-os-image-with-missing-name-or-project) | Automated (unit test) |
-| 8 | [PSC endpoint forbidden for sovereign cloud](#8-psc-endpoint-forbidden-for-sovereign-cloud) | Automated (unit test) |
-| 9 | [Service account email for domain-scoped project](#9-service-account-email-for-domain-scoped-project) | Automated (unit test) |
-| 10 | [Cloud provider config uses nil tokenURL](#10-cloud-provider-config-uses-nil-tokenurl) | Automated (unit test) |
-| 11 | [CAPG controller receives universe domain](#11-capg-controller-receives-universe-domain) | Automated (unit test) |
-| 12 | [Credential options for sovereign cloud](#12-credential-options-for-sovereign-cloud) | Automated (unit test) |
-| 13 | [E2E: IPI install on GCD sovereign region](#13-e2e-ipi-install-on-gcd-sovereign-region) | Automated (Prow CI) |
-| 14 | [Verify GCD cluster nodes use correct machine type and disk](#14-verify-gcd-cluster-nodes-use-correct-machine-type-and-disk) | Manual |
-| 15 | [Verify GCD cluster uses private DNS only](#15-verify-gcd-cluster-uses-private-dns-only) | Manual |
-| 16 | [Verify GCD cluster destroy removes all resources](#16-verify-gcd-cluster-destroy-removes-all-resources) | Manual |
-| 17 | [Verify install-config validation rejects public publish on GCD](#17-verify-install-config-validation-rejects-public-publish-on-gcd) | Manual |
+| # | Scenario | Status | Priority |
+|---|----------|--------|----------|
+| 1 | [Sovereign cloud detection from project ID and region](#1-sovereign-cloud-detection-from-project-id-and-region) | Automated (unit test) | |
+| 2 | [Domain-scoped project or sovereign region alone is not sovereign](#2-domain-scoped-project-or-sovereign-region-alone-is-not-sovereign) | Automated (unit test) | |
+| 3 | [Non-default universe domain detection](#3-non-default-universe-domain-detection) | Automated (unit test) | |
+| 4 | [Default instance type for sovereign cloud](#4-default-instance-type-for-sovereign-cloud) | Automated (unit test) | |
+| 5 | [Default disk type for sovereign cloud](#5-default-disk-type-for-sovereign-cloud) | Automated (unit test) | |
+| 6 | [OS image required for sovereign cloud](#6-os-image-required-for-sovereign-cloud) | Automated (unit test) | |
+| 7 | [OS image with missing name or project](#7-os-image-with-missing-name-or-project) | Automated (unit test) | |
+| 8 | [PSC endpoint forbidden for sovereign cloud](#8-psc-endpoint-forbidden-for-sovereign-cloud) | Automated (unit test) | |
+| 9 | [Service account email for domain-scoped project](#9-service-account-email-for-domain-scoped-project) | Automated (unit test) | |
+| 10 | [Cloud provider config uses nil tokenURL](#10-cloud-provider-config-uses-nil-tokenurl) | Automated (unit test) | |
+| 11 | [CAPG controller receives universe domain](#11-capg-controller-receives-universe-domain) | Automated (unit test) | |
+| 12 | [Credential options for sovereign cloud](#12-credential-options-for-sovereign-cloud) | Automated (unit test) | |
+| 13 | [E2E: IPI install on GCD sovereign region](#13-e2e-ipi-install-on-gcd-sovereign-region) | Automated (Prow CI) | |
+| 14 | [Verify GCD cluster nodes use correct machine type and disk](#14-verify-gcd-cluster-nodes-use-correct-machine-type-and-disk) | Manual | P1 |
+| 15 | [Verify GCD cluster uses private DNS only](#15-verify-gcd-cluster-uses-private-dns-only) | Manual | P1 |
+| 16 | [Verify GCD cluster destroy removes all resources](#16-verify-gcd-cluster-destroy-removes-all-resources) | Manual | P2 |
+| 17 | [Verify install-config validation rejects public publish on GCD](#17-verify-install-config-validation-rejects-public-publish-on-gcd) | Manual | P1 |
 
 ---
 
@@ -534,6 +534,8 @@ opts := CredentialOptions(ctx, credJSON)
 ## 13. E2E: IPI install on GCD sovereign region
 
 - **CI job:** `e2e-gcd-ovn-private-techpreview`
+- **CI job history:** [Prow job history](https://prow.ci.openshift.org/job-history/gs/test-platform-results/logs/periodic-ci-openshift-release-main-ci-5.0-e2e-gcd-ovn-private-techpreview)
+- **CI job definition:** [openshift/release](https://github.com/openshift/release/blob/master/ci-operator/config/openshift/installer/openshift-installer-main.yaml) (search for `e2e-gcd`)
 - **Workflow:** `openshift-e2e-gcd`
 - **Automation status:** Automated (Prow CI)
 

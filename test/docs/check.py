@@ -23,6 +23,8 @@ AUTOMATION_STATUSES = {
     "TBD",
 }
 
+PRIORITY_VALUES = {"P1", "P2", "P3", ""}
+
 TEST_TYPES = {"Unit", "Integration", "E2E"}
 
 MATRIX_CELL_VALUES = {"AT", "MT", "AT/MT", "PT", "NT", "NA", "Yes", "No"}
@@ -258,6 +260,16 @@ def validate_case(path, lines):
                 ))
             if status == "Manual":
                 has_manual = True
+
+            # Validate priority column if present (4th column).
+            if len(row) >= 4:
+                priority = row[3].strip()
+                if priority not in PRIORITY_VALUES:
+                    errors.append(ValidationError(
+                        rel, line_num + row_idx + 2,
+                        f"invalid priority '{priority}' "
+                        f"(expected one of: P1, P2, P3, or empty)",
+                    ))
 
             num_str = row[0].strip()
             if not num_str.isdigit() or int(num_str) < 1:
