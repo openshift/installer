@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"cloud.google.com/go/iam/credentials/apiv1/credentialspb"
 	"github.com/go-logr/logr"
@@ -237,12 +238,36 @@ func (s *Service) createBaseKubeConfig(contextName string, cluster *containerpb.
 	return cfg, nil
 }
 
+// tokenEmailResolver resolves the service account email used for token generation.
+type tokenEmailResolver interface {
+	Email(ctx context.Context) (string, error)
+}
+
+// credentialEmailResolver uses an explicit service account email from loaded credentials.
+type credentialEmailResolver struct {
+	email string
+}
+
+func (r credentialEmailResolver) Email(_ context.Context) (string, error) {
+	return r.email, nil
+}
+
+// metadataEmailResolver discovers the bound service account email from the GKE
+// metadata server, used when running under Workload Identity Federation.
+type metadataEmailResolver struct{}
+
+func (r metadataEmailResolver) Email(ctx context.Context) (string, error) {
+	return metadata.EmailWithContext(ctx, "default")
+}
+
 func (s *Service) generateToken(ctx context.Context) (string, error) {
+	email, err := s.emailResolver.Email(ctx)
+	if err != nil {
+		return "", fmt.Errorf("resolving service account email: %w", err)
+	}
 	req := &credentialspb.GenerateAccessTokenRequest{
-		Name: "projects/-/serviceAccounts/" + s.scope.GetCredential().ClientEmail,
-		Scope: []string{
-			GkeScope,
-		},
+		Name:  "projects/-/serviceAccounts/" + email,
+		Scope: []string{GkeScope},
 	}
 	resp, err := s.scope.CredentialsClient().GenerateAccessToken(ctx, req)
 	if err != nil {

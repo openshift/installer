@@ -77,6 +77,14 @@ linters:
           alias: kerrors
         - pkg: sigs.k8s.io/controller-runtime
           alias: ctrl
+        - pkg: "sigs.k8s.io/cluster-api/api/core/v1beta2"
+          alias: clusterv1
+        - pkg: "sigs.k8s.io/cluster-api/api/core/v1beta1"
+          alias: clusterv1beta1
+        - pkg: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+          alias: v1beta1patch
+        - pkg: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+          alias: v1beta1conditions
       no-unaliased: true
   exclusions:
     generated: lax
@@ -92,7 +100,7 @@ linters:
         text: 'printf: non-constant format string in call to sigs.k8s.io/cluster-api/util/conditions.MarkFalse'
       - linters:
           - revive
-        text: 'exported: exported method .*\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported'
+        text: 'exported: exported method .*\.(Reconcile|SetupWithManager|SetupWebhookWithManager|Default|ValidateCreate|ValidateUpdate|ValidateDelete) should have comment or be unexported'
       - linters:
           - errcheck
         text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
@@ -111,6 +119,9 @@ linters:
           - revive
         path: (framework|e2e|infrastructure/docker)/.*.go
         text: exported (method|function|type|const) (.+) should have comment or be unexported
+      - linters:
+          - goconst
+        path: (.+)_test\.go
       - linters:
           - unparam
         text: always receives
@@ -133,10 +144,15 @@ linters:
       - path: (.+)\.go$
         text: (G104|G307)
 
-      # Temporary exclusion during upgrade from CAPI 1.10 to CAPI 1.11
+      # Temporary exclusion: CAPI's record.InitFromRecorder still requires the old EventRecorder type
       - linters:
           - staticcheck
-        text: 'SA1019: .* This package is deprecated and is going to be removed when support for v1beta1 will be dropped'
+        text: 'SA1019: mgr.GetEventRecorderFor is deprecated: this uses the old events API and will be removed in a future release. Please use GetEventRecorder instead.'
+
+      # Temporary exclusion during upgrade from CAPI v1beta1 to v1beta2
+      - linters:
+          - staticcheck
+        text: 'SA1019: .* This (package|type) is deprecated and is going to be removed when support for v1beta1 will be dropped'
 
     paths:
       - zz_generated.*\.go$

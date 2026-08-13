@@ -1039,11 +1039,9 @@ func validateKMSKeyServiceAgentAccess(client API, ic *types.InstallConfig) field
 
 	projectNumber := strings.TrimPrefix(project.Name, "projects/")
 
-	// Domain-scoped project IDs (e.g. "eu0:openshift") append the domain
-	// prefix to the service agent domain, mirroring GetDefaultServiceAccount.
 	domainSuffix := ""
-	if parts := strings.SplitN(projectID, ":", 2); len(parts) == 2 {
-		domainSuffix = "." + parts[0]
+	if parts := strings.SplitN(projectID, ":", 2); len(parts) == 2 && gcp.GetCloudEnvironment(projectID, ic.GCP.Region) == gcp.CloudEnvironmentSovereign {
+		domainSuffix = "." + parts[0] + "-system"
 	}
 	computeAgent := fmt.Sprintf("serviceAccount:service-%s@compute-system%s.iam.gserviceaccount.com", projectNumber, domainSuffix)
 	gcsAgent := fmt.Sprintf("serviceAccount:service-%s@gs-project-accounts%s.iam.gserviceaccount.com", projectNumber, domainSuffix)

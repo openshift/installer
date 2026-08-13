@@ -22,7 +22,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/strings/slices"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -95,7 +95,23 @@ type ClusterNetwork struct {
 	// Service defines the range of CIDRBlock list from where it gets the IP address.
 	// +optional
 	Service *ClusterNetworkService `json:"service,omitempty"`
+
+	// GatewayAPIChannel controls whether the GKE-managed Gateway API controller
+	// is enabled on the cluster, and which release channel it runs on.
+	// +optional
+	GatewayAPIChannel *GatewayAPIChannel `json:"gatewayAPIChannel,omitempty"`
 }
+
+// GatewayAPIChannel is the release channel of the GKE Gateway API controller.
+// +kubebuilder:validation:Enum=disabled;standard
+type GatewayAPIChannel string
+
+const (
+	// GatewayAPIChannelDisabled disables the GKE-managed Gateway API controller.
+	GatewayAPIChannelDisabled GatewayAPIChannel = "disabled"
+	// GatewayAPIChannelStandard enables the GKE-managed Gateway API controller on the standard channel.
+	GatewayAPIChannelStandard GatewayAPIChannel = "standard"
+)
 
 // WorkloadIdentityConfig allows workloads in your GKE clusters to impersonate Identity and Access Management (IAM)
 // service accounts to access Google Cloud services.
@@ -141,12 +157,6 @@ type ClusterSecurity struct {
 type GCPManagedControlPlaneSpec struct {
 	GCPManagedControlPlaneClassSpec `json:",inline"`
 
-	// ClusterName allows you to specify the name of the GKE cluster.
-	// If you don't specify a name then a default name will be created
-	// based on the namespace and name of the managed control plane.
-	// +optional
-	ClusterName string `json:"clusterName,omitempty"`
-
 	// Description describe the cluster.
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -168,7 +178,7 @@ type GCPManagedControlPlaneSpec struct {
 
 	// Endpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	Endpoint clusterv1.APIEndpoint `json:"endpoint"`
+	Endpoint clusterv1beta1.APIEndpoint `json:"endpoint"`
 }
 
 // GCPManagedControlPlaneStatus defines the observed state of GCPManagedControlPlane.
@@ -184,7 +194,7 @@ type GCPManagedControlPlaneStatus struct {
 	Initialized bool `json:"initialized,omitempty"`
 
 	// Conditions specifies the conditions for the managed control plane
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// CurrentVersion shows the current version of the GKE control plane.
 	//
@@ -301,12 +311,12 @@ func (m MonitoringService) String() string {
 }
 
 // GetConditions returns the control planes conditions.
-func (r *GCPManagedControlPlane) GetConditions() clusterv1.Conditions {
+func (r *GCPManagedControlPlane) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
 // SetConditions sets the status conditions for the GCPManagedControlPlane.
-func (r *GCPManagedControlPlane) SetConditions(conditions clusterv1.Conditions) {
+func (r *GCPManagedControlPlane) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import (
 
 	computepb "cloud.google.com/go/compute/apiv1/computepb"
 	gax "github.com/googleapis/gax-go/v2"
+	"github.com/googleapis/gax-go/v2/callctx"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
@@ -211,7 +212,7 @@ type RegionInstanceGroupManagersClient struct {
 
 // Wrapper methods routed to the internal client.
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *RegionInstanceGroupManagersClient) Close() error {
 	return c.internalClient.Close()
@@ -232,7 +233,21 @@ func (c *RegionInstanceGroupManagersClient) Connection() *grpc.ClientConn {
 	return c.internalClient.Connection()
 }
 
-// AbandonInstances flags the specified instances to be immediately removed from the managed instance group. Abandoning an instance does not delete the instance, but it does remove the instance from any target pools that are applied by the managed instance group. This method reduces the targetSize of the managed instance group by the number of instances that you abandon. This operation is marked as DONE when the action is scheduled even if the instances have not yet been removed from the group. You must separately verify the status of the abandoning action with the listmanagedinstances method. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted. You can specify a maximum of 1000 instances with this method per request.
+// AbandonInstances flags the specified instances to be immediately removed from the managed
+// instance group. Abandoning an instance does not delete the
+// instance, but it does remove the instance from any target pools that are
+// applied by the managed instance group. This method reduces thetargetSize of the managed instance group by the
+// number of instances that you abandon. This operation is marked asDONE when the action is scheduled even if the instances have
+// not yet been removed from the group. You must separately verify the
+// status of the abandoning action with thelistmanagedinstances
+// method.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) AbandonInstances(ctx context.Context, req *computepb.AbandonInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.AbandonInstances(ctx, req, opts...)
 }
@@ -242,22 +257,43 @@ func (c *RegionInstanceGroupManagersClient) ApplyUpdatesToInstances(ctx context.
 	return c.internalClient.ApplyUpdatesToInstances(ctx, req, opts...)
 }
 
-// CreateInstances creates instances with per-instance configurations in this regional managed instance group. Instances are created using the current instance template. The create instances operation is marked DONE if the createInstances request is successful. The underlying actions take additional time. You must separately verify the status of the creating or actions with the listmanagedinstances method.
+// CreateInstances creates instances with per-instance configurations in this regional managed
+// instance group. Instances are created using the current instance template.
+// The create instances operation is marked DONE if
+// the createInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of thecreating or actions with the listmanagedinstances
+// method.
 func (c *RegionInstanceGroupManagersClient) CreateInstances(ctx context.Context, req *computepb.CreateInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.CreateInstances(ctx, req, opts...)
 }
 
-// Delete deletes the specified managed instance group and all of the instances in that group.
+// Delete deletes the specified managed instance group and all of the instances
+// in that group.
 func (c *RegionInstanceGroupManagersClient) Delete(ctx context.Context, req *computepb.DeleteRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Delete(ctx, req, opts...)
 }
 
-// DeleteInstances flags the specified instances in the managed instance group to be immediately deleted. The instances are also removed from any target pools of which they were a member. This method reduces the targetSize of the managed instance group by the number of instances that you delete. The deleteInstances operation is marked DONE if the deleteInstances request is successful. The underlying actions take additional time. You must separately verify the status of the deleting action with the listmanagedinstances method. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted. You can specify a maximum of 1000 instances with this method per request.
+// DeleteInstances flags the specified instances in the managed instance group to be
+// immediately deleted. The instances are also removed from any target
+// pools of which they were a member. This method reduces thetargetSize of the managed instance group by the number of
+// instances that you delete.
+// The deleteInstances operation is marked DONE if
+// the deleteInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of thedeleting action with thelistmanagedinstances
+// method.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) DeleteInstances(ctx context.Context, req *computepb.DeleteInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.DeleteInstances(ctx, req, opts...)
 }
 
-// DeletePerInstanceConfigs deletes selected per-instance configurations for the managed instance group.
+// DeletePerInstanceConfigs deletes selected per-instance configurations for the managed instance
+// group.
 func (c *RegionInstanceGroupManagersClient) DeletePerInstanceConfigs(ctx context.Context, req *computepb.DeletePerInstanceConfigsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.DeletePerInstanceConfigs(ctx, req, opts...)
 }
@@ -267,82 +303,220 @@ func (c *RegionInstanceGroupManagersClient) Get(ctx context.Context, req *comput
 	return c.internalClient.Get(ctx, req, opts...)
 }
 
-// Insert creates a managed instance group using the information that you specify in the request. After the group is created, instances in the group are created using the specified instance template. This operation is marked as DONE when the group is created even if the instances in the group have not yet been created. You must separately verify the status of the individual instances with the listmanagedinstances method. A regional managed instance group can contain up to 2000 instances.
+// Insert creates a managed instance group using the information that you specify
+// in the request. After the group is created, instances in the group are
+// created using the specified instance template.
+// This operation is marked as DONE when the group is created
+// even if the instances in the group have not yet been created. You must
+// separately verify the status of the individual instances with thelistmanagedinstances
+// method.
+//
+// A regional managed instance group can contain up to 2000 instances.
 func (c *RegionInstanceGroupManagersClient) Insert(ctx context.Context, req *computepb.InsertRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Insert(ctx, req, opts...)
 }
 
-// List retrieves the list of managed instance groups that are contained within the specified region.
+// List retrieves the list of managed instance groups that are contained
+// within the specified region.
 func (c *RegionInstanceGroupManagersClient) List(ctx context.Context, req *computepb.ListRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *InstanceGroupManagerIterator {
 	return c.internalClient.List(ctx, req, opts...)
 }
 
-// ListErrors lists all errors thrown by actions on instances for a given regional managed instance group. The filter and orderBy query parameters are not supported.
+// ListErrors lists all errors thrown by actions on instances for a given regional
+// managed instance group. The filter andorderBy query parameters are not supported.
 func (c *RegionInstanceGroupManagersClient) ListErrors(ctx context.Context, req *computepb.ListErrorsRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *InstanceManagedByIgmErrorIterator {
 	return c.internalClient.ListErrors(ctx, req, opts...)
 }
 
-// ListManagedInstances lists the instances in the managed instance group and instances that are scheduled to be created. The list includes any current actions that the group has scheduled for its instances. The orderBy query parameter is not supported. The pageToken query parameter is supported only if the group’s listManagedInstancesResults field is set to PAGINATED.
+// ListManagedInstances lists the instances in the managed instance group and instances that are
+// scheduled to be created. The list includes any current actions
+// that the group has scheduled for its instances. The orderBy
+// query parameter is not supported.   The pageToken query parameter is
+// supported only if the group’s listManagedInstancesResults field is set
+// to PAGINATED.
 func (c *RegionInstanceGroupManagersClient) ListManagedInstances(ctx context.Context, req *computepb.ListManagedInstancesRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *ManagedInstanceIterator {
 	return c.internalClient.ListManagedInstances(ctx, req, opts...)
 }
 
-// ListPerInstanceConfigs lists all of the per-instance configurations defined for the managed instance group. The orderBy query parameter is not supported.
+// ListPerInstanceConfigs lists all of the per-instance configurations defined for the managed
+// instance group. The orderBy query parameter is not supported.
 func (c *RegionInstanceGroupManagersClient) ListPerInstanceConfigs(ctx context.Context, req *computepb.ListPerInstanceConfigsRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *PerInstanceConfigIterator {
 	return c.internalClient.ListPerInstanceConfigs(ctx, req, opts...)
 }
 
-// Patch updates a managed instance group using the information that you specify in the request. This operation is marked as DONE when the group is patched even if the instances in the group are still in the process of being patched. You must separately verify the status of the individual instances with the listmanagedinstances method. This method supports PATCH semantics and uses the JSON merge patch format and processing rules. If you update your group to specify a new template or instance configuration, it’s possible that your intended specification for each VM in the group is different from the current state of that VM. To learn how to apply an updated configuration to the VMs in a MIG, see Updating instances in a MIG.
+// Patch updates a managed instance group using the information that you specify
+// in the request.
+// This operation is marked as DONE when the group is patched
+// even if the instances in the group are still in the process of being
+// patched. You must separately verify the status of the individual instances
+// with the listmanagedinstances
+// method. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
+//
+// If you update your group to specify a new template or instance
+// configuration, it’s possible that your intended specification for each VM
+// in the group is different from the current state of that VM. To learn how
+// to apply an updated configuration to the VMs in a MIG, seeUpdating instances in
+// a MIG.
 func (c *RegionInstanceGroupManagersClient) Patch(ctx context.Context, req *computepb.PatchRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Patch(ctx, req, opts...)
 }
 
-// PatchPerInstanceConfigs inserts or patches per-instance configurations for the managed instance group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to distinguish whether to perform insert or patch.
+// PatchPerInstanceConfigs inserts or patches per-instance configurations for the managed instance
+// group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to
+// distinguish whether to perform insert or patch.
 func (c *RegionInstanceGroupManagersClient) PatchPerInstanceConfigs(ctx context.Context, req *computepb.PatchPerInstanceConfigsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.PatchPerInstanceConfigs(ctx, req, opts...)
 }
 
-// RecreateInstances flags the specified VM instances in the managed instance group to be immediately recreated. Each instance is recreated using the group’s current configuration. This operation is marked as DONE when the flag is set even if the instances have not yet been recreated. You must separately verify the status of each instance by checking its currentAction field; for more information, see Checking the status of managed instances. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted. You can specify a maximum of 1000 instances with this method per request.
+// RecreateInstances flags the specified VM instances in the managed instance group to be
+// immediately recreated. Each instance is recreated using the group’s current
+// configuration. This operation is marked as DONE when the flag
+// is set even if the instances have not yet been recreated. You must
+// separately verify the status of each instance by checking itscurrentAction field; for more information, see Checking
+// the status of managed instances.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) RecreateInstances(ctx context.Context, req *computepb.RecreateInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.RecreateInstances(ctx, req, opts...)
 }
 
-// Resize changes the intended size of the managed instance group. If you increase the size, the group creates new instances using the current instance template. If you decrease the size, the group deletes one or more instances. The resize operation is marked DONE if the resize request is successful. The underlying actions take additional time. You must separately verify the status of the creating or deleting actions with the listmanagedinstances method. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted.
+// Resize changes the intended size of the managed instance group. If you increase
+// the size, the group creates new instances using the current instance
+// template. If you decrease the size, the group deletes one or more
+// instances.
+//
+// The resize operation is marked DONE if theresize request is successful. The underlying actions take
+// additional time. You must separately verify the status of thecreating or deleting actions with thelistmanagedinstances
+// method.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
 func (c *RegionInstanceGroupManagersClient) Resize(ctx context.Context, req *computepb.ResizeRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Resize(ctx, req, opts...)
 }
 
-// ResumeInstances flags the specified instances in the managed instance group to be resumed. This method increases the targetSize and decreases the targetSuspendedSize of the managed instance group by the number of instances that you resume. The resumeInstances operation is marked DONE if the resumeInstances request is successful. The underlying actions take additional time. You must separately verify the status of the RESUMING action with the listmanagedinstances method. In this request, you can only specify instances that are suspended. For example, if an instance was previously suspended using the suspendInstances method, it can be resumed using the resumeInstances method. If a health check is attached to the managed instance group, the specified instances will be verified as healthy after they are resumed. You can specify a maximum of 1000 instances with this method per request.
+// ResumeInstances flags the specified instances in the managed instance group to be
+// resumed. This method increases thetargetSize and decreases the targetSuspendedSize
+// of the managed instance group by the number of instances that you resume.
+// The resumeInstances operation is marked DONE if
+// the resumeInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theRESUMING action with thelistmanagedinstances
+// method.
+//
+// In this request, you can only specify instances that are suspended. For
+// example, if an instance was previously suspended using the suspendInstances
+// method, it can be resumed using the resumeInstances method.
+//
+// If a health check is attached to the managed instance group, the specified
+// instances will be verified as healthy after they are resumed.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) ResumeInstances(ctx context.Context, req *computepb.ResumeInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.ResumeInstances(ctx, req, opts...)
 }
 
-// SetInstanceTemplate sets the instance template to use when creating new instances or recreating instances in this group. Existing instances are not affected.
+// SetInstanceTemplate sets the instance template to use when creating new instances or recreating
+// instances in this group. Existing instances are not affected.
 func (c *RegionInstanceGroupManagersClient) SetInstanceTemplate(ctx context.Context, req *computepb.SetInstanceTemplateRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetInstanceTemplate(ctx, req, opts...)
 }
 
-// SetTargetPools modifies the target pools to which all new instances in this group are assigned. Existing instances in the group are not affected.
+// SetTargetPools modifies the target pools to which all new instances in this group are
+// assigned. Existing instances in the group are not affected.
 func (c *RegionInstanceGroupManagersClient) SetTargetPools(ctx context.Context, req *computepb.SetTargetPoolsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetTargetPools(ctx, req, opts...)
 }
 
-// StartInstances flags the specified instances in the managed instance group to be started. This method increases the targetSize and decreases the targetStoppedSize of the managed instance group by the number of instances that you start. The startInstances operation is marked DONE if the startInstances request is successful. The underlying actions take additional time. You must separately verify the status of the STARTING action with the listmanagedinstances method. In this request, you can only specify instances that are stopped. For example, if an instance was previously stopped using the stopInstances method, it can be started using the startInstances method. If a health check is attached to the managed instance group, the specified instances will be verified as healthy after they are started. You can specify a maximum of 1000 instances with this method per request.
+// StartInstances flags the specified instances in the managed instance group to be
+// started. This method increases thetargetSize and decreases the targetStoppedSize
+// of the managed instance group by the number of instances that you start.
+// The startInstances operation is marked DONE if
+// the startInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theSTARTING action with thelistmanagedinstances
+// method.
+//
+// In this request, you can only specify instances that are stopped. For
+// example, if an instance was previously stopped using the stopInstances
+// method, it can be started using the startInstances method.
+//
+// If a health check is attached to the managed instance group, the specified
+// instances will be verified as healthy after they are started.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) StartInstances(ctx context.Context, req *computepb.StartInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.StartInstances(ctx, req, opts...)
 }
 
-// StopInstances flags the specified instances in the managed instance group to be immediately stopped. You can only specify instances that are running in this request. This method reduces the targetSize and increases the targetStoppedSize of the managed instance group by the number of instances that you stop. The stopInstances operation is marked DONE if the stopInstances request is successful. The underlying actions take additional time. You must separately verify the status of the STOPPING action with the listmanagedinstances method. If the standbyPolicy.initialDelaySec field is set, the group delays stopping the instances until initialDelaySec have passed from instance.creationTimestamp (that is, when the instance was created). This delay gives your application time to set itself up and initialize on the instance. If more than initialDelaySec seconds have passed since instance.creationTimestamp when this method is called, there will be zero delay. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is stopped. Stopped instances can be started using the startInstances method. You can specify a maximum of 1000 instances with this method per request.
+// StopInstances flags the specified instances in the managed instance group to be
+// immediately stopped. You can only specify instances that are running in
+// this request. This method reduces thetargetSize and increases the targetStoppedSize
+// of the managed instance group by the number of instances that you stop.
+// The stopInstances operation is marked DONE if
+// the stopInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theSTOPPING action with thelistmanagedinstances
+// method.
+//
+// If the standbyPolicy.initialDelaySec field is set, the group
+// delays stopping the instances until initialDelaySec have
+// passed from instance.creationTimestamp (that is, when the
+// instance was created). This delay gives your application time to
+// set itself up and initialize on the instance. If more thaninitialDelaySec seconds have passed sinceinstance.creationTimestamp when this method is called, there
+// will be zero delay.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is stopped.
+//
+// Stopped instances can be started using the startInstances
+// method.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) StopInstances(ctx context.Context, req *computepb.StopInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.StopInstances(ctx, req, opts...)
 }
 
-// SuspendInstances flags the specified instances in the managed instance group to be immediately suspended. You can only specify instances that are running in this request. This method reduces the targetSize and increases the targetSuspendedSize of the managed instance group by the number of instances that you suspend. The suspendInstances operation is marked DONE if the suspendInstances request is successful. The underlying actions take additional time. You must separately verify the status of the SUSPENDING action with the listmanagedinstances method. If the standbyPolicy.initialDelaySec field is set, the group delays suspension of the instances until initialDelaySec have passed from instance.creationTimestamp (that is, when the instance was created). This delay gives your application time to set itself up and initialize on the instance. If more than initialDelaySec seconds have passed since instance.creationTimestamp when this method is called, there will be zero delay. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is suspended. Suspended instances can be resumed using the resumeInstances method. You can specify a maximum of 1000 instances with this method per request.
+// SuspendInstances flags the specified instances in the managed instance group to be
+// immediately suspended. You can only specify instances that are running in
+// this request. This method reduces thetargetSize and increases the targetSuspendedSize
+// of the managed instance group by the number of instances that you suspend.
+// The suspendInstances operation is marked DONE if
+// the suspendInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theSUSPENDING action with thelistmanagedinstances
+// method.
+//
+// If the standbyPolicy.initialDelaySec field is set, the group
+// delays suspension of the instances until initialDelaySec have
+// passed from instance.creationTimestamp (that is, when the
+// instance was created). This delay gives your application time to
+// set itself up and initialize on the instance. If more thaninitialDelaySec seconds have passed sinceinstance.creationTimestamp when this method is called, there
+// will be zero delay.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is suspended.
+//
+// Suspended instances can be resumed using the resumeInstances
+// method.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *RegionInstanceGroupManagersClient) SuspendInstances(ctx context.Context, req *computepb.SuspendInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SuspendInstances(ctx, req, opts...)
 }
 
-// UpdatePerInstanceConfigs inserts or updates per-instance configurations for the managed instance group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to distinguish whether to perform insert or patch.
+// UpdatePerInstanceConfigs inserts or updates per-instance configurations for the managed instance
+// group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to
+// distinguish whether to perform insert or patch.
 func (c *RegionInstanceGroupManagersClient) UpdatePerInstanceConfigs(ctx context.Context, req *computepb.UpdatePerInstanceConfigsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.UpdatePerInstanceConfigs(ctx, req, opts...)
 }
@@ -372,6 +546,16 @@ type regionInstanceGroupManagersRESTClient struct {
 // The RegionInstanceGroupManagers API.
 func NewRegionInstanceGroupManagersRESTClient(ctx context.Context, opts ...option.ClientOption) (*RegionInstanceGroupManagersClient, error) {
 	clientOpts := append(defaultRegionInstanceGroupManagersRESTClientOptions(), opts...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		clientOpts = append(clientOpts, internaloption.WithTelemetryAttributes(map[string]string{
+			"gcp.client.service":  "compute",
+			"gcp.client.version":  getVersionClient(),
+			"gcp.client.repo":     "googleapis/google-cloud-go",
+			"gcp.client.artifact": "cloud.google.com/go/compute/apiv1",
+			"gcp.client.language": "go",
+			"url.domain":          "compute.googleapis.com",
+		}))
+	}
 	httpClient, endpoint, err := httptransport.NewClient(ctx, clientOpts...)
 	if err != nil {
 		return nil, err
@@ -385,6 +569,43 @@ func NewRegionInstanceGroupManagersRESTClient(ctx context.Context, opts ...optio
 		logger:      internaloption.GetLogger(opts),
 	}
 	c.setGoogleClientInfo()
+
+	if gax.IsFeatureEnabled("METRICS") {
+		metrics := gax.NewClientMetrics(
+			gax.WithTelemetryLogger(c.logger),
+			gax.WithTelemetryAttributes(map[string]string{
+				gax.ClientService:  "compute",
+				gax.ClientVersion:  getVersionClient(),
+				gax.ClientArtifact: "cloud.google.com/go/compute/apiv1",
+				gax.RPCSystem:      "http",
+				gax.URLDomain:      "compute.googleapis.com",
+			}),
+		)
+
+		callOpts.AbandonInstances = append(callOpts.AbandonInstances, gax.WithClientMetrics(metrics))
+		callOpts.ApplyUpdatesToInstances = append(callOpts.ApplyUpdatesToInstances, gax.WithClientMetrics(metrics))
+		callOpts.CreateInstances = append(callOpts.CreateInstances, gax.WithClientMetrics(metrics))
+		callOpts.Delete = append(callOpts.Delete, gax.WithClientMetrics(metrics))
+		callOpts.DeleteInstances = append(callOpts.DeleteInstances, gax.WithClientMetrics(metrics))
+		callOpts.DeletePerInstanceConfigs = append(callOpts.DeletePerInstanceConfigs, gax.WithClientMetrics(metrics))
+		callOpts.Get = append(callOpts.Get, gax.WithClientMetrics(metrics))
+		callOpts.Insert = append(callOpts.Insert, gax.WithClientMetrics(metrics))
+		callOpts.List = append(callOpts.List, gax.WithClientMetrics(metrics))
+		callOpts.ListErrors = append(callOpts.ListErrors, gax.WithClientMetrics(metrics))
+		callOpts.ListManagedInstances = append(callOpts.ListManagedInstances, gax.WithClientMetrics(metrics))
+		callOpts.ListPerInstanceConfigs = append(callOpts.ListPerInstanceConfigs, gax.WithClientMetrics(metrics))
+		callOpts.Patch = append(callOpts.Patch, gax.WithClientMetrics(metrics))
+		callOpts.PatchPerInstanceConfigs = append(callOpts.PatchPerInstanceConfigs, gax.WithClientMetrics(metrics))
+		callOpts.RecreateInstances = append(callOpts.RecreateInstances, gax.WithClientMetrics(metrics))
+		callOpts.Resize = append(callOpts.Resize, gax.WithClientMetrics(metrics))
+		callOpts.ResumeInstances = append(callOpts.ResumeInstances, gax.WithClientMetrics(metrics))
+		callOpts.SetInstanceTemplate = append(callOpts.SetInstanceTemplate, gax.WithClientMetrics(metrics))
+		callOpts.SetTargetPools = append(callOpts.SetTargetPools, gax.WithClientMetrics(metrics))
+		callOpts.StartInstances = append(callOpts.StartInstances, gax.WithClientMetrics(metrics))
+		callOpts.StopInstances = append(callOpts.StopInstances, gax.WithClientMetrics(metrics))
+		callOpts.SuspendInstances = append(callOpts.SuspendInstances, gax.WithClientMetrics(metrics))
+		callOpts.UpdatePerInstanceConfigs = append(callOpts.UpdatePerInstanceConfigs, gax.WithClientMetrics(metrics))
+	}
 
 	o := []option.ClientOption{
 		option.WithHTTPClient(httpClient),
@@ -422,7 +643,7 @@ func (c *regionInstanceGroupManagersRESTClient) setGoogleClientInfo(keyval ...st
 	}
 }
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *regionInstanceGroupManagersRESTClient) Close() error {
 	// Replace httpClient with nil to force cleanup.
@@ -440,7 +661,21 @@ func (c *regionInstanceGroupManagersRESTClient) Connection() *grpc.ClientConn {
 	return nil
 }
 
-// AbandonInstances flags the specified instances to be immediately removed from the managed instance group. Abandoning an instance does not delete the instance, but it does remove the instance from any target pools that are applied by the managed instance group. This method reduces the targetSize of the managed instance group by the number of instances that you abandon. This operation is marked as DONE when the action is scheduled even if the instances have not yet been removed from the group. You must separately verify the status of the abandoning action with the listmanagedinstances method. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted. You can specify a maximum of 1000 instances with this method per request.
+// AbandonInstances flags the specified instances to be immediately removed from the managed
+// instance group. Abandoning an instance does not delete the
+// instance, but it does remove the instance from any target pools that are
+// applied by the managed instance group. This method reduces thetargetSize of the managed instance group by the
+// number of instances that you abandon. This operation is marked asDONE when the action is scheduled even if the instances have
+// not yet been removed from the group. You must separately verify the
+// status of the abandoning action with thelistmanagedinstances
+// method.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) AbandonInstances(ctx context.Context, req *computepb.AbandonInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersAbandonInstancesRequestResource()
@@ -468,6 +703,13 @@ func (c *regionInstanceGroupManagersRESTClient) AbandonInstances(ctx context.Con
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/AbandonInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/abandonInstances")
+	}
 	opts = append((*c.CallOptions).AbandonInstances[0:len((*c.CallOptions).AbandonInstances):len((*c.CallOptions).AbandonInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -528,6 +770,13 @@ func (c *regionInstanceGroupManagersRESTClient) ApplyUpdatesToInstances(ctx cont
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/ApplyUpdatesToInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/applyUpdatesToInstances")
+	}
 	opts = append((*c.CallOptions).ApplyUpdatesToInstances[0:len((*c.CallOptions).ApplyUpdatesToInstances):len((*c.CallOptions).ApplyUpdatesToInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -567,7 +816,12 @@ func (c *regionInstanceGroupManagersRESTClient) ApplyUpdatesToInstances(ctx cont
 	return op, nil
 }
 
-// CreateInstances creates instances with per-instance configurations in this regional managed instance group. Instances are created using the current instance template. The create instances operation is marked DONE if the createInstances request is successful. The underlying actions take additional time. You must separately verify the status of the creating or actions with the listmanagedinstances method.
+// CreateInstances creates instances with per-instance configurations in this regional managed
+// instance group. Instances are created using the current instance template.
+// The create instances operation is marked DONE if
+// the createInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of thecreating or actions with the listmanagedinstances
+// method.
 func (c *regionInstanceGroupManagersRESTClient) CreateInstances(ctx context.Context, req *computepb.CreateInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersCreateInstancesRequestResource()
@@ -595,6 +849,13 @@ func (c *regionInstanceGroupManagersRESTClient) CreateInstances(ctx context.Cont
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/CreateInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/createInstances")
+	}
 	opts = append((*c.CallOptions).CreateInstances[0:len((*c.CallOptions).CreateInstances):len((*c.CallOptions).CreateInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -634,7 +895,8 @@ func (c *regionInstanceGroupManagersRESTClient) CreateInstances(ctx context.Cont
 	return op, nil
 }
 
-// Delete deletes the specified managed instance group and all of the instances in that group.
+// Delete deletes the specified managed instance group and all of the instances
+// in that group.
 func (c *regionInstanceGroupManagersRESTClient) Delete(ctx context.Context, req *computepb.DeleteRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -643,6 +905,9 @@ func (c *regionInstanceGroupManagersRESTClient) Delete(ctx context.Context, req 
 	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager())
 
 	params := url.Values{}
+	if req != nil && req.NoGracefulShutdown != nil {
+		params.Add("noGracefulShutdown", fmt.Sprintf("%v", req.GetNoGracefulShutdown()))
+	}
 	if req != nil && req.RequestId != nil {
 		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
 	}
@@ -655,6 +920,13 @@ func (c *regionInstanceGroupManagersRESTClient) Delete(ctx context.Context, req 
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/Delete")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}")
+	}
 	opts = append((*c.CallOptions).Delete[0:len((*c.CallOptions).Delete):len((*c.CallOptions).Delete)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -694,7 +966,21 @@ func (c *regionInstanceGroupManagersRESTClient) Delete(ctx context.Context, req 
 	return op, nil
 }
 
-// DeleteInstances flags the specified instances in the managed instance group to be immediately deleted. The instances are also removed from any target pools of which they were a member. This method reduces the targetSize of the managed instance group by the number of instances that you delete. The deleteInstances operation is marked DONE if the deleteInstances request is successful. The underlying actions take additional time. You must separately verify the status of the deleting action with the listmanagedinstances method. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted. You can specify a maximum of 1000 instances with this method per request.
+// DeleteInstances flags the specified instances in the managed instance group to be
+// immediately deleted. The instances are also removed from any target
+// pools of which they were a member. This method reduces thetargetSize of the managed instance group by the number of
+// instances that you delete.
+// The deleteInstances operation is marked DONE if
+// the deleteInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of thedeleting action with thelistmanagedinstances
+// method.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) DeleteInstances(ctx context.Context, req *computepb.DeleteInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersDeleteInstancesRequestResource()
@@ -710,6 +996,9 @@ func (c *regionInstanceGroupManagersRESTClient) DeleteInstances(ctx context.Cont
 	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/instanceGroupManagers/%v/deleteInstances", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager())
 
 	params := url.Values{}
+	if req != nil && req.NoGracefulShutdown != nil {
+		params.Add("noGracefulShutdown", fmt.Sprintf("%v", req.GetNoGracefulShutdown()))
+	}
 	if req != nil && req.RequestId != nil {
 		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
 	}
@@ -722,6 +1011,13 @@ func (c *regionInstanceGroupManagersRESTClient) DeleteInstances(ctx context.Cont
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/DeleteInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/deleteInstances")
+	}
 	opts = append((*c.CallOptions).DeleteInstances[0:len((*c.CallOptions).DeleteInstances):len((*c.CallOptions).DeleteInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -761,7 +1057,8 @@ func (c *regionInstanceGroupManagersRESTClient) DeleteInstances(ctx context.Cont
 	return op, nil
 }
 
-// DeletePerInstanceConfigs deletes selected per-instance configurations for the managed instance group.
+// DeletePerInstanceConfigs deletes selected per-instance configurations for the managed instance
+// group.
 func (c *regionInstanceGroupManagersRESTClient) DeletePerInstanceConfigs(ctx context.Context, req *computepb.DeletePerInstanceConfigsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagerDeleteInstanceConfigReqResource()
@@ -782,6 +1079,13 @@ func (c *regionInstanceGroupManagersRESTClient) DeletePerInstanceConfigs(ctx con
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/DeletePerInstanceConfigs")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/deletePerInstanceConfigs")
+	}
 	opts = append((*c.CallOptions).DeletePerInstanceConfigs[0:len((*c.CallOptions).DeletePerInstanceConfigs):len((*c.CallOptions).DeletePerInstanceConfigs)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -835,6 +1139,13 @@ func (c *regionInstanceGroupManagersRESTClient) Get(ctx context.Context, req *co
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/Get")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}")
+	}
 	opts = append((*c.CallOptions).Get[0:len((*c.CallOptions).Get):len((*c.CallOptions).Get)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.InstanceGroupManager{}
@@ -866,7 +1177,15 @@ func (c *regionInstanceGroupManagersRESTClient) Get(ctx context.Context, req *co
 	return resp, nil
 }
 
-// Insert creates a managed instance group using the information that you specify in the request. After the group is created, instances in the group are created using the specified instance template. This operation is marked as DONE when the group is created even if the instances in the group have not yet been created. You must separately verify the status of the individual instances with the listmanagedinstances method. A regional managed instance group can contain up to 2000 instances.
+// Insert creates a managed instance group using the information that you specify
+// in the request. After the group is created, instances in the group are
+// created using the specified instance template.
+// This operation is marked as DONE when the group is created
+// even if the instances in the group have not yet been created. You must
+// separately verify the status of the individual instances with thelistmanagedinstances
+// method.
+//
+// A regional managed instance group can contain up to 2000 instances.
 func (c *regionInstanceGroupManagersRESTClient) Insert(ctx context.Context, req *computepb.InsertRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstanceGroupManagerResource()
@@ -894,6 +1213,13 @@ func (c *regionInstanceGroupManagersRESTClient) Insert(ctx context.Context, req 
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v", req.GetProject(), req.GetRegion()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/Insert")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers")
+	}
 	opts = append((*c.CallOptions).Insert[0:len((*c.CallOptions).Insert):len((*c.CallOptions).Insert)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -933,10 +1259,11 @@ func (c *regionInstanceGroupManagersRESTClient) Insert(ctx context.Context, req 
 	return op, nil
 }
 
-// List retrieves the list of managed instance groups that are contained within the specified region.
+// List retrieves the list of managed instance groups that are contained
+// within the specified region.
 func (c *regionInstanceGroupManagersRESTClient) List(ctx context.Context, req *computepb.ListRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *InstanceGroupManagerIterator {
 	it := &InstanceGroupManagerIterator{}
-	req = proto.Clone(req).(*computepb.ListRegionInstanceGroupManagersRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.InstanceGroupManager, string, error) {
 		resp := &computepb.RegionInstanceGroupManagerList{}
@@ -1019,10 +1346,11 @@ func (c *regionInstanceGroupManagersRESTClient) List(ctx context.Context, req *c
 	return it
 }
 
-// ListErrors lists all errors thrown by actions on instances for a given regional managed instance group. The filter and orderBy query parameters are not supported.
+// ListErrors lists all errors thrown by actions on instances for a given regional
+// managed instance group. The filter andorderBy query parameters are not supported.
 func (c *regionInstanceGroupManagersRESTClient) ListErrors(ctx context.Context, req *computepb.ListErrorsRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *InstanceManagedByIgmErrorIterator {
 	it := &InstanceManagedByIgmErrorIterator{}
-	req = proto.Clone(req).(*computepb.ListErrorsRegionInstanceGroupManagersRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.InstanceManagedByIgmError, string, error) {
 		resp := &computepb.RegionInstanceGroupManagersListErrorsResponse{}
@@ -1105,10 +1433,15 @@ func (c *regionInstanceGroupManagersRESTClient) ListErrors(ctx context.Context, 
 	return it
 }
 
-// ListManagedInstances lists the instances in the managed instance group and instances that are scheduled to be created. The list includes any current actions that the group has scheduled for its instances. The orderBy query parameter is not supported. The pageToken query parameter is supported only if the group’s listManagedInstancesResults field is set to PAGINATED.
+// ListManagedInstances lists the instances in the managed instance group and instances that are
+// scheduled to be created. The list includes any current actions
+// that the group has scheduled for its instances. The orderBy
+// query parameter is not supported.   The pageToken query parameter is
+// supported only if the group’s listManagedInstancesResults field is set
+// to PAGINATED.
 func (c *regionInstanceGroupManagersRESTClient) ListManagedInstances(ctx context.Context, req *computepb.ListManagedInstancesRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *ManagedInstanceIterator {
 	it := &ManagedInstanceIterator{}
-	req = proto.Clone(req).(*computepb.ListManagedInstancesRegionInstanceGroupManagersRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.ManagedInstance, string, error) {
 		resp := &computepb.RegionInstanceGroupManagersListInstancesResponse{}
@@ -1191,10 +1524,11 @@ func (c *regionInstanceGroupManagersRESTClient) ListManagedInstances(ctx context
 	return it
 }
 
-// ListPerInstanceConfigs lists all of the per-instance configurations defined for the managed instance group. The orderBy query parameter is not supported.
+// ListPerInstanceConfigs lists all of the per-instance configurations defined for the managed
+// instance group. The orderBy query parameter is not supported.
 func (c *regionInstanceGroupManagersRESTClient) ListPerInstanceConfigs(ctx context.Context, req *computepb.ListPerInstanceConfigsRegionInstanceGroupManagersRequest, opts ...gax.CallOption) *PerInstanceConfigIterator {
 	it := &PerInstanceConfigIterator{}
-	req = proto.Clone(req).(*computepb.ListPerInstanceConfigsRegionInstanceGroupManagersRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.PerInstanceConfig, string, error) {
 		resp := &computepb.RegionInstanceGroupManagersListInstanceConfigsResp{}
@@ -1277,7 +1611,21 @@ func (c *regionInstanceGroupManagersRESTClient) ListPerInstanceConfigs(ctx conte
 	return it
 }
 
-// Patch updates a managed instance group using the information that you specify in the request. This operation is marked as DONE when the group is patched even if the instances in the group are still in the process of being patched. You must separately verify the status of the individual instances with the listmanagedinstances method. This method supports PATCH semantics and uses the JSON merge patch format and processing rules. If you update your group to specify a new template or instance configuration, it’s possible that your intended specification for each VM in the group is different from the current state of that VM. To learn how to apply an updated configuration to the VMs in a MIG, see Updating instances in a MIG.
+// Patch updates a managed instance group using the information that you specify
+// in the request.
+// This operation is marked as DONE when the group is patched
+// even if the instances in the group are still in the process of being
+// patched. You must separately verify the status of the individual instances
+// with the listmanagedinstances
+// method. This method supportsPATCH
+// semantics and uses theJSON merge
+// patch format and processing rules.
+//
+// If you update your group to specify a new template or instance
+// configuration, it’s possible that your intended specification for each VM
+// in the group is different from the current state of that VM. To learn how
+// to apply an updated configuration to the VMs in a MIG, seeUpdating instances in
+// a MIG.
 func (c *regionInstanceGroupManagersRESTClient) Patch(ctx context.Context, req *computepb.PatchRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetInstanceGroupManagerResource()
@@ -1305,6 +1653,13 @@ func (c *regionInstanceGroupManagersRESTClient) Patch(ctx context.Context, req *
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/Patch")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}")
+	}
 	opts = append((*c.CallOptions).Patch[0:len((*c.CallOptions).Patch):len((*c.CallOptions).Patch)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1344,7 +1699,9 @@ func (c *regionInstanceGroupManagersRESTClient) Patch(ctx context.Context, req *
 	return op, nil
 }
 
-// PatchPerInstanceConfigs inserts or patches per-instance configurations for the managed instance group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to distinguish whether to perform insert or patch.
+// PatchPerInstanceConfigs inserts or patches per-instance configurations for the managed instance
+// group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to
+// distinguish whether to perform insert or patch.
 func (c *regionInstanceGroupManagersRESTClient) PatchPerInstanceConfigs(ctx context.Context, req *computepb.PatchPerInstanceConfigsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagerPatchInstanceConfigReqResource()
@@ -1372,6 +1729,13 @@ func (c *regionInstanceGroupManagersRESTClient) PatchPerInstanceConfigs(ctx cont
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/PatchPerInstanceConfigs")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/patchPerInstanceConfigs")
+	}
 	opts = append((*c.CallOptions).PatchPerInstanceConfigs[0:len((*c.CallOptions).PatchPerInstanceConfigs):len((*c.CallOptions).PatchPerInstanceConfigs)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1411,7 +1775,19 @@ func (c *regionInstanceGroupManagersRESTClient) PatchPerInstanceConfigs(ctx cont
 	return op, nil
 }
 
-// RecreateInstances flags the specified VM instances in the managed instance group to be immediately recreated. Each instance is recreated using the group’s current configuration. This operation is marked as DONE when the flag is set even if the instances have not yet been recreated. You must separately verify the status of each instance by checking its currentAction field; for more information, see Checking the status of managed instances. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted. You can specify a maximum of 1000 instances with this method per request.
+// RecreateInstances flags the specified VM instances in the managed instance group to be
+// immediately recreated. Each instance is recreated using the group’s current
+// configuration. This operation is marked as DONE when the flag
+// is set even if the instances have not yet been recreated. You must
+// separately verify the status of each instance by checking itscurrentAction field; for more information, see Checking
+// the status of managed instances.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) RecreateInstances(ctx context.Context, req *computepb.RecreateInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersRecreateRequestResource()
@@ -1427,6 +1803,9 @@ func (c *regionInstanceGroupManagersRESTClient) RecreateInstances(ctx context.Co
 	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/instanceGroupManagers/%v/recreateInstances", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager())
 
 	params := url.Values{}
+	if req != nil && req.NoGracefulShutdown != nil {
+		params.Add("noGracefulShutdown", fmt.Sprintf("%v", req.GetNoGracefulShutdown()))
+	}
 	if req != nil && req.RequestId != nil {
 		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
 	}
@@ -1439,6 +1818,13 @@ func (c *regionInstanceGroupManagersRESTClient) RecreateInstances(ctx context.Co
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/RecreateInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/recreateInstances")
+	}
 	opts = append((*c.CallOptions).RecreateInstances[0:len((*c.CallOptions).RecreateInstances):len((*c.CallOptions).RecreateInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1478,7 +1864,19 @@ func (c *regionInstanceGroupManagersRESTClient) RecreateInstances(ctx context.Co
 	return op, nil
 }
 
-// Resize changes the intended size of the managed instance group. If you increase the size, the group creates new instances using the current instance template. If you decrease the size, the group deletes one or more instances. The resize operation is marked DONE if the resize request is successful. The underlying actions take additional time. You must separately verify the status of the creating or deleting actions with the listmanagedinstances method. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is removed or deleted.
+// Resize changes the intended size of the managed instance group. If you increase
+// the size, the group creates new instances using the current instance
+// template. If you decrease the size, the group deletes one or more
+// instances.
+//
+// The resize operation is marked DONE if theresize request is successful. The underlying actions take
+// additional time. You must separately verify the status of thecreating or deleting actions with thelistmanagedinstances
+// method.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is removed or deleted.
 func (c *regionInstanceGroupManagersRESTClient) Resize(ctx context.Context, req *computepb.ResizeRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -1500,6 +1898,13 @@ func (c *regionInstanceGroupManagersRESTClient) Resize(ctx context.Context, req 
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/Resize")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/resize")
+	}
 	opts = append((*c.CallOptions).Resize[0:len((*c.CallOptions).Resize):len((*c.CallOptions).Resize)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1539,7 +1944,22 @@ func (c *regionInstanceGroupManagersRESTClient) Resize(ctx context.Context, req 
 	return op, nil
 }
 
-// ResumeInstances flags the specified instances in the managed instance group to be resumed. This method increases the targetSize and decreases the targetSuspendedSize of the managed instance group by the number of instances that you resume. The resumeInstances operation is marked DONE if the resumeInstances request is successful. The underlying actions take additional time. You must separately verify the status of the RESUMING action with the listmanagedinstances method. In this request, you can only specify instances that are suspended. For example, if an instance was previously suspended using the suspendInstances method, it can be resumed using the resumeInstances method. If a health check is attached to the managed instance group, the specified instances will be verified as healthy after they are resumed. You can specify a maximum of 1000 instances with this method per request.
+// ResumeInstances flags the specified instances in the managed instance group to be
+// resumed. This method increases thetargetSize and decreases the targetSuspendedSize
+// of the managed instance group by the number of instances that you resume.
+// The resumeInstances operation is marked DONE if
+// the resumeInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theRESUMING action with thelistmanagedinstances
+// method.
+//
+// In this request, you can only specify instances that are suspended. For
+// example, if an instance was previously suspended using the suspendInstances
+// method, it can be resumed using the resumeInstances method.
+//
+// If a health check is attached to the managed instance group, the specified
+// instances will be verified as healthy after they are resumed.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) ResumeInstances(ctx context.Context, req *computepb.ResumeInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersResumeInstancesRequestResource()
@@ -1567,6 +1987,13 @@ func (c *regionInstanceGroupManagersRESTClient) ResumeInstances(ctx context.Cont
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/ResumeInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/resumeInstances")
+	}
 	opts = append((*c.CallOptions).ResumeInstances[0:len((*c.CallOptions).ResumeInstances):len((*c.CallOptions).ResumeInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1606,7 +2033,8 @@ func (c *regionInstanceGroupManagersRESTClient) ResumeInstances(ctx context.Cont
 	return op, nil
 }
 
-// SetInstanceTemplate sets the instance template to use when creating new instances or recreating instances in this group. Existing instances are not affected.
+// SetInstanceTemplate sets the instance template to use when creating new instances or recreating
+// instances in this group. Existing instances are not affected.
 func (c *regionInstanceGroupManagersRESTClient) SetInstanceTemplate(ctx context.Context, req *computepb.SetInstanceTemplateRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersSetTemplateRequestResource()
@@ -1634,6 +2062,13 @@ func (c *regionInstanceGroupManagersRESTClient) SetInstanceTemplate(ctx context.
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/SetInstanceTemplate")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/setInstanceTemplate")
+	}
 	opts = append((*c.CallOptions).SetInstanceTemplate[0:len((*c.CallOptions).SetInstanceTemplate):len((*c.CallOptions).SetInstanceTemplate)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1673,7 +2108,8 @@ func (c *regionInstanceGroupManagersRESTClient) SetInstanceTemplate(ctx context.
 	return op, nil
 }
 
-// SetTargetPools modifies the target pools to which all new instances in this group are assigned. Existing instances in the group are not affected.
+// SetTargetPools modifies the target pools to which all new instances in this group are
+// assigned. Existing instances in the group are not affected.
 func (c *regionInstanceGroupManagersRESTClient) SetTargetPools(ctx context.Context, req *computepb.SetTargetPoolsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersSetTargetPoolsRequestResource()
@@ -1701,6 +2137,13 @@ func (c *regionInstanceGroupManagersRESTClient) SetTargetPools(ctx context.Conte
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/SetTargetPools")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/setTargetPools")
+	}
 	opts = append((*c.CallOptions).SetTargetPools[0:len((*c.CallOptions).SetTargetPools):len((*c.CallOptions).SetTargetPools)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1740,7 +2183,22 @@ func (c *regionInstanceGroupManagersRESTClient) SetTargetPools(ctx context.Conte
 	return op, nil
 }
 
-// StartInstances flags the specified instances in the managed instance group to be started. This method increases the targetSize and decreases the targetStoppedSize of the managed instance group by the number of instances that you start. The startInstances operation is marked DONE if the startInstances request is successful. The underlying actions take additional time. You must separately verify the status of the STARTING action with the listmanagedinstances method. In this request, you can only specify instances that are stopped. For example, if an instance was previously stopped using the stopInstances method, it can be started using the startInstances method. If a health check is attached to the managed instance group, the specified instances will be verified as healthy after they are started. You can specify a maximum of 1000 instances with this method per request.
+// StartInstances flags the specified instances in the managed instance group to be
+// started. This method increases thetargetSize and decreases the targetStoppedSize
+// of the managed instance group by the number of instances that you start.
+// The startInstances operation is marked DONE if
+// the startInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theSTARTING action with thelistmanagedinstances
+// method.
+//
+// In this request, you can only specify instances that are stopped. For
+// example, if an instance was previously stopped using the stopInstances
+// method, it can be started using the startInstances method.
+//
+// If a health check is attached to the managed instance group, the specified
+// instances will be verified as healthy after they are started.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) StartInstances(ctx context.Context, req *computepb.StartInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersStartInstancesRequestResource()
@@ -1768,6 +2226,13 @@ func (c *regionInstanceGroupManagersRESTClient) StartInstances(ctx context.Conte
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/StartInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/startInstances")
+	}
 	opts = append((*c.CallOptions).StartInstances[0:len((*c.CallOptions).StartInstances):len((*c.CallOptions).StartInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1807,7 +2272,31 @@ func (c *regionInstanceGroupManagersRESTClient) StartInstances(ctx context.Conte
 	return op, nil
 }
 
-// StopInstances flags the specified instances in the managed instance group to be immediately stopped. You can only specify instances that are running in this request. This method reduces the targetSize and increases the targetStoppedSize of the managed instance group by the number of instances that you stop. The stopInstances operation is marked DONE if the stopInstances request is successful. The underlying actions take additional time. You must separately verify the status of the STOPPING action with the listmanagedinstances method. If the standbyPolicy.initialDelaySec field is set, the group delays stopping the instances until initialDelaySec have passed from instance.creationTimestamp (that is, when the instance was created). This delay gives your application time to set itself up and initialize on the instance. If more than initialDelaySec seconds have passed since instance.creationTimestamp when this method is called, there will be zero delay. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is stopped. Stopped instances can be started using the startInstances method. You can specify a maximum of 1000 instances with this method per request.
+// StopInstances flags the specified instances in the managed instance group to be
+// immediately stopped. You can only specify instances that are running in
+// this request. This method reduces thetargetSize and increases the targetStoppedSize
+// of the managed instance group by the number of instances that you stop.
+// The stopInstances operation is marked DONE if
+// the stopInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theSTOPPING action with thelistmanagedinstances
+// method.
+//
+// If the standbyPolicy.initialDelaySec field is set, the group
+// delays stopping the instances until initialDelaySec have
+// passed from instance.creationTimestamp (that is, when the
+// instance was created). This delay gives your application time to
+// set itself up and initialize on the instance. If more thaninitialDelaySec seconds have passed sinceinstance.creationTimestamp when this method is called, there
+// will be zero delay.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is stopped.
+//
+// Stopped instances can be started using the startInstances
+// method.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) StopInstances(ctx context.Context, req *computepb.StopInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersStopInstancesRequestResource()
@@ -1823,6 +2312,9 @@ func (c *regionInstanceGroupManagersRESTClient) StopInstances(ctx context.Contex
 	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/instanceGroupManagers/%v/stopInstances", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager())
 
 	params := url.Values{}
+	if req != nil && req.NoGracefulShutdown != nil {
+		params.Add("noGracefulShutdown", fmt.Sprintf("%v", req.GetNoGracefulShutdown()))
+	}
 	if req != nil && req.RequestId != nil {
 		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
 	}
@@ -1835,6 +2327,13 @@ func (c *regionInstanceGroupManagersRESTClient) StopInstances(ctx context.Contex
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/StopInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/stopInstances")
+	}
 	opts = append((*c.CallOptions).StopInstances[0:len((*c.CallOptions).StopInstances):len((*c.CallOptions).StopInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1874,7 +2373,31 @@ func (c *regionInstanceGroupManagersRESTClient) StopInstances(ctx context.Contex
 	return op, nil
 }
 
-// SuspendInstances flags the specified instances in the managed instance group to be immediately suspended. You can only specify instances that are running in this request. This method reduces the targetSize and increases the targetSuspendedSize of the managed instance group by the number of instances that you suspend. The suspendInstances operation is marked DONE if the suspendInstances request is successful. The underlying actions take additional time. You must separately verify the status of the SUSPENDING action with the listmanagedinstances method. If the standbyPolicy.initialDelaySec field is set, the group delays suspension of the instances until initialDelaySec have passed from instance.creationTimestamp (that is, when the instance was created). This delay gives your application time to set itself up and initialize on the instance. If more than initialDelaySec seconds have passed since instance.creationTimestamp when this method is called, there will be zero delay. If the group is part of a backend service that has enabled connection draining, it can take up to 60 seconds after the connection draining duration has elapsed before the VM instance is suspended. Suspended instances can be resumed using the resumeInstances method. You can specify a maximum of 1000 instances with this method per request.
+// SuspendInstances flags the specified instances in the managed instance group to be
+// immediately suspended. You can only specify instances that are running in
+// this request. This method reduces thetargetSize and increases the targetSuspendedSize
+// of the managed instance group by the number of instances that you suspend.
+// The suspendInstances operation is marked DONE if
+// the suspendInstances request is successful. The underlying
+// actions take additional time. You must separately verify the status of theSUSPENDING action with thelistmanagedinstances
+// method.
+//
+// If the standbyPolicy.initialDelaySec field is set, the group
+// delays suspension of the instances until initialDelaySec have
+// passed from instance.creationTimestamp (that is, when the
+// instance was created). This delay gives your application time to
+// set itself up and initialize on the instance. If more thaninitialDelaySec seconds have passed sinceinstance.creationTimestamp when this method is called, there
+// will be zero delay.
+//
+// If the group is part of a backend
+// service that has enabled
+// connection draining, it can take up to 60 seconds after the connection
+// draining duration has elapsed before the VM instance is suspended.
+//
+// Suspended instances can be resumed using the resumeInstances
+// method.
+//
+// You can specify a maximum of 1000 instances with this method per request.
 func (c *regionInstanceGroupManagersRESTClient) SuspendInstances(ctx context.Context, req *computepb.SuspendInstancesRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagersSuspendInstancesRequestResource()
@@ -1902,6 +2425,13 @@ func (c *regionInstanceGroupManagersRESTClient) SuspendInstances(ctx context.Con
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/SuspendInstances")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/suspendInstances")
+	}
 	opts = append((*c.CallOptions).SuspendInstances[0:len((*c.CallOptions).SuspendInstances):len((*c.CallOptions).SuspendInstances)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -1941,7 +2471,9 @@ func (c *regionInstanceGroupManagersRESTClient) SuspendInstances(ctx context.Con
 	return op, nil
 }
 
-// UpdatePerInstanceConfigs inserts or updates per-instance configurations for the managed instance group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to distinguish whether to perform insert or patch.
+// UpdatePerInstanceConfigs inserts or updates per-instance configurations for the managed instance
+// group. perInstanceConfig.name (at http://perInstanceConfig.name) serves as a key used to
+// distinguish whether to perform insert or patch.
 func (c *regionInstanceGroupManagersRESTClient) UpdatePerInstanceConfigs(ctx context.Context, req *computepb.UpdatePerInstanceConfigsRegionInstanceGroupManagerRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetRegionInstanceGroupManagerUpdateInstanceConfigReqResource()
@@ -1969,6 +2501,13 @@ func (c *regionInstanceGroupManagersRESTClient) UpdatePerInstanceConfigs(ctx con
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/instanceGroupManagers/%v", req.GetProject(), req.GetRegion(), req.GetInstanceGroupManager()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionInstanceGroupManagers/UpdatePerInstanceConfigs")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/instanceGroupManagers/{instance_group_manager}/updatePerInstanceConfigs")
+	}
 	opts = append((*c.CallOptions).UpdatePerInstanceConfigs[0:len((*c.CallOptions).UpdatePerInstanceConfigs):len((*c.CallOptions).UpdatePerInstanceConfigs)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}

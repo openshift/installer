@@ -16,7 +16,9 @@ limitations under the License.
 
 package v1beta1
 
-import infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+import (
+	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+)
 
 // GCPManagedControlPlaneClassSpec defines the GCPManagedControlPlane properties that may be shared across several gcp managed control planes.
 type GCPManagedControlPlaneClassSpec struct {
@@ -26,6 +28,12 @@ type GCPManagedControlPlaneClassSpec struct {
 	// only to fulfill the CAPI contract.
 	// +optional
 	MachineTemplate *GCPManagedControlPlaneTemplateMachineTemplate `json:"machineTemplate,omitempty"`
+
+	// ClusterName allows you to specify the name of the GKE cluster.
+	// If you don't specify a name then a default name will be created
+	// based on the namespace and name of the managed control plane.
+	// +optional
+	ClusterName string `json:"clusterName,omitempty"`
 
 	// ClusterNetwork define the cluster network.
 	// +optional
@@ -145,4 +153,13 @@ type GCPManagedMachinePoolClassSpec struct {
 	// LinuxNodeConfig specifies the settings for Linux agent nodes.
 	// +optional
 	LinuxNodeConfig *LinuxNodeConfig `json:"linuxNodeConfig,omitempty"`
+	// Preemptible specifies whether to create nodes using preemptible VM instances.
+	// Preemptible VMs have a maximum lifetime of 24 hours and may be reclaimed with 30 seconds
+	// notice. This field is immutable.
+	// +optional
+	Preemptible *bool `json:"preemptible,omitempty"`
+	// Spot specifies whether to create nodes using Spot VM instances. Spot VMs can be reclaimed at
+	// any time and are recommended over Preemptible VMs for new workloads. This field is immutable.
+	// +optional
+	Spot *bool `json:"spot,omitempty"`
 }
