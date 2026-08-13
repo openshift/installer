@@ -1016,6 +1016,35 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\" or \"external\".",
 		},
 		{
+			name: "minimalISO requested on s390x",
+			data: `
+apiVersion: v1
+metadata:
+		name: test-cluster
+baseDomain: test-domain
+networking:
+		networkType: OVNKubernetes
+compute:
+		- architecture: s390x
+		  hyperthreading: Enabled
+		  name: worker
+		  platform: {}
+		  replicas: 0
+controlPlane:
+		architecture: s390x
+		hyperthreading: Enabled
+		name: master
+		platform: {}
+		replicas: 3
+platform:
+		external:
+		  platformName: vsphere
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: minimalISO: Invalid value: true: minimal ISO is not supported on s390x architecture (s390x uses zipl bootloader, not GRUB/isolinux)",
+		},
+		{
 			name: "generic platformName for external platform",
 			data: `
 apiVersion: v1
@@ -2341,4 +2370,37 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 			}
 		})
 	}
+}
+
+func TestValidateMinimalISO(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+	fileFetcher.EXPECT().FetchByName("agent-config.yaml").Return(&asset.File{
+		Filename: "agent-config.yaml",
+		Data: []byte(`apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: test-agent-config
+minimalISO: true
+`),
+	}, nil)
+
+	installConfig := &types.InstallConfig{
+		ControlPlane: &types.MachinePool{
+			Architecture: types.ArchitectureS390X,
+		},
+		Platform: types.Platform{
+			External: &external.Platform{
+				PlatformName: "ibmz",
+			},
+		},
+	}
+
+	a := &OptionalInstallConfig{}
+	errs := a.validateMinimalISO(installConfig, fileFetcher)
+
+	assert.Len(t, errs, 1)
+	assert.Contains(t, errs[0].Error(), "minimal ISO is not supported on s390x architecture")
 }
