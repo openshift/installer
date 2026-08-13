@@ -481,6 +481,13 @@ type NodeExporterCollectorConfig struct {
 	// Enable when you need visibility into kernel memory zone allocation and pressure.
 	// +optional
 	Zoneinfo NodeExporterCollectorZoneinfoConfig `json:"zoneinfo,omitzero"`
+	// nvmExpressSubsystem configures the nvmesubsystem collector, which
+	// collects statistics about NVM Express (NVMe) subsystem devices.
+	// nvmExpressSubsystem is optional.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable default,
+	// which is subject to change over time. The current default is enabled.
+	// +optional
+	NVMExpressSubsystem NodeExporterCollectorNVMExpressSubsystemConfig `json:"nvmExpressSubsystem,omitzero"`
 }
 
 // NodeExporterCollectorCpufreqConfig provides configuration for the cpufreq collector
@@ -728,6 +735,20 @@ type NodeExporterCollectorZoneinfoConfig struct {
 	// Valid values are "Collect" and "DoNotCollect".
 	// When set to "Collect", the zoneinfo collector is active and zone memory statistics are collected.
 	// When set to "DoNotCollect", the zoneinfo collector is inactive.
+	// +required
+	CollectionPolicy NodeExporterCollectorCollectionPolicy `json:"collectionPolicy,omitempty"`
+}
+
+// NodeExporterCollectorNVMExpressSubsystemConfig provides configuration for
+// the nvmesubsystem collector of the node-exporter agent. The nvmesubsystem
+// collector collects statistics about NVM Express (NVMe) subsystem devices.
+// It is enabled by default.
+type NodeExporterCollectorNVMExpressSubsystemConfig struct {
+	// collectionPolicy declares whether the nvmesubsystem collector collects metrics.
+	// This field is required.
+	// Valid values are "Collect" and "DoNotCollect".
+	// When set to "Collect", the nvmesubsystem collector is active and NVMe subsystem statistics are collected.
+	// When set to "DoNotCollect", the nvmesubsystem collector is inactive and the corresponding metrics become unavailable.
 	// +required
 	CollectionPolicy NodeExporterCollectorCollectionPolicy `json:"collectionPolicy,omitempty"`
 }
