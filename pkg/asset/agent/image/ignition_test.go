@@ -131,6 +131,12 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, userAuthToken, templateData.UserAuthToken)
 	assert.Equal(t, watcherAuthToken, templateData.WatcherAuthToken)
 	assert.Equal(t, false, templateData.DisableImagePolicy) // Should be false when env var is unset
+	assert.Equal(t, "", templateData.DisabledHostValidations)
+}
+
+func TestIgnition_disabledHostValidationsForWorkflow(t *testing.T) {
+	assert.Equal(t, "apps-domain-name-resolved-correctly", disabledHostValidationsForWorkflow(workflow.AgentWorkflowTypeAddNodes))
+	assert.Equal(t, "", disabledHostValidationsForWorkflow(workflow.AgentWorkflowTypeInstall))
 }
 
 func TestIgnition_shouldDisableImagePolicy(t *testing.T) {
