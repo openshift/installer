@@ -22,15 +22,16 @@ import (
 
 	"sigs.k8s.io/cluster-api-provider-gcp/util/location"
 
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	container "cloud.google.com/go/container/apiv1"
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/pkg/errors"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -91,7 +92,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		params.CredentialsClient = credentialsClient
 	}
 
-	helper, err := patch.NewHelper(params.GCPManagedControlPlane, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.GCPManagedControlPlane, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
@@ -112,7 +113,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 // ManagedControlPlaneScope defines the basic context for an actuator to operate upon.
 type ManagedControlPlaneScope struct {
 	client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	Cluster                *clusterv1.Cluster
 	GCPManagedCluster      *infrav1exp.GCPManagedCluster
@@ -131,7 +132,7 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.GCPManagedControlPlane,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
 			infrav1exp.GKEControlPlaneReadyCondition,
 			infrav1exp.GKEControlPlaneCreatingCondition,
 			infrav1exp.GKEControlPlaneUpdatingCondition,
@@ -148,7 +149,7 @@ func (s *ManagedControlPlaneScope) Close() error {
 }
 
 // ConditionSetter return a condition setter (which is GCPManagedControlPlane itself).
-func (s *ManagedControlPlaneScope) ConditionSetter() conditions.Setter {
+func (s *ManagedControlPlaneScope) ConditionSetter() v1beta1conditions.Setter {
 	return s.GCPManagedControlPlane
 }
 
@@ -226,7 +227,7 @@ func (s *ManagedControlPlaneScope) ClusterName() string {
 
 // SetEndpoint sets the Endpoint of GCPManagedControlPlane.
 func (s *ManagedControlPlaneScope) SetEndpoint(host string) {
-	s.GCPManagedControlPlane.Spec.Endpoint = clusterv1.APIEndpoint{
+	s.GCPManagedControlPlane.Spec.Endpoint = clusterv1beta1.APIEndpoint{
 		Host: host,
 		Port: APIServerPort,
 	}

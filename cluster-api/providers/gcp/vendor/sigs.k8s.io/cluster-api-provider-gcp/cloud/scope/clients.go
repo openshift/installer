@@ -18,6 +18,7 @@ package scope
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -42,6 +43,12 @@ type GCPServices struct {
 
 // GCPRateLimiter implements cloud.RateLimiter.
 type GCPRateLimiter struct{}
+
+// credentialHeader is a helper struct used for determining the type of
+// GCP credentials from JSON data.
+type credentialHeader struct {
+	Type string `json:"type"`
+}
 
 // Accept blocks until the operation can be performed.
 func (rl *GCPRateLimiter) Accept(ctx context.Context, key *cloud.RateLimitKey) error {
@@ -83,7 +90,22 @@ func defaultClientOptions(ctx context.Context, credentialsRef *infrav1.ObjectRef
 		if err != nil {
 			return nil, fmt.Errorf("getting gcp credentials from reference %s: %w", credentialsRef, err)
 		}
-		opts = append(opts, option.WithCredentialsJSON(rawData))
+
+		header := &credentialHeader{}
+		if err := json.Unmarshal(rawData, header); err != nil {
+			return nil, fmt.Errorf("parsing gcp credential type from reference %s: %w", credentialsRef, err)
+		}
+
+		switch header.Type {
+		case "service_account":
+			opts = append(opts, option.WithAuthCredentialsJSON(option.ServiceAccount, rawData))
+		case "external_account":
+			opts = append(opts, option.WithAuthCredentialsJSON(option.ExternalAccount, rawData))
+		case "impersonated_service_account":
+			opts = append(opts, option.WithAuthCredentialsJSON(option.ImpersonatedServiceAccount, rawData))
+		default:
+			opts = append(opts, option.WithAuthCredentialsJSON(option.ServiceAccount, rawData))
+		}
 	}
 
 	return opts, nil
