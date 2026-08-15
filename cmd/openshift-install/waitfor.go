@@ -17,6 +17,8 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // getWaitOptionsFromInstallConfig constructs WaitOptions from an InstallConfig.
@@ -26,7 +28,7 @@ func getWaitOptionsFromInstallConfig(ic *types.InstallConfig) command.WaitOption
 	}
 	if ic != nil {
 		switch ic.Platform.Name() {
-		case baremetal.Name:
+		case baremetal.Name, openstack.Name, vsphere.Name:
 			options.ExtendTimeoutForBaremetal = true
 		case aws.Name:
 			if ic.AWS != nil &&
