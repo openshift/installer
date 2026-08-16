@@ -538,11 +538,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			logrus.Warnf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType)
 		}
 
-		if vspherePlatform.LoadBalancer != nil && !reflect.DeepEqual(*vspherePlatform.LoadBalancer, configv1.VSpherePlatformLoadBalancer{}) {
-			fieldPath := vsPath.Child("loadBalancer")
-			logrus.Warnf("%s: %v is ignored", fieldPath, vspherePlatform.LoadBalancer)
-		}
-
 		if len(vspherePlatform.Hosts) > 1 {
 			fieldPath := vsPath.Child("hosts")
 			logrus.Warnf("%s: %v is ignored", fieldPath, vspherePlatform.Hosts)
