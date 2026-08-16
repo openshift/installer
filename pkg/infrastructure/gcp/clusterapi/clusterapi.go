@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
@@ -33,6 +34,7 @@ var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.BootstrapDestroyer = (*Provider)(nil)
+var _ clusterapi.Timeouts = (*Provider)(nil)
 
 // Name returns the name for the platform.
 func (p Provider) Name() string {
@@ -42,6 +44,16 @@ func (p Provider) Name() string {
 // PublicGatherEndpoint indicates that machine ready checks should wait for an ExternalIP
 // in the status and use that when gathering bootstrap log bundles.
 func (Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.ExternalIP }
+
+// NetworkTimeout for the network infrastructure to become ready.
+func (p Provider) NetworkTimeout() time.Duration {
+	return 30 * time.Minute
+}
+
+// ProvisionTimeout for the machines to be provisioned.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 15 * time.Minute
+}
 
 // PreProvision is called before provisioning using CAPI controllers has initiated.
 // GCP resources that are not created by CAPG (and are required for other stages of the install) are
