@@ -6802,6 +6802,19 @@ spec:
                     - Managed
                     - Unmanaged
                     type: string
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VPC
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   network:
                     description: |-
                       Network specifies an existing VPC where the cluster should be created
