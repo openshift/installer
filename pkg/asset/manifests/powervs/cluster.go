@@ -82,7 +82,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	client, err = powervsconfig.NewClient()
+	client, err = powervsconfig.NewClientWithEndpoints(installConfig.Config.Platform.PowerVS.ServiceEndpoints)
 	if err != nil {
 		return nil, err
 	}

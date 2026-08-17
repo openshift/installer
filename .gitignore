@@ -1,1 +1,13 @@
 /bin/
+/copy_install-config.yaml
+/test-powervs*
+.powervs/config.json
+copy_openshift_install_state.json
+cleanup-j4hxb/
+ibm-credentials.env
+PROD_files/
+.bob/
+/openshift-ipi-powervs-installation-diagnostic-report.html
+/openshift-install*
+.gitignore
+.DS_Store

@@ -16,6 +16,7 @@ import (
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/sirupsen/logrus"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -60,8 +61,13 @@ type SessionVars struct {
 	PowerVSResourceGroup string
 }
 
-func authenticateAPIKey(apikey string) (string, error) {
-	a, err := core.NewIamAuthenticatorBuilder().SetApiKey(apikey).SetURL(GetIAMURL()).Build()
+func authenticateAPIKey(apikey string, endpoints []configv1.PowerVSServiceEndpoint) (string, error) {
+	iamURL := powervs.EndpointURLForService(string(configv1.IBMCloudServiceIAM), endpoints)
+	builder := core.NewIamAuthenticatorBuilder().SetApiKey(apikey)
+	if iamURL != "" {
+		builder = builder.SetURL(iamURL)
+	}
+	a, err := builder.Build()
 	if err != nil {
 		return "", err
 	}
@@ -73,11 +79,11 @@ func authenticateAPIKey(apikey string) (string, error) {
 }
 
 // FetchUserDetails returns User details from the given API key.
-func FetchUserDetails(apikey string) (*User, error) {
+func FetchUserDetails(apikey string, endpoints []configv1.PowerVSServiceEndpoint) (*User, error) {
 	user := User{}
 	var bluemixToken string
 
-	iamToken, err := authenticateAPIKey(apikey)
+	iamToken, err := authenticateAPIKey(apikey, endpoints)
 	if err != nil {
 		return &user, err
 	}
@@ -110,7 +116,7 @@ func FetchUserDetails(apikey string) (*User, error) {
 }
 
 // NewBxClient func returns bluemix client
-func NewBxClient(survey bool) (*BxClient, error) {
+func NewBxClient(survey bool, endpoints []configv1.PowerVSServiceEndpoint) (*BxClient, error) {
 	c := &BxClient{}
 	sv, err := getSessionVars(survey)
 	if err != nil {
@@ -122,7 +128,7 @@ func NewBxClient(survey bool) (*BxClient, error) {
 	c.Zone = sv.Zone
 	c.PowerVSResourceGroup = sv.PowerVSResourceGroup
 
-	c.User, err = FetchUserDetails(c.APIKey)
+	c.User, err = FetchUserDetails(c.APIKey, endpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -202,11 +208,13 @@ func getSessionVars(survey bool) (SessionVars, error) {
 }
 
 // NewPISession updates pisession details, return error on fail.
-func (c *BxClient) NewPISession() error {
-	authenticator, autherr := core.NewIamAuthenticatorBuilder().
-		SetApiKey(c.APIKey).
-		SetURL(GetIAMURL()).
-		Build()
+func (c *BxClient) NewPISession(endpoints []configv1.PowerVSServiceEndpoint) error {
+	iamURL := powervs.EndpointURLForService(string(configv1.IBMCloudServiceIAM), endpoints)
+	builder := core.NewIamAuthenticatorBuilder().SetApiKey(c.APIKey)
+	if iamURL != "" {
+		builder = builder.SetURL(iamURL)
+	}
+	authenticator, autherr := builder.Build()
 	if autherr != nil {
 		return fmt.Errorf("failed to create IAM authenticator: %w", autherr)
 	}
@@ -218,7 +226,7 @@ func (c *BxClient) NewPISession() error {
 		Region:        c.Region,
 		Zone:          c.Zone,
 		Debug:         false,
-		URL:           GetPowerURL(c.Zone, c.Region),
+		URL:           powervs.EndpointURLForService("Power", endpoints),
 	}
 
 	// Avoid by defining err as a variable: non-name c.PISession on left side of :=

@@ -29,7 +29,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 //go:generate mockgen -source=./client.go -destination=./mock/powervsclient_generated.go -package=mock
@@ -99,6 +101,7 @@ type API interface {
 type Client struct {
 	APIKey            string
 	BXCli             *BxClient
+	ServiceEndpoints  []configv1.PowerVSServiceEndpoint
 	managementAPI     *resourcemanagerv2.ResourceManagerV2
 	controllerAPI     *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI            *vpcv1.VpcV1
@@ -142,14 +145,20 @@ type DNSRecordResponse struct {
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
-	bxCli, err := NewBxClient(false)
+	return NewClientWithEndpoints(nil)
+}
+
+// NewClientWithEndpoints initializes a client with a session and optional service endpoint overrides.
+func NewClientWithEndpoints(endpoints []configv1.PowerVSServiceEndpoint) (*Client, error) {
+	bxCli, err := NewBxClient(false, endpoints)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		APIKey: bxCli.APIKey,
-		BXCli:  bxCli,
+		APIKey:           bxCli.APIKey,
+		BXCli:            bxCli,
+		ServiceEndpoints: endpoints,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -209,13 +218,15 @@ func (c *Client) loadSDKServices() error {
 // by its CRN, zone ID, and DNS record name.
 func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string, publish types.PublishingStrategy) ([]DNSRecordResponse, error) {
 	// Get service URLs once at the start of this function
-	iamURL := GetIAMURL()
-	cisURL := GetCISURL()
-	dnsServicesURL := GetDNSServicesURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	cisURL := powervstypes.EndpointURLForService("CIS", c.ServiceEndpoints)
+	dnsServicesURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceDNSServices), c.ServiceEndpoints)
 
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	dnsRecords := []DNSRecordResponse{}
 	switch publish {
@@ -412,14 +423,16 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 
 	var allZones []DNSZoneResponse
 	// Get service URLs once at the start of this function
-	iamURL := GetIAMURL()
-	cisURL := GetCISURL()
-	dnsServicesURL := GetDNSServicesURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	cisURL := powervstypes.EndpointURLForService("CIS", c.ServiceEndpoints)
+	dnsServicesURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceDNSServices), c.ServiceEndpoints)
 
 	for _, instance := range listResourceInstancesResponse.Resources {
 		authenticator := &core.IamAuthenticator{
 			ApiKey: c.APIKey,
-			URL:    iamURL,
+		}
+		if iamURL != "" {
+			authenticator.URL = iamURL
 		}
 
 		switch publish {
@@ -554,8 +567,8 @@ func (c *Client) createPublicDNSRecord(ctx context.Context, crnstr string, baseD
 	logrus.Debugf("createDNSRecord: crnstr = %s, hostname = %s, cname = %s", crnstr, hostname, cname)
 
 	// Get service URLs once at the start of this function
-	iamURL := GetIAMURL()
-	cisURL := GetCISURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	cisURL := powervstypes.EndpointURLForService("CIS", c.ServiceEndpoints)
 
 	var (
 		zoneID           string
@@ -575,13 +588,17 @@ func (c *Client) createPublicDNSRecord(ctx context.Context, crnstr string, baseD
 
 	authenticator = &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	globalOptions = &dnsrecordsv1.DnsRecordsV1Options{
 		Authenticator:  authenticator,
 		Crn:            ptr.To(crnstr),
 		ZoneIdentifier: ptr.To(zoneID),
-		URL:            cisURL,
+	}
+	if cisURL != "" {
+		globalOptions.URL = cisURL
 	}
 	dnsRecordService, err = dnsrecordsv1.NewDnsRecordsV1(globalOptions)
 	if err != nil {
@@ -650,8 +667,11 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	}
 	var vpcNamesList []string
 	for _, region := range listRegionsResponse.Regions {
-		// Use staging-aware URL instead of the endpoint from the region list
-		regionURL := GetVPCURL(*region.Name)
+		// Use the endpoint override if set; otherwise derive a standard per-region URL.
+		regionURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceVPC), c.ServiceEndpoints)
+		if regionURL == "" {
+			regionURL = "https://" + *region.Name + ".iaas.cloud.ibm.com/v1"
+		}
 		err := c.vpcAPI.SetServiceURL(regionURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
@@ -765,16 +785,19 @@ func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region 
 }
 
 func (c *Client) loadResourceManagementAPI() error {
-	// Get service URLs once at the start of this function
-	iamURL := GetIAMURL()
-	resourceControllerURL := GetResourceControllerURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	resourceManagerURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceResourceManager), c.ServiceEndpoints)
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	options := &resourcemanagerv2.ResourceManagerV2Options{
 		Authenticator: authenticator,
-		URL:           resourceControllerURL,
+	}
+	if resourceManagerURL != "" {
+		options.URL = resourceManagerURL
 	}
 
 	resourceManagerV2Service, err := resourcemanagerv2.NewResourceManagerV2(options)
@@ -786,17 +809,20 @@ func (c *Client) loadResourceManagementAPI() error {
 }
 
 func (c *Client) loadResourceControllerAPI() error {
-	// Get service URLs once at the start of this function
-	iamURL := GetIAMURL()
-	resourceControllerURL := GetResourceControllerURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	resourceControllerURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceResourceController), c.ServiceEndpoints)
 
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	options := &resourcecontrollerv2.ResourceControllerV2Options{
 		Authenticator: authenticator,
-		URL:           resourceControllerURL,
+	}
+	if resourceControllerURL != "" {
+		options.URL = resourceControllerURL
 	}
 	resourceControllerV2Service, err := resourcecontrollerv2.NewResourceControllerV2(options)
 	if err != nil {
@@ -807,14 +833,18 @@ func (c *Client) loadResourceControllerAPI() error {
 }
 
 func (c *Client) loadVPCV1API() error {
-	// Get service URLs
-	iamURL := GetIAMURL()
-	// Use a default VPC region URL - this will be overridden per-region as needed
-	vpcURL := GetVPCURL("us-south")
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	// Use the VPC endpoint override if set; the URL will be updated per-region by SetVPCServiceURLForRegion.
+	vpcURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceVPC), c.ServiceEndpoints)
+	if vpcURL == "" {
+		vpcURL = "https://us-south.iaas.cloud.ibm.com/v1"
+	}
 
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
 		Authenticator: authenticator,
@@ -828,11 +858,14 @@ func (c *Client) loadVPCV1API() error {
 }
 
 func (c *Client) loadDNSServicesAPI() error {
-	iamURL := GetIAMURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	dnsServicesURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceDNSServices), c.ServiceEndpoints)
 
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	dnsService, err := dnssvcsv1.NewDnsSvcsV1(&dnssvcsv1.DnsSvcsV1Options{
 		Authenticator: authenticator,
@@ -841,11 +874,10 @@ func (c *Client) loadDNSServicesAPI() error {
 		return err
 	}
 
-	// Set the DNS Services URL based on staging mode
-	dnsServicesURL := GetDNSServicesURL()
-	err = dnsService.SetServiceURL(dnsServicesURL)
-	if err != nil {
-		return err
+	if dnsServicesURL != "" {
+		if err = dnsService.SetServiceURL(dnsServicesURL); err != nil {
+			return err
+		}
 	}
 
 	c.dnsServicesAPI = dnsService
@@ -853,19 +885,24 @@ func (c *Client) loadDNSServicesAPI() error {
 }
 
 func (c *Client) loadTransitGatewayAPI() error {
-	iamURL := GetIAMURL()
-	transitGatewayURL := GetTransitGatewayURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	transitGatewayURL := powervstypes.EndpointURLForService("TransitGateway", c.ServiceEndpoints)
 
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	versionDate := "2023-07-04"
-	tgSvc, err := transitgatewayapisv1.NewTransitGatewayApisV1(&transitgatewayapisv1.TransitGatewayApisV1Options{
+	opts := &transitgatewayapisv1.TransitGatewayApisV1Options{
 		Authenticator: authenticator,
 		Version:       &versionDate,
-		URL:           transitGatewayURL,
-	})
+	}
+	if transitGatewayURL != "" {
+		opts.URL = transitGatewayURL
+	}
+	tgSvc, err := transitgatewayapisv1.NewTransitGatewayApisV1(opts)
 	if err != nil {
 		return err
 	}
@@ -873,24 +910,25 @@ func (c *Client) loadTransitGatewayAPI() error {
 	return nil
 }
 
-// SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources
+// SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources.
 func (c *Client) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
-	// Use staging-aware URL instead of the endpoint from GetRegion
-	// The endpoint from GetRegion returns production URLs even in staging mode
-	regionURL := GetVPCURL(region)
-	err := c.vpcAPI.SetServiceURL(regionURL)
-	if err != nil {
-		return err
+	// If a VPC endpoint override is set, use it; otherwise construct the standard regional URL.
+	regionURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceVPC), c.ServiceEndpoints)
+	if regionURL == "" {
+		regionURL = "https://" + region + ".iaas.cloud.ibm.com/v1"
 	}
-	return nil
+	return c.vpcAPI.SetServiceURL(regionURL)
 }
 
 // GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
 // for authentication to the IBM Cloud APIs.
 func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    "https://iam.test.cloud.ibm.com",
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
 		Authenticator: authenticator,
@@ -1209,7 +1247,7 @@ func (c *Client) ServiceInstanceNameToGUID(ctx context.Context, name string) (st
 func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error) {
 	var err error
 	if c.BXCli.PISession == nil {
-		err = c.BXCli.NewPISession()
+		err = c.BXCli.NewPISession(c.ServiceEndpoints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterCapabilities: %w", err)
 		}
@@ -1226,7 +1264,7 @@ func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (
 func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error) {
 	var err error
 	if c.BXCli.PISession == nil {
-		err = c.BXCli.NewPISession()
+		err = c.BXCli.NewPISession(c.ServiceEndpoints)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterSupportedSystems: %w", err)
 		}
@@ -1470,29 +1508,38 @@ func (c *Client) CreateSSHKey(ctx context.Context, serviceInstance string, zone 
 		err           error
 	)
 
-	user, err = FetchUserDetails(c.APIKey)
+	user, err = FetchUserDetails(c.APIKey, c.ServiceEndpoints)
 	if err != nil {
 		return fmt.Errorf("createSSHKey: failed to fetch user details %w", err)
 	}
 
-	authenticator = &core.IamAuthenticator{
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
+	iamAuth := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    GetIAMURL(),
 	}
+	if iamURL != "" {
+		iamAuth.URL = iamURL
+	}
+	authenticator = iamAuth
 	err = authenticator.Validate()
 	if err != nil {
 		return fmt.Errorf("createSSHKey: authenticator failed validate %w", err)
 	}
 
-	// Derive the region from the zone so GetPowerURL can build the correct endpoint.
+	// Derive a per-region URL for the Power API from the zone and the endpoint override.
 	// Strip trailing digits: "dal12" → "dal" (mirrors ibmpisession.costructRegionFromZone).
 	powerRegion := strings.TrimRight(zone, "0123456789")
+	powerURL := powervstypes.EndpointURLForService("Power", c.ServiceEndpoints)
 	options = &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
 		Debug:         false,
 		UserAccount:   user.Account,
 		Zone:          zone,
-		URL:           GetPowerURL(zone, powerRegion),
+	}
+	if powerURL != "" {
+		options.URL = powerURL
+	} else {
+		options.URL = "https://" + powerRegion + ".power-iaas.cloud.ibm.com"
 	}
 
 	piSession, err = ibmpisession.NewIBMPISession(options)
@@ -1709,18 +1756,23 @@ func (c *Client) CreateVirtualPrivateEndpointGateway(ctx context.Context, name s
 //
 //	resourceType=bucket, resource=<bucket-name>
 func (c *Client) SetCOSBucketPublicIAMPolicy(ctx context.Context, cosInstanceGUID, bucketName string) error {
-	iamURL := GetIAMURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), c.ServiceEndpoints)
 
 	authenticator := &core.IamAuthenticator{
 		ApiKey: c.APIKey,
-		URL:    iamURL,
+	}
+	if iamURL != "" {
+		authenticator.URL = iamURL
 	}
 
 	// IAM Policy Management API lives at the same base IAM URL.
-	svc, err := iampolicymanagementv1.NewIamPolicyManagementV1(&iampolicymanagementv1.IamPolicyManagementV1Options{
+	svcOptions := &iampolicymanagementv1.IamPolicyManagementV1Options{
 		Authenticator: authenticator,
-		URL:           iamURL,
-	})
+	}
+	if iamURL != "" {
+		svcOptions.URL = iamURL
+	}
+	svc, err := iampolicymanagementv1.NewIamPolicyManagementV1(svcOptions)
 	if err != nil {
 		return fmt.Errorf("failed to create IAM policy management client: %w", err)
 	}

@@ -16,7 +16,8 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	configv1 "github.com/openshift/api/config/v1"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 const cosTypeName = "cos instance"
@@ -336,9 +337,13 @@ func bootstrapIgnBucketName(infraID string) string {
 
 // newCOSS3Client builds a COS S3 client pointed at the appropriate endpoint.
 // cosInstanceGUID is the GUID portion of the COS instance CRN.
-func newCOSS3Client(apiKey, cosInstanceGUID, endpoint string) *ibms3.S3 {
+// serviceEndpoints is the list of service endpoint overrides from the cluster metadata.
+func newCOSS3Client(apiKey, cosInstanceGUID, endpoint string, serviceEndpoints []configv1.PowerVSServiceEndpoint) *ibms3.S3 {
 	cfg := cosaws.NewConfig()
-	iamURL := powervs.GetIAMURL()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), serviceEndpoints)
+	if iamURL == "" {
+		iamURL = "https://iam.cloud.ibm.com"
+	}
 	authEndpoint := fmt.Sprintf("%s/identity/token", iamURL)
 	cfg.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, apiKey, cosInstanceGUID))
 	cfg.WithEndpoint(endpoint)
@@ -357,71 +362,58 @@ func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
 	}
 	cosInstanceGUID := parts[7]
 
-	endpoint := powervs.GetCOSEndpoint(o.Region)
-	// Strip the leading "https://" the SDK expects just the host.
+	// Use COS endpoint override if set; otherwise fall back to the standard regional endpoint.
+	endpoint := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceCOS), o.ServiceEndpoints)
+	if endpoint == "" {
+		endpoint = "https://s3." + o.Region + ".cloud-object-storage.appdomain.cloud"
+	}
+	// Strip the leading "https://" — the SDK expects just the host.
 	endpoint = strings.TrimPrefix(endpoint, "https://")
 
-	cosClient := newCOSS3Client(o.APIKey, cosInstanceGUID, endpoint)
+	cosClient := newCOSS3Client(o.APIKey, cosInstanceGUID, endpoint, o.ServiceEndpoints)
 	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	bucketName := bootstrapIgnBucketName(o.InfraID)
 	o.Logger.Infof("Deleting installer-created COS bucket %q from pre-existing instance", bucketName)
 
-	// In staging, CAPI uploads per-machine ignition objects into the bucket
-	// under "control-plane/<machine-name>" in addition to the root-level
-	// "bootstrap.ign" written by the installer. We must enumerate and remove
-	// all of them before the bucket can be deleted.
-	// In production only "bootstrap.ign" is present, so this extra list pass
-	// is not needed there.
-	if powervs.IsStagingMode() {
-		listInput := &ibms3.ListObjectsInput{
-			Bucket: cosaws.String(bucketName),
+	// Enumerate and delete all objects before deleting the bucket itself.
+	// This is a safe no-op when the bucket is empty and handles both the
+	// root-level "bootstrap.ign" object and any additional objects (e.g.
+	// per-machine ignition files) that CAPI may have uploaded.
+	listInput := &ibms3.ListObjectsInput{
+		Bucket: cosaws.String(bucketName),
+	}
+	for {
+		listOutput, err := cosClient.ListObjectsWithContext(ctx, listInput)
+		if err != nil {
+			if strings.Contains(err.Error(), "NoSuchBucket") || strings.Contains(err.Error(), "404") {
+				o.Logger.Debugf("destroyCOSInstanceBuckets: bucket %q already gone during list", bucketName)
+				return nil
+			}
+			return fmt.Errorf("destroyCOSInstanceBuckets: failed to list objects in bucket %q: %w", bucketName, err)
 		}
-		for {
-			listOutput, err := cosClient.ListObjectsWithContext(ctx, listInput)
-			if err != nil {
-				if strings.Contains(err.Error(), "NoSuchBucket") || strings.Contains(err.Error(), "404") {
-					o.Logger.Debugf("destroyCOSInstanceBuckets: bucket %q already gone during list", bucketName)
-					return nil
-				}
-				return fmt.Errorf("destroyCOSInstanceBuckets: failed to list objects in bucket %q: %w", bucketName, err)
-			}
 
-			for _, obj := range listOutput.Contents {
-				deleteObjInput := &ibms3.DeleteObjectInput{
-					Bucket: cosaws.String(bucketName),
-					Key:    obj.Key,
-				}
-				if _, err := cosClient.DeleteObjectWithContext(ctx, deleteObjInput); err != nil {
-					o.Logger.Debugf("destroyCOSInstanceBuckets: DeleteObject %q in %q: %v (ignoring)", *obj.Key, bucketName, err)
-				} else {
-					o.Logger.Debugf("destroyCOSInstanceBuckets: deleted object %q from bucket %q", *obj.Key, bucketName)
-				}
+		for _, obj := range listOutput.Contents {
+			deleteObjInput := &ibms3.DeleteObjectInput{
+				Bucket: cosaws.String(bucketName),
+				Key:    obj.Key,
 			}
-
-			if listOutput.IsTruncated == nil || !*listOutput.IsTruncated {
-				break
-			}
-			// Without a Delimiter, NextMarker is not set; use the last key as the next marker.
-			if len(listOutput.Contents) > 0 {
-				listInput.Marker = listOutput.Contents[len(listOutput.Contents)-1].Key
+			if _, err := cosClient.DeleteObjectWithContext(ctx, deleteObjInput); err != nil {
+				o.Logger.Debugf("destroyCOSInstanceBuckets: DeleteObject %q in %q: %v (ignoring)", *obj.Key, bucketName, err)
 			} else {
-				break
+				o.Logger.Debugf("destroyCOSInstanceBuckets: deleted object %q from bucket %q", *obj.Key, bucketName)
 			}
 		}
-	} else {
-		// Production: only "bootstrap.ign" is present; delete it directly.
-		const bootstrapIgnObject = "bootstrap.ign"
-		deleteObjInput := &ibms3.DeleteObjectInput{
-			Bucket: cosaws.String(bucketName),
-			Key:    cosaws.String(bootstrapIgnObject),
+
+		if listOutput.IsTruncated == nil || !*listOutput.IsTruncated {
+			break
 		}
-		if _, err := cosClient.DeleteObjectWithContext(ctx, deleteObjInput); err != nil {
-			// A missing object is not an error – it may have already been cleaned up.
-			o.Logger.Debugf("destroyCOSInstanceBuckets: DeleteObject %q in %q: %v (ignoring)", bootstrapIgnObject, bucketName, err)
+		// Without a Delimiter, NextMarker is not set; use the last key as the next marker.
+		if len(listOutput.Contents) > 0 {
+			listInput.Marker = listOutput.Contents[len(listOutput.Contents)-1].Key
 		} else {
-			o.Logger.Debugf("destroyCOSInstanceBuckets: deleted object %q from bucket %q", bootstrapIgnObject, bucketName)
+			break
 		}
 	}
 

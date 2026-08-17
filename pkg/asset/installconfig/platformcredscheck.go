@@ -75,7 +75,7 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
 	case powervs.Name:
-		_, err = powervsconfig.NewClient()
+		_, err = powervsconfig.NewClientWithEndpoints(ic.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}

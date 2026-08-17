@@ -160,12 +160,12 @@ func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Pa
 		summarizeReport(reports)
 	case powervs.Name:
 		// We need to prompt for missing variables because NewPISession requires them!
-		bxCli, err := configpowervs.NewBxClient(true)
+		bxCli, err := configpowervs.NewBxClient(true, ic.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "failed to create bluemix client")
 		}
 
-		err = bxCli.NewPISession()
+		err = bxCli.NewPISession(ic.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "failed to create a new PISession")
 		}

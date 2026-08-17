@@ -27,6 +27,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
@@ -83,19 +84,20 @@ type User struct {
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	APIKey         string
-	BaseDomain     string
-	CISInstanceCRN string
-	ClusterName    string
-	DNSInstanceCRN string
-	DNSZone        string
-	InfraID        string
-	Logger         logrus.FieldLogger
-	Region         string
-	ServiceGUID    string
-	VPCRegion      string
-	Zone           string
-	TransitGateway string
+	APIKey           string
+	BaseDomain       string
+	CISInstanceCRN   string
+	ClusterName      string
+	DNSInstanceCRN   string
+	DNSZone          string
+	InfraID          string
+	Logger           logrus.FieldLogger
+	Region           string
+	ServiceGUID      string
+	VPCRegion        string
+	Zone             string
+	TransitGateway   string
+	ServiceEndpoints []configv1.PowerVSServiceEndpoint
 
 	managementSvc      *resourcemanagerv2.ResourceManagerV2
 	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
@@ -140,7 +142,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	)
 
 	// We need to prompt for missing variables because NewPISession requires them!
-	bxClient, err = powervs.NewBxClient(true)
+	bxClient, err = powervs.NewBxClient(true, metadata.ClusterPlatformMetadata.PowerVS.ServiceEndpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +192,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
+		ServiceEndpoints:   metadata.ClusterPlatformMetadata.PowerVS.ServiceEndpoints,
 		TransitGateway:     metadata.ClusterPlatformMetadata.PowerVS.TransitGateway,
 		searchByTag:        false, // @TODO Enable in the future
 		siPreconfigured:    siPreconfigured,
@@ -385,19 +388,16 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 }
 
 func (o *ClusterUninstaller) newAuthenticator(apikey string) (core.Authenticator, error) {
-	var (
-		authenticator core.Authenticator
-		err           error
-	)
-
 	if apikey == "" {
 		return nil, errors.New("newAuthenticator: apikey is empty")
 	}
 
-	authenticator, err = core.NewIamAuthenticatorBuilder().
-		SetApiKey(apikey).
-		SetURL(powervs.GetIAMURL()).
-		Build()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), o.ServiceEndpoints)
+	builder := core.NewIamAuthenticatorBuilder().SetApiKey(apikey)
+	if iamURL != "" {
+		builder = builder.SetURL(iamURL)
+	}
+	authenticator, err := builder.Build()
 	if err != nil {
 		return nil, fmt.Errorf("newAuthenticator: failed to build authenticator: %w", err)
 	}
@@ -545,7 +545,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: missing APIKey in metadata.json")
 	}
 
-	user, err := powervs.FetchUserDetails(o.APIKey)
+	user, err := powervs.FetchUserDetails(o.APIKey, o.ServiceEndpoints)
 	if err != nil {
 		return fmt.Errorf("loadSDKServices: fetchUserDetails: %w", err)
 	}
@@ -555,15 +555,18 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return err
 	}
 
-	var options *ibmpisession.IBMPIOptions = &ibmpisession.IBMPIOptions{
+	powerURL := powervstypes.EndpointURLForService("Power", o.ServiceEndpoints)
+	piOptions := &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
 		Debug:         false,
 		UserAccount:   user.Account,
 		Zone:          o.Zone,
-		URL:           powervs.GetPowerURL(o.Zone, o.Region),
+	}
+	if powerURL != "" {
+		piOptions.URL = powerURL
 	}
 
-	o.piSession, err = ibmpisession.NewIBMPISession(options)
+	o.piSession, err = ibmpisession.NewIBMPISession(piOptions)
 	if (err != nil) || (o.piSession == nil) {
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: ibmpisession.New: %w", err)
@@ -577,9 +580,13 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	// https://raw.githubusercontent.com/IBM/vpc-go-sdk/master/vpcv1/vpc_v1.go
+	vpcURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceVPC), o.ServiceEndpoints)
+	if vpcURL == "" {
+		vpcURL = "https://" + o.VPCRegion + ".iaas.cloud.ibm.com/v1"
+	}
 	o.vpcSvc, err = vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
 		Authenticator: authenticator,
-		URL:           powervs.GetVPCURL(o.VPCRegion),
+		URL:           vpcURL,
 	})
 	if err != nil {
 		return fmt.Errorf("loadSDKServices: vpcv1.NewVpcV1: %w", err)
@@ -594,10 +601,14 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	// Instantiate the service with an API key based IAM authenticator
-	o.managementSvc, err = resourcemanagerv2.NewResourceManagerV2(&resourcemanagerv2.ResourceManagerV2Options{
+	rmURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceResourceManager), o.ServiceEndpoints)
+	rmOptions := &resourcemanagerv2.ResourceManagerV2Options{
 		Authenticator: authenticator,
-		URL:           powervs.GetResourceManagerURL(),
-	})
+	}
+	if rmURL != "" {
+		rmOptions.URL = rmURL
+	}
+	o.managementSvc, err = resourcemanagerv2.NewResourceManagerV2(rmOptions)
 	if err != nil {
 		return fmt.Errorf("loadSDKServices: creating ResourceManagerV2 Service: %w", err)
 	}
@@ -608,11 +619,15 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	// Instantiate the service with an API key based IAM authenticator
-	o.controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(&resourcecontrollerv2.ResourceControllerV2Options{
+	rcURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceResourceController), o.ServiceEndpoints)
+	rcOptions := &resourcecontrollerv2.ResourceControllerV2Options{
 		Authenticator: authenticator,
 		ServiceName:   "cloud-object-storage",
-		URL:           powervs.GetResourceControllerURL(),
-	})
+	}
+	if rcURL != "" {
+		rcOptions.URL = rcURL
+	}
+	o.controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(rcOptions)
 	if err != nil {
 		return fmt.Errorf("loadSDKServices: creating ControllerV2 Service: %w", err)
 	}
@@ -622,10 +637,13 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return err
 	}
 
+	tgURL := powervstypes.EndpointURLForService("TransitGateway", o.ServiceEndpoints)
 	tgOptions = &transitgatewayapisv1.TransitGatewayApisV1Options{
 		Authenticator: authenticator,
 		Version:       &versionDate,
-		URL:           powervs.GetTransitGatewayURL(),
+	}
+	if tgURL != "" {
+		tgOptions.URL = tgURL
 	}
 
 	o.tgClient, err = transitgatewayapisv1.NewTransitGatewayApisV1(tgOptions)
@@ -644,11 +662,15 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return err
 		}
 
-		o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
+		cisURL := powervstypes.EndpointURLForService("CIS", o.ServiceEndpoints)
+		cisOptions := &zonesv1.ZonesV1Options{
 			Authenticator: authenticator,
 			Crn:           &o.CISInstanceCRN,
-			URL:           powervs.GetCISURL(),
-		})
+		}
+		if cisURL != "" {
+			cisOptions.URL = cisURL
+		}
+		o.zonesSvc, err = zonesv1.NewZonesV1(cisOptions)
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
@@ -680,12 +702,16 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return err
 		}
 
-		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+		cisURLForRecords := powervstypes.EndpointURLForService("CIS", o.ServiceEndpoints)
+		dnsRecordsOptions := &dnsrecordsv1.DnsRecordsV1Options{
 			Authenticator:  authenticator,
 			Crn:            &o.CISInstanceCRN,
 			ZoneIdentifier: &o.dnsZoneID,
-			URL:            powervs.GetCISURL(),
-		})
+		}
+		if cisURLForRecords != "" {
+			dnsRecordsOptions.URL = cisURLForRecords
+		}
+		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(dnsRecordsOptions)
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: Failed to instantiate dnsRecordsSvc: %w", err)
 		}
@@ -697,10 +723,14 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return err
 		}
 
-		o.dnsZonesSvc, err = dnszonesv1.NewDnsZonesV1(&dnszonesv1.DnsZonesV1Options{
+		dnsZonesURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceDNSServices), o.ServiceEndpoints)
+		dnsZonesOptions := &dnszonesv1.DnsZonesV1Options{
 			Authenticator: authenticator,
-			URL:           powervs.GetDNSServicesURL(),
-		})
+		}
+		if dnsZonesURL != "" {
+			dnsZonesOptions.URL = dnsZonesURL
+		}
+		o.dnsZonesSvc, err = dnszonesv1.NewDnsZonesV1(dnsZonesOptions)
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
@@ -735,10 +765,14 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return err
 		}
 
-		o.resourceRecordsSvc, err = resourcerecordsv1.NewResourceRecordsV1(&resourcerecordsv1.ResourceRecordsV1Options{
+		dnsServicesURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceDNSServices), o.ServiceEndpoints)
+		rrOptions := &resourcerecordsv1.ResourceRecordsV1Options{
 			Authenticator: authenticator,
-			URL:           powervs.GetDNSServicesURL(),
-		})
+		}
+		if dnsServicesURL != "" {
+			rrOptions.URL = dnsServicesURL
+		}
+		o.resourceRecordsSvc, err = resourcerecordsv1.NewResourceRecordsV1(rrOptions)
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: Failed to instantiate resourceRecordsSvc: %w", err)
 		}

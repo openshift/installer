@@ -74,6 +74,14 @@ type Platform struct {
 	// +optional
 	ServiceEndpoints []configv1.PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
+	// ProvisionTimeoutMinutes overrides the default machine provisioning timeout.
+	// Use this when the target environment provisions machines more slowly than
+	// the default 15-minute window (e.g. IBM Cloud staging/test environments).
+	// When unset or zero, the default of 15 minutes is used.
+	//
+	// +optional
+	ProvisionTimeoutMinutes int `json:"provisionTimeoutMinutes,omitempty"`
+
 	// tgName is the name or id of a pre-created TransitGateway inside IBM Cloud.
 	//
 	// +optional

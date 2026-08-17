@@ -353,11 +353,10 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
 		}
 
-		// Use staging IAM endpoint if IBMCLOUD_STAGING is set, otherwise use production
-		iamEndpoint := powervsic.GetIAMURL()
-		// Override IAM endpoint if an override was provided in service endpoints
-		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, metadata.IBMCloud.ServiceEndpoints); overrideURL != "" {
-			iamEndpoint = overrideURL
+		// Use the IAM endpoint from service endpoint overrides if provided.
+		iamEndpoint := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, metadata.IBMCloud.ServiceEndpoints)
+		if iamEndpoint == "" {
+			iamEndpoint = "https://iam.cloud.ibm.com"
 		}
 
 		envVars := map[string]string{
@@ -435,15 +434,21 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			),
 		)
 	case powervs.Name:
+		var svcEndpoints []configv1.PowerVSServiceEndpoint
+		if cfg := metadata.PowerVS; cfg != nil {
+			svcEndpoints = cfg.ServiceEndpoints
+		}
 		// We need to prompt for missing variables because NewPISession requires them!
-		bxClient, err := powervsic.NewBxClient(true)
+		bxClient, err := powervsic.NewBxClient(true, svcEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to create a BxClient in Run: %w", err)
 		}
 		APIKey := bxClient.GetBxClientAPIKey()
 
-		// Use staging IAM endpoint if IBMCLOUD_STAGING is set
-		iamEndpoint := powervsic.GetIAMURL()
+		iamEndpoint := powervs.EndpointURLForService(string(configv1.IBMCloudServiceIAM), svcEndpoints)
+		if iamEndpoint == "" {
+			iamEndpoint = "https://iam.cloud.ibm.com"
+		}
 
 		envVars := map[string]string{
 			"IBMCLOUD_AUTH_TYPE":        "iam",
@@ -452,10 +457,12 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			"IBMCLOUD_IAM_API_ENDPOINT": iamEndpoint,
 			"LOGLEVEL":                  "2",
 		}
-
-		// Pass IBMCLOUD_STAGING to CAPI controllers if set
-		if stagingEnv := os.Getenv("IBMCLOUD_STAGING"); stagingEnv != "" {
-			envVars["IBMCLOUD_STAGING"] = stagingEnv
+		// If the COS endpoint override targets the staging environment
+		// (*.cloud-object-storage.test.appdomain.cloud), tell the CAPI controller
+		// so it selects the COS Lite plan via GetCOSResourcePlanID in the vendor code.
+		cosEndpoint := powervs.EndpointURLForService(string(configv1.IBMCloudServiceCOS), svcEndpoints)
+		if strings.Contains(cosEndpoint, ".test.appdomain.cloud") {
+			envVars["IBMCLOUD_STAGING"] = "true"
 		}
 
 		controller := c.getInfrastructureController(
