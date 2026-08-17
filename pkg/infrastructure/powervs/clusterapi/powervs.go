@@ -11,6 +11,7 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -100,7 +101,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	}
 	logrus.Debugf("InfraReady: powerVSCluster.Status.VPC.ID = %s", *powerVSCluster.Status.VPC.ID)
 
-	// Get the image from the provider
+	// Get the image from the provider when an IBMPowerVSImage resource was created.
+	// Existing workspace images skip manifest creation, so a missing resource is expected.
 	key = crclient.ObjectKey{
 		Name:      fmt.Sprintf("rhcos-%s", in.InfraID),
 		Namespace: capiutils.Namespace,
@@ -108,9 +110,13 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	logrus.Debugf("InfraReady: image key = %+v", key)
 	powerVSImage := &capibm.IBMPowerVSImage{}
 	if err = in.Client.Get(ctx, key, powerVSImage); err != nil {
-		return fmt.Errorf("failed to get PowerVS image in InfraReady: %w", err)
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to get PowerVS image in InfraReady: %w", err)
+		}
+		logrus.Debugf("InfraReady: image resource %q not found, assuming existing workspace image is being used", key.Name)
+	} else {
+		logrus.Debugf("InfraReady: image = %+v", powerVSImage)
 	}
-	logrus.Debugf("InfraReady: image = %+v", powerVSImage)
 
 	// We need to set the region we will eventually query inside
 	vpcRegion := in.InstallConfig.Config.Platform.PowerVS.VPCRegion
