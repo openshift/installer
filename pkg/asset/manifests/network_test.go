@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -178,4 +179,44 @@ func TestNetworking_GenerateCustomNetworkConfigMTU(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestCNOConfigEnablesFRRForBGPVIP(t *testing.T) {
+	ic := validInstallConfigWithMTU(&types.InstallConfig{
+		Networking: &types.Networking{NetworkType: "OVNKubernetes"},
+		Platform: types.Platform{
+			BareMetal: &baremetal.Platform{
+				BGPVIPConfig: &baremetal.BGPVIPConfig{
+					LocalASN: 64512,
+					Peers:    []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.1", PeerASN: 64513}},
+				},
+			},
+		},
+	})
+	cfg, err := clusterNetworkOperatorConfig(ic, nil, nil)
+	if !assert.NoError(t, err) {
+		return
+	}
+	if !assert.NotNil(t, cfg) {
+		return
+	}
+	if !assert.NotNil(t, cfg.Spec.AdditionalRoutingCapabilities) {
+		return
+	}
+	assert.Contains(t, cfg.Spec.AdditionalRoutingCapabilities.Providers,
+		operatorv1.RoutingCapabilitiesProviderFRR)
+}
+
+func TestCNOConfigNilForBareMetalWithoutBGPVIP(t *testing.T) {
+	ic := validInstallConfigWithMTU(&types.InstallConfig{
+		Networking: &types.Networking{NetworkType: "OVNKubernetes"},
+		Platform: types.Platform{
+			BareMetal: &baremetal.Platform{},
+		},
+	})
+	cfg, err := clusterNetworkOperatorConfig(ic, nil, nil)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Nil(t, cfg)
 }

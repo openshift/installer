@@ -6139,6 +6139,77 @@ spec:
                       type: string
                     maxItems: 2
                     type: array
+                  bgpVIPConfig:
+                    description: |-
+                      BGPVIPConfig configures BGP-based advertisement of the API and
+                      Ingress VIPs. When set, kube-vip (Routing Table Mode) and frr-k8s
+                      are deployed as static pods on control plane nodes to advertise
+                      VIPs via BGP, replacing the default keepalived/VRRP mechanism.
+                    properties:
+                      communities:
+                        description: |-
+                          Communities is an optional list of BGP communities to attach to
+                          advertised VIP routes, in the format "ASN:value" (e.g., "64512:100").
+                        items:
+                          type: string
+                        type: array
+                      localASN:
+                        description: LocalASN is the Autonomous System Number for
+                          this cluster's BGP speaker.
+                        format: int64
+                        type: integer
+                      peers:
+                        description: Peers is the list of BGP peers to advertise VIPs
+                          to.
+                        items:
+                          description: BGPPeerConfig defines the configuration for
+                            a BGP peer.
+                          properties:
+                            bfdEnabled:
+                              description: |-
+                                BFDEnabled configures Bi-directional Forwarding Detection.
+                                Valid values are "true" and "false".
+                              type: string
+                            ebgpMultiHop:
+                              description: EBGPMultiHop enables multi-hop eBGP when
+                                the peer is not directly connected.
+                              type: string
+                            holdTime:
+                              description: HoldTime is the BGP hold time for this
+                                peer (e.g., "90s").
+                              type: string
+                            keepaliveTime:
+                              description: KeepaliveTime is the BGP keepalive interval
+                                for this peer (e.g., "30s").
+                              type: string
+                            password:
+                              description: |-
+                                Password is the optional TCP MD5 signature password for the BGP
+                                session (RFC 2385), consumed by FRR.
+                              type: string
+                            peerASN:
+                              description: PeerASN is the Autonomous System Number
+                                of the BGP peer.
+                              format: int64
+                              type: integer
+                            peerAddress:
+                              description: PeerAddress is the IP address of the BGP
+                                peer (e.g., ToR switch).
+                              type: string
+                            port:
+                              description: Port is the TCP port for the BGP session.
+                                Defaults to 179.
+                              format: int32
+                              type: integer
+                          required:
+                          - peerASN
+                          - peerAddress
+                          type: object
+                        type: array
+                    required:
+                    - localASN
+                    - peers
+                    type: object
                   bmcVerifyCA:
                     type: string
                   bootstrapExternalStaticDNS:
@@ -6228,6 +6299,56 @@ spec:
                       description: Host stores all the configuration data for a baremetal
                         host.
                       properties:
+                        bgpPeers:
+                          description: |-
+                            BGPPeers overrides the global bgpVIPConfig.peers for this specific
+                            host. When set, this host will peer with the listed BGP peers instead
+                            of the global peer list.
+                          items:
+                            description: BGPPeerConfig defines the configuration for
+                              a BGP peer.
+                            properties:
+                              bfdEnabled:
+                                description: |-
+                                  BFDEnabled configures Bi-directional Forwarding Detection.
+                                  Valid values are "true" and "false".
+                                type: string
+                              ebgpMultiHop:
+                                description: EBGPMultiHop enables multi-hop eBGP when
+                                  the peer is not directly connected.
+                                type: string
+                              holdTime:
+                                description: HoldTime is the BGP hold time for this
+                                  peer (e.g., "90s").
+                                type: string
+                              keepaliveTime:
+                                description: KeepaliveTime is the BGP keepalive interval
+                                  for this peer (e.g., "30s").
+                                type: string
+                              password:
+                                description: |-
+                                  Password is the optional TCP MD5 signature password for the BGP
+                                  session (RFC 2385), consumed by FRR.
+                                type: string
+                              peerASN:
+                                description: PeerASN is the Autonomous System Number
+                                  of the BGP peer.
+                                format: int64
+                                type: integer
+                              peerAddress:
+                                description: PeerAddress is the IP address of the
+                                  BGP peer (e.g., ToR switch).
+                                type: string
+                              port:
+                                description: Port is the TCP port for the BGP session.
+                                  Defaults to 179.
+                                format: int32
+                                type: integer
+                            required:
+                            - peerASN
+                            - peerAddress
+                            type: object
+                          type: array
                         bmc:
                           description: BMC stores the information about a baremetal
                             host's management controller.

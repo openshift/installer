@@ -92,6 +92,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.InternalReleaseImageRegistryAuthSecret{},
 		&BMCVerifyCAConfigMap{},
 		&PKIConfiguration{},
+		&BGPVIPConfigMap{},
 	}
 }
 
@@ -110,8 +111,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	mcoCfgTemplate := &manifests.MCO{}
 	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 	pkiConfig := &PKIConfiguration{}
+	bgpVIPConfigMap := &BGPVIPConfigMap{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -151,6 +153,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
 	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 	m.FileList = append(m.FileList, pkiConfig.Files()...)
+	m.FileList = append(m.FileList, bgpVIPConfigMap.Files()...)
 
 	asset.SortFiles(m.FileList)
 
