@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -421,6 +422,19 @@ func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors fiel
 	return
 }
 
+func validateHostOSImageStream(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	validStreams := types.OSImageStreamValues()
+	for idx, host := range hosts {
+		if host.OSImageStream != "" {
+			stream := types.OSImageStream(host.OSImageStream)
+			if !slices.Contains(validStreams, stream) {
+				errors = append(errors, field.NotSupported(fldPath.Index(idx).Child("osImageStream"), host.OSImageStream, validStreams))
+			}
+		}
+	}
+	return
+}
+
 // ValidateHostRootDeviceHints checks that a rootDeviceHints field contains no
 // invalid values.
 func ValidateHostRootDeviceHints(rdh *baremetal.RootDeviceHints, fldPath *field.Path) (errors field.ErrorList) {
@@ -540,6 +554,7 @@ func ValidateHosts(p *baremetal.Platform, fldPath *field.Path, c *types.InstallC
 	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath)...)
 
 	allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath)...)
+	allErrs = append(allErrs, validateHostOSImageStream(p.Hosts, fldPath)...)
 	return allErrs
 }
 

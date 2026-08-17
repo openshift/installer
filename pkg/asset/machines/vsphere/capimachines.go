@@ -149,7 +149,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				},
 			},
 		}
-		utils.SetMachineOSStreamLabels(vsphereMachine, config)
+		utils.SetMachineOSStreamLabels(vsphereMachine, config, pool)
 
 		// only set failureDomainName if VMGroup is defined as vm-host group
 		// is the only scenario we create vspherefailuredomainspec and vspheredeploymentzone
@@ -215,7 +215,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 		}
 		machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(machine, config)
+		utils.SetMachineOSStreamLabels(machine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},
@@ -248,7 +248,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			Spec: bootstrapSpec,
 		}
 		bootstrapVSphereMachine.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereMachine"))
-		utils.SetMachineOSStreamLabels(bootstrapVSphereMachine, config)
+		utils.SetMachineOSStreamLabels(bootstrapVSphereMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapVSphereMachine.Name)},
@@ -284,7 +284,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 		}
 		bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(bootstrapMachine, config)
+		utils.SetMachineOSStreamLabels(bootstrapMachine, config, pool)
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapVSphereMachine.Name)},
 			Object: bootstrapMachine,

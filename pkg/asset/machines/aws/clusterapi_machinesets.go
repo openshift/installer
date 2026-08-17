@@ -209,7 +209,7 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 		}
 		// Machine labels will be synced from the Machine to the corresponding Node
 		maps.Copy(machineSet.Spec.Template.ObjectMeta.Labels, nodeLabels)
-		utils.SetCAPIMachineSetOSStreamLabels(&machineSet, in.Config)
+		utils.SetCAPIMachineSetOSStreamLabels(&machineSet, in.Config, in.Pool)
 
 		machineSets = append(machineSets, machineSet)
 	}

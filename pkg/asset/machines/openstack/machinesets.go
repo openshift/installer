@@ -122,7 +122,7 @@ func MachineSets(ctx context.Context, clusterID string, config *types.InstallCon
 				},
 			},
 		}
-		utils.SetMachineSetOSStreamLabels(machinesets[idx], config)
+		utils.SetMachineSetOSStreamLabels(machinesets[idx], config, pool)
 	}
 
 	return machinesets, nil

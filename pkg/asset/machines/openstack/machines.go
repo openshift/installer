@@ -97,7 +97,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 
@@ -159,7 +159,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 			},
 		},
 	}
-	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config)
+	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config, pool)
 
 	if CPMSFailureDomains := pruneFailureDomains(failureDomains); CPMSFailureDomains != nil {
 		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = &machinev1.FailureDomains{

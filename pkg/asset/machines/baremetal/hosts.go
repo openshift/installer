@@ -124,13 +124,23 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 	numMasters := 0
 
 	controlPlaneArch := ""
+	controlPlaneOSImageStream := ""
 	if config.ControlPlane != nil {
 		controlPlaneArch = arch.RpmArch(string(config.ControlPlane.Architecture))
+		controlPlaneOSImageStream = string(config.ControlPlane.OSImageStream)
+		if controlPlaneOSImageStream == "" {
+			controlPlaneOSImageStream = string(config.OSImageStream)
+		}
 	}
 	computeArch := ""
+	computeOSImageStream := ""
 
 	if len(config.Compute) > 0 {
 		computeArch = arch.RpmArch(string(config.Compute[0].Architecture))
+		computeOSImageStream = string(config.Compute[0].OSImageStream)
+		if computeOSImageStream == "" {
+			computeOSImageStream = string(config.OSImageStream)
+		}
 	}
 
 	for _, host := range config.Platform.BareMetal.Hosts {
@@ -175,9 +185,14 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 				Method: "install_coreos",
 			}
 
+			hostStream := host.OSImageStream
+			if hostStream == "" {
+				hostStream = controlPlaneOSImageStream
+			}
+
 			newHost.ObjectMeta.Labels = map[string]string{
 				"installer.openshift.io/role": "control-plane",
-				streamLabelKey:                string(config.OSImageStream),
+				streamLabelKey:                hostStream,
 			}
 
 			// Link the new host to the currently available machine
@@ -196,9 +211,17 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 			numMasters++
 		} else {
 			newHost.Spec.Architecture = computeArch
-			newHost.ObjectMeta.Labels = map[string]string{
-				streamLabelKey: string(config.OSImageStream),
+
+			hostStream := host.OSImageStream
+
+			if hostStream == "" {
+				hostStream = computeOSImageStream
 			}
+
+			newHost.ObjectMeta.Labels = map[string]string{
+				streamLabelKey: hostStream,
+			}
+
 			// Pause workers until the real control plane is up.
 			newHost.ObjectMeta.Annotations = map[string]string{
 				"baremetalhost.metal3.io/paused": "",
@@ -232,8 +255,13 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 	numArbiters := 0
 
 	arbiterArch := ""
+	arbiterOSImageStream := ""
 	if config.Arbiter != nil {
 		arbiterArch = arch.RpmArch(string(config.Arbiter.Architecture))
+		arbiterOSImageStream = string(config.Arbiter.OSImageStream)
+		if arbiterOSImageStream == "" {
+			arbiterOSImageStream = string(config.OSImageStream)
+		}
 	}
 
 	for _, host := range config.Platform.BareMetal.Hosts {
@@ -280,9 +308,14 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 				Method: "install_coreos",
 			}
 
+			hostStream := host.OSImageStream
+			if hostStream == "" {
+				hostStream = arbiterOSImageStream
+			}
+
 			newHost.ObjectMeta.Labels = map[string]string{
 				"installer.openshift.io/role": "control-plane",
-				streamLabelKey:                string(config.OSImageStream),
+				streamLabelKey:                hostStream,
 			}
 
 			// Link the new host to the currently available machine

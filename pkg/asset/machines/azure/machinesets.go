@@ -123,7 +123,7 @@ func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.
 				},
 			},
 		}
-		utils.SetMachineSetOSStreamLabels(mset, ic.Config)
+		utils.SetMachineSetOSStreamLabels(mset, ic.Config, pool)
 		machinesets = append(machinesets, mset)
 	}
 	return machinesets, nil
@@ -246,7 +246,7 @@ func getMultiZoneMachineSets(in multiZoneMachineSetInput) ([]*clusterapi.Machine
 					},
 				},
 			}
-			utils.SetMachineSetOSStreamLabels(mset, in.ic.Config)
+			utils.SetMachineSetOSStreamLabels(mset, in.ic.Config, in.pool)
 			machineSets = append(machineSets, mset)
 			replicasToCreate -= currentReplica
 		}

@@ -75,7 +75,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			Spec: *machineSpec,
 		}
 		openStackMachine.SetGroupVersionKind(capo.SchemeGroupVersion.WithKind("OpenStackMachine"))
-		utils.SetMachineOSStreamLabels(openStackMachine, config)
+		utils.SetMachineOSStreamLabels(openStackMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", openStackMachine.Name)},
@@ -107,7 +107,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			},
 		}
 		machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(machine, config)
+		utils.SetMachineOSStreamLabels(machine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},

@@ -60,7 +60,7 @@ func Machines(clusterID string, config *types.InstallConfig, subnets map[string]
 				},
 			},
 		}
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machines = append(machines, machine)
 	}
 

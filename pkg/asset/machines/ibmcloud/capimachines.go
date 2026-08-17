@@ -167,7 +167,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			},
 		}
 		capibmcloudMachine.SetGroupVersionKind(capibmcloud.GroupVersion.WithKind("IBMVPCMachine"))
-		utils.SetMachineOSStreamLabels(capibmcloudMachine, config)
+		utils.SetMachineOSStreamLabels(capibmcloudMachine, config, pool)
 		capibmcloudMachines = append(capibmcloudMachines, capibmcloudMachine)
 
 		result = append(result, &asset.RuntimeFile{
@@ -196,7 +196,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			},
 		}
 		capiMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(capiMachine, config)
+		utils.SetMachineOSStreamLabels(capiMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", capiMachine.Name)},
@@ -223,7 +223,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			Spec: bootstrapSpec,
 		}
 		bootstrapMachine.SetGroupVersionKind(capibmcloud.GroupVersion.WithKind("IBMVPCMachine"))
-		utils.SetMachineOSStreamLabels(bootstrapMachine, config)
+		utils.SetMachineOSStreamLabels(bootstrapMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapMachine.Name)},
@@ -250,7 +250,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			},
 		}
 		bootstrapCAPIMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(bootstrapCAPIMachine, config)
+		utils.SetMachineOSStreamLabels(bootstrapCAPIMachine, config, pool)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},

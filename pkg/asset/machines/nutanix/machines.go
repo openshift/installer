@@ -75,7 +75,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-		utils.SetMachineOSStreamLabels(&machine, config)
+		utils.SetMachineOSStreamLabels(&machine, config, pool)
 		machineSetProvider = provider.DeepCopy()
 		machines = append(machines, machine)
 	}
@@ -117,7 +117,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		},
 	}
-	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config)
+	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config, pool)
 
 	if len(failureDomains) > 0 {
 		fdRefs := make([]machinev1.NutanixFailureDomainReference, 0, len(failureDomains))

@@ -164,6 +164,13 @@ spec:
                   For the compute machine pools, the only valid name is "worker".
                   For the arbiter machine pools, the only valid name is "arbiter".
                 type: string
+              osImageStream:
+                description: OSImageStream represents the name of an OS Image Stream
+                  to use in a pool.
+                enum:
+                - rhel-9
+                - rhel-10
+                type: string
               platform:
                 description: Platform is configuration for machine pool specific to
                   the platform.
@@ -1770,6 +1777,13 @@ spec:
                     For the compute machine pools, the only valid name is "worker".
                     For the arbiter machine pools, the only valid name is "arbiter".
                   type: string
+                osImageStream:
+                  description: OSImageStream represents the name of an OS Image Stream
+                    to use in a pool.
+                  enum:
+                  - rhel-9
+                  - rhel-10
+                  type: string
                 platform:
                   description: Platform is configuration for machine pool specific
                     to the platform.
@@ -3333,6 +3347,13 @@ spec:
                   For the control plane machine pool, the name will always be "master".
                   For the compute machine pools, the only valid name is "worker".
                   For the arbiter machine pools, the only valid name is "arbiter".
+                type: string
+              osImageStream:
+                description: OSImageStream represents the name of an OS Image Stream
+                  to use in a pool.
+                enum:
+                - rhel-9
+                - rhel-10
                 type: string
               platform:
                 description: Platform is configuration for machine pool specific to
@@ -6265,6 +6286,8 @@ spec:
                           type: string
                         networkConfig:
                           x-kubernetes-preserve-unknown-fields: true
+                        osImageStream:
+                          type: string
                         role:
                           type: string
                         rootDeviceHints:
