@@ -11,6 +11,8 @@ FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS b
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 ARG SKIP_ENVTEST="y"
+ARG BUILD_VERSION
+ENV BUILD_VERSION=${BUILD_VERSION}
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=kas-artifacts /usr/share/openshift/ cluster-api/bin/
