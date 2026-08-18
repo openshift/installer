@@ -32,6 +32,10 @@ $vcentercredpath = "secrets/vcenter-creds.xml"
 $storagepolicy = ""
 $secureboot = $false
 
+# Optional (e.g. openshift/release CI on vsphere-elastic): use a pre-provisioned pool under the compute cluster; PowerCLI will not create or tag the pool.
+# Leave unset to create a pool named like metadata.infraID (default for manual UPI).
+# $vsphere_install_resource_pool_name = "ipi-ci-clusters"
+
 $pullsecret = @"
 {"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}
 "@
