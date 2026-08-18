@@ -806,28 +806,23 @@ func OSImageStreamValues() []OSImageStream {
 }
 
 // NetworkObservabilityInstallationPolicy is an enumeration of the available network observability installation policies
-// Valid values are "", "InstallAndEnable", "DoNotInstall".
-// +kubebuilder:validation:Enum="";InstallAndEnable;DoNotInstall
+// Valid values are "InstallAndEnable", "NoAction".
+// +kubebuilder:validation:Enum=InstallAndEnable;NoAction
 type NetworkObservabilityInstallationPolicy string
 
 const (
-	// NetworkObservabilityNoOpinion means that the user has no opinion and the platform is left
-	// to choose reasonable defaults. The current default is to install and enable network observability.
-	// This is subject to change over time.
-	NetworkObservabilityNoOpinion NetworkObservabilityInstallationPolicy = ""
-	// NetworkObservabilityInstallAndEnable means that network observability should be installed and enabled during cluster deployment
+	// NetworkObservabilityInstallAndEnable means that network observability should be installed and enabled during cluster deployment.
 	NetworkObservabilityInstallAndEnable NetworkObservabilityInstallationPolicy = "InstallAndEnable"
-	// NetworkObservabilityDoNotInstall means that network observability should not be installed
-	NetworkObservabilityDoNotInstall NetworkObservabilityInstallationPolicy = "DoNotInstall"
+	// NetworkObservabilityNoAction means that nothing will be done regarding network observability.
+	NetworkObservabilityNoAction NetworkObservabilityInstallationPolicy = "NoAction"
 )
 
-// NetworkObservability defines the configuration for network observability installation
+// NetworkObservability defines the configuration for network observability installation.
 type NetworkObservability struct {
 	// InstallationPolicy controls whether network observability is installed during cluster deployment.
-	// Valid values are "", "InstallAndEnable" and "DoNotInstall".
-	// When set to "", network observability will be installed unless this is a SNO cluster.
+	// Valid values are "InstallAndEnable" and "NoAction".
 	// When set to "InstallAndEnable", network observability will be installed and enabled.
-	// When set to "DoNotInstall", network observability will not be installed.
+	// When set to "NoAction", nothing will be done regarding network observability.
 	// +optional
 	InstallationPolicy *NetworkObservabilityInstallationPolicy `json:"installationPolicy,omitempty"`
 }

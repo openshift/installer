@@ -22,13 +22,6 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
-var (
-	defaultNetworkObservabilityInstallAndEnable = types.NetworkObservabilityInstallAndEnable
-	defaultNetworkObservability                 = &types.NetworkObservability{
-		InstallationPolicy: &defaultNetworkObservabilityInstallAndEnable,
-	}
-)
-
 func TestInstallConfigLoad(t *testing.T) {
 	cases := []struct {
 		name           string
@@ -478,7 +471,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1072,7 +1064,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1164,7 +1155,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1236,7 +1226,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1308,7 +1297,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1380,7 +1368,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1490,7 +1477,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1640,7 +1626,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -1858,7 +1843,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -2181,7 +2165,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",
@@ -2289,7 +2272,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 								HostPrefix: 23,
 							},
 						},
-						NetworkObservability: defaultNetworkObservability,
 					},
 					ControlPlane: &types.MachinePool{
 						Name:           "master",

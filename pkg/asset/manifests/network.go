@@ -83,7 +83,7 @@ func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) er
 	// Set networkObservability from the install config
 	if netConfig.NetworkObservability != nil && netConfig.NetworkObservability.InstallationPolicy != nil {
 		networkSpec.NetworkObservability = configv1.NetworkObservabilitySpec{
-			InstallationPolicy: (*configv1.NetworkObservabilityInstallationPolicy)(netConfig.NetworkObservability.InstallationPolicy),
+			InstallationPolicy: configv1.NetworkObservabilityInstallationPolicy(*netConfig.NetworkObservability.InstallationPolicy),
 		}
 	}
 

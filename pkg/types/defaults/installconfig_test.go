@@ -21,7 +21,6 @@ import (
 )
 
 func defaultInstallConfig() *types.InstallConfig {
-	installationPolicy := types.NetworkObservabilityInstallAndEnable
 	return &types.InstallConfig{
 		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
@@ -35,9 +34,6 @@ func defaultInstallConfig() *types.InstallConfig {
 					CIDR:       *defaultClusterNetwork,
 					HostPrefix: int32(defaultHostPrefix),
 				},
-			},
-			NetworkObservability: &types.NetworkObservability{
-				InstallationPolicy: &installationPolicy,
 			},
 		},
 		ControlPlane:  defaultMachinePool("master"),
@@ -288,39 +284,6 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultNoneInstallConfig()
-				return c
-			}(),
-		},
-		{
-			name: "NetworkObservability nil",
-			config: &types.InstallConfig{
-				Networking: &types.Networking{
-					NetworkObservability: nil,
-				},
-			},
-			expected: func() *types.InstallConfig {
-				c := defaultInstallConfig()
-				return c
-			}(),
-		},
-		{
-			name: "NetworkObservability DoNotInstall",
-			config: &types.InstallConfig{
-				Networking: &types.Networking{
-					NetworkObservability: &types.NetworkObservability{
-						InstallationPolicy: func() *types.NetworkObservabilityInstallationPolicy {
-							p := types.NetworkObservabilityDoNotInstall
-							return &p
-						}(),
-					},
-				},
-			},
-			expected: func() *types.InstallConfig {
-				c := defaultInstallConfig()
-				doNotInstall := types.NetworkObservabilityDoNotInstall
-				c.Networking.NetworkObservability = &types.NetworkObservability{
-					InstallationPolicy: &doNotInstall,
-				}
 				return c
 			}(),
 		},
