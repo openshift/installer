@@ -9,11 +9,13 @@ import (
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
@@ -234,18 +236,18 @@ var (
 		return &r
 	}()
 
-	marketplaceImageAPIResult = azenc.VirtualMachineImage{
+	marketplaceImageAPIResult = armcompute.VirtualMachineImage{
 		Name: to.StringPtr("VMImage"),
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV1,
-			Plan:             &azenc.PurchasePlan{},
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: ptr.To(armcompute.HyperVGenerationTypesV1),
+			Plan:             &armcompute.PurchasePlan{},
 		},
 	}
 
-	marketplaceImageAPIResultNoPlan = azenc.VirtualMachineImage{
+	marketplaceImageAPIResultNoPlan = armcompute.VirtualMachineImage{
 		Name: to.StringPtr("VMImage"),
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV1,
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: ptr.To(armcompute.HyperVGenerationTypesV1),
 		},
 	}
 
@@ -1474,9 +1476,9 @@ func TestAzureMarketplaceImage(t *testing.T) {
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringLicenseTermsOSImageSKU).Return(false, fmt.Errorf("error")).AnyTimes()
 	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU, validOSImageVersion).Return(marketplaceImageAPIResult, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU).Return(false, nil).AnyTimes()
-	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(azenc.VirtualMachineImage{
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV2,
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(armcompute.VirtualMachineImage{
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: ptr.To(armcompute.HyperVGenerationTypesV2),
 		},
 	}, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringOSImageSKU).Return(true, nil).AnyTimes()
@@ -1664,9 +1666,9 @@ func TestAzureMarketplaceImages(t *testing.T) {
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringLicenseTermsOSImageSKU).Return(false, fmt.Errorf("error")).AnyTimes()
 	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU, validOSImageVersion).Return(marketplaceImageAPIResult, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, unacceptedLicenseTermsOSImageSKU).Return(false, nil).AnyTimes()
-	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(azenc.VirtualMachineImage{
-		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
-			HyperVGeneration: azenc.HyperVGenerationTypesV2,
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, erroringOSImageSKU, validOSImageVersion).Return(armcompute.VirtualMachineImage{
+		Properties: &armcompute.VirtualMachineImageProperties{
+			HyperVGeneration: ptr.To(armcompute.HyperVGenerationTypesV2),
 		},
 	}, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringOSImageSKU).Return(true, nil).AnyTimes()
