@@ -59,13 +59,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
-	if c.Networking.NetworkObservability == nil {
-		installationPolicy := types.NetworkObservabilityInstallAndEnable
-		c.Networking.NetworkObservability = &types.NetworkObservability{
-			InstallationPolicy: &installationPolicy,
-		}
-	}
-
 	if c.Publish == "" {
 		c.Publish = types.ExternalPublishingStrategy
 	}

@@ -4998,14 +4998,12 @@ spec:
                   installationPolicy:
                     description: |-
                       InstallationPolicy controls whether network observability is installed during cluster deployment.
-                      Valid values are "", "InstallAndEnable" and "DoNotInstall".
-                      When set to "", network observability will be installed unless this is a SNO cluster.
+                      Valid values are "InstallAndEnable" and "NoAction".
                       When set to "InstallAndEnable", network observability will be installed and enabled.
-                      When set to "DoNotInstall", network observability will not be installed.
+                      When set to "NoAction", nothing will be done regarding network observability.
                     enum:
-                    - ""
                     - InstallAndEnable
-                    - DoNotInstall
+                    - NoAction
                     type: string
                 type: object
               networkType:

@@ -19,13 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 )
 
-var (
-	defaultNetworkObservabilityInstallAndEnable = types.NetworkObservabilityInstallAndEnable
-	defaultNetworkObservability                 = &types.NetworkObservability{
-		InstallationPolicy: &defaultNetworkObservabilityInstallAndEnable,
-	}
-)
-
 func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{"test-domain", types.ExternalPublishingStrategy}
@@ -67,7 +60,6 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 					HostPrefix: 23,
 				},
 			},
-			NetworkObservability: defaultNetworkObservability,
 		},
 		ControlPlane: &types.MachinePool{
 			Name:           "master",
@@ -136,7 +128,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
-					NetworkObservability: defaultNetworkObservability,
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
@@ -238,7 +229,6 @@ wrong_key: wrong_value
 							HostPrefix: 23,
 						},
 					},
-					NetworkObservability: defaultNetworkObservability,
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
@@ -295,7 +285,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
-					NetworkObservability: defaultNetworkObservability,
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
