@@ -52,7 +52,7 @@ func (s *RouteTableSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the route table.
-func (s *RouteTableSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s *RouteTableSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.RouteTable); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.RouteTable", existing)

@@ -21,12 +21,10 @@ import (
 	"fmt"
 
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -84,7 +82,7 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	for _, owner := range agentPool.GetOwnerReferences() {
-		if matchesASOManagedAPIGroup(owner.APIVersion) &&
+		if apiVersionMatchesASOManagedAPIGroup(owner.APIVersion) &&
 			owner.Kind == infrav1.AzureASOManagedMachinePoolKind {
 			return ctrl.Result{}, nil
 		}
@@ -126,7 +124,7 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 	var managedControlPlaneOwner *metav1.OwnerReference
 	for _, owner := range managedCluster.GetOwnerReferences() {
-		if matchesASOManagedAPIGroup(owner.APIVersion) &&
+		if apiVersionMatchesASOManagedAPIGroup(owner.APIVersion) &&
 			owner.Kind == infrav1.AzureASOManagedControlPlaneKind &&
 			owner.Name == agentPool.Owner().Name {
 			managedControlPlaneOwner = ptr.To(owner)
@@ -161,12 +159,12 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		},
 	}
 
-	machinePool := &expv1.MachinePool{
+	machinePool := &clusterv1.MachinePool{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      agentPool.Name,
 		},
-		Spec: expv1.MachinePoolSpec{
+		Spec: clusterv1.MachinePoolSpec{
 			ClusterName: clusterName,
 			Replicas:    replicas,
 			Template: clusterv1.MachineTemplateSpec{
@@ -175,10 +173,10 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 						DataSecretName: ptr.To(""),
 					},
 					ClusterName: clusterName,
-					InfrastructureRef: corev1.ObjectReference{
-						APIVersion: infrav1.GroupVersion.Identifier(),
-						Kind:       infrav1.AzureASOManagedMachinePoolKind,
-						Name:       asoManagedMachinePool.Name,
+					InfrastructureRef: clusterv1.ContractVersionedObjectReference{
+						APIGroup: infrav1.GroupVersion.Group,
+						Kind:     infrav1.AzureASOManagedMachinePoolKind,
+						Name:     asoManagedMachinePool.Name,
 					},
 				},
 			},

@@ -140,8 +140,8 @@ func (ss *ScaleSet) RefreshCaches() error {
 
 // newScaleSet creates a new ScaleSet.
 func newScaleSet(az *Cloud) (VMSet, error) {
-	if az.Config.VmssVirtualMachinesCacheTTLInSeconds == 0 {
-		az.Config.VmssVirtualMachinesCacheTTLInSeconds = consts.VMSSVirtualMachinesCacheTTLDefaultInSeconds
+	if az.VmssVirtualMachinesCacheTTLInSeconds == 0 {
+		az.VmssVirtualMachinesCacheTTLInSeconds = consts.VMSSVirtualMachinesCacheTTLDefaultInSeconds
 	}
 
 	var err error
@@ -584,7 +584,7 @@ func (ss *ScaleSet) GetZoneByNodeName(ctx context.Context, name string) (cloudpr
 // GetPrimaryVMSetName returns the VM set name depending on the configured vmType.
 // It returns config.PrimaryScaleSetName for vmss and config.PrimaryAvailabilitySetName for standard vmType.
 func (ss *ScaleSet) GetPrimaryVMSetName() string {
-	return ss.Config.PrimaryScaleSetName
+	return ss.PrimaryScaleSetName
 }
 
 // GetIPByNodeName gets machine private IP and public IP by node name.
@@ -825,7 +825,15 @@ func (ss *ScaleSet) listScaleSetVMs(scaleSetName, resourceGroup string) ([]*armc
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
 
-	allVMs, rerr := ss.ComputeClientFactory.GetVirtualMachineScaleSetVMClient().ListVMInstanceView(ctx, resourceGroup, scaleSetName)
+	var allVMs []*armcompute.VirtualMachineScaleSetVM
+	var rerr error
+	if ss.ListVmssVirtualMachinesWithoutInstanceView {
+		klog.V(6).Info("listScaleSetVMs called for scaleSetName: ", scaleSetName, " resourceGroup: ", resourceGroup)
+		allVMs, rerr = ss.ComputeClientFactory.GetVirtualMachineScaleSetVMClient().List(ctx, resourceGroup, scaleSetName)
+	} else {
+		klog.V(6).Info("listScaleSetVMs called for scaleSetName with instanceView: ", scaleSetName, " resourceGroup: ", resourceGroup)
+		allVMs, rerr = ss.ComputeClientFactory.GetVirtualMachineScaleSetVMClient().ListVMInstanceView(ctx, resourceGroup, scaleSetName)
+	}
 	if rerr != nil {
 		klog.Errorf("ComputeClientFactory.GetVirtualMachineScaleSetVMClient().List(%s, %s) failed: %v", resourceGroup, scaleSetName, rerr)
 		if exists, err := errutils.CheckResourceExistsFromAzcoreError(rerr); !exists && err == nil {
@@ -880,7 +888,7 @@ func (ss *ScaleSet) GetVMSetNames(ctx context.Context, service *v1.Service, node
 	if !hasMode || ss.UseStandardLoadBalancer() {
 		// no mode specified in service annotation or use single SLB mode
 		// default to PrimaryScaleSetName
-		return to.SliceOfPtrs(ss.Config.PrimaryScaleSetName), nil
+		return to.SliceOfPtrs(ss.PrimaryScaleSetName), nil
 	}
 
 	scaleSetNames, err := ss.GetAgentPoolVMSetNames(ctx, nodes)
@@ -968,7 +976,7 @@ func (ss *ScaleSet) GetPrimaryInterface(ctx context.Context, nodeName string) (*
 
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
-	nic, rerr := ss.NetworkClientFactory.GetInterfaceClient().GetVirtualMachineScaleSetNetworkInterface(ctx, resourceGroup, vm.VMSSName,
+	nic, rerr := ss.ComputeClientFactory.GetInterfaceClient().GetVirtualMachineScaleSetNetworkInterface(ctx, resourceGroup, vm.VMSSName,
 		vm.InstanceID,
 		nicName)
 	if rerr != nil {
@@ -1057,6 +1065,12 @@ func (ss *ScaleSet) EnsureHostInPool(ctx context.Context, _ *v1.Service, nodeNam
 			return "", "", "", nil, err
 		}
 	}
+	// In some cases (e.g., BYO nodes), we may get an ErrorNotVmssInstance error,
+	// but it has been ignored above, so a nil check is needed here to prevent panic.
+	if vm == nil {
+		logger.Info("vmss vm not found, skip adding to backend pool", "vmName", vmName)
+		return "", "", "", nil, nil
+	}
 	statuses := vm.GetInstanceViewStatus()
 	vmPowerState := vmutil.GetVMPowerState(vm.Name, statuses)
 	provisioningState := vm.GetProvisioningState()
@@ -1072,11 +1086,7 @@ func (ss *ScaleSet) EnsureHostInPool(ctx context.Context, _ *v1.Service, nodeNam
 	// - For single standard SKU load balancer, backend could belong to multiple VMSS, so we
 	//   don't check vmSet for it.
 	// - For multiple standard SKU load balancers, the behavior is similar to the basic load balancer
-	needCheck := false
-	if !ss.UseStandardLoadBalancer() {
-		// need to check the vmSet name when using the basic LB
-		needCheck = true
-	}
+	needCheck := !ss.UseStandardLoadBalancer()
 
 	if vmSetNameOfLB != "" && needCheck && !strings.EqualFold(vmSetNameOfLB, vm.VMSSName) {
 		logger.V(3).Info("skips the node %s because it is not in the ScaleSet %s", vmName, vmSetNameOfLB)
