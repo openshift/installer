@@ -22,6 +22,7 @@ import (
 	utilsnet "k8s.io/utils/net"
 
 	configv1 "github.com/openshift/api/config/v1"
+	features "github.com/openshift/api/features"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -1693,6 +1694,12 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	}
 
 	gatedFeatures = append(gatedFeatures, validateMachinePoolFeatureGates(c)...)
+
+	gatedFeatures = append(gatedFeatures, featuregates.GatedInstallConfigFeature{
+		FeatureGateName: features.FeatureGateNetworkObservabilityInstall,
+		Condition:       c.Networking != nil && c.Networking.NetworkObservability != nil,
+		Field:           field.NewPath("networking", "networkObservability"),
+	})
 
 	fg := c.EnabledFeatureGates()
 	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
