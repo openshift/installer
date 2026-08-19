@@ -1013,7 +1013,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
+			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\" or \"external\".",
 		},
 		{
 			name: "generic platformName for external platform",
@@ -2327,7 +2327,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				).MaxTimes(2)
-
 			asset := &OptionalInstallConfig{}
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
