@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/api/features"
@@ -62,7 +61,7 @@ func (a *OptionalInstallConfig) Load(f asset.FileFetcher) (bool, error) {
 	found, err := a.LoadFromFile(f)
 	if found && err == nil {
 		a.Supplied = true
-		if err := a.validateInstallConfig(ctx, a.Config, f).ToAggregate(); err != nil {
+		if err := a.validateInstallConfig(ctx, a.Config).ToAggregate(); err != nil {
 			return false, errors.Wrapf(err, "invalid install-config configuration")
 		}
 		if err := a.RecordFile(); err != nil {
@@ -72,16 +71,13 @@ func (a *OptionalInstallConfig) Load(f asset.FileFetcher) (bool, error) {
 	return found, err
 }
 
-func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, installConfig *types.InstallConfig, f asset.FileFetcher) field.ErrorList {
+func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	if err := validation.ValidateInstallConfig(a.Config, true); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
 	if err := a.validateSupportedPlatforms(installConfig); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-	if err := a.validateMinimalISO(installConfig, f); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -115,31 +111,6 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.InstallConfig) field.ErrorList {
 	allErrs := ValidateSupportedPlatforms(installConfig.Platform, string(installConfig.ControlPlane.Architecture))
 	return append(allErrs, a.validatePlatformsByName(installConfig)...)
-}
-
-type minimalISOConfig struct {
-	MinimalISO bool `yaml:"minimalISO"`
-}
-
-func (a *OptionalInstallConfig) validateMinimalISO(installConfig *types.InstallConfig, f asset.FileFetcher) field.ErrorList {
-	if installConfig.ControlPlane.Architecture != types.ArchitectureS390X {
-		return nil
-	}
-
-	agentConfigFile, err := f.FetchByName("agent-config.yaml")
-	if err != nil || agentConfigFile == nil {
-		return nil
-	}
-
-	cfg := &minimalISOConfig{}
-	if err := yaml.Unmarshal(agentConfigFile.Data, cfg); err != nil {
-		return nil
-	}
-	if !cfg.MinimalISO {
-		return nil
-	}
-
-	return field.ErrorList{field.Invalid(field.NewPath("minimalISO"), true, "minimal ISO is not supported on s390x architecture (s390x uses zipl bootloader, not GRUB/isolinux)")}
 }
 
 // ValidateSupportedPlatforms verifies if the specified platform/arch is supported or not.

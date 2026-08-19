@@ -2,7 +2,6 @@ package agent
 
 import (
 	"net"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -2328,12 +2327,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				).MaxTimes(2)
-			fileFetcher.EXPECT().FetchByName("agent-config.yaml").Return(nil, &os.PathError{
-				Op:   "open",
-				Path: "agent-config.yaml",
-				Err:  os.ErrNotExist,
-			}).AnyTimes()
-
 			asset := &OptionalInstallConfig{}
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
@@ -2349,35 +2342,3 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 	}
 }
 
-func TestValidateMinimalISO(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	fileFetcher := mock.NewMockFileFetcher(mockCtrl)
-	fileFetcher.EXPECT().FetchByName("agent-config.yaml").Return(&asset.File{
-		Filename: "agent-config.yaml",
-		Data: []byte(`apiVersion: v1beta1
-kind: AgentConfig
-metadata:
-  name: test-agent-config
-minimalISO: true
-`),
-	}, nil)
-
-	installConfig := &types.InstallConfig{
-		ControlPlane: &types.MachinePool{
-			Architecture: types.ArchitectureS390X,
-		},
-		Platform: types.Platform{
-			External: &external.Platform{
-				PlatformName: "ibmz",
-			},
-		},
-	}
-
-	a := &OptionalInstallConfig{}
-	errs := a.validateMinimalISO(installConfig, fileFetcher)
-
-	assert.Len(t, errs, 1)
-	assert.Contains(t, errs[0].Error(), "minimal ISO is not supported on s390x architecture")
-}
