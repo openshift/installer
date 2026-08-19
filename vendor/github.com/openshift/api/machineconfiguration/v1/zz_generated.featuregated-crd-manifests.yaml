@@ -6,6 +6,7 @@ containerruntimeconfigs.machineconfiguration.openshift.io:
   Category: ""
   FeatureGates:
   - AdditionalStorageConfig
+  - GomaxprocsInjection
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"
@@ -89,6 +90,7 @@ kubeletconfigs.machineconfiguration.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
+  - GomaxprocsInjection
   - TLSGroupPreferences
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"

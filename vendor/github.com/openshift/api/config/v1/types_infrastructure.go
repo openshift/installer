@@ -720,7 +720,7 @@ type AzureResourceTag struct {
 }
 
 // AzureCloudEnvironment is the name of the Azure cloud environment
-// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud;AzureUSSecCloud
 type AzureCloudEnvironment string
 
 const (
@@ -738,6 +738,9 @@ const (
 
 	// AzureStackCloud is the Azure cloud environment used at the edge and on premises.
 	AzureStackCloud AzureCloudEnvironment = "AzureStackCloud"
+
+	// AzureUSSecCloud is the Azure cloud environment for US Government Secret (IL6) workloads.
+	AzureUSSecCloud AzureCloudEnvironment = "AzureUSSecCloud"
 )
 
 // Start: TOMBSTONE
