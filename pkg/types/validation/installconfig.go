@@ -566,6 +566,20 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
 	}
 
+	if n.NetworkObservability != nil {
+		if n.NetworkObservability.InstallationPolicy == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("networkObservability", "installationPolicy"), "installationPolicy is required when networkObservability is specified"))
+		} else {
+			validPolicies := map[types.NetworkObservabilityInstallationPolicy]bool{
+				types.NetworkObservabilityInstallAndEnable: true,
+				types.NetworkObservabilityNoAction:         true,
+			}
+			if !validPolicies[*n.NetworkObservability.InstallationPolicy] {
+				allErrs = append(allErrs, field.NotSupported(fldPath.Child("networkObservability", "installationPolicy"), *n.NetworkObservability.InstallationPolicy, []string{string(types.NetworkObservabilityInstallAndEnable), string(types.NetworkObservabilityNoAction)}))
+			}
+		}
+	}
+
 	return allErrs
 }
 

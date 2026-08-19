@@ -407,6 +407,69 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.networkType: Invalid value: "OpenShiftSDN": networkType OpenShiftSDN is not supported, please use OVNKubernetes$`,
 		},
 		{
+			name: "invalid networkObservability installationPolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				invalidPolicy := types.NetworkObservabilityInstallationPolicy("test")
+				c.Networking.NetworkObservability = &types.NetworkObservability{
+					InstallationPolicy: &invalidPolicy,
+				}
+				return c
+			}(),
+			expectedError: `^networking\.networkObservability\.installationPolicy: Unsupported value: "test": supported values: "InstallAndEnable", "NoAction"$`,
+		},
+		{
+			name: "missing networkObservability installationPolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkObservability = &types.NetworkObservability{}
+				return c
+			}(),
+			expectedError: `^networking\.networkObservability\.installationPolicy: Required value: installationPolicy is required when networkObservability is specified$`,
+		},
+		{
+			name: "blank networkObservability installationPolicy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				blankPolicy := types.NetworkObservabilityInstallationPolicy("")
+				c.Networking.NetworkObservability = &types.NetworkObservability{
+					InstallationPolicy: &blankPolicy,
+				}
+				return c
+			}(),
+			expectedError: `^networking\.networkObservability\.installationPolicy: Unsupported value: "": supported values: "InstallAndEnable", "NoAction"$`,
+		},
+		{
+			name: "valid networkObservability InstallAndEnable",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				policy := types.NetworkObservabilityInstallAndEnable
+				c.Networking.NetworkObservability = &types.NetworkObservability{
+					InstallationPolicy: &policy,
+				}
+				return c
+			}(),
+		},
+		{
+			name: "valid networkObservability NoAction",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				policy := types.NetworkObservabilityNoAction
+				c.Networking.NetworkObservability = &types.NetworkObservability{
+					InstallationPolicy: &policy,
+				}
+				return c
+			}(),
+		},
+		{
+			name: "valid networkObservability absent",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkObservability = nil
+				return c
+			}(),
+		},
+		{
 			name: "missing service network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
