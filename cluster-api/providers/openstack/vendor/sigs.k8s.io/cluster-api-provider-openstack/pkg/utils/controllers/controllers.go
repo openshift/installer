@@ -17,8 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"net"
+
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 )
@@ -45,4 +49,16 @@ func ValidateSubnets(subnets []infrav1.Subnet) error {
 		return fmt.Errorf("multiple IPv%d Subnet not allowed on OpenStackCluster", ethertype)
 	}
 	return nil
+}
+
+func GetInfraCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cluster) (*infrav1.OpenStackCluster, error) {
+	openStackCluster := &infrav1.OpenStackCluster{}
+	openStackClusterName := client.ObjectKey{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Spec.InfrastructureRef.Name,
+	}
+	if err := c.Get(ctx, openStackClusterName, openStackCluster); err != nil {
+		return nil, err
+	}
+	return openStackCluster, nil
 }

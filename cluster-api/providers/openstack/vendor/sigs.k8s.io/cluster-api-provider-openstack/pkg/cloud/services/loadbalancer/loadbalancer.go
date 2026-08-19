@@ -52,6 +52,7 @@ const (
 const (
 	loadBalancerProvisioningStatusActive        = "ACTIVE"
 	loadBalancerProvisioningStatusPendingDelete = "PENDING_DELETE"
+	poolMemberProvisioningStatusActive          = "ACTIVE"
 )
 
 // Default values for Monitor, sync with `kubebuilder:default` annotations on APIServerLoadBalancerMonitor object.
@@ -645,6 +646,9 @@ func (s *Service) ReconcileLoadBalancerMember(openStackCluster *infrav1.OpenStac
 	if openStackCluster.Status.APIServerLoadBalancer == nil {
 		return errors.New("network.APIServerLoadBalancer is not yet available in openStackCluster.Status")
 	}
+	if openStackCluster.Status.APIServerLoadBalancer.LoadBalancerNetwork == nil {
+		return errors.New("apiServerLoadBalancer.LoadBalancerNetwork is not yet available in openStackCluster.Status")
+	}
 	if openStackCluster.Spec.ControlPlaneEndpoint == nil || !openStackCluster.Spec.ControlPlaneEndpoint.IsValid() {
 		return errors.New("ControlPlaneEndpoint is not yet set in openStackCluster.Spec")
 	}
@@ -710,11 +714,20 @@ func (s *Service) ReconcileLoadBalancerMember(openStackCluster *infrav1.OpenStac
 			Tags:         openStackCluster.Spec.Tags,
 		}
 
+		if openStackCluster.Status.Network.ID != openStackCluster.Status.APIServerLoadBalancer.LoadBalancerNetwork.ID {
+			lbMemberOpts.SubnetID = openStackCluster.Status.Network.Subnets[0].ID
+		}
+
 		if _, err := s.waitForLoadBalancerActive(lbID); err != nil {
 			return err
 		}
 
-		if _, err := s.loadbalancerClient.CreatePoolMember(pool.ID, lbMemberOpts); err != nil {
+		member, err := s.loadbalancerClient.CreatePoolMember(pool.ID, lbMemberOpts)
+		if err != nil {
+			return err
+		}
+
+		if _, err := s.waitForPoolMemberActive(pool.ID, member.ID); err != nil {
 			return err
 		}
 
@@ -926,6 +939,25 @@ func (s *Service) waitForLoadBalancerActive(id string) (*loadbalancers.LoadBalan
 		return nil, err
 	}
 	return lb, nil
+}
+
+// Possible Pool Member states are documented here: https://docs.openstack.org/api-ref/load-balancer/v2/#prov-status
+func (s *Service) waitForPoolMemberActive(poolID, memberID string) (*pools.Member, error) {
+	var member *pools.Member
+
+	s.scope.Logger().Info("Waiting for pool member", "pool_id", poolID, "member_id", memberID, "targetStatus", "ACTIVE")
+	err := wait.ExponentialBackoff(backoff, func() (bool, error) {
+		var err error
+		member, err = s.loadbalancerClient.GetPoolMember(poolID, memberID)
+		if err != nil {
+			return false, err
+		}
+		return member.ProvisioningStatus == poolMemberProvisioningStatusActive, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return member, nil
 }
 
 func (s *Service) waitForListener(id, target string) error {

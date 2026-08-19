@@ -46,10 +46,6 @@ const (
 	// SkipKubeProxyAnnotation annotation explicitly skips reconciling kube-proxy if set.
 	SkipKubeProxyAnnotation = "controlplane.cluster.x-k8s.io/skip-kube-proxy"
 
-	// KubeadmClusterConfigurationAnnotation is a machine annotation that stores the json-marshalled string of KCP ClusterConfiguration.
-	// This annotation is used to detect any changes in ClusterConfiguration and trigger machine rollout in KCP.
-	KubeadmClusterConfigurationAnnotation = "controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration"
-
 	// RemediationInProgressAnnotation is used to keep track that a KCP remediation is in progress, and more
 	// specifically it tracks that the system is in between having deleted an unhealthy machine and recreating its replacement.
 	// NOTE: if something external to CAPI removes this annotation the system cannot detect the above situation; this can lead to
@@ -424,11 +420,6 @@ type KubeadmControlPlaneSpec struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 
 	// version defines the desired Kubernetes version.
-	// Please note that if kubeadmConfigSpec.ClusterConfiguration.imageRepository is not set
-	// we don't allow upgrades to versions >= v1.22.0 for which kubeadm uses the old registry (k8s.gcr.io).
-	// Please use a newer patch version with the new registry instead. The default registries of kubeadm are:
-	//   * registry.k8s.io (new registry): >= v1.22.17, >= v1.23.15, >= v1.24.9, >= v1.25.0
-	//   * k8s.gcr.io (old registry): all older versions
 	// +required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256

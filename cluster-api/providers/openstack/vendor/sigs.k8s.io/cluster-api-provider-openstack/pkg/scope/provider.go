@@ -31,12 +31,15 @@ import (
 	osclient "github.com/gophercloud/utils/v2/client"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
 	"sigs.k8s.io/cluster-api-provider-openstack/version"
@@ -46,6 +49,16 @@ const (
 	CloudsSecretKey = "clouds.yaml"
 	CASecretKey     = "cacert"
 )
+
+// IdentityAccessDeniedError is returned when a namespace is not permitted to use a ClusterIdentity.
+type IdentityAccessDeniedError struct {
+	IdentityName       string
+	RequesterNamespace string
+}
+
+func (e *IdentityAccessDeniedError) Error() string {
+	return fmt.Sprintf("namespace %s not allowed to use cluster identity %s", e.RequesterNamespace, e.IdentityName)
+}
 
 type providerScopeFactory struct {
 	clientCache *cache.LRUExpireCache
@@ -69,8 +82,45 @@ func (f *providerScopeFactory) NewClientScopeFromObject(ctx context.Context, ctr
 	var cloud clientconfig.Cloud
 	var caCert []byte
 
-	var err error
-	cloud, caCert, err = getCloudFromSecret(ctx, ctrlClient, *namespace, identityRef.Name, identityRef.CloudName)
+	// Determine which secret to read based on identity type
+	var secretNamespace string
+	var secretName string
+
+	switch identityRef.Type {
+	case "", "Secret":
+		secretNamespace = *namespace
+		secretName = identityRef.Name
+		logger.V(4).Info("Using Secret for OpenStack credentials", "namespace", secretNamespace, "name", secretName, "cloudName", identityRef.CloudName)
+	case "ClusterIdentity":
+		// Fetch cluster-scoped identity and validate namespace access
+		identity := &infrav1alpha1.OpenStackClusterIdentity{}
+		if err := ctrlClient.Get(ctx, types.NamespacedName{Name: identityRef.Name}, identity); err != nil {
+			return nil, fmt.Errorf("failed to get OpenStackClusterIdentity %s: %w", identityRef.Name, err)
+		}
+		// Validate selector (if any) against the caller namespace
+		if identity.Spec.NamespaceSelector != nil {
+			ns := &corev1.Namespace{}
+			if err := ctrlClient.Get(ctx, types.NamespacedName{Name: *namespace}, ns); err != nil {
+				return nil, fmt.Errorf("failed to get namespace %s: %w", *namespace, err)
+			}
+			selector, err := metav1.LabelSelectorAsSelector(identity.Spec.NamespaceSelector)
+			if err != nil {
+				return nil, fmt.Errorf("invalid namespace selector on identity %s: %w", identity.Name, err)
+			}
+			if !selector.Matches(labels.Set(ns.Labels)) {
+				logger.V(2).Info("Namespace not allowed to use ClusterIdentity", "identity", identity.Name, "namespace", *namespace)
+				return nil, &IdentityAccessDeniedError{IdentityName: identity.Name, RequesterNamespace: *namespace}
+			}
+		}
+		secretNamespace = identity.Spec.SecretRef.Namespace
+		secretName = identity.Spec.SecretRef.Name
+		logger.V(4).Info("Using ClusterIdentity for OpenStack credentials", "identity", identityRef.Name, "secretNamespace", secretNamespace, "secretName", secretName, "cloudName", identityRef.CloudName)
+	default:
+		return nil, fmt.Errorf("unsupported identity type: %s", identityRef.Type)
+	}
+
+	// Read cloud from the resolved secret using the provided cloudName
+	cloud, caCert, err := getCloudFromSecret(ctx, ctrlClient, secretNamespace, secretName, identityRef.CloudName)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +171,7 @@ func NewCachedProviderScope(cache *cache.LRUExpireCache, cloud clientconfig.Clou
 	}
 
 	if scope, found := cache.Get(key); found {
-		logger.V(6).Info("Using scope from cache")
+		logger.V(5).Info("Using scope from cache")
 		return scope.(Scope), nil
 	}
 
@@ -222,7 +272,7 @@ func NewProviderClient(cloud clientconfig.Cloud, regionName string, caCert []byt
 	}
 
 	provider.HTTPClient.Transport = &http.Transport{Proxy: http.ProxyFromEnvironment, TLSClientConfig: config}
-	if klog.V(6).Enabled() {
+	if klog.V(5).Enabled() {
 		provider.HTTPClient.Transport = &osclient.RoundTripper{
 			Rt:     provider.HTTPClient.Transport,
 			Logger: &gophercloudLogger{logger},
