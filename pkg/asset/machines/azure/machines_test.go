@@ -3,9 +3,12 @@ package azure
 import (
 	"testing"
 
+	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/stretchr/testify/assert"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -364,6 +367,168 @@ func TestMapiImage(t *testing.T) {
 				assert.Equal(t, expected.imageType, string(result.Type))
 			case struct{ resourceID string }:
 				assert.Equal(t, expected.resourceID, result.ResourceID)
+			}
+		})
+	}
+}
+
+func TestProviderDataDiskEncryptionSet(t *testing.T) {
+	validDESID := "/subscriptions/sub-123/resourceGroups/rg-456/providers/Microsoft.Compute/diskEncryptionSets/des-789"
+	lun := int32(1)
+
+	basePlatform := &aztypes.Platform{
+		Region: "eastus",
+	}
+	baseSession := &icazure.Session{
+		Credentials: icazure.Credentials{
+			SubscriptionID: "test-sub",
+		},
+		Environment: azureenv.Environment{
+			StorageEndpointSuffix: "core.windows.net",
+		},
+	}
+	baseMpool := func() *aztypes.MachinePool {
+		return &aztypes.MachinePool{
+			InstanceType: "Standard_D2s_v3",
+			OSDisk: aztypes.OSDisk{
+				DiskSizeGB: 128,
+				DiskType:   "Premium_LRS",
+			},
+			Zones:    []string{"1"},
+			Identity: &aztypes.VMIdentity{},
+		}
+	}
+	capabilities := map[string]string{
+		"HyperVGenerations": "V1,V2",
+	}
+	azIdx := 0
+
+	testCases := []struct {
+		name          string
+		dataDisks     []capz.DataDisk
+		expectError   bool
+		errorContains string
+		validate      func(t *testing.T, spec *machineapi.AzureMachineProviderSpec)
+	}{
+		{
+			name: "data disk with valid DiskEncryptionSet",
+			dataDisks: []capz.DataDisk{
+				{
+					NameSuffix:  "disk1",
+					DiskSizeGB:  256,
+					Lun:         &lun,
+					CachingType: "ReadOnly",
+					ManagedDisk: &capz.ManagedDiskParameters{
+						StorageAccountType: "Premium_LRS",
+						DiskEncryptionSet: &capz.DiskEncryptionSetParameters{
+							ID: validDESID,
+						},
+					},
+				},
+			},
+			expectError: false,
+			validate: func(t *testing.T, spec *machineapi.AzureMachineProviderSpec) {
+				t.Helper()
+				assert.Len(t, spec.DataDisks, 1)
+				assert.NotNil(t, spec.DataDisks[0].ManagedDisk.DiskEncryptionSet)
+				assert.Equal(t, validDESID, spec.DataDisks[0].ManagedDisk.DiskEncryptionSet.ID)
+			},
+		},
+		{
+			name: "data disk with DiskEncryptionSet but empty ID",
+			dataDisks: []capz.DataDisk{
+				{
+					NameSuffix:  "disk-empty-id",
+					DiskSizeGB:  256,
+					CachingType: "ReadOnly",
+					ManagedDisk: &capz.ManagedDiskParameters{
+						StorageAccountType: "Premium_LRS",
+						DiskEncryptionSet: &capz.DiskEncryptionSetParameters{
+							ID: "",
+						},
+					},
+				},
+			},
+			expectError:   true,
+			errorContains: "data disk disk-empty-id has invalid disk encryption set: empty ID",
+		},
+		{
+			name: "data disk without DiskEncryptionSet",
+			dataDisks: []capz.DataDisk{
+				{
+					NameSuffix:  "disk-no-des",
+					DiskSizeGB:  256,
+					CachingType: "ReadOnly",
+					ManagedDisk: &capz.ManagedDiskParameters{
+						StorageAccountType: "Premium_LRS",
+					},
+				},
+			},
+			expectError: false,
+			validate: func(t *testing.T, spec *machineapi.AzureMachineProviderSpec) {
+				t.Helper()
+				assert.Len(t, spec.DataDisks, 1)
+				assert.Nil(t, spec.DataDisks[0].ManagedDisk.DiskEncryptionSet)
+			},
+		},
+		{
+			name: "data disk with DiskEncryptionSet but nil SecurityProfile - no panic",
+			dataDisks: []capz.DataDisk{
+				{
+					NameSuffix:  "disk-nil-secprofile",
+					DiskSizeGB:  256,
+					CachingType: "ReadOnly",
+					ManagedDisk: &capz.ManagedDiskParameters{
+						StorageAccountType: "Premium_LRS",
+						DiskEncryptionSet: &capz.DiskEncryptionSetParameters{
+							ID: validDESID,
+						},
+						SecurityProfile: nil,
+					},
+				},
+			},
+			expectError: false,
+			validate: func(t *testing.T, spec *machineapi.AzureMachineProviderSpec) {
+				t.Helper()
+				assert.Len(t, spec.DataDisks, 1)
+				assert.NotNil(t, spec.DataDisks[0].ManagedDisk.DiskEncryptionSet)
+				assert.Equal(t, validDESID, spec.DataDisks[0].ManagedDisk.DiskEncryptionSet.ID)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mpool := baseMpool()
+			mpool.DataDisks = tc.dataDisks
+
+			spec, err := provider(
+				basePlatform,
+				mpool,
+				"",             // osImage
+				"user-data",    // userDataSecret
+				"test-cluster", // clusterID
+				"worker",       // role
+				&azIdx,         // azIdx
+				capabilities,
+				baseSession,
+				"test-nrg",    // networkResourceGroup
+				"test-vnet",   // virtualNetwork
+				"test-subnet", // subnet
+			)
+
+			if tc.expectError {
+				assert.Error(t, err)
+				if tc.errorContains != "" {
+					assert.Contains(t, err.Error(), tc.errorContains)
+				}
+				assert.Nil(t, spec)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, spec)
+				if tc.validate != nil {
+					tc.validate(t, spec)
+				}
 			}
 		})
 	}
