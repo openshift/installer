@@ -36,32 +36,6 @@ func EffectiveProfile(ic *types.InstallConfig) (configv1alpha1.PKIProfile, bool)
 	return profile, true
 }
 
-// EffectiveSignerPKIConfig returns the effective PKI config for signer certificate generation.
-//
-// Deprecated: Use EffectiveProfile via the SignerKeyParams asset instead.
-func EffectiveSignerPKIConfig(ic *types.InstallConfig) *types.PKIConfig {
-	if ic == nil {
-		return nil
-	}
-
-	if !ic.Enabled(features.FeatureGateConfigurablePKI) {
-		return nil
-	}
-
-	if ic.PKI != nil {
-		return ic.PKI
-	}
-
-	return &types.PKIConfig{
-		SignerCertificates: types.CertificateConfig{
-			Key: types.KeyConfig{
-				Algorithm: types.KeyAlgorithmECDSA,
-				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
-			},
-		},
-	}
-}
-
 func toAPICertificateConfig(local types.CertificateConfig) configv1alpha1.CertificateConfig {
 	apiKey := configv1alpha1.KeyConfig{
 		Algorithm: configv1alpha1.KeyAlgorithm(local.Key.Algorithm),
