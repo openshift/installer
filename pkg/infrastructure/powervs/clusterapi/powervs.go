@@ -1,21 +1,14 @@
 package clusterapi
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math"
 	"reflect"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	cosaws "github.com/IBM/ibm-cos-sdk-go/aws"
-	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
-	cossession "github.com/IBM/ibm-cos-sdk-go/aws/session"
-	ibms3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -24,9 +17,7 @@ import (
 	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	configv1 "github.com/openshift/api/config/v1"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
-	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/types"
@@ -43,7 +34,6 @@ type Provider struct {
 
 var _ clusterapi.Timeouts = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
-var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.PreProvider = (*Provider)(nil)
@@ -223,114 +213,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	}
 
 	return nil
-}
-
-
-// Ignition uploads the bootstrap ignition config to the COS bucket that the
-// CAPI IBM Cloud controller created, then builds a small ignition shim that
-// redirects the VM to fetch the full config from COS using an IAM-authenticated
-// presigned URL.  Without this the VM receives an empty userdata and ignition
-// stage fetch-offline finds "no config URL provided".
-func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
-	// Retrieve the IBMPowerVSCluster that CAPI has already reconciled.
-	// Its Status.COSInstance and Spec.CosInstance fields tell us where to upload.
-	powerVSCluster := &capibm.IBMPowerVSCluster{}
-	key := crclient.ObjectKey{
-		Name:      in.InfraID,
-		Namespace: capiutils.Namespace,
-	}
-	if err := in.Client.Get(ctx, key, powerVSCluster); err != nil {
-		return nil, fmt.Errorf("Ignition: failed to get PowerVS cluster: %w", err)
-	}
-
-	if powerVSCluster.Spec.CosInstance == nil {
-		return nil, fmt.Errorf("Ignition: IBMPowerVSCluster.Spec.CosInstance is nil")
-	}
-	if powerVSCluster.Status.COSInstance == nil || powerVSCluster.Status.COSInstance.ID == nil {
-		return nil, fmt.Errorf("Ignition: IBMPowerVSCluster.Status.COSInstance is not yet populated; InfraReady may not have completed")
-	}
-
-	cosInstanceGUID := *powerVSCluster.Status.COSInstance.ID
-	bucketName := powerVSCluster.Spec.CosInstance.BucketName
-	const objectKey = "bootstrap.ign"
-
-	logrus.Infof("Ignition: uploading bootstrap.ign to COS bucket %s (instance %s)", bucketName, cosInstanceGUID)
-
-	// Determine the COS S3 endpoint to use.
-	svcEndpoints := in.InstallConfig.Config.Platform.PowerVS.ServiceEndpoints
-	cosEndpoint := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceCOS), svcEndpoints)
-	if cosEndpoint == "" {
-		cosRegion := powerVSCluster.Spec.CosInstance.BucketRegion
-		cosEndpoint = "https://s3." + cosRegion + ".cloud-object-storage.appdomain.cloud"
-	}
-	// The IBM COS SDK expects the endpoint without the scheme prefix.
-	cosEndpointHost := strings.TrimPrefix(cosEndpoint, "https://")
-	cosEndpointHost = strings.TrimPrefix(cosEndpointHost, "http://")
-
-	// Resolve the IAM URL for authentication.
-	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), svcEndpoints)
-	if iamURL == "" {
-		iamURL = "https://iam.cloud.ibm.com"
-	}
-	authEndpoint := iamURL + "/identity/token"
-
-	bxCli, err := powervsconfig.NewBxClient(false, svcEndpoints)
-	if err != nil {
-		return nil, fmt.Errorf("Ignition: failed to create BxClient to obtain API key: %w", err)
-	}
-	apiKey := bxCli.GetBxClientAPIKey()
-
-	// Build the COS S3 client.
-	cfg := cosaws.NewConfig()
-	cfg.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, apiKey, cosInstanceGUID))
-	cfg.WithEndpoint(cosEndpointHost)
-	sess := cossession.Must(cossession.NewSession())
-	cosClient := ibms3.New(sess, cfg)
-
-	// Upload bootstrap.ign.
-	_, err = cosClient.PutObjectWithContext(ctx, &ibms3.PutObjectInput{
-		Bucket:      cosaws.String(bucketName),
-		Key:         cosaws.String(objectKey),
-		Body:        bytes.NewReader(in.BootstrapIgnData),
-		ContentType: cosaws.String("application/json"),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Ignition: failed to upload bootstrap.ign to COS bucket %s: %w", bucketName, err)
-	}
-	logrus.Infof("Ignition: bootstrap.ign uploaded to %s/%s", bucketName, objectKey)
-
-	// Generate a presigned GET URL valid for 1 hour (VMs only need it to boot once).
-	presignReq, _ := cosClient.GetObjectRequest(&ibms3.GetObjectInput{
-		Bucket: cosaws.String(bucketName),
-		Key:    cosaws.String(objectKey),
-	})
-	ignitionURL, err := presignReq.Presign(1 * time.Hour)
-	if err != nil {
-		return nil, fmt.Errorf("Ignition: failed to presign bootstrap.ign URL: %w", err)
-	}
-	logrus.Debugf("Ignition: presigned URL = %s", ignitionURL)
-
-	// Build a minimal ignition shim that directs the VM to fetch from the
-	// presigned COS URL.  No Authorization header is needed — the presigned URL
-	// already embeds all credentials.
-	shim, err := ignition.Marshal(&igntypes.Config{
-		Ignition: igntypes.Ignition{
-			Version: igntypes.MaxVersion.String(),
-			Config: igntypes.IgnitionConfig{
-				Replace: igntypes.Resource{
-					Source: ptr.To(ignitionURL),
-				},
-			},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Ignition: failed to marshal ignition shim: %w", err)
-	}
-
-	return []*corev1.Secret{
-		clusterapi.IgnitionSecret(shim, in.InfraID, "bootstrap"),
-		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
-	}, nil
 }
 
 
