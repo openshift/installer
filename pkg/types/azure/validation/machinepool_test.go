@@ -809,6 +809,109 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "": securityType should be set to TrustedLaunch when uefiSettings are enabled.$`,
 		},
 		{
+			name:          "master data disk without security profile passes",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 64,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "master data disk with securityEncryptionType is rejected",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 64,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile: &capz.VMDiskSecurityProfile{
+									SecurityEncryptionType: capz.SecurityEncryptionTypeVMGuestStateOnly,
+								},
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.securityEncryptionType: Forbidden: security encryption types on data disks are not yet supported by the Machine API and would be silently ignored`,
+		},
+		{
+			name:          "worker data disk with securityEncryptionType is rejected",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 128,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile: &capz.VMDiskSecurityProfile{
+									SecurityEncryptionType: capz.SecurityEncryptionTypeVMGuestStateOnly,
+								},
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.securityEncryptionType: Forbidden: security encryption types on data disks are not yet supported by the Machine API and would be silently ignored`,
+		},
+		{
+			name:          "worker data disk with security profile but no encryption type is rejected",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 128,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile:    &capz.VMDiskSecurityProfile{},
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile: Forbidden: data disk security profiles are not yet supported by the Machine API and would be silently ignored`,
+		},
+		{
+			name:          "data disks with no security settings pass validation",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "data",
+							DiskSizeGB:  128,
+							ManagedDisk: nil,
+							Lun:         ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
+		{
 			name:          "azure VM Identity is unrecognized type",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
