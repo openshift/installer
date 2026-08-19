@@ -2341,4 +2341,3 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 		})
 	}
 }
-
