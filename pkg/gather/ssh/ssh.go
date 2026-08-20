@@ -25,6 +25,42 @@ func NewClient(user, address string, keys []string) (*ssh.Client, error) {
 		return nil, errors.Wrap(err, "failed to initialize the SSH agent")
 	}
 
+	client, err := attemptSSHConnection(user, address, ag)
+
+	// If authentication failed with SSH agent, retry without SSH_AUTH_SOCK
+	if err != nil && agentType == "agent" && isAuthenticationError(err) {
+		logrus.Debug("Authentication failed with SSH_AUTH_SOCK agent, retrying with keys from files")
+		ag, _, err = getAgentWithoutSSHAuthSock(keys)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to initialize SSH agent without SSH_AUTH_SOCK")
+		}
+		client, err = attemptSSHConnection(user, address, ag)
+		if err != nil {
+			if isAuthenticationError(err) {
+				return nil, errors.Wrap(err, "failed to authenticate even after retrying without SSH_AUTH_SOCK")
+			}
+			return nil, err
+		}
+		logrus.Info("Successfully connected after retrying without SSH_AUTH_SOCK")
+		return client, nil
+	}
+
+	if err != nil {
+		if isAuthenticationError(err) {
+			if agentType == "agent" {
+				return nil, errors.Wrap(err, "failed to use pre-existing agent, make sure the appropriate keys exist in the agent for authentication")
+			}
+			return nil, errors.Wrap(err, "failed to use the provided keys for authentication")
+		}
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// attemptSSHConnection attempts to establish an SSH connection to the given address
+// using the provided agent for authentication.
+func attemptSSHConnection(user, address string, ag agent.Agent) (*ssh.Client, error) {
 	client, err := ssh.Dial("tcp", address, &ssh.ClientConfig{
 		User: user,
 		Auth: []ssh.AuthMethod{
@@ -36,18 +72,21 @@ func NewClient(user, address string, keys []string) (*ssh.Client, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	})
 	if err != nil {
-		if strings.Contains(err.Error(), "ssh: handshake failed: ssh: unable to authenticate") {
-			if agentType == "agent" {
-				return nil, errors.Wrap(err, "failed to use pre-existing agent, make sure the appropriate keys exist in the agent for authentication")
-			}
-			return nil, errors.Wrap(err, "failed to use the provided keys for authentication")
-		}
 		return nil, err
 	}
 	if err := agent.ForwardToAgent(client, ag); err != nil {
+		client.Close()
 		return nil, errors.Wrap(err, "failed to forward agent")
 	}
 	return client, nil
+}
+
+// isAuthenticationError checks if the error is an SSH authentication failure.
+func isAuthenticationError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "ssh: handshake failed: ssh: unable to authenticate")
 }
 
 // Run uses an SSH client to execute commands.
