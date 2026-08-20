@@ -2,14 +2,15 @@ package gcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	kms "cloud.google.com/go/kms/apiv1"
 	"cloud.google.com/go/kms/apiv1/kmspb"
-	"github.com/pkg/errors"
 	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	compute "google.golang.org/api/compute/v1"
@@ -39,6 +40,7 @@ type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
 	GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error)
 	GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error)
+	GetDiskTypeWithZones(ctx context.Context, project, region, diskType string) (*compute.DiskType, sets.Set[string], error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
 	GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error)
 	GetDNSZoneFromParams(ctx context.Context, params gcptypes.DNSZoneParams) (*dns.ManagedZone, error)
@@ -58,6 +60,7 @@ type API interface {
 	GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error)
 	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
 	GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
+	GetKMSCryptoKeyIamPolicy(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference, defaultProjectID string) (*iampb.Policy, error)
 	UpdateDNSPrivateZoneLabels(ctx context.Context, baseDomain, project, zoneName string, labels map[string]string) error
 	GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error)
 }
@@ -72,7 +75,7 @@ type Client struct {
 func NewClient(ctx context.Context, endpoint *gcptypes.PSCEndpoint) (*Client, error) {
 	ssn, err := GetSession(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get session")
+		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
 	endpointName := ""
@@ -223,6 +226,50 @@ func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, m
 	return machines[0], zones, nil
 }
 
+// GetDiskTypeWithZones retrieves the specified disk type and the zones in which it is available.
+// It queries each zone individually because DiskTypes.AggregatedList may not
+// return results on sovereign clouds.
+func (c *Client) GetDiskTypeWithZones(ctx context.Context, project, region, diskType string) (*compute.DiskType, sets.Set[string], error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pz, err := GetZones(ctx, svc, project, region)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(pz) == 0 {
+		return nil, nil, fmt.Errorf("failed to find zones in project %s region %s", project, region)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	var found *compute.DiskType
+	zones := sets.New[string]()
+	for _, zone := range pz {
+		dt, err := svc.DiskTypes.Get(project, zone.Name, diskType).Context(ctx).Do()
+		if err != nil {
+			var gerr *googleapi.Error
+			if errors.As(err, &gerr) && gerr.Code == http.StatusNotFound {
+				continue
+			}
+			return nil, nil, err
+		}
+		if found == nil {
+			found = dt
+		}
+		zones.Insert(zone.Name)
+	}
+
+	if found == nil {
+		return nil, nil, nil
+	}
+
+	return found, zones, nil
+}
+
 // GetNetwork uses the GCP Compute Service API to get a network by name from a project.
 func (c *Client) GetNetwork(ctx context.Context, network, project string) (*compute.Network, error) {
 	svc, err := c.getComputeService(ctx)
@@ -234,7 +281,7 @@ func (c *Client) GetNetwork(ctx context.Context, network, project string) (*comp
 	defer cancel()
 	res, err := svc.Networks.Get(project, network).Context(ctx).Do()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get network %s", network)
+		return nil, fmt.Errorf("failed to get network %s: %w", network, err)
 	}
 	return res, nil
 }
@@ -526,7 +573,7 @@ func (c *Client) GetRegions(ctx context.Context, project string) ([]string, erro
 	defer cancel()
 	gcpRegionsList, err := svc.Regions.List(project).Context(ctx).Do()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get regions for project")
+		return nil, fmt.Errorf("failed to get regions for project: %w", err)
 	}
 
 	computeRegions := make([]string, 0, len(gcpRegionsList.Items))
@@ -551,7 +598,7 @@ func GetZones(ctx context.Context, svc *compute.Service, project, region string)
 		}
 		return nil
 	}); err != nil {
-		return nil, errors.Wrapf(err, "failed to get zones from project %s", project)
+		return nil, fmt.Errorf("failed to get zones from project %s: %w", project, err)
 	}
 	return zones, nil
 }
@@ -601,7 +648,7 @@ func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount 
 	}
 	svc, err := GetIAMService(ctx, opts...)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed create IAM service")
+		return "", fmt.Errorf("failed create IAM service: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -610,7 +657,7 @@ func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount 
 	fullServiceAccountPath := fmt.Sprintf("projects/%s/serviceAccounts/%s", project, serviceAccount)
 	rsp, err := svc.Projects.ServiceAccounts.Get(fullServiceAccountPath).Context(ctx).Do()
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to find resource %s", fullServiceAccountPath)
+		return "", fmt.Errorf("failed to find resource %s: %w", fullServiceAccountPath, err)
 	}
 	return rsp.Name, nil
 }
@@ -639,14 +686,14 @@ func (c *Client) getPermissions(ctx context.Context, project string, permissions
 
 	service, err := c.getCloudResourceService(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get cloud resource manager service")
+		return nil, fmt.Errorf("failed to get cloud resource manager service: %w", err)
 	}
 
 	projectsService := cloudresourcemanager.NewProjectsService(service)
 	rb := &cloudresourcemanager.TestIamPermissionsRequest{Permissions: permissions}
 	response, err := projectsService.TestIamPermissions(fmt.Sprintf(gcpconsts.ProjectNameFmt, project), rb).Context(ctx).Do()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get Iam permissions")
+		return nil, fmt.Errorf("failed to get Iam permissions: %w", err)
 	}
 
 	return response.Permissions, nil
@@ -720,7 +767,11 @@ func (c *Client) GetNamespacedTagValue(ctx context.Context, tagNamespacedName st
 }
 
 func (c *Client) getKeyManagementClient(ctx context.Context) (*kms.KeyManagementClient, error) {
-	kmsClient, err := kms.NewKeyManagementClient(ctx, option.WithCredentials(c.ssn.Credentials))
+	opts, err := CredentialOptions(c.ssn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get credential options: %w", err)
+	}
+	kmsClient, err := kms.NewKeyManagementClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create kms key management client: %w", err)
 	}
@@ -762,6 +813,30 @@ func (c *Client) GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyRefer
 		}
 	}
 	return nil, fmt.Errorf("failed to find kms key ring with name %s", keyRingName)
+}
+
+// GetKMSCryptoKeyIamPolicy returns the IAM policy for a KMS crypto key.
+// The defaultProjectID is used if the kmsKeyRef.ProjectID is empty.
+func (c *Client) GetKMSCryptoKeyIamPolicy(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference, defaultProjectID string) (*iampb.Policy, error) {
+	if kmsKeyRef == nil {
+		return nil, fmt.Errorf("kms key reference cannot be empty")
+	}
+
+	kmsClient, err := c.getKeyManagementClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KMS client: %w", err)
+	}
+	defer kmsClient.Close()
+
+	keyResourcePath := gcptypes.FormatKMSKeyResourcePath(kmsKeyRef, defaultProjectID)
+	policy, err := kmsClient.GetIamPolicy(ctx, &iampb.GetIamPolicyRequest{
+		Resource: keyResourcePath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get IAM policy for KMS key %s: %w", keyResourcePath, err)
+	}
+
+	return policy, nil
 }
 
 // GetPrivateServiceConnectEndpoint finds the GCP compute forwarding rule that is associated with the endpoint.

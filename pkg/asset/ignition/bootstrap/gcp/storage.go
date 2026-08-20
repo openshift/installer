@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (
@@ -36,6 +37,13 @@ func CreateStorage(ctx context.Context, ic *installconfig.InstallConfig, bucketH
 		},
 		Location: ic.Config.GCP.Region,
 		Labels:   labels,
+	}
+
+	// Add customer-managed KMS encryption if configured via defaultMachinePlatform
+	if kmsKey := gcptypes.GetDefaultEncryptionKey(ic.Config.GCP); kmsKey != nil {
+		bucketAttrs.Encryption = &storage.BucketEncryption{
+			DefaultKMSKeyName: gcptypes.FormatKMSKeyResourcePath(kmsKey, ic.Config.GCP.ProjectID),
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)

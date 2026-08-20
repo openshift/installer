@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import (
 
 	computepb "cloud.google.com/go/compute/apiv1/computepb"
 	gax "github.com/googleapis/gax-go/v2"
+	"github.com/googleapis/gax-go/v2/callctx"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
@@ -117,7 +118,7 @@ type ExternalVpnGatewaysClient struct {
 
 // Wrapper methods routed to the internal client.
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *ExternalVpnGatewaysClient) Close() error {
 	return c.internalClient.Close()
@@ -143,22 +144,27 @@ func (c *ExternalVpnGatewaysClient) Delete(ctx context.Context, req *computepb.D
 	return c.internalClient.Delete(ctx, req, opts...)
 }
 
-// Get returns the specified externalVpnGateway. Get a list of available externalVpnGateways by making a list() request.
+// Get returns the specified externalVpnGateway. Get a list of available
+// externalVpnGateways by making a list() request.
 func (c *ExternalVpnGatewaysClient) Get(ctx context.Context, req *computepb.GetExternalVpnGatewayRequest, opts ...gax.CallOption) (*computepb.ExternalVpnGateway, error) {
 	return c.internalClient.Get(ctx, req, opts...)
 }
 
-// Insert creates a ExternalVpnGateway in the specified project using the data included in the request.
+// Insert creates a ExternalVpnGateway in the specified project using
+// the data included in the request.
 func (c *ExternalVpnGatewaysClient) Insert(ctx context.Context, req *computepb.InsertExternalVpnGatewayRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Insert(ctx, req, opts...)
 }
 
-// List retrieves the list of ExternalVpnGateway available to the specified project.
+// List retrieves the list of ExternalVpnGateway available to the specified
+// project.
 func (c *ExternalVpnGatewaysClient) List(ctx context.Context, req *computepb.ListExternalVpnGatewaysRequest, opts ...gax.CallOption) *ExternalVpnGatewayIterator {
 	return c.internalClient.List(ctx, req, opts...)
 }
 
-// SetLabels sets the labels on an ExternalVpnGateway. To learn more about labels, read the Labeling Resources documentation.
+// SetLabels sets the labels on an ExternalVpnGateway. To learn more about labels,
+// read the Labeling
+// Resources documentation.
 func (c *ExternalVpnGatewaysClient) SetLabels(ctx context.Context, req *computepb.SetLabelsExternalVpnGatewayRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.SetLabels(ctx, req, opts...)
 }
@@ -193,6 +199,16 @@ type externalVpnGatewaysRESTClient struct {
 // The ExternalVpnGateways API.
 func NewExternalVpnGatewaysRESTClient(ctx context.Context, opts ...option.ClientOption) (*ExternalVpnGatewaysClient, error) {
 	clientOpts := append(defaultExternalVpnGatewaysRESTClientOptions(), opts...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		clientOpts = append(clientOpts, internaloption.WithTelemetryAttributes(map[string]string{
+			"gcp.client.service":  "compute",
+			"gcp.client.version":  getVersionClient(),
+			"gcp.client.repo":     "googleapis/google-cloud-go",
+			"gcp.client.artifact": "cloud.google.com/go/compute/apiv1",
+			"gcp.client.language": "go",
+			"url.domain":          "compute.googleapis.com",
+		}))
+	}
 	httpClient, endpoint, err := httptransport.NewClient(ctx, clientOpts...)
 	if err != nil {
 		return nil, err
@@ -206,6 +222,26 @@ func NewExternalVpnGatewaysRESTClient(ctx context.Context, opts ...option.Client
 		logger:      internaloption.GetLogger(opts),
 	}
 	c.setGoogleClientInfo()
+
+	if gax.IsFeatureEnabled("METRICS") {
+		metrics := gax.NewClientMetrics(
+			gax.WithTelemetryLogger(c.logger),
+			gax.WithTelemetryAttributes(map[string]string{
+				gax.ClientService:  "compute",
+				gax.ClientVersion:  getVersionClient(),
+				gax.ClientArtifact: "cloud.google.com/go/compute/apiv1",
+				gax.RPCSystem:      "http",
+				gax.URLDomain:      "compute.googleapis.com",
+			}),
+		)
+
+		callOpts.Delete = append(callOpts.Delete, gax.WithClientMetrics(metrics))
+		callOpts.Get = append(callOpts.Get, gax.WithClientMetrics(metrics))
+		callOpts.Insert = append(callOpts.Insert, gax.WithClientMetrics(metrics))
+		callOpts.List = append(callOpts.List, gax.WithClientMetrics(metrics))
+		callOpts.SetLabels = append(callOpts.SetLabels, gax.WithClientMetrics(metrics))
+		callOpts.TestIamPermissions = append(callOpts.TestIamPermissions, gax.WithClientMetrics(metrics))
+	}
 
 	o := []option.ClientOption{
 		option.WithHTTPClient(httpClient),
@@ -243,7 +279,7 @@ func (c *externalVpnGatewaysRESTClient) setGoogleClientInfo(keyval ...string) {
 	}
 }
 
-// Close closes the connection to the API service. The user should invoke this when
+// Close closes the connection to the API service. **Always** call Close() when
 // the client is no longer required.
 func (c *externalVpnGatewaysRESTClient) Close() error {
 	// Replace httpClient with nil to force cleanup.
@@ -282,6 +318,13 @@ func (c *externalVpnGatewaysRESTClient) Delete(ctx context.Context, req *compute
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/global/externalVpnGateways/%v", req.GetProject(), req.GetExternalVpnGateway()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.ExternalVpnGateways/Delete")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/global/externalVpnGateways/{external_vpn_gateway}")
+	}
 	opts = append((*c.CallOptions).Delete[0:len((*c.CallOptions).Delete):len((*c.CallOptions).Delete)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -320,7 +363,8 @@ func (c *externalVpnGatewaysRESTClient) Delete(ctx context.Context, req *compute
 	return op, nil
 }
 
-// Get returns the specified externalVpnGateway. Get a list of available externalVpnGateways by making a list() request.
+// Get returns the specified externalVpnGateway. Get a list of available
+// externalVpnGateways by making a list() request.
 func (c *externalVpnGatewaysRESTClient) Get(ctx context.Context, req *computepb.GetExternalVpnGatewayRequest, opts ...gax.CallOption) (*computepb.ExternalVpnGateway, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -334,6 +378,13 @@ func (c *externalVpnGatewaysRESTClient) Get(ctx context.Context, req *computepb.
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/global/externalVpnGateways/%v", req.GetProject(), req.GetExternalVpnGateway()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.ExternalVpnGateways/Get")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/global/externalVpnGateways/{external_vpn_gateway}")
+	}
 	opts = append((*c.CallOptions).Get[0:len((*c.CallOptions).Get):len((*c.CallOptions).Get)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.ExternalVpnGateway{}
@@ -365,7 +416,8 @@ func (c *externalVpnGatewaysRESTClient) Get(ctx context.Context, req *computepb.
 	return resp, nil
 }
 
-// Insert creates a ExternalVpnGateway in the specified project using the data included in the request.
+// Insert creates a ExternalVpnGateway in the specified project using
+// the data included in the request.
 func (c *externalVpnGatewaysRESTClient) Insert(ctx context.Context, req *computepb.InsertExternalVpnGatewayRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetExternalVpnGatewayResource()
@@ -393,6 +445,13 @@ func (c *externalVpnGatewaysRESTClient) Insert(ctx context.Context, req *compute
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v", req.GetProject()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.ExternalVpnGateways/Insert")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/global/externalVpnGateways")
+	}
 	opts = append((*c.CallOptions).Insert[0:len((*c.CallOptions).Insert):len((*c.CallOptions).Insert)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -431,10 +490,11 @@ func (c *externalVpnGatewaysRESTClient) Insert(ctx context.Context, req *compute
 	return op, nil
 }
 
-// List retrieves the list of ExternalVpnGateway available to the specified project.
+// List retrieves the list of ExternalVpnGateway available to the specified
+// project.
 func (c *externalVpnGatewaysRESTClient) List(ctx context.Context, req *computepb.ListExternalVpnGatewaysRequest, opts ...gax.CallOption) *ExternalVpnGatewayIterator {
 	it := &ExternalVpnGatewayIterator{}
-	req = proto.Clone(req).(*computepb.ListExternalVpnGatewaysRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.ExternalVpnGateway, string, error) {
 		resp := &computepb.ExternalVpnGatewayList{}
@@ -517,7 +577,9 @@ func (c *externalVpnGatewaysRESTClient) List(ctx context.Context, req *computepb
 	return it
 }
 
-// SetLabels sets the labels on an ExternalVpnGateway. To learn more about labels, read the Labeling Resources documentation.
+// SetLabels sets the labels on an ExternalVpnGateway. To learn more about labels,
+// read the Labeling
+// Resources documentation.
 func (c *externalVpnGatewaysRESTClient) SetLabels(ctx context.Context, req *computepb.SetLabelsExternalVpnGatewayRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetGlobalSetLabelsRequestResource()
@@ -538,6 +600,13 @@ func (c *externalVpnGatewaysRESTClient) SetLabels(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/global/externalVpnGateways/%v", req.GetProject(), req.GetResource()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.ExternalVpnGateways/SetLabels")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/global/externalVpnGateways/{resource}/setLabels")
+	}
 	opts = append((*c.CallOptions).SetLabels[0:len((*c.CallOptions).SetLabels):len((*c.CallOptions).SetLabels)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -597,6 +666,13 @@ func (c *externalVpnGatewaysRESTClient) TestIamPermissions(ctx context.Context, 
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/global/externalVpnGateways/%v", req.GetProject(), req.GetResource()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.ExternalVpnGateways/TestIamPermissions")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/global/externalVpnGateways/{resource}/testIamPermissions")
+	}
 	opts = append((*c.CallOptions).TestIamPermissions[0:len((*c.CallOptions).TestIamPermissions):len((*c.CallOptions).TestIamPermissions)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.TestPermissionsResponse{}

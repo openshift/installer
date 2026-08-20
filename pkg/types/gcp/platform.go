@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/openshift/installer/pkg/types/dns"
 )
@@ -17,6 +18,9 @@ const (
 	// UnmanagedFirewallRules indicates that the firewall rules should be managed by the user. The
 	// firewall rules should exist prior to the installation occurs.
 	UnmanagedFirewallRules FirewallRulesManagementPolicy = "Unmanaged"
+
+	// CloudEnvironmentSovereign is the cloud environment identifier for GCP sovereign clouds.
+	CloudEnvironmentSovereign = "sovereign"
 )
 
 // DNS contains the gcp dns zone information for the cluster.
@@ -185,11 +189,66 @@ func GetConfiguredServiceAccount(platform *Platform, mpool *MachinePool) string 
 // GetDefaultServiceAccount returns the default service account email to use based on role.
 // The default should be used when an existing service account is not configured.
 func GetDefaultServiceAccount(platform *Platform, clusterID string, role string) string {
-	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+	projectID := platform.ProjectID
+
+	// Domain-scoped project IDs (e.g. "eu0:openshift") use a reversed
+	// dot-separated format in SA emails: "openshift.eu0".
+	if parts := strings.SplitN(projectID, ":", 2); len(parts) == 2 {
+		projectID = parts[1] + "." + parts[0]
+	}
+
+	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], projectID)
 }
 
 // ShouldUseEndpointForInstaller returns true when the endpoint should be used for GCP api endpoint overrides in the
 // installer.
 func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
+}
+
+// GetCloudEnvironment determines the cloud environment from the project ID and region.
+// Returns CloudEnvironmentSovereign for sovereign cloud environments, empty string for public GCP.
+// Sovereign cloud is identified by both a domain-scoped project ID (containing ":")
+// and a sovereign region (prefixed with "u-").
+func GetCloudEnvironment(projectID, region string) string {
+	if strings.Contains(projectID, ":") && strings.HasPrefix(region, "u-") {
+		return CloudEnvironmentSovereign
+	}
+	return ""
+}
+
+// IsNonDefaultUniverseDomain returns true if the universe domain is non-empty
+// and not the default "googleapis.com" value.
+// This indicates a sovereign cloud or custom universe domain configuration.
+func IsNonDefaultUniverseDomain(universeDomain string) bool {
+	return universeDomain != "" && universeDomain != "googleapis.com"
+}
+
+// GetDefaultEncryptionKey returns the KMS key to use for GCS bucket encryption.
+// Returns the key from defaultMachinePlatform.osDisk.encryptionKey.kmsKey if configured,
+// otherwise returns nil.
+func GetDefaultEncryptionKey(platform *Platform) *KMSKeyReference {
+	if platform != nil &&
+		platform.DefaultMachinePlatform != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey != nil {
+		return platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey
+	}
+	return nil
+}
+
+// FormatKMSKeyResourcePath formats a KMSKeyReference into a full GCP resource path.
+// If the KMSKeyReference specifies a ProjectID, it uses that; otherwise, it uses the provided default projectID.
+func FormatKMSKeyResourcePath(kmsKey *KMSKeyReference, projectID string) string {
+	if kmsKey == nil {
+		return ""
+	}
+
+	keyProjectID := projectID
+	if kmsKey.ProjectID != "" {
+		keyProjectID = kmsKey.ProjectID
+	}
+
+	return fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
+		keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
 }

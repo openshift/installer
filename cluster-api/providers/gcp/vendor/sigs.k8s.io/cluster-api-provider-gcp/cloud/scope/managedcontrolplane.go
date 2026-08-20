@@ -22,15 +22,17 @@ import (
 
 	"sigs.k8s.io/cluster-api-provider-gcp/util/location"
 
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	container "cloud.google.com/go/container/apiv1"
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -91,7 +93,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		params.CredentialsClient = credentialsClient
 	}
 
-	helper, err := patch.NewHelper(params.GCPManagedControlPlane, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.GCPManagedControlPlane, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
@@ -112,7 +114,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 // ManagedControlPlaneScope defines the basic context for an actuator to operate upon.
 type ManagedControlPlaneScope struct {
 	client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	Cluster                *clusterv1.Cluster
 	GCPManagedCluster      *infrav1exp.GCPManagedCluster
@@ -127,11 +129,11 @@ type ManagedControlPlaneScope struct {
 }
 
 // PatchObject persists the managed control plane configuration and status.
-func (s *ManagedControlPlaneScope) PatchObject() error {
+func (s *ManagedControlPlaneScope) PatchObject(ctx context.Context) error {
 	return s.patchHelper.Patch(
-		context.TODO(),
+		ctx,
 		s.GCPManagedControlPlane,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
 			infrav1exp.GKEControlPlaneReadyCondition,
 			infrav1exp.GKEControlPlaneCreatingCondition,
 			infrav1exp.GKEControlPlaneUpdatingCondition,
@@ -140,15 +142,15 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 }
 
 // Close closes the current scope persisting the managed control plane configuration and status.
-func (s *ManagedControlPlaneScope) Close() error {
+func (s *ManagedControlPlaneScope) Close(ctx context.Context) error {
 	s.mcClient.Close()
 	s.tagBindingsClient.Close()
 	s.credentialsClient.Close()
-	return s.PatchObject()
+	return s.PatchObject(ctx)
 }
 
 // ConditionSetter return a condition setter (which is GCPManagedControlPlane itself).
-func (s *ManagedControlPlaneScope) ConditionSetter() conditions.Setter {
+func (s *ManagedControlPlaneScope) ConditionSetter() v1beta1conditions.Setter {
 	return s.GCPManagedControlPlane
 }
 
@@ -189,15 +191,21 @@ func (s *ManagedControlPlaneScope) GetAllNodePools(ctx context.Context) ([]infra
 		if err := s.client.List(ctx, machinePoolList, listOptions...); err != nil {
 			return nil, nil, err
 		}
-		managedMachinePoolList := &infrav1exp.GCPManagedMachinePoolList{}
-		if err := s.client.List(ctx, managedMachinePoolList, listOptions...); err != nil {
-			return nil, nil, err
-		}
-		if len(machinePoolList.Items) != len(managedMachinePoolList.Items) {
-			return nil, nil, fmt.Errorf("machinePoolList length (%d) != managedMachinePoolList length (%d)", len(machinePoolList.Items), len(managedMachinePoolList.Items))
-		}
+
 		s.AllMachinePools = machinePoolList.Items
-		s.AllManagedMachinePools = managedMachinePoolList.Items
+		s.AllManagedMachinePools = []infrav1exp.GCPManagedMachinePool{}
+		for _, machinePool := range s.AllMachinePools {
+			managedMachinePool := infrav1exp.GCPManagedMachinePool{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      machinePool.Spec.Template.Spec.InfrastructureRef.Name,
+					Namespace: machinePool.GetNamespace(),
+				},
+			}
+			if err := s.client.Get(ctx, client.ObjectKeyFromObject(&managedMachinePool), &managedMachinePool); err != nil {
+				return nil, nil, fmt.Errorf("getting GCPManagedMachinePool %s for MachinePool %s: %w", managedMachinePool.GetName(), machinePool.GetName(), err)
+			}
+			s.AllManagedMachinePools = append(s.AllManagedMachinePools, managedMachinePool)
+		}
 	}
 
 	return s.AllManagedMachinePools, s.AllMachinePools, nil
@@ -226,7 +234,7 @@ func (s *ManagedControlPlaneScope) ClusterName() string {
 
 // SetEndpoint sets the Endpoint of GCPManagedControlPlane.
 func (s *ManagedControlPlaneScope) SetEndpoint(host string) {
-	s.GCPManagedControlPlane.Spec.Endpoint = clusterv1.APIEndpoint{
+	s.GCPManagedControlPlane.Spec.Endpoint = clusterv1beta1.APIEndpoint{
 		Host: host,
 		Port: APIServerPort,
 	}
