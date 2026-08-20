@@ -344,6 +344,8 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		untilTime := time.Now().Add(provisionTimeout)
 		timezone, _ := untilTime.Zone()
 		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.PublicGatherEndpoint() == ExternalIP
+		bootstrapMachineName := capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
+		bootstrapReadyCalled := false
 		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", provisionTimeout, untilTime.Format(time.Kitchen), timezone, machineNames)
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, provisionTimeout, true,
 			func(ctx context.Context) (bool, error) {
@@ -360,7 +362,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 						return false, err
 					}
 
-					reqPubIP := reqBootstrapPubIP && machine.Name == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
+					reqPubIP := reqBootstrapPubIP && machine.Name == bootstrapMachineName
 					ready, err := checkMachineReady(machine, reqPubIP)
 					if err != nil {
 						return false, fmt.Errorf("failed waiting for machines: %w", err)
@@ -371,6 +373,11 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 						logrus.Debugf("Machine %s is ready. Phase: %s", machine.Name, machine.Status.Phase)
 					}
 				}
+
+				if !bootstrapReadyCalled {
+					bootstrapReadyCalled = i.callBootstrapReadyHook(ctx, cl, capiMachines, bootstrapMachineName, reqBootstrapPubIP, installConfig, clusterID.InfraID)
+				}
+
 				return allReady, nil
 			}); err != nil {
 			// Attempt to find and report falsy conditions in infra machines if any.
@@ -405,6 +412,45 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
 
 	return fileList, nil
+}
+
+// callBootstrapReadyHook checks whether the bootstrap machine is ready and,
+// if so, invokes the platform's BootstrapReady hook exactly once. Returns true
+// when the hook has been called (or the provider does not implement it),
+// preventing further attempts.
+func (i *InfraProvider) callBootstrapReadyHook(
+	ctx context.Context,
+	cl client.Client,
+	capiMachines []*clusterv1.Machine,
+	bootstrapMachineName string,
+	reqBootstrapPubIP bool,
+	installConfig *installconfig.InstallConfig,
+	infraID string,
+) bool {
+	for _, machine := range capiMachines {
+		if machine.Name != bootstrapMachineName {
+			continue
+		}
+		ready, _ := checkMachineReady(machine, reqBootstrapPubIP)
+		if !ready {
+			return false
+		}
+		p, ok := i.impl.(BootstrapReadyProvider)
+		if !ok {
+			logrus.Debugf("No bootstrap ready requirements for the %s provider", i.impl.Name())
+			return true
+		}
+		logrus.Infof("Bootstrap machine is ready, running bootstrap ready hook")
+		if err := p.BootstrapReady(ctx, BootstrapReadyInput{
+			Client:        cl,
+			InstallConfig: installConfig,
+			InfraID:       infraID,
+		}); err != nil {
+			logrus.Warnf("Bootstrap ready hook failed (SSH to bootstrap may be unavailable): %v", err)
+		}
+		return true
+	}
+	return false
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
