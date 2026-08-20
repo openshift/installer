@@ -101,6 +101,9 @@ func (a *InstallConfig) Generate(ctx context.Context, parents asset.Parents) err
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
 	a.Config.PowerVS = platform.PowerVS
+	if a.Config.PowerVS != nil && baseDomain.PowerVSVPC != "" {
+		a.Config.PowerVS.VPC = baseDomain.PowerVSVPC
+	}
 	a.Config.PowerVC = platform.PowerVC
 	a.Config.Nutanix = platform.Nutanix
 

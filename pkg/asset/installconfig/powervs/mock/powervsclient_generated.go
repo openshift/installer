@@ -415,6 +415,21 @@ func (mr *MockAPIMockRecorder) GetVPCs(ctx, region any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
 }
 
+// GetVPCsInResourceGroup mocks base method.
+func (m *MockAPI) GetVPCsInResourceGroup(ctx context.Context, resourceGroupID string, region string) ([]vpcv1.VPC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCsInResourceGroup", ctx, resourceGroupID, region)
+	ret0, _ := ret[0].([]vpcv1.VPC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCsInResourceGroup indicates an expected call of GetVPCsInResourceGroup.
+func (mr *MockAPIMockRecorder) GetVPCsInResourceGroup(ctx, resourceGroupID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCsInResourceGroup", reflect.TypeOf((*MockAPI)(nil).GetVPCsInResourceGroup), ctx, resourceGroupID, region)
+}
+
 // ListResourceGroups mocks base method.
 func (m *MockAPI) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error) {
 	m.ctrl.T.Helper()
