@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import (
 
 	iampb "cloud.google.com/go/iam/apiv1/iampb"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
-	"cloud.google.com/go/longrunning"
-	lroauto "cloud.google.com/go/longrunning/autogen"
 	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
@@ -52,18 +50,14 @@ type KeyManagementCallOptions struct {
 	ListCryptoKeys                []gax.CallOption
 	ListCryptoKeyVersions         []gax.CallOption
 	ListImportJobs                []gax.CallOption
-	ListRetiredResources          []gax.CallOption
 	GetKeyRing                    []gax.CallOption
 	GetCryptoKey                  []gax.CallOption
 	GetCryptoKeyVersion           []gax.CallOption
 	GetPublicKey                  []gax.CallOption
 	GetImportJob                  []gax.CallOption
-	GetRetiredResource            []gax.CallOption
 	CreateKeyRing                 []gax.CallOption
 	CreateCryptoKey               []gax.CallOption
 	CreateCryptoKeyVersion        []gax.CallOption
-	DeleteCryptoKey               []gax.CallOption
-	DeleteCryptoKeyVersion        []gax.CallOption
 	ImportCryptoKeyVersion        []gax.CallOption
 	CreateImportJob               []gax.CallOption
 	UpdateCryptoKey               []gax.CallOption
@@ -79,6 +73,7 @@ type KeyManagementCallOptions struct {
 	AsymmetricDecrypt             []gax.CallOption
 	MacSign                       []gax.CallOption
 	MacVerify                     []gax.CallOption
+	Decapsulate                   []gax.CallOption
 	GenerateRandomBytes           []gax.CallOption
 	GetLocation                   []gax.CallOption
 	ListLocations                 []gax.CallOption
@@ -97,6 +92,7 @@ func defaultKeyManagementGRPCClientOptions() []option.ClientOption {
 		internaloption.WithDefaultAudience("https://cloudkms.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
 		internaloption.EnableJwtWithScope(),
+		internaloption.AllowHardBoundTokens("MTLS_S2A"),
 		internaloption.EnableNewAuthLibrary(),
 		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
@@ -145,19 +141,6 @@ func defaultKeyManagementCallOptions() *KeyManagementCallOptions {
 			}),
 		},
 		ListImportJobs: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-					codes.DeadlineExceeded,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		ListRetiredResources: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
@@ -235,19 +218,6 @@ func defaultKeyManagementCallOptions() *KeyManagementCallOptions {
 				})
 			}),
 		},
-		GetRetiredResource: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-					codes.DeadlineExceeded,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
 		CreateKeyRing: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
 			gax.WithRetry(func() gax.Retryer {
@@ -276,32 +246,6 @@ func defaultKeyManagementCallOptions() *KeyManagementCallOptions {
 		},
 		CreateCryptoKeyVersion: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
-		},
-		DeleteCryptoKey: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-					codes.DeadlineExceeded,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		DeleteCryptoKeyVersion: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-					codes.DeadlineExceeded,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
 		},
 		ImportCryptoKeyVersion: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
@@ -464,6 +408,7 @@ func defaultKeyManagementCallOptions() *KeyManagementCallOptions {
 				})
 			}),
 		},
+		Decapsulate: []gax.CallOption{},
 		GenerateRandomBytes: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
 			gax.WithRetry(func() gax.Retryer {
@@ -536,18 +481,6 @@ func defaultKeyManagementRESTCallOptions() *KeyManagementCallOptions {
 					http.StatusGatewayTimeout)
 			}),
 		},
-		ListRetiredResources: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnHTTPCodes(gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				},
-					http.StatusServiceUnavailable,
-					http.StatusGatewayTimeout)
-			}),
-		},
 		GetKeyRing: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
 			gax.WithRetry(func() gax.Retryer {
@@ -608,18 +541,6 @@ func defaultKeyManagementRESTCallOptions() *KeyManagementCallOptions {
 					http.StatusGatewayTimeout)
 			}),
 		},
-		GetRetiredResource: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnHTTPCodes(gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				},
-					http.StatusServiceUnavailable,
-					http.StatusGatewayTimeout)
-			}),
-		},
 		CreateKeyRing: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
 			gax.WithRetry(func() gax.Retryer {
@@ -646,30 +567,6 @@ func defaultKeyManagementRESTCallOptions() *KeyManagementCallOptions {
 		},
 		CreateCryptoKeyVersion: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
-		},
-		DeleteCryptoKey: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnHTTPCodes(gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				},
-					http.StatusServiceUnavailable,
-					http.StatusGatewayTimeout)
-			}),
-		},
-		DeleteCryptoKeyVersion: []gax.CallOption{
-			gax.WithTimeout(60000 * time.Millisecond),
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnHTTPCodes(gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.30,
-				},
-					http.StatusServiceUnavailable,
-					http.StatusGatewayTimeout)
-			}),
 		},
 		ImportCryptoKeyVersion: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
@@ -820,6 +717,7 @@ func defaultKeyManagementRESTCallOptions() *KeyManagementCallOptions {
 					http.StatusGatewayTimeout)
 			}),
 		},
+		Decapsulate: []gax.CallOption{},
 		GenerateRandomBytes: []gax.CallOption{
 			gax.WithTimeout(60000 * time.Millisecond),
 			gax.WithRetry(func() gax.Retryer {
@@ -850,20 +748,14 @@ type internalKeyManagementClient interface {
 	ListCryptoKeys(context.Context, *kmspb.ListCryptoKeysRequest, ...gax.CallOption) *CryptoKeyIterator
 	ListCryptoKeyVersions(context.Context, *kmspb.ListCryptoKeyVersionsRequest, ...gax.CallOption) *CryptoKeyVersionIterator
 	ListImportJobs(context.Context, *kmspb.ListImportJobsRequest, ...gax.CallOption) *ImportJobIterator
-	ListRetiredResources(context.Context, *kmspb.ListRetiredResourcesRequest, ...gax.CallOption) *RetiredResourceIterator
 	GetKeyRing(context.Context, *kmspb.GetKeyRingRequest, ...gax.CallOption) (*kmspb.KeyRing, error)
 	GetCryptoKey(context.Context, *kmspb.GetCryptoKeyRequest, ...gax.CallOption) (*kmspb.CryptoKey, error)
 	GetCryptoKeyVersion(context.Context, *kmspb.GetCryptoKeyVersionRequest, ...gax.CallOption) (*kmspb.CryptoKeyVersion, error)
 	GetPublicKey(context.Context, *kmspb.GetPublicKeyRequest, ...gax.CallOption) (*kmspb.PublicKey, error)
 	GetImportJob(context.Context, *kmspb.GetImportJobRequest, ...gax.CallOption) (*kmspb.ImportJob, error)
-	GetRetiredResource(context.Context, *kmspb.GetRetiredResourceRequest, ...gax.CallOption) (*kmspb.RetiredResource, error)
 	CreateKeyRing(context.Context, *kmspb.CreateKeyRingRequest, ...gax.CallOption) (*kmspb.KeyRing, error)
 	CreateCryptoKey(context.Context, *kmspb.CreateCryptoKeyRequest, ...gax.CallOption) (*kmspb.CryptoKey, error)
 	CreateCryptoKeyVersion(context.Context, *kmspb.CreateCryptoKeyVersionRequest, ...gax.CallOption) (*kmspb.CryptoKeyVersion, error)
-	DeleteCryptoKey(context.Context, *kmspb.DeleteCryptoKeyRequest, ...gax.CallOption) (*DeleteCryptoKeyOperation, error)
-	DeleteCryptoKeyOperation(name string) *DeleteCryptoKeyOperation
-	DeleteCryptoKeyVersion(context.Context, *kmspb.DeleteCryptoKeyVersionRequest, ...gax.CallOption) (*DeleteCryptoKeyVersionOperation, error)
-	DeleteCryptoKeyVersionOperation(name string) *DeleteCryptoKeyVersionOperation
 	ImportCryptoKeyVersion(context.Context, *kmspb.ImportCryptoKeyVersionRequest, ...gax.CallOption) (*kmspb.CryptoKeyVersion, error)
 	CreateImportJob(context.Context, *kmspb.CreateImportJobRequest, ...gax.CallOption) (*kmspb.ImportJob, error)
 	UpdateCryptoKey(context.Context, *kmspb.UpdateCryptoKeyRequest, ...gax.CallOption) (*kmspb.CryptoKey, error)
@@ -879,6 +771,7 @@ type internalKeyManagementClient interface {
 	AsymmetricDecrypt(context.Context, *kmspb.AsymmetricDecryptRequest, ...gax.CallOption) (*kmspb.AsymmetricDecryptResponse, error)
 	MacSign(context.Context, *kmspb.MacSignRequest, ...gax.CallOption) (*kmspb.MacSignResponse, error)
 	MacVerify(context.Context, *kmspb.MacVerifyRequest, ...gax.CallOption) (*kmspb.MacVerifyResponse, error)
+	Decapsulate(context.Context, *kmspb.DecapsulateRequest, ...gax.CallOption) (*kmspb.DecapsulateResponse, error)
 	GenerateRandomBytes(context.Context, *kmspb.GenerateRandomBytesRequest, ...gax.CallOption) (*kmspb.GenerateRandomBytesResponse, error)
 	GetLocation(context.Context, *locationpb.GetLocationRequest, ...gax.CallOption) (*locationpb.Location, error)
 	ListLocations(context.Context, *locationpb.ListLocationsRequest, ...gax.CallOption) *LocationIterator
@@ -912,11 +805,6 @@ type KeyManagementClient struct {
 
 	// The call options for this service.
 	CallOptions *KeyManagementCallOptions
-
-	// LROClient is used internally to handle long-running operations.
-	// It is exposed so that its CallOptions can be modified if required.
-	// Users should not Close this client.
-	LROClient *lroauto.OperationsClient
 }
 
 // Wrapper methods routed to the internal client.
@@ -962,13 +850,6 @@ func (c *KeyManagementClient) ListImportJobs(ctx context.Context, req *kmspb.Lis
 	return c.internalClient.ListImportJobs(ctx, req, opts...)
 }
 
-// ListRetiredResources lists the RetiredResources which are
-// the records of deleted CryptoKeys.
-// RetiredResources prevent the reuse of these resource names after deletion.
-func (c *KeyManagementClient) ListRetiredResources(ctx context.Context, req *kmspb.ListRetiredResourcesRequest, opts ...gax.CallOption) *RetiredResourceIterator {
-	return c.internalClient.ListRetiredResources(ctx, req, opts...)
-}
-
 // GetKeyRing returns metadata for a given KeyRing.
 func (c *KeyManagementClient) GetKeyRing(ctx context.Context, req *kmspb.GetKeyRingRequest, opts ...gax.CallOption) (*kmspb.KeyRing, error) {
 	return c.internalClient.GetKeyRing(ctx, req, opts...)
@@ -1002,13 +883,6 @@ func (c *KeyManagementClient) GetImportJob(ctx context.Context, req *kmspb.GetIm
 	return c.internalClient.GetImportJob(ctx, req, opts...)
 }
 
-// GetRetiredResource retrieves a specific RetiredResource
-// resource, which represents the record of a deleted
-// CryptoKey.
-func (c *KeyManagementClient) GetRetiredResource(ctx context.Context, req *kmspb.GetRetiredResourceRequest, opts ...gax.CallOption) (*kmspb.RetiredResource, error) {
-	return c.internalClient.GetRetiredResource(ctx, req, opts...)
-}
-
 // CreateKeyRing create a new KeyRing in a given Project and
 // Location.
 func (c *KeyManagementClient) CreateKeyRing(ctx context.Context, req *kmspb.CreateKeyRingRequest, opts ...gax.CallOption) (*kmspb.KeyRing, error) {
@@ -1033,43 +907,6 @@ func (c *KeyManagementClient) CreateCryptoKey(ctx context.Context, req *kmspb.Cr
 // ENABLED.
 func (c *KeyManagementClient) CreateCryptoKeyVersion(ctx context.Context, req *kmspb.CreateCryptoKeyVersionRequest, opts ...gax.CallOption) (*kmspb.CryptoKeyVersion, error) {
 	return c.internalClient.CreateCryptoKeyVersion(ctx, req, opts...)
-}
-
-// DeleteCryptoKey permanently deletes the given CryptoKey.
-// All child CryptoKeyVersions must
-// have been previously deleted using
-// KeyManagementService.DeleteCryptoKeyVersion.
-// The specified crypto key will be immediately and permanently deleted upon
-// calling this method. This action cannot be undone.
-func (c *KeyManagementClient) DeleteCryptoKey(ctx context.Context, req *kmspb.DeleteCryptoKeyRequest, opts ...gax.CallOption) (*DeleteCryptoKeyOperation, error) {
-	return c.internalClient.DeleteCryptoKey(ctx, req, opts...)
-}
-
-// DeleteCryptoKeyOperation returns a new DeleteCryptoKeyOperation from a given name.
-// The name must be that of a previously created DeleteCryptoKeyOperation, possibly from a different process.
-func (c *KeyManagementClient) DeleteCryptoKeyOperation(name string) *DeleteCryptoKeyOperation {
-	return c.internalClient.DeleteCryptoKeyOperation(name)
-}
-
-// DeleteCryptoKeyVersion permanently deletes the given
-// CryptoKeyVersion. Only possible if
-// the version has not been previously imported and if its
-// state is one of
-// DESTROYED,
-// IMPORT_FAILED, or
-// GENERATION_FAILED.
-// Successfully imported
-// CryptoKeyVersions cannot be deleted
-// at this time. The specified version will be immediately and permanently
-// deleted upon calling this method. This action cannot be undone.
-func (c *KeyManagementClient) DeleteCryptoKeyVersion(ctx context.Context, req *kmspb.DeleteCryptoKeyVersionRequest, opts ...gax.CallOption) (*DeleteCryptoKeyVersionOperation, error) {
-	return c.internalClient.DeleteCryptoKeyVersion(ctx, req, opts...)
-}
-
-// DeleteCryptoKeyVersionOperation returns a new DeleteCryptoKeyVersionOperation from a given name.
-// The name must be that of a previously created DeleteCryptoKeyVersionOperation, possibly from a different process.
-func (c *KeyManagementClient) DeleteCryptoKeyVersionOperation(name string) *DeleteCryptoKeyVersionOperation {
-	return c.internalClient.DeleteCryptoKeyVersionOperation(name)
 }
 
 // ImportCryptoKeyVersion import wrapped key material into a
@@ -1229,6 +1066,15 @@ func (c *KeyManagementClient) MacVerify(ctx context.Context, req *kmspb.MacVerif
 	return c.internalClient.MacVerify(ctx, req, opts...)
 }
 
+// Decapsulate decapsulates data that was encapsulated with a public key retrieved from
+// GetPublicKey
+// corresponding to a CryptoKeyVersion
+// with CryptoKey.purpose
+// KEY_ENCAPSULATION.
+func (c *KeyManagementClient) Decapsulate(ctx context.Context, req *kmspb.DecapsulateRequest, opts ...gax.CallOption) (*kmspb.DecapsulateResponse, error) {
+	return c.internalClient.Decapsulate(ctx, req, opts...)
+}
+
 // GenerateRandomBytes generate random bytes using the Cloud KMS randomness source in the provided
 // location.
 func (c *KeyManagementClient) GenerateRandomBytes(ctx context.Context, req *kmspb.GenerateRandomBytesRequest, opts ...gax.CallOption) (*kmspb.GenerateRandomBytesResponse, error) {
@@ -1241,14 +1087,6 @@ func (c *KeyManagementClient) GetLocation(ctx context.Context, req *locationpb.G
 }
 
 // ListLocations lists information about the supported locations for this service.
-// This method can be called in two ways:
-//
-//	List all public locations: Use the path GET /v1/locations.
-//
-//	List project-visible locations: Use the path
-//	GET /v1/projects/{project_id}/locations. This may include public
-//	locations as well as private or other locations specifically visible
-//	to the project.
 func (c *KeyManagementClient) ListLocations(ctx context.Context, req *locationpb.ListLocationsRequest, opts ...gax.CallOption) *LocationIterator {
 	return c.internalClient.ListLocations(ctx, req, opts...)
 }
@@ -1296,11 +1134,6 @@ type keyManagementGRPCClient struct {
 
 	// The gRPC API client.
 	keyManagementClient kmspb.KeyManagementServiceClient
-
-	// LROClient is used internally to handle long-running operations.
-	// It is exposed so that its CallOptions can be modified if required.
-	// Users should not Close this client.
-	LROClient **lroauto.OperationsClient
 
 	operationsClient longrunningpb.OperationsClient
 
@@ -1361,17 +1194,6 @@ func NewKeyManagementClient(ctx context.Context, opts ...option.ClientOption) (*
 
 	client.internalClient = c
 
-	client.LROClient, err = lroauto.NewOperationsClient(ctx, gtransport.WithConnPool(connPool))
-	if err != nil {
-		// This error "should not happen", since we are just reusing old connection pool
-		// and never actually need to dial.
-		// If this does happen, we could leak connp. However, we cannot close conn:
-		// If the user invoked the constructor with option.WithGRPCConn,
-		// we would close a connection that's still in use.
-		// TODO: investigate error conditions.
-		return nil, err
-	}
-	c.LROClient = &client.LROClient
 	return &client, nil
 }
 
@@ -1407,11 +1229,6 @@ type keyManagementRESTClient struct {
 
 	// The http client.
 	httpClient *http.Client
-
-	// LROClient is used internally to handle long-running operations.
-	// It is exposed so that its CallOptions can be modified if required.
-	// Users should not Close this client.
-	LROClient **lroauto.OperationsClient
 
 	// The x-goog-* headers to be sent with each request.
 	xGoogHeaders []string
@@ -1454,16 +1271,6 @@ func NewKeyManagementRESTClient(ctx context.Context, opts ...option.ClientOption
 		logger:      internaloption.GetLogger(opts),
 	}
 	c.setGoogleClientInfo()
-
-	lroOpts := []option.ClientOption{
-		option.WithHTTPClient(httpClient),
-		option.WithEndpoint(endpoint),
-	}
-	opClient, err := lroauto.NewOperationsRESTClient(ctx, lroOpts...)
-	if err != nil {
-		return nil, err
-	}
-	c.LROClient = &opClient
 
 	return &KeyManagementClient{internalClient: c, CallOptions: callOpts}, nil
 }
@@ -1689,52 +1496,6 @@ func (c *keyManagementGRPCClient) ListImportJobs(ctx context.Context, req *kmspb
 	return it
 }
 
-func (c *keyManagementGRPCClient) ListRetiredResources(ctx context.Context, req *kmspb.ListRetiredResourcesRequest, opts ...gax.CallOption) *RetiredResourceIterator {
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
-	opts = append((*c.CallOptions).ListRetiredResources[0:len((*c.CallOptions).ListRetiredResources):len((*c.CallOptions).ListRetiredResources)], opts...)
-	it := &RetiredResourceIterator{}
-	req = proto.Clone(req).(*kmspb.ListRetiredResourcesRequest)
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*kmspb.RetiredResource, string, error) {
-		resp := &kmspb.ListRetiredResourcesResponse{}
-		if pageToken != "" {
-			req.PageToken = pageToken
-		}
-		if pageSize > math.MaxInt32 {
-			req.PageSize = math.MaxInt32
-		} else if pageSize != 0 {
-			req.PageSize = int32(pageSize)
-		}
-		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-			var err error
-			resp, err = executeRPC(ctx, c.keyManagementClient.ListRetiredResources, req, settings.GRPC, c.logger, "ListRetiredResources")
-			return err
-		}, opts...)
-		if err != nil {
-			return nil, "", err
-		}
-
-		it.Response = resp
-		return resp.GetRetiredResources(), resp.GetNextPageToken(), nil
-	}
-	fetch := func(pageSize int, pageToken string) (string, error) {
-		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
-		if err != nil {
-			return "", err
-		}
-		it.items = append(it.items, items...)
-		return nextPageToken, nil
-	}
-
-	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
-	it.pageInfo.MaxSize = int(req.GetPageSize())
-	it.pageInfo.Token = req.GetPageToken()
-
-	return it
-}
-
 func (c *keyManagementGRPCClient) GetKeyRing(ctx context.Context, req *kmspb.GetKeyRingRequest, opts ...gax.CallOption) (*kmspb.KeyRing, error) {
 	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
 
@@ -1825,24 +1586,6 @@ func (c *keyManagementGRPCClient) GetImportJob(ctx context.Context, req *kmspb.G
 	return resp, nil
 }
 
-func (c *keyManagementGRPCClient) GetRetiredResource(ctx context.Context, req *kmspb.GetRetiredResourceRequest, opts ...gax.CallOption) (*kmspb.RetiredResource, error) {
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
-	opts = append((*c.CallOptions).GetRetiredResource[0:len((*c.CallOptions).GetRetiredResource):len((*c.CallOptions).GetRetiredResource)], opts...)
-	var resp *kmspb.RetiredResource
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = executeRPC(ctx, c.keyManagementClient.GetRetiredResource, req, settings.GRPC, c.logger, "GetRetiredResource")
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
 func (c *keyManagementGRPCClient) CreateKeyRing(ctx context.Context, req *kmspb.CreateKeyRingRequest, opts ...gax.CallOption) (*kmspb.KeyRing, error) {
 	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent()))}
 
@@ -1895,46 +1638,6 @@ func (c *keyManagementGRPCClient) CreateCryptoKeyVersion(ctx context.Context, re
 		return nil, err
 	}
 	return resp, nil
-}
-
-func (c *keyManagementGRPCClient) DeleteCryptoKey(ctx context.Context, req *kmspb.DeleteCryptoKeyRequest, opts ...gax.CallOption) (*DeleteCryptoKeyOperation, error) {
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
-	opts = append((*c.CallOptions).DeleteCryptoKey[0:len((*c.CallOptions).DeleteCryptoKey):len((*c.CallOptions).DeleteCryptoKey)], opts...)
-	var resp *longrunningpb.Operation
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = executeRPC(ctx, c.keyManagementClient.DeleteCryptoKey, req, settings.GRPC, c.logger, "DeleteCryptoKey")
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &DeleteCryptoKeyOperation{
-		lro: longrunning.InternalNewOperation(*c.LROClient, resp),
-	}, nil
-}
-
-func (c *keyManagementGRPCClient) DeleteCryptoKeyVersion(ctx context.Context, req *kmspb.DeleteCryptoKeyVersionRequest, opts ...gax.CallOption) (*DeleteCryptoKeyVersionOperation, error) {
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
-	opts = append((*c.CallOptions).DeleteCryptoKeyVersion[0:len((*c.CallOptions).DeleteCryptoKeyVersion):len((*c.CallOptions).DeleteCryptoKeyVersion)], opts...)
-	var resp *longrunningpb.Operation
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = executeRPC(ctx, c.keyManagementClient.DeleteCryptoKeyVersion, req, settings.GRPC, c.logger, "DeleteCryptoKeyVersion")
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &DeleteCryptoKeyVersionOperation{
-		lro: longrunning.InternalNewOperation(*c.LROClient, resp),
-	}, nil
 }
 
 func (c *keyManagementGRPCClient) ImportCryptoKeyVersion(ctx context.Context, req *kmspb.ImportCryptoKeyVersionRequest, opts ...gax.CallOption) (*kmspb.CryptoKeyVersion, error) {
@@ -2199,6 +1902,24 @@ func (c *keyManagementGRPCClient) MacVerify(ctx context.Context, req *kmspb.MacV
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
 		resp, err = executeRPC(ctx, c.keyManagementClient.MacVerify, req, settings.GRPC, c.logger, "MacVerify")
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *keyManagementGRPCClient) Decapsulate(ctx context.Context, req *kmspb.DecapsulateRequest, opts ...gax.CallOption) (*kmspb.DecapsulateResponse, error) {
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	opts = append((*c.CallOptions).Decapsulate[0:len((*c.CallOptions).Decapsulate):len((*c.CallOptions).Decapsulate)], opts...)
+	var resp *kmspb.DecapsulateResponse
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = executeRPC(ctx, c.keyManagementClient.Decapsulate, req, settings.GRPC, c.logger, "Decapsulate")
 		return err
 	}, opts...)
 	if err != nil {
@@ -2703,86 +2424,6 @@ func (c *keyManagementRESTClient) ListImportJobs(ctx context.Context, req *kmspb
 	return it
 }
 
-// ListRetiredResources lists the RetiredResources which are
-// the records of deleted CryptoKeys.
-// RetiredResources prevent the reuse of these resource names after deletion.
-func (c *keyManagementRESTClient) ListRetiredResources(ctx context.Context, req *kmspb.ListRetiredResourcesRequest, opts ...gax.CallOption) *RetiredResourceIterator {
-	it := &RetiredResourceIterator{}
-	req = proto.Clone(req).(*kmspb.ListRetiredResourcesRequest)
-	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*kmspb.RetiredResource, string, error) {
-		resp := &kmspb.ListRetiredResourcesResponse{}
-		if pageToken != "" {
-			req.PageToken = pageToken
-		}
-		if pageSize > math.MaxInt32 {
-			req.PageSize = math.MaxInt32
-		} else if pageSize != 0 {
-			req.PageSize = int32(pageSize)
-		}
-		baseUrl, err := url.Parse(c.endpoint)
-		if err != nil {
-			return nil, "", err
-		}
-		baseUrl.Path += fmt.Sprintf("/v1/%v/retiredResources", req.GetParent())
-
-		params := url.Values{}
-		params.Add("$alt", "json;enum-encoding=int")
-		if req.GetPageSize() != 0 {
-			params.Add("pageSize", fmt.Sprintf("%v", req.GetPageSize()))
-		}
-		if req.GetPageToken() != "" {
-			params.Add("pageToken", fmt.Sprintf("%v", req.GetPageToken()))
-		}
-
-		baseUrl.RawQuery = params.Encode()
-
-		// Build HTTP headers from client and context metadata.
-		hds := append(c.xGoogHeaders, "Content-Type", "application/json")
-		headers := gax.BuildHeaders(ctx, hds...)
-		e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-			if settings.Path != "" {
-				baseUrl.Path = settings.Path
-			}
-			httpReq, err := http.NewRequest("GET", baseUrl.String(), nil)
-			if err != nil {
-				return err
-			}
-			httpReq.Header = headers
-
-			buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, nil, "ListRetiredResources")
-			if err != nil {
-				return err
-			}
-			if err := unm.Unmarshal(buf, resp); err != nil {
-				return err
-			}
-
-			return nil
-		}, opts...)
-		if e != nil {
-			return nil, "", e
-		}
-		it.Response = resp
-		return resp.GetRetiredResources(), resp.GetNextPageToken(), nil
-	}
-
-	fetch := func(pageSize int, pageToken string) (string, error) {
-		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
-		if err != nil {
-			return "", err
-		}
-		it.items = append(it.items, items...)
-		return nextPageToken, nil
-	}
-
-	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
-	it.pageInfo.MaxSize = int(req.GetPageSize())
-	it.pageInfo.Token = req.GetPageToken()
-
-	return it
-}
-
 // GetKeyRing returns metadata for a given KeyRing.
 func (c *keyManagementRESTClient) GetKeyRing(ctx context.Context, req *kmspb.GetKeyRingRequest, opts ...gax.CallOption) (*kmspb.KeyRing, error) {
 	baseUrl, err := url.Parse(c.endpoint)
@@ -3044,58 +2685,6 @@ func (c *keyManagementRESTClient) GetImportJob(ctx context.Context, req *kmspb.G
 	return resp, nil
 }
 
-// GetRetiredResource retrieves a specific RetiredResource
-// resource, which represents the record of a deleted
-// CryptoKey.
-func (c *keyManagementRESTClient) GetRetiredResource(ctx context.Context, req *kmspb.GetRetiredResourceRequest, opts ...gax.CallOption) (*kmspb.RetiredResource, error) {
-	baseUrl, err := url.Parse(c.endpoint)
-	if err != nil {
-		return nil, err
-	}
-	baseUrl.Path += fmt.Sprintf("/v1/%v", req.GetName())
-
-	params := url.Values{}
-	params.Add("$alt", "json;enum-encoding=int")
-
-	baseUrl.RawQuery = params.Encode()
-
-	// Build HTTP headers from client and context metadata.
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	hds = append(hds, "Content-Type", "application/json")
-	headers := gax.BuildHeaders(ctx, hds...)
-	opts = append((*c.CallOptions).GetRetiredResource[0:len((*c.CallOptions).GetRetiredResource):len((*c.CallOptions).GetRetiredResource)], opts...)
-	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	resp := &kmspb.RetiredResource{}
-	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		if settings.Path != "" {
-			baseUrl.Path = settings.Path
-		}
-		httpReq, err := http.NewRequest("GET", baseUrl.String(), nil)
-		if err != nil {
-			return err
-		}
-		httpReq = httpReq.WithContext(ctx)
-		httpReq.Header = headers
-
-		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, nil, "GetRetiredResource")
-		if err != nil {
-			return err
-		}
-
-		if err := unm.Unmarshal(buf, resp); err != nil {
-			return err
-		}
-
-		return nil
-	}, opts...)
-	if e != nil {
-		return nil, e
-	}
-	return resp, nil
-}
-
 // CreateKeyRing create a new KeyRing in a given Project and
 // Location.
 func (c *keyManagementRESTClient) CreateKeyRing(ctx context.Context, req *kmspb.CreateKeyRingRequest, opts ...gax.CallOption) (*kmspb.KeyRing, error) {
@@ -3281,127 +2870,6 @@ func (c *keyManagementRESTClient) CreateCryptoKeyVersion(ctx context.Context, re
 		return nil, e
 	}
 	return resp, nil
-}
-
-// DeleteCryptoKey permanently deletes the given CryptoKey.
-// All child CryptoKeyVersions must
-// have been previously deleted using
-// KeyManagementService.DeleteCryptoKeyVersion.
-// The specified crypto key will be immediately and permanently deleted upon
-// calling this method. This action cannot be undone.
-func (c *keyManagementRESTClient) DeleteCryptoKey(ctx context.Context, req *kmspb.DeleteCryptoKeyRequest, opts ...gax.CallOption) (*DeleteCryptoKeyOperation, error) {
-	baseUrl, err := url.Parse(c.endpoint)
-	if err != nil {
-		return nil, err
-	}
-	baseUrl.Path += fmt.Sprintf("/v1/%v", req.GetName())
-
-	params := url.Values{}
-	params.Add("$alt", "json;enum-encoding=int")
-
-	baseUrl.RawQuery = params.Encode()
-
-	// Build HTTP headers from client and context metadata.
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	hds = append(hds, "Content-Type", "application/json")
-	headers := gax.BuildHeaders(ctx, hds...)
-	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	resp := &longrunningpb.Operation{}
-	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		if settings.Path != "" {
-			baseUrl.Path = settings.Path
-		}
-		httpReq, err := http.NewRequest("DELETE", baseUrl.String(), nil)
-		if err != nil {
-			return err
-		}
-		httpReq = httpReq.WithContext(ctx)
-		httpReq.Header = headers
-
-		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, nil, "DeleteCryptoKey")
-		if err != nil {
-			return err
-		}
-		if err := unm.Unmarshal(buf, resp); err != nil {
-			return err
-		}
-
-		return nil
-	}, opts...)
-	if e != nil {
-		return nil, e
-	}
-
-	override := fmt.Sprintf("/v1/%s", resp.GetName())
-	return &DeleteCryptoKeyOperation{
-		lro:      longrunning.InternalNewOperation(*c.LROClient, resp),
-		pollPath: override,
-	}, nil
-}
-
-// DeleteCryptoKeyVersion permanently deletes the given
-// CryptoKeyVersion. Only possible if
-// the version has not been previously imported and if its
-// state is one of
-// DESTROYED,
-// IMPORT_FAILED, or
-// GENERATION_FAILED.
-// Successfully imported
-// CryptoKeyVersions cannot be deleted
-// at this time. The specified version will be immediately and permanently
-// deleted upon calling this method. This action cannot be undone.
-func (c *keyManagementRESTClient) DeleteCryptoKeyVersion(ctx context.Context, req *kmspb.DeleteCryptoKeyVersionRequest, opts ...gax.CallOption) (*DeleteCryptoKeyVersionOperation, error) {
-	baseUrl, err := url.Parse(c.endpoint)
-	if err != nil {
-		return nil, err
-	}
-	baseUrl.Path += fmt.Sprintf("/v1/%v", req.GetName())
-
-	params := url.Values{}
-	params.Add("$alt", "json;enum-encoding=int")
-
-	baseUrl.RawQuery = params.Encode()
-
-	// Build HTTP headers from client and context metadata.
-	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
-
-	hds = append(c.xGoogHeaders, hds...)
-	hds = append(hds, "Content-Type", "application/json")
-	headers := gax.BuildHeaders(ctx, hds...)
-	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	resp := &longrunningpb.Operation{}
-	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		if settings.Path != "" {
-			baseUrl.Path = settings.Path
-		}
-		httpReq, err := http.NewRequest("DELETE", baseUrl.String(), nil)
-		if err != nil {
-			return err
-		}
-		httpReq = httpReq.WithContext(ctx)
-		httpReq.Header = headers
-
-		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, nil, "DeleteCryptoKeyVersion")
-		if err != nil {
-			return err
-		}
-		if err := unm.Unmarshal(buf, resp); err != nil {
-			return err
-		}
-
-		return nil
-	}, opts...)
-	if e != nil {
-		return nil, e
-	}
-
-	override := fmt.Sprintf("/v1/%s", resp.GetName())
-	return &DeleteCryptoKeyVersionOperation{
-		lro:      longrunning.InternalNewOperation(*c.LROClient, resp),
-		pollPath: override,
-	}, nil
 }
 
 // ImportCryptoKeyVersion import wrapped key material into a
@@ -4344,6 +3812,66 @@ func (c *keyManagementRESTClient) MacVerify(ctx context.Context, req *kmspb.MacV
 	return resp, nil
 }
 
+// Decapsulate decapsulates data that was encapsulated with a public key retrieved from
+// GetPublicKey
+// corresponding to a CryptoKeyVersion
+// with CryptoKey.purpose
+// KEY_ENCAPSULATION.
+func (c *keyManagementRESTClient) Decapsulate(ctx context.Context, req *kmspb.DecapsulateRequest, opts ...gax.CallOption) (*kmspb.DecapsulateResponse, error) {
+	m := protojson.MarshalOptions{AllowPartial: true, UseEnumNumbers: true}
+	jsonReq, err := m.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/v1/%v:decapsulate", req.GetName())
+
+	params := url.Values{}
+	params.Add("$alt", "json;enum-encoding=int")
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).Decapsulate[0:len((*c.CallOptions).Decapsulate):len((*c.CallOptions).Decapsulate)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &kmspb.DecapsulateResponse{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("POST", baseUrl.String(), bytes.NewReader(jsonReq))
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "Decapsulate")
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	return resp, nil
+}
+
 // GenerateRandomBytes generate random bytes using the Cloud KMS randomness source in the provided
 // location.
 func (c *keyManagementRESTClient) GenerateRandomBytes(ctx context.Context, req *kmspb.GenerateRandomBytesRequest, opts ...gax.CallOption) (*kmspb.GenerateRandomBytesResponse, error) {
@@ -4452,14 +3980,6 @@ func (c *keyManagementRESTClient) GetLocation(ctx context.Context, req *location
 }
 
 // ListLocations lists information about the supported locations for this service.
-// This method can be called in two ways:
-//
-//	List all public locations: Use the path GET /v1/locations.
-//
-//	List project-visible locations: Use the path
-//	GET /v1/projects/{project_id}/locations. This may include public
-//	locations as well as private or other locations specifically visible
-//	to the project.
 func (c *keyManagementRESTClient) ListLocations(ctx context.Context, req *locationpb.ListLocationsRequest, opts ...gax.CallOption) *LocationIterator {
 	it := &LocationIterator{}
 	req = proto.Clone(req).(*locationpb.ListLocationsRequest)
@@ -4764,40 +4284,4 @@ func (c *keyManagementRESTClient) GetOperation(ctx context.Context, req *longrun
 		return nil, e
 	}
 	return resp, nil
-}
-
-// DeleteCryptoKeyOperation returns a new DeleteCryptoKeyOperation from a given name.
-// The name must be that of a previously created DeleteCryptoKeyOperation, possibly from a different process.
-func (c *keyManagementGRPCClient) DeleteCryptoKeyOperation(name string) *DeleteCryptoKeyOperation {
-	return &DeleteCryptoKeyOperation{
-		lro: longrunning.InternalNewOperation(*c.LROClient, &longrunningpb.Operation{Name: name}),
-	}
-}
-
-// DeleteCryptoKeyOperation returns a new DeleteCryptoKeyOperation from a given name.
-// The name must be that of a previously created DeleteCryptoKeyOperation, possibly from a different process.
-func (c *keyManagementRESTClient) DeleteCryptoKeyOperation(name string) *DeleteCryptoKeyOperation {
-	override := fmt.Sprintf("/v1/%s", name)
-	return &DeleteCryptoKeyOperation{
-		lro:      longrunning.InternalNewOperation(*c.LROClient, &longrunningpb.Operation{Name: name}),
-		pollPath: override,
-	}
-}
-
-// DeleteCryptoKeyVersionOperation returns a new DeleteCryptoKeyVersionOperation from a given name.
-// The name must be that of a previously created DeleteCryptoKeyVersionOperation, possibly from a different process.
-func (c *keyManagementGRPCClient) DeleteCryptoKeyVersionOperation(name string) *DeleteCryptoKeyVersionOperation {
-	return &DeleteCryptoKeyVersionOperation{
-		lro: longrunning.InternalNewOperation(*c.LROClient, &longrunningpb.Operation{Name: name}),
-	}
-}
-
-// DeleteCryptoKeyVersionOperation returns a new DeleteCryptoKeyVersionOperation from a given name.
-// The name must be that of a previously created DeleteCryptoKeyVersionOperation, possibly from a different process.
-func (c *keyManagementRESTClient) DeleteCryptoKeyVersionOperation(name string) *DeleteCryptoKeyVersionOperation {
-	override := fmt.Sprintf("/v1/%s", name)
-	return &DeleteCryptoKeyVersionOperation{
-		lro:      longrunning.InternalNewOperation(*c.LROClient, &longrunningpb.Operation{Name: name}),
-		pollPath: override,
-	}
 }

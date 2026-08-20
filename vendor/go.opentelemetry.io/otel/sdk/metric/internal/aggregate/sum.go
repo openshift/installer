@@ -8,16 +8,13 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/sdk/internal/x"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
 
 type sumValue[N int64 | float64] struct {
-	n             atomicCounter[N]
-	res           FilteredExemplarReservoir[N]
-	attrs         attribute.Set
-	startTime     time.Time
-	dropExemplars bool
+	n     atomicCounter[N]
+	res   FilteredExemplarReservoir[N]
+	attrs attribute.Set
 }
 
 type sumValueMap[N int64 | float64] struct {
@@ -32,22 +29,16 @@ func (s *sumValueMap[N]) measure(
 	droppedAttr []attribute.KeyValue,
 ) {
 	sv := s.values.LoadOrStoreAttr(fltrAttr, func(attr attribute.Set) any {
-		r := s.newRes(attr)
-		_, isDrop := r.(*dropRes[N])
 		return &sumValue[N]{
-			res:           r,
-			attrs:         attr,
-			startTime:     now(),
-			dropExemplars: isDrop,
+			res:   s.newRes(attr),
+			attrs: attr,
 		}
 	}).(*sumValue[N])
 	sv.n.add(value)
 	// It is possible for collection to race with measurement and observe the
 	// exemplar in the batch of metrics after the add() for cumulative sums.
 	// This is an accepted tradeoff to avoid locking during measurement.
-	if !sv.dropExemplars {
-		sv.res.Offer(ctx, value, droppedAttr)
-	}
+	sv.res.Offer(ctx, value, droppedAttr)
 }
 
 // newDeltaSum returns an aggregator that summarizes a set of measurements as
@@ -169,19 +160,12 @@ func (s *cumulativeSum[N]) collect(
 	// current length for capacity.
 	dPts := reset(sData.DataPoints, 0, s.values.Len())
 
-	perSeriesStartTimeEnabled := x.PerSeriesStartTimestamps.Enabled()
-
 	var i int
 	s.values.Range(func(_, value any) bool {
 		val := value.(*sumValue[N])
-
-		startTime := s.start
-		if perSeriesStartTimeEnabled {
-			startTime = val.startTime
-		}
 		newPt := metricdata.DataPoint[N]{
 			Attributes: val.attrs,
-			StartTime:  startTime,
+			StartTime:  s.start,
 			Time:       t,
 			Value:      val.n.load(),
 		}

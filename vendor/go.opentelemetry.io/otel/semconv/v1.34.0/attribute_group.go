@@ -3,7 +3,7 @@
 
 // Code generated from semantic convention specification. DO NOT EDIT.
 
-package semconv // import "go.opentelemetry.io/otel/semconv/v1.40.0"
+package semconv // import "go.opentelemetry.io/otel/semconv/v1.34.0"
 
 import "go.opentelemetry.io/otel/attribute"
 
@@ -28,8 +28,7 @@ const (
 	// AndroidOSAPILevelKey is the attribute Key conforming to the
 	// "android.os.api_level" semantic conventions. It represents the uniquely
 	// identifies the framework API revision offered by a version (`os.version`) of
-	// the android operating system. More information can be found in the
-	// [Android API levels documentation].
+	// the android operating system. More information can be found [here].
 	//
 	// Type: string
 	// RequirementLevel: Recommended
@@ -37,17 +36,16 @@ const (
 	//
 	// Examples: "33", "32"
 	//
-	// [Android API levels documentation]: https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels
+	// [here]: https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels
 	AndroidOSAPILevelKey = attribute.Key("android.os.api_level")
 )
 
 // AndroidOSAPILevel returns an attribute KeyValue conforming to the
 // "android.os.api_level" semantic conventions. It represents the uniquely
 // identifies the framework API revision offered by a version (`os.version`) of
-// the android operating system. More information can be found in the
-// [Android API levels documentation].
+// the android operating system. More information can be found [here].
 //
-// [Android API levels documentation]: https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels
+// [here]: https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels
 func AndroidOSAPILevel(val string) attribute.KeyValue {
 	return AndroidOSAPILevelKey.String(val)
 }
@@ -75,18 +73,6 @@ var (
 
 // Namespace: app
 const (
-	// AppBuildIDKey is the attribute Key conforming to the "app.build_id" semantic
-	// conventions. It represents the unique identifier for a particular build or
-	// compilation of the application.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "6cff0a7e-cefc-4668-96f5-1273d8b334d0",
-	// "9f2b833506aa6973a92fde9733e6271f", "my-app-1.0.0-code-123"
-	AppBuildIDKey = attribute.Key("app.build_id")
-
 	// AppInstallationIDKey is the attribute Key conforming to the
 	// "app.installation.id" semantic conventions. It represents a unique identifier
 	// representing the installation of an application on a specific device.
@@ -120,50 +106,15 @@ const (
 	//   - [App set ID].
 	//   - [`Settings.getString(Settings.Secure.ANDROID_ID)`].
 	//
-	// More information about Android identifier best practices can be found in the
-	// [Android user data IDs guide].
+	// More information about Android identifier best practices can be found [here]
+	// .
 	//
 	// [vendor identifier]: https://developer.apple.com/documentation/uikit/uidevice/identifierforvendor
 	// [Firebase Installation ID]: https://firebase.google.com/docs/projects/manage-installations
 	// [App set ID]: https://developer.android.com/identity/app-set-id
 	// [`Settings.getString(Settings.Secure.ANDROID_ID)`]: https://developer.android.com/reference/android/provider/Settings.Secure#ANDROID_ID
-	// [Android user data IDs guide]: https://developer.android.com/training/articles/user-data-ids
+	// [here]: https://developer.android.com/training/articles/user-data-ids
 	AppInstallationIDKey = attribute.Key("app.installation.id")
-
-	// AppJankFrameCountKey is the attribute Key conforming to the
-	// "app.jank.frame_count" semantic conventions. It represents a number of frame
-	// renders that experienced jank.
-	//
-	// Type: int
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 9, 42
-	// Note: Depending on platform limitations, the value provided MAY be
-	// approximation.
-	AppJankFrameCountKey = attribute.Key("app.jank.frame_count")
-
-	// AppJankPeriodKey is the attribute Key conforming to the "app.jank.period"
-	// semantic conventions. It represents the time period, in seconds, for which
-	// this jank is being reported.
-	//
-	// Type: double
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 1.0, 5.0, 10.24
-	AppJankPeriodKey = attribute.Key("app.jank.period")
-
-	// AppJankThresholdKey is the attribute Key conforming to the
-	// "app.jank.threshold" semantic conventions. It represents the minimum
-	// rendering threshold for this jank, in seconds.
-	//
-	// Type: double
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 0.016, 0.7, 1.024
-	AppJankThresholdKey = attribute.Key("app.jank.threshold")
 
 	// AppScreenCoordinateXKey is the attribute Key conforming to the
 	// "app.screen.coordinate.x" semantic conventions. It represents the x
@@ -186,38 +137,6 @@ const (
 	//
 	// Examples: 12, 99
 	AppScreenCoordinateYKey = attribute.Key("app.screen.coordinate.y")
-
-	// AppScreenIDKey is the attribute Key conforming to the "app.screen.id"
-	// semantic conventions. It represents an identifier that uniquely
-	// differentiates this screen from other screens in the same application.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "f9bc787d-ff05-48ad-90e1-fca1d46130b3",
-	// "com.example.app.MainActivity", "com.example.shop.ProductDetailFragment",
-	// "MyApp.ProfileView", "MyApp.ProfileViewController"
-	// Note: A screen represents only the part of the device display drawn by the
-	// app. It typically contains multiple widgets or UI components and is larger in
-	// scope than individual widgets. Multiple screens can coexist on the same
-	// display simultaneously (e.g., split view on tablets).
-	AppScreenIDKey = attribute.Key("app.screen.id")
-
-	// AppScreenNameKey is the attribute Key conforming to the "app.screen.name"
-	// semantic conventions. It represents the name of an application screen.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "MainActivity", "ProductDetailFragment", "ProfileView",
-	// "ProfileViewController"
-	// Note: A screen represents only the part of the device display drawn by the
-	// app. It typically contains multiple widgets or UI components and is larger in
-	// scope than individual widgets. Multiple screens can coexist on the same
-	// display simultaneously (e.g., split view on tablets).
-	AppScreenNameKey = attribute.Key("app.screen.name")
 
 	// AppWidgetIDKey is the attribute Key conforming to the "app.widget.id"
 	// semantic conventions. It represents an identifier that uniquely
@@ -245,39 +164,11 @@ const (
 	AppWidgetNameKey = attribute.Key("app.widget.name")
 )
 
-// AppBuildID returns an attribute KeyValue conforming to the "app.build_id"
-// semantic conventions. It represents the unique identifier for a particular
-// build or compilation of the application.
-func AppBuildID(val string) attribute.KeyValue {
-	return AppBuildIDKey.String(val)
-}
-
 // AppInstallationID returns an attribute KeyValue conforming to the
 // "app.installation.id" semantic conventions. It represents a unique identifier
 // representing the installation of an application on a specific device.
 func AppInstallationID(val string) attribute.KeyValue {
 	return AppInstallationIDKey.String(val)
-}
-
-// AppJankFrameCount returns an attribute KeyValue conforming to the
-// "app.jank.frame_count" semantic conventions. It represents a number of frame
-// renders that experienced jank.
-func AppJankFrameCount(val int) attribute.KeyValue {
-	return AppJankFrameCountKey.Int(val)
-}
-
-// AppJankPeriod returns an attribute KeyValue conforming to the
-// "app.jank.period" semantic conventions. It represents the time period, in
-// seconds, for which this jank is being reported.
-func AppJankPeriod(val float64) attribute.KeyValue {
-	return AppJankPeriodKey.Float64(val)
-}
-
-// AppJankThreshold returns an attribute KeyValue conforming to the
-// "app.jank.threshold" semantic conventions. It represents the minimum rendering
-// threshold for this jank, in seconds.
-func AppJankThreshold(val float64) attribute.KeyValue {
-	return AppJankThresholdKey.Float64(val)
 }
 
 // AppScreenCoordinateX returns an attribute KeyValue conforming to the
@@ -292,20 +183,6 @@ func AppScreenCoordinateX(val int) attribute.KeyValue {
 // component of a screen coordinate, in screen pixels.
 func AppScreenCoordinateY(val int) attribute.KeyValue {
 	return AppScreenCoordinateYKey.Int(val)
-}
-
-// AppScreenID returns an attribute KeyValue conforming to the "app.screen.id"
-// semantic conventions. It represents an identifier that uniquely differentiates
-// this screen from other screens in the same application.
-func AppScreenID(val string) attribute.KeyValue {
-	return AppScreenIDKey.String(val)
-}
-
-// AppScreenName returns an attribute KeyValue conforming to the
-// "app.screen.name" semantic conventions. It represents the name of an
-// application screen.
-func AppScreenName(val string) attribute.KeyValue {
-	return AppScreenNameKey.String(val)
 }
 
 // AppWidgetID returns an attribute KeyValue conforming to the "app.widget.id"
@@ -1493,11 +1370,9 @@ func AWSExtendedRequestID(val string) attribute.KeyValue {
 // AWSKinesisStreamName returns an attribute KeyValue conforming to the
 // "aws.kinesis.stream_name" semantic conventions. It represents the name of the
 // AWS Kinesis [stream] the request refers to. Corresponds to the `--stream-name`
-//
-//	parameter of the Kinesis [describe-stream] operation.
+//  parameter of the Kinesis [describe-stream] operation.
 //
 // [stream]: https://docs.aws.amazon.com/streams/latest/dev/introduction.html
-//
 // [describe-stream]: https://docs.aws.amazon.com/cli/latest/reference/kinesis/describe-stream.html
 func AWSKinesisStreamName(val string) attribute.KeyValue {
 	return AWSKinesisStreamNameKey.String(val)
@@ -1507,8 +1382,7 @@ func AWSKinesisStreamName(val string) attribute.KeyValue {
 // "aws.lambda.invoked_arn" semantic conventions. It represents the full invoked
 // ARN as provided on the `Context` passed to the function (
 // `Lambda-Runtime-Invoked-Function-Arn` header on the `/runtime/invocation/next`
-//
-//	applicable).
+//  applicable).
 func AWSLambdaInvokedARN(val string) attribute.KeyValue {
 	return AWSLambdaInvokedARNKey.String(val)
 }
@@ -1651,13 +1525,58 @@ func AWSStepFunctionsStateMachineARN(val string) attribute.KeyValue {
 
 // Enum values for aws.ecs.launchtype
 var (
-	// Amazon EC2
+	// ec2
 	// Stability: development
 	AWSECSLaunchtypeEC2 = AWSECSLaunchtypeKey.String("ec2")
-	// Amazon Fargate
+	// fargate
 	// Stability: development
 	AWSECSLaunchtypeFargate = AWSECSLaunchtypeKey.String("fargate")
 )
+
+// Namespace: az
+const (
+	// AzNamespaceKey is the attribute Key conforming to the "az.namespace" semantic
+	// conventions. It represents the [Azure Resource Provider Namespace] as
+	// recognized by the client.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.ServiceBus"
+	//
+	// [Azure Resource Provider Namespace]: https://learn.microsoft.com/azure/azure-resource-manager/management/azure-services-resource-providers
+	AzNamespaceKey = attribute.Key("az.namespace")
+
+	// AzServiceRequestIDKey is the attribute Key conforming to the
+	// "az.service_request_id" semantic conventions. It represents the unique
+	// identifier of the service request. It's generated by the Azure service and
+	// returned with the response.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "00000000-0000-0000-0000-000000000000"
+	AzServiceRequestIDKey = attribute.Key("az.service_request_id")
+)
+
+// AzNamespace returns an attribute KeyValue conforming to the "az.namespace"
+// semantic conventions. It represents the [Azure Resource Provider Namespace] as
+// recognized by the client.
+//
+// [Azure Resource Provider Namespace]: https://learn.microsoft.com/azure/azure-resource-manager/management/azure-services-resource-providers
+func AzNamespace(val string) attribute.KeyValue {
+	return AzNamespaceKey.String(val)
+}
+
+// AzServiceRequestID returns an attribute KeyValue conforming to the
+// "az.service_request_id" semantic conventions. It represents the unique
+// identifier of the service request. It's generated by the Azure service and
+// returned with the response.
+func AzServiceRequestID(val string) attribute.KeyValue {
+	return AzServiceRequestIDKey.String(val)
+}
 
 // Namespace: azure
 const (
@@ -1711,7 +1630,7 @@ const (
 	// Examples: "North Central US", "Australia East", "Australia Southeast"
 	// Note: Region name matches the format of `displayName` in [Azure Location API]
 	//
-	// [Azure Location API]: https://learn.microsoft.com/rest/api/resources/subscriptions/list-locations
+	// [Azure Location API]: https://learn.microsoft.com/rest/api/subscription/subscriptions/list-locations?view=rest-subscription-2021-10-01&tabs=HTTP#location
 	AzureCosmosDBOperationContactedRegionsKey = attribute.Key("azure.cosmosdb.operation.contacted_regions")
 
 	// AzureCosmosDBOperationRequestChargeKey is the attribute Key conforming to the
@@ -1746,31 +1665,6 @@ const (
 	//
 	// Examples: 1000, 1002
 	AzureCosmosDBResponseSubStatusCodeKey = attribute.Key("azure.cosmosdb.response.sub_status_code")
-
-	// AzureResourceProviderNamespaceKey is the attribute Key conforming to the
-	// "azure.resource_provider.namespace" semantic conventions. It represents the
-	// [Azure Resource Provider Namespace] as recognized by the client.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.ServiceBus"
-	//
-	// [Azure Resource Provider Namespace]: https://learn.microsoft.com/azure/azure-resource-manager/management/azure-services-resource-providers
-	AzureResourceProviderNamespaceKey = attribute.Key("azure.resource_provider.namespace")
-
-	// AzureServiceRequestIDKey is the attribute Key conforming to the
-	// "azure.service.request.id" semantic conventions. It represents the unique
-	// identifier of the service request. It's generated by the Azure service and
-	// returned with the response.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "00000000-0000-0000-0000-000000000000"
-	AzureServiceRequestIDKey = attribute.Key("azure.service.request.id")
 )
 
 // AzureClientID returns an attribute KeyValue conforming to the
@@ -1811,23 +1705,6 @@ func AzureCosmosDBResponseSubStatusCode(val int) attribute.KeyValue {
 	return AzureCosmosDBResponseSubStatusCodeKey.Int(val)
 }
 
-// AzureResourceProviderNamespace returns an attribute KeyValue conforming to the
-// "azure.resource_provider.namespace" semantic conventions. It represents the
-// [Azure Resource Provider Namespace] as recognized by the client.
-//
-// [Azure Resource Provider Namespace]: https://learn.microsoft.com/azure/azure-resource-manager/management/azure-services-resource-providers
-func AzureResourceProviderNamespace(val string) attribute.KeyValue {
-	return AzureResourceProviderNamespaceKey.String(val)
-}
-
-// AzureServiceRequestID returns an attribute KeyValue conforming to the
-// "azure.service.request.id" semantic conventions. It represents the unique
-// identifier of the service request. It's generated by the Azure service and
-// returned with the response.
-func AzureServiceRequestID(val string) attribute.KeyValue {
-	return AzureServiceRequestIDKey.String(val)
-}
-
 // Enum values for azure.cosmosdb.connection.mode
 var (
 	// Gateway (HTTP) connection.
@@ -1840,19 +1717,19 @@ var (
 
 // Enum values for azure.cosmosdb.consistency.level
 var (
-	// Strong
+	// strong
 	// Stability: development
 	AzureCosmosDBConsistencyLevelStrong = AzureCosmosDBConsistencyLevelKey.String("Strong")
-	// Bounded Staleness
+	// bounded_staleness
 	// Stability: development
 	AzureCosmosDBConsistencyLevelBoundedStaleness = AzureCosmosDBConsistencyLevelKey.String("BoundedStaleness")
-	// Session
+	// session
 	// Stability: development
 	AzureCosmosDBConsistencyLevelSession = AzureCosmosDBConsistencyLevelKey.String("Session")
-	// Eventual
+	// eventual
 	// Stability: development
 	AzureCosmosDBConsistencyLevelEventual = AzureCosmosDBConsistencyLevelKey.String("Eventual")
-	// Consistent Prefix
+	// consistent_prefix
 	// Stability: development
 	AzureCosmosDBConsistencyLevelConsistentPrefix = AzureCosmosDBConsistencyLevelKey.String("ConsistentPrefix")
 )
@@ -2067,37 +1944,37 @@ func CassandraSpeculativeExecutionCount(val int) attribute.KeyValue {
 
 // Enum values for cassandra.consistency.level
 var (
-	// All
+	// all
 	// Stability: development
 	CassandraConsistencyLevelAll = CassandraConsistencyLevelKey.String("all")
-	// Each Quorum
+	// each_quorum
 	// Stability: development
 	CassandraConsistencyLevelEachQuorum = CassandraConsistencyLevelKey.String("each_quorum")
-	// Quorum
+	// quorum
 	// Stability: development
 	CassandraConsistencyLevelQuorum = CassandraConsistencyLevelKey.String("quorum")
-	// Local Quorum
+	// local_quorum
 	// Stability: development
 	CassandraConsistencyLevelLocalQuorum = CassandraConsistencyLevelKey.String("local_quorum")
-	// One
+	// one
 	// Stability: development
 	CassandraConsistencyLevelOne = CassandraConsistencyLevelKey.String("one")
-	// Two
+	// two
 	// Stability: development
 	CassandraConsistencyLevelTwo = CassandraConsistencyLevelKey.String("two")
-	// Three
+	// three
 	// Stability: development
 	CassandraConsistencyLevelThree = CassandraConsistencyLevelKey.String("three")
-	// Local One
+	// local_one
 	// Stability: development
 	CassandraConsistencyLevelLocalOne = CassandraConsistencyLevelKey.String("local_one")
-	// Any
+	// any
 	// Stability: development
 	CassandraConsistencyLevelAny = CassandraConsistencyLevelKey.String("any")
-	// Serial
+	// serial
 	// Stability: development
 	CassandraConsistencyLevelSerial = CassandraConsistencyLevelKey.String("serial")
-	// Local Serial
+	// local_serial
 	// Stability: development
 	CassandraConsistencyLevelLocalSerial = CassandraConsistencyLevelKey.String("local_serial")
 )
@@ -2650,7 +2527,7 @@ const (
 	// [ARN]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
 	// [alias suffix]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-aliases.html
 	// [URI of the resource]: https://cloud.google.com/iam/docs/full-resource-names
-	// [Fully Qualified Resource ID]: https://learn.microsoft.com/rest/api/resources/resources/get-by-id
+	// [Fully Qualified Resource ID]: https://docs.microsoft.com/rest/api/resources/resources/get-by-id
 	CloudResourceIDKey = attribute.Key("cloud.resource_id")
 )
 
@@ -2684,8 +2561,7 @@ func CloudRegion(val string) attribute.KeyValue {
 // "cloud.resource_id" semantic conventions. It represents the cloud
 // provider-specific native identifier of the monitored cloud resource (e.g. an
 // [ARN] on AWS, a [fully qualified resource ID] on Azure, a [full resource name]
-//
-//	on GCP).
+//  on GCP).
 //
 // [ARN]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
 // [fully qualified resource ID]: https://learn.microsoft.com/rest/api/resources/resources/get-by-id
@@ -2696,9 +2572,6 @@ func CloudResourceID(val string) attribute.KeyValue {
 
 // Enum values for cloud.platform
 var (
-	// Akamai Cloud Compute
-	// Stability: development
-	CloudPlatformAkamaiCloudCompute = CloudPlatformKey.String("akamai_cloud.compute")
 	// Alibaba Cloud Elastic Compute Service
 	// Stability: development
 	CloudPlatformAlibabaCloudECS = CloudPlatformKey.String("alibaba_cloud_ecs")
@@ -2731,28 +2604,25 @@ var (
 	CloudPlatformAWSOpenShift = CloudPlatformKey.String("aws_openshift")
 	// Azure Virtual Machines
 	// Stability: development
-	CloudPlatformAzureVM = CloudPlatformKey.String("azure.vm")
+	CloudPlatformAzureVM = CloudPlatformKey.String("azure_vm")
 	// Azure Container Apps
 	// Stability: development
-	CloudPlatformAzureContainerApps = CloudPlatformKey.String("azure.container_apps")
+	CloudPlatformAzureContainerApps = CloudPlatformKey.String("azure_container_apps")
 	// Azure Container Instances
 	// Stability: development
-	CloudPlatformAzureContainerInstances = CloudPlatformKey.String("azure.container_instances")
+	CloudPlatformAzureContainerInstances = CloudPlatformKey.String("azure_container_instances")
 	// Azure Kubernetes Service
 	// Stability: development
-	CloudPlatformAzureAKS = CloudPlatformKey.String("azure.aks")
+	CloudPlatformAzureAKS = CloudPlatformKey.String("azure_aks")
 	// Azure Functions
 	// Stability: development
-	CloudPlatformAzureFunctions = CloudPlatformKey.String("azure.functions")
+	CloudPlatformAzureFunctions = CloudPlatformKey.String("azure_functions")
 	// Azure App Service
 	// Stability: development
-	CloudPlatformAzureAppService = CloudPlatformKey.String("azure.app_service")
+	CloudPlatformAzureAppService = CloudPlatformKey.String("azure_app_service")
 	// Azure Red Hat OpenShift
 	// Stability: development
-	CloudPlatformAzureOpenShift = CloudPlatformKey.String("azure.openshift")
-	// Google Vertex AI Agent Engine
-	// Stability: development
-	CloudPlatformGCPAgentEngine = CloudPlatformKey.String("gcp.agent_engine")
+	CloudPlatformAzureOpenShift = CloudPlatformKey.String("azure_openshift")
 	// Google Bare Metal Solution (BMS)
 	// Stability: development
 	CloudPlatformGCPBareMetalSolution = CloudPlatformKey.String("gcp_bare_metal_solution")
@@ -2774,9 +2644,6 @@ var (
 	// Red Hat OpenShift on Google Cloud
 	// Stability: development
 	CloudPlatformGCPOpenShift = CloudPlatformKey.String("gcp_openshift")
-	// Server on Hetzner Cloud
-	// Stability: development
-	CloudPlatformHetznerCloudServer = CloudPlatformKey.String("hetzner.cloud_server")
 	// Red Hat OpenShift on IBM Cloud
 	// Stability: development
 	CloudPlatformIBMCloudOpenShift = CloudPlatformKey.String("ibm_cloud_openshift")
@@ -2795,16 +2662,10 @@ var (
 	// Tencent Cloud Serverless Cloud Function (SCF)
 	// Stability: development
 	CloudPlatformTencentCloudSCF = CloudPlatformKey.String("tencent_cloud_scf")
-	// Vultr Cloud Compute
-	// Stability: development
-	CloudPlatformVultrCloudCompute = CloudPlatformKey.String("vultr.cloud_compute")
 )
 
 // Enum values for cloud.provider
 var (
-	// Akamai Cloud
-	// Stability: development
-	CloudProviderAkamaiCloud = CloudProviderKey.String("akamai_cloud")
 	// Alibaba Cloud
 	// Stability: development
 	CloudProviderAlibabaCloud = CloudProviderKey.String("alibaba_cloud")
@@ -2820,9 +2681,6 @@ var (
 	// Heroku Platform as a Service
 	// Stability: development
 	CloudProviderHeroku = CloudProviderKey.String("heroku")
-	// Hetzner
-	// Stability: development
-	CloudProviderHetzner = CloudProviderKey.String("hetzner")
 	// IBM Cloud
 	// Stability: development
 	CloudProviderIBMCloud = CloudProviderKey.String("ibm_cloud")
@@ -2832,9 +2690,6 @@ var (
 	// Tencent Cloud
 	// Stability: development
 	CloudProviderTencentCloud = CloudProviderKey.String("tencent_cloud")
-	// Vultr
-	// Stability: development
-	CloudProviderVultr = CloudProviderKey.String("vultr")
 )
 
 // Namespace: cloudevents
@@ -3435,7 +3290,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "a3bf90e006b2"
 	//
@@ -3462,7 +3317,7 @@ const (
 	// environments. Consider using `oci.manifest.digest` if it is important to
 	// identify the same image in different environments/runtimes.
 	//
-	// [API]: https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Container/operation/ContainerInspect
+	// [API]: https://docs.docker.com/engine/api/v1.43/#tag/Container/operation/ContainerInspect
 	ContainerImageIDKey = attribute.Key("container.image.id")
 
 	// ContainerImageNameKey is the attribute Key conforming to the
@@ -3471,7 +3326,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "gcr.io/opentelemetry/operator"
 	ContainerImageNameKey = attribute.Key("container.image.name")
@@ -3482,14 +3337,14 @@ const (
 	//
 	// Type: string[]
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples:
 	// "example@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
 	// "internal.registry.example.com:5000/example@sha256:b69959407d21e8a062e0416bf13405bb2b71ed7a84dde4158ebafacfa06f5578"
 	// Note: [Docker] and [CRI] report those under the `RepoDigests` field.
 	//
-	// [Docker]: https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Image/operation/ImageInspect
+	// [Docker]: https://docs.docker.com/engine/api/v1.43/#tag/Image/operation/ImageInspect
 	// [CRI]: https://github.com/kubernetes/cri-api/blob/c75ef5b473bbe2d0a4fc92f82235efd665ea8e9f/pkg/apis/runtime/v1/api.proto#L1237-L1238
 	ContainerImageRepoDigestsKey = attribute.Key("container.image.repo_digests")
 
@@ -3501,11 +3356,11 @@ const (
 	//
 	// Type: string[]
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "v1.27.1", "3.5.7-0"
 	//
-	// [Docker Image Inspect]: https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Image/operation/ImageInspect
+	// [Docker Image Inspect]: https://docs.docker.com/engine/api/v1.43/#tag/Image/operation/ImageInspect
 	ContainerImageTagsKey = attribute.Key("container.image.tags")
 
 	// ContainerNameKey is the attribute Key conforming to the "container.name"
@@ -3519,40 +3374,16 @@ const (
 	// Examples: "opentelemetry-autoconf"
 	ContainerNameKey = attribute.Key("container.name")
 
-	// ContainerRuntimeDescriptionKey is the attribute Key conforming to the
-	// "container.runtime.description" semantic conventions. It represents a
-	// description about the runtime which could include, for example details about
-	// the CRI/API version being used or other customisations.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "docker://19.3.1 - CRI: 1.22.0"
-	ContainerRuntimeDescriptionKey = attribute.Key("container.runtime.description")
-
-	// ContainerRuntimeNameKey is the attribute Key conforming to the
-	// "container.runtime.name" semantic conventions. It represents the container
-	// runtime managing this container.
+	// ContainerRuntimeKey is the attribute Key conforming to the
+	// "container.runtime" semantic conventions. It represents the container runtime
+	// managing this container.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
 	// Examples: "docker", "containerd", "rkt"
-	ContainerRuntimeNameKey = attribute.Key("container.runtime.name")
-
-	// ContainerRuntimeVersionKey is the attribute Key conforming to the
-	// "container.runtime.version" semantic conventions. It represents the version
-	// of the runtime of this process, as returned by the runtime without
-	// modification.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 1.0.0
-	ContainerRuntimeVersionKey = attribute.Key("container.runtime.version")
+	ContainerRuntimeKey = attribute.Key("container.runtime")
 )
 
 // ContainerCommand returns an attribute KeyValue conforming to the
@@ -3631,7 +3462,7 @@ func ContainerImageRepoDigests(val ...string) attribute.KeyValue {
 // `<tag>` section of the full name for example from
 // `registry.example.com/my-org/my-image:<tag>`.
 //
-// [Docker Image Inspect]: https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Image/operation/ImageInspect
+// [Docker Image Inspect]: https://docs.docker.com/engine/api/v1.43/#tag/Image/operation/ImageInspect
 func ContainerImageTags(val ...string) attribute.KeyValue {
 	return ContainerImageTagsKey.StringSlice(val)
 }
@@ -3650,26 +3481,11 @@ func ContainerName(val string) attribute.KeyValue {
 	return ContainerNameKey.String(val)
 }
 
-// ContainerRuntimeDescription returns an attribute KeyValue conforming to the
-// "container.runtime.description" semantic conventions. It represents a
-// description about the runtime which could include, for example details about
-// the CRI/API version being used or other customisations.
-func ContainerRuntimeDescription(val string) attribute.KeyValue {
-	return ContainerRuntimeDescriptionKey.String(val)
-}
-
-// ContainerRuntimeName returns an attribute KeyValue conforming to the
-// "container.runtime.name" semantic conventions. It represents the container
-// runtime managing this container.
-func ContainerRuntimeName(val string) attribute.KeyValue {
-	return ContainerRuntimeNameKey.String(val)
-}
-
-// ContainerRuntimeVersion returns an attribute KeyValue conforming to the
-// "container.runtime.version" semantic conventions. It represents the version of
-// the runtime of this process, as returned by the runtime without modification.
-func ContainerRuntimeVersion(val string) attribute.KeyValue {
-	return ContainerRuntimeVersionKey.String(val)
+// ContainerRuntime returns an attribute KeyValue conforming to the
+// "container.runtime" semantic conventions. It represents the container runtime
+// managing this container.
+func ContainerRuntime(val string) attribute.KeyValue {
+	return ContainerRuntimeKey.String(val)
 }
 
 // Namespace: cpu
@@ -3705,28 +3521,28 @@ func CPULogicalNumber(val int) attribute.KeyValue {
 
 // Enum values for cpu.mode
 var (
-	// User
+	// user
 	// Stability: development
 	CPUModeUser = CPUModeKey.String("user")
-	// System
+	// system
 	// Stability: development
 	CPUModeSystem = CPUModeKey.String("system")
-	// Nice
+	// nice
 	// Stability: development
 	CPUModeNice = CPUModeKey.String("nice")
-	// Idle
+	// idle
 	// Stability: development
 	CPUModeIdle = CPUModeKey.String("idle")
-	// IO Wait
+	// iowait
 	// Stability: development
 	CPUModeIOWait = CPUModeKey.String("iowait")
-	// Interrupt
+	// interrupt
 	// Stability: development
 	CPUModeInterrupt = CPUModeKey.String("interrupt")
-	// Steal
+	// steal
 	// Stability: development
 	CPUModeSteal = CPUModeKey.String("steal")
-	// Kernel
+	// kernel
 	// Stability: development
 	CPUModeKernel = CPUModeKey.String("kernel")
 )
@@ -3860,13 +3676,7 @@ const (
 	// [Generating query summary]
 	// section.
 	//
-	// For batch operations, if the individual operations are known to have the same
-	// query summary
-	// then that query summary SHOULD be used prepended by `BATCH `,
-	// otherwise `db.query.summary` SHOULD be `BATCH` or some other database
-	// system specific term if more applicable.
-	//
-	// [Generating query summary]: /docs/db/database-spans.md#generating-a-summary-of-the-query
+	// [Generating query summary]: /docs/database/database-spans.md#generating-a-summary-of-the-query
 	DBQuerySummaryKey = attribute.Key("db.query.summary")
 
 	// DBQueryTextKey is the attribute Key conforming to the "db.query.text"
@@ -3888,7 +3698,7 @@ const (
 	// passed as parameter values, and the benefit to observability of capturing the
 	// static part of the query text by default outweighs the risk.
 	//
-	// [Sanitization of `db.query.text`]: /docs/db/database-spans.md#sanitization-of-dbquerytext
+	// [Sanitization of `db.query.text`]: /docs/database/database-spans.md#sanitization-of-dbquerytext
 	DBQueryTextKey = attribute.Key("db.query.text")
 
 	// DBResponseReturnedRowsKey is the attribute Key conforming to the
@@ -4407,8 +4217,8 @@ const (
 	// Hardware IDs (e.g. vendor-specific serial number, IMEI or MAC address) MAY be
 	// used as values.
 	//
-	// More information about Android identifier best practices can be found in the
-	// [Android user data IDs guide].
+	// More information about Android identifier best practices can be found [here]
+	// .
 	//
 	// > [!WARNING]> This attribute may contain sensitive (PII) information. Caution
 	// > should be taken when storing personal data or anything which can identify a
@@ -4423,7 +4233,7 @@ const (
 	// > opt-in feature.> See [`app.installation.id`]>  for a more
 	// > privacy-preserving alternative.
 	//
-	// [Android user data IDs guide]: https://developer.android.com/training/articles/user-data-ids
+	// [here]: https://developer.android.com/training/articles/user-data-ids
 	// [`app.installation.id`]: /docs/registry/attributes/app.md#app-installation-id
 	DeviceIDKey = attribute.Key("device.id")
 
@@ -4521,17 +4331,6 @@ var (
 
 // Namespace: dns
 const (
-	// DNSAnswersKey is the attribute Key conforming to the "dns.answers" semantic
-	// conventions. It represents the list of IPv4 or IPv6 addresses resolved during
-	// DNS lookup.
-	//
-	// Type: string[]
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "10.0.0.1", "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-	DNSAnswersKey = attribute.Key("dns.answers")
-
 	// DNSQuestionNameKey is the attribute Key conforming to the "dns.question.name"
 	// semantic conventions. It represents the name being queried.
 	//
@@ -4540,17 +4339,12 @@ const (
 	// Stability: Development
 	//
 	// Examples: "www.example.com", "opentelemetry.io"
-	// Note: The name represents the queried domain name as it appears in the DNS
-	// query without any additional normalization.
+	// Note: If the name field contains non-printable characters (below 32 or above
+	// 126), those characters should be represented as escaped base 10 integers
+	// (\DDD). Back slashes and quotes should be escaped. Tabs, carriage returns,
+	// and line feeds should be converted to \t, \r, and \n respectively.
 	DNSQuestionNameKey = attribute.Key("dns.question.name")
 )
-
-// DNSAnswers returns an attribute KeyValue conforming to the "dns.answers"
-// semantic conventions. It represents the list of IPv4 or IPv6 addresses
-// resolved during DNS lookup.
-func DNSAnswers(val ...string) attribute.KeyValue {
-	return DNSAnswersKey.StringSlice(val)
-}
 
 // DNSQuestionName returns an attribute KeyValue conforming to the
 // "dns.question.name" semantic conventions. It represents the name being
@@ -4633,6 +4427,27 @@ func EnduserPseudoID(val string) attribute.KeyValue {
 
 // Namespace: error
 const (
+	// ErrorMessageKey is the attribute Key conforming to the "error.message"
+	// semantic conventions. It represents a message providing more detail about an
+	// error in human-readable form.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "Unexpected input type: string", "The user has exceeded their
+	// storage quota"
+	// Note: `error.message` should provide additional context and detail about an
+	// error.
+	// It is NOT RECOMMENDED to duplicate the value of `error.type` in
+	// `error.message`.
+	// It is also NOT RECOMMENDED to duplicate the value of `exception.message` in
+	// `error.message`.
+	//
+	// `error.message` is NOT RECOMMENDED for metrics or spans due to its unbounded
+	// cardinality and overlap with span status.
+	ErrorMessageKey = attribute.Key("error.message")
+
 	// ErrorTypeKey is the attribute Key conforming to the "error.type" semantic
 	// conventions. It represents the describes a class of error the operation ended
 	// with.
@@ -4663,7 +4478,7 @@ const (
 	// `error.type`.
 	//
 	// If a specific domain defines its own set of error identifiers (such as HTTP
-	// or RPC status codes),
+	// or gRPC status codes),
 	// it's RECOMMENDED to:
 	//
 	//   - Use a domain-specific attribute
@@ -4671,6 +4486,13 @@ const (
 	//     defined within the domain-specific set or not.
 	ErrorTypeKey = attribute.Key("error.type")
 )
+
+// ErrorMessage returns an attribute KeyValue conforming to the "error.message"
+// semantic conventions. It represents a message providing more detail about an
+// error in human-readable form.
+func ErrorMessage(val string) attribute.KeyValue {
+	return ErrorMessageKey.String(val)
+}
 
 // Enum values for error.type
 var (
@@ -4692,9 +4514,6 @@ const (
 	// Stability: Stable
 	//
 	// Examples: "Division by zero", "Can't convert 'int' object to str implicitly"
-	// Note: > [!WARNING]
-	//
-	// > This attribute may contain sensitive information.
 	ExceptionMessageKey = attribute.Key("exception.message")
 
 	// ExceptionStacktraceKey is the attribute Key conforming to the
@@ -4977,7 +4796,7 @@ const (
 	//
 	// [function version]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html
 	// [revision]: https://cloud.google.com/run/docs/managing/revisions
-	// [`K_REVISION` environment variable]: https://cloud.google.com/run/docs/container-contract#services-env-vars
+	// [`K_REVISION` environment variable]: https://cloud.google.com/functions/docs/env-var#runtime_environment_variables_set_automatically
 	FaaSVersionKey = attribute.Key("faas.version")
 )
 
@@ -5145,30 +4964,17 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "5157782b-2203-4c80-a857-dbbd5e7761db"
 	FeatureFlagContextIDKey = attribute.Key("feature_flag.context.id")
-
-	// FeatureFlagErrorMessageKey is the attribute Key conforming to the
-	// "feature_flag.error.message" semantic conventions. It represents a message
-	// providing more detail about an error that occurred during feature flag
-	// evaluation in human-readable form.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
-	//
-	// Examples: "Unexpected input type: string", "The user has exceeded their
-	// storage quota"
-	FeatureFlagErrorMessageKey = attribute.Key("feature_flag.error.message")
 
 	// FeatureFlagKeyKey is the attribute Key conforming to the "feature_flag.key"
 	// semantic conventions. It represents the lookup key of the feature flag.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "logo-color"
 	FeatureFlagKeyKey = attribute.Key("feature_flag.key")
@@ -5179,7 +4985,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "Flag Manager"
 	FeatureFlagProviderNameKey = attribute.Key("feature_flag.provider.name")
@@ -5190,7 +4996,7 @@ const (
 	//
 	// Type: Enum
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "static", "targeting_match", "error", "default"
 	FeatureFlagResultReasonKey = attribute.Key("feature_flag.result.reason")
@@ -5201,7 +5007,7 @@ const (
 	//
 	// Type: any
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "#ff0000", true, 3
 	// Note: With some feature flag providers, feature flag results can be quite
@@ -5221,7 +5027,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "red", "true", "on"
 	// Note: A semantic identifier, commonly referred to as a variant, provides a
@@ -5237,7 +5043,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "proj-1", "ab98sgs", "service1/dev"
 	//
@@ -5251,7 +5057,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples: "1", "01ABCDEF"
 	FeatureFlagVersionKey = attribute.Key("feature_flag.version")
@@ -5262,14 +5068,6 @@ const (
 // identifier for the flag evaluation context. For example, the targeting key.
 func FeatureFlagContextID(val string) attribute.KeyValue {
 	return FeatureFlagContextIDKey.String(val)
-}
-
-// FeatureFlagErrorMessage returns an attribute KeyValue conforming to the
-// "feature_flag.error.message" semantic conventions. It represents a message
-// providing more detail about an error that occurred during feature flag
-// evaluation in human-readable form.
-func FeatureFlagErrorMessage(val string) attribute.KeyValue {
-	return FeatureFlagErrorMessageKey.String(val)
 }
 
 // FeatureFlagKey returns an attribute KeyValue conforming to the
@@ -5313,34 +5111,34 @@ func FeatureFlagVersion(val string) attribute.KeyValue {
 // Enum values for feature_flag.result.reason
 var (
 	// The resolved value is static (no dynamic evaluation).
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonStatic = FeatureFlagResultReasonKey.String("static")
 	// The resolved value fell back to a pre-configured value (no dynamic evaluation
 	// occurred or dynamic evaluation yielded no result).
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonDefault = FeatureFlagResultReasonKey.String("default")
 	// The resolved value was the result of a dynamic evaluation, such as a rule or
 	// specific user-targeting.
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonTargetingMatch = FeatureFlagResultReasonKey.String("targeting_match")
 	// The resolved value was the result of pseudorandom assignment.
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonSplit = FeatureFlagResultReasonKey.String("split")
 	// The resolved value was retrieved from cache.
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonCached = FeatureFlagResultReasonKey.String("cached")
 	// The resolved value was the result of the flag being disabled in the
 	// management system.
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonDisabled = FeatureFlagResultReasonKey.String("disabled")
 	// The reason for the resolved value could not be determined.
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonUnknown = FeatureFlagResultReasonKey.String("unknown")
 	// The resolved value is non-authoritative or possibly out of date
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonStale = FeatureFlagResultReasonKey.String("stale")
 	// The resolved value was the result of an error.
-	// Stability: release_candidate
+	// Stability: development
 	FeatureFlagResultReasonError = FeatureFlagResultReasonKey.String("error")
 )
 
@@ -5433,7 +5231,7 @@ const (
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
-	// Examples: "Zone.Identifier"
+	// Examples: "Zone.Identifer"
 	// Note: On Linux, a resource fork is used to store additional data with a
 	// filesystem object. A file always has at least one fork for the data portion,
 	// and additional forks may exist.
@@ -5800,119 +5598,6 @@ const (
 	// Examples: "my-workload"
 	GCPAppHubWorkloadIDKey = attribute.Key("gcp.apphub.workload.id")
 
-	// GCPAppHubDestinationApplicationContainerKey is the attribute Key conforming
-	// to the "gcp.apphub_destination.application.container" semantic conventions.
-	// It represents the container within GCP where the AppHub destination
-	// application is defined.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "projects/my-container-project"
-	GCPAppHubDestinationApplicationContainerKey = attribute.Key("gcp.apphub_destination.application.container")
-
-	// GCPAppHubDestinationApplicationIDKey is the attribute Key conforming to the
-	// "gcp.apphub_destination.application.id" semantic conventions. It represents
-	// the name of the destination application as configured in AppHub.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "my-application"
-	GCPAppHubDestinationApplicationIDKey = attribute.Key("gcp.apphub_destination.application.id")
-
-	// GCPAppHubDestinationApplicationLocationKey is the attribute Key conforming to
-	// the "gcp.apphub_destination.application.location" semantic conventions. It
-	// represents the GCP zone or region where the destination application is
-	// defined.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "us-central1"
-	GCPAppHubDestinationApplicationLocationKey = attribute.Key("gcp.apphub_destination.application.location")
-
-	// GCPAppHubDestinationServiceCriticalityTypeKey is the attribute Key conforming
-	// to the "gcp.apphub_destination.service.criticality_type" semantic
-	// conventions. It represents the criticality of a destination workload
-	// indicates its importance to the business as specified in [AppHub type enum].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	//
-	// [AppHub type enum]: https://cloud.google.com/app-hub/docs/reference/rest/v1/Attributes#type
-	GCPAppHubDestinationServiceCriticalityTypeKey = attribute.Key("gcp.apphub_destination.service.criticality_type")
-
-	// GCPAppHubDestinationServiceEnvironmentTypeKey is the attribute Key conforming
-	// to the "gcp.apphub_destination.service.environment_type" semantic
-	// conventions. It represents the software lifecycle stage of a destination
-	// service as defined [AppHub environment type].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	//
-	// [AppHub environment type]: https://cloud.google.com/app-hub/docs/reference/rest/v1/Attributes#type_1
-	GCPAppHubDestinationServiceEnvironmentTypeKey = attribute.Key("gcp.apphub_destination.service.environment_type")
-
-	// GCPAppHubDestinationServiceIDKey is the attribute Key conforming to the
-	// "gcp.apphub_destination.service.id" semantic conventions. It represents the
-	// name of the destination service as configured in AppHub.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "my-service"
-	GCPAppHubDestinationServiceIDKey = attribute.Key("gcp.apphub_destination.service.id")
-
-	// GCPAppHubDestinationWorkloadCriticalityTypeKey is the attribute Key
-	// conforming to the "gcp.apphub_destination.workload.criticality_type" semantic
-	// conventions. It represents the criticality of a destination workload
-	// indicates its importance to the business as specified in [AppHub type enum].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	//
-	// [AppHub type enum]: https://cloud.google.com/app-hub/docs/reference/rest/v1/Attributes#type
-	GCPAppHubDestinationWorkloadCriticalityTypeKey = attribute.Key("gcp.apphub_destination.workload.criticality_type")
-
-	// GCPAppHubDestinationWorkloadEnvironmentTypeKey is the attribute Key
-	// conforming to the "gcp.apphub_destination.workload.environment_type" semantic
-	// conventions. It represents the environment of a destination workload is the
-	// stage of a software lifecycle as provided in the [AppHub environment type].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	//
-	// [AppHub environment type]: https://cloud.google.com/app-hub/docs/reference/rest/v1/Attributes#type_1
-	GCPAppHubDestinationWorkloadEnvironmentTypeKey = attribute.Key("gcp.apphub_destination.workload.environment_type")
-
-	// GCPAppHubDestinationWorkloadIDKey is the attribute Key conforming to the
-	// "gcp.apphub_destination.workload.id" semantic conventions. It represents the
-	// name of the destination workload as configured in AppHub.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "my-workload"
-	GCPAppHubDestinationWorkloadIDKey = attribute.Key("gcp.apphub_destination.workload.id")
-
 	// GCPClientServiceKey is the attribute Key conforming to the
 	// "gcp.client.service" semantic conventions. It represents the identifies the
 	// Google Cloud service for which the official client library is intended.
@@ -5986,41 +5671,6 @@ const (
 	//
 	// [default internal DNS name]: https://cloud.google.com/compute/docs/internal-dns#instance-fully-qualified-domain-names
 	GCPGCEInstanceNameKey = attribute.Key("gcp.gce.instance.name")
-
-	// GCPGCEInstanceGroupManagerNameKey is the attribute Key conforming to the
-	// "gcp.gce.instance_group_manager.name" semantic conventions. It represents the
-	// name of the Instance Group Manager (IGM) that manages this VM, if any.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "web-igm", "my-managed-group"
-	GCPGCEInstanceGroupManagerNameKey = attribute.Key("gcp.gce.instance_group_manager.name")
-
-	// GCPGCEInstanceGroupManagerRegionKey is the attribute Key conforming to the
-	// "gcp.gce.instance_group_manager.region" semantic conventions. It represents
-	// the region of a **regional** Instance Group Manager (e.g., `us-central1`).
-	// Set this **only** when the IGM is regional.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "us-central1", "europe-west1"
-	GCPGCEInstanceGroupManagerRegionKey = attribute.Key("gcp.gce.instance_group_manager.region")
-
-	// GCPGCEInstanceGroupManagerZoneKey is the attribute Key conforming to the
-	// "gcp.gce.instance_group_manager.zone" semantic conventions. It represents the
-	// zone of a **zonal** Instance Group Manager (e.g., `us-central1-a`). Set this
-	// **only** when the IGM is zonal.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "us-central1-a", "europe-west1-b"
-	GCPGCEInstanceGroupManagerZoneKey = attribute.Key("gcp.gce.instance_group_manager.zone")
 )
 
 // GCPAppHubApplicationContainer returns an attribute KeyValue conforming to the
@@ -6056,43 +5706,6 @@ func GCPAppHubServiceID(val string) attribute.KeyValue {
 // workload as configured in AppHub.
 func GCPAppHubWorkloadID(val string) attribute.KeyValue {
 	return GCPAppHubWorkloadIDKey.String(val)
-}
-
-// GCPAppHubDestinationApplicationContainer returns an attribute KeyValue
-// conforming to the "gcp.apphub_destination.application.container" semantic
-// conventions. It represents the container within GCP where the AppHub
-// destination application is defined.
-func GCPAppHubDestinationApplicationContainer(val string) attribute.KeyValue {
-	return GCPAppHubDestinationApplicationContainerKey.String(val)
-}
-
-// GCPAppHubDestinationApplicationID returns an attribute KeyValue conforming to
-// the "gcp.apphub_destination.application.id" semantic conventions. It
-// represents the name of the destination application as configured in AppHub.
-func GCPAppHubDestinationApplicationID(val string) attribute.KeyValue {
-	return GCPAppHubDestinationApplicationIDKey.String(val)
-}
-
-// GCPAppHubDestinationApplicationLocation returns an attribute KeyValue
-// conforming to the "gcp.apphub_destination.application.location" semantic
-// conventions. It represents the GCP zone or region where the destination
-// application is defined.
-func GCPAppHubDestinationApplicationLocation(val string) attribute.KeyValue {
-	return GCPAppHubDestinationApplicationLocationKey.String(val)
-}
-
-// GCPAppHubDestinationServiceID returns an attribute KeyValue conforming to the
-// "gcp.apphub_destination.service.id" semantic conventions. It represents the
-// name of the destination service as configured in AppHub.
-func GCPAppHubDestinationServiceID(val string) attribute.KeyValue {
-	return GCPAppHubDestinationServiceIDKey.String(val)
-}
-
-// GCPAppHubDestinationWorkloadID returns an attribute KeyValue conforming to the
-// "gcp.apphub_destination.workload.id" semantic conventions. It represents the
-// name of the destination workload as configured in AppHub.
-func GCPAppHubDestinationWorkloadID(val string) attribute.KeyValue {
-	return GCPAppHubDestinationWorkloadIDKey.String(val)
 }
 
 // GCPClientService returns an attribute KeyValue conforming to the
@@ -6142,29 +5755,6 @@ func GCPGCEInstanceHostname(val string) attribute.KeyValue {
 // [default internal DNS name]: https://cloud.google.com/compute/docs/internal-dns#instance-fully-qualified-domain-names
 func GCPGCEInstanceName(val string) attribute.KeyValue {
 	return GCPGCEInstanceNameKey.String(val)
-}
-
-// GCPGCEInstanceGroupManagerName returns an attribute KeyValue conforming to the
-// "gcp.gce.instance_group_manager.name" semantic conventions. It represents the
-// name of the Instance Group Manager (IGM) that manages this VM, if any.
-func GCPGCEInstanceGroupManagerName(val string) attribute.KeyValue {
-	return GCPGCEInstanceGroupManagerNameKey.String(val)
-}
-
-// GCPGCEInstanceGroupManagerRegion returns an attribute KeyValue conforming to
-// the "gcp.gce.instance_group_manager.region" semantic conventions. It
-// represents the region of a **regional** Instance Group Manager (e.g.,
-// `us-central1`). Set this **only** when the IGM is regional.
-func GCPGCEInstanceGroupManagerRegion(val string) attribute.KeyValue {
-	return GCPGCEInstanceGroupManagerRegionKey.String(val)
-}
-
-// GCPGCEInstanceGroupManagerZone returns an attribute KeyValue conforming to the
-// "gcp.gce.instance_group_manager.zone" semantic conventions. It represents the
-// zone of a **zonal** Instance Group Manager (e.g., `us-central1-a`). Set this
-// **only** when the IGM is zonal.
-func GCPGCEInstanceGroupManagerZone(val string) attribute.KeyValue {
-	return GCPGCEInstanceGroupManagerZoneKey.String(val)
 }
 
 // Enum values for gcp.apphub.service.criticality_type
@@ -6231,70 +5821,6 @@ var (
 	GCPAppHubWorkloadEnvironmentTypeDevelopment = GCPAppHubWorkloadEnvironmentTypeKey.String("DEVELOPMENT")
 )
 
-// Enum values for gcp.apphub_destination.service.criticality_type
-var (
-	// Mission critical service.
-	// Stability: development
-	GCPAppHubDestinationServiceCriticalityTypeMissionCritical = GCPAppHubDestinationServiceCriticalityTypeKey.String("MISSION_CRITICAL")
-	// High impact.
-	// Stability: development
-	GCPAppHubDestinationServiceCriticalityTypeHigh = GCPAppHubDestinationServiceCriticalityTypeKey.String("HIGH")
-	// Medium impact.
-	// Stability: development
-	GCPAppHubDestinationServiceCriticalityTypeMedium = GCPAppHubDestinationServiceCriticalityTypeKey.String("MEDIUM")
-	// Low impact.
-	// Stability: development
-	GCPAppHubDestinationServiceCriticalityTypeLow = GCPAppHubDestinationServiceCriticalityTypeKey.String("LOW")
-)
-
-// Enum values for gcp.apphub_destination.service.environment_type
-var (
-	// Production environment.
-	// Stability: development
-	GCPAppHubDestinationServiceEnvironmentTypeProduction = GCPAppHubDestinationServiceEnvironmentTypeKey.String("PRODUCTION")
-	// Staging environment.
-	// Stability: development
-	GCPAppHubDestinationServiceEnvironmentTypeStaging = GCPAppHubDestinationServiceEnvironmentTypeKey.String("STAGING")
-	// Test environment.
-	// Stability: development
-	GCPAppHubDestinationServiceEnvironmentTypeTest = GCPAppHubDestinationServiceEnvironmentTypeKey.String("TEST")
-	// Development environment.
-	// Stability: development
-	GCPAppHubDestinationServiceEnvironmentTypeDevelopment = GCPAppHubDestinationServiceEnvironmentTypeKey.String("DEVELOPMENT")
-)
-
-// Enum values for gcp.apphub_destination.workload.criticality_type
-var (
-	// Mission critical service.
-	// Stability: development
-	GCPAppHubDestinationWorkloadCriticalityTypeMissionCritical = GCPAppHubDestinationWorkloadCriticalityTypeKey.String("MISSION_CRITICAL")
-	// High impact.
-	// Stability: development
-	GCPAppHubDestinationWorkloadCriticalityTypeHigh = GCPAppHubDestinationWorkloadCriticalityTypeKey.String("HIGH")
-	// Medium impact.
-	// Stability: development
-	GCPAppHubDestinationWorkloadCriticalityTypeMedium = GCPAppHubDestinationWorkloadCriticalityTypeKey.String("MEDIUM")
-	// Low impact.
-	// Stability: development
-	GCPAppHubDestinationWorkloadCriticalityTypeLow = GCPAppHubDestinationWorkloadCriticalityTypeKey.String("LOW")
-)
-
-// Enum values for gcp.apphub_destination.workload.environment_type
-var (
-	// Production environment.
-	// Stability: development
-	GCPAppHubDestinationWorkloadEnvironmentTypeProduction = GCPAppHubDestinationWorkloadEnvironmentTypeKey.String("PRODUCTION")
-	// Staging environment.
-	// Stability: development
-	GCPAppHubDestinationWorkloadEnvironmentTypeStaging = GCPAppHubDestinationWorkloadEnvironmentTypeKey.String("STAGING")
-	// Test environment.
-	// Stability: development
-	GCPAppHubDestinationWorkloadEnvironmentTypeTest = GCPAppHubDestinationWorkloadEnvironmentTypeKey.String("TEST")
-	// Development environment.
-	// Stability: development
-	GCPAppHubDestinationWorkloadEnvironmentTypeDevelopment = GCPAppHubDestinationWorkloadEnvironmentTypeKey.String("DEVELOPMENT")
-)
-
 // Namespace: gen_ai
 const (
 	// GenAIAgentDescriptionKey is the attribute Key conforming to the
@@ -6329,17 +5855,6 @@ const (
 	// Examples: "Math Tutor", "Fiction Writer"
 	GenAIAgentNameKey = attribute.Key("gen_ai.agent.name")
 
-	// GenAIAgentVersionKey is the attribute Key conforming to the
-	// "gen_ai.agent.version" semantic conventions. It represents the version of the
-	// GenAI agent.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "1.0.0", "2025-05-01"
-	GenAIAgentVersionKey = attribute.Key("gen_ai.agent.version")
-
 	// GenAIConversationIDKey is the attribute Key conforming to the
 	// "gen_ai.conversation.id" semantic conventions. It represents the unique
 	// identifier for a conversation (session, thread), used to store and correlate
@@ -6371,103 +5886,39 @@ const (
 	// `db.*`, to further identify and describe the data source.
 	GenAIDataSourceIDKey = attribute.Key("gen_ai.data_source.id")
 
-	// GenAIEmbeddingsDimensionCountKey is the attribute Key conforming to the
-	// "gen_ai.embeddings.dimension.count" semantic conventions. It represents the
-	// number of dimensions the resulting output embeddings should have.
+	// GenAIOpenAIRequestServiceTierKey is the attribute Key conforming to the
+	// "gen_ai.openai.request.service_tier" semantic conventions. It represents the
+	// service tier requested. May be a specific tier, default, or auto.
 	//
-	// Type: int
+	// Type: Enum
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
-	// Examples: 512, 1024
-	GenAIEmbeddingsDimensionCountKey = attribute.Key("gen_ai.embeddings.dimension.count")
+	// Examples: "auto", "default"
+	GenAIOpenAIRequestServiceTierKey = attribute.Key("gen_ai.openai.request.service_tier")
 
-	// GenAIEvaluationExplanationKey is the attribute Key conforming to the
-	// "gen_ai.evaluation.explanation" semantic conventions. It represents a
-	// free-form explanation for the assigned score provided by the evaluator.
+	// GenAIOpenAIResponseServiceTierKey is the attribute Key conforming to the
+	// "gen_ai.openai.response.service_tier" semantic conventions. It represents the
+	// service tier used for the response.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
-	// Examples: "The response is factually accurate but lacks sufficient detail to
-	// fully address the question."
-	GenAIEvaluationExplanationKey = attribute.Key("gen_ai.evaluation.explanation")
+	// Examples: "scale", "default"
+	GenAIOpenAIResponseServiceTierKey = attribute.Key("gen_ai.openai.response.service_tier")
 
-	// GenAIEvaluationNameKey is the attribute Key conforming to the
-	// "gen_ai.evaluation.name" semantic conventions. It represents the name of the
-	// evaluation metric used for the GenAI response.
+	// GenAIOpenAIResponseSystemFingerprintKey is the attribute Key conforming to
+	// the "gen_ai.openai.response.system_fingerprint" semantic conventions. It
+	// represents a fingerprint to track any eventual change in the Generative AI
+	// environment.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
-	// Examples: "Relevance", "IntentResolution"
-	GenAIEvaluationNameKey = attribute.Key("gen_ai.evaluation.name")
-
-	// GenAIEvaluationScoreLabelKey is the attribute Key conforming to the
-	// "gen_ai.evaluation.score.label" semantic conventions. It represents the human
-	// readable label for evaluation.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "relevant", "not_relevant", "correct", "incorrect", "pass", "fail"
-	// Note: This attribute provides a human-readable interpretation of the
-	// evaluation score produced by an evaluator. For example, a score value of 1
-	// could mean "relevant" in one evaluation system and "not relevant" in another,
-	// depending on the scoring range and evaluator. The label SHOULD have low
-	// cardinality. Possible values depend on the evaluation metric and evaluator
-	// used; implementations SHOULD document the possible values.
-	GenAIEvaluationScoreLabelKey = attribute.Key("gen_ai.evaluation.score.label")
-
-	// GenAIEvaluationScoreValueKey is the attribute Key conforming to the
-	// "gen_ai.evaluation.score.value" semantic conventions. It represents the
-	// evaluation score returned by the evaluator.
-	//
-	// Type: double
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 4.0
-	GenAIEvaluationScoreValueKey = attribute.Key("gen_ai.evaluation.score.value")
-
-	// GenAIInputMessagesKey is the attribute Key conforming to the
-	// "gen_ai.input.messages" semantic conventions. It represents the chat history
-	// provided to the model as an input.
-	//
-	// Type: any
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "[\n {\n "role": "user",\n "parts": [\n {\n "type": "text",\n
-	// "content": "Weather in Paris?"\n }\n ]\n },\n {\n "role": "assistant",\n
-	// "parts": [\n {\n "type": "tool_call",\n "id":
-	// "call_VSPygqKTWdrhaFErNvMV18Yl",\n "name": "get_weather",\n "arguments": {\n
-	// "location": "Paris"\n }\n }\n ]\n },\n {\n "role": "tool",\n "parts": [\n {\n
-	// "type": "tool_call_response",\n "id": " call_VSPygqKTWdrhaFErNvMV18Yl",\n
-	// "result": "rainy, 57°F"\n }\n ]\n }\n]\n"
-	// Note: Instrumentations MUST follow [Input messages JSON schema].
-	// When the attribute is recorded on events, it MUST be recorded in structured
-	// form. When recorded on spans, it MAY be recorded as a JSON string if
-	// structured
-	// format is not supported and SHOULD be recorded in structured form otherwise.
-	//
-	// Messages MUST be provided in the order they were sent to the model.
-	// Instrumentations MAY provide a way for users to filter or truncate
-	// input messages.
-	//
-	// > [!Warning]
-	// > This attribute is likely to contain sensitive information including
-	// > user/PII data.
-	//
-	// See [Recording content on attributes]
-	// section for more details.
-	//
-	// [Input messages JSON schema]: /docs/gen-ai/gen-ai-input-messages.json
-	// [Recording content on attributes]: /docs/gen-ai/gen-ai-spans.md#recording-content-on-attributes
-	GenAIInputMessagesKey = attribute.Key("gen_ai.input.messages")
+	// Examples: "fp_44709d6fcb"
+	GenAIOpenAIResponseSystemFingerprintKey = attribute.Key("gen_ai.openai.response.system_fingerprint")
 
 	// GenAIOperationNameKey is the attribute Key conforming to the
 	// "gen_ai.operation.name" semantic conventions. It represents the name of the
@@ -6484,44 +5935,6 @@ const (
 	// instrumentation. If a different name is not documented, instrumentation
 	// libraries SHOULD use applicable predefined value.
 	GenAIOperationNameKey = attribute.Key("gen_ai.operation.name")
-
-	// GenAIOutputMessagesKey is the attribute Key conforming to the
-	// "gen_ai.output.messages" semantic conventions. It represents the messages
-	// returned by the model where each message represents a specific model response
-	// (choice, candidate).
-	//
-	// Type: any
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "[\n {\n "role": "assistant",\n "parts": [\n {\n "type": "text",\n
-	// "content": "The weather in Paris is currently rainy with a temperature of
-	// 57°F."\n }\n ],\n "finish_reason": "stop"\n }\n]\n"
-	// Note: Instrumentations MUST follow [Output messages JSON schema]
-	//
-	// Each message represents a single output choice/candidate generated by
-	// the model. Each message corresponds to exactly one generation
-	// (choice/candidate) and vice versa - one choice cannot be split across
-	// multiple messages or one message cannot contain parts from multiple choices.
-	//
-	// When the attribute is recorded on events, it MUST be recorded in structured
-	// form. When recorded on spans, it MAY be recorded as a JSON string if
-	// structured
-	// format is not supported and SHOULD be recorded in structured form otherwise.
-	//
-	// Instrumentations MAY provide a way for users to filter or truncate
-	// output messages.
-	//
-	// > [!Warning]
-	// > This attribute is likely to contain sensitive information including
-	// > user/PII data.
-	//
-	// See [Recording content on attributes]
-	// section for more details.
-	//
-	// [Output messages JSON schema]: /docs/gen-ai/gen-ai-output-messages.json
-	// [Recording content on attributes]: /docs/gen-ai/gen-ai-spans.md#recording-content-on-attributes
-	GenAIOutputMessagesKey = attribute.Key("gen_ai.output.messages")
 
 	// GenAIOutputTypeKey is the attribute Key conforming to the
 	// "gen_ai.output.type" semantic conventions. It represents the represents the
@@ -6540,46 +5953,6 @@ const (
 	// Additional output format details may be recorded in the future in the
 	// `gen_ai.output.{type}.*` attributes.
 	GenAIOutputTypeKey = attribute.Key("gen_ai.output.type")
-
-	// GenAIPromptNameKey is the attribute Key conforming to the
-	// "gen_ai.prompt.name" semantic conventions. It represents the name of the
-	// prompt that uniquely identifies it.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "analyze-code"
-	GenAIPromptNameKey = attribute.Key("gen_ai.prompt.name")
-
-	// GenAIProviderNameKey is the attribute Key conforming to the
-	// "gen_ai.provider.name" semantic conventions. It represents the Generative AI
-	// provider as identified by the client or server instrumentation.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	// Note: The attribute SHOULD be set based on the instrumentation's best
-	// knowledge and may differ from the actual model provider.
-	//
-	// Multiple providers, including Azure OpenAI, Gemini, and AI hosting platforms
-	// are accessible using the OpenAI REST API and corresponding client libraries,
-	// but may proxy or host models from different providers.
-	//
-	// The `gen_ai.request.model`, `gen_ai.response.model`, and `server.address`
-	// attributes may help identify the actual system in use.
-	//
-	// The `gen_ai.provider.name` attribute acts as a discriminator that
-	// identifies the GenAI telemetry format flavor specific to that provider
-	// within GenAI semantic conventions.
-	// It SHOULD be set consistently with provider-specific attributes and signals.
-	// For example, GenAI spans, metrics, and events related to AWS Bedrock
-	// should have the `gen_ai.provider.name` set to `aws.bedrock` and include
-	// applicable `aws.bedrock.*` attributes and are not expected to include
-	// `openai.*` attributes.
-	GenAIProviderNameKey = attribute.Key("gen_ai.provider.name")
 
 	// GenAIRequestChoiceCountKey is the attribute Key conforming to the
 	// "gen_ai.request.choice.count" semantic conventions. It represents the target
@@ -6738,82 +6111,31 @@ const (
 	// Examples: "gpt-4-0613"
 	GenAIResponseModelKey = attribute.Key("gen_ai.response.model")
 
-	// GenAIRetrievalDocumentsKey is the attribute Key conforming to the
-	// "gen_ai.retrieval.documents" semantic conventions. It represents the
-	// documents retrieved.
+	// GenAISystemKey is the attribute Key conforming to the "gen_ai.system"
+	// semantic conventions. It represents the Generative AI product as identified
+	// by the client or server instrumentation.
 	//
-	// Type: any
+	// Type: Enum
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
-	// Examples: "[\n {\n "id": "doc_123",\n "score": 0.95\n },\n {\n "id":
-	// "doc_456",\n "score": 0.87\n },\n {\n "id": "doc_789",\n "score": 0.82\n
-	// }\n]\n"
-	// Note: Instrumentations MUST follow [Retrieval documents JSON schema].
-	// When the attribute is recorded on events, it MUST be recorded in structured
-	// form. When recorded on spans, it MAY be recorded as a JSON string if
-	// structured
-	// format is not supported and SHOULD be recorded in structured form otherwise.
+	// Examples: openai
+	// Note: The `gen_ai.system` describes a family of GenAI models with specific
+	// model identified
+	// by `gen_ai.request.model` and `gen_ai.response.model` attributes.
 	//
-	// Each document object SHOULD contain at least the following properties:
-	// `id` (string): A unique identifier for the document, `score` (double): The
-	// relevance score of the document
+	// The actual GenAI product may differ from the one identified by the client.
+	// Multiple systems, including Azure OpenAI and Gemini, are accessible by OpenAI
+	// client
+	// libraries. In such cases, the `gen_ai.system` is set to `openai` based on the
+	// instrumentation's best knowledge, instead of the actual system. The
+	// `server.address`
+	// attribute may help identify the actual system in use for `openai`.
 	//
-	// [Retrieval documents JSON schema]: /docs/gen-ai/gen-ai-retrieval-documents.json
-	GenAIRetrievalDocumentsKey = attribute.Key("gen_ai.retrieval.documents")
-
-	// GenAIRetrievalQueryTextKey is the attribute Key conforming to the
-	// "gen_ai.retrieval.query.text" semantic conventions. It represents the query
-	// text used for retrieval.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "What is the capital of France?", "weather in Paris"
-	// Note: > [!Warning]
-	//
-	// > This attribute may contain sensitive information.
-	GenAIRetrievalQueryTextKey = attribute.Key("gen_ai.retrieval.query.text")
-
-	// GenAISystemInstructionsKey is the attribute Key conforming to the
-	// "gen_ai.system_instructions" semantic conventions. It represents the system
-	// message or instructions provided to the GenAI model separately from the chat
-	// history.
-	//
-	// Type: any
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "[\n {\n "type": "text",\n "content": "You are an Agent that greet
-	// users, always use greetings tool to respond"\n }\n]\n", "[\n {\n "type":
-	// "text",\n "content": "You are a language translator."\n },\n {\n "type":
-	// "text",\n "content": "Your mission is to translate text in English to
-	// French."\n }\n]\n"
-	// Note: This attribute SHOULD be used when the corresponding provider or API
-	// allows to provide system instructions or messages separately from the
-	// chat history.
-	//
-	// Instructions that are part of the chat history SHOULD be recorded in
-	// `gen_ai.input.messages` attribute instead.
-	//
-	// Instrumentations MUST follow [System instructions JSON schema].
-	//
-	// When recorded on spans, it MAY be recorded as a JSON string if structured
-	// format is not supported and SHOULD be recorded in structured form otherwise.
-	//
-	// Instrumentations MAY provide a way for users to filter or truncate
-	// system instructions.
-	//
-	// > [!Warning]
-	// > This attribute may contain sensitive information.
-	//
-	// See [Recording content on attributes]
-	// section for more details.
-	//
-	// [System instructions JSON schema]: /docs/gen-ai/gen-ai-system-instructions.json
-	// [Recording content on attributes]: /docs/gen-ai/gen-ai-spans.md#recording-content-on-attributes
-	GenAISystemInstructionsKey = attribute.Key("gen_ai.system_instructions")
+	// For custom model, a custom friendly name SHOULD be used.
+	// If none of these options apply, the `gen_ai.system` SHOULD be set to `_OTHER`
+	// .
+	GenAISystemKey = attribute.Key("gen_ai.system")
 
 	// GenAITokenTypeKey is the attribute Key conforming to the "gen_ai.token.type"
 	// semantic conventions. It represents the type of token being counted.
@@ -6825,26 +6147,6 @@ const (
 	// Examples: "input", "output"
 	GenAITokenTypeKey = attribute.Key("gen_ai.token.type")
 
-	// GenAIToolCallArgumentsKey is the attribute Key conforming to the
-	// "gen_ai.tool.call.arguments" semantic conventions. It represents the
-	// parameters passed to the tool call.
-	//
-	// Type: any
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "{\n "location": "San Francisco?",\n "date": "2025-10-01"\n}\n"
-	// Note: > [!WARNING]
-	//
-	// > This attribute may contain sensitive information.
-	//
-	// It's expected to be an object - in case a serialized string is available
-	// to the instrumentation, the instrumentation SHOULD do the best effort to
-	// deserialize it to an object. When recorded on spans, it MAY be recorded as a
-	// JSON string if structured format is not supported and SHOULD be recorded in
-	// structured form otherwise.
-	GenAIToolCallArgumentsKey = attribute.Key("gen_ai.tool.call.arguments")
-
 	// GenAIToolCallIDKey is the attribute Key conforming to the
 	// "gen_ai.tool.call.id" semantic conventions. It represents the tool call
 	// identifier.
@@ -6855,56 +6157,6 @@ const (
 	//
 	// Examples: "call_mszuSIzqtI65i1wAUOE8w5H4"
 	GenAIToolCallIDKey = attribute.Key("gen_ai.tool.call.id")
-
-	// GenAIToolCallResultKey is the attribute Key conforming to the
-	// "gen_ai.tool.call.result" semantic conventions. It represents the result
-	// returned by the tool call (if any and if execution was successful).
-	//
-	// Type: any
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "{\n "temperature_range": {\n "high": 75,\n "low": 60\n },\n
-	// "conditions": "sunny"\n}\n"
-	// Note: > [!WARNING]
-	//
-	// > This attribute may contain sensitive information.
-	//
-	// It's expected to be an object - in case a serialized string is available
-	// to the instrumentation, the instrumentation SHOULD do the best effort to
-	// deserialize it to an object. When recorded on spans, it MAY be recorded as a
-	// JSON string if structured format is not supported and SHOULD be recorded in
-	// structured form otherwise.
-	GenAIToolCallResultKey = attribute.Key("gen_ai.tool.call.result")
-
-	// GenAIToolDefinitionsKey is the attribute Key conforming to the
-	// "gen_ai.tool.definitions" semantic conventions. It represents the list of
-	// source system tool definitions available to the GenAI agent or model.
-	//
-	// Type: any
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "[\n {\n "type": "function",\n "name": "get_current_weather",\n
-	// "description": "Get the current weather in a given location",\n "parameters":
-	// {\n "type": "object",\n "properties": {\n "location": {\n "type": "string",\n
-	// "description": "The city and state, e.g. San Francisco, CA"\n },\n "unit":
-	// {\n "type": "string",\n "enum": [\n "celsius",\n "fahrenheit"\n ]\n }\n },\n
-	// "required": [\n "location",\n "unit"\n ]\n }\n }\n]\n"
-	// Note: The value of this attribute matches source system tool definition
-	// format.
-	//
-	// It's expected to be an array of objects where each object represents a tool
-	// definition. In case a serialized string is available
-	// to the instrumentation, the instrumentation SHOULD do the best effort to
-	// deserialize it to an array. When recorded on spans, it MAY be recorded as a
-	// JSON string if structured format is not supported and SHOULD be recorded in
-	// structured form otherwise.
-	//
-	// Since this attribute could be large, it's NOT RECOMMENDED to populate
-	// it by default. Instrumentations MAY provide a way to enable
-	// populating this attribute.
-	GenAIToolDefinitionsKey = attribute.Key("gen_ai.tool.definitions")
 
 	// GenAIToolDescriptionKey is the attribute Key conforming to the
 	// "gen_ai.tool.description" semantic conventions. It represents the tool
@@ -6950,30 +6202,6 @@ const (
 	// updates.
 	GenAIToolTypeKey = attribute.Key("gen_ai.tool.type")
 
-	// GenAIUsageCacheCreationInputTokensKey is the attribute Key conforming to the
-	// "gen_ai.usage.cache_creation.input_tokens" semantic conventions. It
-	// represents the number of input tokens written to a provider-managed cache.
-	//
-	// Type: int
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 25
-	// Note: The value SHOULD be included in `gen_ai.usage.input_tokens`.
-	GenAIUsageCacheCreationInputTokensKey = attribute.Key("gen_ai.usage.cache_creation.input_tokens")
-
-	// GenAIUsageCacheReadInputTokensKey is the attribute Key conforming to the
-	// "gen_ai.usage.cache_read.input_tokens" semantic conventions. It represents
-	// the number of input tokens served from a provider-managed cache.
-	//
-	// Type: int
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 50
-	// Note: The value SHOULD be included in `gen_ai.usage.input_tokens`.
-	GenAIUsageCacheReadInputTokensKey = attribute.Key("gen_ai.usage.cache_read.input_tokens")
-
 	// GenAIUsageInputTokensKey is the attribute Key conforming to the
 	// "gen_ai.usage.input_tokens" semantic conventions. It represents the number of
 	// tokens used in the GenAI input (prompt).
@@ -6983,12 +6211,6 @@ const (
 	// Stability: Development
 	//
 	// Examples: 100
-	// Note: This value SHOULD include all types of input tokens, including cached
-	// tokens.
-	// Instrumentations SHOULD make a best effort to populate this value, using a
-	// total
-	// provided by the provider when available or, depending on the provider API,
-	// by summing different token types parsed from the provider output.
 	GenAIUsageInputTokensKey = attribute.Key("gen_ai.usage.input_tokens")
 
 	// GenAIUsageOutputTokensKey is the attribute Key conforming to the
@@ -7023,13 +6245,6 @@ func GenAIAgentName(val string) attribute.KeyValue {
 	return GenAIAgentNameKey.String(val)
 }
 
-// GenAIAgentVersion returns an attribute KeyValue conforming to the
-// "gen_ai.agent.version" semantic conventions. It represents the version of the
-// GenAI agent.
-func GenAIAgentVersion(val string) attribute.KeyValue {
-	return GenAIAgentVersionKey.String(val)
-}
-
 // GenAIConversationID returns an attribute KeyValue conforming to the
 // "gen_ai.conversation.id" semantic conventions. It represents the unique
 // identifier for a conversation (session, thread), used to store and correlate
@@ -7045,46 +6260,19 @@ func GenAIDataSourceID(val string) attribute.KeyValue {
 	return GenAIDataSourceIDKey.String(val)
 }
 
-// GenAIEmbeddingsDimensionCount returns an attribute KeyValue conforming to the
-// "gen_ai.embeddings.dimension.count" semantic conventions. It represents the
-// number of dimensions the resulting output embeddings should have.
-func GenAIEmbeddingsDimensionCount(val int) attribute.KeyValue {
-	return GenAIEmbeddingsDimensionCountKey.Int(val)
+// GenAIOpenAIResponseServiceTier returns an attribute KeyValue conforming to the
+// "gen_ai.openai.response.service_tier" semantic conventions. It represents the
+// service tier used for the response.
+func GenAIOpenAIResponseServiceTier(val string) attribute.KeyValue {
+	return GenAIOpenAIResponseServiceTierKey.String(val)
 }
 
-// GenAIEvaluationExplanation returns an attribute KeyValue conforming to the
-// "gen_ai.evaluation.explanation" semantic conventions. It represents a
-// free-form explanation for the assigned score provided by the evaluator.
-func GenAIEvaluationExplanation(val string) attribute.KeyValue {
-	return GenAIEvaluationExplanationKey.String(val)
-}
-
-// GenAIEvaluationName returns an attribute KeyValue conforming to the
-// "gen_ai.evaluation.name" semantic conventions. It represents the name of the
-// evaluation metric used for the GenAI response.
-func GenAIEvaluationName(val string) attribute.KeyValue {
-	return GenAIEvaluationNameKey.String(val)
-}
-
-// GenAIEvaluationScoreLabel returns an attribute KeyValue conforming to the
-// "gen_ai.evaluation.score.label" semantic conventions. It represents the human
-// readable label for evaluation.
-func GenAIEvaluationScoreLabel(val string) attribute.KeyValue {
-	return GenAIEvaluationScoreLabelKey.String(val)
-}
-
-// GenAIEvaluationScoreValue returns an attribute KeyValue conforming to the
-// "gen_ai.evaluation.score.value" semantic conventions. It represents the
-// evaluation score returned by the evaluator.
-func GenAIEvaluationScoreValue(val float64) attribute.KeyValue {
-	return GenAIEvaluationScoreValueKey.Float64(val)
-}
-
-// GenAIPromptName returns an attribute KeyValue conforming to the
-// "gen_ai.prompt.name" semantic conventions. It represents the name of the
-// prompt that uniquely identifies it.
-func GenAIPromptName(val string) attribute.KeyValue {
-	return GenAIPromptNameKey.String(val)
+// GenAIOpenAIResponseSystemFingerprint returns an attribute KeyValue conforming
+// to the "gen_ai.openai.response.system_fingerprint" semantic conventions. It
+// represents a fingerprint to track any eventual change in the Generative AI
+// environment.
+func GenAIOpenAIResponseSystemFingerprint(val string) attribute.KeyValue {
+	return GenAIOpenAIResponseSystemFingerprintKey.String(val)
 }
 
 // GenAIRequestChoiceCount returns an attribute KeyValue conforming to the
@@ -7186,13 +6374,6 @@ func GenAIResponseModel(val string) attribute.KeyValue {
 	return GenAIResponseModelKey.String(val)
 }
 
-// GenAIRetrievalQueryText returns an attribute KeyValue conforming to the
-// "gen_ai.retrieval.query.text" semantic conventions. It represents the query
-// text used for retrieval.
-func GenAIRetrievalQueryText(val string) attribute.KeyValue {
-	return GenAIRetrievalQueryTextKey.String(val)
-}
-
 // GenAIToolCallID returns an attribute KeyValue conforming to the
 // "gen_ai.tool.call.id" semantic conventions. It represents the tool call
 // identifier.
@@ -7221,20 +6402,6 @@ func GenAIToolType(val string) attribute.KeyValue {
 	return GenAIToolTypeKey.String(val)
 }
 
-// GenAIUsageCacheCreationInputTokens returns an attribute KeyValue conforming to
-// the "gen_ai.usage.cache_creation.input_tokens" semantic conventions. It
-// represents the number of input tokens written to a provider-managed cache.
-func GenAIUsageCacheCreationInputTokens(val int) attribute.KeyValue {
-	return GenAIUsageCacheCreationInputTokensKey.Int(val)
-}
-
-// GenAIUsageCacheReadInputTokens returns an attribute KeyValue conforming to the
-// "gen_ai.usage.cache_read.input_tokens" semantic conventions. It represents the
-// number of input tokens served from a provider-managed cache.
-func GenAIUsageCacheReadInputTokens(val int) attribute.KeyValue {
-	return GenAIUsageCacheReadInputTokensKey.Int(val)
-}
-
 // GenAIUsageInputTokens returns an attribute KeyValue conforming to the
 // "gen_ai.usage.input_tokens" semantic conventions. It represents the number of
 // tokens used in the GenAI input (prompt).
@@ -7248,6 +6415,16 @@ func GenAIUsageInputTokens(val int) attribute.KeyValue {
 func GenAIUsageOutputTokens(val int) attribute.KeyValue {
 	return GenAIUsageOutputTokensKey.Int(val)
 }
+
+// Enum values for gen_ai.openai.request.service_tier
+var (
+	// The system will utilize scale tier credits until they are exhausted.
+	// Stability: development
+	GenAIOpenAIRequestServiceTierAuto = GenAIOpenAIRequestServiceTierKey.String("auto")
+	// The system will utilize the default scale tier.
+	// Stability: development
+	GenAIOpenAIRequestServiceTierDefault = GenAIOpenAIRequestServiceTierKey.String("default")
+)
 
 // Enum values for gen_ai.operation.name
 var (
@@ -7271,11 +6448,6 @@ var (
 	//
 	// [OpenAI Create embeddings API]: https://platform.openai.com/docs/api-reference/embeddings/create
 	GenAIOperationNameEmbeddings = GenAIOperationNameKey.String("embeddings")
-	// Retrieval operation such as [OpenAI Search Vector Store API]
-	// Stability: development
-	//
-	// [OpenAI Search Vector Store API]: https://platform.openai.com/docs/api-reference/vector-stores/search
-	GenAIOperationNameRetrieval = GenAIOperationNameKey.String("retrieval")
 	// Create GenAI agent
 	// Stability: development
 	GenAIOperationNameCreateAgent = GenAIOperationNameKey.String("create_agent")
@@ -7303,79 +6475,57 @@ var (
 	GenAIOutputTypeSpeech = GenAIOutputTypeKey.String("speech")
 )
 
-// Enum values for gen_ai.provider.name
+// Enum values for gen_ai.system
 var (
-	// [OpenAI]
+	// OpenAI
 	// Stability: development
-	//
-	// [OpenAI]: https://openai.com/
-	GenAIProviderNameOpenAI = GenAIProviderNameKey.String("openai")
+	GenAISystemOpenAI = GenAISystemKey.String("openai")
 	// Any Google generative AI endpoint
 	// Stability: development
-	GenAIProviderNameGCPGenAI = GenAIProviderNameKey.String("gcp.gen_ai")
-	// [Vertex AI]
+	GenAISystemGCPGenAI = GenAISystemKey.String("gcp.gen_ai")
+	// Vertex AI
 	// Stability: development
-	//
-	// [Vertex AI]: https://cloud.google.com/vertex-ai
-	GenAIProviderNameGCPVertexAI = GenAIProviderNameKey.String("gcp.vertex_ai")
-	// [Gemini]
+	GenAISystemGCPVertexAI = GenAISystemKey.String("gcp.vertex_ai")
+	// Gemini
 	// Stability: development
-	//
-	// [Gemini]: https://cloud.google.com/products/gemini
-	GenAIProviderNameGCPGemini = GenAIProviderNameKey.String("gcp.gemini")
-	// [Anthropic]
+	GenAISystemGCPGemini = GenAISystemKey.String("gcp.gemini")
+	// Deprecated: Use 'gcp.vertex_ai' instead.
+	GenAISystemVertexAI = GenAISystemKey.String("vertex_ai")
+	// Deprecated: Use 'gcp.gemini' instead.
+	GenAISystemGemini = GenAISystemKey.String("gemini")
+	// Anthropic
 	// Stability: development
-	//
-	// [Anthropic]: https://www.anthropic.com/
-	GenAIProviderNameAnthropic = GenAIProviderNameKey.String("anthropic")
-	// [Cohere]
+	GenAISystemAnthropic = GenAISystemKey.String("anthropic")
+	// Cohere
 	// Stability: development
-	//
-	// [Cohere]: https://cohere.com/
-	GenAIProviderNameCohere = GenAIProviderNameKey.String("cohere")
+	GenAISystemCohere = GenAISystemKey.String("cohere")
 	// Azure AI Inference
 	// Stability: development
-	GenAIProviderNameAzureAIInference = GenAIProviderNameKey.String("azure.ai.inference")
-	// [Azure OpenAI]
+	GenAISystemAzAIInference = GenAISystemKey.String("az.ai.inference")
+	// Azure OpenAI
 	// Stability: development
-	//
-	// [Azure OpenAI]: https://azure.microsoft.com/products/ai-services/openai-service/
-	GenAIProviderNameAzureAIOpenAI = GenAIProviderNameKey.String("azure.ai.openai")
-	// [IBM Watsonx AI]
+	GenAISystemAzAIOpenAI = GenAISystemKey.String("az.ai.openai")
+	// IBM Watsonx AI
 	// Stability: development
-	//
-	// [IBM Watsonx AI]: https://www.ibm.com/products/watsonx-ai
-	GenAIProviderNameIBMWatsonxAI = GenAIProviderNameKey.String("ibm.watsonx.ai")
-	// [AWS Bedrock]
+	GenAISystemIBMWatsonxAI = GenAISystemKey.String("ibm.watsonx.ai")
+	// AWS Bedrock
 	// Stability: development
-	//
-	// [AWS Bedrock]: https://aws.amazon.com/bedrock
-	GenAIProviderNameAWSBedrock = GenAIProviderNameKey.String("aws.bedrock")
-	// [Perplexity]
+	GenAISystemAWSBedrock = GenAISystemKey.String("aws.bedrock")
+	// Perplexity
 	// Stability: development
-	//
-	// [Perplexity]: https://www.perplexity.ai/
-	GenAIProviderNamePerplexity = GenAIProviderNameKey.String("perplexity")
-	// [xAI]
+	GenAISystemPerplexity = GenAISystemKey.String("perplexity")
+	// xAI
 	// Stability: development
-	//
-	// [xAI]: https://x.ai/
-	GenAIProviderNameXAI = GenAIProviderNameKey.String("x_ai")
-	// [DeepSeek]
+	GenAISystemXai = GenAISystemKey.String("xai")
+	// DeepSeek
 	// Stability: development
-	//
-	// [DeepSeek]: https://www.deepseek.com/
-	GenAIProviderNameDeepseek = GenAIProviderNameKey.String("deepseek")
-	// [Groq]
+	GenAISystemDeepseek = GenAISystemKey.String("deepseek")
+	// Groq
 	// Stability: development
-	//
-	// [Groq]: https://groq.com/
-	GenAIProviderNameGroq = GenAIProviderNameKey.String("groq")
-	// [Mistral AI]
+	GenAISystemGroq = GenAISystemKey.String("groq")
+	// Mistral AI
 	// Stability: development
-	//
-	// [Mistral AI]: https://mistral.ai/
-	GenAIProviderNameMistralAI = GenAIProviderNameKey.String("mistral_ai")
+	GenAISystemMistralAI = GenAISystemKey.String("mistral_ai")
 )
 
 // Enum values for gen_ai.token.type
@@ -7383,6 +6533,8 @@ var (
 	// Input tokens (prompt, input, etc.)
 	// Stability: development
 	GenAITokenTypeInput = GenAITokenTypeKey.String("input")
+	// Deprecated: Replaced by `output`.
+	GenAITokenTypeCompletion = GenAITokenTypeKey.String("output")
 	// Output tokens (completion, response, etc.)
 	// Stability: development
 	GenAITokenTypeOutput = GenAITokenTypeKey.String("output")
@@ -8053,9 +7205,8 @@ const (
 	// Examples: "GET", "POST", "HEAD"
 	// Note: HTTP request method value SHOULD be "known" to the instrumentation.
 	// By default, this convention defines "known" methods as the ones listed in
-	// [RFC9110],
-	// the PATCH method defined in [RFC5789]
-	// and the QUERY method defined in [httpbis-safe-method-w-body].
+	// [RFC9110]
+	// and the PATCH method defined in [RFC5789].
 	//
 	// If the HTTP request method is not known to instrumentation, it MUST set the
 	// `http.request.method` attribute to `_OTHER`.
@@ -8065,18 +7216,9 @@ const (
 	// the list of known HTTP methods. If this override is done via environment
 	// variable, then the environment variable MUST be named
 	// OTEL_INSTRUMENTATION_HTTP_KNOWN_METHODS and support a comma-separated list of
-	// case-sensitive known HTTP methods.
-	//
-	//
-	// If this override is done via declarative configuration, then the list MUST be
-	// configurable via the `known_methods` property
-	// (an array of case-sensitive strings with minimum items 0) under
-	// `.instrumentation/development.general.http.client` and/or
-	// `.instrumentation/development.general.http.server`.
-	//
-	// In either case, this list MUST be a full override of the default known
-	// methods,
-	// it is not a list of known methods in addition to the defaults.
+	// case-sensitive known HTTP methods
+	// (this list MUST be a full override of the default known method, it is not a
+	// list of known methods in addition to the defaults).
 	//
 	// HTTP method names are case-sensitive and `http.request.method` attribute
 	// value MUST match a known HTTP method name exactly.
@@ -8087,7 +7229,6 @@ const (
 	//
 	// [RFC9110]: https://www.rfc-editor.org/rfc/rfc9110.html#name-methods
 	// [RFC5789]: https://www.rfc-editor.org/rfc/rfc5789.html
-	// [httpbis-safe-method-w-body]: https://datatracker.ietf.org/doc/draft-ietf-httpbis-safe-method-w-body/?include_text=1
 	HTTPRequestMethodKey = attribute.Key("http.request.method")
 
 	// HTTPRequestMethodOriginalKey is the attribute Key conforming to the
@@ -8165,35 +7306,18 @@ const (
 	HTTPResponseStatusCodeKey = attribute.Key("http.response.status_code")
 
 	// HTTPRouteKey is the attribute Key conforming to the "http.route" semantic
-	// conventions. It represents the matched route template for the request. This
-	// MUST be low-cardinality and include all static path segments, with dynamic
-	// path segments represented with placeholders.
+	// conventions. It represents the matched route, that is, the path template in
+	// the format used by the respective server framework.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
 	// Stability: Stable
 	//
-	// Examples: "/users/:userID?", "my-controller/my-action/{id?}"
+	// Examples: "/users/:userID?", "{controller}/{action}/{id?}"
 	// Note: MUST NOT be populated when this is not supported by the HTTP server
 	// framework as the route attribute should have low-cardinality and the URI path
 	// can NOT substitute it.
 	// SHOULD include the [application root] if there is one.
-	//
-	// A static path segment is a part of the route template with a fixed,
-	// low-cardinality value. This includes literal strings like `/users/` and
-	// placeholders that
-	// are constrained to a finite, predefined set of values, e.g. `{controller}` or
-	// `{action}`.
-	//
-	// A dynamic path segment is a placeholder for a value that can have high
-	// cardinality and is not constrained to a predefined list like static path
-	// segments.
-	//
-	// Instrumentations SHOULD use routing information provided by the corresponding
-	// web framework. They SHOULD pick the most precise source of routing
-	// information and MAY
-	// support custom route formatting. Instrumentations SHOULD document the format
-	// and the API used to obtain the route string.
 	//
 	// [application root]: /docs/http/http-spans.md#http-server-definitions
 	HTTPRouteKey = attribute.Key("http.route")
@@ -8281,9 +7405,8 @@ func HTTPResponseStatusCode(val int) attribute.KeyValue {
 }
 
 // HTTPRoute returns an attribute KeyValue conforming to the "http.route"
-// semantic conventions. It represents the matched route template for the
-// request. This MUST be low-cardinality and include all static path segments,
-// with dynamic path segments represented with placeholders.
+// semantic conventions. It represents the matched route, that is, the path
+// template in the format used by the respective server framework.
 func HTTPRoute(val string) attribute.KeyValue {
 	return HTTPRouteKey.String(val)
 }
@@ -8327,9 +7450,6 @@ var (
 	// TRACE method.
 	// Stability: stable
 	HTTPRequestMethodTrace = HTTPRequestMethodKey.String("TRACE")
-	// QUERY method.
-	// Stability: development
-	HTTPRequestMethodQuery = HTTPRequestMethodKey.String("QUERY")
 	// Any HTTP method that the instrumentation has no prior knowledge of.
 	// Stability: stable
 	HTTPRequestMethodOther = HTTPRequestMethodKey.String("_OTHER")
@@ -8337,94 +7457,6 @@ var (
 
 // Namespace: hw
 const (
-	// HwBatteryCapacityKey is the attribute Key conforming to the
-	// "hw.battery.capacity" semantic conventions. It represents the design capacity
-	// in Watts-hours or Amper-hours.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "9.3Ah", "50Wh"
-	HwBatteryCapacityKey = attribute.Key("hw.battery.capacity")
-
-	// HwBatteryChemistryKey is the attribute Key conforming to the
-	// "hw.battery.chemistry" semantic conventions. It represents the battery
-	// [chemistry], e.g. Lithium-Ion, Nickel-Cadmium, etc.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Li-ion", "NiMH"
-	//
-	// [chemistry]: https://schemas.dmtf.org/wbem/cim-html/2.31.0/CIM_Battery.html
-	HwBatteryChemistryKey = attribute.Key("hw.battery.chemistry")
-
-	// HwBatteryStateKey is the attribute Key conforming to the "hw.battery.state"
-	// semantic conventions. It represents the current state of the battery.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	HwBatteryStateKey = attribute.Key("hw.battery.state")
-
-	// HwBiosVersionKey is the attribute Key conforming to the "hw.bios_version"
-	// semantic conventions. It represents the BIOS version of the hardware
-	// component.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "1.2.3"
-	HwBiosVersionKey = attribute.Key("hw.bios_version")
-
-	// HwDriverVersionKey is the attribute Key conforming to the "hw.driver_version"
-	// semantic conventions. It represents the driver version for the hardware
-	// component.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "10.2.1-3"
-	HwDriverVersionKey = attribute.Key("hw.driver_version")
-
-	// HwEnclosureTypeKey is the attribute Key conforming to the "hw.enclosure.type"
-	// semantic conventions. It represents the type of the enclosure (useful for
-	// modular systems).
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Computer", "Storage", "Switch"
-	HwEnclosureTypeKey = attribute.Key("hw.enclosure.type")
-
-	// HwFirmwareVersionKey is the attribute Key conforming to the
-	// "hw.firmware_version" semantic conventions. It represents the firmware
-	// version of the hardware component.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "2.0.1"
-	HwFirmwareVersionKey = attribute.Key("hw.firmware_version")
-
-	// HwGpuTaskKey is the attribute Key conforming to the "hw.gpu.task" semantic
-	// conventions. It represents the type of task the GPU is performing.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	HwGpuTaskKey = attribute.Key("hw.gpu.task")
-
 	// HwIDKey is the attribute Key conforming to the "hw.id" semantic conventions.
 	// It represents an identifier for the hardware component, unique within the
 	// monitored host.
@@ -8435,60 +7467,6 @@ const (
 	//
 	// Examples: "win32battery_battery_testsysa33_1"
 	HwIDKey = attribute.Key("hw.id")
-
-	// HwLimitTypeKey is the attribute Key conforming to the "hw.limit_type"
-	// semantic conventions. It represents the type of limit for hardware
-	// components.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	HwLimitTypeKey = attribute.Key("hw.limit_type")
-
-	// HwLogicalDiskRaidLevelKey is the attribute Key conforming to the
-	// "hw.logical_disk.raid_level" semantic conventions. It represents the RAID
-	// Level of the logical disk.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "RAID0+1", "RAID5", "RAID10"
-	HwLogicalDiskRaidLevelKey = attribute.Key("hw.logical_disk.raid_level")
-
-	// HwLogicalDiskStateKey is the attribute Key conforming to the
-	// "hw.logical_disk.state" semantic conventions. It represents the state of the
-	// logical disk space usage.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	HwLogicalDiskStateKey = attribute.Key("hw.logical_disk.state")
-
-	// HwMemoryTypeKey is the attribute Key conforming to the "hw.memory.type"
-	// semantic conventions. It represents the type of the memory module.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "DDR4", "DDR5", "LPDDR5"
-	HwMemoryTypeKey = attribute.Key("hw.memory.type")
-
-	// HwModelKey is the attribute Key conforming to the "hw.model" semantic
-	// conventions. It represents the descriptive model name of the hardware
-	// component.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "PERC H740P", "Intel(R) Core(TM) i7-10700K", "Dell XPS 15 Battery"
-	HwModelKey = attribute.Key("hw.model")
 
 	// HwNameKey is the attribute Key conforming to the "hw.name" semantic
 	// conventions. It represents an easily-recognizable name for the hardware
@@ -8501,28 +7479,6 @@ const (
 	// Examples: "eth0"
 	HwNameKey = attribute.Key("hw.name")
 
-	// HwNetworkLogicalAddressesKey is the attribute Key conforming to the
-	// "hw.network.logical_addresses" semantic conventions. It represents the
-	// logical addresses of the adapter (e.g. IP address, or WWPN).
-	//
-	// Type: string[]
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "172.16.8.21", "57.11.193.42"
-	HwNetworkLogicalAddressesKey = attribute.Key("hw.network.logical_addresses")
-
-	// HwNetworkPhysicalAddressKey is the attribute Key conforming to the
-	// "hw.network.physical_address" semantic conventions. It represents the
-	// physical address of the adapter (e.g. MAC address, or WWNN).
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "00-90-F5-E9-7B-36"
-	HwNetworkPhysicalAddressKey = attribute.Key("hw.network.physical_address")
-
 	// HwParentKey is the attribute Key conforming to the "hw.parent" semantic
 	// conventions. It represents the unique identifier of the parent component
 	// (typically the `hw.id` attribute of the enclosure, or disk controller).
@@ -8534,65 +7490,6 @@ const (
 	// Examples: "dellStorage_perc_0"
 	HwParentKey = attribute.Key("hw.parent")
 
-	// HwPhysicalDiskSmartAttributeKey is the attribute Key conforming to the
-	// "hw.physical_disk.smart_attribute" semantic conventions. It represents the
-	// [S.M.A.R.T.] (Self-Monitoring, Analysis, and Reporting Technology) attribute
-	// of the physical disk.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Spin Retry Count", "Seek Error Rate", "Raw Read Error Rate"
-	//
-	// [S.M.A.R.T.]: https://wikipedia.org/wiki/S.M.A.R.T.
-	HwPhysicalDiskSmartAttributeKey = attribute.Key("hw.physical_disk.smart_attribute")
-
-	// HwPhysicalDiskStateKey is the attribute Key conforming to the
-	// "hw.physical_disk.state" semantic conventions. It represents the state of the
-	// physical disk endurance utilization.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	HwPhysicalDiskStateKey = attribute.Key("hw.physical_disk.state")
-
-	// HwPhysicalDiskTypeKey is the attribute Key conforming to the
-	// "hw.physical_disk.type" semantic conventions. It represents the type of the
-	// physical disk.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "HDD", "SSD", "10K"
-	HwPhysicalDiskTypeKey = attribute.Key("hw.physical_disk.type")
-
-	// HwSensorLocationKey is the attribute Key conforming to the
-	// "hw.sensor_location" semantic conventions. It represents the location of the
-	// sensor.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "cpu0", "ps1", "INLET", "CPU0_DIE", "AMBIENT", "MOTHERBOARD", "PS0
-	// V3_3", "MAIN_12V", "CPU_VCORE"
-	HwSensorLocationKey = attribute.Key("hw.sensor_location")
-
-	// HwSerialNumberKey is the attribute Key conforming to the "hw.serial_number"
-	// semantic conventions. It represents the serial number of the hardware
-	// component.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "CNFCP0123456789"
-	HwSerialNumberKey = attribute.Key("hw.serial_number")
-
 	// HwStateKey is the attribute Key conforming to the "hw.state" semantic
 	// conventions. It represents the current state of the component.
 	//
@@ -8602,17 +7499,6 @@ const (
 	//
 	// Examples:
 	HwStateKey = attribute.Key("hw.state")
-
-	// HwTapeDriveOperationTypeKey is the attribute Key conforming to the
-	// "hw.tape_drive.operation_type" semantic conventions. It represents the type
-	// of tape drive operation.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	HwTapeDriveOperationTypeKey = attribute.Key("hw.tape_drive.operation_type")
 
 	// HwTypeKey is the attribute Key conforming to the "hw.type" semantic
 	// conventions. It represents the type of the component.
@@ -8627,87 +7513,13 @@ const (
 	// `hw.state=degraded` would indicate that the temperature of the hardware
 	// component has been reported as `degraded`.
 	HwTypeKey = attribute.Key("hw.type")
-
-	// HwVendorKey is the attribute Key conforming to the "hw.vendor" semantic
-	// conventions. It represents the vendor name of the hardware component.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Dell", "HP", "Intel", "AMD", "LSI", "Lenovo"
-	HwVendorKey = attribute.Key("hw.vendor")
 )
-
-// HwBatteryCapacity returns an attribute KeyValue conforming to the
-// "hw.battery.capacity" semantic conventions. It represents the design capacity
-// in Watts-hours or Amper-hours.
-func HwBatteryCapacity(val string) attribute.KeyValue {
-	return HwBatteryCapacityKey.String(val)
-}
-
-// HwBatteryChemistry returns an attribute KeyValue conforming to the
-// "hw.battery.chemistry" semantic conventions. It represents the battery
-// [chemistry], e.g. Lithium-Ion, Nickel-Cadmium, etc.
-//
-// [chemistry]: https://schemas.dmtf.org/wbem/cim-html/2.31.0/CIM_Battery.html
-func HwBatteryChemistry(val string) attribute.KeyValue {
-	return HwBatteryChemistryKey.String(val)
-}
-
-// HwBiosVersion returns an attribute KeyValue conforming to the
-// "hw.bios_version" semantic conventions. It represents the BIOS version of the
-// hardware component.
-func HwBiosVersion(val string) attribute.KeyValue {
-	return HwBiosVersionKey.String(val)
-}
-
-// HwDriverVersion returns an attribute KeyValue conforming to the
-// "hw.driver_version" semantic conventions. It represents the driver version for
-// the hardware component.
-func HwDriverVersion(val string) attribute.KeyValue {
-	return HwDriverVersionKey.String(val)
-}
-
-// HwEnclosureType returns an attribute KeyValue conforming to the
-// "hw.enclosure.type" semantic conventions. It represents the type of the
-// enclosure (useful for modular systems).
-func HwEnclosureType(val string) attribute.KeyValue {
-	return HwEnclosureTypeKey.String(val)
-}
-
-// HwFirmwareVersion returns an attribute KeyValue conforming to the
-// "hw.firmware_version" semantic conventions. It represents the firmware version
-// of the hardware component.
-func HwFirmwareVersion(val string) attribute.KeyValue {
-	return HwFirmwareVersionKey.String(val)
-}
 
 // HwID returns an attribute KeyValue conforming to the "hw.id" semantic
 // conventions. It represents an identifier for the hardware component, unique
 // within the monitored host.
 func HwID(val string) attribute.KeyValue {
 	return HwIDKey.String(val)
-}
-
-// HwLogicalDiskRaidLevel returns an attribute KeyValue conforming to the
-// "hw.logical_disk.raid_level" semantic conventions. It represents the RAID
-// Level of the logical disk.
-func HwLogicalDiskRaidLevel(val string) attribute.KeyValue {
-	return HwLogicalDiskRaidLevelKey.String(val)
-}
-
-// HwMemoryType returns an attribute KeyValue conforming to the "hw.memory.type"
-// semantic conventions. It represents the type of the memory module.
-func HwMemoryType(val string) attribute.KeyValue {
-	return HwMemoryTypeKey.String(val)
-}
-
-// HwModel returns an attribute KeyValue conforming to the "hw.model" semantic
-// conventions. It represents the descriptive model name of the hardware
-// component.
-func HwModel(val string) attribute.KeyValue {
-	return HwModelKey.String(val)
 }
 
 // HwName returns an attribute KeyValue conforming to the "hw.name" semantic
@@ -8717,20 +7529,6 @@ func HwName(val string) attribute.KeyValue {
 	return HwNameKey.String(val)
 }
 
-// HwNetworkLogicalAddresses returns an attribute KeyValue conforming to the
-// "hw.network.logical_addresses" semantic conventions. It represents the logical
-// addresses of the adapter (e.g. IP address, or WWPN).
-func HwNetworkLogicalAddresses(val ...string) attribute.KeyValue {
-	return HwNetworkLogicalAddressesKey.StringSlice(val)
-}
-
-// HwNetworkPhysicalAddress returns an attribute KeyValue conforming to the
-// "hw.network.physical_address" semantic conventions. It represents the physical
-// address of the adapter (e.g. MAC address, or WWNN).
-func HwNetworkPhysicalAddress(val string) attribute.KeyValue {
-	return HwNetworkPhysicalAddressKey.String(val)
-}
-
 // HwParent returns an attribute KeyValue conforming to the "hw.parent" semantic
 // conventions. It represents the unique identifier of the parent component
 // (typically the `hw.id` attribute of the enclosure, or disk controller).
@@ -8738,144 +7536,17 @@ func HwParent(val string) attribute.KeyValue {
 	return HwParentKey.String(val)
 }
 
-// HwPhysicalDiskSmartAttribute returns an attribute KeyValue conforming to the
-// "hw.physical_disk.smart_attribute" semantic conventions. It represents the
-// [S.M.A.R.T.] (Self-Monitoring, Analysis, and Reporting Technology) attribute
-// of the physical disk.
-//
-// [S.M.A.R.T.]: https://wikipedia.org/wiki/S.M.A.R.T.
-func HwPhysicalDiskSmartAttribute(val string) attribute.KeyValue {
-	return HwPhysicalDiskSmartAttributeKey.String(val)
-}
-
-// HwPhysicalDiskType returns an attribute KeyValue conforming to the
-// "hw.physical_disk.type" semantic conventions. It represents the type of the
-// physical disk.
-func HwPhysicalDiskType(val string) attribute.KeyValue {
-	return HwPhysicalDiskTypeKey.String(val)
-}
-
-// HwSensorLocation returns an attribute KeyValue conforming to the
-// "hw.sensor_location" semantic conventions. It represents the location of the
-// sensor.
-func HwSensorLocation(val string) attribute.KeyValue {
-	return HwSensorLocationKey.String(val)
-}
-
-// HwSerialNumber returns an attribute KeyValue conforming to the
-// "hw.serial_number" semantic conventions. It represents the serial number of
-// the hardware component.
-func HwSerialNumber(val string) attribute.KeyValue {
-	return HwSerialNumberKey.String(val)
-}
-
-// HwVendor returns an attribute KeyValue conforming to the "hw.vendor" semantic
-// conventions. It represents the vendor name of the hardware component.
-func HwVendor(val string) attribute.KeyValue {
-	return HwVendorKey.String(val)
-}
-
-// Enum values for hw.battery.state
-var (
-	// Charging
-	// Stability: development
-	HwBatteryStateCharging = HwBatteryStateKey.String("charging")
-	// Discharging
-	// Stability: development
-	HwBatteryStateDischarging = HwBatteryStateKey.String("discharging")
-)
-
-// Enum values for hw.gpu.task
-var (
-	// Decoder
-	// Stability: development
-	HwGpuTaskDecoder = HwGpuTaskKey.String("decoder")
-	// Encoder
-	// Stability: development
-	HwGpuTaskEncoder = HwGpuTaskKey.String("encoder")
-	// General
-	// Stability: development
-	HwGpuTaskGeneral = HwGpuTaskKey.String("general")
-)
-
-// Enum values for hw.limit_type
-var (
-	// Critical
-	// Stability: development
-	HwLimitTypeCritical = HwLimitTypeKey.String("critical")
-	// Degraded
-	// Stability: development
-	HwLimitTypeDegraded = HwLimitTypeKey.String("degraded")
-	// High Critical
-	// Stability: development
-	HwLimitTypeHighCritical = HwLimitTypeKey.String("high.critical")
-	// High Degraded
-	// Stability: development
-	HwLimitTypeHighDegraded = HwLimitTypeKey.String("high.degraded")
-	// Low Critical
-	// Stability: development
-	HwLimitTypeLowCritical = HwLimitTypeKey.String("low.critical")
-	// Low Degraded
-	// Stability: development
-	HwLimitTypeLowDegraded = HwLimitTypeKey.String("low.degraded")
-	// Maximum
-	// Stability: development
-	HwLimitTypeMax = HwLimitTypeKey.String("max")
-	// Throttled
-	// Stability: development
-	HwLimitTypeThrottled = HwLimitTypeKey.String("throttled")
-	// Turbo
-	// Stability: development
-	HwLimitTypeTurbo = HwLimitTypeKey.String("turbo")
-)
-
-// Enum values for hw.logical_disk.state
-var (
-	// Used
-	// Stability: development
-	HwLogicalDiskStateUsed = HwLogicalDiskStateKey.String("used")
-	// Free
-	// Stability: development
-	HwLogicalDiskStateFree = HwLogicalDiskStateKey.String("free")
-)
-
-// Enum values for hw.physical_disk.state
-var (
-	// Remaining
-	// Stability: development
-	HwPhysicalDiskStateRemaining = HwPhysicalDiskStateKey.String("remaining")
-)
-
 // Enum values for hw.state
 var (
+	// Ok
+	// Stability: development
+	HwStateOk = HwStateKey.String("ok")
 	// Degraded
 	// Stability: development
 	HwStateDegraded = HwStateKey.String("degraded")
 	// Failed
 	// Stability: development
 	HwStateFailed = HwStateKey.String("failed")
-	// Needs Cleaning
-	// Stability: development
-	HwStateNeedsCleaning = HwStateKey.String("needs_cleaning")
-	// OK
-	// Stability: development
-	HwStateOk = HwStateKey.String("ok")
-	// Predicted Failure
-	// Stability: development
-	HwStatePredictedFailure = HwStateKey.String("predicted_failure")
-)
-
-// Enum values for hw.tape_drive.operation_type
-var (
-	// Mount
-	// Stability: development
-	HwTapeDriveOperationTypeMount = HwTapeDriveOperationTypeKey.String("mount")
-	// Unmount
-	// Stability: development
-	HwTapeDriveOperationTypeUnmount = HwTapeDriveOperationTypeKey.String("unmount")
-	// Clean
-	// Stability: development
-	HwTapeDriveOperationTypeClean = HwTapeDriveOperationTypeKey.String("clean")
 )
 
 // Enum values for hw.type
@@ -8972,57 +7643,6 @@ var (
 	IOSAppStateTerminate = IOSAppStateKey.String("terminate")
 )
 
-// Namespace: jsonrpc
-const (
-	// JSONRPCProtocolVersionKey is the attribute Key conforming to the
-	// "jsonrpc.protocol.version" semantic conventions. It represents the protocol
-	// version, as specified in the `jsonrpc` property of the request and its
-	// corresponding response.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "2.0", "1.0"
-	JSONRPCProtocolVersionKey = attribute.Key("jsonrpc.protocol.version")
-
-	// JSONRPCRequestIDKey is the attribute Key conforming to the
-	// "jsonrpc.request.id" semantic conventions. It represents a string
-	// representation of the `id` property of the request and its corresponding
-	// response.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "10", "request-7"
-	// Note: Under the [JSON-RPC specification], the `id` property may be a string,
-	// number, null, or omitted entirely. When omitted, the request is treated as a
-	// notification. Using `null` is not equivalent to omitting the `id`, but it is
-	// discouraged.
-	// Instrumentations SHOULD NOT capture this attribute when the `id` is `null` or
-	// omitted.
-	//
-	// [JSON-RPC specification]: https://www.jsonrpc.org/specification
-	JSONRPCRequestIDKey = attribute.Key("jsonrpc.request.id")
-)
-
-// JSONRPCProtocolVersion returns an attribute KeyValue conforming to the
-// "jsonrpc.protocol.version" semantic conventions. It represents the protocol
-// version, as specified in the `jsonrpc` property of the request and its
-// corresponding response.
-func JSONRPCProtocolVersion(val string) attribute.KeyValue {
-	return JSONRPCProtocolVersionKey.String(val)
-}
-
-// JSONRPCRequestID returns an attribute KeyValue conforming to the
-// "jsonrpc.request.id" semantic conventions. It represents a string
-// representation of the `id` property of the request and its corresponding
-// response.
-func JSONRPCRequestID(val string) attribute.KeyValue {
-	return JSONRPCRequestIDKey.String(val)
-}
-
 // Namespace: k8s
 const (
 	// K8SClusterNameKey is the attribute Key conforming to the "k8s.cluster.name"
@@ -9030,7 +7650,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry-cluster"
 	K8SClusterNameKey = attribute.Key("k8s.cluster.name")
@@ -9041,7 +7661,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "218fc5a9-a5f1-4b54-aa05-46717d0ab26d"
 	// Note: K8s doesn't have support for obtaining a cluster ID. If this is ever
@@ -9077,7 +7697,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "redis"
 	K8SContainerNameKey = attribute.Key("k8s.container.name")
@@ -9089,7 +7709,7 @@ const (
 	//
 	// Type: int
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples:
 	K8SContainerRestartCountKey = attribute.Key("k8s.container.restart_count")
@@ -9105,42 +7725,12 @@ const (
 	// Examples: "Evicted", "Error"
 	K8SContainerStatusLastTerminatedReasonKey = attribute.Key("k8s.container.status.last_terminated_reason")
 
-	// K8SContainerStatusReasonKey is the attribute Key conforming to the
-	// "k8s.container.status.reason" semantic conventions. It represents the reason
-	// for the container state. Corresponds to the `reason` field of the:
-	// [K8s ContainerStateWaiting] or [K8s ContainerStateTerminated].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "ContainerCreating", "CrashLoopBackOff",
-	// "CreateContainerConfigError", "ErrImagePull", "ImagePullBackOff",
-	// "OOMKilled", "Completed", "Error", "ContainerCannotRun"
-	//
-	// [K8s ContainerStateWaiting]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#containerstatewaiting-v1-core
-	// [K8s ContainerStateTerminated]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#containerstateterminated-v1-core
-	K8SContainerStatusReasonKey = attribute.Key("k8s.container.status.reason")
-
-	// K8SContainerStatusStateKey is the attribute Key conforming to the
-	// "k8s.container.status.state" semantic conventions. It represents the state of
-	// the container. [K8s ContainerState].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "terminated", "running", "waiting"
-	//
-	// [K8s ContainerState]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#containerstate-v1-core
-	K8SContainerStatusStateKey = attribute.Key("k8s.container.status.state")
-
 	// K8SCronJobNameKey is the attribute Key conforming to the "k8s.cronjob.name"
 	// semantic conventions. It represents the name of the CronJob.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry"
 	K8SCronJobNameKey = attribute.Key("k8s.cronjob.name")
@@ -9150,7 +7740,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SCronJobUIDKey = attribute.Key("k8s.cronjob.uid")
@@ -9161,7 +7751,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry"
 	K8SDaemonSetNameKey = attribute.Key("k8s.daemonset.name")
@@ -9171,7 +7761,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SDaemonSetUIDKey = attribute.Key("k8s.daemonset.uid")
@@ -9182,7 +7772,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry"
 	K8SDeploymentNameKey = attribute.Key("k8s.deployment.name")
@@ -9193,22 +7783,10 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SDeploymentUIDKey = attribute.Key("k8s.deployment.uid")
-
-	// K8SHPAMetricTypeKey is the attribute Key conforming to the
-	// "k8s.hpa.metric.type" semantic conventions. It represents the type of metric
-	// source for the horizontal pod autoscaler.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Resource", "ContainerResource"
-	// Note: This attribute reflects the `type` field of spec.metrics[] in the HPA.
-	K8SHPAMetricTypeKey = attribute.Key("k8s.hpa.metric.type")
 
 	// K8SHPANameKey is the attribute Key conforming to the "k8s.hpa.name" semantic
 	// conventions. It represents the name of the horizontal pod autoscaler.
@@ -9220,43 +7798,6 @@ const (
 	// Examples: "opentelemetry"
 	K8SHPANameKey = attribute.Key("k8s.hpa.name")
 
-	// K8SHPAScaletargetrefAPIVersionKey is the attribute Key conforming to the
-	// "k8s.hpa.scaletargetref.api_version" semantic conventions. It represents the
-	// API version of the target resource to scale for the HorizontalPodAutoscaler.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "apps/v1", "autoscaling/v2"
-	// Note: This maps to the `apiVersion` field in the `scaleTargetRef` of the HPA
-	// spec.
-	K8SHPAScaletargetrefAPIVersionKey = attribute.Key("k8s.hpa.scaletargetref.api_version")
-
-	// K8SHPAScaletargetrefKindKey is the attribute Key conforming to the
-	// "k8s.hpa.scaletargetref.kind" semantic conventions. It represents the kind of
-	// the target resource to scale for the HorizontalPodAutoscaler.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Deployment", "StatefulSet"
-	// Note: This maps to the `kind` field in the `scaleTargetRef` of the HPA spec.
-	K8SHPAScaletargetrefKindKey = attribute.Key("k8s.hpa.scaletargetref.kind")
-
-	// K8SHPAScaletargetrefNameKey is the attribute Key conforming to the
-	// "k8s.hpa.scaletargetref.name" semantic conventions. It represents the name of
-	// the target resource to scale for the HorizontalPodAutoscaler.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "my-deployment", "my-statefulset"
-	// Note: This maps to the `name` field in the `scaleTargetRef` of the HPA spec.
-	K8SHPAScaletargetrefNameKey = attribute.Key("k8s.hpa.scaletargetref.name")
-
 	// K8SHPAUIDKey is the attribute Key conforming to the "k8s.hpa.uid" semantic
 	// conventions. It represents the UID of the horizontal pod autoscaler.
 	//
@@ -9267,23 +7808,12 @@ const (
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SHPAUIDKey = attribute.Key("k8s.hpa.uid")
 
-	// K8SHugepageSizeKey is the attribute Key conforming to the "k8s.hugepage.size"
-	// semantic conventions. It represents the size (identifier) of the K8s huge
-	// page.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "2Mi"
-	K8SHugepageSizeKey = attribute.Key("k8s.hugepage.size")
-
 	// K8SJobNameKey is the attribute Key conforming to the "k8s.job.name" semantic
 	// conventions. It represents the name of the Job.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry"
 	K8SJobNameKey = attribute.Key("k8s.job.name")
@@ -9293,7 +7823,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SJobUIDKey = attribute.Key("k8s.job.uid")
@@ -9304,7 +7834,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "default"
 	K8SNamespaceNameKey = attribute.Key("k8s.namespace.name")
@@ -9324,52 +7854,12 @@ const (
 	// [K8s NamespaceStatus]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#namespacestatus-v1-core
 	K8SNamespacePhaseKey = attribute.Key("k8s.namespace.phase")
 
-	// K8SNodeConditionStatusKey is the attribute Key conforming to the
-	// "k8s.node.condition.status" semantic conventions. It represents the status of
-	// the condition, one of True, False, Unknown.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "true", "false", "unknown"
-	// Note: This attribute aligns with the `status` field of the
-	// [NodeCondition]
-	//
-	// [NodeCondition]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#nodecondition-v1-core
-	K8SNodeConditionStatusKey = attribute.Key("k8s.node.condition.status")
-
-	// K8SNodeConditionTypeKey is the attribute Key conforming to the
-	// "k8s.node.condition.type" semantic conventions. It represents the condition
-	// type of a K8s Node.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Ready", "DiskPressure"
-	// Note: K8s Node conditions as described
-	// by [K8s documentation].
-	//
-	// This attribute aligns with the `type` field of the
-	// [NodeCondition]
-	//
-	// The set of possible values is not limited to those listed here. Managed
-	// Kubernetes environments,
-	// or custom controllers MAY introduce additional node condition types.
-	// When this occurs, the exact value as reported by the Kubernetes API SHOULD be
-	// used.
-	//
-	// [K8s documentation]: https://v1-32.docs.kubernetes.io/docs/reference/node/node-status/#condition
-	// [NodeCondition]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#nodecondition-v1-core
-	K8SNodeConditionTypeKey = attribute.Key("k8s.node.condition.type")
-
 	// K8SNodeNameKey is the attribute Key conforming to the "k8s.node.name"
 	// semantic conventions. It represents the name of the Node.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "node-1"
 	K8SNodeNameKey = attribute.Key("k8s.node.name")
@@ -9379,106 +7869,27 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "1eb3a0c6-0477-4080-a9cb-0cb7db65c6a2"
 	K8SNodeUIDKey = attribute.Key("k8s.node.uid")
-
-	// K8SPodHostnameKey is the attribute Key conforming to the "k8s.pod.hostname"
-	// semantic conventions. It represents the specifies the hostname of the Pod.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Beta
-	//
-	// Examples: "collector-gateway"
-	// Note: The K8s Pod spec has an optional hostname field, which can be used to
-	// specify a hostname.
-	// Refer to [K8s docs]
-	// for more information about this field.
-	//
-	// This attribute aligns with the `hostname` field of the
-	// [K8s PodSpec].
-	//
-	// [K8s docs]: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-hostname-and-subdomain-field
-	// [K8s PodSpec]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#podspec-v1-core
-	K8SPodHostnameKey = attribute.Key("k8s.pod.hostname")
-
-	// K8SPodIPKey is the attribute Key conforming to the "k8s.pod.ip" semantic
-	// conventions. It represents the IP address allocated to the Pod.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Beta
-	//
-	// Examples: "172.18.0.2"
-	// Note: This attribute aligns with the `podIP` field of the
-	// [K8s PodStatus].
-	//
-	// [K8s PodStatus]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#podstatus-v1-core
-	K8SPodIPKey = attribute.Key("k8s.pod.ip")
 
 	// K8SPodNameKey is the attribute Key conforming to the "k8s.pod.name" semantic
 	// conventions. It represents the name of the Pod.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry-pod-autoconf"
 	K8SPodNameKey = attribute.Key("k8s.pod.name")
-
-	// K8SPodStartTimeKey is the attribute Key conforming to the
-	// "k8s.pod.start_time" semantic conventions. It represents the start timestamp
-	// of the Pod.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Beta
-	//
-	// Examples: "2025-12-04T08:41:03Z"
-	// Note: Date and time at which the object was acknowledged by the Kubelet.
-	// This is before the Kubelet pulled the container image(s) for the pod.
-	//
-	// This attribute aligns with the `startTime` field of the
-	// [K8s PodStatus],
-	// in ISO 8601 (RFC 3339 compatible) format.
-	//
-	// [K8s PodStatus]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#podstatus-v1-core
-	K8SPodStartTimeKey = attribute.Key("k8s.pod.start_time")
-
-	// K8SPodStatusPhaseKey is the attribute Key conforming to the
-	// "k8s.pod.status.phase" semantic conventions. It represents the phase for the
-	// pod. Corresponds to the `phase` field of the: [K8s PodStatus].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Pending", "Running"
-	//
-	// [K8s PodStatus]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#podstatus-v1-core
-	K8SPodStatusPhaseKey = attribute.Key("k8s.pod.status.phase")
-
-	// K8SPodStatusReasonKey is the attribute Key conforming to the
-	// "k8s.pod.status.reason" semantic conventions. It represents the reason for
-	// the pod state. Corresponds to the `reason` field of the: [K8s PodStatus].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Evicted", "NodeAffinity"
-	//
-	// [K8s PodStatus]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#podstatus-v1-core
-	K8SPodStatusReasonKey = attribute.Key("k8s.pod.status.reason")
 
 	// K8SPodUIDKey is the attribute Key conforming to the "k8s.pod.uid" semantic
 	// conventions. It represents the UID of the Pod.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SPodUIDKey = attribute.Key("k8s.pod.uid")
@@ -9489,7 +7900,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry"
 	K8SReplicaSetNameKey = attribute.Key("k8s.replicaset.name")
@@ -9500,7 +7911,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SReplicaSetUIDKey = attribute.Key("k8s.replicaset.uid")
@@ -9538,25 +7949,6 @@ const (
 	// Examples: "opentelemetry"
 	K8SResourceQuotaNameKey = attribute.Key("k8s.resourcequota.name")
 
-	// K8SResourceQuotaResourceNameKey is the attribute Key conforming to the
-	// "k8s.resourcequota.resource_name" semantic conventions. It represents the
-	// name of the K8s resource a resource quota defines.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "count/replicationcontrollers"
-	// Note: The value for this attribute can be either the full
-	// `count/<resource>[.<group>]` string (e.g., count/deployments.apps,
-	// count/pods), or, for certain core Kubernetes resources, just the resource
-	// name (e.g., pods, services, configmaps). Both forms are supported by
-	// Kubernetes for object count quotas. See
-	// [Kubernetes Resource Quotas documentation] for more details.
-	//
-	// [Kubernetes Resource Quotas documentation]: https://kubernetes.io/docs/concepts/policy/resource-quotas/#quota-on-object-count
-	K8SResourceQuotaResourceNameKey = attribute.Key("k8s.resourcequota.resource_name")
-
 	// K8SResourceQuotaUIDKey is the attribute Key conforming to the
 	// "k8s.resourcequota.uid" semantic conventions. It represents the UID of the
 	// resource quota.
@@ -9568,152 +7960,13 @@ const (
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SResourceQuotaUIDKey = attribute.Key("k8s.resourcequota.uid")
 
-	// K8SServiceEndpointAddressTypeKey is the attribute Key conforming to the
-	// "k8s.service.endpoint.address_type" semantic conventions. It represents the
-	// address type of the service endpoint.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "IPv4", "IPv6"
-	// Note: The network address family or type of the endpoint.
-	// This attribute aligns with the `addressType` field of the
-	// [K8s EndpointSlice].
-	// It is used to differentiate metrics when a Service is backed by multiple
-	// address types
-	// (e.g., in dual-stack clusters).
-	//
-	// [K8s EndpointSlice]: https://kubernetes.io/docs/reference/kubernetes-api/service-resources/endpoint-slice-v1/
-	K8SServiceEndpointAddressTypeKey = attribute.Key("k8s.service.endpoint.address_type")
-
-	// K8SServiceEndpointConditionKey is the attribute Key conforming to the
-	// "k8s.service.endpoint.condition" semantic conventions. It represents the
-	// condition of the service endpoint.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "ready", "serving", "terminating"
-	// Note: The current operational condition of the service endpoint.
-	// An endpoint can have multiple conditions set at once (e.g., both `serving`
-	// and `terminating` during rollout).
-	// This attribute aligns with the condition fields in the [K8s EndpointSlice].
-	//
-	// [K8s EndpointSlice]: https://kubernetes.io/docs/reference/kubernetes-api/service-resources/endpoint-slice-v1/
-	K8SServiceEndpointConditionKey = attribute.Key("k8s.service.endpoint.condition")
-
-	// K8SServiceEndpointZoneKey is the attribute Key conforming to the
-	// "k8s.service.endpoint.zone" semantic conventions. It represents the zone of
-	// the service endpoint.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "us-east-1a", "us-west-2b", "zone-a", ""
-	// Note: The zone where the endpoint is located, typically corresponding to a
-	// failure domain.
-	// This attribute aligns with the `zone` field of endpoints in the
-	// [K8s EndpointSlice].
-	// It enables zone-aware monitoring of service endpoint distribution and
-	// supports
-	// features like [Topology Aware Routing].
-	//
-	// If the zone is not populated (e.g., nodes without the
-	// `topology.kubernetes.io/zone` label),
-	// the attribute value will be an empty string.
-	//
-	// [K8s EndpointSlice]: https://kubernetes.io/docs/reference/kubernetes-api/service-resources/endpoint-slice-v1/
-	// [Topology Aware Routing]: https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/
-	K8SServiceEndpointZoneKey = attribute.Key("k8s.service.endpoint.zone")
-
-	// K8SServiceNameKey is the attribute Key conforming to the "k8s.service.name"
-	// semantic conventions. It represents the name of the Service.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "my-service"
-	K8SServiceNameKey = attribute.Key("k8s.service.name")
-
-	// K8SServicePublishNotReadyAddressesKey is the attribute Key conforming to the
-	// "k8s.service.publish_not_ready_addresses" semantic conventions. It represents
-	// the whether the Service publishes not-ready endpoints.
-	//
-	// Type: boolean
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: true, false
-	// Note: Whether the Service is configured to publish endpoints before the pods
-	// are ready.
-	// This attribute is typically used to indicate that a Service (such as a
-	// headless
-	// Service for a StatefulSet) allows peer discovery before pods pass their
-	// readiness probes.
-	// It aligns with the `publishNotReadyAddresses` field of the
-	// [K8s ServiceSpec].
-	//
-	// [K8s ServiceSpec]: https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceSpec
-	K8SServicePublishNotReadyAddressesKey = attribute.Key("k8s.service.publish_not_ready_addresses")
-
-	// K8SServiceTrafficDistributionKey is the attribute Key conforming to the
-	// "k8s.service.traffic_distribution" semantic conventions. It represents the
-	// traffic distribution policy for the Service.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "PreferSameZone", "PreferSameNode"
-	// Note: Specifies how traffic is distributed to endpoints for this Service.
-	// This attribute aligns with the `trafficDistribution` field of the
-	// [K8s ServiceSpec].
-	// Known values include `PreferSameZone` (prefer endpoints in the same zone as
-	// the client) and
-	// `PreferSameNode` (prefer endpoints on the same node, fallback to same zone,
-	// then cluster-wide).
-	// If this field is not set on the Service, the attribute SHOULD NOT be emitted.
-	// When not set, Kubernetes distributes traffic evenly across all endpoints
-	// cluster-wide.
-	//
-	// [K8s ServiceSpec]: https://kubernetes.io/docs/reference/networking/virtual-ips/#traffic-distribution
-	K8SServiceTrafficDistributionKey = attribute.Key("k8s.service.traffic_distribution")
-
-	// K8SServiceTypeKey is the attribute Key conforming to the "k8s.service.type"
-	// semantic conventions. It represents the type of the Kubernetes Service.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "ClusterIP", "NodePort", "LoadBalancer"
-	// Note: This attribute aligns with the `type` field of the
-	// [K8s ServiceSpec].
-	//
-	// [K8s ServiceSpec]: https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceSpec
-	K8SServiceTypeKey = attribute.Key("k8s.service.type")
-
-	// K8SServiceUIDKey is the attribute Key conforming to the "k8s.service.uid"
-	// semantic conventions. It represents the UID of the Service.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
-	K8SServiceUIDKey = attribute.Key("k8s.service.uid")
-
 	// K8SStatefulSetNameKey is the attribute Key conforming to the
 	// "k8s.statefulset.name" semantic conventions. It represents the name of the
 	// StatefulSet.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "opentelemetry"
 	K8SStatefulSetNameKey = attribute.Key("k8s.statefulset.name")
@@ -9724,23 +7977,10 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Beta
+	// Stability: Development
 	//
 	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
 	K8SStatefulSetUIDKey = attribute.Key("k8s.statefulset.uid")
-
-	// K8SStorageclassNameKey is the attribute Key conforming to the
-	// "k8s.storageclass.name" semantic conventions. It represents the name of K8s
-	// [StorageClass] object.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "gold.storageclass.storage.k8s.io"
-	//
-	// [StorageClass]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#storageclass-v1-storage-k8s-io
-	K8SStorageclassNameKey = attribute.Key("k8s.storageclass.name")
 
 	// K8SVolumeNameKey is the attribute Key conforming to the "k8s.volume.name"
 	// semantic conventions. It represents the name of the K8s volume.
@@ -9831,16 +8071,14 @@ func K8SCronJobUID(val string) attribute.KeyValue {
 
 // K8SDaemonSetAnnotation returns an attribute KeyValue conforming to the
 // "k8s.daemonset.annotation" semantic conventions. It represents the annotation
-// placed on the DaemonSet, the `<key>` being the annotation name, the value
-// being the annotation value, even if the value is empty.
+// key-value pairs placed on the DaemonSet.
 func K8SDaemonSetAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.daemonset.annotation."+key, val)
 }
 
 // K8SDaemonSetLabel returns an attribute KeyValue conforming to the
-// "k8s.daemonset.label" semantic conventions. It represents the label placed on
-// the DaemonSet, the `<key>` being the label name, the value being the label
-// value, even if the value is empty.
+// "k8s.daemonset.label" semantic conventions. It represents the label key-value
+// pairs placed on the DaemonSet.
 func K8SDaemonSetLabel(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.daemonset.label."+key, val)
 }
@@ -9861,16 +8099,14 @@ func K8SDaemonSetUID(val string) attribute.KeyValue {
 
 // K8SDeploymentAnnotation returns an attribute KeyValue conforming to the
 // "k8s.deployment.annotation" semantic conventions. It represents the annotation
-// placed on the Deployment, the `<key>` being the annotation name, the value
-// being the annotation value, even if the value is empty.
+// key-value pairs placed on the Deployment.
 func K8SDeploymentAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.deployment.annotation."+key, val)
 }
 
 // K8SDeploymentLabel returns an attribute KeyValue conforming to the
-// "k8s.deployment.label" semantic conventions. It represents the label placed on
-// the Deployment, the `<key>` being the label name, the value being the label
-// value, even if the value is empty.
+// "k8s.deployment.label" semantic conventions. It represents the label key-value
+// pairs placed on the Deployment.
 func K8SDeploymentLabel(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.deployment.label."+key, val)
 }
@@ -9889,38 +8125,10 @@ func K8SDeploymentUID(val string) attribute.KeyValue {
 	return K8SDeploymentUIDKey.String(val)
 }
 
-// K8SHPAMetricType returns an attribute KeyValue conforming to the
-// "k8s.hpa.metric.type" semantic conventions. It represents the type of metric
-// source for the horizontal pod autoscaler.
-func K8SHPAMetricType(val string) attribute.KeyValue {
-	return K8SHPAMetricTypeKey.String(val)
-}
-
 // K8SHPAName returns an attribute KeyValue conforming to the "k8s.hpa.name"
 // semantic conventions. It represents the name of the horizontal pod autoscaler.
 func K8SHPAName(val string) attribute.KeyValue {
 	return K8SHPANameKey.String(val)
-}
-
-// K8SHPAScaletargetrefAPIVersion returns an attribute KeyValue conforming to the
-// "k8s.hpa.scaletargetref.api_version" semantic conventions. It represents the
-// API version of the target resource to scale for the HorizontalPodAutoscaler.
-func K8SHPAScaletargetrefAPIVersion(val string) attribute.KeyValue {
-	return K8SHPAScaletargetrefAPIVersionKey.String(val)
-}
-
-// K8SHPAScaletargetrefKind returns an attribute KeyValue conforming to the
-// "k8s.hpa.scaletargetref.kind" semantic conventions. It represents the kind of
-// the target resource to scale for the HorizontalPodAutoscaler.
-func K8SHPAScaletargetrefKind(val string) attribute.KeyValue {
-	return K8SHPAScaletargetrefKindKey.String(val)
-}
-
-// K8SHPAScaletargetrefName returns an attribute KeyValue conforming to the
-// "k8s.hpa.scaletargetref.name" semantic conventions. It represents the name of
-// the target resource to scale for the HorizontalPodAutoscaler.
-func K8SHPAScaletargetrefName(val string) attribute.KeyValue {
-	return K8SHPAScaletargetrefNameKey.String(val)
 }
 
 // K8SHPAUID returns an attribute KeyValue conforming to the "k8s.hpa.uid"
@@ -9929,25 +8137,16 @@ func K8SHPAUID(val string) attribute.KeyValue {
 	return K8SHPAUIDKey.String(val)
 }
 
-// K8SHugepageSize returns an attribute KeyValue conforming to the
-// "k8s.hugepage.size" semantic conventions. It represents the size (identifier)
-// of the K8s huge page.
-func K8SHugepageSize(val string) attribute.KeyValue {
-	return K8SHugepageSizeKey.String(val)
-}
-
 // K8SJobAnnotation returns an attribute KeyValue conforming to the
-// "k8s.job.annotation" semantic conventions. It represents the annotation placed
-// on the Job, the `<key>` being the annotation name, the value being the
-// annotation value, even if the value is empty.
+// "k8s.job.annotation" semantic conventions. It represents the annotation
+// key-value pairs placed on the Job.
 func K8SJobAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.job.annotation."+key, val)
 }
 
 // K8SJobLabel returns an attribute KeyValue conforming to the "k8s.job.label"
-// semantic conventions. It represents the label placed on the Job, the `<key>`
-// being the label name, the value being the label value, even if the value is
-// empty.
+// semantic conventions. It represents the label key-value pairs placed on the
+// Job.
 func K8SJobLabel(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.job.label."+key, val)
 }
@@ -9966,16 +8165,14 @@ func K8SJobUID(val string) attribute.KeyValue {
 
 // K8SNamespaceAnnotation returns an attribute KeyValue conforming to the
 // "k8s.namespace.annotation" semantic conventions. It represents the annotation
-// placed on the Namespace, the `<key>` being the annotation name, the value
-// being the annotation value, even if the value is empty.
+// key-value pairs placed on the Namespace.
 func K8SNamespaceAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.namespace.annotation."+key, val)
 }
 
 // K8SNamespaceLabel returns an attribute KeyValue conforming to the
-// "k8s.namespace.label" semantic conventions. It represents the label placed on
-// the Namespace, the `<key>` being the label name, the value being the label
-// value, even if the value is empty.
+// "k8s.namespace.label" semantic conventions. It represents the label key-value
+// pairs placed on the Namespace.
 func K8SNamespaceLabel(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.namespace.label."+key, val)
 }
@@ -10023,19 +8220,6 @@ func K8SPodAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.pod.annotation."+key, val)
 }
 
-// K8SPodHostname returns an attribute KeyValue conforming to the
-// "k8s.pod.hostname" semantic conventions. It represents the specifies the
-// hostname of the Pod.
-func K8SPodHostname(val string) attribute.KeyValue {
-	return K8SPodHostnameKey.String(val)
-}
-
-// K8SPodIP returns an attribute KeyValue conforming to the "k8s.pod.ip" semantic
-// conventions. It represents the IP address allocated to the Pod.
-func K8SPodIP(val string) attribute.KeyValue {
-	return K8SPodIPKey.String(val)
-}
-
 // K8SPodLabel returns an attribute KeyValue conforming to the "k8s.pod.label"
 // semantic conventions. It represents the label placed on the Pod, the `<key>`
 // being the label name, the value being the label value.
@@ -10049,13 +8233,6 @@ func K8SPodName(val string) attribute.KeyValue {
 	return K8SPodNameKey.String(val)
 }
 
-// K8SPodStartTime returns an attribute KeyValue conforming to the
-// "k8s.pod.start_time" semantic conventions. It represents the start timestamp
-// of the Pod.
-func K8SPodStartTime(val string) attribute.KeyValue {
-	return K8SPodStartTimeKey.String(val)
-}
-
 // K8SPodUID returns an attribute KeyValue conforming to the "k8s.pod.uid"
 // semantic conventions. It represents the UID of the Pod.
 func K8SPodUID(val string) attribute.KeyValue {
@@ -10064,16 +8241,14 @@ func K8SPodUID(val string) attribute.KeyValue {
 
 // K8SReplicaSetAnnotation returns an attribute KeyValue conforming to the
 // "k8s.replicaset.annotation" semantic conventions. It represents the annotation
-// placed on the ReplicaSet, the `<key>` being the annotation name, the value
-// being the annotation value, even if the value is empty.
+// key-value pairs placed on the ReplicaSet.
 func K8SReplicaSetAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.replicaset.annotation."+key, val)
 }
 
 // K8SReplicaSetLabel returns an attribute KeyValue conforming to the
-// "k8s.replicaset.label" semantic conventions. It represents the label placed on
-// the ReplicaSet, the `<key>` being the label name, the value being the label
-// value, even if the value is empty.
+// "k8s.replicaset.label" semantic conventions. It represents the label key-value
+// pairs placed on the ReplicaSet.
 func K8SReplicaSetLabel(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.replicaset.label."+key, val)
 }
@@ -10113,13 +8288,6 @@ func K8SResourceQuotaName(val string) attribute.KeyValue {
 	return K8SResourceQuotaNameKey.String(val)
 }
 
-// K8SResourceQuotaResourceName returns an attribute KeyValue conforming to the
-// "k8s.resourcequota.resource_name" semantic conventions. It represents the name
-// of the K8s resource a resource quota defines.
-func K8SResourceQuotaResourceName(val string) attribute.KeyValue {
-	return K8SResourceQuotaResourceNameKey.String(val)
-}
-
 // K8SResourceQuotaUID returns an attribute KeyValue conforming to the
 // "k8s.resourcequota.uid" semantic conventions. It represents the UID of the
 // resource quota.
@@ -10127,76 +8295,16 @@ func K8SResourceQuotaUID(val string) attribute.KeyValue {
 	return K8SResourceQuotaUIDKey.String(val)
 }
 
-// K8SServiceAnnotation returns an attribute KeyValue conforming to the
-// "k8s.service.annotation" semantic conventions. It represents the annotation
-// placed on the Service, the `<key>` being the annotation name, the value being
-// the annotation value, even if the value is empty.
-func K8SServiceAnnotation(key string, val string) attribute.KeyValue {
-	return attribute.String("k8s.service.annotation."+key, val)
-}
-
-// K8SServiceEndpointZone returns an attribute KeyValue conforming to the
-// "k8s.service.endpoint.zone" semantic conventions. It represents the zone of
-// the service endpoint.
-func K8SServiceEndpointZone(val string) attribute.KeyValue {
-	return K8SServiceEndpointZoneKey.String(val)
-}
-
-// K8SServiceLabel returns an attribute KeyValue conforming to the
-// "k8s.service.label" semantic conventions. It represents the label placed on
-// the Service, the `<key>` being the label name, the value being the label
-// value, even if the value is empty.
-func K8SServiceLabel(key string, val string) attribute.KeyValue {
-	return attribute.String("k8s.service.label."+key, val)
-}
-
-// K8SServiceName returns an attribute KeyValue conforming to the
-// "k8s.service.name" semantic conventions. It represents the name of the
-// Service.
-func K8SServiceName(val string) attribute.KeyValue {
-	return K8SServiceNameKey.String(val)
-}
-
-// K8SServicePublishNotReadyAddresses returns an attribute KeyValue conforming to
-// the "k8s.service.publish_not_ready_addresses" semantic conventions. It
-// represents the whether the Service publishes not-ready endpoints.
-func K8SServicePublishNotReadyAddresses(val bool) attribute.KeyValue {
-	return K8SServicePublishNotReadyAddressesKey.Bool(val)
-}
-
-// K8SServiceSelector returns an attribute KeyValue conforming to the
-// "k8s.service.selector" semantic conventions. It represents the selector
-// key-value pair placed on the Service, the `<key>` being the selector key, the
-// value being the selector value.
-func K8SServiceSelector(key string, val string) attribute.KeyValue {
-	return attribute.String("k8s.service.selector."+key, val)
-}
-
-// K8SServiceTrafficDistribution returns an attribute KeyValue conforming to the
-// "k8s.service.traffic_distribution" semantic conventions. It represents the
-// traffic distribution policy for the Service.
-func K8SServiceTrafficDistribution(val string) attribute.KeyValue {
-	return K8SServiceTrafficDistributionKey.String(val)
-}
-
-// K8SServiceUID returns an attribute KeyValue conforming to the
-// "k8s.service.uid" semantic conventions. It represents the UID of the Service.
-func K8SServiceUID(val string) attribute.KeyValue {
-	return K8SServiceUIDKey.String(val)
-}
-
 // K8SStatefulSetAnnotation returns an attribute KeyValue conforming to the
 // "k8s.statefulset.annotation" semantic conventions. It represents the
-// annotation placed on the StatefulSet, the `<key>` being the annotation name,
-// the value being the annotation value, even if the value is empty.
+// annotation key-value pairs placed on the StatefulSet.
 func K8SStatefulSetAnnotation(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.statefulset.annotation."+key, val)
 }
 
 // K8SStatefulSetLabel returns an attribute KeyValue conforming to the
-// "k8s.statefulset.label" semantic conventions. It represents the label placed
-// on the StatefulSet, the `<key>` being the label name, the value being the
-// label value, even if the value is empty.
+// "k8s.statefulset.label" semantic conventions. It represents the label
+// key-value pairs placed on the StatefulSet.
 func K8SStatefulSetLabel(key string, val string) attribute.KeyValue {
 	return attribute.String("k8s.statefulset.label."+key, val)
 }
@@ -10215,65 +8323,12 @@ func K8SStatefulSetUID(val string) attribute.KeyValue {
 	return K8SStatefulSetUIDKey.String(val)
 }
 
-// K8SStorageclassName returns an attribute KeyValue conforming to the
-// "k8s.storageclass.name" semantic conventions. It represents the name of K8s
-// [StorageClass] object.
-//
-// [StorageClass]: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#storageclass-v1-storage-k8s-io
-func K8SStorageclassName(val string) attribute.KeyValue {
-	return K8SStorageclassNameKey.String(val)
-}
-
 // K8SVolumeName returns an attribute KeyValue conforming to the
 // "k8s.volume.name" semantic conventions. It represents the name of the K8s
 // volume.
 func K8SVolumeName(val string) attribute.KeyValue {
 	return K8SVolumeNameKey.String(val)
 }
-
-// Enum values for k8s.container.status.reason
-var (
-	// The container is being created.
-	// Stability: development
-	K8SContainerStatusReasonContainerCreating = K8SContainerStatusReasonKey.String("ContainerCreating")
-	// The container is in a crash loop back off state.
-	// Stability: development
-	K8SContainerStatusReasonCrashLoopBackOff = K8SContainerStatusReasonKey.String("CrashLoopBackOff")
-	// There was an error creating the container configuration.
-	// Stability: development
-	K8SContainerStatusReasonCreateContainerConfigError = K8SContainerStatusReasonKey.String("CreateContainerConfigError")
-	// There was an error pulling the container image.
-	// Stability: development
-	K8SContainerStatusReasonErrImagePull = K8SContainerStatusReasonKey.String("ErrImagePull")
-	// The container image pull is in back off state.
-	// Stability: development
-	K8SContainerStatusReasonImagePullBackOff = K8SContainerStatusReasonKey.String("ImagePullBackOff")
-	// The container was killed due to out of memory.
-	// Stability: development
-	K8SContainerStatusReasonOomKilled = K8SContainerStatusReasonKey.String("OOMKilled")
-	// The container has completed execution.
-	// Stability: development
-	K8SContainerStatusReasonCompleted = K8SContainerStatusReasonKey.String("Completed")
-	// There was an error with the container.
-	// Stability: development
-	K8SContainerStatusReasonError = K8SContainerStatusReasonKey.String("Error")
-	// The container cannot run.
-	// Stability: development
-	K8SContainerStatusReasonContainerCannotRun = K8SContainerStatusReasonKey.String("ContainerCannotRun")
-)
-
-// Enum values for k8s.container.status.state
-var (
-	// The container has terminated.
-	// Stability: development
-	K8SContainerStatusStateTerminated = K8SContainerStatusStateKey.String("terminated")
-	// The container is running.
-	// Stability: development
-	K8SContainerStatusStateRunning = K8SContainerStatusStateKey.String("running")
-	// The container is waiting.
-	// Stability: development
-	K8SContainerStatusStateWaiting = K8SContainerStatusStateKey.String("waiting")
-)
 
 // Enum values for k8s.namespace.phase
 var (
@@ -10287,136 +8342,6 @@ var (
 	//
 	// [K8s API]: https://pkg.go.dev/k8s.io/api@v0.31.3/core/v1#NamespacePhase
 	K8SNamespacePhaseTerminating = K8SNamespacePhaseKey.String("terminating")
-)
-
-// Enum values for k8s.node.condition.status
-var (
-	// condition_true
-	// Stability: development
-	K8SNodeConditionStatusConditionTrue = K8SNodeConditionStatusKey.String("true")
-	// condition_false
-	// Stability: development
-	K8SNodeConditionStatusConditionFalse = K8SNodeConditionStatusKey.String("false")
-	// condition_unknown
-	// Stability: development
-	K8SNodeConditionStatusConditionUnknown = K8SNodeConditionStatusKey.String("unknown")
-)
-
-// Enum values for k8s.node.condition.type
-var (
-	// The node is healthy and ready to accept pods
-	// Stability: development
-	K8SNodeConditionTypeReady = K8SNodeConditionTypeKey.String("Ready")
-	// Pressure exists on the disk size—that is, if the disk capacity is low
-	// Stability: development
-	K8SNodeConditionTypeDiskPressure = K8SNodeConditionTypeKey.String("DiskPressure")
-	// Pressure exists on the node memory—that is, if the node memory is low
-	// Stability: development
-	K8SNodeConditionTypeMemoryPressure = K8SNodeConditionTypeKey.String("MemoryPressure")
-	// Pressure exists on the processes—that is, if there are too many processes
-	// on the node
-	// Stability: development
-	K8SNodeConditionTypePIDPressure = K8SNodeConditionTypeKey.String("PIDPressure")
-	// The network for the node is not correctly configured
-	// Stability: development
-	K8SNodeConditionTypeNetworkUnavailable = K8SNodeConditionTypeKey.String("NetworkUnavailable")
-)
-
-// Enum values for k8s.pod.status.phase
-var (
-	// The pod has been accepted by the system, but one or more of the containers
-	// has not been started. This includes time before being bound to a node, as
-	// well as time spent pulling images onto the host.
-	//
-	// Stability: development
-	K8SPodStatusPhasePending = K8SPodStatusPhaseKey.String("Pending")
-	// The pod has been bound to a node and all of the containers have been started.
-	// At least one container is still running or is in the process of being
-	// restarted.
-	//
-	// Stability: development
-	K8SPodStatusPhaseRunning = K8SPodStatusPhaseKey.String("Running")
-	// All containers in the pod have voluntarily terminated with a container exit
-	// code of 0, and the system is not going to restart any of these containers.
-	//
-	// Stability: development
-	K8SPodStatusPhaseSucceeded = K8SPodStatusPhaseKey.String("Succeeded")
-	// All containers in the pod have terminated, and at least one container has
-	// terminated in a failure (exited with a non-zero exit code or was stopped by
-	// the system).
-	//
-	// Stability: development
-	K8SPodStatusPhaseFailed = K8SPodStatusPhaseKey.String("Failed")
-	// For some reason the state of the pod could not be obtained, typically due to
-	// an error in communicating with the host of the pod.
-	//
-	// Stability: development
-	K8SPodStatusPhaseUnknown = K8SPodStatusPhaseKey.String("Unknown")
-)
-
-// Enum values for k8s.pod.status.reason
-var (
-	// The pod is evicted.
-	// Stability: development
-	K8SPodStatusReasonEvicted = K8SPodStatusReasonKey.String("Evicted")
-	// The pod is in a status because of its node affinity
-	// Stability: development
-	K8SPodStatusReasonNodeAffinity = K8SPodStatusReasonKey.String("NodeAffinity")
-	// The reason on a pod when its state cannot be confirmed as kubelet is
-	// unresponsive on the node it is (was) running.
-	//
-	// Stability: development
-	K8SPodStatusReasonNodeLost = K8SPodStatusReasonKey.String("NodeLost")
-	// The node is shutdown
-	// Stability: development
-	K8SPodStatusReasonShutdown = K8SPodStatusReasonKey.String("Shutdown")
-	// The pod was rejected admission to the node because of an error during
-	// admission that could not be categorized.
-	//
-	// Stability: development
-	K8SPodStatusReasonUnexpectedAdmissionError = K8SPodStatusReasonKey.String("UnexpectedAdmissionError")
-)
-
-// Enum values for k8s.service.endpoint.address_type
-var (
-	// IPv4 address type
-	// Stability: development
-	K8SServiceEndpointAddressTypeIPv4 = K8SServiceEndpointAddressTypeKey.String("IPv4")
-	// IPv6 address type
-	// Stability: development
-	K8SServiceEndpointAddressTypeIPv6 = K8SServiceEndpointAddressTypeKey.String("IPv6")
-	// FQDN address type
-	// Stability: development
-	K8SServiceEndpointAddressTypeFqdn = K8SServiceEndpointAddressTypeKey.String("FQDN")
-)
-
-// Enum values for k8s.service.endpoint.condition
-var (
-	// The endpoint is ready to receive new connections.
-	// Stability: development
-	K8SServiceEndpointConditionReady = K8SServiceEndpointConditionKey.String("ready")
-	// The endpoint is currently handling traffic.
-	// Stability: development
-	K8SServiceEndpointConditionServing = K8SServiceEndpointConditionKey.String("serving")
-	// The endpoint is in the process of shutting down.
-	// Stability: development
-	K8SServiceEndpointConditionTerminating = K8SServiceEndpointConditionKey.String("terminating")
-)
-
-// Enum values for k8s.service.type
-var (
-	// ClusterIP service type
-	// Stability: development
-	K8SServiceTypeClusterIP = K8SServiceTypeKey.String("ClusterIP")
-	// NodePort service type
-	// Stability: development
-	K8SServiceTypeNodePort = K8SServiceTypeKey.String("NodePort")
-	// LoadBalancer service type
-	// Stability: development
-	K8SServiceTypeLoadBalancer = K8SServiceTypeKey.String("LoadBalancer")
-	// ExternalName service type
-	// Stability: development
-	K8SServiceTypeExternalName = K8SServiceTypeKey.String("ExternalName")
 )
 
 // Enum values for k8s.volume.type
@@ -10451,6 +8376,30 @@ var (
 	//
 	// [local]: https://v1-30.docs.kubernetes.io/docs/concepts/storage/volumes/#local
 	K8SVolumeTypeLocal = K8SVolumeTypeKey.String("local")
+)
+
+// Namespace: linux
+const (
+	// LinuxMemorySlabStateKey is the attribute Key conforming to the
+	// "linux.memory.slab.state" semantic conventions. It represents the Linux Slab
+	// memory state.
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "reclaimable", "unreclaimable"
+	LinuxMemorySlabStateKey = attribute.Key("linux.memory.slab.state")
+)
+
+// Enum values for linux.memory.slab.state
+var (
+	// reclaimable
+	// Stability: development
+	LinuxMemorySlabStateReclaimable = LinuxMemorySlabStateKey.String("reclaimable")
+	// unreclaimable
+	// Stability: development
+	LinuxMemorySlabStateUnreclaimable = LinuxMemorySlabStateKey.String("unreclaimable")
 )
 
 // Namespace: log
@@ -10590,209 +8539,6 @@ var (
 	// Events from stderr stream
 	// Stability: development
 	LogIostreamStderr = LogIostreamKey.String("stderr")
-)
-
-// Namespace: mainframe
-const (
-	// MainframeLparNameKey is the attribute Key conforming to the
-	// "mainframe.lpar.name" semantic conventions. It represents the name of the
-	// logical partition that hosts a systems with a mainframe operating system.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "LPAR01"
-	MainframeLparNameKey = attribute.Key("mainframe.lpar.name")
-)
-
-// MainframeLparName returns an attribute KeyValue conforming to the
-// "mainframe.lpar.name" semantic conventions. It represents the name of the
-// logical partition that hosts a systems with a mainframe operating system.
-func MainframeLparName(val string) attribute.KeyValue {
-	return MainframeLparNameKey.String(val)
-}
-
-// Namespace: mcp
-const (
-	// McpMethodNameKey is the attribute Key conforming to the "mcp.method.name"
-	// semantic conventions. It represents the name of the request or notification
-	// method.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	McpMethodNameKey = attribute.Key("mcp.method.name")
-
-	// McpProtocolVersionKey is the attribute Key conforming to the
-	// "mcp.protocol.version" semantic conventions. It represents the [version] of
-	// the Model Context Protocol used.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "2025-06-18"
-	//
-	// [version]: https://modelcontextprotocol.io/specification/versioning
-	McpProtocolVersionKey = attribute.Key("mcp.protocol.version")
-
-	// McpResourceURIKey is the attribute Key conforming to the "mcp.resource.uri"
-	// semantic conventions. It represents the value of the resource uri.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "postgres://database/customers/schema",
-	// "file:///home/user/documents/report.pdf"
-	// Note: This is a URI of the resource provided in the following requests or
-	// notifications: `resources/read`, `resources/subscribe`,
-	// `resources/unsubscribe`, or `notifications/resources/updated`.
-	McpResourceURIKey = attribute.Key("mcp.resource.uri")
-
-	// McpSessionIDKey is the attribute Key conforming to the "mcp.session.id"
-	// semantic conventions. It represents the identifies [MCP session].
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "191c4850af6c49e08843a3f6c80e5046"
-	//
-	// [MCP session]: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#session-management
-	McpSessionIDKey = attribute.Key("mcp.session.id")
-)
-
-// McpProtocolVersion returns an attribute KeyValue conforming to the
-// "mcp.protocol.version" semantic conventions. It represents the [version] of
-// the Model Context Protocol used.
-//
-// [version]: https://modelcontextprotocol.io/specification/versioning
-func McpProtocolVersion(val string) attribute.KeyValue {
-	return McpProtocolVersionKey.String(val)
-}
-
-// McpResourceURI returns an attribute KeyValue conforming to the
-// "mcp.resource.uri" semantic conventions. It represents the value of the
-// resource uri.
-func McpResourceURI(val string) attribute.KeyValue {
-	return McpResourceURIKey.String(val)
-}
-
-// McpSessionID returns an attribute KeyValue conforming to the "mcp.session.id"
-// semantic conventions. It represents the identifies [MCP session].
-//
-// [MCP session]: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#session-management
-func McpSessionID(val string) attribute.KeyValue {
-	return McpSessionIDKey.String(val)
-}
-
-// Enum values for mcp.method.name
-var (
-	// Notification cancelling a previously-issued request.
-	//
-	// Stability: development
-	McpMethodNameNotificationsCancelled = McpMethodNameKey.String("notifications/cancelled")
-	// Request to initialize the MCP client.
-	//
-	// Stability: development
-	McpMethodNameInitialize = McpMethodNameKey.String("initialize")
-	// Notification indicating that the MCP client has been initialized.
-	//
-	// Stability: development
-	McpMethodNameNotificationsInitialized = McpMethodNameKey.String("notifications/initialized")
-	// Notification indicating the progress for a long-running operation.
-	//
-	// Stability: development
-	McpMethodNameNotificationsProgress = McpMethodNameKey.String("notifications/progress")
-	// Request to check that the other party is still alive.
-	//
-	// Stability: development
-	McpMethodNamePing = McpMethodNameKey.String("ping")
-	// Request to list resources available on server.
-	//
-	// Stability: development
-	McpMethodNameResourcesList = McpMethodNameKey.String("resources/list")
-	// Request to list resource templates available on server.
-	//
-	// Stability: development
-	McpMethodNameResourcesTemplatesList = McpMethodNameKey.String("resources/templates/list")
-	// Request to read a resource.
-	//
-	// Stability: development
-	McpMethodNameResourcesRead = McpMethodNameKey.String("resources/read")
-	// Notification indicating that the list of resources has changed.
-	//
-	// Stability: development
-	McpMethodNameNotificationsResourcesListChanged = McpMethodNameKey.String("notifications/resources/list_changed")
-	// Request to subscribe to a resource.
-	//
-	// Stability: development
-	McpMethodNameResourcesSubscribe = McpMethodNameKey.String("resources/subscribe")
-	// Request to unsubscribe from resource updates.
-	//
-	// Stability: development
-	McpMethodNameResourcesUnsubscribe = McpMethodNameKey.String("resources/unsubscribe")
-	// Notification indicating that a resource has been updated.
-	//
-	// Stability: development
-	McpMethodNameNotificationsResourcesUpdated = McpMethodNameKey.String("notifications/resources/updated")
-	// Request to list prompts available on server.
-	//
-	// Stability: development
-	McpMethodNamePromptsList = McpMethodNameKey.String("prompts/list")
-	// Request to get a prompt.
-	//
-	// Stability: development
-	McpMethodNamePromptsGet = McpMethodNameKey.String("prompts/get")
-	// Notification indicating that the list of prompts has changed.
-	//
-	// Stability: development
-	McpMethodNameNotificationsPromptsListChanged = McpMethodNameKey.String("notifications/prompts/list_changed")
-	// Request to list tools available on server.
-	//
-	// Stability: development
-	McpMethodNameToolsList = McpMethodNameKey.String("tools/list")
-	// Request to call a tool.
-	//
-	// Stability: development
-	McpMethodNameToolsCall = McpMethodNameKey.String("tools/call")
-	// Notification indicating that the list of tools has changed.
-	//
-	// Stability: development
-	McpMethodNameNotificationsToolsListChanged = McpMethodNameKey.String("notifications/tools/list_changed")
-	// Request to set the logging level.
-	//
-	// Stability: development
-	McpMethodNameLoggingSetLevel = McpMethodNameKey.String("logging/setLevel")
-	// Notification indicating that a message has been received.
-	//
-	// Stability: development
-	McpMethodNameNotificationsMessage = McpMethodNameKey.String("notifications/message")
-	// Request to create a sampling message.
-	//
-	// Stability: development
-	McpMethodNameSamplingCreateMessage = McpMethodNameKey.String("sampling/createMessage")
-	// Request to complete a prompt.
-	//
-	// Stability: development
-	McpMethodNameCompletionComplete = McpMethodNameKey.String("completion/complete")
-	// Request to list roots available on server.
-	//
-	// Stability: development
-	McpMethodNameRootsList = McpMethodNameKey.String("roots/list")
-	// Notification indicating that the list of roots has changed.
-	//
-	// Stability: development
-	McpMethodNameNotificationsRootsListChanged = McpMethodNameKey.String("notifications/roots/list_changed")
-	// Request from the server to elicit additional information from the user via
-	// the client
-	//
-	// Stability: development
-	McpMethodNameElicitationCreate = McpMethodNameKey.String("elicitation/create")
 )
 
 // Namespace: messaging
@@ -11508,6 +9254,10 @@ var (
 	//
 	// Stability: development
 	MessagingOperationTypeSettle = MessagingOperationTypeKey.String("settle")
+	// Deprecated: Replaced by `process`.
+	MessagingOperationTypeDeliver = MessagingOperationTypeKey.String("deliver")
+	// Deprecated: Replaced by `send`.
+	MessagingOperationTypePublish = MessagingOperationTypeKey.String("publish")
 )
 
 // Enum values for messaging.rocketmq.consumption_model
@@ -11557,9 +9307,6 @@ var (
 	// Apache ActiveMQ
 	// Stability: development
 	MessagingSystemActiveMQ = MessagingSystemKey.String("activemq")
-	// Amazon Simple Notification Service (SNS)
-	// Stability: development
-	MessagingSystemAWSSNS = MessagingSystemKey.String("aws.sns")
 	// Amazon Simple Queue Service (SQS)
 	// Stability: development
 	MessagingSystemAWSSQS = MessagingSystemKey.String("aws_sqs")
@@ -12046,47 +9793,6 @@ var (
 	NetworkTypeIPv6 = NetworkTypeKey.String("ipv6")
 )
 
-// Namespace: nfs
-const (
-	// NfsOperationNameKey is the attribute Key conforming to the
-	// "nfs.operation.name" semantic conventions. It represents the NFSv4+ operation
-	// name.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "OPEN", "READ", "GETATTR"
-	NfsOperationNameKey = attribute.Key("nfs.operation.name")
-
-	// NfsServerRepcacheStatusKey is the attribute Key conforming to the
-	// "nfs.server.repcache.status" semantic conventions. It represents the linux:
-	// one of "hit" (NFSD_STATS_RC_HITS), "miss" (NFSD_STATS_RC_MISSES), or
-	// "nocache" (NFSD_STATS_RC_NOCACHE -- uncacheable).
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: hit
-	NfsServerRepcacheStatusKey = attribute.Key("nfs.server.repcache.status")
-)
-
-// NfsOperationName returns an attribute KeyValue conforming to the
-// "nfs.operation.name" semantic conventions. It represents the NFSv4+ operation
-// name.
-func NfsOperationName(val string) attribute.KeyValue {
-	return NfsOperationNameKey.String(val)
-}
-
-// NfsServerRepcacheStatus returns an attribute KeyValue conforming to the
-// "nfs.server.repcache.status" semantic conventions. It represents the linux:
-// one of "hit" (NFSD_STATS_RC_HITS), "miss" (NFSD_STATS_RC_MISSES), or "nocache"
-// (NFSD_STATS_RC_NOCACHE -- uncacheable).
-func NfsServerRepcacheStatus(val string) attribute.KeyValue {
-	return NfsServerRepcacheStatusKey.String(val)
-}
-
 // Namespace: oci
 const (
 	// OCIManifestDigestKey is the attribute Key conforming to the
@@ -12118,203 +9824,6 @@ func OCIManifestDigest(val string) attribute.KeyValue {
 	return OCIManifestDigestKey.String(val)
 }
 
-// Namespace: onc_rpc
-const (
-	// OncRPCProcedureNameKey is the attribute Key conforming to the
-	// "onc_rpc.procedure.name" semantic conventions. It represents the ONC/Sun RPC
-	// procedure name.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "OPEN", "READ", "GETATTR"
-	OncRPCProcedureNameKey = attribute.Key("onc_rpc.procedure.name")
-
-	// OncRPCProcedureNumberKey is the attribute Key conforming to the
-	// "onc_rpc.procedure.number" semantic conventions. It represents the ONC/Sun
-	// RPC procedure number.
-	//
-	// Type: int
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	OncRPCProcedureNumberKey = attribute.Key("onc_rpc.procedure.number")
-
-	// OncRPCProgramNameKey is the attribute Key conforming to the
-	// "onc_rpc.program.name" semantic conventions. It represents the ONC/Sun RPC
-	// program name.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "portmapper", "nfs"
-	OncRPCProgramNameKey = attribute.Key("onc_rpc.program.name")
-
-	// OncRPCVersionKey is the attribute Key conforming to the "onc_rpc.version"
-	// semantic conventions. It represents the ONC/Sun RPC program version.
-	//
-	// Type: int
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	OncRPCVersionKey = attribute.Key("onc_rpc.version")
-)
-
-// OncRPCProcedureName returns an attribute KeyValue conforming to the
-// "onc_rpc.procedure.name" semantic conventions. It represents the ONC/Sun RPC
-// procedure name.
-func OncRPCProcedureName(val string) attribute.KeyValue {
-	return OncRPCProcedureNameKey.String(val)
-}
-
-// OncRPCProcedureNumber returns an attribute KeyValue conforming to the
-// "onc_rpc.procedure.number" semantic conventions. It represents the ONC/Sun RPC
-// procedure number.
-func OncRPCProcedureNumber(val int) attribute.KeyValue {
-	return OncRPCProcedureNumberKey.Int(val)
-}
-
-// OncRPCProgramName returns an attribute KeyValue conforming to the
-// "onc_rpc.program.name" semantic conventions. It represents the ONC/Sun RPC
-// program name.
-func OncRPCProgramName(val string) attribute.KeyValue {
-	return OncRPCProgramNameKey.String(val)
-}
-
-// OncRPCVersion returns an attribute KeyValue conforming to the
-// "onc_rpc.version" semantic conventions. It represents the ONC/Sun RPC program
-// version.
-func OncRPCVersion(val int) attribute.KeyValue {
-	return OncRPCVersionKey.Int(val)
-}
-
-// Namespace: openai
-const (
-	// OpenAIAPITypeKey is the attribute Key conforming to the "openai.api.type"
-	// semantic conventions. It represents the type of OpenAI API being used.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	OpenAIAPITypeKey = attribute.Key("openai.api.type")
-
-	// OpenAIRequestServiceTierKey is the attribute Key conforming to the
-	// "openai.request.service_tier" semantic conventions. It represents the service
-	// tier requested. May be a specific tier, default, or auto.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "auto", "default"
-	OpenAIRequestServiceTierKey = attribute.Key("openai.request.service_tier")
-
-	// OpenAIResponseServiceTierKey is the attribute Key conforming to the
-	// "openai.response.service_tier" semantic conventions. It represents the
-	// service tier used for the response.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "scale", "default"
-	OpenAIResponseServiceTierKey = attribute.Key("openai.response.service_tier")
-
-	// OpenAIResponseSystemFingerprintKey is the attribute Key conforming to the
-	// "openai.response.system_fingerprint" semantic conventions. It represents a
-	// fingerprint to track any eventual change in the Generative AI environment.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "fp_44709d6fcb"
-	OpenAIResponseSystemFingerprintKey = attribute.Key("openai.response.system_fingerprint")
-)
-
-// OpenAIResponseServiceTier returns an attribute KeyValue conforming to the
-// "openai.response.service_tier" semantic conventions. It represents the service
-// tier used for the response.
-func OpenAIResponseServiceTier(val string) attribute.KeyValue {
-	return OpenAIResponseServiceTierKey.String(val)
-}
-
-// OpenAIResponseSystemFingerprint returns an attribute KeyValue conforming to
-// the "openai.response.system_fingerprint" semantic conventions. It represents a
-// fingerprint to track any eventual change in the Generative AI environment.
-func OpenAIResponseSystemFingerprint(val string) attribute.KeyValue {
-	return OpenAIResponseSystemFingerprintKey.String(val)
-}
-
-// Enum values for openai.api.type
-var (
-	// The OpenAI [Chat Completions API].
-	// Stability: development
-	//
-	// [Chat Completions API]: https://developers.openai.com/api/reference/chat-completions/overview
-	OpenAIAPITypeChatCompletions = OpenAIAPITypeKey.String("chat_completions")
-	// The OpenAI [Responses API].
-	// Stability: development
-	//
-	// [Responses API]: https://developers.openai.com/api/reference/responses/overview
-	OpenAIAPITypeResponses = OpenAIAPITypeKey.String("responses")
-)
-
-// Enum values for openai.request.service_tier
-var (
-	// The system will utilize scale tier credits until they are exhausted.
-	// Stability: development
-	OpenAIRequestServiceTierAuto = OpenAIRequestServiceTierKey.String("auto")
-	// The system will utilize the default scale tier.
-	// Stability: development
-	OpenAIRequestServiceTierDefault = OpenAIRequestServiceTierKey.String("default")
-)
-
-// Namespace: openshift
-const (
-	// OpenShiftClusterquotaNameKey is the attribute Key conforming to the
-	// "openshift.clusterquota.name" semantic conventions. It represents the name of
-	// the cluster quota.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "opentelemetry"
-	OpenShiftClusterquotaNameKey = attribute.Key("openshift.clusterquota.name")
-
-	// OpenShiftClusterquotaUIDKey is the attribute Key conforming to the
-	// "openshift.clusterquota.uid" semantic conventions. It represents the UID of
-	// the cluster quota.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "275ecb36-5aa8-4c2a-9c47-d8bb681b9aff"
-	OpenShiftClusterquotaUIDKey = attribute.Key("openshift.clusterquota.uid")
-)
-
-// OpenShiftClusterquotaName returns an attribute KeyValue conforming to the
-// "openshift.clusterquota.name" semantic conventions. It represents the name of
-// the cluster quota.
-func OpenShiftClusterquotaName(val string) attribute.KeyValue {
-	return OpenShiftClusterquotaNameKey.String(val)
-}
-
-// OpenShiftClusterquotaUID returns an attribute KeyValue conforming to the
-// "openshift.clusterquota.uid" semantic conventions. It represents the UID of
-// the cluster quota.
-func OpenShiftClusterquotaUID(val string) attribute.KeyValue {
-	return OpenShiftClusterquotaUIDKey.String(val)
-}
-
 // Namespace: opentracing
 const (
 	// OpenTracingRefTypeKey is the attribute Key conforming to the
@@ -12339,158 +9848,6 @@ var (
 	// Stability: development
 	OpenTracingRefTypeFollowsFrom = OpenTracingRefTypeKey.String("follows_from")
 )
-
-// Namespace: oracle
-const (
-	// OracleDBDomainKey is the attribute Key conforming to the "oracle.db.domain"
-	// semantic conventions. It represents the database domain associated with the
-	// connection.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "example.com", "corp.internal", "prod.db.local"
-	// Note: This attribute SHOULD be set to the value of the `DB_DOMAIN`
-	// initialization parameter,
-	// as exposed in `v$parameter`. `DB_DOMAIN` defines the domain portion of the
-	// global
-	// database name and SHOULD be configured when a database is, or may become,
-	// part of a
-	// distributed environment. Its value consists of one or more valid identifiers
-	// (alphanumeric ASCII characters) separated by periods.
-	OracleDBDomainKey = attribute.Key("oracle.db.domain")
-
-	// OracleDBInstanceNameKey is the attribute Key conforming to the
-	// "oracle.db.instance.name" semantic conventions. It represents the instance
-	// name associated with the connection in an Oracle Real Application Clusters
-	// environment.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "ORCL1", "ORCL2", "ORCL3"
-	// Note: There can be multiple instances associated with a single database
-	// service. It indicates the
-	// unique instance name to which the connection is currently bound. For non-RAC
-	// databases, this value
-	// defaults to the `oracle.db.name`.
-	OracleDBInstanceNameKey = attribute.Key("oracle.db.instance.name")
-
-	// OracleDBNameKey is the attribute Key conforming to the "oracle.db.name"
-	// semantic conventions. It represents the database name associated with the
-	// connection.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "ORCL1", "FREE"
-	// Note: This attribute SHOULD be set to the value of the parameter `DB_NAME`
-	// exposed in `v$parameter`.
-	OracleDBNameKey = attribute.Key("oracle.db.name")
-
-	// OracleDBPdbKey is the attribute Key conforming to the "oracle.db.pdb"
-	// semantic conventions. It represents the pluggable database (PDB) name
-	// associated with the connection.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "PDB1", "FREEPDB"
-	// Note: This attribute SHOULD reflect the PDB that the session is currently
-	// connected to.
-	// If instrumentation cannot reliably obtain the active PDB name for each
-	// operation
-	// without issuing an additional query (such as `SELECT SYS_CONTEXT`), it is
-	// RECOMMENDED to fall back to the PDB name specified at connection
-	// establishment.
-	OracleDBPdbKey = attribute.Key("oracle.db.pdb")
-
-	// OracleDBServiceKey is the attribute Key conforming to the "oracle.db.service"
-	// semantic conventions. It represents the service name currently associated
-	// with the database connection.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "order-processing-service", "db_low.adb.oraclecloud.com",
-	// "db_high.adb.oraclecloud.com"
-	// Note: The effective service name for a connection can change during its
-	// lifetime,
-	// for example after executing sql, `ALTER SESSION`. If an instrumentation
-	// cannot reliably
-	// obtain the current service name for each operation without issuing an
-	// additional
-	// query (such as `SELECT SYS_CONTEXT`), it is RECOMMENDED to fall back to the
-	// service name originally provided at connection establishment.
-	OracleDBServiceKey = attribute.Key("oracle.db.service")
-)
-
-// OracleDBDomain returns an attribute KeyValue conforming to the
-// "oracle.db.domain" semantic conventions. It represents the database domain
-// associated with the connection.
-func OracleDBDomain(val string) attribute.KeyValue {
-	return OracleDBDomainKey.String(val)
-}
-
-// OracleDBInstanceName returns an attribute KeyValue conforming to the
-// "oracle.db.instance.name" semantic conventions. It represents the instance
-// name associated with the connection in an Oracle Real Application Clusters
-// environment.
-func OracleDBInstanceName(val string) attribute.KeyValue {
-	return OracleDBInstanceNameKey.String(val)
-}
-
-// OracleDBName returns an attribute KeyValue conforming to the "oracle.db.name"
-// semantic conventions. It represents the database name associated with the
-// connection.
-func OracleDBName(val string) attribute.KeyValue {
-	return OracleDBNameKey.String(val)
-}
-
-// OracleDBPdb returns an attribute KeyValue conforming to the "oracle.db.pdb"
-// semantic conventions. It represents the pluggable database (PDB) name
-// associated with the connection.
-func OracleDBPdb(val string) attribute.KeyValue {
-	return OracleDBPdbKey.String(val)
-}
-
-// OracleDBService returns an attribute KeyValue conforming to the
-// "oracle.db.service" semantic conventions. It represents the service name
-// currently associated with the database connection.
-func OracleDBService(val string) attribute.KeyValue {
-	return OracleDBServiceKey.String(val)
-}
-
-// Namespace: oracle_cloud
-const (
-	// OracleCloudRealmKey is the attribute Key conforming to the
-	// "oracle_cloud.realm" semantic conventions. It represents the OCI realm
-	// identifier that indicates the isolated partition in which the tenancy and its
-	// resources reside.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "oc1", "oc2"
-	// Note: See [OCI documentation on realms]
-	//
-	// [OCI documentation on realms]: https://docs.oracle.com/iaas/Content/General/Concepts/regions.htm
-	OracleCloudRealmKey = attribute.Key("oracle_cloud.realm")
-)
-
-// OracleCloudRealm returns an attribute KeyValue conforming to the
-// "oracle_cloud.realm" semantic conventions. It represents the OCI realm
-// identifier that indicates the isolated partition in which the tenancy and its
-// resources reside.
-func OracleCloudRealm(val string) attribute.KeyValue {
-	return OracleCloudRealmKey.String(val)
-}
 
 // Namespace: os
 const (
@@ -12615,7 +9972,7 @@ var (
 	OSTypeSolaris = OSTypeKey.String("solaris")
 	// IBM z/OS
 	// Stability: development
-	OSTypeZOS = OSTypeKey.String("zos")
+	OSTypeZOS = OSTypeKey.String("z_os")
 )
 
 // Namespace: otel
@@ -12668,20 +10025,6 @@ const (
 	// E.g. for Java the fully qualified classname SHOULD be used in this case.
 	OTelComponentTypeKey = attribute.Key("otel.component.type")
 
-	// OTelEventNameKey is the attribute Key conforming to the "otel.event.name"
-	// semantic conventions. It represents the identifies the class / type of event.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "browser.mouse.click", "device.app.lifecycle"
-	// Note: This attribute SHOULD be used by non-OTLP exporters when destination
-	// does not support `EventName` or equivalent field. This attribute MAY be used
-	// by applications using existing logging libraries so that it can be used to
-	// set the `EventName` field by Collector or SDK components.
-	OTelEventNameKey = attribute.Key("otel.event.name")
-
 	// OTelScopeNameKey is the attribute Key conforming to the "otel.scope.name"
 	// semantic conventions. It represents the name of the instrumentation scope - (
 	// `InstrumentationScope.Name` in OTLP).
@@ -12693,17 +10036,6 @@ const (
 	// Examples: "io.opentelemetry.contrib.mongodb"
 	OTelScopeNameKey = attribute.Key("otel.scope.name")
 
-	// OTelScopeSchemaURLKey is the attribute Key conforming to the
-	// "otel.scope.schema_url" semantic conventions. It represents the schema URL of
-	// the instrumentation scope.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "https://opentelemetry.io/schemas/1.31.0"
-	OTelScopeSchemaURLKey = attribute.Key("otel.scope.schema_url")
-
 	// OTelScopeVersionKey is the attribute Key conforming to the
 	// "otel.scope.version" semantic conventions. It represents the version of the
 	// instrumentation scope - (`InstrumentationScope.Version` in OTLP).
@@ -12714,20 +10046,6 @@ const (
 	//
 	// Examples: "1.0.0"
 	OTelScopeVersionKey = attribute.Key("otel.scope.version")
-
-	// OTelSpanParentOriginKey is the attribute Key conforming to the
-	// "otel.span.parent.origin" semantic conventions. It represents the determines
-	// whether the span has a parent span, and if so,
-	// [whether it is a remote parent].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	//
-	// [whether it is a remote parent]: https://opentelemetry.io/docs/specs/otel/trace/api/#isremote
-	OTelSpanParentOriginKey = attribute.Key("otel.span.parent.origin")
 
 	// OTelSpanSamplingResultKey is the attribute Key conforming to the
 	// "otel.span.sampling_result" semantic conventions. It represents the result
@@ -12771,25 +10089,11 @@ func OTelComponentName(val string) attribute.KeyValue {
 	return OTelComponentNameKey.String(val)
 }
 
-// OTelEventName returns an attribute KeyValue conforming to the
-// "otel.event.name" semantic conventions. It represents the identifies the class
-// / type of event.
-func OTelEventName(val string) attribute.KeyValue {
-	return OTelEventNameKey.String(val)
-}
-
 // OTelScopeName returns an attribute KeyValue conforming to the
 // "otel.scope.name" semantic conventions. It represents the name of the
 // instrumentation scope - (`InstrumentationScope.Name` in OTLP).
 func OTelScopeName(val string) attribute.KeyValue {
 	return OTelScopeNameKey.String(val)
-}
-
-// OTelScopeSchemaURL returns an attribute KeyValue conforming to the
-// "otel.scope.schema_url" semantic conventions. It represents the schema URL of
-// the instrumentation scope.
-func OTelScopeSchemaURL(val string) attribute.KeyValue {
-	return OTelScopeSchemaURLKey.String(val)
 }
 
 // OTelScopeVersion returns an attribute KeyValue conforming to the
@@ -12836,10 +10140,6 @@ var (
 	//
 	// Stability: development
 	OTelComponentTypeOtlpHTTPJSONSpanExporter = OTelComponentTypeKey.String("otlp_http_json_span_exporter")
-	// Zipkin span exporter over HTTP
-	//
-	// Stability: development
-	OTelComponentTypeZipkinHTTPSpanExporter = OTelComponentTypeKey.String("zipkin_http_span_exporter")
 	// OTLP log record exporter over gRPC with protobuf serialization
 	//
 	// Stability: development
@@ -12868,27 +10168,6 @@ var (
 	//
 	// Stability: development
 	OTelComponentTypeOtlpHTTPJSONMetricExporter = OTelComponentTypeKey.String("otlp_http_json_metric_exporter")
-	// Prometheus metric exporter over HTTP with the default text-based format
-	//
-	// Stability: development
-	OTelComponentTypePrometheusHTTPTextMetricExporter = OTelComponentTypeKey.String("prometheus_http_text_metric_exporter")
-)
-
-// Enum values for otel.span.parent.origin
-var (
-	// The span does not have a parent, it is a root span
-	// Stability: development
-	OTelSpanParentOriginNone = OTelSpanParentOriginKey.String("none")
-	// The span has a parent and the parent's span context [isRemote()] is false
-	// Stability: development
-	//
-	// [isRemote()]: https://opentelemetry.io/docs/specs/otel/trace/api/#isremote
-	OTelSpanParentOriginLocal = OTelSpanParentOriginKey.String("local")
-	// The span has a parent and the parent's span context [isRemote()] is true
-	// Stability: development
-	//
-	// [isRemote()]: https://opentelemetry.io/docs/specs/otel/trace/api/#isremote
-	OTelSpanParentOriginRemote = OTelSpanParentOriginKey.String("remote")
 )
 
 // Enum values for otel.span.sampling_result
@@ -12915,225 +10194,31 @@ var (
 	OTelStatusCodeError = OTelStatusCodeKey.String("ERROR")
 )
 
-// Namespace: pprof
+// Namespace: peer
 const (
-	// PprofLocationIsFoldedKey is the attribute Key conforming to the
-	// "pprof.location.is_folded" semantic conventions. It represents the provides
-	// an indication that multiple symbols map to this location's address, for
-	// example due to identical code folding by the linker. In that case the line
-	// information represents one of the multiple symbols. This field must be
-	// recomputed when the symbolization state of the profile changes.
-	//
-	// Type: boolean
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	PprofLocationIsFoldedKey = attribute.Key("pprof.location.is_folded")
-
-	// PprofMappingHasFilenamesKey is the attribute Key conforming to the
-	// "pprof.mapping.has_filenames" semantic conventions. It represents the
-	// indicates that there are filenames related to this mapping.
-	//
-	// Type: boolean
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	PprofMappingHasFilenamesKey = attribute.Key("pprof.mapping.has_filenames")
-
-	// PprofMappingHasFunctionsKey is the attribute Key conforming to the
-	// "pprof.mapping.has_functions" semantic conventions. It represents the
-	// indicates that there are functions related to this mapping.
-	//
-	// Type: boolean
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	PprofMappingHasFunctionsKey = attribute.Key("pprof.mapping.has_functions")
-
-	// PprofMappingHasInlineFramesKey is the attribute Key conforming to the
-	// "pprof.mapping.has_inline_frames" semantic conventions. It represents the
-	// indicates that there are inline frames related to this mapping.
-	//
-	// Type: boolean
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	PprofMappingHasInlineFramesKey = attribute.Key("pprof.mapping.has_inline_frames")
-
-	// PprofMappingHasLineNumbersKey is the attribute Key conforming to the
-	// "pprof.mapping.has_line_numbers" semantic conventions. It represents the
-	// indicates that there are line numbers related to this mapping.
-	//
-	// Type: boolean
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples:
-	PprofMappingHasLineNumbersKey = attribute.Key("pprof.mapping.has_line_numbers")
-
-	// PprofProfileCommentKey is the attribute Key conforming to the
-	// "pprof.profile.comment" semantic conventions. It represents the free-form
-	// text associated with the profile. This field should not be used to store any
-	// machine-readable information, it is only for human-friendly content.
-	//
-	// Type: string[]
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "hello world", "bazinga"
-	PprofProfileCommentKey = attribute.Key("pprof.profile.comment")
-
-	// PprofProfileDocURLKey is the attribute Key conforming to the
-	// "pprof.profile.doc_url" semantic conventions. It represents the documentation
-	// link for this profile type.
+	// PeerServiceKey is the attribute Key conforming to the "peer.service" semantic
+	// conventions. It represents the [`service.name`] of the remote service. SHOULD
+	// be equal to the actual `service.name` resource attribute of the remote
+	// service if any.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
 	// Stability: Development
 	//
-	// Examples: "http://pprof.example.com/cpu-profile.html"
-	// Note: The URL must be absolute and may be missing if the profile was
-	// generated by code that did not supply a link
-	PprofProfileDocURLKey = attribute.Key("pprof.profile.doc_url")
-
-	// PprofProfileDropFramesKey is the attribute Key conforming to the
-	// "pprof.profile.drop_frames" semantic conventions. It represents the frames
-	// with Function.function_name fully matching the regexp will be dropped from
-	// the samples, along with their successors.
+	// Examples: AuthTokenCache
 	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "/foobar/"
-	PprofProfileDropFramesKey = attribute.Key("pprof.profile.drop_frames")
-
-	// PprofProfileKeepFramesKey is the attribute Key conforming to the
-	// "pprof.profile.keep_frames" semantic conventions. It represents the frames
-	// with Function.function_name fully matching the regexp will be kept, even if
-	// it matches drop_frames.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "/bazinga/"
-	PprofProfileKeepFramesKey = attribute.Key("pprof.profile.keep_frames")
-
-	// PprofScopeDefaultSampleTypeKey is the attribute Key conforming to the
-	// "pprof.scope.default_sample_type" semantic conventions. It represents the
-	// records the pprof's default_sample_type in the original profile. Not set if
-	// the default sample type was missing.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "cpu"
-	// Note: This attribute, if present, MUST be set at the scope level
-	// (resource_profiles[].scope_profiles[].scope.attributes[]).
-	PprofScopeDefaultSampleTypeKey = attribute.Key("pprof.scope.default_sample_type")
-
-	// PprofScopeSampleTypeOrderKey is the attribute Key conforming to the
-	// "pprof.scope.sample_type_order" semantic conventions. It represents the
-	// records the indexes of the sample types in the original profile.
-	//
-	// Type: int[]
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: 3, 0, 1, 2
-	// Note: This attribute, if present, MUST be set at the scope level
-	// (resource_profiles[].scope_profiles[].scope.attributes[]).
-	PprofScopeSampleTypeOrderKey = attribute.Key("pprof.scope.sample_type_order")
+	// [`service.name`]: /docs/resource/README.md#service
+	PeerServiceKey = attribute.Key("peer.service")
 )
 
-// PprofLocationIsFolded returns an attribute KeyValue conforming to the
-// "pprof.location.is_folded" semantic conventions. It represents the provides an
-// indication that multiple symbols map to this location's address, for example
-// due to identical code folding by the linker. In that case the line information
-// represents one of the multiple symbols. This field must be recomputed when the
-// symbolization state of the profile changes.
-func PprofLocationIsFolded(val bool) attribute.KeyValue {
-	return PprofLocationIsFoldedKey.Bool(val)
-}
-
-// PprofMappingHasFilenames returns an attribute KeyValue conforming to the
-// "pprof.mapping.has_filenames" semantic conventions. It represents the
-// indicates that there are filenames related to this mapping.
-func PprofMappingHasFilenames(val bool) attribute.KeyValue {
-	return PprofMappingHasFilenamesKey.Bool(val)
-}
-
-// PprofMappingHasFunctions returns an attribute KeyValue conforming to the
-// "pprof.mapping.has_functions" semantic conventions. It represents the
-// indicates that there are functions related to this mapping.
-func PprofMappingHasFunctions(val bool) attribute.KeyValue {
-	return PprofMappingHasFunctionsKey.Bool(val)
-}
-
-// PprofMappingHasInlineFrames returns an attribute KeyValue conforming to the
-// "pprof.mapping.has_inline_frames" semantic conventions. It represents the
-// indicates that there are inline frames related to this mapping.
-func PprofMappingHasInlineFrames(val bool) attribute.KeyValue {
-	return PprofMappingHasInlineFramesKey.Bool(val)
-}
-
-// PprofMappingHasLineNumbers returns an attribute KeyValue conforming to the
-// "pprof.mapping.has_line_numbers" semantic conventions. It represents the
-// indicates that there are line numbers related to this mapping.
-func PprofMappingHasLineNumbers(val bool) attribute.KeyValue {
-	return PprofMappingHasLineNumbersKey.Bool(val)
-}
-
-// PprofProfileComment returns an attribute KeyValue conforming to the
-// "pprof.profile.comment" semantic conventions. It represents the free-form text
-// associated with the profile. This field should not be used to store any
-// machine-readable information, it is only for human-friendly content.
-func PprofProfileComment(val ...string) attribute.KeyValue {
-	return PprofProfileCommentKey.StringSlice(val)
-}
-
-// PprofProfileDocURL returns an attribute KeyValue conforming to the
-// "pprof.profile.doc_url" semantic conventions. It represents the documentation
-// link for this profile type.
-func PprofProfileDocURL(val string) attribute.KeyValue {
-	return PprofProfileDocURLKey.String(val)
-}
-
-// PprofProfileDropFrames returns an attribute KeyValue conforming to the
-// "pprof.profile.drop_frames" semantic conventions. It represents the frames
-// with Function.function_name fully matching the regexp will be dropped from the
-// samples, along with their successors.
-func PprofProfileDropFrames(val string) attribute.KeyValue {
-	return PprofProfileDropFramesKey.String(val)
-}
-
-// PprofProfileKeepFrames returns an attribute KeyValue conforming to the
-// "pprof.profile.keep_frames" semantic conventions. It represents the frames
-// with Function.function_name fully matching the regexp will be kept, even if it
-// matches drop_frames.
-func PprofProfileKeepFrames(val string) attribute.KeyValue {
-	return PprofProfileKeepFramesKey.String(val)
-}
-
-// PprofScopeDefaultSampleType returns an attribute KeyValue conforming to the
-// "pprof.scope.default_sample_type" semantic conventions. It represents the
-// records the pprof's default_sample_type in the original profile. Not set if
-// the default sample type was missing.
-func PprofScopeDefaultSampleType(val string) attribute.KeyValue {
-	return PprofScopeDefaultSampleTypeKey.String(val)
-}
-
-// PprofScopeSampleTypeOrder returns an attribute KeyValue conforming to the
-// "pprof.scope.sample_type_order" semantic conventions. It represents the
-// records the indexes of the sample types in the original profile.
-func PprofScopeSampleTypeOrder(val ...int) attribute.KeyValue {
-	return PprofScopeSampleTypeOrderKey.IntSlice(val)
+// PeerService returns an attribute KeyValue conforming to the "peer.service"
+// semantic conventions. It represents the [`service.name`] of the remote
+// service. SHOULD be equal to the actual `service.name` resource attribute of
+// the remote service if any.
+//
+// [`service.name`]: /docs/resource/README.md#service
+func PeerService(val string) attribute.KeyValue {
+	return PeerServiceKey.String(val)
 }
 
 // Namespace: process
@@ -13197,7 +10282,7 @@ const (
 	ProcessCommandLineKey = attribute.Key("process.command_line")
 
 	// ProcessContextSwitchTypeKey is the attribute Key conforming to the
-	// "process.context_switch.type" semantic conventions. It represents the
+	// "process.context_switch_type" semantic conventions. It represents the
 	// specifies whether the context switches for this data point were voluntary or
 	// involuntary.
 	//
@@ -13206,7 +10291,7 @@ const (
 	// Stability: Development
 	//
 	// Examples:
-	ProcessContextSwitchTypeKey = attribute.Key("process.context_switch.type")
+	ProcessContextSwitchTypeKey = attribute.Key("process.context_switch_type")
 
 	// ProcessCreationTimeKey is the attribute Key conforming to the
 	// "process.creation.time" semantic conventions. It represents the date and time
@@ -13353,6 +10438,18 @@ const (
 	// Examples: "root"
 	ProcessOwnerKey = attribute.Key("process.owner")
 
+	// ProcessPagingFaultTypeKey is the attribute Key conforming to the
+	// "process.paging.fault_type" semantic conventions. It represents the type of
+	// page fault for this data point. Type `major` is for major/hard page faults,
+	// and `minor` is for minor/soft page faults.
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	ProcessPagingFaultTypeKey = attribute.Key("process.paging.fault_type")
+
 	// ProcessParentPIDKey is the attribute Key conforming to the
 	// "process.parent_pid" semantic conventions. It represents the parent Process
 	// identifier (PPID).
@@ -13464,19 +10561,6 @@ const (
 	// Examples: 14
 	ProcessSessionLeaderPIDKey = attribute.Key("process.session_leader.pid")
 
-	// ProcessStateKey is the attribute Key conforming to the "process.state"
-	// semantic conventions. It represents the process state, e.g.,
-	// [Linux Process State Codes].
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "running"
-	//
-	// [Linux Process State Codes]: https://man7.org/linux/man-pages/man1/ps.1.html#PROCESS_STATE_CODES
-	ProcessStateKey = attribute.Key("process.state")
-
 	// ProcessTitleKey is the attribute Key conforming to the "process.title"
 	// semantic conventions. It represents the process title (proctitle).
 	//
@@ -13585,7 +10669,7 @@ func ProcessCreationTime(val string) attribute.KeyValue {
 
 // ProcessEnvironmentVariable returns an attribute KeyValue conforming to the
 // "process.environment_variable" semantic conventions. It represents the process
-// environment variables, `<key>` being the environment variable name, the value
+// environment variables, <key> being the environment variable name, the value
 // being the environment variable value.
 func ProcessEnvironmentVariable(key string, val string) attribute.KeyValue {
 	return attribute.String("process.environment_variable."+key, val)
@@ -13778,7 +10862,7 @@ func ProcessWorkingDirectory(val string) attribute.KeyValue {
 	return ProcessWorkingDirectoryKey.String(val)
 }
 
-// Enum values for process.context_switch.type
+// Enum values for process.context_switch_type
 var (
 	// voluntary
 	// Stability: development
@@ -13788,20 +10872,14 @@ var (
 	ProcessContextSwitchTypeInvoluntary = ProcessContextSwitchTypeKey.String("involuntary")
 )
 
-// Enum values for process.state
+// Enum values for process.paging.fault_type
 var (
-	// running
+	// major
 	// Stability: development
-	ProcessStateRunning = ProcessStateKey.String("running")
-	// sleeping
+	ProcessPagingFaultTypeMajor = ProcessPagingFaultTypeKey.String("major")
+	// minor
 	// Stability: development
-	ProcessStateSleeping = ProcessStateKey.String("sleeping")
-	// stopped
-	// Stability: development
-	ProcessStateStopped = ProcessStateKey.String("stopped")
-	// defunct
-	// Stability: development
-	ProcessStateDefunct = ProcessStateKey.String("defunct")
+	ProcessPagingFaultTypeMinor = ProcessPagingFaultTypeKey.String("minor")
 )
 
 // Namespace: profile
@@ -13900,144 +10978,404 @@ var (
 
 // Namespace: rpc
 const (
-	// RPCMethodKey is the attribute Key conforming to the "rpc.method" semantic
-	// conventions. It represents the fully-qualified logical name of the method
-	// from the RPC interface perspective.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
-	//
-	// Examples: "com.example.ExampleService/exampleMethod", "EchoService/Echo",
-	// "_OTHER"
-	// Note: The method name MAY have unbounded cardinality in edge or error cases.
-	//
-	// Some RPC frameworks or libraries provide a fixed set of recognized methods
-	// for client stubs and server implementations. Instrumentations for such
-	// frameworks MUST set this attribute to the original method name only
-	// when the method is recognized by the framework or library.
-	//
-	// When the method is not recognized, for example, when the server receives
-	// a request for a method that is not predefined on the server, or when
-	// instrumentation is not able to reliably detect if the method is predefined,
-	// the attribute MUST be set to `_OTHER`. In such cases, tracing
-	// instrumentations MUST also set `rpc.method_original` attribute to
-	// the original method value.
-	//
-	// If the RPC instrumentation could end up converting valid RPC methods to
-	// `_OTHER`, then it SHOULD provide a way to configure the list of recognized
-	// RPC methods.
-	//
-	// The `rpc.method` can be different from the name of any implementing
-	// method/function.
-	// The `code.function.name` attribute may be used to record the fully-qualified
-	// method actually executing the call on the server side, or the
-	// RPC client stub method on the client side.
-	RPCMethodKey = attribute.Key("rpc.method")
-
-	// RPCMethodOriginalKey is the attribute Key conforming to the
-	// "rpc.method_original" semantic conventions. It represents the original name
-	// of the method used by the client.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
-	//
-	// Examples: "com.myservice.EchoService/catchAll",
-	// "com.myservice.EchoService/unknownMethod", "InvalidMethod"
-	RPCMethodOriginalKey = attribute.Key("rpc.method_original")
-
-	// RPCResponseStatusCodeKey is the attribute Key conforming to the
-	// "rpc.response.status_code" semantic conventions. It represents the status
-	// code of the RPC returned by the RPC server or generated by the client.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
-	//
-	// Examples: "OK", "DEADLINE_EXCEEDED", "-32602"
-	// Note: Usually it represents an error code, but may also represent partial
-	// success, warning, or differentiate between various types of successful
-	// outcomes.
-	// Semantic conventions for individual RPC frameworks SHOULD document what
-	// `rpc.response.status_code` means in the context of that system and which
-	// values are considered to represent errors.
-	RPCResponseStatusCodeKey = attribute.Key("rpc.response.status_code")
-
-	// RPCSystemNameKey is the attribute Key conforming to the "rpc.system.name"
-	// semantic conventions. It represents the Remote Procedure Call (RPC) system.
+	// RPCConnectRPCErrorCodeKey is the attribute Key conforming to the
+	// "rpc.connect_rpc.error_code" semantic conventions. It represents the
+	// [error codes] of the Connect request. Error codes are always string values.
 	//
 	// Type: Enum
 	// RequirementLevel: Recommended
-	// Stability: Release_Candidate
+	// Stability: Development
 	//
 	// Examples:
-	// Note: The client and server RPC systems may differ for the same RPC
-	// interaction. For example, a client may use Apache Dubbo or Connect RPC to
-	// communicate with a server that uses gRPC since both protocols provide
-	// compatibility with gRPC.
-	RPCSystemNameKey = attribute.Key("rpc.system.name")
+	//
+	// [error codes]: https://connectrpc.com//docs/protocol/#error-codes
+	RPCConnectRPCErrorCodeKey = attribute.Key("rpc.connect_rpc.error_code")
+
+	// RPCGRPCStatusCodeKey is the attribute Key conforming to the
+	// "rpc.grpc.status_code" semantic conventions. It represents the
+	// [numeric status code] of the gRPC request.
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	//
+	// [numeric status code]: https://github.com/grpc/grpc/blob/v1.33.2/doc/statuscodes.md
+	RPCGRPCStatusCodeKey = attribute.Key("rpc.grpc.status_code")
+
+	// RPCJSONRPCErrorCodeKey is the attribute Key conforming to the
+	// "rpc.jsonrpc.error_code" semantic conventions. It represents the `error.code`
+	//  property of response if it is an error response.
+	//
+	// Type: int
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: -32700, 100
+	RPCJSONRPCErrorCodeKey = attribute.Key("rpc.jsonrpc.error_code")
+
+	// RPCJSONRPCErrorMessageKey is the attribute Key conforming to the
+	// "rpc.jsonrpc.error_message" semantic conventions. It represents the
+	// `error.message` property of response if it is an error response.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "Parse error", "User already exists"
+	RPCJSONRPCErrorMessageKey = attribute.Key("rpc.jsonrpc.error_message")
+
+	// RPCJSONRPCRequestIDKey is the attribute Key conforming to the
+	// "rpc.jsonrpc.request_id" semantic conventions. It represents the `id`
+	// property of request or response. Since protocol allows id to be int, string,
+	// `null` or missing (for notifications), value is expected to be cast to string
+	// for simplicity. Use empty string in case of `null` value. Omit entirely if
+	// this is a notification.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "10", "request-7", ""
+	RPCJSONRPCRequestIDKey = attribute.Key("rpc.jsonrpc.request_id")
+
+	// RPCJSONRPCVersionKey is the attribute Key conforming to the
+	// "rpc.jsonrpc.version" semantic conventions. It represents the protocol
+	// version as in `jsonrpc` property of request/response. Since JSON-RPC 1.0
+	// doesn't specify this, the value can be omitted.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "2.0", "1.0"
+	RPCJSONRPCVersionKey = attribute.Key("rpc.jsonrpc.version")
+
+	// RPCMessageCompressedSizeKey is the attribute Key conforming to the
+	// "rpc.message.compressed_size" semantic conventions. It represents the
+	// compressed size of the message in bytes.
+	//
+	// Type: int
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	RPCMessageCompressedSizeKey = attribute.Key("rpc.message.compressed_size")
+
+	// RPCMessageIDKey is the attribute Key conforming to the "rpc.message.id"
+	// semantic conventions. It MUST be calculated as two different counters
+	// starting from `1` one for sent messages and one for received message..
+	//
+	// Type: int
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	// Note: This way we guarantee that the values will be consistent between
+	// different implementations.
+	RPCMessageIDKey = attribute.Key("rpc.message.id")
+
+	// RPCMessageTypeKey is the attribute Key conforming to the "rpc.message.type"
+	// semantic conventions. It represents the whether this is a received or sent
+	// message.
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	RPCMessageTypeKey = attribute.Key("rpc.message.type")
+
+	// RPCMessageUncompressedSizeKey is the attribute Key conforming to the
+	// "rpc.message.uncompressed_size" semantic conventions. It represents the
+	// uncompressed size of the message in bytes.
+	//
+	// Type: int
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	RPCMessageUncompressedSizeKey = attribute.Key("rpc.message.uncompressed_size")
+
+	// RPCMethodKey is the attribute Key conforming to the "rpc.method" semantic
+	// conventions. It represents the name of the (logical) method being called,
+	// must be equal to the $method part in the span name.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: exampleMethod
+	// Note: This is the logical name of the method from the RPC interface
+	// perspective, which can be different from the name of any implementing
+	// method/function. The `code.function.name` attribute may be used to store the
+	// latter (e.g., method actually executing the call on the server side, RPC
+	// client stub method on the client side).
+	RPCMethodKey = attribute.Key("rpc.method")
+
+	// RPCServiceKey is the attribute Key conforming to the "rpc.service" semantic
+	// conventions. It represents the full (logical) name of the service being
+	// called, including its package name, if applicable.
+	//
+	// Type: string
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: myservice.EchoService
+	// Note: This is the logical name of the service from the RPC interface
+	// perspective, which can be different from the name of any implementing class.
+	// The `code.namespace` attribute may be used to store the latter (despite the
+	// attribute name, it may include a class name; e.g., class with method actually
+	// executing the call on the server side, RPC client stub class on the client
+	// side).
+	RPCServiceKey = attribute.Key("rpc.service")
+
+	// RPCSystemKey is the attribute Key conforming to the "rpc.system" semantic
+	// conventions. It represents a string identifying the remoting system. See
+	// below for a list of well-known identifiers.
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples:
+	RPCSystemKey = attribute.Key("rpc.system")
 )
 
+// RPCConnectRPCRequestMetadata returns an attribute KeyValue conforming to the
+// "rpc.connect_rpc.request.metadata" semantic conventions. It represents the
+// connect request metadata, `<key>` being the normalized Connect Metadata key
+// (lowercase), the value being the metadata values.
+func RPCConnectRPCRequestMetadata(key string, val ...string) attribute.KeyValue {
+	return attribute.StringSlice("rpc.connect_rpc.request.metadata."+key, val)
+}
+
+// RPCConnectRPCResponseMetadata returns an attribute KeyValue conforming to the
+// "rpc.connect_rpc.response.metadata" semantic conventions. It represents the
+// connect response metadata, `<key>` being the normalized Connect Metadata key
+// (lowercase), the value being the metadata values.
+func RPCConnectRPCResponseMetadata(key string, val ...string) attribute.KeyValue {
+	return attribute.StringSlice("rpc.connect_rpc.response.metadata."+key, val)
+}
+
+// RPCGRPCRequestMetadata returns an attribute KeyValue conforming to the
+// "rpc.grpc.request.metadata" semantic conventions. It represents the gRPC
+// request metadata, `<key>` being the normalized gRPC Metadata key (lowercase),
+// the value being the metadata values.
+func RPCGRPCRequestMetadata(key string, val ...string) attribute.KeyValue {
+	return attribute.StringSlice("rpc.grpc.request.metadata."+key, val)
+}
+
+// RPCGRPCResponseMetadata returns an attribute KeyValue conforming to the
+// "rpc.grpc.response.metadata" semantic conventions. It represents the gRPC
+// response metadata, `<key>` being the normalized gRPC Metadata key (lowercase),
+// the value being the metadata values.
+func RPCGRPCResponseMetadata(key string, val ...string) attribute.KeyValue {
+	return attribute.StringSlice("rpc.grpc.response.metadata."+key, val)
+}
+
+// RPCJSONRPCErrorCode returns an attribute KeyValue conforming to the
+// "rpc.jsonrpc.error_code" semantic conventions. It represents the `error.code`
+// property of response if it is an error response.
+func RPCJSONRPCErrorCode(val int) attribute.KeyValue {
+	return RPCJSONRPCErrorCodeKey.Int(val)
+}
+
+// RPCJSONRPCErrorMessage returns an attribute KeyValue conforming to the
+// "rpc.jsonrpc.error_message" semantic conventions. It represents the
+// `error.message` property of response if it is an error response.
+func RPCJSONRPCErrorMessage(val string) attribute.KeyValue {
+	return RPCJSONRPCErrorMessageKey.String(val)
+}
+
+// RPCJSONRPCRequestID returns an attribute KeyValue conforming to the
+// "rpc.jsonrpc.request_id" semantic conventions. It represents the `id` property
+// of request or response. Since protocol allows id to be int, string, `null` or
+// missing (for notifications), value is expected to be cast to string for
+// simplicity. Use empty string in case of `null` value. Omit entirely if this is
+// a notification.
+func RPCJSONRPCRequestID(val string) attribute.KeyValue {
+	return RPCJSONRPCRequestIDKey.String(val)
+}
+
+// RPCJSONRPCVersion returns an attribute KeyValue conforming to the
+// "rpc.jsonrpc.version" semantic conventions. It represents the protocol version
+// as in `jsonrpc` property of request/response. Since JSON-RPC 1.0 doesn't
+// specify this, the value can be omitted.
+func RPCJSONRPCVersion(val string) attribute.KeyValue {
+	return RPCJSONRPCVersionKey.String(val)
+}
+
+// RPCMessageCompressedSize returns an attribute KeyValue conforming to the
+// "rpc.message.compressed_size" semantic conventions. It represents the
+// compressed size of the message in bytes.
+func RPCMessageCompressedSize(val int) attribute.KeyValue {
+	return RPCMessageCompressedSizeKey.Int(val)
+}
+
+// RPCMessageID returns an attribute KeyValue conforming to the "rpc.message.id"
+// semantic conventions. It MUST be calculated as two different counters starting
+// from `1` one for sent messages and one for received message..
+func RPCMessageID(val int) attribute.KeyValue {
+	return RPCMessageIDKey.Int(val)
+}
+
+// RPCMessageUncompressedSize returns an attribute KeyValue conforming to the
+// "rpc.message.uncompressed_size" semantic conventions. It represents the
+// uncompressed size of the message in bytes.
+func RPCMessageUncompressedSize(val int) attribute.KeyValue {
+	return RPCMessageUncompressedSizeKey.Int(val)
+}
+
 // RPCMethod returns an attribute KeyValue conforming to the "rpc.method"
-// semantic conventions. It represents the fully-qualified logical name of the
-// method from the RPC interface perspective.
+// semantic conventions. It represents the name of the (logical) method being
+// called, must be equal to the $method part in the span name.
 func RPCMethod(val string) attribute.KeyValue {
 	return RPCMethodKey.String(val)
 }
 
-// RPCMethodOriginal returns an attribute KeyValue conforming to the
-// "rpc.method_original" semantic conventions. It represents the original name of
-// the method used by the client.
-func RPCMethodOriginal(val string) attribute.KeyValue {
-	return RPCMethodOriginalKey.String(val)
+// RPCService returns an attribute KeyValue conforming to the "rpc.service"
+// semantic conventions. It represents the full (logical) name of the service
+// being called, including its package name, if applicable.
+func RPCService(val string) attribute.KeyValue {
+	return RPCServiceKey.String(val)
 }
 
-// RPCRequestMetadata returns an attribute KeyValue conforming to the
-// "rpc.request.metadata" semantic conventions. It represents the RPC request
-// metadata, `<key>` being the normalized RPC metadata key (lowercase), the value
-// being the metadata values.
-func RPCRequestMetadata(key string, val ...string) attribute.KeyValue {
-	return attribute.StringSlice("rpc.request.metadata."+key, val)
-}
-
-// RPCResponseMetadata returns an attribute KeyValue conforming to the
-// "rpc.response.metadata" semantic conventions. It represents the RPC response
-// metadata, `<key>` being the normalized RPC metadata key (lowercase), the value
-// being the metadata values.
-func RPCResponseMetadata(key string, val ...string) attribute.KeyValue {
-	return attribute.StringSlice("rpc.response.metadata."+key, val)
-}
-
-// RPCResponseStatusCode returns an attribute KeyValue conforming to the
-// "rpc.response.status_code" semantic conventions. It represents the status code
-// of the RPC returned by the RPC server or generated by the client.
-func RPCResponseStatusCode(val string) attribute.KeyValue {
-	return RPCResponseStatusCodeKey.String(val)
-}
-
-// Enum values for rpc.system.name
+// Enum values for rpc.connect_rpc.error_code
 var (
-	// [gRPC]
-	// Stability: release_candidate
-	//
-	// [gRPC]: https://grpc.io/
-	RPCSystemNameGRPC = RPCSystemNameKey.String("grpc")
-	// [Apache Dubbo]
-	// Stability: release_candidate
-	//
-	// [Apache Dubbo]: https://dubbo.apache.org/
-	RPCSystemNameDubbo = RPCSystemNameKey.String("dubbo")
-	// [Connect RPC]
+	// cancelled
 	// Stability: development
-	//
-	// [Connect RPC]: https://connectrpc.com/
-	RPCSystemNameConnectrpc = RPCSystemNameKey.String("connectrpc")
-	// [JSON-RPC]
+	RPCConnectRPCErrorCodeCancelled = RPCConnectRPCErrorCodeKey.String("cancelled")
+	// unknown
 	// Stability: development
-	//
-	// [JSON-RPC]: https://www.jsonrpc.org/
-	RPCSystemNameJSONRPC = RPCSystemNameKey.String("jsonrpc")
+	RPCConnectRPCErrorCodeUnknown = RPCConnectRPCErrorCodeKey.String("unknown")
+	// invalid_argument
+	// Stability: development
+	RPCConnectRPCErrorCodeInvalidArgument = RPCConnectRPCErrorCodeKey.String("invalid_argument")
+	// deadline_exceeded
+	// Stability: development
+	RPCConnectRPCErrorCodeDeadlineExceeded = RPCConnectRPCErrorCodeKey.String("deadline_exceeded")
+	// not_found
+	// Stability: development
+	RPCConnectRPCErrorCodeNotFound = RPCConnectRPCErrorCodeKey.String("not_found")
+	// already_exists
+	// Stability: development
+	RPCConnectRPCErrorCodeAlreadyExists = RPCConnectRPCErrorCodeKey.String("already_exists")
+	// permission_denied
+	// Stability: development
+	RPCConnectRPCErrorCodePermissionDenied = RPCConnectRPCErrorCodeKey.String("permission_denied")
+	// resource_exhausted
+	// Stability: development
+	RPCConnectRPCErrorCodeResourceExhausted = RPCConnectRPCErrorCodeKey.String("resource_exhausted")
+	// failed_precondition
+	// Stability: development
+	RPCConnectRPCErrorCodeFailedPrecondition = RPCConnectRPCErrorCodeKey.String("failed_precondition")
+	// aborted
+	// Stability: development
+	RPCConnectRPCErrorCodeAborted = RPCConnectRPCErrorCodeKey.String("aborted")
+	// out_of_range
+	// Stability: development
+	RPCConnectRPCErrorCodeOutOfRange = RPCConnectRPCErrorCodeKey.String("out_of_range")
+	// unimplemented
+	// Stability: development
+	RPCConnectRPCErrorCodeUnimplemented = RPCConnectRPCErrorCodeKey.String("unimplemented")
+	// internal
+	// Stability: development
+	RPCConnectRPCErrorCodeInternal = RPCConnectRPCErrorCodeKey.String("internal")
+	// unavailable
+	// Stability: development
+	RPCConnectRPCErrorCodeUnavailable = RPCConnectRPCErrorCodeKey.String("unavailable")
+	// data_loss
+	// Stability: development
+	RPCConnectRPCErrorCodeDataLoss = RPCConnectRPCErrorCodeKey.String("data_loss")
+	// unauthenticated
+	// Stability: development
+	RPCConnectRPCErrorCodeUnauthenticated = RPCConnectRPCErrorCodeKey.String("unauthenticated")
+)
+
+// Enum values for rpc.grpc.status_code
+var (
+	// OK
+	// Stability: development
+	RPCGRPCStatusCodeOk = RPCGRPCStatusCodeKey.Int(0)
+	// CANCELLED
+	// Stability: development
+	RPCGRPCStatusCodeCancelled = RPCGRPCStatusCodeKey.Int(1)
+	// UNKNOWN
+	// Stability: development
+	RPCGRPCStatusCodeUnknown = RPCGRPCStatusCodeKey.Int(2)
+	// INVALID_ARGUMENT
+	// Stability: development
+	RPCGRPCStatusCodeInvalidArgument = RPCGRPCStatusCodeKey.Int(3)
+	// DEADLINE_EXCEEDED
+	// Stability: development
+	RPCGRPCStatusCodeDeadlineExceeded = RPCGRPCStatusCodeKey.Int(4)
+	// NOT_FOUND
+	// Stability: development
+	RPCGRPCStatusCodeNotFound = RPCGRPCStatusCodeKey.Int(5)
+	// ALREADY_EXISTS
+	// Stability: development
+	RPCGRPCStatusCodeAlreadyExists = RPCGRPCStatusCodeKey.Int(6)
+	// PERMISSION_DENIED
+	// Stability: development
+	RPCGRPCStatusCodePermissionDenied = RPCGRPCStatusCodeKey.Int(7)
+	// RESOURCE_EXHAUSTED
+	// Stability: development
+	RPCGRPCStatusCodeResourceExhausted = RPCGRPCStatusCodeKey.Int(8)
+	// FAILED_PRECONDITION
+	// Stability: development
+	RPCGRPCStatusCodeFailedPrecondition = RPCGRPCStatusCodeKey.Int(9)
+	// ABORTED
+	// Stability: development
+	RPCGRPCStatusCodeAborted = RPCGRPCStatusCodeKey.Int(10)
+	// OUT_OF_RANGE
+	// Stability: development
+	RPCGRPCStatusCodeOutOfRange = RPCGRPCStatusCodeKey.Int(11)
+	// UNIMPLEMENTED
+	// Stability: development
+	RPCGRPCStatusCodeUnimplemented = RPCGRPCStatusCodeKey.Int(12)
+	// INTERNAL
+	// Stability: development
+	RPCGRPCStatusCodeInternal = RPCGRPCStatusCodeKey.Int(13)
+	// UNAVAILABLE
+	// Stability: development
+	RPCGRPCStatusCodeUnavailable = RPCGRPCStatusCodeKey.Int(14)
+	// DATA_LOSS
+	// Stability: development
+	RPCGRPCStatusCodeDataLoss = RPCGRPCStatusCodeKey.Int(15)
+	// UNAUTHENTICATED
+	// Stability: development
+	RPCGRPCStatusCodeUnauthenticated = RPCGRPCStatusCodeKey.Int(16)
+)
+
+// Enum values for rpc.message.type
+var (
+	// sent
+	// Stability: development
+	RPCMessageTypeSent = RPCMessageTypeKey.String("SENT")
+	// received
+	// Stability: development
+	RPCMessageTypeReceived = RPCMessageTypeKey.String("RECEIVED")
+)
+
+// Enum values for rpc.system
+var (
+	// gRPC
+	// Stability: development
+	RPCSystemGRPC = RPCSystemKey.String("grpc")
+	// Java RMI
+	// Stability: development
+	RPCSystemJavaRmi = RPCSystemKey.String("java_rmi")
+	// .NET WCF
+	// Stability: development
+	RPCSystemDotnetWcf = RPCSystemKey.String("dotnet_wcf")
+	// Apache Dubbo
+	// Stability: development
+	RPCSystemApacheDubbo = RPCSystemKey.String("apache_dubbo")
+	// Connect RPC
+	// Stability: development
+	RPCSystemConnectRPC = RPCSystemKey.String("connect_rpc")
 )
 
 // Namespace: security_rule
@@ -14239,28 +11577,13 @@ func ServerPort(val int) attribute.KeyValue {
 
 // Namespace: service
 const (
-	// ServiceCriticalityKey is the attribute Key conforming to the
-	// "service.criticality" semantic conventions. It represents the operational
-	// criticality of the service.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "critical", "high", "medium", "low"
-	// Note: Application developers are encouraged to set `service.criticality` to
-	// express the operational importance of their services. Telemetry consumers MAY
-	// use this attribute to optimize telemetry collection or improve user
-	// experience.
-	ServiceCriticalityKey = attribute.Key("service.criticality")
-
 	// ServiceInstanceIDKey is the attribute Key conforming to the
 	// "service.instance.id" semantic conventions. It represents the string ID of
 	// the service instance.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Stable
+	// Stability: Development
 	//
 	// Examples: "627cc493-f310-47de-96bd-71410b7dec09"
 	// Note: MUST be unique for each instance of the same
@@ -14334,7 +11657,7 @@ const (
 	//
 	// Type: string
 	// RequirementLevel: Recommended
-	// Stability: Stable
+	// Stability: Development
 	//
 	// Examples: "Shop"
 	// Note: A string value having a meaning that helps to distinguish a group of
@@ -14347,38 +11670,9 @@ const (
 	// namespace.
 	ServiceNamespaceKey = attribute.Key("service.namespace")
 
-	// ServicePeerNameKey is the attribute Key conforming to the "service.peer.name"
-	// semantic conventions. It represents the logical name of the service on the
-	// other side of the connection. SHOULD be equal to the actual [`service.name`]
-	// resource attribute of the remote service if any.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "shoppingcart"
-	//
-	// [`service.name`]: /docs/resource/README.md#service
-	ServicePeerNameKey = attribute.Key("service.peer.name")
-
-	// ServicePeerNamespaceKey is the attribute Key conforming to the
-	// "service.peer.namespace" semantic conventions. It represents the logical
-	// namespace of the service on the other side of the connection. SHOULD be equal
-	// to the actual [`service.namespace`] resource attribute of the remote service
-	// if any.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "Shop"
-	//
-	// [`service.namespace`]: /docs/resource/README.md#service
-	ServicePeerNamespaceKey = attribute.Key("service.peer.namespace")
-
 	// ServiceVersionKey is the attribute Key conforming to the "service.version"
-	// semantic conventions. It represents the version string of the service
-	// component. The format is not defined by these conventions.
+	// semantic conventions. It represents the version string of the service API or
+	// implementation. The format is not defined by these conventions.
 	//
 	// Type: string
 	// RequirementLevel: Recommended
@@ -14408,56 +11702,13 @@ func ServiceNamespace(val string) attribute.KeyValue {
 	return ServiceNamespaceKey.String(val)
 }
 
-// ServicePeerName returns an attribute KeyValue conforming to the
-// "service.peer.name" semantic conventions. It represents the logical name of
-// the service on the other side of the connection. SHOULD be equal to the actual
-// [`service.name`] resource attribute of the remote service if any.
-//
-// [`service.name`]: /docs/resource/README.md#service
-func ServicePeerName(val string) attribute.KeyValue {
-	return ServicePeerNameKey.String(val)
-}
-
-// ServicePeerNamespace returns an attribute KeyValue conforming to the
-// "service.peer.namespace" semantic conventions. It represents the logical
-// namespace of the service on the other side of the connection. SHOULD be equal
-// to the actual [`service.namespace`] resource attribute of the remote service
-// if any.
-//
-// [`service.namespace`]: /docs/resource/README.md#service
-func ServicePeerNamespace(val string) attribute.KeyValue {
-	return ServicePeerNamespaceKey.String(val)
-}
-
 // ServiceVersion returns an attribute KeyValue conforming to the
 // "service.version" semantic conventions. It represents the version string of
-// the service component. The format is not defined by these conventions.
+// the service API or implementation. The format is not defined by these
+// conventions.
 func ServiceVersion(val string) attribute.KeyValue {
 	return ServiceVersionKey.String(val)
 }
-
-// Enum values for service.criticality
-var (
-	// Service is business-critical; downtime directly impacts revenue, user
-	// experience, or core functionality.
-	//
-	// Stability: development
-	ServiceCriticalityCritical = ServiceCriticalityKey.String("critical")
-	// Service is important but has degradation tolerance or fallback mechanisms.
-	//
-	// Stability: development
-	ServiceCriticalityHigh = ServiceCriticalityKey.String("high")
-	// Service provides supplementary functionality; degradation has limited user
-	// impact.
-	//
-	// Stability: development
-	ServiceCriticalityMedium = ServiceCriticalityKey.String("medium")
-	// Service is non-essential to core operations; used for background tasks or
-	// internal tools.
-	//
-	// Stability: development
-	ServiceCriticalityLow = ServiceCriticalityKey.String("low")
-)
 
 // Namespace: session
 const (
@@ -14593,6 +11844,17 @@ func SourcePort(val int) attribute.KeyValue {
 
 // Namespace: system
 const (
+	// SystemCPULogicalNumberKey is the attribute Key conforming to the
+	// "system.cpu.logical_number" semantic conventions. It represents the
+	// deprecated, use `cpu.logical_number` instead.
+	//
+	// Type: int
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: 1
+	SystemCPULogicalNumberKey = attribute.Key("system.cpu.logical_number")
+
 	// SystemDeviceKey is the attribute Key conforming to the "system.device"
 	// semantic conventions. It represents the device identifier.
 	//
@@ -14647,17 +11909,6 @@ const (
 	// Examples: "ext4"
 	SystemFilesystemTypeKey = attribute.Key("system.filesystem.type")
 
-	// SystemMemoryLinuxSlabStateKey is the attribute Key conforming to the
-	// "system.memory.linux.slab.state" semantic conventions. It represents the
-	// Linux Slab memory state.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "reclaimable", "unreclaimable"
-	SystemMemoryLinuxSlabStateKey = attribute.Key("system.memory.linux.slab.state")
-
 	// SystemMemoryStateKey is the attribute Key conforming to the
 	// "system.memory.state" semantic conventions. It represents the memory state.
 	//
@@ -14679,17 +11930,6 @@ const (
 	// Examples: "in"
 	SystemPagingDirectionKey = attribute.Key("system.paging.direction")
 
-	// SystemPagingFaultTypeKey is the attribute Key conforming to the
-	// "system.paging.fault.type" semantic conventions. It represents the paging
-	// fault type.
-	//
-	// Type: Enum
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "minor"
-	SystemPagingFaultTypeKey = attribute.Key("system.paging.fault.type")
-
 	// SystemPagingStateKey is the attribute Key conforming to the
 	// "system.paging.state" semantic conventions. It represents the memory paging
 	// state.
@@ -14700,7 +11940,38 @@ const (
 	//
 	// Examples: "free"
 	SystemPagingStateKey = attribute.Key("system.paging.state")
+
+	// SystemPagingTypeKey is the attribute Key conforming to the
+	// "system.paging.type" semantic conventions. It represents the memory paging
+	// type.
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "minor"
+	SystemPagingTypeKey = attribute.Key("system.paging.type")
+
+	// SystemProcessStatusKey is the attribute Key conforming to the
+	// "system.process.status" semantic conventions. It represents the process
+	// state, e.g., [Linux Process State Codes].
+	//
+	// Type: Enum
+	// RequirementLevel: Recommended
+	// Stability: Development
+	//
+	// Examples: "running"
+	//
+	// [Linux Process State Codes]: https://man7.org/linux/man-pages/man1/ps.1.html#PROCESS_STATE_CODES
+	SystemProcessStatusKey = attribute.Key("system.process.status")
 )
+
+// SystemCPULogicalNumber returns an attribute KeyValue conforming to the
+// "system.cpu.logical_number" semantic conventions. It represents the
+// deprecated, use `cpu.logical_number` instead.
+func SystemCPULogicalNumber(val int) attribute.KeyValue {
+	return SystemCPULogicalNumberKey.Int(val)
+}
 
 // SystemDevice returns an attribute KeyValue conforming to the "system.device"
 // semantic conventions. It represents the device identifier.
@@ -14757,24 +12028,17 @@ var (
 	SystemFilesystemTypeExt4 = SystemFilesystemTypeKey.String("ext4")
 )
 
-// Enum values for system.memory.linux.slab.state
-var (
-	// reclaimable
-	// Stability: development
-	SystemMemoryLinuxSlabStateReclaimable = SystemMemoryLinuxSlabStateKey.String("reclaimable")
-	// unreclaimable
-	// Stability: development
-	SystemMemoryLinuxSlabStateUnreclaimable = SystemMemoryLinuxSlabStateKey.String("unreclaimable")
-)
-
 // Enum values for system.memory.state
 var (
-	// Actual used virtual memory in bytes.
+	// used
 	// Stability: development
 	SystemMemoryStateUsed = SystemMemoryStateKey.String("used")
 	// free
 	// Stability: development
 	SystemMemoryStateFree = SystemMemoryStateKey.String("free")
+	// Deprecated: Removed, report shared memory usage with
+	// `metric.system.memory.shared` metric.
+	SystemMemoryStateShared = SystemMemoryStateKey.String("shared")
 	// buffers
 	// Stability: development
 	SystemMemoryStateBuffers = SystemMemoryStateKey.String("buffers")
@@ -14793,16 +12057,6 @@ var (
 	SystemPagingDirectionOut = SystemPagingDirectionKey.String("out")
 )
 
-// Enum values for system.paging.fault.type
-var (
-	// major
-	// Stability: development
-	SystemPagingFaultTypeMajor = SystemPagingFaultTypeKey.String("major")
-	// minor
-	// Stability: development
-	SystemPagingFaultTypeMinor = SystemPagingFaultTypeKey.String("minor")
-)
-
 // Enum values for system.paging.state
 var (
 	// used
@@ -14811,6 +12065,32 @@ var (
 	// free
 	// Stability: development
 	SystemPagingStateFree = SystemPagingStateKey.String("free")
+)
+
+// Enum values for system.paging.type
+var (
+	// major
+	// Stability: development
+	SystemPagingTypeMajor = SystemPagingTypeKey.String("major")
+	// minor
+	// Stability: development
+	SystemPagingTypeMinor = SystemPagingTypeKey.String("minor")
+)
+
+// Enum values for system.process.status
+var (
+	// running
+	// Stability: development
+	SystemProcessStatusRunning = SystemProcessStatusKey.String("running")
+	// sleeping
+	// Stability: development
+	SystemProcessStatusSleeping = SystemProcessStatusKey.String("sleeping")
+	// stopped
+	// Stability: development
+	SystemProcessStatusStopped = SystemProcessStatusKey.String("stopped")
+	// defunct
+	// Stability: development
+	SystemProcessStatusDefunct = SystemProcessStatusKey.String("defunct")
 )
 
 // Namespace: telemetry
@@ -15065,18 +12345,6 @@ const (
 	// Type: int
 	// RequirementLevel: Recommended
 	// Stability: Development
-	//
-	// Note:
-	// Examples of where the value can be extracted from:
-	//
-	// | Language or platform | Source |
-	// | --- | --- |
-	// | JVM | `Thread.currentThread().threadId()` |
-	// | .NET | `Thread.CurrentThread.ManagedThreadId` |
-	// | Python | `threading.current_thread().ident` |
-	// | Ruby | `Thread.current.object_id` |
-	// | C++ | `std::this_thread::get_id()` |
-	// | Erlang | `erlang:self()` |
 	ThreadIDKey = attribute.Key("thread.id")
 
 	// ThreadNameKey is the attribute Key conforming to the "thread.name" semantic
@@ -15087,16 +12355,6 @@ const (
 	// Stability: Development
 	//
 	// Examples: main
-	// Note:
-	// Examples of where the value can be extracted from:
-	//
-	// | Language or platform | Source |
-	// | --- | --- |
-	// | JVM | `Thread.currentThread().getName()` |
-	// | .NET | `Thread.CurrentThread.Name` |
-	// | Python | `threading.current_thread().name` |
-	// | Ruby | `Thread.current.name` |
-	// | Erlang | `erlang:process_info(self(), registered_name)` |
 	ThreadNameKey = attribute.Key("thread.name")
 )
 
@@ -15778,18 +13036,6 @@ const (
 	//
 	// This list is subject to change over time.
 	//
-	// Matching of query parameter keys against the sensitive list SHOULD be
-	// case-sensitive.
-	//
-	//
-	// Instrumentation MAY provide a way to override this list via declarative
-	// configuration.
-	// If so, it SHOULD use the `sensitive_query_parameters` property
-	// (an array of case-sensitive strings with minimum items 0) under
-	// `.instrumentation/development.general.sanitization.url`.
-	// This list is a full override of the default sensitive query parameter keys,
-	// it is not a list of keys in addition to the defaults.
-	//
 	// When a query string value is redacted, the query string key SHOULD still be
 	// preserved, e.g.
 	// `https://www.example.com/path?color=blue&sig=REDACTED`.
@@ -15864,17 +13110,6 @@ const (
 	//   - [`X-Goog-Signature`]
 	//
 	// This list is subject to change over time.
-	//
-	// Matching of query parameter keys against the sensitive list SHOULD be
-	// case-sensitive.
-	//
-	// Instrumentation MAY provide a way to override this list via declarative
-	// configuration.
-	// If so, it SHOULD use the `sensitive_query_parameters` property
-	// (an array of case-sensitive strings with minimum items 0) under
-	// `.instrumentation/development.general.sanitization.url`.
-	// This list is a full override of the default sensitive query parameter keys,
-	// it is not a list of keys in addition to the defaults.
 	//
 	// When a query string value is redacted, the query string key SHOULD still be
 	// preserved, e.g.
@@ -16187,7 +13422,7 @@ const (
 	// significant name SHOULD be selected. In such a scenario it should align with
 	// `user_agent.version`
 	//
-	// [Example]: https://uaparser.dev/#demo
+	// [Example]: https://www.whatsmyua.info
 	UserAgentNameKey = attribute.Key("user_agent.name")
 
 	// UserAgentOriginalKey is the attribute Key conforming to the
@@ -16270,7 +13505,7 @@ const (
 	// significant version SHOULD be selected. In such a scenario it should align
 	// with `user_agent.name`
 	//
-	// [Example]: https://uaparser.dev/#demo
+	// [Example]: https://www.whatsmyua.info
 	UserAgentVersionKey = attribute.Key("user_agent.version")
 )
 
@@ -16562,7 +13797,7 @@ const (
 	// Note: In Git Version Control Systems, the canonical URL SHOULD NOT include
 	// the `.git` extension.
 	//
-	// [canonical URL]: https://support.google.com/webmasters/answer/10347851
+	// [canonical URL]: https://support.google.com/webmasters/answer/10347851?hl=en#:~:text=A%20canonical%20URL%20is%20the,Google%20chooses%20one%20as%20canonical.
 	VCSRepositoryURLFullKey = attribute.Key("vcs.repository.url.full")
 
 	// VCSRevisionDeltaDirectionKey is the attribute Key conforming to the
@@ -16652,7 +13887,7 @@ func VCSRepositoryName(val string) attribute.KeyValue {
 // [canonical URL] of the repository providing the complete HTTP(S) address in
 // order to locate and identify the repository through a browser.
 //
-// [canonical URL]: https://support.google.com/webmasters/answer/10347851
+// [canonical URL]: https://support.google.com/webmasters/answer/10347851?hl=en#:~:text=A%20canonical%20URL%20is%20the,Google%20chooses%20one%20as%20canonical.
 func VCSRepositoryURLFull(val string) attribute.KeyValue {
 	return VCSRepositoryURLFullKey.String(val)
 }
@@ -16702,6 +13937,8 @@ var (
 	//
 	// [GitLab]: https://gitlab.com
 	VCSProviderNameGitlab = VCSProviderNameKey.String("gitlab")
+	// Deprecated: Replaced by `gitea`.
+	VCSProviderNameGittea = VCSProviderNameKey.String("gittea")
 	// [Gitea]
 	// Stability: development
 	//
@@ -16821,45 +14058,4 @@ func WebEngineName(val string) attribute.KeyValue {
 // engine.
 func WebEngineVersion(val string) attribute.KeyValue {
 	return WebEngineVersionKey.String(val)
-}
-
-// Namespace: zos
-const (
-	// ZOSSmfIDKey is the attribute Key conforming to the "zos.smf.id" semantic
-	// conventions. It represents the System Management Facility (SMF) Identifier
-	// uniquely identified a z/OS system within a SYSPLEX or mainframe environment
-	// and is used for system and performance analysis.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "SYS1"
-	ZOSSmfIDKey = attribute.Key("zos.smf.id")
-
-	// ZOSSysplexNameKey is the attribute Key conforming to the "zos.sysplex.name"
-	// semantic conventions. It represents the name of the SYSPLEX to which the z/OS
-	// system belongs too.
-	//
-	// Type: string
-	// RequirementLevel: Recommended
-	// Stability: Development
-	//
-	// Examples: "SYSPLEX1"
-	ZOSSysplexNameKey = attribute.Key("zos.sysplex.name")
-)
-
-// ZOSSmfID returns an attribute KeyValue conforming to the "zos.smf.id" semantic
-// conventions. It represents the System Management Facility (SMF) Identifier
-// uniquely identified a z/OS system within a SYSPLEX or mainframe environment
-// and is used for system and performance analysis.
-func ZOSSmfID(val string) attribute.KeyValue {
-	return ZOSSmfIDKey.String(val)
-}
-
-// ZOSSysplexName returns an attribute KeyValue conforming to the
-// "zos.sysplex.name" semantic conventions. It represents the name of the SYSPLEX
-// to which the z/OS system belongs too.
-func ZOSSysplexName(val string) attribute.KeyValue {
-	return ZOSSysplexNameKey.String(val)
 }

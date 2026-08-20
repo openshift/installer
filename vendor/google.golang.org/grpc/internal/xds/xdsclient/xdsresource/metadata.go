@@ -21,25 +21,17 @@ import (
 	"fmt"
 	"net/netip"
 
-	"google.golang.org/grpc/internal/envconfig"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	v3corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	v3gcpauthnpb "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/gcp_authn/v3"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func init() {
-	if envconfig.XDSHTTPConnectEnabled {
-		registerMetadataConverter("type.googleapis.com/envoy.config.core.v3.Address", proxyAddressConvertor{})
-	}
-	if envconfig.GCPAuthenticationFilterEnabled {
-		registerMetadataConverter("type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience", audienceConverter{})
-	}
+	registerMetadataConverter("type.googleapis.com/envoy.config.core.v3.Address", proxyAddressConvertor{})
 }
 
 var (
-	// metadataRegistry is a map from proto type to metadataConverter.
-	metadataRegistry = make(map[string]metadataConverter)
+	// metdataRegistry is a map from proto type to metadataConverter.
+	metdataRegistry = make(map[string]metadataConverter)
 )
 
 // metadataConverter converts xds metadata entries in
@@ -53,18 +45,12 @@ type metadataConverter interface {
 // registerMetadataConverter registers the converter to the map keyed on a proto
 // type_url. Must be called at init time. Not thread safe.
 func registerMetadataConverter(protoType string, c metadataConverter) {
-	metadataRegistry[protoType] = c
+	metdataRegistry[protoType] = c
 }
 
 // metadataConverterForType retrieves a converter based on key given.
 func metadataConverterForType(typeURL string) metadataConverter {
-	return metadataRegistry[typeURL]
-}
-
-// unregisterMetadataConverterForTesting removes a converter from the registry.
-// For testing only.
-func unregisterMetadataConverterForTesting(typeURL string) {
-	delete(metadataRegistry, typeURL)
+	return metdataRegistry[typeURL]
 }
 
 // StructMetadataValue stores the values in a google.protobuf.Struct from
@@ -104,29 +90,4 @@ func (proxyAddressConvertor) convert(anyProto *anypb.Any) (any, error) {
 		return nil, fmt.Errorf("port value not set in socket_address")
 	}
 	return ProxyAddressMetadataValue{Address: parseAddress(socketaddress)}, nil
-}
-
-// AudienceMetadataValue holds the audience parsed from the
-// envoy.extensions.filters.http.gcp_authn.v3.Audience proto message, as
-// specified in gRFC A83.
-type AudienceMetadataValue struct {
-	// Audience is the URL of the receiving service that performs token
-	// authentication.
-	Audience string
-}
-
-// audienceConverter implements the metadataConverter interface to
-// handle the conversion of envoy.extensions.filters.http.gcp_authn.v3.Audience
-// protobuf messages into an internal representation.
-type audienceConverter struct{}
-
-func (audienceConverter) convert(anyProto *anypb.Any) (any, error) {
-	audienceProto := &v3gcpauthnpb.Audience{}
-	if err := anyProto.UnmarshalTo(audienceProto); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the envoy.extensions.filters.http.gcp_authn.v3.Audience resource from Any proto: %v", err)
-	}
-	if audienceProto.GetUrl() == "" {
-		return nil, fmt.Errorf("empty url field in audience metadata")
-	}
-	return AudienceMetadataValue{Audience: audienceProto.GetUrl()}, nil
 }

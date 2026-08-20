@@ -376,12 +376,16 @@ func nextComposed(i *Iter) []byte {
 			goto doNorm
 		}
 		prevCC = i.info.tccc
-		p := outp + int(i.info.size)
+		sz := int(i.info.size)
+		if sz == 0 {
+			sz = 1 // illegal rune: copy byte-by-byte
+		}
+		p := outp + sz
 		if p > len(i.buf) {
 			break
 		}
 		outp = p
-		i.p += int(i.info.size)
+		i.p += sz
 		if i.p >= i.rb.nsrc {
 			i.setDone()
 			break

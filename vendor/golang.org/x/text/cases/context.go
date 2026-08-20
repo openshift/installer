@@ -249,7 +249,7 @@ func upper(c *context) bool {
 	return c.copy()
 }
 
-// isUpper reports whether the current rune is in upper case.
+// isUpper writes the isUppercase version of the current rune to dst.
 func isUpper(c *context) bool {
 	ct := c.caseType()
 	if c.info&hasMappingMask == 0 || ct == cUpper {

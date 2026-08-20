@@ -19,56 +19,24 @@
 // Package stats provides internal stats related functionality.
 package stats
 
-import (
-	"context"
-	"maps"
-)
+import "context"
 
-// LabelCallback is a function that is executed when telemetry
-// label keys are updated.
-type LabelCallback func(map[string]string)
-type telemetryLabelCallbackKey struct{}
-
-// UpdateLabels executes registered telemetry callbacks with the update labels. Labels
-// are copied before being processed by any callbacks to ensure mutations are not
-// shared among derived contexts.
-//
-// It is the responsibility of the registrant to handle conflicts or label resets.
-func UpdateLabels(ctx context.Context, update map[string]string) {
-	executeTelemetryLabelCallbacks(ctx, update)
+// Labels are the labels for metrics.
+type Labels struct {
+	// TelemetryLabels are the telemetry labels to record.
+	TelemetryLabels map[string]string
 }
 
-// RegisterTelemetryLabelCallback registers a callback function that is executed whenever
-// telemetry labels are updated.
-func RegisterTelemetryLabelCallback(ctx context.Context, callback LabelCallback) context.Context {
-	if callback == nil {
-		return ctx
-	}
+type labelsKey struct{}
 
-	callbacks, ok := ctx.Value(telemetryLabelCallbackKey{}).([]LabelCallback)
-	if !ok {
-		return context.WithValue(ctx, telemetryLabelCallbackKey{}, []LabelCallback{callback})
-	}
-	return context.WithValue(ctx, telemetryLabelCallbackKey{}, append(append([]LabelCallback(nil), callbacks...), callback))
-
+// GetLabels returns the Labels stored in the context, or nil if there is one.
+func GetLabels(ctx context.Context) *Labels {
+	labels, _ := ctx.Value(labelsKey{}).(*Labels)
+	return labels
 }
 
-// executeTelemetryLabelCallback runs the registered callbacks in the order they were
-// registered on the context with the provided labels. If no callbacks are registered
-// it does nothing.
-//
-// To ensure callbacks do not mutate the state of the provided label map it is copied
-// before execution.
-func executeTelemetryLabelCallbacks(ctx context.Context, labels map[string]string) {
-	callbacks, ok := ctx.Value(telemetryLabelCallbackKey{}).([]LabelCallback)
-	if !ok {
-		return
-	}
-
-	labelsCopy := map[string]string{}
-	maps.Copy(labelsCopy, labels)
-	for _, callback := range callbacks {
-		callback(labelsCopy)
-	}
-
+// SetLabels sets the Labels in the context.
+func SetLabels(ctx context.Context, labels *Labels) context.Context {
+	// could also append
+	return context.WithValue(ctx, labelsKey{}, labels)
 }

@@ -1273,15 +1273,6 @@ type GoogleIamAdminV1WorkforcePoolProviderExtraAttributesOAuth2Client struct {
 	// user's groups that are returned from Microsoft Entra ID can be mapped by
 	// using the following attributes: * OIDC: `assertion.groups` * SAML:
 	// `assertion.attributes.groups`
-	//   "AZURE_AD_GROUPS_DISPLAY_NAME" - Used to get the user's group claims from
-	// the Microsoft Entra ID identity provider using the configuration provided in
-	// ExtraAttributesOAuth2Client. The `displayName` property of the
-	// `microsoft.graph.group` object is used for claim mapping. See
-	// https://learn.microsoft.com/en-us/graph/api/resources/group?view=graph-rest-1.0#properties
-	// for more details on `microsoft.graph.group` properties. The display names of
-	// the user's groups that are returned from Microsoft Entra ID can be mapped by
-	// using the following attributes: * OIDC: `assertion.groups` * SAML:
-	// `assertion.attributes.groups`
 	AttributesType string `json:"attributesType,omitempty"`
 	// ClientId: Required. The OAuth 2.0 client ID for retrieving extra attributes
 	// from the identity provider. Required to get the Access Token using client
@@ -1568,15 +1559,6 @@ type InlineCertificateIssuanceConfig struct {
 	// initiated. Must be between 50 and 80. If no value is specified, rotation
 	// window percentage is defaulted to 50.
 	RotationWindowPercentage int64 `json:"rotationWindowPercentage,omitempty"`
-	// UseDefaultSharedCa: Optional. If set to true, the trust domain will utilize
-	// the GCP-provisioned default CA. A default CA in the same region as the
-	// workload will be selected to issue the certificate. Enabling this will clear
-	// any existing `ca_pools` configuration to provision the certificates. NOTE:
-	// This field is mutually exclusive with `ca_pools`. If this flag is enabled,
-	// certificates will be automatically provisioned from the default shared CAs.
-	// This flag should not be set if you want to use your own CA pools to
-	// provision the certificates.
-	UseDefaultSharedCa bool `json:"useDefaultSharedCa,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "CaPools") to unconditionally
 	// include in API requests. By default, fields with empty or default values are
 	// omitted from API requests. See
@@ -3589,11 +3571,6 @@ type TrustStore struct {
 	// validation against a given TrustStore. The incoming end entity's certificate
 	// must be in the trust chain of one of the trust anchors here.
 	TrustAnchors []*TrustAnchor `json:"trustAnchors,omitempty"`
-	// TrustDefaultSharedCa: Optional. If set to True, the trust bundle will
-	// include the private ca managed identity regional root public certificates.
-	// Important: `trust_default_shared_ca` is only supported for managed identity
-	// trust domain resource.
-	TrustDefaultSharedCa bool `json:"trustDefaultSharedCa,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "IntermediateCas") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
@@ -3679,6 +3656,11 @@ type UndeleteWorkforcePoolProviderRequest struct {
 // UndeleteWorkforcePoolProviderScimTenantRequest: Gemini Enterprise only.
 // Request message for UndeleteWorkforcePoolProviderScimTenant.
 type UndeleteWorkforcePoolProviderScimTenantRequest struct {
+}
+
+// UndeleteWorkforcePoolProviderScimTokenRequest: Gemini Enterprise only.
+// Request message for UndeleteWorkforcePoolProviderScimToken.
+type UndeleteWorkforcePoolProviderScimTokenRequest struct {
 }
 
 // UndeleteWorkforcePoolRequest: Request message for UndeleteWorkforcePool.
@@ -4162,20 +4144,17 @@ type WorkloadIdentityPool struct {
 	//   "MODE_UNSPECIFIED" - State unspecified. New pools should not use this
 	// mode. Pools with an unspecified mode will operate as if they are in
 	// federation-only mode.
-	//   "FEDERATION_ONLY" - Federation-only mode. FEDERATION_ONLY mode pools can
-	// only be used for federating external workload identities into Google Cloud.
+	//   "FEDERATION_ONLY" - Federation-only mode. Federation-only pools can only
+	// be used for federating external workload identities into Google Cloud.
 	// Unless otherwise noted, no structure or format constraints are applied to
-	// workload identities in a FEDERATION_ONLY mode pool, and you cannot create
-	// any resources within the pool besides providers.
-	//   "TRUST_DOMAIN" - Trust-domain mode. TRUST_DOMAIN mode pools can be used to
-	// assign identities to Google Cloud workloads. Identities within a
-	// TRUST_DOMAIN mode pool share the same root of trust.
-	// WorkloadIdentityPoolProviders cannot be created within trust-domain pools.
-	//   "SYSTEM_TRUST_DOMAIN" - SYSTEM_TRUST_DOMAIN mode pools are managed by
-	// Google Cloud services. Neither WorkloadIdentityPoolNamespaces nor
-	// WorkloadIdentityPoolProviders can be created within SYSTEM_TRUST_DOMAIN mode
-	// pools. All identities within a SYSTEM_TRUST_DOMAIN mode pool are in one of
-	// the following formats: * `spiffe:///ns//sa/` * `spiffe:///resources//`
+	// workload identities in a federation-only pool, and you cannot create any
+	// resources within the pool besides providers.
+	//   "TRUST_DOMAIN" - Trust-domain mode. Trust-domain pools can be used to
+	// assign identities to Google Cloud workloads. All identities within a
+	// trust-domain pool must consist of a single namespace and individual workload
+	// identifier. The subject identifier for all identities must conform to the
+	// following format: `ns//sa/` WorkloadIdentityPoolProviders cannot be created
+	// within trust-domain pools.
 	Mode string `json:"mode,omitempty"`
 	// Name: Identifier. The resource name of the pool.
 	Name string `json:"name,omitempty"`
@@ -8684,6 +8663,114 @@ func (c *LocationsWorkforcePoolsProvidersScimTenantsTokensPatchCall) Do(opts ...
 	return ret, nil
 }
 
+type LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall struct {
+	s                                             *Service
+	name                                          string
+	undeleteworkforcepoolproviderscimtokenrequest *UndeleteWorkforcePoolProviderScimTokenRequest
+	urlParams_                                    gensupport.URLParams
+	ctx_                                          context.Context
+	header_                                       http.Header
+}
+
+// Undelete: Gemini Enterprise only. Undeletes a
+// WorkforcePoolProviderScimToken,that was deleted fewer than 30 days ago.
+//
+//   - name: Gemini Enterprise only. The name of the SCIM token to undelete.
+//     Format:
+//     `locations/{location}/workforcePools/{workforce_pool}/providers/{provider}/
+//     scimTenants/{scim_tenant}/tokens/{token}`.
+func (r *LocationsWorkforcePoolsProvidersScimTenantsTokensService) Undelete(name string, undeleteworkforcepoolproviderscimtokenrequest *UndeleteWorkforcePoolProviderScimTokenRequest) *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall {
+	c := &LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.undeleteworkforcepoolproviderscimtokenrequest = undeleteworkforcepoolproviderscimtokenrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall) Fields(s ...googleapi.Field) *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall) Context(ctx context.Context) *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.undeleteworkforcepoolproviderscimtokenrequest)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:undelete")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "iam.locations.workforcePools.providers.scimTenants.tokens.undelete", "request", internallog.HTTPRequest(req, body.Bytes()))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "iam.locations.workforcePools.providers.scimTenants.tokens.undelete" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *WorkforcePoolProviderScimToken.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *LocationsWorkforcePoolsProvidersScimTenantsTokensUndeleteCall) Do(opts ...googleapi.CallOption) (*WorkforcePoolProviderScimToken, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &WorkforcePoolProviderScimToken{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "iam.locations.workforcePools.providers.scimTenants.tokens.undelete", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
+}
+
 type LocationsWorkforcePoolsSubjectsDeleteCall struct {
 	s          *Service
 	name       string
@@ -11236,112 +11323,6 @@ func (c *ProjectsLocationsOauthClientsCredentialsPatchCall) Do(opts ...googleapi
 	return ret, nil
 }
 
-type ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall struct {
-	s                         *Service
-	resource                  string
-	addattestationrulerequest *AddAttestationRuleRequest
-	urlParams_                gensupport.URLParams
-	ctx_                      context.Context
-	header_                   http.Header
-}
-
-// AddAttestationRule: Add an AttestationRule on a
-// WorkloadIdentityPoolManagedIdentity. The total attestation rules after
-// addition must not exceed 50.
-//
-//   - resource: The resource name of the managed identity or namespace resource
-//     to add an attestation rule to.
-func (r *ProjectsLocationsWorkloadIdentityPoolsService) AddAttestationRule(resource string, addattestationrulerequest *AddAttestationRuleRequest) *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall {
-	c := &ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.resource = resource
-	c.addattestationrulerequest = addattestationrulerequest
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
-// details.
-func (c *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall) Fields(s ...googleapi.Field) *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method.
-func (c *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall) Context(ctx context.Context) *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns a http.Header that can be modified by the caller to add
-// headers to the request.
-func (c *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
-	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.addattestationrulerequest)
-	if err != nil {
-		return nil, err
-	}
-	c.urlParams_.Set("alt", alt)
-	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:addAttestationRule")
-	urls += "?" + c.urlParams_.Encode()
-	req, err := http.NewRequest("POST", urls, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"resource": c.resource,
-	})
-	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.addAttestationRule", "request", internallog.HTTPRequest(req, body.Bytes()))
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "iam.projects.locations.workloadIdentityPools.addAttestationRule" call.
-// Any non-2xx status code is an error. Response headers are in either
-// *Operation.ServerResponse.Header or (if a response was returned at all) in
-// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
-// whether the returned error was because http.StatusNotModified was returned.
-func (c *ProjectsLocationsWorkloadIdentityPoolsAddAttestationRuleCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, gensupport.WrapError(&googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		})
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, gensupport.WrapError(err)
-	}
-	ret := &Operation{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	b, err := gensupport.DecodeResponseBytes(target, res)
-	if err != nil {
-		return nil, err
-	}
-	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.addAttestationRule", "response", internallog.HTTPResponse(res, b))
-	return ret, nil
-}
-
 type ProjectsLocationsWorkloadIdentityPoolsCreateCall struct {
 	s                    *Service
 	parent               string
@@ -11931,165 +11912,6 @@ func (c *ProjectsLocationsWorkloadIdentityPoolsListCall) Pages(ctx context.Conte
 	}
 }
 
-type ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall struct {
-	s            *Service
-	resource     string
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// ListAttestationRules: List all AttestationRule on a
-// WorkloadIdentityPoolManagedIdentity.
-//
-//   - resource: The resource name of the managed identity or namespace resource
-//     to list attestation rules of.
-func (r *ProjectsLocationsWorkloadIdentityPoolsService) ListAttestationRules(resource string) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c := &ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.resource = resource
-	return c
-}
-
-// Filter sets the optional parameter "filter": A query filter. Supports the
-// following function: * `container_ids()`: Returns only the AttestationRules
-// under the specific container ids. The function expects a comma-delimited
-// list with only project numbers and must use the format `projects/`. For
-// example: `container_ids(projects/, projects/,...)`.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) Filter(filter string) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c.urlParams_.Set("filter", filter)
-	return c
-}
-
-// PageSize sets the optional parameter "pageSize": The maximum number of
-// AttestationRules to return. If unspecified, at most 50 AttestationRules are
-// returned. The maximum value is 100; values above 100 are truncated to 100.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) PageSize(pageSize int64) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
-	return c
-}
-
-// PageToken sets the optional parameter "pageToken": A page token, received
-// from a previous `ListWorkloadIdentityPoolProviderKeys` call. Provide this to
-// retrieve the subsequent page.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) PageToken(pageToken string) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c.urlParams_.Set("pageToken", pageToken)
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
-// details.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) Fields(s ...googleapi.Field) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets an optional parameter which makes the operation fail if the
-// object's ETag matches the given value. This is useful for getting updates
-// only after the object has changed since the last request.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) IfNoneMatch(entityTag string) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) Context(ctx context.Context) *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns a http.Header that can be modified by the caller to add
-// headers to the request.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	c.urlParams_.Set("alt", alt)
-	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:listAttestationRules")
-	urls += "?" + c.urlParams_.Encode()
-	req, err := http.NewRequest("GET", urls, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"resource": c.resource,
-	})
-	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.listAttestationRules", "request", internallog.HTTPRequest(req, nil))
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "iam.projects.locations.workloadIdentityPools.listAttestationRules" call.
-// Any non-2xx status code is an error. Response headers are in either
-// *ListAttestationRulesResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was because
-// http.StatusNotModified was returned.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) Do(opts ...googleapi.CallOption) (*ListAttestationRulesResponse, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, gensupport.WrapError(&googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		})
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, gensupport.WrapError(err)
-	}
-	ret := &ListAttestationRulesResponse{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	b, err := gensupport.DecodeResponseBytes(target, res)
-	if err != nil {
-		return nil, err
-	}
-	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.listAttestationRules", "response", internallog.HTTPResponse(res, b))
-	return ret, nil
-}
-
-// Pages invokes f for each page of results.
-// A non-nil error returned from f will halt the iteration.
-// The provided context supersedes any context provided to the Context method.
-func (c *ProjectsLocationsWorkloadIdentityPoolsListAttestationRulesCall) Pages(ctx context.Context, f func(*ListAttestationRulesResponse) error) error {
-	c.ctx_ = ctx
-	defer c.PageToken(c.urlParams_.Get("pageToken"))
-	for {
-		x, err := c.Do()
-		if err != nil {
-			return err
-		}
-		if err := f(x); err != nil {
-			return err
-		}
-		if x.NextPageToken == "" {
-			return nil
-		}
-		c.PageToken(x.NextPageToken)
-	}
-}
-
 type ProjectsLocationsWorkloadIdentityPoolsPatchCall struct {
 	s                    *Service
 	name                 string
@@ -12197,217 +12019,6 @@ func (c *ProjectsLocationsWorkloadIdentityPoolsPatchCall) Do(opts ...googleapi.C
 		return nil, err
 	}
 	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.patch", "response", internallog.HTTPResponse(res, b))
-	return ret, nil
-}
-
-type ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall struct {
-	s                            *Service
-	resource                     string
-	removeattestationrulerequest *RemoveAttestationRuleRequest
-	urlParams_                   gensupport.URLParams
-	ctx_                         context.Context
-	header_                      http.Header
-}
-
-// RemoveAttestationRule: Remove an AttestationRule on a
-// WorkloadIdentityPoolManagedIdentity.
-//
-//   - resource: The resource name of the managed identity or namespace resource
-//     to remove an attestation rule from.
-func (r *ProjectsLocationsWorkloadIdentityPoolsService) RemoveAttestationRule(resource string, removeattestationrulerequest *RemoveAttestationRuleRequest) *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall {
-	c := &ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.resource = resource
-	c.removeattestationrulerequest = removeattestationrulerequest
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
-// details.
-func (c *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall) Fields(s ...googleapi.Field) *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method.
-func (c *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall) Context(ctx context.Context) *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns a http.Header that can be modified by the caller to add
-// headers to the request.
-func (c *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
-	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.removeattestationrulerequest)
-	if err != nil {
-		return nil, err
-	}
-	c.urlParams_.Set("alt", alt)
-	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:removeAttestationRule")
-	urls += "?" + c.urlParams_.Encode()
-	req, err := http.NewRequest("POST", urls, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"resource": c.resource,
-	})
-	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.removeAttestationRule", "request", internallog.HTTPRequest(req, body.Bytes()))
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "iam.projects.locations.workloadIdentityPools.removeAttestationRule" call.
-// Any non-2xx status code is an error. Response headers are in either
-// *Operation.ServerResponse.Header or (if a response was returned at all) in
-// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
-// whether the returned error was because http.StatusNotModified was returned.
-func (c *ProjectsLocationsWorkloadIdentityPoolsRemoveAttestationRuleCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, gensupport.WrapError(&googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		})
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, gensupport.WrapError(err)
-	}
-	ret := &Operation{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	b, err := gensupport.DecodeResponseBytes(target, res)
-	if err != nil {
-		return nil, err
-	}
-	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.removeAttestationRule", "response", internallog.HTTPResponse(res, b))
-	return ret, nil
-}
-
-type ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall struct {
-	s                          *Service
-	resource                   string
-	setattestationrulesrequest *SetAttestationRulesRequest
-	urlParams_                 gensupport.URLParams
-	ctx_                       context.Context
-	header_                    http.Header
-}
-
-// SetAttestationRules: Set all AttestationRule on a
-// WorkloadIdentityPoolManagedIdentity. A maximum of 50 AttestationRules can be
-// set.
-//
-//   - resource: The resource name of the managed identity or namespace resource
-//     to add an attestation rule to.
-func (r *ProjectsLocationsWorkloadIdentityPoolsService) SetAttestationRules(resource string, setattestationrulesrequest *SetAttestationRulesRequest) *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall {
-	c := &ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.resource = resource
-	c.setattestationrulesrequest = setattestationrulesrequest
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
-// details.
-func (c *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall) Fields(s ...googleapi.Field) *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method.
-func (c *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall) Context(ctx context.Context) *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns a http.Header that can be modified by the caller to add
-// headers to the request.
-func (c *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
-	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.setattestationrulesrequest)
-	if err != nil {
-		return nil, err
-	}
-	c.urlParams_.Set("alt", alt)
-	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:setAttestationRules")
-	urls += "?" + c.urlParams_.Encode()
-	req, err := http.NewRequest("POST", urls, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"resource": c.resource,
-	})
-	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.setAttestationRules", "request", internallog.HTTPRequest(req, body.Bytes()))
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "iam.projects.locations.workloadIdentityPools.setAttestationRules" call.
-// Any non-2xx status code is an error. Response headers are in either
-// *Operation.ServerResponse.Header or (if a response was returned at all) in
-// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
-// whether the returned error was because http.StatusNotModified was returned.
-func (c *ProjectsLocationsWorkloadIdentityPoolsSetAttestationRulesCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, gensupport.WrapError(&googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		})
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, gensupport.WrapError(err)
-	}
-	ret := &Operation{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	b, err := gensupport.DecodeResponseBytes(target, res)
-	if err != nil {
-		return nil, err
-	}
-	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "iam.projects.locations.workloadIdentityPools.setAttestationRules", "response", internallog.HTTPResponse(res, b))
 	return ret, nil
 }
 

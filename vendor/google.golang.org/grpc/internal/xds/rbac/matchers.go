@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"regexp"
 
 	v3corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	v3rbacpb "github.com/envoyproxy/go-control-plane/envoy/config/rbac/v3"
@@ -78,7 +79,7 @@ func (pm *policyMatcher) match(data *rpcData) bool {
 func matchersFromPermissions(permissions []*v3rbacpb.Permission) ([]matcher, error) {
 	var matchers []matcher
 	for _, permission := range permissions {
-		switch p := permission.GetRule().(type) {
+		switch permission.GetRule().(type) {
 		case *v3rbacpb.Permission_AndRules:
 			mList, err := matchersFromPermissions(permission.GetAndRules().Rules)
 			if err != nil {
@@ -120,24 +121,16 @@ func matchersFromPermissions(permissions []*v3rbacpb.Permission) ([]matcher, err
 			if err != nil {
 				return nil, err
 			}
-			if len(mList) != 1 {
-				return nil, fmt.Errorf("NotRule must contain exactly one rule")
-			}
 			matchers = append(matchers, &notMatcher{matcherToNot: mList[0]})
 		case *v3rbacpb.Permission_Metadata:
-			if permission.GetMetadata().GetInvert() {
+			// Never matches - so no-op if not inverted, always match if
+			// inverted.
+			if permission.GetMetadata().GetInvert() { // Test metadata being no-op and also metadata with invert always matching
 				matchers = append(matchers, &alwaysMatcher{})
-			} else {
-				matchers = append(matchers, &neverMatcher{})
 			}
 		case *v3rbacpb.Permission_RequestedServerName:
-			m, err := newRequestedServerNameMatcher(permission.GetRequestedServerName())
-			if err != nil {
-				return nil, err
-			}
-			matchers = append(matchers, m)
-		default:
-			return nil, fmt.Errorf("unsupported permission rule type: %T", p)
+			// Not supported in gRPC RBAC currently - a permission typed as
+			// requested server name in the initial config will be a no-op.
 		}
 	}
 	return matchers, nil
@@ -146,7 +139,7 @@ func matchersFromPermissions(permissions []*v3rbacpb.Permission) ([]matcher, err
 func matchersFromPrincipals(principals []*v3rbacpb.Principal) ([]matcher, error) {
 	var matchers []matcher
 	for _, principal := range principals {
-		switch p := principal.GetIdentifier().(type) {
+		switch principal.GetIdentifier().(type) {
 		case *v3rbacpb.Principal_AndIds:
 			mList, err := matchersFromPrincipals(principal.GetAndIds().Ids)
 			if err != nil {
@@ -186,29 +179,16 @@ func matchersFromPrincipals(principals []*v3rbacpb.Principal) ([]matcher, error)
 				return nil, err
 			}
 			matchers = append(matchers, m)
-		case *v3rbacpb.Principal_Metadata:
-			if principal.GetMetadata().GetInvert() {
-				matchers = append(matchers, &alwaysMatcher{})
-			} else {
-				matchers = append(matchers, &neverMatcher{})
-			}
 		case *v3rbacpb.Principal_NotId:
 			mList, err := matchersFromPrincipals([]*v3rbacpb.Principal{{Identifier: principal.GetNotId().Identifier}})
 			if err != nil {
 				return nil, err
 			}
-			if len(mList) != 1 {
-				return nil, fmt.Errorf("NotId must contain exactly one identifier")
-			}
 			matchers = append(matchers, &notMatcher{matcherToNot: mList[0]})
 		case *v3rbacpb.Principal_SourceIp:
-			// The source ip principal identifier is deprecated, but gRPC RBAC
-			// treats it as equivalent to direct_remote_ip as per A41.
-			m, err := newRemoteIPMatcher(principal.GetSourceIp())
-			if err != nil {
-				return nil, err
-			}
-			matchers = append(matchers, m)
+			// The source ip principal identifier is deprecated. Thus, a
+			// principal typed as a source ip in the identifier will be a no-op.
+			// The config should use DirectRemoteIp instead.
 		case *v3rbacpb.Principal_RemoteIp:
 			// RBAC in gRPC treats direct_remote_ip and remote_ip as logically
 			// equivalent, as per A41.
@@ -217,8 +197,9 @@ func matchersFromPrincipals(principals []*v3rbacpb.Principal) ([]matcher, error)
 				return nil, err
 			}
 			matchers = append(matchers, m)
-		default:
-			return nil, fmt.Errorf("unsupported principal identifier type: %T", p)
+		case *v3rbacpb.Principal_Metadata:
+			// Not supported in gRPC RBAC currently - a principal typed as
+			// Metadata in the initial config will be a no-op.
 		}
 	}
 	return matchers, nil
@@ -268,16 +249,6 @@ func (am *alwaysMatcher) match(*rpcData) bool {
 	return true
 }
 
-// neverMatcher is a matcher that will never match. This logically represents a
-// permission or principal that is unsupported in gRPC. neverMatcher implements
-// the matcher interface.
-type neverMatcher struct {
-}
-
-func (nm *neverMatcher) match(*rpcData) bool {
-	return false
-}
-
 // notMatcher is a matcher that nots an underlying matcher. notMatcher
 // implements the matcher interface.
 type notMatcher struct {
@@ -300,7 +271,7 @@ func newHeaderMatcher(headerMatcherConfig *v3route_componentspb.HeaderMatcher) (
 	case *v3route_componentspb.HeaderMatcher_ExactMatch:
 		m = internalmatcher.NewHeaderExactMatcher(headerMatcherConfig.Name, headerMatcherConfig.GetExactMatch(), headerMatcherConfig.InvertMatch)
 	case *v3route_componentspb.HeaderMatcher_SafeRegexMatch:
-		regex, err := internalmatcher.CompileSafeRegex(headerMatcherConfig.GetSafeRegexMatch().GetRegex())
+		regex, err := regexp.Compile(headerMatcherConfig.GetSafeRegexMatch().Regex)
 		if err != nil {
 			return nil, err
 		}
@@ -411,25 +382,6 @@ func (pm *portMatcher) match(data *rpcData) bool {
 	return data.destinationPort == pm.destinationPort
 }
 
-// requestedServerNameMatcher matches on if the given string matcher matches
-// on "", as per A41-xds-rbac.md. requestedServerNameMatcher implements
-// the matcher interface.
-type requestedServerNameMatcher struct {
-	stringMatcher internalmatcher.StringMatcher
-}
-
-func newRequestedServerNameMatcher(stringMatcherProto *v3matcherpb.StringMatcher) (*requestedServerNameMatcher, error) {
-	stringMatcher, err := internalmatcher.StringMatcherFromProto(stringMatcherProto)
-	if err != nil {
-		return nil, err
-	}
-	return &requestedServerNameMatcher{stringMatcher: stringMatcher}, nil
-}
-
-func (r *requestedServerNameMatcher) match(*rpcData) bool {
-	return r.stringMatcher.Match("")
-}
-
 // authenticatedMatcher matches on the name of the Principal. If set, the URI
 // SAN or DNS SAN in that order is used from the certificate, otherwise the
 // subject field is used. If unset, it applies to any user that is
@@ -467,23 +419,17 @@ func (am *authenticatedMatcher) match(data *rpcData) bool {
 		return am.stringMatcher.Match("")
 	}
 	cert := data.certs[0]
-	// Use the first non-empty identity source in priority order:
-	// URI SANs, then DNS SANs, then Subject.
-	if len(cert.URIs) > 0 {
-		for _, uriSAN := range cert.URIs {
-			if am.stringMatcher.Match(uriSAN.String()) {
-				return true
-			}
+	// The order of matching as per the RBAC documentation (see package-level comments)
+	// is as follows: URI SANs, DNS SANs, and then subject name.
+	for _, uriSAN := range cert.URIs {
+		if am.stringMatcher.Match(uriSAN.String()) {
+			return true
 		}
-		return false
 	}
-	if len(cert.DNSNames) > 0 {
-		for _, dnsSAN := range cert.DNSNames {
-			if am.stringMatcher.Match(dnsSAN) {
-				return true
-			}
+	for _, dnsSAN := range cert.DNSNames {
+		if am.stringMatcher.Match(dnsSAN) {
+			return true
 		}
-		return false
 	}
 	return am.stringMatcher.Match(cert.Subject.String())
 }

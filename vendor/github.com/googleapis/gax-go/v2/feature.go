@@ -51,17 +51,11 @@ func IsFeatureEnabled(name string) bool {
 	featureEnabledOnce.Do(func() {
 		featureEnabledStore = make(map[string]bool)
 		for _, env := range os.Environ() {
-			prefix := ""
 			if strings.HasPrefix(env, "GOOGLE_SDK_GO_EXPERIMENTAL_") {
-				prefix = "GOOGLE_SDK_GO_EXPERIMENTAL_"
-			} else if strings.HasPrefix(env, "GOOGLE_SDK_GO_") {
-				prefix = "GOOGLE_SDK_GO_"
-			}
-			if prefix != "" {
 				// Parse "KEY=VALUE"
 				kv := strings.SplitN(env, "=", 2)
 				if len(kv) == 2 && strings.ToLower(kv[1]) == "true" {
-					key := strings.TrimPrefix(kv[0], prefix)
+					key := strings.TrimPrefix(kv[0], "GOOGLE_SDK_GO_EXPERIMENTAL_")
 					featureEnabledStore[key] = true
 				}
 			}

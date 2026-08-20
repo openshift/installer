@@ -50,16 +50,11 @@ func unmarshalRouteConfigResource(r *anypb.Any, opts *xdsclient.DecodeOptions) (
 		return "", RouteConfigUpdate{}, fmt.Errorf("failed to unmarshal resource: %v", err)
 	}
 
-	if rc.GetName() == "" {
-		return "", RouteConfigUpdate{}, fmt.Errorf("empty resource name in route config resource")
-	}
-
 	u, err := generateRDSUpdateFromRouteConfiguration(rc, opts)
 	if err != nil {
 		return rc.GetName(), RouteConfigUpdate{}, err
 	}
 	u.Raw = r
-
 	return rc.GetName(), u, nil
 }
 
@@ -241,7 +236,7 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 			route.Path = &pt.Path
 		case *v3routepb.RouteMatch_SafeRegex:
 			regex := pt.SafeRegex.GetRegex()
-			re, err := matcher.CompileSafeRegex(regex)
+			re, err := regexp.Compile(regex)
 			if err != nil {
 				return nil, nil, fmt.Errorf("route %+v contains an invalid regex %q", r, regex)
 			}
@@ -261,7 +256,7 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 				header.ExactMatch = &ht.ExactMatch
 			case *v3routepb.HeaderMatcher_SafeRegexMatch:
 				regex := ht.SafeRegexMatch.GetRegex()
-				re, err := matcher.CompileSafeRegex(regex)
+				re, err := regexp.Compile(regex)
 				if err != nil {
 					return nil, nil, fmt.Errorf("route %+v contains an invalid regex %q", r, regex)
 				}
