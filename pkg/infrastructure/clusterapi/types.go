@@ -135,22 +135,6 @@ type InfraReadyInput struct {
 	InfraID       string
 }
 
-// BootstrapReadyProvider defines the BootstrapReady hook, which is called
-// once the bootstrap machine has been provisioned but before the remaining
-// control-plane machines are required to be ready. This is the earliest
-// point at which the bootstrap NIC exists, making it the correct place
-// to set up SSH access to the bootstrap node for diagnostic log gathering.
-type BootstrapReadyProvider interface {
-	BootstrapReady(ctx context.Context, in BootstrapReadyInput) error
-}
-
-// BootstrapReadyInput collects the args passed to the BootstrapReady hook.
-type BootstrapReadyInput struct {
-	Client        client.Client
-	InstallConfig *installconfig.InstallConfig
-	InfraID       string
-}
-
 // PostProvider defines the PostProvision hook, which is called after
 // machine provisioning has completed.
 type PostProvider interface {
