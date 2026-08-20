@@ -3,13 +3,18 @@ package tls
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/authentication/user"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // CertInterface contains cert.
@@ -121,42 +126,107 @@ type SignedCertKey struct {
 }
 
 // Generate generates a cert/key pair signed by the specified parent CA.
+// When keyGen is nil, uses the legacy path (GenerateSignedCertificate with RSA 2048 keys).
+// When keyGen is non-nil, uses library-go based on cfg.CertType (server/client/peer).
 func (c *SignedCertKey) Generate(_ context.Context,
 	cfg *CertCfg,
 	parentCA CertKeyInterface,
 	filenameBase string,
 	appendParent AppendParentChoice,
+	keyGen libcrypto.KeyPairGenerator,
 ) error {
-	caKey, err := PemToPrivateKey(parentCA.Key())
-	if err != nil {
-		logrus.Debugf("Failed to parse private key: %s", err)
-		return fmt.Errorf("failed to parse private key: %w", err)
+	if keyGen == nil {
+		// Legacy path
+		caKey, err := PemToPrivateKey(parentCA.Key())
+		if err != nil {
+			logrus.Debugf("Failed to parse private key: %s", err)
+			return fmt.Errorf("failed to parse private key: %w", err)
+		}
+
+		caCert, err := PemToCertificate(parentCA.Cert())
+		if err != nil {
+			logrus.Debugf("Failed to parse x509 certificate: %s", err)
+			return fmt.Errorf("failed to parse x509 certificate: %w", err)
+		}
+
+		key, crt, err := GenerateSignedCertificate(caKey, caCert, cfg)
+		if err != nil {
+			logrus.Debugf("Failed to generate signed cert/key pair: %s", err)
+			return fmt.Errorf("failed to generate signed cert/key pair: %w", err)
+		}
+
+		c.KeyRaw, err = PrivateKeyToPem(key)
+		if err != nil {
+			return fmt.Errorf("failed to encode private key to PEM: %w", err)
+		}
+		c.CertRaw = CertToPem(crt)
+
+		if appendParent {
+			c.CertRaw = bytes.Join([][]byte{c.CertRaw, CertToPem(caCert)}, []byte("\n"))
+		}
+
+		c.generateFiles(filenameBase)
+		return nil
 	}
 
-	caCert, err := PemToCertificate(parentCA.Cert())
+	// Library-go path
+	ca, err := libcrypto.GetCAFromBytes(parentCA.Cert(), parentCA.Key())
 	if err != nil {
-		logrus.Debugf("Failed to parse x509 certificate: %s", err)
-		return fmt.Errorf("failed to parse x509 certificate: %w", err)
+		return fmt.Errorf("failed to parse parent CA: %w", err)
 	}
 
-	key, crt, err := GenerateSignedCertificate(caKey, caCert, cfg)
-	if err != nil {
-		logrus.Debugf("Failed to generate signed cert/key pair: %s", err)
-		return fmt.Errorf("failed to generate signed cert/key pair: %w", err)
+	var tlsCfg *libcrypto.TLSCertificateConfig
+	opts := []libcrypto.CertificateOption{
+		libcrypto.WithLifetime(cfg.Validity),
 	}
 
-	c.KeyRaw, err = PrivateKeyToPem(key)
-	if err != nil {
-		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	switch cfg.CertType {
+	case libpki.CertificateTypeServing:
+		hostnames := hostnamesFromCfg(cfg)
+		if len(cfg.ExtKeyUsages) > 0 {
+			opts = append(opts, libcrypto.WithExtensions(func(template *x509.Certificate) error {
+				template.ExtKeyUsage = cfg.ExtKeyUsages
+				return nil
+			}))
+		}
+		tlsCfg, err = ca.NewServerCertificate(hostnames, keyGen, opts...)
+	case libpki.CertificateTypeClient:
+		u := userInfoFromCfg(cfg)
+		tlsCfg, err = ca.NewClientCertificate(u, keyGen, opts...)
+	case libpki.CertificateTypePeer:
+		hostnames := hostnamesFromCfg(cfg)
+		u := userInfoFromCfg(cfg)
+		if len(cfg.ExtKeyUsages) > 0 {
+			opts = append(opts, libcrypto.WithExtensions(func(template *x509.Certificate) error {
+				template.ExtKeyUsage = cfg.ExtKeyUsages
+				return nil
+			}))
+		}
+		tlsCfg, err = ca.NewPeerCertificate(hostnames, u, keyGen, opts...)
+	default:
+		return fmt.Errorf("unsupported certificate type: %v", cfg.CertType)
 	}
-	c.CertRaw = CertToPem(crt)
 
+	if err != nil {
+		return fmt.Errorf("failed to generate signed certificate: %w", err)
+	}
+
+	// Encode cert and key
 	if appendParent {
-		c.CertRaw = bytes.Join([][]byte{c.CertRaw, CertToPem(caCert)}, []byte("\n"))
+		c.CertRaw, err = libcrypto.EncodeCertificates(tlsCfg.Certs...)
+	} else {
+		c.CertRaw, err = libcrypto.EncodeCertificates(tlsCfg.Certs[0])
+	}
+	if err != nil {
+		return fmt.Errorf("failed to encode certificates: %w", err)
+	}
+
+	c.KeyRaw, err = libcrypto.EncodeKey(tlsCfg.Key)
+	if err != nil {
+		return fmt.Errorf("failed to encode private key: %w", err)
 	}
 
 	c.generateFiles(filenameBase)
-
 	return nil
 }
 
@@ -166,12 +236,69 @@ type SelfSignedCertKey struct {
 }
 
 // Generate generates a self-signed cert/key pair using the specified PKI profile.
+// When keyGen is nil, uses the legacy path (PKIConfigToKeyParams(nil) + GenerateSelfSignedCertificate).
+// When keyGen is non-nil and cfg.IsCA, uses libcrypto.NewSigningCertificate (library-go path).
+// When keyGen is non-nil and not IsCA, converts keyGen to PrivateKeyParams and uses legacy GenerateSelfSignedCertificate.
 func (c *SelfSignedCertKey) Generate(_ context.Context,
 	cfg *CertCfg,
 	filenameBase string,
-	pkiConfig *types.PKIConfig,
+	keyGen libcrypto.KeyPairGenerator,
 ) error {
-	params := PKIConfigToKeyParams(pkiConfig)
+	if keyGen == nil {
+		// Legacy path
+		params := PKIConfigToKeyParams(nil)
+		key, crt, err := GenerateSelfSignedCertificate(cfg, params)
+		if err != nil {
+			return fmt.Errorf("failed to generate self-signed cert/key pair: %w", err)
+		}
+		c.KeyRaw, err = PrivateKeyToPem(key)
+		if err != nil {
+			return fmt.Errorf("failed to encode private key to PEM: %w", err)
+		}
+		c.CertRaw = CertToPem(crt)
+		c.generateFiles(filenameBase)
+		return nil
+	}
+
+	if cfg.IsCA {
+		return c.generateSigningCert(cfg, filenameBase, keyGen)
+	}
+	return c.generateSelfSignedCert(cfg, filenameBase, keyGen)
+}
+
+// generateSigningCert generates a self-signed CA certificate using library-go.
+func (c *SelfSignedCertKey) generateSigningCert(cfg *CertCfg, filenameBase string, keyGen libcrypto.KeyPairGenerator) error {
+	var opts []libcrypto.CertificateOption
+	if cfg.Subject.CommonName != "" || len(cfg.Subject.OrganizationalUnit) > 0 {
+		opts = append(opts, libcrypto.WithSubject(cfg.Subject))
+	}
+	opts = append(opts, libcrypto.WithLifetime(cfg.Validity))
+
+	tlsCfg, err := libcrypto.NewSigningCertificate(filenameBase, keyGen, opts...)
+	if err != nil {
+		return fmt.Errorf("failed to generate signing certificate: %w", err)
+	}
+
+	c.CertRaw, err = libcrypto.EncodeCertificates(tlsCfg.Certs...)
+	if err != nil {
+		return fmt.Errorf("failed to encode certificates: %w", err)
+	}
+
+	c.KeyRaw, err = libcrypto.EncodeKey(tlsCfg.Key)
+	if err != nil {
+		return fmt.Errorf("failed to encode private key: %w", err)
+	}
+
+	c.generateFiles(filenameBase)
+	return nil
+}
+
+// generateSelfSignedCert generates a self-signed non-CA certificate using the legacy path.
+func (c *SelfSignedCertKey) generateSelfSignedCert(cfg *CertCfg, filenameBase string, keyGen libcrypto.KeyPairGenerator) error {
+	params, err := keyGenToParams(keyGen)
+	if err != nil {
+		return fmt.Errorf("failed to convert keyGen to PrivateKeyParams: %w", err)
+	}
 
 	key, crt, err := GenerateSelfSignedCertificate(cfg, params)
 	if err != nil {
@@ -185,7 +312,6 @@ func (c *SelfSignedCertKey) Generate(_ context.Context,
 	c.CertRaw = CertToPem(crt)
 
 	c.generateFiles(filenameBase)
-
 	return nil
 }
 
@@ -225,4 +351,53 @@ func RegenerateSignedCertKey(
 	}
 
 	return keyRaw, certRaw, nil
+}
+
+// hostnamesFromCfg extracts hostnames (DNS names and IP addresses) from CertCfg.
+func hostnamesFromCfg(cfg *CertCfg) sets.Set[string] {
+	hostnames := sets.New[string]()
+	for _, dns := range cfg.DNSNames {
+		hostnames.Insert(dns)
+	}
+	for _, ip := range cfg.IPAddresses {
+		hostnames.Insert(ip.String())
+	}
+	return hostnames
+}
+
+// userInfoFromCfg converts CertCfg.Subject to user.Info for library-go client cert generation.
+func userInfoFromCfg(cfg *CertCfg) user.Info {
+	return &user.DefaultInfo{
+		Name:   cfg.Subject.CommonName,
+		Groups: cfg.Subject.Organization,
+	}
+}
+
+// keyGenToParams converts a libcrypto.KeyPairGenerator to PrivateKeyParams.
+func keyGenToParams(keyGen libcrypto.KeyPairGenerator) (PrivateKeyParams, error) {
+	switch kg := keyGen.(type) {
+	case libcrypto.RSAKeyPairGenerator:
+		return PrivateKeyParams{
+			Algorithm:  types.KeyAlgorithmRSA,
+			RSAKeySize: int32(kg.Bits),
+		}, nil
+	case libcrypto.ECDSAKeyPairGenerator:
+		var curve types.ECDSACurve
+		switch kg.Curve {
+		case libcrypto.P256:
+			curve = types.ECDSACurveP256
+		case libcrypto.P384:
+			curve = types.ECDSACurveP384
+		case libcrypto.P521:
+			curve = types.ECDSACurveP521
+		default:
+			return PrivateKeyParams{}, fmt.Errorf("unsupported ECDSA curve: %v", kg.Curve)
+		}
+		return PrivateKeyParams{
+			Algorithm:  types.KeyAlgorithmECDSA,
+			ECDSACurve: curve,
+		}, nil
+	default:
+		return PrivateKeyParams{}, fmt.Errorf("unsupported KeyPairGenerator type: %T", keyGen)
+	}
 }

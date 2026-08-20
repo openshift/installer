@@ -10,7 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // KubeAPIServerToKubeletSignerCertKey is a key/cert pair that signs the kube-apiserver to kubelet client certs.
@@ -22,21 +22,35 @@ var _ asset.WritableAsset = (*KubeAPIServerToKubeletSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeAPIServerToKubeletSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerKeyParams{}, &installconfig.InstallConfig{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	parents.Get(signerKeyParams, installConfig)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityOneYear(installConfig),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.kubelet-client-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityOneYear(installConfig),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -86,6 +100,7 @@ func (a *KubeAPIServerToKubeletClientCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeAPIServerToKubeletSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -93,16 +108,30 @@ func (a *KubeAPIServerToKubeletClientCertKey) Dependencies() []asset.Asset {
 func (a *KubeAPIServerToKubeletClientCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeAPIServerToKubeletSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneYear(installConfig),
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			Validity:     ValidityOneYear(installConfig),
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-to-kubelet-client", DoNotAppendParent, nil)
 	}
 
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-to-kubelet-client", DoNotAppendParent)
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.kubelet-client")
+	if err != nil {
+		return err
+	}
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Validity:     ValidityOneYear(installConfig),
+		CertType:     libpki.CertificateTypeClient,
+	}
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-to-kubelet-client", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -131,14 +160,27 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Dependencies() []asset.Asset {
 func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	signerKeyParams := &SignerKeyParams{}
 	parents.Get(signerKeyParams)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityTenYears(),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.localhost-serving-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", signerKeyParams.PKIConfig)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", keyGen)
 }
 
 // Load reads the asset files from disk.
@@ -193,6 +235,7 @@ func (a *KubeAPIServerLocalhostServerCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeAPIServerLocalhostSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -200,20 +243,38 @@ func (a *KubeAPIServerLocalhostServerCertKey) Dependencies() []asset.Asset {
 func (a *KubeAPIServerLocalhostServerCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeAPIServerLocalhostSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			Validity:     ValidityOneDay(installConfig),
+			DNSNames: []string{
+				"localhost",
+			},
+			IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-localhost-server", AppendParent, nil)
+	}
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.localhost-serving")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:     ValidityOneDay(installConfig),
 		DNSNames: []string{
 			"localhost",
 		},
 		IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
+		CertType:    libpki.CertificateTypeServing,
 	}
-
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-localhost-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-localhost-server", AppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -242,14 +303,27 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Dependencies() []asset.Asset 
 func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	signerKeyParams := &SignerKeyParams{}
 	parents.Get(signerKeyParams)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityTenYears(),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.service-network-serving-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", signerKeyParams.PKIConfig)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", keyGen)
 }
 
 // Load reads the asset files from disk.
@@ -304,6 +378,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Dependencies() []asset.Asset 
 	return []asset.Asset{
 		&KubeAPIServerServiceNetworkSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -311,15 +386,38 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Dependencies() []asset.Asset 
 func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeAPIServerServiceNetworkSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 	serviceAddress, err := cidrhost(installConfig.Config.Networking.ServiceNetwork[0].IPNet, 1)
 	if err != nil {
 		return errors.Wrap(err, "failed to get service address for kube-apiserver from InstallConfig")
 	}
 
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			Validity:     ValidityOneDay(installConfig),
+			DNSNames: []string{
+				"kubernetes", "kubernetes.default",
+				"kubernetes.default.svc",
+				"kubernetes.default.svc.cluster.local",
+				"openshift", "openshift.default",
+				"openshift.default.svc",
+				"openshift.default.svc.cluster.local",
+			},
+			IPAddresses: []net.IP{net.ParseIP(serviceAddress)},
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent, nil)
+	}
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.service-network-serving")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:     ValidityOneDay(installConfig),
 		DNSNames: []string{
@@ -331,9 +429,9 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context,
 			"openshift.default.svc.cluster.local",
 		},
 		IPAddresses: []net.IP{net.ParseIP(serviceAddress)},
+		CertType:    libpki.CertificateTypeServing,
 	}
-
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -362,14 +460,27 @@ func (c *KubeAPIServerLBSignerCertKey) Dependencies() []asset.Asset {
 func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
 	signerKeyParams := &SignerKeyParams{}
 	parents.Get(signerKeyParams)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityTenYears(),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", nil)
+	}
+
+	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.loadbalancer-serving-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", signerKeyParams.PKIConfig)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", keyGen)
 }
 
 // Load reads the asset files from disk.
@@ -424,6 +535,7 @@ func (a *KubeAPIServerExternalLBServerCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeAPIServerLBSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -431,19 +543,36 @@ func (a *KubeAPIServerExternalLBServerCertKey) Dependencies() []asset.Asset {
 func (a *KubeAPIServerExternalLBServerCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeAPIServerLBSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			Validity:     ValidityOneDay(installConfig),
+			DNSNames: []string{
+				apiAddress(installConfig.Config),
+			},
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-lb-server", AppendParent, nil)
+	}
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.external-loadbalancer-serving")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:     ValidityOneDay(installConfig),
 		DNSNames: []string{
 			apiAddress(installConfig.Config),
 		},
+		CertType: libpki.CertificateTypeServing,
 	}
-
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-lb-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-lb-server", AppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -463,6 +592,7 @@ func (a *KubeAPIServerInternalLBServerCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeAPIServerLBSignerCertKey{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -470,19 +600,36 @@ func (a *KubeAPIServerInternalLBServerCertKey) Dependencies() []asset.Asset {
 func (a *KubeAPIServerInternalLBServerCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &KubeAPIServerLBSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			Validity:     ValidityOneDay(installConfig),
+			DNSNames: []string{
+				internalAPIAddress(installConfig.Config),
+			},
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-internal-lb-server", AppendParent, nil)
+	}
+
+	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.internal-loadbalancer-serving")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:     ValidityOneDay(installConfig),
 		DNSNames: []string{
 			internalAPIAddress(installConfig.Config),
 		},
+		CertType: libpki.CertificateTypeServing,
 	}
-
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-internal-lb-server", AppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-internal-lb-server", AppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
