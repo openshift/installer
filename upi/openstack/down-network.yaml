@@ -40,6 +40,16 @@
       cmd: "openstack port delete {{ ports.stdout_lines | join(' ') }}"
     when: ports.stdout != ""
 
+  - name: 'List FIPs'
+    ansible.builtin.command:
+      cmd: "openstack floating ip list --router {{ os_router}} -f value -c ID"
+    register: fips
+
+  - name: 'Remove the cluster FIPs'
+    ansible.builtin.command:
+      cmd: "openstack floating ip delete {{ fips.stdout_lines | join(' ') }}"
+    when: fips.stdout != ""
+
   - name: 'Remove the cluster router'
     openstack.cloud.router:
       name: "{{ os_router }}"
