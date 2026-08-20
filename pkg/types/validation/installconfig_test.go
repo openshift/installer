@@ -3206,7 +3206,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "osImageStream: Unsupported value: \"invalid\": supported values: \"rhel-9\", \"rhel-10\"",
 		},
 		{
-			name: "sno on baremetal not supported",
+			name: "sno on baremetal",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
@@ -3217,7 +3217,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^bootstrapInPlace: Invalid value: "": Single Node OpenShift is not supported on the baremetal platform$`,
 		},
 		{
 			name: "valid PKI with signer certificates",
