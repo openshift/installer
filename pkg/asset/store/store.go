@@ -50,18 +50,32 @@ type storeImpl struct {
 	assets          map[reflect.Type]*assetState
 	stateFileAssets map[string]json.RawMessage
 	fileFetcher     asset.FileFetcher
+	modifications   *modificationTracker
+	consumeFiles    bool
 }
 
 // NewStore returns an asset store that implements the asset.Store interface.
 func NewStore(dir string) (asset.Store, error) {
-	return newStore(dir)
+	return newStore(dir, true)
 }
 
-func newStore(dir string) (*storeImpl, error) {
+// NewStoreWithConsumption returns an asset store that implements the asset.Store
+// interface, configured to either consume input files or allow them to persist.
+func NewStoreWithConsumption(dir string, consumeFiles bool) (asset.Store, error) {
+	return newStore(dir, consumeFiles)
+}
+
+func newStore(dir string, consumeFiles bool) (*storeImpl, error) {
+	modTracker := newModificationTracker()
 	store := &storeImpl{
-		directory:   dir,
-		fileFetcher: &fileFetcher{directory: dir},
-		assets:      map[reflect.Type]*assetState{},
+		directory: dir,
+		assets:    map[reflect.Type]*assetState{},
+		fileFetcher: &fileFetcher{
+			directory: dir,
+			modCheck:  modTracker,
+		},
+		modifications: modTracker,
+		consumeFiles:  consumeFiles,
 	}
 
 	if err := store.loadStateFile(); err != nil {
@@ -104,6 +118,7 @@ func (s *storeImpl) Destroy(a asset.Asset) error {
 		if err := asset.DeleteAssetFromDisk(wa, s.directory); err != nil {
 			return err
 		}
+		s.modifications.Purge(wa)
 	}
 
 	delete(s.assets, reflect.TypeOf(a))
@@ -142,6 +157,12 @@ func (s *storeImpl) loadStateFile() error {
 		return errors.Wrapf(err, "failed to unmarshal state file %q", path)
 	}
 	s.stateFileAssets = assets
+
+	if mods, ok := assets[modTrackerKey]; ok {
+		if err := json.Unmarshal(mods, s.modifications); err != nil {
+			return errors.Wrapf(err, "failed to unmarshal state file %q", path)
+		}
+	}
 	return nil
 }
 
@@ -175,6 +196,11 @@ func (s *storeImpl) saveStateFile() error {
 		}
 		s.stateFileAssets[k.String()] = json.RawMessage(data)
 	}
+	mods, err := json.Marshal(s.modifications)
+	if err != nil {
+		return err
+	}
+	s.stateFileAssets[modTrackerKey] = json.RawMessage(mods)
 	data, err := json.MarshalIndent(s.stateFileAssets, "", "    ")
 	if err != nil {
 		return err
@@ -272,6 +298,7 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 		stateFileAsset         asset.Asset
 		foundInStateFile       bool
 		onDiskMatchesStateFile bool
+		preservedOnDisk        bool
 	)
 	// Do not need to bother with loading from state file if any of the parents
 	// are dirty because the asset must be re-generated in this case.
@@ -294,6 +321,8 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 				logrus.Debugf("%sOn-disk %s matches asset in state file", indent, a.Name())
 			}
 		}
+
+		preservedOnDisk = s.modifications.HasPreservedFiles(stateFileAsset)
 	}
 
 	var (
@@ -327,7 +356,7 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 		asset:           assetToStore,
 		source:          source,
 		anyParentsDirty: anyParentsDirty,
-		presentOnDisk:   foundOnDisk,
+		presentOnDisk:   foundOnDisk || preservedOnDisk,
 	}
 	s.assets[reflect.TypeOf(a)] = state
 	return state, nil
@@ -345,11 +374,19 @@ func (s *storeImpl) purge(excluded []asset.WritableAsset) error {
 		if !assetState.presentOnDisk || excl[reflect.TypeOf(assetState.asset)] {
 			continue
 		}
-		logrus.Infof("Consuming %s from target directory", assetState.asset.Name())
-		if err := asset.DeleteAssetFromDisk(assetState.asset.(asset.WritableAsset), s.directory); err != nil {
-			return err
+		if s.consumeFiles {
+			logrus.Infof("Consuming %s from target directory", assetState.asset.Name())
+			if wa, ok := assetState.asset.(asset.WritableAsset); ok {
+				if err := asset.DeleteAssetFromDisk(wa, s.directory); err != nil {
+					return err
+				}
+				s.modifications.Purge(wa)
+			}
 		}
 		assetState.presentOnDisk = false
+	}
+	if s.consumeFiles {
+		return s.saveStateFile()
 	}
 	return nil
 }
@@ -371,4 +408,23 @@ func (s *storeImpl) Load(a asset.Asset) (asset.Asset, error) {
 	}
 
 	return s.assets[reflect.TypeOf(a)].asset, nil
+}
+
+func asFileWriter(a asset.WritableAsset) asset.FileWriter {
+	switch v := a.(type) {
+	case asset.FileWriter:
+		return v
+	default:
+		return asset.NewDefaultFileWriter(a)
+	}
+}
+
+func (s *storeImpl) PersistToFile(wa asset.WritableAsset) error {
+	if s.consumeFiles {
+		s.modifications.Purge(wa)
+		if err := s.saveStateFile(); err != nil {
+			return err
+		}
+	}
+	return asFileWriter(wa).PersistToFile(s.directory)
 }
