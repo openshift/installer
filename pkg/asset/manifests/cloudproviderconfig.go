@@ -386,7 +386,7 @@ NodeIPFamilies=ipv4
 		}
 		cm.Data[cloudProviderConfigDataKey] = powervsConfig
 	case vspheretypes.Name:
-		vsphereConfig, err := vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere)
+		vsphereConfig, err := vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig)
 
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
