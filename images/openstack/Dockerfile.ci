@@ -2,8 +2,8 @@
 # It builds an image containing the openshift-install command as well as the openstack cli.
 
 # We copy from the -artifacts images because they are statically linked
-FROM registry.ci.openshift.org/ocp/4.17:installer-kube-apiserver-artifacts AS kas-artifacts
-FROM registry.ci.openshift.org/ocp/4.17:installer-etcd-artifacts AS etcd-artifacts
+FROM registry.ci.openshift.org/ocp/4.22:installer-kube-apiserver-artifacts AS kas-artifacts
+FROM registry.ci.openshift.org/ocp/4.22:installer-etcd-artifacts AS etcd-artifacts
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS builder
 # FIPS support is offered via the baremetal-installer image
@@ -18,9 +18,9 @@ RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
 	mv cluster-api/bin/$(go env GOOS)/$(go env GOHOSTARCH)/* -t cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/4.17:cli AS cli
+FROM registry.ci.openshift.org/ocp/4.22:cli AS cli
 
-FROM registry.ci.openshift.org/ocp/4.17:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.22:base-rhel9
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi/openstack /var/lib/openshift-install/upi
@@ -71,4 +71,4 @@ USER 1000:1000
 ENV HOME /output
 ENV LC_ALL en_US.UTF-8
 WORKDIR /output
-ENTRYPOINT ["/bin/openshift-install"]
+ENTRYPOINT ["/bin/bash"]
