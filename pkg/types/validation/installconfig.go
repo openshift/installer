@@ -370,6 +370,8 @@ func ipnetworksToStrings(networks []ipnet.IPNet) []string {
 
 // validateNetworkingIPVersion checks parameters for consistency when the user
 // requests single-stack IPv6 or dual-stack modes.
+//
+//nolint:gocyclo
 func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
@@ -420,6 +422,14 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 				break
 			}
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", fmt.Sprintf("dual-stack IPv4/IPv6 can only be specified when platform.aws.ipFamily is %s or %s", network.DualStackIPv4Primary, network.DualStackIPv6Primary)))
+		case p.GCP != nil:
+			if ipFamily := p.GCP.IPFamily; ipFamily.DualStackEnabled() {
+				if ipFamily == network.DualStackIPv6Primary {
+					allowV6Primary = true
+				}
+				break
+			}
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", fmt.Sprintf("dual-stack IPv4/IPv6 can only be specified when platform.gcp.ipFamily is %s or %s", network.DualStackIPv4Primary, network.DualStackIPv6Primary)))
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
 		}
@@ -451,6 +461,8 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 		case p.Nutanix != nil:
 		case p.None != nil:
 		case p.External != nil:
+		case p.GCP != nil && p.GCP.IPFamily.DualStackEnabled():
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		case p.AWS != nil:
 			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
 			if p.AWS.IPFamily.DualStackEnabled() {
@@ -466,6 +478,8 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 
 	case hasIPv4:
 		switch {
+		case p.GCP != nil && p.GCP.IPFamily.DualStackEnabled():
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		case p.AWS != nil:
 			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
 			if p.AWS.IPFamily.DualStackEnabled() {
@@ -502,6 +516,16 @@ func validateNetworkEntryOrder(p *types.Platform, ipAddressType ipAddressType, n
 	switch {
 	case p.AWS != nil:
 		ipFamily := p.AWS.IPFamily
+
+		if ipFamily == network.DualStackIPv4Primary && ipAddressType.Primary == corev1.IPv6Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv4Primary requires an IPv4 network first in this list"))
+		}
+
+		if ipFamily == network.DualStackIPv6Primary && ipAddressType.Primary == corev1.IPv4Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv6Primary requires an IPv6 network first in this list"))
+		}
+	case p.GCP != nil:
+		ipFamily := p.GCP.IPFamily
 
 		if ipFamily == network.DualStackIPv4Primary && ipAddressType.Primary == corev1.IPv6Protocol {
 			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv4Primary requires an IPv4 network first in this list"))
