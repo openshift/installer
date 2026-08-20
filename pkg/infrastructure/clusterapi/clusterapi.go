@@ -334,6 +334,27 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
+	// Ensure PostProvision runs even when machine provisioning fails,
+	// so SSH NAT rules are created for diagnostic log gathering.
+	defer func() {
+		if p, ok := i.impl.(PostProvider); ok {
+			postMachineInput := PostProvisionInput{
+				Client:        cl,
+				InstallConfig: installConfig,
+				InfraID:       clusterID.InfraID,
+			}
+			timer.StartTimer(postProvisionStage)
+			if postErr := p.PostProvision(ctx, postMachineInput); postErr != nil {
+				if err != nil {
+					logrus.Warnf("post-provision hook failed: %v", postErr)
+				} else {
+					err = fmt.Errorf("failed during post-machine creation hook: %w", postErr)
+				}
+			}
+			timer.StopTimer(postProvisionStage)
+		}
+	}()
+
 	var provisionTimeout = 15 * time.Minute
 
 	if p, ok := i.impl.(Timeouts); ok {
@@ -344,6 +365,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		untilTime := time.Now().Add(provisionTimeout)
 		timezone, _ := untilTime.Zone()
 		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.PublicGatherEndpoint() == ExternalIP
+		bootstrapMachineName := capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
 		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", provisionTimeout, untilTime.Format(time.Kitchen), timezone, machineNames)
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, provisionTimeout, true,
 			func(ctx context.Context) (bool, error) {
@@ -360,7 +382,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 						return false, err
 					}
 
-					reqPubIP := reqBootstrapPubIP && machine.Name == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
+					reqPubIP := reqBootstrapPubIP && machine.Name == bootstrapMachineName
 					ready, err := checkMachineReady(machine, reqPubIP)
 					if err != nil {
 						return false, fmt.Errorf("failed waiting for machines: %w", err)
@@ -387,20 +409,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	}
 	timer.StopTimer(machineStage)
 	logrus.Info("Control-plane machines are ready")
-
-	if p, ok := i.impl.(PostProvider); ok {
-		postMachineInput := PostProvisionInput{
-			Client:        cl,
-			InstallConfig: installConfig,
-			InfraID:       clusterID.InfraID,
-		}
-
-		timer.StartTimer(postProvisionStage)
-		if err = p.PostProvision(ctx, postMachineInput); err != nil {
-			return fileList, fmt.Errorf("failed during post-machine creation hook: %w", err)
-		}
-		timer.StopTimer(postProvisionStage)
-	}
 
 	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
 
@@ -644,14 +652,15 @@ func (i *InfraProvider) collectManifests(ctx context.Context, cl client.Client) 
 
 func checkMachineReady(machine *clusterv1.Machine, requirePublicIP bool) (bool, error) {
 	logrus.Debugf("Checking that machine %s has provisioned...", machine.Name)
+	if machine.Status.Phase == string(clusterv1.MachinePhaseFailed) {
+		//TODO: We need to update this to use non deprecated field
+		msg := ptr.Deref(machine.Status.FailureMessage, "machine.Status.FailureMessage was not set") //nolint:staticcheck
+		return false, fmt.Errorf("machine %s failed to provision: %s", machine.Name, msg)
+	}
 	if machine.Status.Phase != string(clusterv1.MachinePhaseProvisioned) &&
 		machine.Status.Phase != string(clusterv1.MachinePhaseRunning) {
 		logrus.Debugf("Machine %s has not yet provisioned: %s", machine.Name, machine.Status.Phase)
 		return false, nil
-	} else if machine.Status.Phase == string(clusterv1.MachinePhaseFailed) {
-		//TODO: We need to update this to use non deprecated field
-		msg := ptr.Deref(machine.Status.FailureMessage, "machine.Status.FailureMessage was not set") //nolint:staticcheck
-		return false, fmt.Errorf("machine %s failed to provision: %s", machine.Name, msg)
 	}
 	logrus.Debugf("Machine %s has status: %s", machine.Name, machine.Status.Phase)
 	return hasRequiredIP(machine, requirePublicIP), nil
