@@ -828,7 +828,7 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 		},
 		{
-			name:          "master data disk with securityEncryptionType is rejected",
+			name:          "master data disk with SecurityProfile and SecurityEncryptionType is rejected",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "master",
@@ -848,10 +848,31 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.securityEncryptionType: Forbidden: security encryption types on data disks are not yet supported by the Machine API and would be silently ignored`,
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile: Forbidden: data disk security profiles are not yet supported by the Machine API and would be silently ignored`,
 		},
 		{
-			name:          "worker data disk with securityEncryptionType is rejected",
+			name:          "master data disk with SecurityProfile but no SecurityEncryptionType is rejected",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 64,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+								SecurityProfile:    &capz.VMDiskSecurityProfile{},
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile: Forbidden: data disk security profiles are not yet supported by the Machine API and would be silently ignored`,
+		},
+		{
+			name:          "worker data disk with SecurityProfile and SecurityEncryptionType is rejected",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "worker",
@@ -871,10 +892,10 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile\.securityEncryptionType: Forbidden: security encryption types on data disks are not yet supported by the Machine API and would be silently ignored`,
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile: Forbidden: data disk security profiles are not yet supported by the Machine API and would be silently ignored`,
 		},
 		{
-			name:          "worker data disk with security profile but no encryption type is rejected",
+			name:          "worker data disk with SecurityProfile but no SecurityEncryptionType is rejected",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
 				Name: "worker",

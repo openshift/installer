@@ -348,33 +348,12 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 	return errs
 }
 
-func dataDiskContainsSecurityEncryptionType(dataDisk capz.DataDisk) bool {
-	return dataDisk.ManagedDisk != nil &&
-		dataDisk.ManagedDisk.SecurityProfile != nil &&
-		dataDisk.ManagedDisk.SecurityProfile.SecurityEncryptionType != ""
-}
-
 func validateDataDisk(p *azure.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
 	switch poolName {
-	case types.MachinePoolControlPlaneRoleName:
+	case types.MachinePoolControlPlaneRoleName, types.MachinePoolComputeRoleName:
 		for i, dataDisk := range p.DataDisks {
-			if dataDiskContainsSecurityEncryptionType(dataDisk) {
-				allErrs = append(allErrs, field.Forbidden(
-					fldPath.Index(i).Child("managedDisk", "securityProfile", "securityEncryptionType"),
-					"security encryption types on data disks are not yet supported by the Machine API and would be silently ignored",
-				))
-			}
-		}
-	case types.MachinePoolComputeRoleName:
-		for i, dataDisk := range p.DataDisks {
-			if dataDiskContainsSecurityEncryptionType(dataDisk) {
-				allErrs = append(allErrs, field.Forbidden(
-					fldPath.Index(i).Child("managedDisk", "securityProfile", "securityEncryptionType"),
-					"security encryption types on data disks are not yet supported by the Machine API and would be silently ignored",
-				))
-			}
 			if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.SecurityProfile != nil {
 				allErrs = append(allErrs, field.Forbidden(
 					fldPath.Index(i).Child("managedDisk", "securityProfile"),
