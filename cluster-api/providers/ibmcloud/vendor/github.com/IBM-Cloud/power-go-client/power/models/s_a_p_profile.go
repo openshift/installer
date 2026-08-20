@@ -54,7 +54,7 @@ type SAPProfile struct {
 
 	// Type of profile
 	// Required: true
-	// Enum: ["balanced","compute","memory","non-production","ultra-memory","small","SAP Rise Optimized"]
+	// Enum: ["balanced","compute","memory","ultra-memory","small","sap-rise","sap-rise-app"]
 	Type *string `json:"type"`
 
 	// List of supported workload types
@@ -168,7 +168,7 @@ var sAPProfileTypeTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["balanced","compute","memory","non-production","ultra-memory","small","SAP Rise Optimized"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["balanced","compute","memory","ultra-memory","small","sap-rise","sap-rise-app"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -187,17 +187,17 @@ const (
 	// SAPProfileTypeMemory captures enum value "memory"
 	SAPProfileTypeMemory string = "memory"
 
-	// SAPProfileTypeNonDashProduction captures enum value "non-production"
-	SAPProfileTypeNonDashProduction string = "non-production"
-
 	// SAPProfileTypeUltraDashMemory captures enum value "ultra-memory"
 	SAPProfileTypeUltraDashMemory string = "ultra-memory"
 
 	// SAPProfileTypeSmall captures enum value "small"
 	SAPProfileTypeSmall string = "small"
 
-	// SAPProfileTypeSAPRiseOptimized captures enum value "SAP Rise Optimized"
-	SAPProfileTypeSAPRiseOptimized string = "SAP Rise Optimized"
+	// SAPProfileTypeSapDashRise captures enum value "sap-rise"
+	SAPProfileTypeSapDashRise string = "sap-rise"
+
+	// SAPProfileTypeSapDashRiseDashApp captures enum value "sap-rise-app"
+	SAPProfileTypeSapDashRiseDashApp string = "sap-rise-app"
 )
 
 // prop value enum
