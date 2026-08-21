@@ -18,6 +18,8 @@ limitations under the License.
 package hash
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 
@@ -46,11 +48,12 @@ func Base36TruncatedHash(str string, hashLen int) (string, error) {
 // It is not an encoding since it returns a same-length string
 // for any byte value.
 func base36Truncate(bytes []byte) string {
-	var chars string
+	var b strings.Builder
+	b.Grow(len(bytes))
 	for _, bite := range bytes {
 		idx := int(bite) % 36
-		chars += string(base36set[idx])
+		b.WriteByte(base36set[idx])
 	}
 
-	return chars
+	return b.String()
 }

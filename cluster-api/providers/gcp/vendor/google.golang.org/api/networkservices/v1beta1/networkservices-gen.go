@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC.
+// Copyright 2026 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -168,6 +168,7 @@ type ProjectsService struct {
 
 func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 	rs := &ProjectsLocationsService{s: s}
+	rs.AgentGateways = NewProjectsLocationsAgentGatewaysService(s)
 	rs.AuthzExtensions = NewProjectsLocationsAuthzExtensionsService(s)
 	rs.EndpointPolicies = NewProjectsLocationsEndpointPoliciesService(s)
 	rs.Gateways = NewProjectsLocationsGatewaysService(s)
@@ -189,6 +190,8 @@ func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 
 type ProjectsLocationsService struct {
 	s *Service
+
+	AgentGateways *ProjectsLocationsAgentGatewaysService
 
 	AuthzExtensions *ProjectsLocationsAuthzExtensionsService
 
@@ -221,6 +224,15 @@ type ProjectsLocationsService struct {
 	TlsRoutes *ProjectsLocationsTlsRoutesService
 
 	WasmPlugins *ProjectsLocationsWasmPluginsService
+}
+
+func NewProjectsLocationsAgentGatewaysService(s *Service) *ProjectsLocationsAgentGatewaysService {
+	rs := &ProjectsLocationsAgentGatewaysService{s: s}
+	return rs
+}
+
+type ProjectsLocationsAgentGatewaysService struct {
+	s *Service
 }
 
 func NewProjectsLocationsAuthzExtensionsService(s *Service) *ProjectsLocationsAuthzExtensionsService {
@@ -403,11 +415,236 @@ type ProjectsLocationsWasmPluginsVersionsService struct {
 	s *Service
 }
 
+// AgentGateway: AgentGateway represents the agent gateway resource.
+type AgentGateway struct {
+	// AgentGatewayCard: Output only. Field for populated AgentGateway card.
+	AgentGatewayCard *AgentGatewayAgentGatewayOutputCard `json:"agentGatewayCard,omitempty"`
+	// CreateTime: Output only. The timestamp when the resource was created.
+	CreateTime string `json:"createTime,omitempty"`
+	// Description: Optional. A free-text description of the resource. Max length
+	// 1024 characters.
+	Description string `json:"description,omitempty"`
+	// Etag: Optional. Etag of the resource. If this is provided, it must match the
+	// server's etag. If the provided etag does not match the server's etag, the
+	// request will fail with a 409 ABORTED error.
+	Etag string `json:"etag,omitempty"`
+	// GoogleManaged: Optional. Proxy is orchestrated and managed by GoogleCloud in
+	// a tenant project.
+	GoogleManaged *AgentGatewayGoogleManaged `json:"googleManaged,omitempty"`
+	// Labels: Optional. Set of label tags associated with the AgentGateway
+	// resource.
+	Labels map[string]string `json:"labels,omitempty"`
+	// Name: Identifier. Name of the AgentGateway resource. It matches pattern
+	// `projects/*/locations/*/agentGateways/`.
+	Name string `json:"name,omitempty"`
+	// NetworkConfig: Optional. Network configuration for the AgentGateway.
+	NetworkConfig *AgentGatewayNetworkConfig `json:"networkConfig,omitempty"`
+	// Protocols: Required. List of protocols supported by an Agent Gateway
+	//
+	// Possible values:
+	//   "PROTOCOL_UNSPECIFIED" - Unspecified protocol.
+	//   "MCP" - Message Control Plane protocol.
+	Protocols []string `json:"protocols,omitempty"`
+	// Registries: Optional. A list of Agent registries containing the agents, MCP
+	// servers and tools governed by the Agent Gateway. Note: Currently limited to
+	// project-scoped registries Must be of format
+	// `//agentregistry.googleapis.com/projects/{project}/locations/{location}/
+	Registries []string `json:"registries,omitempty"`
+	// SelfManaged: Optional. Attach to existing Application Load Balancers or
+	// Secure Web Proxies.
+	SelfManaged *AgentGatewaySelfManaged `json:"selfManaged,omitempty"`
+	// UpdateTime: Output only. The timestamp when the resource was updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the server.
+	googleapi.ServerResponse `json:"-"`
+	// ForceSendFields is a list of field names (e.g. "AgentGatewayCard") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "AgentGatewayCard") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGateway) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGateway
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AgentGatewayAgentGatewayOutputCard: AgentGatewayOutputCard contains
+// informational output-only fields
+type AgentGatewayAgentGatewayOutputCard struct {
+	// MtlsEndpoint: Output only. mTLS Endpoint associated with this AgentGateway
+	MtlsEndpoint string `json:"mtlsEndpoint,omitempty"`
+	// RootCertificates: Output only. Root Certificates for Agents to validate this
+	// AgentGateway
+	RootCertificates []string `json:"rootCertificates,omitempty"`
+	// ServiceExtensionsServiceAccount: Output only. Service Account used by
+	// Service Extensions to operate.
+	ServiceExtensionsServiceAccount string `json:"serviceExtensionsServiceAccount,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "MtlsEndpoint") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "MtlsEndpoint") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGatewayAgentGatewayOutputCard) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGatewayAgentGatewayOutputCard
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AgentGatewayGoogleManaged: Configuration for Google Managed deployment mode.
+// Proxy is orchestrated and managed by GoogleCloud in a tenant project.
+type AgentGatewayGoogleManaged struct {
+	// GovernedAccessPath: Optional. Operating Mode of Agent Gateway.
+	//
+	// Possible values:
+	//   "GOVERNED_ACCESS_PATH_UNSPECIFIED" - Governed access path is not
+	// specified.
+	//   "AGENT_TO_ANYWHERE" - Govern agent conections to destinations.
+	//   "CLIENT_TO_AGENT" - Protect connection to Agent or Tool.
+	GovernedAccessPath string `json:"governedAccessPath,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "GovernedAccessPath") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "GovernedAccessPath") to include
+	// in API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGatewayGoogleManaged) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGatewayGoogleManaged
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AgentGatewayNetworkConfig: NetworkConfig contains network configurations for
+// the AgentGateway.
+type AgentGatewayNetworkConfig struct {
+	// DnsPeeringConfig: Optional. Optional DNS peering configuration for
+	// connectivity to your private VPC network.
+	DnsPeeringConfig *AgentGatewayNetworkConfigDnsPeeringConfig `json:"dnsPeeringConfig,omitempty"`
+	// Egress: Optional. Optional PSC-Interface network attachment for connectivity
+	// to your private VPCs network.
+	Egress *AgentGatewayNetworkConfigEgress `json:"egress,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "DnsPeeringConfig") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "DnsPeeringConfig") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGatewayNetworkConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGatewayNetworkConfig
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AgentGatewayNetworkConfigDnsPeeringConfig: DNS peering config for the user
+// VPC network.
+type AgentGatewayNetworkConfigDnsPeeringConfig struct {
+	// Domains: Required. Domain names for which DNS queries should be forwarded to
+	// the target network.
+	Domains []string `json:"domains,omitempty"`
+	// TargetNetwork: Required. Target network in 'target project' to which DNS
+	// queries should be forwarded to. Must be in format of
+	// `projects/{project}/global/networks/{network}`.
+	TargetNetwork string `json:"targetNetwork,omitempty"`
+	// TargetProject: Required. Target project ID to which DNS queries should be
+	// forwarded to. This can be the same project that contains the AgentGateway or
+	// a different project.
+	TargetProject string `json:"targetProject,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Domains") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Domains") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGatewayNetworkConfigDnsPeeringConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGatewayNetworkConfigDnsPeeringConfig
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AgentGatewayNetworkConfigEgress: Configuration for Egress
+type AgentGatewayNetworkConfigEgress struct {
+	// NetworkAttachment: Optional. The URI of the Network Attachment resource.
+	NetworkAttachment string `json:"networkAttachment,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "NetworkAttachment") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "NetworkAttachment") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGatewayNetworkConfigEgress) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGatewayNetworkConfigEgress
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// AgentGatewaySelfManaged: Configuration for Self Managed deployment mode.
+// Attach to existing Application Load Balancers or Secure Web Proxies.
+type AgentGatewaySelfManaged struct {
+	// ResourceUri: Optional. A supported Google Cloud networking proxy in the
+	// Project and Location
+	ResourceUri string `json:"resourceUri,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "ResourceUri") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "ResourceUri") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s AgentGatewaySelfManaged) MarshalJSON() ([]byte, error) {
+	type NoMethod AgentGatewaySelfManaged
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
 // AuthzExtension: `AuthzExtension` is a resource that allows traffic
 // forwarding to a callout backend service to make an authorization decision.
 type AuthzExtension struct {
-	// Authority: Required. The `:authority` header in the gRPC request sent from
-	// Envoy to the extension service.
+	// Authority: Optional. The `:authority` header in the gRPC request sent from
+	// Envoy to the extension service. It is required when the `service` field
+	// points to a backend service or a wasm plugin.
 	Authority string `json:"authority,omitempty"`
 	// CreateTime: Output only. The timestamp when the resource was created.
 	CreateTime string `json:"createTime,omitempty"`
@@ -424,6 +661,14 @@ type AuthzExtension struct {
 	// headers have been delivered, then the HTTP stream to the downstream client
 	// is reset.
 	FailOpen bool `json:"failOpen,omitempty"`
+	// ForwardAttributes: Optional. List of the Envoy attributes to forward to the
+	// extension server. The attributes provided here are included as part of the
+	// `ProcessingRequest.attributes` field (of type `map`), where the keys are the
+	// attribute names. Refer to the documentation
+	// (https://cloud.google.com/service-extensions/docs/cel-matcher-language-reference#attributes)
+	// for the names of attributes that can be forwarded. If omitted, no attributes
+	// are sent. Each element is a string indicating the attribute name.
+	ForwardAttributes []string `json:"forwardAttributes,omitempty"`
 	// ForwardHeaders: Optional. List of the HTTP headers to forward to the
 	// extension (from the client). If omitted, all headers are sent. Each element
 	// is a string indicating the header name.
@@ -432,9 +677,10 @@ type AuthzExtension struct {
 	// resource. The format must comply with the requirements for labels
 	// (/compute/docs/labeling-resources#requirements) for Google Cloud resources.
 	Labels map[string]string `json:"labels,omitempty"`
-	// LoadBalancingScheme: Required. All backend services and forwarding rules
+	// LoadBalancingScheme: Optional. All backend services and forwarding rules
 	// referenced by this extension must share the same load balancing scheme.
-	// Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more
+	// Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. Can be omitted for
+	// AuthzExtensions that do not reference a backend service. For more
 	// information, refer to Backend services overview
 	// (https://cloud.google.com/load-balancing/docs/backend-service).
 	//
@@ -472,7 +718,9 @@ type AuthzExtension struct {
 	// UpdateTime: Output only. The timestamp when the resource was updated.
 	UpdateTime string `json:"updateTime,omitempty"`
 	// WireFormat: Optional. The format of communication supported by the callout
-	// extension. If not specified, the default value `EXT_PROC_GRPC` is used.
+	// extension. This field is supported only for regional `AuthzExtension`
+	// resources. If not specified, the default value `EXT_PROC_GRPC` is used.
+	// Global `AuthzExtension` resources use the `EXT_PROC_GRPC` wire format.
 	//
 	// Possible values:
 	//   "WIRE_FORMAT_UNSPECIFIED" - Not specified.
@@ -482,8 +730,9 @@ type AuthzExtension struct {
 	// `supported_events` for a client request are sent as part of the same gRPC
 	// stream.
 	//   "EXT_AUTHZ_GRPC" - The extension service uses Envoy's `ext_authz` gRPC
-	// API. The backend service for the extension must use HTTP2, or H2C as the
-	// protocol. `EXT_AUTHZ_GRPC` is only supported for `AuthzExtension` resources.
+	// API. The backend service for the extension must use HTTP2 or H2C as the
+	// protocol. `EXT_AUTHZ_GRPC` is only supported for regional `AuthzExtension`
+	// resources.
 	WireFormat string `json:"wireFormat,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
@@ -575,7 +824,7 @@ type EndpointPolicy struct {
 	// resource.
 	Labels map[string]string `json:"labels,omitempty"`
 	// Name: Identifier. Name of the EndpointPolicy resource. It matches pattern
-	// `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.
+	// `projects/{project}/locations/*/endpointPolicies/{endpoint_policy}`.
 	Name string `json:"name,omitempty"`
 	// SecurityPolicy: Optional. A URL referring to a SecurityPolicy resource.
 	// SecurityPolicy is used to enforce rate limiting policy on the inbound
@@ -663,8 +912,8 @@ type ExtensionChainExtension struct {
 	// AllowDynamicForwarding: Optional. When set to `TRUE`, the response from an
 	// extension service is allowed to set the
 	// `com.google.envoy.dynamic_forwarding` namespace in the dynamic metadata.
-	// This field is not supported for plugin extensions. Setting it results in a
-	// validation error.
+	// This field is not supported for plugin extensions or AuthzExtensions.
+	// Setting it results in a validation error.
 	AllowDynamicForwarding bool `json:"allowDynamicForwarding,omitempty"`
 	// Authority: Optional. The `:authority` header in the gRPC request sent from
 	// Envoy to the extension service. Required for Callout extensions. This field
@@ -682,14 +931,24 @@ type ExtensionChainExtension struct {
 	// headers have been delivered, then the HTTP stream to the downstream client
 	// is reset.
 	FailOpen bool `json:"failOpen,omitempty"`
+	// ForwardAttributes: Optional. List of the Envoy attributes to forward to the
+	// extension server. The attributes provided here are included as part of the
+	// `ProcessingRequest.attributes` field (of type `map`), where the keys are the
+	// attribute names. Refer to the documentation
+	// (https://cloud.google.com/service-extensions/docs/cel-matcher-language-reference#attributes)
+	// for the names of attributes that can be forwarded. If omitted, no attributes
+	// are sent. Each element is a string indicating the attribute name.
+	ForwardAttributes []string `json:"forwardAttributes,omitempty"`
 	// ForwardHeaders: Optional. List of the HTTP headers to forward to the
 	// extension (from the client or backend). If omitted, all headers are sent.
 	// Each element is a string indicating the header name.
 	ForwardHeaders []string `json:"forwardHeaders,omitempty"`
 	// Metadata: Optional. The metadata provided here is included as part of the
 	// `metadata_context` (of type `google.protobuf.Struct`) in the
-	// `ProcessingRequest` message sent to the extension server. The metadata is
-	// available under the namespace `com.google....`. For example:
+	// `ProcessingRequest` message sent to the extension server. For
+	// `AuthzExtension` resources, the metadata is available under the namespace
+	// `com.google.authz_extension.`. For other types of extensions, the metadata
+	// is available under the namespace `com.google....`. For example:
 	// `com.google.lb_traffic_extension.lbtrafficextension1.chain1.ext1`. The
 	// following variables are supported in the metadata: `{forwarding_rule_id}` -
 	// substituted with the forwarding rule's fully qualified resource name. This
@@ -703,12 +962,18 @@ type ExtensionChainExtension struct {
 	// The length of each value must be less than 1024 characters. * All values
 	// must be strings.
 	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
-	// Name: Required. The name for this extension. The name is logged as part of
+	// Name: Optional. The name for this extension. The name is logged as part of
 	// the HTTP request logs. The name must conform with RFC-1034, is restricted to
 	// lower-cased letters, numbers and hyphens, and can have a maximum length of
 	// 63 characters. Additionally, the first character must be a letter and the
-	// last a letter or a number.
+	// last a letter or a number. This field is required except for AuthzExtension.
 	Name string `json:"name,omitempty"`
+	// ObservabilityMode: Optional. When set to `true`, the calls to the extension
+	// backend are performed asynchronously, without pausing the processing of the
+	// ongoing request. In this mode, only `STREAMED` (default) body processing is
+	// supported. Responses, if any, are ignored. Supported by regional
+	// `LbTrafficExtension` and `LbRouteExtension` resources.
+	ObservabilityMode bool `json:"observabilityMode,omitempty"`
 	// RequestBodySendMode: Optional. Configures the send mode for request body
 	// processing. The field can only be set if `supported_events` includes
 	// `REQUEST_BODY`. If `supported_events` includes `REQUEST_BODY`, but
@@ -734,11 +999,14 @@ type ExtensionChainExtension struct {
 	// extension in the chain or the upstream will receive an empty body.
 	RequestBodySendMode string `json:"requestBodySendMode,omitempty"`
 	// ResponseBodySendMode: Optional. Configures the send mode for response
-	// processing. If unspecified, the default value `STREAMED` is used. When this
-	// field is set to `FULL_DUPLEX_STREAMED`, `supported_events` must include both
-	// `RESPONSE_BODY` and `RESPONSE_TRAILERS`. This field can be set only for
-	// `LbTrafficExtension` resources, and only when the `service` field of the
-	// extension points to a `BackendService`.
+	// processing. If unspecified, the default value `STREAMED` is used. The field
+	// can only be set if `supported_events` includes `RESPONSE_BODY`. If
+	// `supported_events` includes `RESPONSE_BODY`, but `response_body_send_mode`
+	// is unset, the default value `STREAMED` is used. When this field is set to
+	// `FULL_DUPLEX_STREAMED`, `supported_events` must include both `RESPONSE_BODY`
+	// and `RESPONSE_TRAILERS`. This field can be set only for `LbTrafficExtension`
+	// resources, and only when the `service` field of the extension points to a
+	// `BackendService`.
 	//
 	// Possible values:
 	//   "BODY_SEND_MODE_UNSPECIFIED" - Default value. Do not use.
@@ -777,7 +1045,9 @@ type ExtensionChainExtension struct {
 	// resource, this field is required. For the `LbRouteExtension` resource, this
 	// field is optional. If unspecified, `REQUEST_HEADERS` event is assumed as
 	// supported. For the `LbEdgeExtension` resource, this field is required and
-	// must only contain `REQUEST_HEADERS` event.
+	// must only contain `REQUEST_HEADERS` event. For the `AuthzExtension`
+	// resource, this field is optional. `REQUEST_HEADERS` is the only supported
+	// event. If unspecified, `REQUEST_HEADERS` event is assumed as supported.
 	//
 	// Possible values:
 	//   "EVENT_TYPE_UNSPECIFIED" - Unspecified value. Do not use.
@@ -854,6 +1124,14 @@ type Gateway struct {
 	// 'SECURE_WEB_GATEWAY'. Gateways of type 'OPEN_MESH' listen on 0.0.0.0 for
 	// IPv4 and :: for IPv6.
 	Addresses []string `json:"addresses,omitempty"`
+	// AllPorts: Optional. If true, the Gateway will listen on all ports. This is
+	// mutually exclusive with the `ports` field. This field only applies to
+	// gateways of type 'SECURE_WEB_GATEWAY'.
+	AllPorts bool `json:"allPorts,omitempty"`
+	// AllowGlobalAccess: Optional. If true, the gateway will allow traffic from
+	// clients outside of the region where the gateway is located. This field is
+	// configurable only for gateways of type SECURE_WEB_GATEWAY.
+	AllowGlobalAccess bool `json:"allowGlobalAccess,omitempty"`
 	// CertificateUrls: Optional. A fully-qualified Certificates URL reference. The
 	// proxy presents a Certificate (selected based on SNI) when establishing a TLS
 	// connection. This feature only applies to gateways of type
@@ -872,8 +1150,8 @@ type Gateway struct {
 	//   "ENVOY_HEADERS_UNSPECIFIED" - Defaults to NONE.
 	//   "NONE" - Suppress envoy debug headers.
 	//   "DEBUG_HEADERS" - Envoy will insert default internal debug headers into
-	// upstream requests: x-envoy-attempt-count x-envoy-is-timeout-retry
-	// x-envoy-expected-rq-timeout-ms x-envoy-original-path
+	// upstream requests: x-envoy-attempt-count, x-envoy-is-timeout-retry,
+	// x-envoy-expected-rq-timeout-ms, x-envoy-original-path,
 	// x-envoy-upstream-stream-duration-ms
 	EnvoyHeaders string `json:"envoyHeaders,omitempty"`
 	// GatewaySecurityPolicy: Optional. A fully-qualified GatewaySecurityPolicy URL
@@ -1020,7 +1298,7 @@ type GrpcRoute struct {
 	// Gateways: Optional. Gateways defines a list of gateways this GrpcRoute is
 	// attached to, as one of the routing rules to route the requests served by the
 	// gateway. Each gateway reference should match the pattern:
-	// `projects/*/locations/global/gateways/`
+	// `projects/*/locations/*/gateways/`
 	Gateways []string `json:"gateways,omitempty"`
 	// Hostnames: Required. Service hostnames with an optional port for which this
 	// route describes traffic. Format: [:] Hostname is the fully qualified domain
@@ -1047,10 +1325,10 @@ type GrpcRoute struct {
 	// Meshes: Optional. Meshes defines a list of meshes this GrpcRoute is attached
 	// to, as one of the routing rules to route the requests served by the mesh.
 	// Each mesh reference should match the pattern:
-	// `projects/*/locations/global/meshes/`
+	// `projects/*/locations/*/meshes/`
 	Meshes []string `json:"meshes,omitempty"`
 	// Name: Identifier. Name of the GrpcRoute resource. It matches pattern
-	// `projects/*/locations/global/grpcRoutes/`
+	// `projects/*/locations/*/grpcRoutes/`
 	Name string `json:"name,omitempty"`
 	// Rules: Required. A list of detailed rules defining how to route traffic.
 	// Within a single GrpcRoute, the GrpcRoute.RouteAction associated with the
@@ -1451,7 +1729,7 @@ type HttpRoute struct {
 	// Gateways: Optional. Gateways defines a list of gateways this HttpRoute is
 	// attached to, as one of the routing rules to route the requests served by the
 	// gateway. Each gateway reference should match the pattern:
-	// `projects/*/locations/global/gateways/`
+	// `projects/*/locations/*/gateways/`
 	Gateways []string `json:"gateways,omitempty"`
 	// Hostnames: Required. Hostnames define a set of hosts that should match
 	// against the HTTP host header to select a HttpRoute to process the request.
@@ -1476,11 +1754,11 @@ type HttpRoute struct {
 	// Meshes: Optional. Meshes defines a list of meshes this HttpRoute is attached
 	// to, as one of the routing rules to route the requests served by the mesh.
 	// Each mesh reference should match the pattern:
-	// `projects/*/locations/global/meshes/` The attached Mesh should be of a type
+	// `projects/*/locations/*/meshes/` The attached Mesh should be of a type
 	// SIDECAR
 	Meshes []string `json:"meshes,omitempty"`
 	// Name: Identifier. Name of the HttpRoute resource. It matches pattern
-	// `projects/*/locations/global/httpRoutes/http_route_name>`.
+	// `projects/*/locations/*/httpRoutes/http_route_name>`.
 	Name string `json:"name,omitempty"`
 	// Rules: Required. Rules that define how traffic is routed and handled. Rules
 	// will be matched sequentially based on the RouteMatch specified for the rule.
@@ -2480,6 +2758,41 @@ func (s LbTrafficExtension) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
+// ListAgentGatewaysResponse: Response returned by the ListAgentGateways
+// method.
+type ListAgentGatewaysResponse struct {
+	// AgentGateways: List of AgentGateway resources.
+	AgentGateways []*AgentGateway `json:"agentGateways,omitempty"`
+	// NextPageToken: If there might be more results than those appearing in this
+	// response, then `next_page_token` is included. To get the next set of
+	// results, call this method again using the value of `next_page_token` as
+	// `page_token`.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+	// Unreachable: Unreachable resources. Populated when the request attempts to
+	// list all resources across all supported locations, while some locations are
+	// temporarily unavailable.
+	Unreachable []string `json:"unreachable,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the server.
+	googleapi.ServerResponse `json:"-"`
+	// ForceSendFields is a list of field names (e.g. "AgentGateways") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "AgentGateways") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s ListAgentGatewaysResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListAgentGatewaysResponse
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
 // ListAuthzExtensionsResponse: Message for response to listing
 // `AuthzExtension` resources.
 type ListAuthzExtensionsResponse struct {
@@ -2905,6 +3218,11 @@ type ListOperationsResponse struct {
 	// Operations: A list of operations that matches the specified filter in the
 	// request.
 	Operations []*Operation `json:"operations,omitempty"`
+	// Unreachable: Unordered list. Unreachable resources. Populated when the
+	// request sets `ListOperationsRequest.return_partial_success` and reads across
+	// collections. For example, when attempting to list all resources across all
+	// supported locations.
+	Unreachable []string `json:"unreachable,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
@@ -3229,8 +3547,8 @@ type Mesh struct {
 	//   "ENVOY_HEADERS_UNSPECIFIED" - Defaults to NONE.
 	//   "NONE" - Suppress envoy debug headers.
 	//   "DEBUG_HEADERS" - Envoy will insert default internal debug headers into
-	// upstream requests: x-envoy-attempt-count x-envoy-is-timeout-retry
-	// x-envoy-expected-rq-timeout-ms x-envoy-original-path
+	// upstream requests: x-envoy-attempt-count, x-envoy-is-timeout-retry,
+	// x-envoy-expected-rq-timeout-ms, x-envoy-original-path,
 	// x-envoy-upstream-stream-duration-ms
 	EnvoyHeaders string `json:"envoyHeaders,omitempty"`
 	// InterceptionPort: Optional. If set to a valid TCP port (1-65535), instructs
@@ -3243,7 +3561,7 @@ type Mesh struct {
 	// Labels: Optional. Set of label tags associated with the Mesh resource.
 	Labels map[string]string `json:"labels,omitempty"`
 	// Name: Identifier. Name of the Mesh resource. It matches pattern
-	// `projects/*/locations/global/meshes/`.
+	// `projects/*/locations/*/meshes/`.
 	Name string `json:"name,omitempty"`
 	// SelfLink: Output only. Server-defined URL of this resource
 	SelfLink string `json:"selfLink,omitempty"`
@@ -3739,18 +4057,18 @@ type TcpRoute struct {
 	// Gateways: Optional. Gateways defines a list of gateways this TcpRoute is
 	// attached to, as one of the routing rules to route the requests served by the
 	// gateway. Each gateway reference should match the pattern:
-	// `projects/*/locations/global/gateways/`
+	// `projects/*/locations/*/gateways/`
 	Gateways []string `json:"gateways,omitempty"`
 	// Labels: Optional. Set of label tags associated with the TcpRoute resource.
 	Labels map[string]string `json:"labels,omitempty"`
 	// Meshes: Optional. Meshes defines a list of meshes this TcpRoute is attached
 	// to, as one of the routing rules to route the requests served by the mesh.
 	// Each mesh reference should match the pattern:
-	// `projects/*/locations/global/meshes/` The attached Mesh should be of a type
+	// `projects/*/locations/*/meshes/` The attached Mesh should be of a type
 	// SIDECAR
 	Meshes []string `json:"meshes,omitempty"`
 	// Name: Identifier. Name of the TcpRoute resource. It matches pattern
-	// `projects/*/locations/global/tcpRoutes/tcp_route_name>`.
+	// `projects/*/locations/*/tcpRoutes/tcp_route_name>`.
 	Name string `json:"name,omitempty"`
 	// Rules: Required. Rules that define how traffic is routed and handled. At
 	// least one RouteRule must be supplied. If there are multiple rules then the
@@ -3920,18 +4238,18 @@ type TlsRoute struct {
 	// Gateways: Optional. Gateways defines a list of gateways this TlsRoute is
 	// attached to, as one of the routing rules to route the requests served by the
 	// gateway. Each gateway reference should match the pattern:
-	// `projects/*/locations/global/gateways/`
+	// `projects/*/locations/*/gateways/`
 	Gateways []string `json:"gateways,omitempty"`
 	// Labels: Optional. Set of label tags associated with the TlsRoute resource.
 	Labels map[string]string `json:"labels,omitempty"`
 	// Meshes: Optional. Meshes defines a list of meshes this TlsRoute is attached
 	// to, as one of the routing rules to route the requests served by the mesh.
 	// Each mesh reference should match the pattern:
-	// `projects/*/locations/global/meshes/` The attached Mesh should be of a type
+	// `projects/*/locations/*/meshes/` The attached Mesh should be of a type
 	// SIDECAR
 	Meshes []string `json:"meshes,omitempty"`
 	// Name: Identifier. Name of the TlsRoute resource. It matches pattern
-	// `projects/*/locations/global/tlsRoutes/tls_route_name>`.
+	// `projects/*/locations/*/tlsRoutes/tls_route_name>`.
 	Name string `json:"name,omitempty"`
 	// Rules: Required. Rules that define how traffic is routed and handled. At
 	// least one RouteRule must be supplied. If there are multiple rules then the
@@ -3939,6 +4257,11 @@ type TlsRoute struct {
 	Rules []*TlsRouteRouteRule `json:"rules,omitempty"`
 	// SelfLink: Output only. Server-defined URL of this resource
 	SelfLink string `json:"selfLink,omitempty"`
+	// TargetProxies: Optional. TargetProxies defines a list of TargetTcpProxies
+	// this TlsRoute is attached to, as one of the routing rules to route the
+	// requests served by the TargetTcpProxy. Each TargetTcpProxy reference should
+	// match the pattern: `projects/*/locations/*/targetTcpProxies/`
+	TargetProxies []string `json:"targetProxies,omitempty"`
 	// UpdateTime: Output only. The timestamp when the resource was updated.
 	UpdateTime string `json:"updateTime,omitempty"`
 
@@ -4110,6 +4433,29 @@ type WasmPlugin struct {
 	CreateTime string `json:"createTime,omitempty"`
 	// Description: Optional. A human-readable description of the resource.
 	Description string `json:"description,omitempty"`
+	// KmsKeyName: Optional. The name of the customer-managed CryptoKey
+	// (https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys)
+	// to be used to encrypt the `WasmPlugin` image (provided by image_uri) and
+	// configuration (provided by plugin_config_data or plugin_config_uri) that are
+	// stored by the `Service Extensions` product at rest. Format:
+	// `projects/{project}/locations/{location}/keyRings/{keyring}/cryptoKeys/{key}`
+	//  By default, Google Cloud automatically encrypts all data at rest using
+	// Google-owned and Google-managed encryption keys. If you need ownership and
+	// control of the keys that protect your data at rest, you can specify a
+	// customer-managed encryption key (CMEK) to encrypt your `WasmPlugin` data.
+	// For more information, see Using customer-managed encryption keys
+	// (https://cloud.google.com/service-extensions/docs/cmek).
+	KmsKeyName string `json:"kmsKeyName,omitempty"`
+	// KmsKeyVersion: Output only. The name of the specific CryptoKeyVersion
+	// (https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions)
+	// used to encrypt the `WasmPlugin` data, if the kms_key_name field is set.
+	// Format:
+	// `projects/{project}/locations/{location}/keyRings/{keyring}/cryptoKeys/{key}/
+	// cryptoKeyVersions/{version}` This is a read-only field. `WasmPlugin` data is
+	// automatically encrypted using the most recent `CryptoKeyVersion` of the
+	// `CryptoKey` provided in the `kms_key_name` field. See Cloud KMS resources
+	// (https://cloud.google.com/kms/docs/resource-hierarchy) for more information.
+	KmsKeyVersion string `json:"kmsKeyVersion,omitempty"`
 	// Labels: Optional. Set of labels associated with the `WasmPlugin` resource.
 	// The format must comply with the following requirements
 	// (/compute/docs/labeling-resources#requirements).
@@ -4529,7 +4875,17 @@ type ProjectsLocationsListCall struct {
 	header_      http.Header
 }
 
-// List: Lists information about the supported locations for this service.
+// List: Lists information about the supported locations for this service. This
+// method lists locations based on the resource scope provided in the
+// ListLocationsRequest.name field: * **Global locations**: If `name` is empty,
+// the method lists the public locations available to all projects. *
+// **Project-specific locations**: If `name` follows the format
+// `projects/{project}`, the method lists locations visible to that specific
+// project. This includes public, private, or other project-specific locations
+// enabled for the project. For gRPC and client library implementations, the
+// resource name is passed as the `name` field. For direct service calls, the
+// resource name is incorporated into the request path based on the specific
+// service implementation and version.
 //
 // - name: The resource that owns the locations collection, if applicable.
 func (r *ProjectsLocationsService) List(name string) *ProjectsLocationsListCall {
@@ -4538,9 +4894,9 @@ func (r *ProjectsLocationsService) List(name string) *ProjectsLocationsListCall 
 	return c
 }
 
-// ExtraLocationTypes sets the optional parameter "extraLocationTypes": A list
-// of extra location types that should be used as conditions for controlling
-// the visibility of the locations.
+// ExtraLocationTypes sets the optional parameter "extraLocationTypes": Do not
+// use this field unless explicitly documented otherwise. This is primarily for
+// internal usage.
 func (c *ProjectsLocationsListCall) ExtraLocationTypes(extraLocationTypes ...string) *ProjectsLocationsListCall {
 	c.urlParams_.SetMulti("extraLocationTypes", append([]string{}, extraLocationTypes...))
 	return c
@@ -4681,6 +5037,604 @@ func (c *ProjectsLocationsListCall) Pages(ctx context.Context, f func(*ListLocat
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+type ProjectsLocationsAgentGatewaysCreateCall struct {
+	s            *Service
+	parent       string
+	agentgateway *AgentGateway
+	urlParams_   gensupport.URLParams
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Create: Creates a new AgentGateway in a given project and location.
+//
+//   - parent: The parent resource of the AgentGateway. Must be in the format
+//     `projects/*/locations/*`.
+func (r *ProjectsLocationsAgentGatewaysService) Create(parent string, agentgateway *AgentGateway) *ProjectsLocationsAgentGatewaysCreateCall {
+	c := &ProjectsLocationsAgentGatewaysCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.agentgateway = agentgateway
+	return c
+}
+
+// AgentGatewayId sets the optional parameter "agentGatewayId": Required. Short
+// name of the AgentGateway resource to be created.
+func (c *ProjectsLocationsAgentGatewaysCreateCall) AgentGatewayId(agentGatewayId string) *ProjectsLocationsAgentGatewaysCreateCall {
+	c.urlParams_.Set("agentGatewayId", agentGatewayId)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsAgentGatewaysCreateCall) Fields(s ...googleapi.Field) *ProjectsLocationsAgentGatewaysCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsAgentGatewaysCreateCall) Context(ctx context.Context) *ProjectsLocationsAgentGatewaysCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsAgentGatewaysCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsAgentGatewaysCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.agentgateway)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/agentGateways")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.create", "request", internallog.HTTPRequest(req, body.Bytes()))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "networkservices.projects.locations.agentGateways.create" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsAgentGatewaysCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.create", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
+}
+
+type ProjectsLocationsAgentGatewaysDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes a single AgentGateway.
+//
+//   - name: A name of the AgentGateway to delete. Must be in the format
+//     `projects/*/locations/*/agentGateways/*`.
+func (r *ProjectsLocationsAgentGatewaysService) Delete(name string) *ProjectsLocationsAgentGatewaysDeleteCall {
+	c := &ProjectsLocationsAgentGatewaysDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Etag sets the optional parameter "etag": The etag of the AgentGateway to
+// delete.
+func (c *ProjectsLocationsAgentGatewaysDeleteCall) Etag(etag string) *ProjectsLocationsAgentGatewaysDeleteCall {
+	c.urlParams_.Set("etag", etag)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsAgentGatewaysDeleteCall) Fields(s ...googleapi.Field) *ProjectsLocationsAgentGatewaysDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsAgentGatewaysDeleteCall) Context(ctx context.Context) *ProjectsLocationsAgentGatewaysDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsAgentGatewaysDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsAgentGatewaysDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("DELETE", urls, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.delete", "request", internallog.HTTPRequest(req, nil))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "networkservices.projects.locations.agentGateways.delete" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsAgentGatewaysDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.delete", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
+}
+
+type ProjectsLocationsAgentGatewaysGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets details of a single AgentGateway.
+//
+//   - name: A name of the AgentGateway to get. Must be in the format
+//     `projects/*/locations/*/agentGateways/*`.
+func (r *ProjectsLocationsAgentGatewaysService) Get(name string) *ProjectsLocationsAgentGatewaysGetCall {
+	c := &ProjectsLocationsAgentGatewaysGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsAgentGatewaysGetCall) Fields(s ...googleapi.Field) *ProjectsLocationsAgentGatewaysGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets an optional parameter which makes the operation fail if the
+// object's ETag matches the given value. This is useful for getting updates
+// only after the object has changed since the last request.
+func (c *ProjectsLocationsAgentGatewaysGetCall) IfNoneMatch(entityTag string) *ProjectsLocationsAgentGatewaysGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsAgentGatewaysGetCall) Context(ctx context.Context) *ProjectsLocationsAgentGatewaysGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsAgentGatewaysGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsAgentGatewaysGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.get", "request", internallog.HTTPRequest(req, nil))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "networkservices.projects.locations.agentGateways.get" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *AgentGateway.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsAgentGatewaysGetCall) Do(opts ...googleapi.CallOption) (*AgentGateway, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &AgentGateway{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.get", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
+}
+
+type ProjectsLocationsAgentGatewaysListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists AgentGateways in a given project and location.
+//
+//   - parent: The project and location from which the AgentGateways should be
+//     listed, specified in the format `projects/*/locations/*`.
+func (r *ProjectsLocationsAgentGatewaysService) List(parent string) *ProjectsLocationsAgentGatewaysListCall {
+	c := &ProjectsLocationsAgentGatewaysListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Maximum number of
+// AgentGateways to return per call.
+func (c *ProjectsLocationsAgentGatewaysListCall) PageSize(pageSize int64) *ProjectsLocationsAgentGatewaysListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": The value returned by the
+// last `ListAgentGatewaysResponse` Indicates that this is a continuation of a
+// prior `ListAgentGateways` call, and that the system should return the next
+// page of data.
+func (c *ProjectsLocationsAgentGatewaysListCall) PageToken(pageToken string) *ProjectsLocationsAgentGatewaysListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess": If
+// true, allow partial responses for multi-regional Aggregated List requests.
+// Otherwise if one of the locations is down or unreachable, the Aggregated
+// List request will fail.
+func (c *ProjectsLocationsAgentGatewaysListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsAgentGatewaysListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsAgentGatewaysListCall) Fields(s ...googleapi.Field) *ProjectsLocationsAgentGatewaysListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets an optional parameter which makes the operation fail if the
+// object's ETag matches the given value. This is useful for getting updates
+// only after the object has changed since the last request.
+func (c *ProjectsLocationsAgentGatewaysListCall) IfNoneMatch(entityTag string) *ProjectsLocationsAgentGatewaysListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsAgentGatewaysListCall) Context(ctx context.Context) *ProjectsLocationsAgentGatewaysListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsAgentGatewaysListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsAgentGatewaysListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+parent}/agentGateways")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.list", "request", internallog.HTTPRequest(req, nil))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "networkservices.projects.locations.agentGateways.list" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *ListAgentGatewaysResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsAgentGatewaysListCall) Do(opts ...googleapi.CallOption) (*ListAgentGatewaysResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &ListAgentGatewaysResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.list", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ProjectsLocationsAgentGatewaysListCall) Pages(ctx context.Context, f func(*ListAgentGatewaysResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken"))
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+type ProjectsLocationsAgentGatewaysPatchCall struct {
+	s            *Service
+	name         string
+	agentgateway *AgentGateway
+	urlParams_   gensupport.URLParams
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Patch: Updates the parameters of a single AgentGateway.
+//
+//   - name: Identifier. Name of the AgentGateway resource. It matches pattern
+//     `projects/*/locations/*/agentGateways/`.
+func (r *ProjectsLocationsAgentGatewaysService) Patch(name string, agentgateway *AgentGateway) *ProjectsLocationsAgentGatewaysPatchCall {
+	c := &ProjectsLocationsAgentGatewaysPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.agentgateway = agentgateway
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Field mask is used to
+// specify the fields to be overwritten in the AgentGateway resource by the
+// update. The fields specified in the update_mask are relative to the
+// resource, not the full request. A field will be overwritten if it is in the
+// mask. If the user does not provide a mask then all fields will be
+// overwritten.
+func (c *ProjectsLocationsAgentGatewaysPatchCall) UpdateMask(updateMask string) *ProjectsLocationsAgentGatewaysPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsAgentGatewaysPatchCall) Fields(s ...googleapi.Field) *ProjectsLocationsAgentGatewaysPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsAgentGatewaysPatchCall) Context(ctx context.Context) *ProjectsLocationsAgentGatewaysPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsAgentGatewaysPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsAgentGatewaysPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	body, err := googleapi.WithoutDataWrapper.JSONBuffer(c.agentgateway)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	c.s.logger.DebugContext(c.ctx_, "api request", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.patch", "request", internallog.HTTPRequest(req, body.Bytes()))
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "networkservices.projects.locations.agentGateways.patch" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsAgentGatewaysPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	b, err := gensupport.DecodeResponseBytes(target, res)
+	if err != nil {
+		return nil, err
+	}
+	c.s.logger.DebugContext(c.ctx_, "api response", "serviceName", apiName, "rpcName", "networkservices.projects.locations.agentGateways.patch", "response", internallog.HTTPResponse(res, b))
+	return ret, nil
 }
 
 type ProjectsLocationsAuthzExtensionsCreateCall struct {
@@ -5341,7 +6295,7 @@ type ProjectsLocationsEndpointPoliciesCreateCall struct {
 // Create: Creates a new EndpointPolicy in a given project and location.
 //
 //   - parent: The parent resource of the EndpointPolicy. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsEndpointPoliciesService) Create(parent string, endpointpolicy *EndpointPolicy) *ProjectsLocationsEndpointPoliciesCreateCall {
 	c := &ProjectsLocationsEndpointPoliciesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -5451,7 +6405,7 @@ type ProjectsLocationsEndpointPoliciesDeleteCall struct {
 // Delete: Deletes a single EndpointPolicy.
 //
 //   - name: A name of the EndpointPolicy to delete. Must be in the format
-//     `projects/*/locations/global/endpointPolicies/*`.
+//     `projects/*/locations/*/endpointPolicies/*`.
 func (r *ProjectsLocationsEndpointPoliciesService) Delete(name string) *ProjectsLocationsEndpointPoliciesDeleteCall {
 	c := &ProjectsLocationsEndpointPoliciesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -5550,7 +6504,7 @@ type ProjectsLocationsEndpointPoliciesGetCall struct {
 // Get: Gets details of a single EndpointPolicy.
 //
 //   - name: A name of the EndpointPolicy to get. Must be in the format
-//     `projects/*/locations/global/endpointPolicies/*`.
+//     `projects/*/locations/*/endpointPolicies/*`.
 func (r *ProjectsLocationsEndpointPoliciesService) Get(name string) *ProjectsLocationsEndpointPoliciesGetCall {
 	c := &ProjectsLocationsEndpointPoliciesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -5660,7 +6614,7 @@ type ProjectsLocationsEndpointPoliciesListCall struct {
 // List: Lists EndpointPolicies in a given project and location.
 //
 //   - parent: The project and location from which the EndpointPolicies should be
-//     listed, specified in the format `projects/*/locations/global`.
+//     listed, specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsEndpointPoliciesService) List(parent string) *ProjectsLocationsEndpointPoliciesListCall {
 	c := &ProjectsLocationsEndpointPoliciesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -5817,7 +6771,7 @@ type ProjectsLocationsEndpointPoliciesPatchCall struct {
 // Patch: Updates the parameters of a single EndpointPolicy.
 //
 //   - name: Identifier. Name of the EndpointPolicy resource. It matches pattern
-//     `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.
+//     `projects/{project}/locations/*/endpointPolicies/{endpoint_policy}`.
 func (r *ProjectsLocationsEndpointPoliciesService) Patch(name string, endpointpolicy *EndpointPolicy) *ProjectsLocationsEndpointPoliciesPatchCall {
 	c := &ProjectsLocationsEndpointPoliciesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -6773,7 +7727,7 @@ type ProjectsLocationsGrpcRoutesCreateCall struct {
 // Create: Creates a new GrpcRoute in a given project and location.
 //
 //   - parent: The parent resource of the GrpcRoute. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsGrpcRoutesService) Create(parent string, grpcroute *GrpcRoute) *ProjectsLocationsGrpcRoutesCreateCall {
 	c := &ProjectsLocationsGrpcRoutesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -6883,7 +7837,7 @@ type ProjectsLocationsGrpcRoutesDeleteCall struct {
 // Delete: Deletes a single GrpcRoute.
 //
 //   - name: A name of the GrpcRoute to delete. Must be in the format
-//     `projects/*/locations/global/grpcRoutes/*`.
+//     `projects/*/locations/*/grpcRoutes/*`.
 func (r *ProjectsLocationsGrpcRoutesService) Delete(name string) *ProjectsLocationsGrpcRoutesDeleteCall {
 	c := &ProjectsLocationsGrpcRoutesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -6982,7 +7936,7 @@ type ProjectsLocationsGrpcRoutesGetCall struct {
 // Get: Gets details of a single GrpcRoute.
 //
 //   - name: A name of the GrpcRoute to get. Must be in the format
-//     `projects/*/locations/global/grpcRoutes/*`.
+//     `projects/*/locations/*/grpcRoutes/*`.
 func (r *ProjectsLocationsGrpcRoutesService) Get(name string) *ProjectsLocationsGrpcRoutesGetCall {
 	c := &ProjectsLocationsGrpcRoutesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7092,7 +8046,7 @@ type ProjectsLocationsGrpcRoutesListCall struct {
 // List: Lists GrpcRoutes in a given project and location.
 //
 //   - parent: The project and location from which the GrpcRoutes should be
-//     listed, specified in the format `projects/*/locations/global`.
+//     listed, specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsGrpcRoutesService) List(parent string) *ProjectsLocationsGrpcRoutesListCall {
 	c := &ProjectsLocationsGrpcRoutesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -7249,7 +8203,7 @@ type ProjectsLocationsGrpcRoutesPatchCall struct {
 // Patch: Updates the parameters of a single GrpcRoute.
 //
 //   - name: Identifier. Name of the GrpcRoute resource. It matches pattern
-//     `projects/*/locations/global/grpcRoutes/`.
+//     `projects/*/locations/*/grpcRoutes/`.
 func (r *ProjectsLocationsGrpcRoutesService) Patch(name string, grpcroute *GrpcRoute) *ProjectsLocationsGrpcRoutesPatchCall {
 	c := &ProjectsLocationsGrpcRoutesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7364,7 +8318,7 @@ type ProjectsLocationsHttpRoutesCreateCall struct {
 // Create: Creates a new HttpRoute in a given project and location.
 //
 //   - parent: The parent resource of the HttpRoute. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsHttpRoutesService) Create(parent string, httproute *HttpRoute) *ProjectsLocationsHttpRoutesCreateCall {
 	c := &ProjectsLocationsHttpRoutesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -7376,6 +8330,12 @@ func (r *ProjectsLocationsHttpRoutesService) Create(parent string, httproute *Ht
 // of the HttpRoute resource to be created.
 func (c *ProjectsLocationsHttpRoutesCreateCall) HttpRouteId(httpRouteId string) *ProjectsLocationsHttpRoutesCreateCall {
 	c.urlParams_.Set("httpRouteId", httpRouteId)
+	return c
+}
+
+// RequestId sets the optional parameter "requestId": Idempotent request UUID.
+func (c *ProjectsLocationsHttpRoutesCreateCall) RequestId(requestId string) *ProjectsLocationsHttpRoutesCreateCall {
+	c.urlParams_.Set("requestId", requestId)
 	return c
 }
 
@@ -7474,7 +8434,7 @@ type ProjectsLocationsHttpRoutesDeleteCall struct {
 // Delete: Deletes a single HttpRoute.
 //
 //   - name: A name of the HttpRoute to delete. Must be in the format
-//     `projects/*/locations/global/httpRoutes/*`.
+//     `projects/*/locations/*/httpRoutes/*`.
 func (r *ProjectsLocationsHttpRoutesService) Delete(name string) *ProjectsLocationsHttpRoutesDeleteCall {
 	c := &ProjectsLocationsHttpRoutesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7573,7 +8533,7 @@ type ProjectsLocationsHttpRoutesGetCall struct {
 // Get: Gets details of a single HttpRoute.
 //
 //   - name: A name of the HttpRoute to get. Must be in the format
-//     `projects/*/locations/global/httpRoutes/*`.
+//     `projects/*/locations/*/httpRoutes/*`.
 func (r *ProjectsLocationsHttpRoutesService) Get(name string) *ProjectsLocationsHttpRoutesGetCall {
 	c := &ProjectsLocationsHttpRoutesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7683,10 +8643,17 @@ type ProjectsLocationsHttpRoutesListCall struct {
 // List: Lists HttpRoute in a given project and location.
 //
 //   - parent: The project and location from which the HttpRoutes should be
-//     listed, specified in the format `projects/*/locations/global`.
+//     listed, specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsHttpRoutesService) List(parent string) *ProjectsLocationsHttpRoutesListCall {
 	c := &ProjectsLocationsHttpRoutesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
+	return c
+}
+
+// Filter sets the optional parameter "filter": Filter expression to restrict
+// the list.
+func (c *ProjectsLocationsHttpRoutesListCall) Filter(filter string) *ProjectsLocationsHttpRoutesListCall {
+	c.urlParams_.Set("filter", filter)
 	return c
 }
 
@@ -7840,7 +8807,7 @@ type ProjectsLocationsHttpRoutesPatchCall struct {
 // Patch: Updates the parameters of a single HttpRoute.
 //
 //   - name: Identifier. Name of the HttpRoute resource. It matches pattern
-//     `projects/*/locations/global/httpRoutes/http_route_name>`.
+//     `projects/*/locations/*/httpRoutes/http_route_name>`.
 func (r *ProjectsLocationsHttpRoutesService) Patch(name string, httproute *HttpRoute) *ProjectsLocationsHttpRoutesPatchCall {
 	c := &ProjectsLocationsHttpRoutesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -10546,7 +11513,7 @@ type ProjectsLocationsMeshesCreateCall struct {
 // Create: Creates a new Mesh in a given project and location.
 //
 //   - parent: The parent resource of the Mesh. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsMeshesService) Create(parent string, mesh *Mesh) *ProjectsLocationsMeshesCreateCall {
 	c := &ProjectsLocationsMeshesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -10656,7 +11623,7 @@ type ProjectsLocationsMeshesDeleteCall struct {
 // Delete: Deletes a single Mesh.
 //
 //   - name: A name of the Mesh to delete. Must be in the format
-//     `projects/*/locations/global/meshes/*`.
+//     `projects/*/locations/*/meshes/*`.
 func (r *ProjectsLocationsMeshesService) Delete(name string) *ProjectsLocationsMeshesDeleteCall {
 	c := &ProjectsLocationsMeshesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -10755,7 +11722,7 @@ type ProjectsLocationsMeshesGetCall struct {
 // Get: Gets details of a single Mesh.
 //
 //   - name: A name of the Mesh to get. Must be in the format
-//     `projects/*/locations/global/meshes/*`.
+//     `projects/*/locations/*/meshes/*`.
 func (r *ProjectsLocationsMeshesService) Get(name string) *ProjectsLocationsMeshesGetCall {
 	c := &ProjectsLocationsMeshesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -10865,7 +11832,7 @@ type ProjectsLocationsMeshesListCall struct {
 // List: Lists Meshes in a given project and location.
 //
 //   - parent: The project and location from which the Meshes should be listed,
-//     specified in the format `projects/*/locations/global`.
+//     specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsMeshesService) List(parent string) *ProjectsLocationsMeshesListCall {
 	c := &ProjectsLocationsMeshesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -11021,7 +11988,7 @@ type ProjectsLocationsMeshesPatchCall struct {
 // Patch: Updates the parameters of a single Mesh.
 //
 //   - name: Identifier. Name of the Mesh resource. It matches pattern
-//     `projects/*/locations/global/meshes/`.
+//     `projects/*/locations/*/meshes/`.
 func (r *ProjectsLocationsMeshesService) Patch(name string, mesh *Mesh) *ProjectsLocationsMeshesPatchCall {
 	c := &ProjectsLocationsMeshesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -11740,6 +12707,19 @@ func (c *ProjectsLocationsOperationsListCall) PageSize(pageSize int64) *Projects
 // token.
 func (c *ProjectsLocationsOperationsListCall) PageToken(pageToken string) *ProjectsLocationsOperationsListCall {
 	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// ReturnPartialSuccess sets the optional parameter "returnPartialSuccess":
+// When set to `true`, operations that are reachable are returned as normal,
+// and those that are unreachable are returned in the
+// ListOperationsResponse.unreachable field. This can only be `true` when
+// reading across collections. For example, when `parent` is set to
+// "projects/example/locations/-". This field is not supported by default and
+// will result in an `UNIMPLEMENTED` error if set unless explicitly documented
+// otherwise in service or product specific documentation.
+func (c *ProjectsLocationsOperationsListCall) ReturnPartialSuccess(returnPartialSuccess bool) *ProjectsLocationsOperationsListCall {
+	c.urlParams_.Set("returnPartialSuccess", fmt.Sprint(returnPartialSuccess))
 	return c
 }
 
@@ -13038,7 +14018,7 @@ type ProjectsLocationsTcpRoutesCreateCall struct {
 // Create: Creates a new TcpRoute in a given project and location.
 //
 //   - parent: The parent resource of the TcpRoute. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsTcpRoutesService) Create(parent string, tcproute *TcpRoute) *ProjectsLocationsTcpRoutesCreateCall {
 	c := &ProjectsLocationsTcpRoutesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -13148,7 +14128,7 @@ type ProjectsLocationsTcpRoutesDeleteCall struct {
 // Delete: Deletes a single TcpRoute.
 //
 //   - name: A name of the TcpRoute to delete. Must be in the format
-//     `projects/*/locations/global/tcpRoutes/*`.
+//     `projects/*/locations/*/tcpRoutes/*`.
 func (r *ProjectsLocationsTcpRoutesService) Delete(name string) *ProjectsLocationsTcpRoutesDeleteCall {
 	c := &ProjectsLocationsTcpRoutesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -13247,7 +14227,7 @@ type ProjectsLocationsTcpRoutesGetCall struct {
 // Get: Gets details of a single TcpRoute.
 //
 //   - name: A name of the TcpRoute to get. Must be in the format
-//     `projects/*/locations/global/tcpRoutes/*`.
+//     `projects/*/locations/*/tcpRoutes/*`.
 func (r *ProjectsLocationsTcpRoutesService) Get(name string) *ProjectsLocationsTcpRoutesGetCall {
 	c := &ProjectsLocationsTcpRoutesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -13357,7 +14337,7 @@ type ProjectsLocationsTcpRoutesListCall struct {
 // List: Lists TcpRoute in a given project and location.
 //
 //   - parent: The project and location from which the TcpRoutes should be
-//     listed, specified in the format `projects/*/locations/global`.
+//     listed, specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsTcpRoutesService) List(parent string) *ProjectsLocationsTcpRoutesListCall {
 	c := &ProjectsLocationsTcpRoutesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -13514,7 +14494,7 @@ type ProjectsLocationsTcpRoutesPatchCall struct {
 // Patch: Updates the parameters of a single TcpRoute.
 //
 //   - name: Identifier. Name of the TcpRoute resource. It matches pattern
-//     `projects/*/locations/global/tcpRoutes/tcp_route_name>`.
+//     `projects/*/locations/*/tcpRoutes/tcp_route_name>`.
 func (r *ProjectsLocationsTcpRoutesService) Patch(name string, tcproute *TcpRoute) *ProjectsLocationsTcpRoutesPatchCall {
 	c := &ProjectsLocationsTcpRoutesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -13628,7 +14608,7 @@ type ProjectsLocationsTlsRoutesCreateCall struct {
 // Create: Creates a new TlsRoute in a given project and location.
 //
 //   - parent: The parent resource of the TlsRoute. Must be in the format
-//     `projects/*/locations/global`.
+//     `projects/*/locations/*`.
 func (r *ProjectsLocationsTlsRoutesService) Create(parent string, tlsroute *TlsRoute) *ProjectsLocationsTlsRoutesCreateCall {
 	c := &ProjectsLocationsTlsRoutesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -13738,7 +14718,7 @@ type ProjectsLocationsTlsRoutesDeleteCall struct {
 // Delete: Deletes a single TlsRoute.
 //
 //   - name: A name of the TlsRoute to delete. Must be in the format
-//     `projects/*/locations/global/tlsRoutes/*`.
+//     `projects/*/locations/*/tlsRoutes/*`.
 func (r *ProjectsLocationsTlsRoutesService) Delete(name string) *ProjectsLocationsTlsRoutesDeleteCall {
 	c := &ProjectsLocationsTlsRoutesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -13837,7 +14817,7 @@ type ProjectsLocationsTlsRoutesGetCall struct {
 // Get: Gets details of a single TlsRoute.
 //
 //   - name: A name of the TlsRoute to get. Must be in the format
-//     `projects/*/locations/global/tlsRoutes/*`.
+//     `projects/*/locations/*/tlsRoutes/*`.
 func (r *ProjectsLocationsTlsRoutesService) Get(name string) *ProjectsLocationsTlsRoutesGetCall {
 	c := &ProjectsLocationsTlsRoutesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -13947,7 +14927,7 @@ type ProjectsLocationsTlsRoutesListCall struct {
 // List: Lists TlsRoute in a given project and location.
 //
 //   - parent: The project and location from which the TlsRoutes should be
-//     listed, specified in the format `projects/*/locations/global`.
+//     listed, specified in the format `projects/*/locations/*`.
 func (r *ProjectsLocationsTlsRoutesService) List(parent string) *ProjectsLocationsTlsRoutesListCall {
 	c := &ProjectsLocationsTlsRoutesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -14104,7 +15084,7 @@ type ProjectsLocationsTlsRoutesPatchCall struct {
 // Patch: Updates the parameters of a single TlsRoute.
 //
 //   - name: Identifier. Name of the TlsRoute resource. It matches pattern
-//     `projects/*/locations/global/tlsRoutes/tls_route_name>`.
+//     `projects/*/locations/*/tlsRoutes/tls_route_name>`.
 func (r *ProjectsLocationsTlsRoutesService) Patch(name string, tlsroute *TlsRoute) *ProjectsLocationsTlsRoutesPatchCall {
 	c := &ProjectsLocationsTlsRoutesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name

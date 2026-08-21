@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import (
 
 	computepb "cloud.google.com/go/compute/apiv1/computepb"
 	gax "github.com/googleapis/gax-go/v2"
+	"github.com/googleapis/gax-go/v2/callctx"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
@@ -138,12 +139,14 @@ func (c *RegionTargetTcpProxiesClient) Get(ctx context.Context, req *computepb.G
 	return c.internalClient.Get(ctx, req, opts...)
 }
 
-// Insert creates a TargetTcpProxy resource in the specified project and region using the data included in the request.
+// Insert creates a TargetTcpProxy resource in the specified project and region using
+// the data included in the request.
 func (c *RegionTargetTcpProxiesClient) Insert(ctx context.Context, req *computepb.InsertRegionTargetTcpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Insert(ctx, req, opts...)
 }
 
-// List retrieves a list of TargetTcpProxy resources available to the specified project in a given region.
+// List retrieves a list of TargetTcpProxy resources
+// available to the specified project in a given region.
 func (c *RegionTargetTcpProxiesClient) List(ctx context.Context, req *computepb.ListRegionTargetTcpProxiesRequest, opts ...gax.CallOption) *TargetTcpProxyIterator {
 	return c.internalClient.List(ctx, req, opts...)
 }
@@ -173,6 +176,16 @@ type regionTargetTcpProxiesRESTClient struct {
 // The RegionTargetTcpProxies API.
 func NewRegionTargetTcpProxiesRESTClient(ctx context.Context, opts ...option.ClientOption) (*RegionTargetTcpProxiesClient, error) {
 	clientOpts := append(defaultRegionTargetTcpProxiesRESTClientOptions(), opts...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		clientOpts = append(clientOpts, internaloption.WithTelemetryAttributes(map[string]string{
+			"gcp.client.service":  "compute",
+			"gcp.client.version":  getVersionClient(),
+			"gcp.client.repo":     "googleapis/google-cloud-go",
+			"gcp.client.artifact": "cloud.google.com/go/compute/apiv1",
+			"gcp.client.language": "go",
+			"url.domain":          "compute.googleapis.com",
+		}))
+	}
 	httpClient, endpoint, err := httptransport.NewClient(ctx, clientOpts...)
 	if err != nil {
 		return nil, err
@@ -186,6 +199,24 @@ func NewRegionTargetTcpProxiesRESTClient(ctx context.Context, opts ...option.Cli
 		logger:      internaloption.GetLogger(opts),
 	}
 	c.setGoogleClientInfo()
+
+	if gax.IsFeatureEnabled("METRICS") {
+		metrics := gax.NewClientMetrics(
+			gax.WithTelemetryLogger(c.logger),
+			gax.WithTelemetryAttributes(map[string]string{
+				gax.ClientService:  "compute",
+				gax.ClientVersion:  getVersionClient(),
+				gax.ClientArtifact: "cloud.google.com/go/compute/apiv1",
+				gax.RPCSystem:      "http",
+				gax.URLDomain:      "compute.googleapis.com",
+			}),
+		)
+
+		callOpts.Delete = append(callOpts.Delete, gax.WithClientMetrics(metrics))
+		callOpts.Get = append(callOpts.Get, gax.WithClientMetrics(metrics))
+		callOpts.Insert = append(callOpts.Insert, gax.WithClientMetrics(metrics))
+		callOpts.List = append(callOpts.List, gax.WithClientMetrics(metrics))
+	}
 
 	o := []option.ClientOption{
 		option.WithHTTPClient(httpClient),
@@ -262,6 +293,13 @@ func (c *regionTargetTcpProxiesRESTClient) Delete(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/targetTcpProxies/%v", req.GetProject(), req.GetRegion(), req.GetTargetTcpProxy()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionTargetTcpProxies/Delete")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/targetTcpProxies/{target_tcp_proxy}")
+	}
 	opts = append((*c.CallOptions).Delete[0:len((*c.CallOptions).Delete):len((*c.CallOptions).Delete)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -315,6 +353,13 @@ func (c *regionTargetTcpProxiesRESTClient) Get(ctx context.Context, req *compute
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v/targetTcpProxies/%v", req.GetProject(), req.GetRegion(), req.GetTargetTcpProxy()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionTargetTcpProxies/Get")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/targetTcpProxies/{target_tcp_proxy}")
+	}
 	opts = append((*c.CallOptions).Get[0:len((*c.CallOptions).Get):len((*c.CallOptions).Get)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.TargetTcpProxy{}
@@ -346,7 +391,8 @@ func (c *regionTargetTcpProxiesRESTClient) Get(ctx context.Context, req *compute
 	return resp, nil
 }
 
-// Insert creates a TargetTcpProxy resource in the specified project and region using the data included in the request.
+// Insert creates a TargetTcpProxy resource in the specified project and region using
+// the data included in the request.
 func (c *regionTargetTcpProxiesRESTClient) Insert(ctx context.Context, req *computepb.InsertRegionTargetTcpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
 	body := req.GetTargetTcpProxyResource()
@@ -374,6 +420,13 @@ func (c *regionTargetTcpProxiesRESTClient) Insert(ctx context.Context, req *comp
 	hds = append(c.xGoogHeaders, hds...)
 	hds = append(hds, "Content-Type", "application/json")
 	headers := gax.BuildHeaders(ctx, hds...)
+	if gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "resource_name", fmt.Sprintf("//compute.googleapis.com/projects/%v/regions/%v", req.GetProject(), req.GetRegion()))
+	}
+	if gax.IsFeatureEnabled("METRICS") || gax.IsFeatureEnabled("TRACING") || gax.IsFeatureEnabled("LOGGING") {
+		ctx = callctx.WithTelemetryContext(ctx, "rpc_method", "google.cloud.compute.v1.RegionTargetTcpProxies/Insert")
+		ctx = callctx.WithTelemetryContext(ctx, "url_template", "/compute/v1/projects/{project}/regions/{region}/targetTcpProxies")
+	}
 	opts = append((*c.CallOptions).Insert[0:len((*c.CallOptions).Insert):len((*c.CallOptions).Insert)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	resp := &computepb.Operation{}
@@ -413,10 +466,11 @@ func (c *regionTargetTcpProxiesRESTClient) Insert(ctx context.Context, req *comp
 	return op, nil
 }
 
-// List retrieves a list of TargetTcpProxy resources available to the specified project in a given region.
+// List retrieves a list of TargetTcpProxy resources
+// available to the specified project in a given region.
 func (c *regionTargetTcpProxiesRESTClient) List(ctx context.Context, req *computepb.ListRegionTargetTcpProxiesRequest, opts ...gax.CallOption) *TargetTcpProxyIterator {
 	it := &TargetTcpProxyIterator{}
-	req = proto.Clone(req).(*computepb.ListRegionTargetTcpProxiesRequest)
+	req = proto.CloneOf(req)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.TargetTcpProxy, string, error) {
 		resp := &computepb.TargetTcpProxyList{}
