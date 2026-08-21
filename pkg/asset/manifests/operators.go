@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
 
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -229,15 +228,13 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		}
 	}
 
-	if installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
-		iri := &manifests.InternalReleaseImage{}
-		dependencies.Get(iri)
+	iri := &manifests.InternalReleaseImage{}
+	dependencies.Get(iri)
 
-		// Skip if InternalReleaseImage manifest wasn't found.
-		if len(iri.FileList) > 0 {
-			files = append(files, appendIRIcerts(dependencies))
-			files = append(files, appendIRIRegistryCredentials(dependencies))
-		}
+	// Skip if InternalReleaseImage manifest wasn't found.
+	if len(iri.FileList) > 0 {
+		files = append(files, appendIRIcerts(dependencies))
+		files = append(files, appendIRIRegistryCredentials(dependencies))
 	}
 
 	return files
