@@ -111,6 +111,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
+		&tls.BootstrapSSHKeyPair{},
 		&password.KubeadminPassword{},
 		&agentconfig.AgentConfig{},
 		&agentconfig.AgentHosts{},
@@ -139,7 +140,8 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	}
 
 	pwd := &password.KubeadminPassword{}
-	dependencies.Get(pwd)
+	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
+	dependencies.Get(pwd, bootstrapSSHKeyPair)
 	pwdHash := string(pwd.PasswordHash)
 
 	infraEnv := agentManifests.InfraEnv
@@ -154,6 +156,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 					Name: "core",
 					SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
 						igntypes.SSHAuthorizedKey(infraEnv.Spec.SSHAuthorizedKey),
+						igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
 					},
 					PasswordHash: &pwdHash,
 				},
