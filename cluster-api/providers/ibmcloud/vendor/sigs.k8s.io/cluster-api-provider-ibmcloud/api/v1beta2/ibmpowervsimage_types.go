@@ -19,7 +19,7 @@ package v1beta2
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -62,7 +62,7 @@ type IBMPowerVSImageSpec struct {
 
 	// Type of storage, storage pool with the most available space will be selected.
 	// +kubebuilder:default=tier1
-	// +kubebuilder:validation:Enum=tier1;tier3
+	// +kubebuilder:validation:Enum=tier0;tier1;tier3
 	// +optional
 	StorageType string `json:"storageType,omitempty"`
 
@@ -93,7 +93,22 @@ type IBMPowerVSImageStatus struct {
 
 	// Conditions defines current service state of the IBMPowerVSImage.
 	// +optional
-	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in IBMPowerVSCluster's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *IBMPowerVSImageV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// IBMPowerVSImageV1Beta2Status groups all the fields that will be added or modified in IBMPowerVSCluster with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type IBMPowerVSImageV1Beta2Status struct {
+	// conditions represents the observations of a DevCluster's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -112,13 +127,29 @@ type IBMPowerVSImage struct {
 }
 
 // GetConditions returns the observations of the operational state of the IBMPowerVSImage resource.
-func (r *IBMPowerVSImage) GetConditions() capiv1beta1.Conditions {
+func (r *IBMPowerVSImage) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the IBMPowerVSImage to the predescribed clusterv1.Conditions.
-func (r *IBMPowerVSImage) SetConditions(conditions capiv1beta1.Conditions) {
+// SetConditions sets the underlying service state of the IBMPowerVSImage to the predescribed clusterv1beta1.Conditions.
+func (r *IBMPowerVSImage) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (r *IBMPowerVSImage) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (r *IBMPowerVSImage) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &IBMPowerVSImageV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
 }
 
 //+kubebuilder:object:root=true
@@ -131,5 +162,5 @@ type IBMPowerVSImageList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMPowerVSImage{}, &IBMPowerVSImageList{})
+	objectTypes = append(objectTypes, &IBMPowerVSImage{}, &IBMPowerVSImageList{})
 }

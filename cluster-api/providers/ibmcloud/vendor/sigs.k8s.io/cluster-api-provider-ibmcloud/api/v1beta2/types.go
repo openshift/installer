@@ -56,14 +56,17 @@ var (
 	// PowerVSImageStateACTIVE is the string representing an image in a active state.
 	PowerVSImageStateACTIVE = PowerVSImageState("active")
 
-	// PowerVSImageStateQue is the string representing an image in a queued state.
-	PowerVSImageStateQue = PowerVSImageState("queued")
+	// PowerVSImageStateQueued is the string representing an image in a queued state.
+	PowerVSImageStateQueued = PowerVSImageState("queued")
 
 	// PowerVSImageStateFailed is the string representing an image in a failed state.
 	PowerVSImageStateFailed = PowerVSImageState("failed")
 
 	// PowerVSImageStateImporting is the string representing an image in a failed state.
 	PowerVSImageStateImporting = PowerVSImageState("importing")
+
+	// PowerVSImageStateCompleted is the string representing an image in a completed state.
+	PowerVSImageStateCompleted = PowerVSImageState("completed")
 )
 
 // ServiceInstanceState describes the state of a service instance.
@@ -139,16 +142,16 @@ type VPCLoadBalancerBackendPoolProtocol string
 
 var (
 	// VPCLoadBalancerBackendPoolProtocolHTTP is the string representing the http protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolHTTP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolHTTPConst
+	VPCLoadBalancerBackendPoolProtocolHTTP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPConst
 
 	// VPCLoadBalancerBackendPoolProtocolHTTPS is the string representing the https protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolHTTPS VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolHTTPSConst
+	VPCLoadBalancerBackendPoolProtocolHTTPS VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPSConst
 
 	// VPCLoadBalancerBackendPoolProtocolTCP is the string representing the tcp protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolTCP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolTCPConst
+	VPCLoadBalancerBackendPoolProtocolTCP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolTCPConst
 
 	// VPCLoadBalancerBackendPoolProtocolUDP is the string representing the tudp protocol for load balancer backend pools.
-	VPCLoadBalancerBackendPoolProtocolUDP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeProtocolUDPConst
+	VPCLoadBalancerBackendPoolProtocolUDP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolUDPConst
 )
 
 // VPCLoadBalancerListenerProtocol describes the protocol for load balancer listeners.

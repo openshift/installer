@@ -17,7 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 const (
@@ -42,7 +42,7 @@ const (
 
 const (
 	// InstanceReadyCondition reports on current status of the instance. Ready indicates the instance is in a Running state.
-	InstanceReadyCondition capiv1beta1.ConditionType = "InstanceReady"
+	InstanceReadyCondition clusterv1beta1.ConditionType = "InstanceReady"
 )
 
 const (
@@ -60,10 +60,10 @@ const (
 
 const (
 	// ImageReadyCondition reports on current status of the image. Ready indicates the image is in a active state.
-	ImageReadyCondition capiv1beta1.ConditionType = "ImageReady"
+	ImageReadyCondition clusterv1beta1.ConditionType = "ImageReady"
 
 	// ImageImportedCondition reports on current status of the image import job. Ready indicates the import job is finished.
-	ImageImportedCondition capiv1beta1.ConditionType = "ImageImported"
+	ImageImportedCondition clusterv1beta1.ConditionType = "ImageImported"
 )
 
 const (
@@ -73,5 +73,5 @@ const (
 
 const (
 	// LoadBalancerReadyCondition reports on current status of the load balancer. Ready indicates the load balancer is in a active state.
-	LoadBalancerReadyCondition capiv1beta1.ConditionType = "LoadBalancerReady"
+	LoadBalancerReadyCondition clusterv1beta1.ConditionType = "LoadBalancerReady"
 )
