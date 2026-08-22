@@ -11,6 +11,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   - [Examples](#examples)
     - [Minimal](#minimal)
     - [Custom machine pools](#custom-machine-pools)
+    - [Bootstrap flavor for NFV/NUMA workloads](#bootstrap-flavor-for-nfvnuma-workloads)
   - [Image Overrides](#image-overrides)
   - [Custom Subnets](#custom-subnets)
   - [Additional Networks](#additional-networks)
@@ -34,6 +35,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `apiVIPs` (optional array of strings): IP address on the machineNetwork that will be assigned to the API VIP. If more than one are set, it must be one IPv4 and one IPv6.
 * `ingressVIPs` (optional array of strings): IP address on the machineNetwork that will be assigned to the ingress VIP. If more than one are set, it must be one IPv4 and one IPv6.
 * `controlPlanePort` (optional object): the UUID and/or Name of an OpenStack Network and its Subnets where to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
+* `bootstrapFlavor` (optional string): The OpenStack flavor to use for the temporary bootstrap instance. When not set, the bootstrap instance uses the same flavor as the control plane machines. This is useful in environments where the control plane flavor has special hardware requirements (such as NFV/NUMA pinning) that are incompatible with the general-purpose bootstrap workload — in those cases a standard flavor can be specified here. See [Bootstrap flavor for NFV/NUMA workloads](#bootstrap-flavor-for-nfvnuma-workloads) for details.
 * `defaultMachinePlatform` (optional object): Default [OpenStack-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own OpenStack-specific properties.
 
 ## Machine pools
@@ -56,7 +58,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
 > **Note**
-> The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
+> The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool. The bootstrap flavor can be overridden independently using the cluster-scoped `bootstrapFlavor` property.
 
 > **Note**
 > Note when deploying the control-plane machines with `rootVolume`, it is highly suggested to use an [additional ephemeral disk dedicated to etcd](./etcd-ephemeral-disk.md).
@@ -121,6 +123,41 @@ platform:
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+### Bootstrap flavor for NFV/NUMA workloads
+
+In Network Function Virtualization (NFV) environments, control plane machines are often deployed on flavors with strict NUMA topology policies or CPU pinning to meet latency and throughput requirements. Because the bootstrap node is a temporary machine that runs a standard Kubernetes control plane (not an NFV workload), deploying it on an NFV-optimized flavor can cause scheduling or compatibility issues — for example, flavors with `hw:numa_nodes` or CPU pinning extra specs may not be schedulable on all hypervisor hosts.
+
+The `bootstrapFlavor` field lets you decouple the bootstrap instance from the control plane flavor. When set, the bootstrap instance uses the specified flavor; when omitted, it falls back to the flavor defined in the `controlPlane` machine pool (or `defaultMachinePlatform`).
+
+Example — using a standard flavor for the bootstrap node while the control plane uses an NFV/NUMA-optimized flavor:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+controlPlane:
+  name: master
+  replicas: 3
+  platform:
+    openstack:
+      type: nfv.numa.xlarge   # NFV-optimized flavor for production control plane nodes
+platform:
+  openstack:
+    cloud: mycloud
+    externalNetwork: external
+    apiFloatingIP: 128.0.0.1
+    bootstrapFlavor: m1.xlarge  # Standard flavor for the temporary bootstrap instance
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+> **Note**
+> The bootstrap instance is temporary and is removed once the cluster is fully operational. The `bootstrapFlavor` has no effect on control plane or worker machine flavors.
+
+> **Note**
+> If `bootstrapFlavor` is not set, the bootstrap instance uses the flavor from the `controlPlane` machine pool. If that is also unset, it falls back to `defaultMachinePlatform.type`.
 
 ## Image Overrides
 
