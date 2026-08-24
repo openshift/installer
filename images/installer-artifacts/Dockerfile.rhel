@@ -10,6 +10,7 @@ FROM registry.ci.openshift.org/ocp/5.0:installer-etcd-artifacts AS etcd-artifact
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS macbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
+ARG BUILD_VERSION=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=kas-artifacts /usr/share/openshift/darwin/amd64 cluster-api/bin/darwin_amd64
@@ -19,6 +20,7 @@ RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS macarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
+ARG BUILD_VERSION=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=kas-artifacts /usr/share/openshift/darwin/arm64 cluster-api/bin/darwin_arm64
@@ -28,6 +30,7 @@ RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS linuxbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
+ARG BUILD_VERSION=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=kas-artifacts /usr/share/openshift/linux/amd64 cluster-api/bin/linux_amd64
@@ -38,6 +41,7 @@ FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS l
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 ARG SKIP_ENVTEST="y"
+ARG BUILD_VERSION=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=kas-artifacts /usr/share/openshift/linux/arm64 cluster-api/bin/linux_arm64
