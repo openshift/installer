@@ -265,25 +265,34 @@ func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
+	var errs []error
 	for _, client := range o.clients {
-		o.Logger.WithField("vCenter", client.GetVCenterName()).Debug("Delete CNS Volumes")
+		clientLogger := o.Logger.WithField("vCenter", client.GetVCenterName())
+		clientLogger.Debug("Delete CNS Volumes")
 		cnsVolumes, err := client.GetCnsVolumes(ctx, o.InfraID)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 
+		found := len(cnsVolumes)
+		deleted := 0
 		for _, cv := range cnsVolumes {
 			cnsVolumeLogger := o.Logger.WithField("CNSVolume", cv.VolumeId.Id).WithField("vCenter", client.GetVCenterName())
 			cnsVolumeLogger.Debug("Destroying")
-			err := client.DeleteCnsVolumes(ctx, cv)
-			if err != nil {
-				return err
+			if err := client.DeleteCnsVolumes(ctx, cv); err != nil {
+				cnsVolumeLogger.Debug(err)
+				errs = append(errs, err)
+			} else {
+				deleted++
+				cnsVolumeLogger.Info("Destroyed")
 			}
-			cnsVolumeLogger.Info("Destroyed")
+		}
+		if found > 0 {
+			clientLogger.Infof("Deleted %d of %d CNS volumes", deleted, found)
 		}
 	}
 
-	return nil
+	return utilerrors.NewAggregate(errs)
 }
 
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
