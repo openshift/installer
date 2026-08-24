@@ -27,6 +27,12 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
+const (
+	// CAPZ moved the default Internal LB IP Address to an internal package. Match
+	// the value here for installer usage.
+	defaultInternalLBIPAddress = "10.0.0.100"
+)
+
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
@@ -568,7 +574,7 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 }
 
 func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (string, error) {
-	lbip := capz.DefaultInternalLBIPAddress
+	lbip := defaultInternalLBIPAddress
 	lbip = getIPWithinCIDR(subnets, lbip)
 
 	var controlPlaneSub string
