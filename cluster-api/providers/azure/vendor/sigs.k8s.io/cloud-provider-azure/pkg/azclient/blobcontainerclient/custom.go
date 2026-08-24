@@ -19,11 +19,23 @@ package blobcontainerclient
 import (
 	"context"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	armstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/metrics"
 )
 
+const ListOperationName = "BlobContainersClient.List"
+const CreateOperationName = "BlobContainersClient.Create"
+const DeleteOperationName = "BlobContainersClient.Delete"
+
 // List gets a list of BlobContainer in the resource group.
-func (client *Client) List(ctx context.Context, resourceGroupName string, parentResourceName string) (result []*armstorage.ListContainerItem, rerr error) {
+func (client *Client) List(ctx context.Context, resourceGroupName string, parentResourceName string) (result []*armstorage.ListContainerItem, err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "BlobContainer", "list")
+	defer func() { metricsCtx.Observe(ctx, err) }()
+	ctx, endSpan := runtime.StartSpan(ctx, ListOperationName, client.tracer, nil)
+	defer endSpan(err)
+
 	pager := client.BlobContainersClient.NewListPager(resourceGroupName, parentResourceName, nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -35,7 +47,12 @@ func (client *Client) List(ctx context.Context, resourceGroupName string, parent
 	return result, nil
 }
 
-func (client *Client) CreateContainer(ctx context.Context, resourceGroupName, accountName, containerName string, parameters armstorage.BlobContainer) (*armstorage.BlobContainer, error) {
+func (client *Client) CreateContainer(ctx context.Context, resourceGroupName, accountName, containerName string, parameters armstorage.BlobContainer) (result *armstorage.BlobContainer, err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "BlobContainer", "create")
+	defer func() { metricsCtx.Observe(ctx, err) }()
+	ctx, endSpan := runtime.StartSpan(ctx, CreateOperationName, client.tracer, nil)
+	defer endSpan(err)
+
 	resp, err := client.BlobContainersClient.Create(ctx, resourceGroupName, accountName, containerName, parameters, nil)
 	if err != nil {
 		return nil, err
@@ -43,7 +60,12 @@ func (client *Client) CreateContainer(ctx context.Context, resourceGroupName, ac
 	return &resp.BlobContainer, nil
 }
 
-func (client *Client) DeleteContainer(ctx context.Context, resourceGroupName, accountName, containerName string) error {
-	_, err := client.BlobContainersClient.Delete(ctx, resourceGroupName, accountName, containerName, nil)
+func (client *Client) DeleteContainer(ctx context.Context, resourceGroupName, accountName, containerName string) (err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "BlobContainer", "delete")
+	defer func() { metricsCtx.Observe(ctx, err) }()
+	ctx, endSpan := runtime.StartSpan(ctx, DeleteOperationName, client.tracer, nil)
+	defer endSpan(err)
+
+	_, err = client.BlobContainersClient.Delete(ctx, resourceGroupName, accountName, containerName, nil)
 	return err
 }

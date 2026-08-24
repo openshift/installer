@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -246,7 +246,7 @@ type AzureMachineStatus struct {
 
 	// Conditions defines current service state of the AzureMachine.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// LongRunningOperationStates saves the states for Azure long-running operations so they can be continued on the
 	// next reconciliation loop.
@@ -297,12 +297,12 @@ type AzureMachineList struct {
 }
 
 // GetConditions returns the list of conditions for an AzureMachine API object.
-func (m *AzureMachine) GetConditions() clusterv1.Conditions {
+func (m *AzureMachine) GetConditions() clusterv1beta1.Conditions {
 	return m.Status.Conditions
 }
 
 // SetConditions will set the given conditions on an AzureMachine object.
-func (m *AzureMachine) SetConditions(conditions clusterv1.Conditions) {
+func (m *AzureMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	m.Status.Conditions = conditions
 }
 

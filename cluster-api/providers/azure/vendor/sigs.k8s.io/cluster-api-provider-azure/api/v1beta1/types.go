@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"slices"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/net"
@@ -909,12 +911,7 @@ func (s SubnetSpec) IsNatGatewayEnabled() bool {
 
 // IsIPv6Enabled returns whether or not IPv6 is enabled on the subnet.
 func (s SubnetSpec) IsIPv6Enabled() bool {
-	for _, cidr := range s.CIDRBlocks {
-		if net.IsIPv6CIDRString(cidr) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(s.CIDRBlocks, net.IsIPv6CIDRString)
 }
 
 // GetSecurityRuleByDestination returns security group rule, which matches provided destination ports.
