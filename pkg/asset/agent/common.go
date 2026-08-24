@@ -34,7 +34,7 @@ type nmStateConfig struct {
 }
 
 const (
-	// ExternalPlatformNameOci is the name of the external platform for OCP.
+	// ExternalPlatformNameOci is the name of the external platform for Oracle Cloud Infrastructure.
 	ExternalPlatformNameOci = "oci"
 )
 
