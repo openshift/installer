@@ -289,7 +289,11 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Zones = azs
 		}
 		pool.Platform.GCP = &mpool
-		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName)
+		controlPlaneImage := rhcosImage.ControlPlane
+		if gcptypes.NeedsRHCOSUpload(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, &mpool) {
+			controlPlaneImage = gcptypes.RHCOSImageRef(ic.Platform.GCP.ProjectID, clusterID.InfraID)
+		}
+		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, controlPlaneImage, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
