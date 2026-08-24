@@ -318,7 +318,7 @@ func (c *Route53Client) CreateHostedZone(ctx context.Context, input *HostedZoneI
 	if len(fields) != 7 {
 		return nil, fmt.Errorf("SOA record value has %d fields, expected 7", len(fields))
 	}
-	fields[0] = "60"
+	fields[6] = "60"
 	record.Value = aws.String(strings.Join(fields, " "))
 	req, err := c.client.ChangeResourceRecordSets(ctx, &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: res.HostedZone.Id,
