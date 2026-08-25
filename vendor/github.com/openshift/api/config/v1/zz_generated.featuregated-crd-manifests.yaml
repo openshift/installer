@@ -405,7 +405,6 @@ infrastructures.config.openshift.io:
   - NutanixMultiSubnets
   - OnPremDNSRecords
   - VSphereHostVMGroupZonal
-  - VSphereMultiNetworks
   - VSphereMultiVCenterDay2
   FilenameOperatorName: config-operator
   FilenameOperatorOrdering: "01"
