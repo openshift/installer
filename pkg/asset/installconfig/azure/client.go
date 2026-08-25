@@ -14,6 +14,7 @@ import (
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
@@ -39,7 +40,7 @@ type API interface {
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
-	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
+	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (armcompute.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
@@ -368,17 +369,29 @@ func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region str
 }
 
 // GetMarketplaceImage get the specified marketplace VM image.
-func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error) {
-	client := azenc.NewVirtualMachineImagesClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
-	client.Authorizer = c.ssn.Authorizer
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (armcompute.VirtualMachineImage, error) {
+	clientOptions := arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Retry: policy.RetryOptions{
+				MaxRetries: 5,
+				TryTimeout: 1 * time.Minute,
+			},
+			Cloud: c.ssn.CloudConfig,
+		},
+	}
+	client, err := armcompute.NewVirtualMachineImagesClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &clientOptions)
+	if err != nil {
+		return armcompute.VirtualMachineImage{}, fmt.Errorf("error creating virtual machine images client: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	image, err := client.Get(ctx, region, publisher, offer, sku, version)
+	resp, err := client.Get(ctx, region, publisher, offer, sku, version, nil)
 	if err != nil {
-		return image, fmt.Errorf("could not get marketplace image: %w", err)
+		return armcompute.VirtualMachineImage{}, fmt.Errorf("could not get marketplace image: %w", err)
 	}
-	return image, nil
+	return resp.VirtualMachineImage, nil
 }
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
