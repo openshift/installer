@@ -135,7 +135,7 @@
               ]
             },
             "list": {
-              "description": "Lists information about the supported locations for this service.",
+              "description": "Lists information about the supported locations for this service. This method lists locations based on the resource scope provided in the ListLocationsRequest.name field: * **Global locations**: If `name` is empty, the method lists the public locations available to all projects. * **Project-specific locations**: If `name` follows the format `projects/{project}`, the method lists locations visible to that specific project. This includes public, private, or other project-specific locations enabled for the project. For gRPC and client library implementations, the resource name is passed as the `name` field. For direct service calls, the resource name is incorporated into the request path based on the specific service implementation and version.",
               "flatPath": "v1beta1/projects/{projectsId}/locations",
               "httpMethod": "GET",
               "id": "networkservices.projects.locations.list",
@@ -144,7 +144,7 @@
               ],
               "parameters": {
                 "extraLocationTypes": {
-                  "description": "Optional. A list of extra location types that should be used as conditions for controlling the visibility of the locations.",
+                  "description": "Optional. Do not use this field unless explicitly documented otherwise. This is primarily for internal usage.",
                   "location": "query",
                   "repeated": true,
                   "type": "string"
@@ -183,6 +183,173 @@
             }
           },
           "resources": {
+            "agentGateways": {
+              "methods": {
+                "create": {
+                  "description": "Creates a new AgentGateway in a given project and location.",
+                  "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/agentGateways",
+                  "httpMethod": "POST",
+                  "id": "networkservices.projects.locations.agentGateways.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "agentGatewayId": {
+                      "description": "Required. Short name of the AgentGateway resource to be created.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The parent resource of the AgentGateway. Must be in the format `projects/*/locations/*`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1beta1/{+parent}/agentGateways",
+                  "request": {
+                    "$ref": "AgentGateway"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "delete": {
+                  "description": "Deletes a single AgentGateway.",
+                  "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/agentGateways/{agentGatewaysId}",
+                  "httpMethod": "DELETE",
+                  "id": "networkservices.projects.locations.agentGateways.delete",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "etag": {
+                      "description": "Optional. The etag of the AgentGateway to delete.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Required. A name of the AgentGateway to delete. Must be in the format `projects/*/locations/*/agentGateways/*`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/agentGateways/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1beta1/{+name}",
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "get": {
+                  "description": "Gets details of a single AgentGateway.",
+                  "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/agentGateways/{agentGatewaysId}",
+                  "httpMethod": "GET",
+                  "id": "networkservices.projects.locations.agentGateways.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. A name of the AgentGateway to get. Must be in the format `projects/*/locations/*/agentGateways/*`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/agentGateways/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1beta1/{+name}",
+                  "response": {
+                    "$ref": "AgentGateway"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "list": {
+                  "description": "Lists AgentGateways in a given project and location.",
+                  "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/agentGateways",
+                  "httpMethod": "GET",
+                  "id": "networkservices.projects.locations.agentGateways.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "pageSize": {
+                      "description": "Optional. Maximum number of AgentGateways to return per call.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "Optional. The value returned by the last `ListAgentGatewaysResponse` Indicates that this is a continuation of a prior `ListAgentGateways` call, and that the system should return the next page of data.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. The project and location from which the AgentGateways should be listed, specified in the format `projects/*/locations/*`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "returnPartialSuccess": {
+                      "description": "Optional. If true, allow partial responses for multi-regional Aggregated List requests. Otherwise if one of the locations is down or unreachable, the Aggregated List request will fail.",
+                      "location": "query",
+                      "type": "boolean"
+                    }
+                  },
+                  "path": "v1beta1/{+parent}/agentGateways",
+                  "response": {
+                    "$ref": "ListAgentGatewaysResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "patch": {
+                  "description": "Updates the parameters of a single AgentGateway.",
+                  "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/agentGateways/{agentGatewaysId}",
+                  "httpMethod": "PATCH",
+                  "id": "networkservices.projects.locations.agentGateways.patch",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Identifier. Name of the AgentGateway resource. It matches pattern `projects/*/locations/*/agentGateways/`.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/agentGateways/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "updateMask": {
+                      "description": "Optional. Field mask is used to specify the fields to be overwritten in the AgentGateway resource by the update. The fields specified in the update_mask are relative to the resource, not the full request. A field will be overwritten if it is in the mask. If the user does not provide a mask then all fields will be overwritten.",
+                      "format": "google-fieldmask",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1beta1/{+name}",
+                  "request": {
+                    "$ref": "AgentGateway"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                }
+              }
+            },
             "authzExtensions": {
               "methods": {
                 "create": {
@@ -382,7 +549,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The parent resource of the EndpointPolicy. Must be in the format `projects/*/locations/global`.",
+                      "description": "Required. The parent resource of the EndpointPolicy. Must be in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -410,7 +577,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the EndpointPolicy to delete. Must be in the format `projects/*/locations/global/endpointPolicies/*`.",
+                      "description": "Required. A name of the EndpointPolicy to delete. Must be in the format `projects/*/locations/*/endpointPolicies/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/endpointPolicies/[^/]+$",
                       "required": true,
@@ -435,7 +602,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the EndpointPolicy to get. Must be in the format `projects/*/locations/global/endpointPolicies/*`.",
+                      "description": "Required. A name of the EndpointPolicy to get. Must be in the format `projects/*/locations/*/endpointPolicies/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/endpointPolicies/[^/]+$",
                       "required": true,
@@ -471,7 +638,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The project and location from which the EndpointPolicies should be listed, specified in the format `projects/*/locations/global`.",
+                      "description": "Required. The project and location from which the EndpointPolicies should be listed, specified in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -501,7 +668,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Identifier. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.",
+                      "description": "Identifier. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/*/endpointPolicies/{endpoint_policy}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/endpointPolicies/[^/]+$",
                       "required": true,
@@ -768,7 +935,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The parent resource of the GrpcRoute. Must be in the format `projects/*/locations/global`.",
+                      "description": "Required. The parent resource of the GrpcRoute. Must be in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -796,7 +963,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the GrpcRoute to delete. Must be in the format `projects/*/locations/global/grpcRoutes/*`.",
+                      "description": "Required. A name of the GrpcRoute to delete. Must be in the format `projects/*/locations/*/grpcRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/grpcRoutes/[^/]+$",
                       "required": true,
@@ -821,7 +988,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the GrpcRoute to get. Must be in the format `projects/*/locations/global/grpcRoutes/*`.",
+                      "description": "Required. A name of the GrpcRoute to get. Must be in the format `projects/*/locations/*/grpcRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/grpcRoutes/[^/]+$",
                       "required": true,
@@ -857,7 +1024,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The project and location from which the GrpcRoutes should be listed, specified in the format `projects/*/locations/global`.",
+                      "description": "Required. The project and location from which the GrpcRoutes should be listed, specified in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -887,7 +1054,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Identifier. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/global/grpcRoutes/`",
+                      "description": "Identifier. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/*/grpcRoutes/`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/grpcRoutes/[^/]+$",
                       "required": true,
@@ -930,10 +1097,15 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The parent resource of the HttpRoute. Must be in the format `projects/*/locations/global`.",
+                      "description": "Required. The parent resource of the HttpRoute. Must be in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "description": "Optional. Idempotent request UUID.",
+                      "location": "query",
                       "type": "string"
                     }
                   },
@@ -958,7 +1130,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the HttpRoute to delete. Must be in the format `projects/*/locations/global/httpRoutes/*`.",
+                      "description": "Required. A name of the HttpRoute to delete. Must be in the format `projects/*/locations/*/httpRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/httpRoutes/[^/]+$",
                       "required": true,
@@ -983,7 +1155,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the HttpRoute to get. Must be in the format `projects/*/locations/global/httpRoutes/*`.",
+                      "description": "Required. A name of the HttpRoute to get. Must be in the format `projects/*/locations/*/httpRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/httpRoutes/[^/]+$",
                       "required": true,
@@ -1007,6 +1179,11 @@
                     "parent"
                   ],
                   "parameters": {
+                    "filter": {
+                      "description": "Optional. Filter expression to restrict the list.",
+                      "location": "query",
+                      "type": "string"
+                    },
                     "pageSize": {
                       "description": "Maximum number of HttpRoutes to return per call.",
                       "format": "int32",
@@ -1019,7 +1196,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The project and location from which the HttpRoutes should be listed, specified in the format `projects/*/locations/global`.",
+                      "description": "Required. The project and location from which the HttpRoutes should be listed, specified in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -1049,7 +1226,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Identifier. Name of the HttpRoute resource. It matches pattern `projects/*/locations/global/httpRoutes/http_route_name\u003e`.",
+                      "description": "Identifier. Name of the HttpRoute resource. It matches pattern `projects/*/locations/*/httpRoutes/http_route_name\u003e`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/httpRoutes/[^/]+$",
                       "required": true,
@@ -1820,7 +1997,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The parent resource of the Mesh. Must be in the format `projects/*/locations/global`.",
+                      "description": "Required. The parent resource of the Mesh. Must be in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -1848,7 +2025,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the Mesh to delete. Must be in the format `projects/*/locations/global/meshes/*`.",
+                      "description": "Required. A name of the Mesh to delete. Must be in the format `projects/*/locations/*/meshes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/meshes/[^/]+$",
                       "required": true,
@@ -1873,7 +2050,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the Mesh to get. Must be in the format `projects/*/locations/global/meshes/*`.",
+                      "description": "Required. A name of the Mesh to get. Must be in the format `projects/*/locations/*/meshes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/meshes/[^/]+$",
                       "required": true,
@@ -1909,7 +2086,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The project and location from which the Meshes should be listed, specified in the format `projects/*/locations/global`.",
+                      "description": "Required. The project and location from which the Meshes should be listed, specified in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -1939,7 +2116,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Identifier. Name of the Mesh resource. It matches pattern `projects/*/locations/global/meshes/`.",
+                      "description": "Identifier. Name of the Mesh resource. It matches pattern `projects/*/locations/*/meshes/`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/meshes/[^/]+$",
                       "required": true,
@@ -2143,6 +2320,11 @@
                       "description": "The standard list page token.",
                       "location": "query",
                       "type": "string"
+                    },
+                    "returnPartialSuccess": {
+                      "description": "When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `\"projects/example/locations/-\"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.",
+                      "location": "query",
+                      "type": "boolean"
                     }
                   },
                   "path": "v1beta1/{+name}/operations",
@@ -2481,7 +2663,7 @@
                   ],
                   "parameters": {
                     "parent": {
-                      "description": "Required. The parent resource of the TcpRoute. Must be in the format `projects/*/locations/global`.",
+                      "description": "Required. The parent resource of the TcpRoute. Must be in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -2514,7 +2696,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the TcpRoute to delete. Must be in the format `projects/*/locations/global/tcpRoutes/*`.",
+                      "description": "Required. A name of the TcpRoute to delete. Must be in the format `projects/*/locations/*/tcpRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tcpRoutes/[^/]+$",
                       "required": true,
@@ -2539,7 +2721,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the TcpRoute to get. Must be in the format `projects/*/locations/global/tcpRoutes/*`.",
+                      "description": "Required. A name of the TcpRoute to get. Must be in the format `projects/*/locations/*/tcpRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tcpRoutes/[^/]+$",
                       "required": true,
@@ -2575,7 +2757,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The project and location from which the TcpRoutes should be listed, specified in the format `projects/*/locations/global`.",
+                      "description": "Required. The project and location from which the TcpRoutes should be listed, specified in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -2605,7 +2787,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Identifier. Name of the TcpRoute resource. It matches pattern `projects/*/locations/global/tcpRoutes/tcp_route_name\u003e`.",
+                      "description": "Identifier. Name of the TcpRoute resource. It matches pattern `projects/*/locations/*/tcpRoutes/tcp_route_name\u003e`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tcpRoutes/[^/]+$",
                       "required": true,
@@ -2643,7 +2825,7 @@
                   ],
                   "parameters": {
                     "parent": {
-                      "description": "Required. The parent resource of the TlsRoute. Must be in the format `projects/*/locations/global`.",
+                      "description": "Required. The parent resource of the TlsRoute. Must be in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -2676,7 +2858,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the TlsRoute to delete. Must be in the format `projects/*/locations/global/tlsRoutes/*`.",
+                      "description": "Required. A name of the TlsRoute to delete. Must be in the format `projects/*/locations/*/tlsRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tlsRoutes/[^/]+$",
                       "required": true,
@@ -2701,7 +2883,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. A name of the TlsRoute to get. Must be in the format `projects/*/locations/global/tlsRoutes/*`.",
+                      "description": "Required. A name of the TlsRoute to get. Must be in the format `projects/*/locations/*/tlsRoutes/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tlsRoutes/[^/]+$",
                       "required": true,
@@ -2737,7 +2919,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. The project and location from which the TlsRoutes should be listed, specified in the format `projects/*/locations/global`.",
+                      "description": "Required. The project and location from which the TlsRoutes should be listed, specified in the format `projects/*/locations/*`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -2767,7 +2949,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Identifier. Name of the TlsRoute resource. It matches pattern `projects/*/locations/global/tlsRoutes/tls_route_name\u003e`.",
+                      "description": "Identifier. Name of the TlsRoute resource. It matches pattern `projects/*/locations/*/tlsRoutes/tls_route_name\u003e`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tlsRoutes/[^/]+$",
                       "required": true,
@@ -3095,15 +3277,197 @@
       }
     }
   },
-  "revision": "20250730",
+  "revision": "20260513",
   "rootUrl": "https://networkservices.googleapis.com/",
   "schemas": {
+    "AgentGateway": {
+      "description": "AgentGateway represents the agent gateway resource.",
+      "id": "AgentGateway",
+      "properties": {
+        "agentGatewayCard": {
+          "$ref": "AgentGatewayAgentGatewayOutputCard",
+          "description": "Output only. Field for populated AgentGateway card.",
+          "readOnly": true
+        },
+        "createTime": {
+          "description": "Output only. The timestamp when the resource was created.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. A free-text description of the resource. Max length 1024 characters.",
+          "type": "string"
+        },
+        "etag": {
+          "description": "Optional. Etag of the resource. If this is provided, it must match the server's etag. If the provided etag does not match the server's etag, the request will fail with a 409 ABORTED error.",
+          "type": "string"
+        },
+        "googleManaged": {
+          "$ref": "AgentGatewayGoogleManaged",
+          "description": "Optional. Proxy is orchestrated and managed by GoogleCloud in a tenant project."
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. Set of label tags associated with the AgentGateway resource.",
+          "type": "object"
+        },
+        "name": {
+          "description": "Identifier. Name of the AgentGateway resource. It matches pattern `projects/*/locations/*/agentGateways/`.",
+          "type": "string"
+        },
+        "networkConfig": {
+          "$ref": "AgentGatewayNetworkConfig",
+          "description": "Optional. Network configuration for the AgentGateway."
+        },
+        "protocols": {
+          "description": "Required. List of protocols supported by an Agent Gateway",
+          "items": {
+            "enum": [
+              "PROTOCOL_UNSPECIFIED",
+              "MCP"
+            ],
+            "enumDescriptions": [
+              "Unspecified protocol.",
+              "Message Control Plane protocol."
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "registries": {
+          "description": "Optional. A list of Agent registries containing the agents, MCP servers and tools governed by the Agent Gateway. Note: Currently limited to project-scoped registries Must be of format `//agentregistry.googleapis.com/projects/{project}/locations/{location}/",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "selfManaged": {
+          "$ref": "AgentGatewaySelfManaged",
+          "description": "Optional. Attach to existing Application Load Balancers or Secure Web Proxies."
+        },
+        "updateTime": {
+          "description": "Output only. The timestamp when the resource was updated.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AgentGatewayAgentGatewayOutputCard": {
+      "description": "AgentGatewayOutputCard contains informational output-only fields",
+      "id": "AgentGatewayAgentGatewayOutputCard",
+      "properties": {
+        "mtlsEndpoint": {
+          "description": "Output only. mTLS Endpoint associated with this AgentGateway",
+          "readOnly": true,
+          "type": "string"
+        },
+        "rootCertificates": {
+          "description": "Output only. Root Certificates for Agents to validate this AgentGateway",
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
+        "serviceExtensionsServiceAccount": {
+          "description": "Output only. Service Account used by Service Extensions to operate.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AgentGatewayGoogleManaged": {
+      "description": "Configuration for Google Managed deployment mode. Proxy is orchestrated and managed by GoogleCloud in a tenant project.",
+      "id": "AgentGatewayGoogleManaged",
+      "properties": {
+        "governedAccessPath": {
+          "description": "Optional. Operating Mode of Agent Gateway.",
+          "enum": [
+            "GOVERNED_ACCESS_PATH_UNSPECIFIED",
+            "AGENT_TO_ANYWHERE",
+            "CLIENT_TO_AGENT"
+          ],
+          "enumDescriptions": [
+            "Governed access path is not specified.",
+            "Govern agent conections to destinations.",
+            "Protect connection to Agent or Tool."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AgentGatewayNetworkConfig": {
+      "description": "NetworkConfig contains network configurations for the AgentGateway.",
+      "id": "AgentGatewayNetworkConfig",
+      "properties": {
+        "dnsPeeringConfig": {
+          "$ref": "AgentGatewayNetworkConfigDnsPeeringConfig",
+          "description": "Optional. Optional DNS peering configuration for connectivity to your private VPC network."
+        },
+        "egress": {
+          "$ref": "AgentGatewayNetworkConfigEgress",
+          "description": "Optional. Optional PSC-Interface network attachment for connectivity to your private VPCs network."
+        }
+      },
+      "type": "object"
+    },
+    "AgentGatewayNetworkConfigDnsPeeringConfig": {
+      "description": "DNS peering config for the user VPC network.",
+      "id": "AgentGatewayNetworkConfigDnsPeeringConfig",
+      "properties": {
+        "domains": {
+          "description": "Required. Domain names for which DNS queries should be forwarded to the target network.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "targetNetwork": {
+          "description": "Required. Target network in 'target project' to which DNS queries should be forwarded to. Must be in format of `projects/{project}/global/networks/{network}`.",
+          "type": "string"
+        },
+        "targetProject": {
+          "description": "Required. Target project ID to which DNS queries should be forwarded to. This can be the same project that contains the AgentGateway or a different project.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AgentGatewayNetworkConfigEgress": {
+      "description": "Configuration for Egress",
+      "id": "AgentGatewayNetworkConfigEgress",
+      "properties": {
+        "networkAttachment": {
+          "description": "Optional. The URI of the Network Attachment resource.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "AgentGatewaySelfManaged": {
+      "description": "Configuration for Self Managed deployment mode. Attach to existing Application Load Balancers or Secure Web Proxies.",
+      "id": "AgentGatewaySelfManaged",
+      "properties": {
+        "resourceUri": {
+          "description": "Optional. A supported Google Cloud networking proxy in the Project and Location",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "AuthzExtension": {
       "description": "`AuthzExtension` is a resource that allows traffic forwarding to a callout backend service to make an authorization decision.",
       "id": "AuthzExtension",
       "properties": {
         "authority": {
-          "description": "Required. The `:authority` header in the gRPC request sent from Envoy to the extension service.",
+          "description": "Optional. The `:authority` header in the gRPC request sent from Envoy to the extension service. It is required when the `service` field points to a backend service or a wasm plugin.",
           "type": "string"
         },
         "createTime": {
@@ -3120,6 +3484,13 @@
           "description": "Optional. Determines how the proxy behaves if the call to the extension fails or times out. When set to `TRUE`, request or response processing continues without error. Any subsequent extensions in the extension chain are also executed. When set to `FALSE` or the default setting of `FALSE` is used, one of the following happens: * If response headers have not been delivered to the downstream client, a generic 500 error is returned to the client. The error response can be tailored by configuring a custom error response in the load balancer. * If response headers have been delivered, then the HTTP stream to the downstream client is reset.",
           "type": "boolean"
         },
+        "forwardAttributes": {
+          "description": "Optional. List of the Envoy attributes to forward to the extension server. The attributes provided here are included as part of the `ProcessingRequest.attributes` field (of type `map`), where the keys are the attribute names. Refer to the [documentation](https://cloud.google.com/service-extensions/docs/cel-matcher-language-reference#attributes) for the names of attributes that can be forwarded. If omitted, no attributes are sent. Each element is a string indicating the attribute name.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "forwardHeaders": {
           "description": "Optional. List of the HTTP headers to forward to the extension (from the client). If omitted, all headers are sent. Each element is a string indicating the header name.",
           "items": {
@@ -3135,7 +3506,7 @@
           "type": "object"
         },
         "loadBalancingScheme": {
-          "description": "Required. All backend services and forwarding rules referenced by this extension must share the same load balancing scheme. Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more information, refer to [Backend services overview](https://cloud.google.com/load-balancing/docs/backend-service).",
+          "description": "Optional. All backend services and forwarding rules referenced by this extension must share the same load balancing scheme. Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. Can be omitted for AuthzExtensions that do not reference a backend service. For more information, refer to [Backend services overview](https://cloud.google.com/load-balancing/docs/backend-service).",
           "enum": [
             "LOAD_BALANCING_SCHEME_UNSPECIFIED",
             "INTERNAL_MANAGED",
@@ -3176,7 +3547,7 @@
           "type": "string"
         },
         "wireFormat": {
-          "description": "Optional. The format of communication supported by the callout extension. If not specified, the default value `EXT_PROC_GRPC` is used.",
+          "description": "Optional. The format of communication supported by the callout extension. This field is supported only for regional `AuthzExtension` resources. If not specified, the default value `EXT_PROC_GRPC` is used. Global `AuthzExtension` resources use the `EXT_PROC_GRPC` wire format.",
           "enum": [
             "WIRE_FORMAT_UNSPECIFIED",
             "EXT_PROC_GRPC",
@@ -3185,7 +3556,7 @@
           "enumDescriptions": [
             "Not specified.",
             "The extension service uses ext_proc gRPC API over a gRPC stream. This is the default value if the wire format is not specified. The backend service for the extension must use HTTP2 or H2C as the protocol. All `supported_events` for a client request are sent as part of the same gRPC stream.",
-            "The extension service uses Envoy's `ext_authz` gRPC API. The backend service for the extension must use HTTP2, or H2C as the protocol. `EXT_AUTHZ_GRPC` is only supported for `AuthzExtension` resources."
+            "The extension service uses Envoy's `ext_authz` gRPC API. The backend service for the extension must use HTTP2 or H2C as the protocol. `EXT_AUTHZ_GRPC` is only supported for regional `AuthzExtension` resources."
           ],
           "type": "string"
         }
@@ -3249,7 +3620,7 @@
           "type": "object"
         },
         "name": {
-          "description": "Identifier. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.",
+          "description": "Identifier. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/*/endpointPolicies/{endpoint_policy}`.",
           "type": "string"
         },
         "securityPolicy": {
@@ -3314,7 +3685,7 @@
       "id": "ExtensionChainExtension",
       "properties": {
         "allowDynamicForwarding": {
-          "description": "Optional. When set to `TRUE`, the response from an extension service is allowed to set the `com.google.envoy.dynamic_forwarding` namespace in the dynamic metadata. This field is not supported for plugin extensions. Setting it results in a validation error.",
+          "description": "Optional. When set to `TRUE`, the response from an extension service is allowed to set the `com.google.envoy.dynamic_forwarding` namespace in the dynamic metadata. This field is not supported for plugin extensions or AuthzExtensions. Setting it results in a validation error.",
           "type": "boolean"
         },
         "authority": {
@@ -3324,6 +3695,13 @@
         "failOpen": {
           "description": "Optional. Determines how the proxy behaves if the call to the extension fails or times out. When set to `TRUE`, request or response processing continues without error. Any subsequent extensions in the extension chain are also executed. When set to `FALSE` or the default setting of `FALSE` is used, one of the following happens: * If response headers have not been delivered to the downstream client, a generic 500 error is returned to the client. The error response can be tailored by configuring a custom error response in the load balancer. * If response headers have been delivered, then the HTTP stream to the downstream client is reset.",
           "type": "boolean"
+        },
+        "forwardAttributes": {
+          "description": "Optional. List of the Envoy attributes to forward to the extension server. The attributes provided here are included as part of the `ProcessingRequest.attributes` field (of type `map`), where the keys are the attribute names. Refer to the [documentation](https://cloud.google.com/service-extensions/docs/cel-matcher-language-reference#attributes) for the names of attributes that can be forwarded. If omitted, no attributes are sent. Each element is a string indicating the attribute name.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "forwardHeaders": {
           "description": "Optional. List of the HTTP headers to forward to the extension (from the client or backend). If omitted, all headers are sent. Each element is a string indicating the header name.",
@@ -3337,12 +3715,16 @@
             "description": "Properties of the object.",
             "type": "any"
           },
-          "description": "Optional. The metadata provided here is included as part of the `metadata_context` (of type `google.protobuf.Struct`) in the `ProcessingRequest` message sent to the extension server. The metadata is available under the namespace `com.google....`. For example: `com.google.lb_traffic_extension.lbtrafficextension1.chain1.ext1`. The following variables are supported in the metadata: `{forwarding_rule_id}` - substituted with the forwarding rule's fully qualified resource name. This field must not be set for plugin extensions. Setting it results in a validation error. You can set metadata at either the resource level or the extension level. The extension level metadata is recommended because you can pass a different set of metadata through each extension to the backend. This field is subject to following limitations: * The total size of the metadata must be less than 1KiB. * The total number of keys in the metadata must be less than 16. * The length of each key must be less than 64 characters. * The length of each value must be less than 1024 characters. * All values must be strings.",
+          "description": "Optional. The metadata provided here is included as part of the `metadata_context` (of type `google.protobuf.Struct`) in the `ProcessingRequest` message sent to the extension server. For `AuthzExtension` resources, the metadata is available under the namespace `com.google.authz_extension.`. For other types of extensions, the metadata is available under the namespace `com.google....`. For example: `com.google.lb_traffic_extension.lbtrafficextension1.chain1.ext1`. The following variables are supported in the metadata: `{forwarding_rule_id}` - substituted with the forwarding rule's fully qualified resource name. This field must not be set for plugin extensions. Setting it results in a validation error. You can set metadata at either the resource level or the extension level. The extension level metadata is recommended because you can pass a different set of metadata through each extension to the backend. This field is subject to following limitations: * The total size of the metadata must be less than 1KiB. * The total number of keys in the metadata must be less than 16. * The length of each key must be less than 64 characters. * The length of each value must be less than 1024 characters. * All values must be strings.",
           "type": "object"
         },
         "name": {
-          "description": "Required. The name for this extension. The name is logged as part of the HTTP request logs. The name must conform with RFC-1034, is restricted to lower-cased letters, numbers and hyphens, and can have a maximum length of 63 characters. Additionally, the first character must be a letter and the last a letter or a number.",
+          "description": "Optional. The name for this extension. The name is logged as part of the HTTP request logs. The name must conform with RFC-1034, is restricted to lower-cased letters, numbers and hyphens, and can have a maximum length of 63 characters. Additionally, the first character must be a letter and the last a letter or a number. This field is required except for AuthzExtension.",
           "type": "string"
+        },
+        "observabilityMode": {
+          "description": "Optional. When set to `true`, the calls to the extension backend are performed asynchronously, without pausing the processing of the ongoing request. In this mode, only `STREAMED` (default) body processing is supported. Responses, if any, are ignored. Supported by regional `LbTrafficExtension` and `LbRouteExtension` resources.",
+          "type": "boolean"
         },
         "requestBodySendMode": {
           "description": "Optional. Configures the send mode for request body processing. The field can only be set if `supported_events` includes `REQUEST_BODY`. If `supported_events` includes `REQUEST_BODY`, but `request_body_send_mode` is unset, the default value `STREAMED` is used. When this field is set to `FULL_DUPLEX_STREAMED`, `supported_events` must include both `REQUEST_BODY` and `REQUEST_TRAILERS`. This field can be set only for `LbTrafficExtension` and `LbRouteExtension` resources, and only when the `service` field of the extension points to a `BackendService`. Only `FULL_DUPLEX_STREAMED` mode is supported for `LbRouteExtension` resources.",
@@ -3359,7 +3741,7 @@
           "type": "string"
         },
         "responseBodySendMode": {
-          "description": "Optional. Configures the send mode for response processing. If unspecified, the default value `STREAMED` is used. When this field is set to `FULL_DUPLEX_STREAMED`, `supported_events` must include both `RESPONSE_BODY` and `RESPONSE_TRAILERS`. This field can be set only for `LbTrafficExtension` resources, and only when the `service` field of the extension points to a `BackendService`.",
+          "description": "Optional. Configures the send mode for response processing. If unspecified, the default value `STREAMED` is used. The field can only be set if `supported_events` includes `RESPONSE_BODY`. If `supported_events` includes `RESPONSE_BODY`, but `response_body_send_mode` is unset, the default value `STREAMED` is used. When this field is set to `FULL_DUPLEX_STREAMED`, `supported_events` must include both `RESPONSE_BODY` and `RESPONSE_TRAILERS`. This field can be set only for `LbTrafficExtension` resources, and only when the `service` field of the extension points to a `BackendService`.",
           "enum": [
             "BODY_SEND_MODE_UNSPECIFIED",
             "BODY_SEND_MODE_STREAMED",
@@ -3377,7 +3759,7 @@
           "type": "string"
         },
         "supportedEvents": {
-          "description": "Optional. A set of events during request or response processing for which this extension is called. For the `LbTrafficExtension` resource, this field is required. For the `LbRouteExtension` resource, this field is optional. If unspecified, `REQUEST_HEADERS` event is assumed as supported. For the `LbEdgeExtension` resource, this field is required and must only contain `REQUEST_HEADERS` event.",
+          "description": "Optional. A set of events during request or response processing for which this extension is called. For the `LbTrafficExtension` resource, this field is required. For the `LbRouteExtension` resource, this field is optional. If unspecified, `REQUEST_HEADERS` event is assumed as supported. For the `LbEdgeExtension` resource, this field is required and must only contain `REQUEST_HEADERS` event. For the `AuthzExtension` resource, this field is optional. `REQUEST_HEADERS` is the only supported event. If unspecified, `REQUEST_HEADERS` event is assumed as supported.",
           "items": {
             "enum": [
               "EVENT_TYPE_UNSPECIFIED",
@@ -3431,6 +3813,14 @@
           },
           "type": "array"
         },
+        "allPorts": {
+          "description": "Optional. If true, the Gateway will listen on all ports. This is mutually exclusive with the `ports` field. This field only applies to gateways of type 'SECURE_WEB_GATEWAY'.",
+          "type": "boolean"
+        },
+        "allowGlobalAccess": {
+          "description": "Optional. If true, the gateway will allow traffic from clients outside of the region where the gateway is located. This field is configurable only for gateways of type SECURE_WEB_GATEWAY.",
+          "type": "boolean"
+        },
         "certificateUrls": {
           "description": "Optional. A fully-qualified Certificates URL reference. The proxy presents a Certificate (selected based on SNI) when establishing a TLS connection. This feature only applies to gateways of type 'SECURE_WEB_GATEWAY'.",
           "items": {
@@ -3458,7 +3848,7 @@
           "enumDescriptions": [
             "Defaults to NONE.",
             "Suppress envoy debug headers.",
-            "Envoy will insert default internal debug headers into upstream requests: x-envoy-attempt-count x-envoy-is-timeout-retry x-envoy-expected-rq-timeout-ms x-envoy-original-path x-envoy-upstream-stream-duration-ms"
+            "Envoy will insert default internal debug headers into upstream requests: x-envoy-attempt-count, x-envoy-is-timeout-retry, x-envoy-expected-rq-timeout-ms, x-envoy-original-path, x-envoy-upstream-stream-duration-ms"
           ],
           "type": "string"
         },
@@ -3603,7 +3993,7 @@
           "type": "string"
         },
         "gateways": {
-          "description": "Optional. Gateways defines a list of gateways this GrpcRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/global/gateways/`",
+          "description": "Optional. Gateways defines a list of gateways this GrpcRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/*/gateways/`",
           "items": {
             "type": "string"
           },
@@ -3624,14 +4014,14 @@
           "type": "object"
         },
         "meshes": {
-          "description": "Optional. Meshes defines a list of meshes this GrpcRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/global/meshes/`",
+          "description": "Optional. Meshes defines a list of meshes this GrpcRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/*/meshes/`",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "name": {
-          "description": "Identifier. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/global/grpcRoutes/`",
+          "description": "Identifier. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/*/grpcRoutes/`",
           "type": "string"
         },
         "rules": {
@@ -3900,7 +4290,7 @@
           "type": "string"
         },
         "gateways": {
-          "description": "Optional. Gateways defines a list of gateways this HttpRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/global/gateways/`",
+          "description": "Optional. Gateways defines a list of gateways this HttpRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/*/gateways/`",
           "items": {
             "type": "string"
           },
@@ -3921,14 +4311,14 @@
           "type": "object"
         },
         "meshes": {
-          "description": "Optional. Meshes defines a list of meshes this HttpRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/global/meshes/` The attached Mesh should be of a type SIDECAR",
+          "description": "Optional. Meshes defines a list of meshes this HttpRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/*/meshes/` The attached Mesh should be of a type SIDECAR",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "name": {
-          "description": "Identifier. Name of the HttpRoute resource. It matches pattern `projects/*/locations/global/httpRoutes/http_route_name\u003e`.",
+          "description": "Identifier. Name of the HttpRoute resource. It matches pattern `projects/*/locations/*/httpRoutes/http_route_name\u003e`.",
           "type": "string"
         },
         "rules": {
@@ -4709,6 +5099,31 @@
       },
       "type": "object"
     },
+    "ListAgentGatewaysResponse": {
+      "description": "Response returned by the ListAgentGateways method.",
+      "id": "ListAgentGatewaysResponse",
+      "properties": {
+        "agentGateways": {
+          "description": "List of AgentGateway resources.",
+          "items": {
+            "$ref": "AgentGateway"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "If there might be more results than those appearing in this response, then `next_page_token` is included. To get the next set of results, call this method again using the value of `next_page_token` as `page_token`.",
+          "type": "string"
+        },
+        "unreachable": {
+          "description": "Unreachable resources. Populated when the request attempts to list all resources across all supported locations, while some locations are temporarily unavailable.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "ListAuthzExtensionsResponse": {
       "description": "Message for response to listing `AuthzExtension` resources.",
       "id": "ListAuthzExtensionsResponse",
@@ -5041,6 +5456,13 @@
             "$ref": "Operation"
           },
           "type": "array"
+        },
+        "unreachable": {
+          "description": "Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -5288,7 +5710,7 @@
           "enumDescriptions": [
             "Defaults to NONE.",
             "Suppress envoy debug headers.",
-            "Envoy will insert default internal debug headers into upstream requests: x-envoy-attempt-count x-envoy-is-timeout-retry x-envoy-expected-rq-timeout-ms x-envoy-original-path x-envoy-upstream-stream-duration-ms"
+            "Envoy will insert default internal debug headers into upstream requests: x-envoy-attempt-count, x-envoy-is-timeout-retry, x-envoy-expected-rq-timeout-ms, x-envoy-original-path, x-envoy-upstream-stream-duration-ms"
           ],
           "type": "string"
         },
@@ -5305,7 +5727,7 @@
           "type": "object"
         },
         "name": {
-          "description": "Identifier. Name of the Mesh resource. It matches pattern `projects/*/locations/global/meshes/`.",
+          "description": "Identifier. Name of the Mesh resource. It matches pattern `projects/*/locations/*/meshes/`.",
           "type": "string"
         },
         "selfLink": {
@@ -5694,7 +6116,7 @@
           "type": "string"
         },
         "gateways": {
-          "description": "Optional. Gateways defines a list of gateways this TcpRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/global/gateways/`",
+          "description": "Optional. Gateways defines a list of gateways this TcpRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/*/gateways/`",
           "items": {
             "type": "string"
           },
@@ -5708,14 +6130,14 @@
           "type": "object"
         },
         "meshes": {
-          "description": "Optional. Meshes defines a list of meshes this TcpRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/global/meshes/` The attached Mesh should be of a type SIDECAR",
+          "description": "Optional. Meshes defines a list of meshes this TcpRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/*/meshes/` The attached Mesh should be of a type SIDECAR",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "name": {
-          "description": "Identifier. Name of the TcpRoute resource. It matches pattern `projects/*/locations/global/tcpRoutes/tcp_route_name\u003e`.",
+          "description": "Identifier. Name of the TcpRoute resource. It matches pattern `projects/*/locations/*/tcpRoutes/tcp_route_name\u003e`.",
           "type": "string"
         },
         "rules": {
@@ -5826,7 +6248,7 @@
           "type": "string"
         },
         "gateways": {
-          "description": "Optional. Gateways defines a list of gateways this TlsRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/global/gateways/`",
+          "description": "Optional. Gateways defines a list of gateways this TlsRoute is attached to, as one of the routing rules to route the requests served by the gateway. Each gateway reference should match the pattern: `projects/*/locations/*/gateways/`",
           "items": {
             "type": "string"
           },
@@ -5840,14 +6262,14 @@
           "type": "object"
         },
         "meshes": {
-          "description": "Optional. Meshes defines a list of meshes this TlsRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/global/meshes/` The attached Mesh should be of a type SIDECAR",
+          "description": "Optional. Meshes defines a list of meshes this TlsRoute is attached to, as one of the routing rules to route the requests served by the mesh. Each mesh reference should match the pattern: `projects/*/locations/*/meshes/` The attached Mesh should be of a type SIDECAR",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "name": {
-          "description": "Identifier. Name of the TlsRoute resource. It matches pattern `projects/*/locations/global/tlsRoutes/tls_route_name\u003e`.",
+          "description": "Identifier. Name of the TlsRoute resource. It matches pattern `projects/*/locations/*/tlsRoutes/tls_route_name\u003e`.",
           "type": "string"
         },
         "rules": {
@@ -5861,6 +6283,13 @@
           "description": "Output only. Server-defined URL of this resource",
           "readOnly": true,
           "type": "string"
+        },
+        "targetProxies": {
+          "description": "Optional. TargetProxies defines a list of TargetTcpProxies this TlsRoute is attached to, as one of the routing rules to route the requests served by the TargetTcpProxy. Each TargetTcpProxy reference should match the pattern: `projects/*/locations/*/targetTcpProxies/`",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "updateTime": {
           "description": "Output only. The timestamp when the resource was updated.",
@@ -5971,6 +6400,15 @@
         },
         "description": {
           "description": "Optional. A human-readable description of the resource.",
+          "type": "string"
+        },
+        "kmsKeyName": {
+          "description": "Optional. The name of the customer-managed [CryptoKey](https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys) to be used to encrypt the `WasmPlugin` image (provided by image_uri) and configuration (provided by plugin_config_data or plugin_config_uri) that are stored by the `Service Extensions` product at rest. Format: `projects/{project}/locations/{location}/keyRings/{keyring}/cryptoKeys/{key}` By default, Google Cloud automatically encrypts all data at rest using Google-owned and Google-managed encryption keys. If you need ownership and control of the keys that protect your data at rest, you can specify a customer-managed encryption key (CMEK) to encrypt your `WasmPlugin` data. For more information, see [Using customer-managed encryption keys](https://cloud.google.com/service-extensions/docs/cmek).",
+          "type": "string"
+        },
+        "kmsKeyVersion": {
+          "description": "Output only. The name of the specific [CryptoKeyVersion](https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions) used to encrypt the `WasmPlugin` data, if the kms_key_name field is set. Format: `projects/{project}/locations/{location}/keyRings/{keyring}/cryptoKeys/{key}/cryptoKeyVersions/{version}` This is a read-only field. `WasmPlugin` data is automatically encrypted using the most recent `CryptoKeyVersion` of the `CryptoKey` provided in the `kms_key_name` field. See [Cloud KMS resources](https://cloud.google.com/kms/docs/resource-hierarchy) for more information.",
+          "readOnly": true,
           "type": "string"
         },
         "labels": {
