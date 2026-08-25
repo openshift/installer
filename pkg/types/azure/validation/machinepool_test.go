@@ -916,6 +916,62 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: `test-path\.dataDisks\[0\]\.managedDisk\.securityProfile: Forbidden: data disk security profiles are not yet supported by the Machine API and would be silently ignored`,
 		},
 		{
+			name:          "master data disk with managedDisk but missing storageAccountType is rejected",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcd",
+							DiskSizeGB:  128,
+							ManagedDisk: &capz.ManagedDiskParameters{},
+							Lun:         ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Required value: storageAccountType is required when managedDisk is specified`,
+		},
+		{
+			name:          "worker data disk with managedDisk but missing storageAccountType is rejected",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 128,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								DiskEncryptionSet: &capz.DiskEncryptionSetParameters{
+									ID: "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/diskEncryptionSets/des",
+								},
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Required value: storageAccountType is required when managedDisk is specified`,
+		},
+		{
+			name:          "data disk without managedDisk passes without storageAccountType",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 128,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
+		{
 			name:          "data disks with no security settings pass validation",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
