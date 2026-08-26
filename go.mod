@@ -71,7 +71,7 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.0
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20260408092441-8b086e6b9eb9
+	github.com/openshift/api v0.0.0-20260817165856-9fda5179a7f7
 	github.com/openshift/assisted-image-service v0.0.0-20250917153356-4ca9ff81f712
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
