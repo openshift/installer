@@ -354,11 +354,19 @@ func validateDataDisk(p *azure.MachinePool, poolName string, fldPath *field.Path
 	switch poolName {
 	case types.MachinePoolControlPlaneRoleName, types.MachinePoolComputeRoleName:
 		for i, dataDisk := range p.DataDisks {
-			if dataDisk.ManagedDisk != nil && dataDisk.ManagedDisk.SecurityProfile != nil {
-				allErrs = append(allErrs, field.Forbidden(
-					fldPath.Index(i).Child("managedDisk", "securityProfile"),
-					"data disk security profiles are not yet supported by the Machine API and would be silently ignored",
-				))
+			if dataDisk.ManagedDisk != nil {
+				if dataDisk.ManagedDisk.StorageAccountType == "" {
+					allErrs = append(allErrs, field.Required(
+						fldPath.Index(i).Child("managedDisk", "storageAccountType"),
+						"storageAccountType is required when managedDisk is specified",
+					))
+				}
+				if dataDisk.ManagedDisk.SecurityProfile != nil {
+					allErrs = append(allErrs, field.Forbidden(
+						fldPath.Index(i).Child("managedDisk", "securityProfile"),
+						"data disk security profiles are not yet supported by the Machine API and would be silently ignored",
+					))
+				}
 			}
 		}
 	default:
