@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3](https://github.com/microsoft/kiota-serialization-form-go/compare/v1.1.2...v1.1.3) (2026-03-13)
+
+
+### Bug Fixes
+
+* reduce parse node allocations when deserializing primitive types collections ([d871ef8](https://github.com/microsoft/kiota-serialization-form-go/commit/d871ef8be0272296fb53389725ca01516d188599))
+
+
+### Performance Improvements
+
+* extract private helpers and avoid parse node allocations in primitive collection deserialization ([ba61e0b](https://github.com/microsoft/kiota-serialization-form-go/commit/ba61e0bb7331cf8a563317b6d9d79a95582c2dfc))
+* reduce parse node allocations when deserializing primitive types ([61219f6](https://github.com/microsoft/kiota-serialization-form-go/commit/61219f6d0054f12523acc89e87bfff7b07a5e36e))
+
 ## [1.1.2](https://github.com/microsoft/kiota-serialization-form-go/compare/v1.1.1...v1.1.2) (2025-04-02)
 
 

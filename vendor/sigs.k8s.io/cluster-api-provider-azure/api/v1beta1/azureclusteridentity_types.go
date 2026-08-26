@@ -25,10 +25,9 @@ import (
 // AllowedNamespaces defines the namespaces the clusters are allowed to use the identity from
 // NamespaceList takes precedence over the Selector.
 type AllowedNamespaces struct {
-	// A nil or empty list indicates that AzureCluster cannot use the identity from any namespace.
+	// An empty list indicates that AzureCluster cannot use the identity from any namespace.
 	//
 	// +optional
-	// +nullable
 	NamespaceList []string `json:"list"`
 	// Selector is a selector of namespaces that AzureCluster can
 	// use this Identity from. This is a standard Kubernetes LabelSelector,
@@ -81,7 +80,6 @@ type AzureClusterIdentitySpec struct {
 	// A namespace should be either in the NamespaceList or match with Selector to use the identity.
 	//
 	// +optional
-	// +nullable
 	AllowedNamespaces *AllowedNamespaces `json:"allowedNamespaces"`
 }
 
@@ -128,5 +126,5 @@ func (c *AzureClusterIdentity) SetConditions(conditions clusterv1beta1.Condition
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureClusterIdentity{}, &AzureClusterIdentityList{})
+	objectTypes = append(objectTypes, &AzureClusterIdentity{}, &AzureClusterIdentityList{})
 }

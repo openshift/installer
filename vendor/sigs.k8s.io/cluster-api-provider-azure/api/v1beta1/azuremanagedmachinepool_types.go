@@ -533,5 +533,5 @@ func (m *AzureManagedMachinePool) SetFutures(futures Futures) {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureManagedMachinePool{}, &AzureManagedMachinePoolList{})
+	objectTypes = append(objectTypes, &AzureManagedMachinePool{}, &AzureManagedMachinePoolList{})
 }

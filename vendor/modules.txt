@@ -87,8 +87,8 @@ github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources
 github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2017-10-01/storage
 github.com/Azure/azure-sdk-for-go/storage
 github.com/Azure/azure-sdk-for-go/version
-# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1
-## explicit; go 1.23.0
+# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
+## explicit; go 1.25.0
 github.com/Azure/azure-sdk-for-go/sdk/azcore
 github.com/Azure/azure-sdk-for-go/sdk/azcore/arm
 github.com/Azure/azure-sdk-for-go/sdk/azcore/arm/internal/resource
@@ -110,12 +110,13 @@ github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime
 github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming
 github.com/Azure/azure-sdk-for-go/sdk/azcore/to
 github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing
-# github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.0
-## explicit; go 1.23.0
+# github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0
+## explicit; go 1.25.0
 github.com/Azure/azure-sdk-for-go/sdk/azidentity
 github.com/Azure/azure-sdk-for-go/sdk/azidentity/internal
-# github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2
-## explicit; go 1.23.0
+github.com/Azure/azure-sdk-for-go/sdk/azidentity/internal/customtokenproxy
+# github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0
+## explicit; go 1.24.0
 github.com/Azure/azure-sdk-for-go/sdk/internal/diag
 github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo
 github.com/Azure/azure-sdk-for-go/sdk/internal/exported
@@ -206,7 +207,7 @@ github.com/Azure/go-autorest/logger
 # github.com/Azure/go-autorest/tracing v0.6.1
 ## explicit; go 1.15
 github.com/Azure/go-autorest/tracing
-# github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0
+# github.com/AzureAD/microsoft-authentication-library-for-go v1.7.2
 ## explicit; go 1.18
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential
@@ -234,7 +235,7 @@ github.com/AzureAD/microsoft-authentication-library-for-go/apps/public
 ## explicit; go 1.18
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
-# github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.31.0
+# github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.32.0
 ## explicit; go 1.24.0
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp
 # github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.53.0
@@ -401,9 +402,6 @@ github.com/apparentlymart/go-cidr/cidr
 # github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/asaskevich/govalidator/v11 v11.0.2-0.20250122183457-e11347878e23
-## explicit; go 1.13
-github.com/asaskevich/govalidator/v11
 # github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 ## explicit
 github.com/awalterschulze/gographviz
@@ -758,6 +756,7 @@ github.com/envoyproxy/go-control-plane/envoy/data/accesslog/v3
 github.com/envoyproxy/go-control-plane/envoy/extensions/clusters/aggregate/v3
 github.com/envoyproxy/go-control-plane/envoy/extensions/filters/common/fault/v3
 github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/fault/v3
+github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/gcp_authn/v3
 github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/rbac/v3
 github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3
 github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3
@@ -813,7 +812,7 @@ github.com/go-errors/errors
 github.com/go-jose/go-jose/v4
 github.com/go-jose/go-jose/v4/cipher
 github.com/go-jose/go-jose/v4/json
-# github.com/go-logr/logr v1.4.3
+# github.com/go-logr/logr v1.4.4
 ## explicit; go 1.18
 github.com/go-logr/logr
 github.com/go-logr/logr/funcr
@@ -836,8 +835,8 @@ github.com/go-openapi/analysis/internal/flatten/sortref
 # github.com/go-openapi/errors v0.22.1
 ## explicit; go 1.20
 github.com/go-openapi/errors
-# github.com/go-openapi/jsonpointer v0.21.1
-## explicit; go 1.20
+# github.com/go-openapi/jsonpointer v0.23.1
+## explicit; go 1.25.0
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/jsonreference v0.21.0
 ## explicit; go 1.20
@@ -866,6 +865,9 @@ github.com/go-openapi/strfmt
 # github.com/go-openapi/swag v0.23.1
 ## explicit; go 1.20
 github.com/go-openapi/swag
+# github.com/go-openapi/swag/jsonname v0.26.0
+## explicit; go 1.25.0
+github.com/go-openapi/swag/jsonname
 # github.com/go-openapi/validate v0.24.0
 ## explicit; go 1.20
 github.com/go-openapi/validate
@@ -891,7 +893,7 @@ github.com/gofrs/uuid/v5
 # github.com/golang-jwt/jwt/v4 v4.5.2
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4
-# github.com/golang-jwt/jwt/v5 v5.3.0
+# github.com/golang-jwt/jwt/v5 v5.3.1
 ## explicit; go 1.21
 github.com/golang-jwt/jwt/v5
 # github.com/golang/mock v1.7.0-rc.1
@@ -1135,40 +1137,44 @@ github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/microsoft/kiota-abstractions-go v1.9.2
+# github.com/microsoft/kiota-abstractions-go v1.9.4
 ## explicit; go 1.23.0
 github.com/microsoft/kiota-abstractions-go
 github.com/microsoft/kiota-abstractions-go/authentication
 github.com/microsoft/kiota-abstractions-go/serialization
 github.com/microsoft/kiota-abstractions-go/store
-# github.com/microsoft/kiota-authentication-azure-go v1.3.0
+# github.com/microsoft/kiota-authentication-azure-go v1.3.1
 ## explicit; go 1.23.0
 github.com/microsoft/kiota-authentication-azure-go
 # github.com/microsoft/kiota-http-go v1.5.4
 ## explicit; go 1.23.0
 github.com/microsoft/kiota-http-go
-# github.com/microsoft/kiota-serialization-form-go v1.1.2
+# github.com/microsoft/kiota-serialization-form-go v1.1.3
 ## explicit; go 1.23.0
 github.com/microsoft/kiota-serialization-form-go
 # github.com/microsoft/kiota-serialization-json-go v1.1.2
 ## explicit; go 1.23.0
 github.com/microsoft/kiota-serialization-json-go
-# github.com/microsoft/kiota-serialization-text-go v1.1.2
+# github.com/microsoft/kiota-serialization-multipart-go v1.1.2
+## explicit; go 1.23.0
+github.com/microsoft/kiota-serialization-multipart-go
+# github.com/microsoft/kiota-serialization-text-go v1.1.3
 ## explicit; go 1.23.0
 github.com/microsoft/kiota-serialization-text-go
-# github.com/microsoftgraph/msgraph-sdk-go v0.59.0
-## explicit; go 1.18
+# github.com/microsoftgraph/msgraph-sdk-go v1.97.0
+## explicit; go 1.24.0
 github.com/microsoftgraph/msgraph-sdk-go
 github.com/microsoftgraph/msgraph-sdk-go/admin
 github.com/microsoftgraph/msgraph-sdk-go/agreementacceptances
 github.com/microsoftgraph/msgraph-sdk-go/agreements
 github.com/microsoftgraph/msgraph-sdk-go/appcatalogs
 github.com/microsoftgraph/msgraph-sdk-go/applications
+github.com/microsoftgraph/msgraph-sdk-go/applicationswithappid
+github.com/microsoftgraph/msgraph-sdk-go/applicationswithuniquename
 github.com/microsoftgraph/msgraph-sdk-go/applicationtemplates
 github.com/microsoftgraph/msgraph-sdk-go/auditlogs
 github.com/microsoftgraph/msgraph-sdk-go/authenticationmethodconfigurations
 github.com/microsoftgraph/msgraph-sdk-go/authenticationmethodspolicy
-github.com/microsoftgraph/msgraph-sdk-go/branding
 github.com/microsoftgraph/msgraph-sdk-go/certificatebasedauthconfiguration
 github.com/microsoftgraph/msgraph-sdk-go/chats
 github.com/microsoftgraph/msgraph-sdk-go/communications
@@ -1180,9 +1186,11 @@ github.com/microsoftgraph/msgraph-sdk-go/datapolicyoperations
 github.com/microsoftgraph/msgraph-sdk-go/deviceappmanagement
 github.com/microsoftgraph/msgraph-sdk-go/devicemanagement
 github.com/microsoftgraph/msgraph-sdk-go/devices
+github.com/microsoftgraph/msgraph-sdk-go/deviceswithdeviceid
 github.com/microsoftgraph/msgraph-sdk-go/directory
 github.com/microsoftgraph/msgraph-sdk-go/directoryobjects
 github.com/microsoftgraph/msgraph-sdk-go/directoryroles
+github.com/microsoftgraph/msgraph-sdk-go/directoryroleswithroletemplateid
 github.com/microsoftgraph/msgraph-sdk-go/directoryroletemplates
 github.com/microsoftgraph/msgraph-sdk-go/domaindnsrecords
 github.com/microsoftgraph/msgraph-sdk-go/domains
@@ -1190,22 +1198,28 @@ github.com/microsoftgraph/msgraph-sdk-go/drives
 github.com/microsoftgraph/msgraph-sdk-go/education
 github.com/microsoftgraph/msgraph-sdk-go/employeeexperience
 github.com/microsoftgraph/msgraph-sdk-go/external
+github.com/microsoftgraph/msgraph-sdk-go/filteroperators
+github.com/microsoftgraph/msgraph-sdk-go/functions
 github.com/microsoftgraph/msgraph-sdk-go/grouplifecyclepolicies
 github.com/microsoftgraph/msgraph-sdk-go/groups
 github.com/microsoftgraph/msgraph-sdk-go/groupsettings
 github.com/microsoftgraph/msgraph-sdk-go/groupsettingtemplates
+github.com/microsoftgraph/msgraph-sdk-go/groupswithuniquename
 github.com/microsoftgraph/msgraph-sdk-go/identity
 github.com/microsoftgraph/msgraph-sdk-go/identitygovernance
 github.com/microsoftgraph/msgraph-sdk-go/identityprotection
 github.com/microsoftgraph/msgraph-sdk-go/identityproviders
 github.com/microsoftgraph/msgraph-sdk-go/informationprotection
 github.com/microsoftgraph/msgraph-sdk-go/invitations
-github.com/microsoftgraph/msgraph-sdk-go/localizations
 github.com/microsoftgraph/msgraph-sdk-go/models
 github.com/microsoftgraph/msgraph-sdk-go/models/callrecords
 github.com/microsoftgraph/msgraph-sdk-go/models/externalconnectors
+github.com/microsoftgraph/msgraph-sdk-go/models/identitygovernance
 github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors
+github.com/microsoftgraph/msgraph-sdk-go/models/partners/billing
+github.com/microsoftgraph/msgraph-sdk-go/models/search
 github.com/microsoftgraph/msgraph-sdk-go/models/security
+github.com/microsoftgraph/msgraph-sdk-go/models/teamsadministration
 github.com/microsoftgraph/msgraph-sdk-go/models/termstore
 github.com/microsoftgraph/msgraph-sdk-go/oauth2permissiongrants
 github.com/microsoftgraph/msgraph-sdk-go/organization
@@ -1222,9 +1236,11 @@ github.com/microsoftgraph/msgraph-sdk-go/scopedrolememberships
 github.com/microsoftgraph/msgraph-sdk-go/search
 github.com/microsoftgraph/msgraph-sdk-go/security
 github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals
+github.com/microsoftgraph/msgraph-sdk-go/serviceprincipalswithappid
 github.com/microsoftgraph/msgraph-sdk-go/shares
 github.com/microsoftgraph/msgraph-sdk-go/sites
 github.com/microsoftgraph/msgraph-sdk-go/solutions
+github.com/microsoftgraph/msgraph-sdk-go/storage
 github.com/microsoftgraph/msgraph-sdk-go/subscribedskus
 github.com/microsoftgraph/msgraph-sdk-go/subscriptions
 github.com/microsoftgraph/msgraph-sdk-go/teams
@@ -1232,8 +1248,9 @@ github.com/microsoftgraph/msgraph-sdk-go/teamstemplates
 github.com/microsoftgraph/msgraph-sdk-go/teamwork
 github.com/microsoftgraph/msgraph-sdk-go/tenantrelationships
 github.com/microsoftgraph/msgraph-sdk-go/users
-# github.com/microsoftgraph/msgraph-sdk-go-core v1.2.1
-## explicit; go 1.18
+github.com/microsoftgraph/msgraph-sdk-go/userswithuserprincipalname
+# github.com/microsoftgraph/msgraph-sdk-go-core v1.4.0
+## explicit; go 1.23.0
 github.com/microsoftgraph/msgraph-sdk-go-core
 github.com/microsoftgraph/msgraph-sdk-go-core/authentication
 # github.com/mitchellh/go-wordwrap v1.0.1
@@ -1279,8 +1296,8 @@ github.com/nutanix-cloud-native/prism-go-client/v3/models
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
-# github.com/onsi/gomega v1.42.0
-## explicit; go 1.24.0
+# github.com/onsi/gomega v1.42.1
+## explicit; go 1.25.0
 github.com/onsi/gomega
 github.com/onsi/gomega/format
 github.com/onsi/gomega/internal
@@ -1501,8 +1518,8 @@ github.com/pkg/diff/write
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/pkg/sftp v1.13.10
-## explicit; go 1.23.0
+# github.com/pkg/sftp v1.13.11
+## explicit; go 1.25.0
 github.com/pkg/sftp
 github.com/pkg/sftp/internal/encoding/ssh/filexfer
 github.com/pkg/sftp/internal/encoding/ssh/filexfer/openssh
@@ -1534,12 +1551,12 @@ github.com/prometheus/client_golang/prometheus/push
 # github.com/prometheus/client_model v0.6.2
 ## explicit; go 1.22.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.67.4
+# github.com/prometheus/common v0.67.5
 ## explicit; go 1.24.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.19.2
-## explicit; go 1.24.0
+# github.com/prometheus/procfs v0.20.1
+## explicit; go 1.25.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
@@ -1682,19 +1699,19 @@ go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 ## explicit; go 1.24.0
 go.opentelemetry.io/auto/sdk
 go.opentelemetry.io/auto/sdk/internal/telemetry
-# go.opentelemetry.io/contrib/detectors/gcp v1.42.0
+# go.opentelemetry.io/contrib/detectors/gcp v1.43.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/contrib/detectors/gcp
-# go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.67.0
+# go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/internal
-# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/request
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconv
-# go.opentelemetry.io/otel v1.43.0
+# go.opentelemetry.io/otel v1.44.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/otel
 go.opentelemetry.io/otel/attribute
@@ -1711,22 +1728,24 @@ go.opentelemetry.io/otel/semconv/v1.17.0
 go.opentelemetry.io/otel/semconv/v1.17.0/httpconv
 go.opentelemetry.io/otel/semconv/v1.24.0
 go.opentelemetry.io/otel/semconv/v1.37.0
+go.opentelemetry.io/otel/semconv/v1.37.0/rpcconv
 go.opentelemetry.io/otel/semconv/v1.40.0
-go.opentelemetry.io/otel/semconv/v1.40.0/httpconv
-go.opentelemetry.io/otel/semconv/v1.40.0/otelconv
-go.opentelemetry.io/otel/semconv/v1.40.0/rpcconv
-# go.opentelemetry.io/otel/metric v1.43.0
+go.opentelemetry.io/otel/semconv/v1.41.0
+go.opentelemetry.io/otel/semconv/v1.41.0/httpconv
+go.opentelemetry.io/otel/semconv/v1.41.0/otelconv
+go.opentelemetry.io/otel/semconv/v1.41.0/rpcconv
+# go.opentelemetry.io/otel/metric v1.44.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
 go.opentelemetry.io/otel/metric/noop
-# go.opentelemetry.io/otel/sdk v1.43.0
+# go.opentelemetry.io/otel/sdk v1.44.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
 go.opentelemetry.io/otel/sdk/internal/x
 go.opentelemetry.io/otel/sdk/resource
-# go.opentelemetry.io/otel/sdk/metric v1.43.0
+# go.opentelemetry.io/otel/sdk/metric v1.44.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/otel/sdk/metric
 go.opentelemetry.io/otel/sdk/metric/exemplar
@@ -1734,8 +1753,9 @@ go.opentelemetry.io/otel/sdk/metric/internal
 go.opentelemetry.io/otel/sdk/metric/internal/aggregate
 go.opentelemetry.io/otel/sdk/metric/internal/observ
 go.opentelemetry.io/otel/sdk/metric/internal/reservoir
+go.opentelemetry.io/otel/sdk/metric/internal/x
 go.opentelemetry.io/otel/sdk/metric/metricdata
-# go.opentelemetry.io/otel/trace v1.43.0
+# go.opentelemetry.io/otel/trace v1.44.0
 ## explicit; go 1.25.0
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
@@ -1760,7 +1780,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# go.yaml.in/yaml/v2 v2.4.3
+# go.yaml.in/yaml/v2 v2.4.4
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
@@ -1939,7 +1959,7 @@ google.golang.org/genproto/googleapis/api/monitoredres
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.81.1
+# google.golang.org/grpc v1.82.1
 ## explicit; go 1.25.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -1987,6 +2007,8 @@ google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/gzip
 google.golang.org/grpc/encoding/internal
 google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/experimental/balancer/hostname
+google.golang.org/grpc/experimental/balancer/weight
 google.golang.org/grpc/experimental/opentelemetry
 google.golang.org/grpc/experimental/stats
 google.golang.org/grpc/grpclog
@@ -1996,7 +2018,6 @@ google.golang.org/grpc/internal/admin
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancer/gracefulswitch
 google.golang.org/grpc/internal/balancer/nop
-google.golang.org/grpc/internal/balancer/weight
 google.golang.org/grpc/internal/balancergroup
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
@@ -2030,6 +2051,7 @@ google.golang.org/grpc/internal/stats
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
+google.golang.org/grpc/internal/transport/internal
 google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/internal/transport/readyreader
 google.golang.org/grpc/internal/wrr
@@ -2755,7 +2777,7 @@ k8s.io/utils/trace
 # libvirt.org/go/libvirtxml v1.10002.0
 ## explicit; go 1.11
 libvirt.org/go/libvirtxml
-# sigs.k8s.io/cluster-api v1.13.2
+# sigs.k8s.io/cluster-api v1.13.4
 ## explicit; go 1.25.0
 sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2
 sigs.k8s.io/cluster-api/api/core/v1beta1
@@ -2782,8 +2804,8 @@ sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
 sigs.k8s.io/cluster-api-provider-aws/v2/feature
 sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-azure v1.21.1-0.20250929163617-2c4eaa611a39 => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
-## explicit; go 1.24.0
+# sigs.k8s.io/cluster-api-provider-azure v1.26.1-0.20260811154716-cd32dffe9f12
+## explicit; go 1.25.7
 sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
 sigs.k8s.io/cluster-api-provider-azure/feature
 sigs.k8s.io/cluster-api-provider-azure/util/azure
@@ -2981,4 +3003,3 @@ sigs.k8s.io/yaml/kyaml
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 # github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
-# sigs.k8s.io/cluster-api-provider-azure => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
