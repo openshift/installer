@@ -14,6 +14,7 @@ import (
 	agentasset "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
@@ -124,15 +125,22 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 			// Load install-config to check if FIPS verification is needed
 			var fipsEnabled bool
-			if installConfigAsset, err := assetStore.Load(&agentasset.OptionalInstallConfig{}); err == nil && installConfigAsset != nil {
+
+			var expectedMasters, expectedWorkers int
+			if installConfigAsset, err := assetStore.Load(&agentasset.OptionalInstallConfig{}); err != nil {
+				logrus.Warnf("Failed to load install-config, skipping FIPS and node verification: %v", err)
+			} else if installConfigAsset != nil {
 				ic := installConfigAsset.(*agentasset.OptionalInstallConfig)
 				if ic.Config != nil {
 					fipsEnabled = ic.Config.FIPS
+					expectedMasters, expectedWorkers = extractExpectedNodeCounts(ic.Config)
 				}
 			}
 
 			options := command.WaitOptions{
-				VerifyFIPS: fipsEnabled,
+				VerifyFIPS:          fipsEnabled,
+				ExpectedMasterNodes: expectedMasters,
+				ExpectedWorkerNodes: expectedWorkers,
 			}
 
 			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, options); err != nil {
@@ -147,4 +155,19 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			}
 		},
 	}
+}
+
+func extractExpectedNodeCounts(ic *types.InstallConfig) (masters int, workers int) {
+	if ic == nil {
+		return 0, 0
+	}
+	if ic.ControlPlane != nil && ic.ControlPlane.Replicas != nil {
+		masters = int(*ic.ControlPlane.Replicas)
+	}
+	for _, pool := range ic.Compute {
+		if pool.Replicas != nil {
+			workers += int(*pool.Replicas)
+		}
+	}
+	return masters, workers
 }
