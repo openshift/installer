@@ -5,7 +5,7 @@
                 "hyperVGen2": {
                     "publisher": "azureopenshift",
                     "offer": "aro4",
-                    "sku": "aro_5-0_arm_gen2",
+                    "sku": "aro_422-arm",
                     "version": "9.8.20260428"
                 }
             }
@@ -14,10 +14,16 @@
     "x86_64": {
         "azure": {
             "no-purchase-plan": {
+                "hyperVGen1": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "aro_422",
+                    "version": "9.8.20260428"
+                },
                 "hyperVGen2": {
                     "publisher": "azureopenshift",
                     "offer": "aro4",
-                    "sku": "aro_5-0_x64_gen2",
+                    "sku": "aro_422-v2",
                     "version": "9.8.20260428"
                 }
             },

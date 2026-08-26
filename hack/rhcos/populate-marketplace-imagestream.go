@@ -21,7 +21,6 @@ const (
 
 type streamConfig struct {
 	name       string
-	rhelMajor  int
 	inputFile  string
 	outputFile string
 }
@@ -29,13 +28,11 @@ type streamConfig struct {
 var (
 	streamRHEL9 = streamConfig{
 		name:       "rhel-9",
-		rhelMajor:  9,
 		inputFile:  "data/data/coreos/coreos-rhel-9.json",
 		outputFile: "data/data/coreos/marketplace/coreos-rhel-9.json",
 	}
 	streamRHEL10 = streamConfig{
 		name:       "rhel-10",
-		rhelMajor:  10,
 		inputFile:  "data/data/coreos/coreos-rhel-10.json",
 		outputFile: "data/data/coreos/marketplace/coreos-rhel-10.json",
 	}
@@ -131,7 +128,7 @@ func (s marketplaceStream) azure(ctx context.Context, arch string, cfg streamCon
 		return fmt.Errorf("failed to initialize azure client: %w", err)
 	}
 
-	if s[arch].Azure, err = azClient.Populate(ctx, arch, rel, cfg.rhelMajor); err != nil {
+	if s[arch].Azure, err = azClient.Populate(ctx, arch, rel); err != nil {
 		return err
 	}
 
