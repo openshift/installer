@@ -266,8 +266,8 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			// Publisher is case-sensitive and matched against exactly. Also the
 			// Plan's publisher might not be exactly the same as the Image's
 			// publisher
-			if img.Plan != nil && img.Plan.Publisher != nil {
-				mpool.OSImage.Publisher = *img.Plan.Publisher
+			if img.Properties != nil && img.Properties.Plan != nil && img.Properties.Plan.Publisher != nil {
+				mpool.OSImage.Publisher = *img.Properties.Plan.Publisher
 			}
 		}
 		capabilities, err := installConfig.Azure.ControlPlaneCapabilities()
