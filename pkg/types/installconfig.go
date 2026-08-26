@@ -531,6 +531,13 @@ type Networking struct {
 	// pod network when NetworkType is set to OVNKubernetes.
 	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
 
+	// NetworkObservability is an optional field that configures network observability installation
+	// during cluster deployment (day-0).
+	// When omitted, network observability will be installed unless this is a SNO cluster.
+	//
+	// +optional
+	NetworkObservability *NetworkObservability `json:"networkObservability,omitempty"`
+
 	// Deprecated types, scheduled to be removed
 
 	// Deprecated way to configure an IP address pool for machines.
@@ -796,4 +803,26 @@ func OSImageStreamValues() []OSImageStream {
 		OSImageStreamRHCOS9,
 		OSImageStreamRHCOS10,
 	}
+}
+
+// NetworkObservabilityInstallationPolicy is an enumeration of the available network observability installation policies
+// Valid values are "InstallAndEnable", "NoAction".
+// +kubebuilder:validation:Enum=InstallAndEnable;NoAction
+type NetworkObservabilityInstallationPolicy string
+
+const (
+	// NetworkObservabilityInstallAndEnable means that network observability should be installed and enabled during cluster deployment.
+	NetworkObservabilityInstallAndEnable NetworkObservabilityInstallationPolicy = "InstallAndEnable"
+	// NetworkObservabilityNoAction means that nothing will be done regarding network observability.
+	NetworkObservabilityNoAction NetworkObservabilityInstallationPolicy = "NoAction"
+)
+
+// NetworkObservability defines the configuration for network observability installation.
+type NetworkObservability struct {
+	// InstallationPolicy controls whether network observability is installed during cluster deployment.
+	// Valid values are "InstallAndEnable" and "NoAction".
+	// When set to "InstallAndEnable", network observability will be installed and enabled.
+	// When set to "NoAction", nothing will be done regarding network observability.
+	// +optional
+	InstallationPolicy *NetworkObservabilityInstallationPolicy `json:"installationPolicy,omitempty"`
 }

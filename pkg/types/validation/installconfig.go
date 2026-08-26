@@ -22,6 +22,7 @@ import (
 	utilsnet "k8s.io/utils/net"
 
 	configv1 "github.com/openshift/api/config/v1"
+	features "github.com/openshift/api/features"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -564,6 +565,20 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 	for i, cn := range n.ClusterNetwork {
 		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
+	}
+
+	if n.NetworkObservability != nil {
+		if n.NetworkObservability.InstallationPolicy == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("networkObservability", "installationPolicy"), "installationPolicy is required when networkObservability is specified"))
+		} else {
+			validPolicies := map[types.NetworkObservabilityInstallationPolicy]bool{
+				types.NetworkObservabilityInstallAndEnable: true,
+				types.NetworkObservabilityNoAction:         true,
+			}
+			if !validPolicies[*n.NetworkObservability.InstallationPolicy] {
+				allErrs = append(allErrs, field.NotSupported(fldPath.Child("networkObservability", "installationPolicy"), *n.NetworkObservability.InstallationPolicy, []string{string(types.NetworkObservabilityInstallAndEnable), string(types.NetworkObservabilityNoAction)}))
+			}
+		}
 	}
 
 	return allErrs
@@ -1679,6 +1694,12 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	}
 
 	gatedFeatures = append(gatedFeatures, validateMachinePoolFeatureGates(c)...)
+
+	gatedFeatures = append(gatedFeatures, featuregates.GatedInstallConfigFeature{
+		FeatureGateName: features.FeatureGateNetworkObservabilityInstall,
+		Condition:       c.Networking != nil && c.Networking.NetworkObservability != nil,
+		Field:           field.NewPath("networking", "networkObservability"),
+	})
 
 	fg := c.EnabledFeatureGates()
 	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
