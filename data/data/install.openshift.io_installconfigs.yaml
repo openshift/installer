@@ -6153,6 +6153,25 @@ spec:
                     description: VirtualNetwork specifies the name of an existing
                       VNet for the installer to use
                     type: string
+                  wifMode:
+                    description: WIFMode specifies the Workload Identity Federation
+                      configuration.
+                    properties:
+                      issuerURL:
+                        description: |-
+                          IssuerURL is the OIDC issuer URL for manual WIF mode.
+                          Required when Type is "Manual", ignored when Type is "Managed".
+                        type: string
+                      type:
+                        description: 'Type is the WIF mode: "Managed" (installer creates
+                          OIDC) or "Manual" (user provides OIDC URL).'
+                        enum:
+                        - Managed
+                        - Manual
+                        type: string
+                    required:
+                    - type
+                    type: object
                 required:
                 - region
                 type: object
