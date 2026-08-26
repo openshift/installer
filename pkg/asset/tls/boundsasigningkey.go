@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 const (
@@ -21,9 +22,9 @@ const (
 
 // BoundSASigningKey contains the key and public parts for the
 // service account signing key used by kube-apiserver.
-// When AWS STS is configured in managed mode, this asset generates
-// a 4096-bit RSA key pair. Otherwise, it only loads user-provided
-// keys from disk.
+// When AWS STS is configured in managed mode or if azure WIF is configured,
+// this asset generates a 4096-bit RSA key pair.
+// Otherwise, it only loads user-provided keys from disk.
 type BoundSASigningKey struct {
 	FileList []*asset.File
 }
@@ -53,6 +54,10 @@ func (sk *BoundSASigningKey) Generate(_ context.Context, dependencies asset.Pare
 	case awstypes.Name:
 		// Generating SA signing key is only supported when STS resources are managed.
 		if !ic.Config.Platform.AWS.IsSTSManaged() {
+			return nil
+		}
+	case azuretypes.Name:
+		if !ic.Config.Platform.Azure.IsWIFManaged() {
 			return nil
 		}
 	default:

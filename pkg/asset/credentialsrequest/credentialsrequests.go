@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 // providerSpecDecoderFunc decodes a raw provider spec into a
@@ -43,6 +44,7 @@ type CredentialRequest struct {
 	SecretRefName       string
 	SecretRefNamespace  string
 	ServiceAccountNames []string
+	CloudTokenPath      string
 	ProviderSpec        interface{}
 }
 
@@ -87,6 +89,10 @@ func (cr *CredentialsRequests) Generate(ctx context.Context, dependencies asset.
 	switch cloud {
 	case awstypes.Name:
 		if !ic.Config.Platform.AWS.IsSTSManaged() {
+			return nil
+		}
+	case azuretypes.Name:
+		if !ic.Config.Platform.Azure.IsWIFManaged() {
 			return nil
 		}
 	default:
@@ -244,6 +250,7 @@ func parseCredentialRequestBytes(data []byte, filename string) (*CredentialReque
 		SecretRefName:       cr.Spec.SecretRef.Name,
 		SecretRefNamespace:  cr.Spec.SecretRef.Namespace,
 		ServiceAccountNames: cr.Spec.ServiceAccountNames,
+		CloudTokenPath:      cr.Spec.CloudTokenPath,
 		ProviderSpec:        providerSpec,
 	}, nil
 }

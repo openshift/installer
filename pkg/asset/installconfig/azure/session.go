@@ -38,6 +38,7 @@ const (
 	ClientSecretAuth AuthenticationType = iota
 	ClientCertificateAuth
 	ManagedIdentityAuth
+	WorkloadIdentityAuth
 )
 
 // Session is an object representing session for subscription
@@ -59,6 +60,7 @@ type Credentials struct {
 	TenantID                  string `json:"tenantId,omitempty"`
 	ClientCertificatePath     string `json:"clientCertificate,omitempty"`
 	ClientCertificatePassword string `json:"clientCertificatePassword,omitempty"`
+	FederatedTokenFilePath    string `json:"federatedTokenFilePath,omitempty"`
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
@@ -104,6 +106,9 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	case credentials.ClientSecret != "":
 		cred, err = newTokenCredentialFromCredentials(credentials, *cloudConfig)
 		authType = ClientSecretAuth
+	case credentials.FederatedTokenFilePath != "":
+		cred, err = newFederatedTokenCredentials(credentials, *cloudConfig)
+		authType = WorkloadIdentityAuth
 	default:
 		cred, err = newTokenCredentialFromMSI(credentials, *cloudConfig)
 		authType = ManagedIdentityAuth
@@ -190,6 +195,12 @@ func credentialsFromFileOrUser() (*Credentials, error) {
 		err = json.Unmarshal(contents, &authFile)
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	if authFile.FederatedTokenFilePath == "" {
+		if f := os.Getenv("AZURE_FEDERATED_TOKEN_FILE"); f != "" {
+			authFile.FederatedTokenFilePath = f
 		}
 	}
 
@@ -354,6 +365,18 @@ func newTokenCredentialFromMSI(credentials *Credentials, cloudConfig cloud.Confi
 		return nil, fmt.Errorf("failed to get client credentials from MSI: %w", err)
 	}
 	return cred, nil
+}
+
+func newFederatedTokenCredentials(credentials *Credentials, cloudConfig cloud.Configuration) (azcore.TokenCredential, error) {
+	options := azidentity.WorkloadIdentityCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cloudConfig,
+		},
+		TenantID:      credentials.TenantID,
+		ClientID:      credentials.ClientID,
+		TokenFilePath: credentials.FederatedTokenFilePath,
+	}
+	return azidentity.NewWorkloadIdentityCredential(&options)
 }
 
 func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cred azcore.TokenCredential) (*Session, error) {
