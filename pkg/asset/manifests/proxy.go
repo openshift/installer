@@ -173,6 +173,9 @@ func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
 		} else {
 			set.Insert(fmt.Sprintf(".%s.compute.internal", region))
 		}
+		// AWS DNS resolver's IP. One of the resolvers used when UserProvisionedDNS is enabled.
+		// https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html
+		set.Insert("169.254.169.253")
 	}
 
 	// TODO: IBM[#95]: proxy
