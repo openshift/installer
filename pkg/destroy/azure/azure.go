@@ -752,7 +752,7 @@ func isResourceGroupBlockedError(err error) bool {
 func extractODataError(err error) error {
 	var oDataErr *odataerrors.ODataError
 	if errors.As(err, &oDataErr) {
-		if typed := oDataErr.GetError(); typed != nil {
+		if typed := oDataErr.GetErrorEscaped(); typed != nil {
 			return fmt.Errorf("%s: %s", *typed.GetCode(), *typed.GetMessage())
 		}
 	}
@@ -799,7 +799,7 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 			errorList = append(errorList, err)
 		}
 
-		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)
+		err = graphClient.Applications().ByApplicationId(*apps[0].GetId()).Delete(ctx, nil)
 		if err != nil {
 			errorList = append(errorList, err)
 		}
