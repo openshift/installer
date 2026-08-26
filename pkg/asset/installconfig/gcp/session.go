@@ -2,7 +2,9 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +23,16 @@ var (
 	credLoaders         = []credLoader{}
 	onceLoggers         = map[credLoader]*sync.Once{}
 )
+
+func credentialType(credsJSON []byte) (string, error) {
+	var f struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(credsJSON, &f); err != nil {
+		return "", fmt.Errorf("failed to parse credentials JSON: %w", err)
+	}
+	return f.Type, nil
+}
 
 // Session is an object representing session for GCP API.
 type Session struct {
@@ -42,6 +54,12 @@ func GetSession(ctx context.Context) (*Session, error) {
 	creds, path, err := loadCredentials(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load credentials")
+	}
+
+	if creds.JSON != nil {
+		if err := validateCredentialURLs(creds.JSON); err != nil {
+			return nil, err
+		}
 	}
 
 	return &Session{
@@ -182,7 +200,12 @@ type contentLoader struct {
 }
 
 func (f *contentLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
-	return googleoauth.CredentialsFromJSON(ctx, []byte(f.content), compute.CloudPlatformScope)
+	jsonData := []byte(f.content)
+	t, err := credentialType(jsonData)
+	if err != nil {
+		return nil, err
+	}
+	return googleoauth.CredentialsFromJSONWithType(ctx, jsonData, googleoauth.CredentialsType(t), compute.CloudPlatformScope)
 }
 
 func (f *contentLoader) String() string {
@@ -229,4 +252,80 @@ func (u *userLoader) Load(ctx context.Context) (*googleoauth.Credentials, error)
 
 func (u *userLoader) Content() string {
 	return defaultAuthFilePath
+}
+
+// validateCredentialURLs validates external_account (Workload Identity Federation)
+// credential URLs per Google's guidance that callers must validate these fields:
+// https://google.aip.dev/auth/4117
+// https://cloud.google.com/docs/authentication/client-libraries#external-credentials
+//
+// WIF with custom universe domains is not supported in the installer — all
+// Google endpoint URLs are restricted to googleapis.com.
+func validateCredentialURLs(credsJSON []byte) error {
+	var creds struct {
+		Type                           string `json:"type"`
+		TokenURL                       string `json:"token_url"`
+		ServiceAccountImpersonationURL string `json:"service_account_impersonation_url"`
+		UniverseDomain                 string `json:"universe_domain"`
+		CredentialSource               struct {
+			URL  string `json:"url"`
+			File string `json:"file"`
+		} `json:"credential_source"`
+	}
+	if err := json.Unmarshal(credsJSON, &creds); err != nil {
+		return fmt.Errorf("failed to parse credentials JSON: %w", err)
+	}
+	switch creds.Type {
+	case "external_account", "external_account_authorized_user":
+	default:
+		return nil
+	}
+
+	if creds.UniverseDomain != "" && creds.UniverseDomain != "googleapis.com" {
+		return fmt.Errorf("workload Identity Federation (%s) with custom universe domain %q is not supported. "+
+			"If you need this capability, please open an RFE with Red Hat or a GitHub issue at https://github.com/openshift/installer/issues", creds.Type, creds.UniverseDomain)
+	}
+
+	const expectedTokenURL = "https://sts.googleapis.com/v1/token" //nolint:gosec
+	const iamPrefix = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
+	const wifNote = "Workload Identity Federation credentials are only supported with googleapis.com endpoints"
+
+	if creds.TokenURL != "" && creds.TokenURL != expectedTokenURL {
+		return fmt.Errorf("token_url must equal %s. %s", expectedTokenURL, wifNote)
+	}
+	if creds.ServiceAccountImpersonationURL != "" && !strings.HasPrefix(creds.ServiceAccountImpersonationURL, iamPrefix) {
+		return fmt.Errorf("service_account_impersonation_url must begin with %s. %s", iamPrefix, wifNote)
+	}
+	if creds.CredentialSource.URL != "" {
+		if err := validateCredSourceURL(creds.CredentialSource.URL); err != nil {
+			return fmt.Errorf("credential_source.url: %w", err)
+		}
+	}
+	if creds.CredentialSource.File != "" {
+		if err := validateCredSourceFile(creds.CredentialSource.File); err != nil {
+			return fmt.Errorf("credential_source.file: %w", err)
+		}
+	}
+	return nil
+}
+
+func validateCredSourceURL(rawURL string) error {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("credential_source.url is not a valid URL")
+	}
+	if parsed.Scheme != "https" {
+		return fmt.Errorf("credential_source.url must use HTTPS")
+	}
+	return nil
+}
+
+func validateCredSourceFile(file string) error {
+	if !filepath.IsAbs(file) {
+		return fmt.Errorf("credential_source.file must be an absolute path")
+	}
+	if filepath.Clean(file) != file {
+		return fmt.Errorf("credential_source.file must not contain path traversal")
+	}
+	return nil
 }

@@ -157,7 +157,7 @@ func (is *InstanceStatus) NetworkStatus() (*InstanceNetworkStatus, error) {
 			case "fixed":
 				addressType = corev1.NodeInternalIP
 			default:
-				is.logger.V(6).Info("Ignoring address with unknown type", "address", address.Address, "type", address.Type)
+				is.logger.V(5).Info("Ignoring address with unknown type", "address", address.Address, "type", address.Type)
 				continue
 			}
 			if address.Version == 4 {

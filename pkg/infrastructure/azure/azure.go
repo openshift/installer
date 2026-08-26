@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -479,9 +480,14 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var extLBFQDN string
 	if in.InstallConfig.Config.PublicAPI() {
 		var publicIPv6 *armnetwork.PublicIPAddress
+		v4InfraID := in.InfraID
+		v6InfraID := ""
+		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+			v6InfraID = fmt.Sprintf("%s-v6", in.InfraID)
+		}
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
-			infraID:       in.InfraID,
+			infraID:       v4InfraID,
 			region:        in.InstallConfig.Config.Azure.Region,
 			resourceGroup: resourceGroupName,
 			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
@@ -495,7 +501,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
 			publicIPv6, err = createPublicIP(ctx, &pipInput{
 				name:          fmt.Sprintf("%s-pip-v6", in.InfraID),
-				infraID:       in.InfraID,
+				infraID:       v6InfraID,
 				region:        in.InstallConfig.Config.Azure.Region,
 				resourceGroup: resourceGroupName,
 				pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
@@ -661,27 +667,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 
 		// For dual-stack, create IPv6 inbound rule for SSH access to bootstrap.
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
-			publicIPv6outbound, err := createPublicIP(ctx, &pipInput{
-				name:          fmt.Sprintf("%s-pip-v6-outbound-lb", in.InfraID),
-				infraID:       in.InfraID,
-				region:        in.InstallConfig.Config.Azure.Region,
-				resourceGroup: p.ResourceGroupName,
-				pipClient:     p.NetworkClientFactory.NewPublicIPAddressesClient(),
-				tags:          p.Tags,
-				ipversion:     armnetwork.IPVersionIPv6,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to create public ipv6 for outbound ipv6 lb: %w", err)
-			}
-			logrus.Debugf("created public ipv6 for outbound ipv6 lb: %s", *publicIPv6outbound.ID)
-
-			// Update the outbound node IPv6 load balancer.
-			outboundLBName := fmt.Sprintf("%s-ipv6-outbound-node-lb", in.InfraID)
-			err = updateOutboundIPv6LoadBalancer(ctx, publicIPv6outbound, p.NetworkClientFactory.NewLoadBalancersClient(), p.ResourceGroupName, outboundLBName, in.InfraID)
-			if err != nil {
-				return fmt.Errorf("failed to set public ipv6 to outbound ipv6 lb: %w", err)
-			}
-			logrus.Debugf("updated outbound ipv6 lb %s with public ipv6: %s", outboundLBName, *publicIPv6outbound.ID)
 			frontendIPv6ConfigName := "public-lb-ip-v6"
 			sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", in.InfraID)
 			frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
@@ -716,6 +701,42 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 				return fmt.Errorf("failed to associate IPv6 SSH inbound nat rule to interface: %w", err)
 			}
 		}
+	}
+
+	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+		bootstrapNicName := fmt.Sprintf("%s-bootstrap-nic", in.InfraID)
+		nicClient := p.NetworkClientFactory.NewInterfacesClient()
+		bootstrapNic, err := nicClient.Get(ctx, p.ResourceGroupName, bootstrapNicName, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get bootstrap nic: %w", err)
+		}
+		for _, ipconfig := range bootstrapNic.Properties.IPConfigurations {
+			if ipconfig.Properties.PrivateIPAddressVersion != nil && *ipconfig.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv6 {
+				existing := make(map[string]bool)
+				for _, ep := range ipconfig.Properties.LoadBalancerBackendAddressPools {
+					if ep.ID != nil {
+						existing[*ep.ID] = true
+					}
+				}
+				for _, pool := range p.lbBackendAddressPools {
+					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") && pool.ID != nil && !existing[*pool.ID] {
+						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
+							ipconfig.Properties.LoadBalancerBackendAddressPools,
+							pool,
+						)
+					}
+				}
+			}
+		}
+		pollerResp, err := nicClient.BeginCreateOrUpdate(ctx, p.ResourceGroupName, bootstrapNicName, bootstrapNic.Interface, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update bootstrap nic with IPv6 backend pools: %w", err)
+		}
+		_, err = pollerResp.PollUntilDone(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update bootstrap nic with IPv6 backend pools: %w", err)
+		}
+		logrus.Debugf("associated bootstrap NIC with IPv6 backend pools")
 	}
 
 	return nil
@@ -828,6 +849,15 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 			return fmt.Errorf("failed to delete konnectivity security rule: %w", err)
 		}
 	}
+
+	// Clean up bootstrap storage account (ignition container and optionally
+	// the entire account if no image gallery containers remain).
+	if in.Metadata.Azure.CloudName != aztypes.StackCloud {
+		if err := deleteBootstrapIgnition(ctx, session, opts, resourceGroupName, in.Metadata.InfraID); err != nil {
+			logrus.Warnf("Failed to clean up bootstrap storage: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -882,6 +912,71 @@ func randomString(length int) string {
 	}
 
 	return string(s)
+}
+
+// deleteBootstrapIgnition removes the ignition container and, if no other
+// containers remain, deletes the storage account created for bootstrap.
+func deleteBootstrapIgnition(ctx context.Context, session *azconfig.Session, opts *arm.ClientOptions, resourceGroupName, infraID string) error {
+	storageAccountName := aztypes.GetStorageAccountName(infraID)
+
+	storageClientFactory, err := armstorage.NewClientFactory(
+		session.Credentials.SubscriptionID,
+		session.TokenCreds,
+		opts,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create storage client factory: %w", err)
+	}
+
+	blobContainersClient := storageClientFactory.NewBlobContainersClient()
+	_, err = blobContainersClient.Delete(ctx, resourceGroupName, storageAccountName, "ignition", nil)
+	if err != nil {
+		if !isNotFoundError(err) {
+			return fmt.Errorf("failed to delete ignition container: %w", err)
+		}
+		logrus.Debugf("Ignition container already deleted from storage account %s", storageAccountName)
+	} else {
+		logrus.Infof("Deleted bootstrap ignition container from storage account %s", storageAccountName)
+	}
+
+	pager := blobContainersClient.NewListPager(resourceGroupName, storageAccountName, nil)
+	hasContainers := false
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			if isNotFoundError(err) {
+				break
+			}
+			logrus.Warnf("Failed to list containers in storage account %s, skipping account deletion: %v", storageAccountName, err)
+			return nil
+		}
+		if len(page.Value) > 0 {
+			hasContainers = true
+			break
+		}
+	}
+
+	accountsClient := storageClientFactory.NewAccountsClient()
+	if !hasContainers {
+		_, err = accountsClient.Delete(ctx, resourceGroupName, storageAccountName, nil)
+		if err != nil {
+			if isNotFoundError(err) {
+				logrus.Debugf("Storage account %s already deleted", storageAccountName)
+				return nil
+			}
+			return fmt.Errorf("failed to delete storage account %s: %w", storageAccountName, err)
+		}
+		logrus.Infof("Deleted bootstrap storage account %s", storageAccountName)
+	} else {
+		logrus.Infof("Storage account %s has remaining containers, skipping deletion (will be removed with resource group)", storageAccountName)
+	}
+
+	return nil
+}
+
+func isNotFoundError(err error) bool {
+	var respErr *azcore.ResponseError
+	return errors.As(err, &respErr) && respErr.StatusCode == http.StatusNotFound
 }
 
 // Ignition provisions the Azure container that holds the bootstrap ignition

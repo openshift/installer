@@ -11,7 +11,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
@@ -23,25 +22,16 @@ import (
 func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 	tests := []struct {
 		name           string
-		featureGate    string
 		iriManifest    bool
 		shouldGenerate bool
 	}{
 		{
-			name:           "Generate with feature gate enabled and IRI manifest present",
-			featureGate:    "TechPreviewNoUpgrade",
+			name:           "Generate with IRI manifest present",
 			iriManifest:    true,
 			shouldGenerate: true,
 		},
 		{
-			name:           "Skip without feature gate",
-			featureGate:    "",
-			iriManifest:    true,
-			shouldGenerate: false,
-		},
-		{
 			name:           "Skip without IRI manifest",
-			featureGate:    "TechPreviewNoUpgrade",
 			iriManifest:    false,
 			shouldGenerate: false,
 		},
@@ -82,10 +72,6 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 						},
 					},
 				},
-			}
-
-			if tt.featureGate != "" {
-				ic.Config.FeatureSet = configv1.FeatureSet(tt.featureGate)
 			}
 
 			// Create IRI manifest asset

@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/collections"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -75,6 +76,8 @@ type OpenStackClusterReconciler struct {
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters;clusters/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackclusteridentities,verbs=get;list;watch
 
 func (r *OpenStackClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
@@ -354,6 +357,24 @@ func (r *OpenStackClusterReconciler) reconcileNormal(ctx context.Context, scope 
 	openStackCluster.Status.Ready = true
 	openStackCluster.Status.FailureMessage = nil
 	openStackCluster.Status.FailureReason = nil
+
+	// Set initialization.provisioned to true when initial infrastructure provisioning is complete.
+	// This field should only be set once and never changed afterward, as per CAPI v1beta2 contract.
+	// We set it here after all core infrastructure (network, router, security groups, control plane endpoint)
+	// has been successfully provisioned.
+	if openStackCluster.Status.Initialization == nil {
+		openStackCluster.Status.Initialization = &infrav1.ClusterInitialization{}
+	}
+	if !openStackCluster.Status.Initialization.Provisioned {
+		openStackCluster.Status.Initialization.Provisioned = true
+		scope.Logger().Info("Initial cluster infrastructure provisioning completed")
+	}
+
+	// Set the Ready condition to True when infrastructure is ready.
+	// This condition surfaces into Cluster's status.conditions[InfrastructureReady].
+	// It reflects the current operational state of the cluster infrastructure.
+	v1beta1conditions.MarkTrue(openStackCluster, clusterv1beta1.ReadyCondition)
+
 	scope.Logger().Info("Reconciled Cluster created successfully")
 
 	result, err := r.reconcileBastion(ctx, scope, cluster, openStackCluster)
@@ -594,7 +615,7 @@ func bastionToOpenStackServerSpec(openStackCluster *infrav1.OpenStackCluster) (*
 	if bastion.AvailabilityZone != nil {
 		az = *bastion.AvailabilityZone
 	}
-	openStackServerSpec, err := openStackMachineSpecToOpenStackServerSpec(bastion.Spec, openStackCluster.Spec.IdentityRef, compute.InstanceTags(bastion.Spec, openStackCluster), az, nil, getBastionSecurityGroupID(openStackCluster), openStackCluster.Status.Network)
+	openStackServerSpec, err := openStackMachineSpecToOpenStackServerSpec(bastion.Spec, openStackCluster.Spec.IdentityRef, compute.InstanceTags(bastion.Spec, openStackCluster), az, nil, getBastionSecurityGroupID(openStackCluster), openStackCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -621,59 +642,67 @@ func getBastionSecurityGroupID(openStackCluster *infrav1.OpenStackCluster) *stri
 
 func resolveLoadBalancerNetwork(openStackCluster *infrav1.OpenStackCluster, networkingService *networking.Service) error {
 	lbSpec := openStackCluster.Spec.APIServerLoadBalancer
-	if lbSpec.IsEnabled() {
-		lbStatus := openStackCluster.Status.APIServerLoadBalancer
-		if lbStatus == nil {
-			lbStatus = &infrav1.LoadBalancer{}
-			openStackCluster.Status.APIServerLoadBalancer = lbStatus
-		}
 
-		lbNetStatus := lbStatus.LoadBalancerNetwork
-		if lbNetStatus == nil {
-			lbNetStatus = &infrav1.NetworkStatusWithSubnets{
-				NetworkStatus: infrav1.NetworkStatus{},
-			}
-		}
+	// if lb is not enabled, return early
+	if !lbSpec.IsEnabled() {
+		return nil
+	}
 
-		if lbSpec.Network != nil {
-			lbNet, err := networkingService.GetNetworkByParam(lbSpec.Network)
-			if err != nil {
-				if errors.Is(err, capoerrors.ErrFilterMatch) {
-					handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to find loadbalancer network: %w", err), true)
-				}
-				return fmt.Errorf("failed to find network: %w", err)
-			}
+	lbStatus := openStackCluster.Status.APIServerLoadBalancer
+	if lbStatus == nil {
+		lbStatus = &infrav1.LoadBalancer{}
+		openStackCluster.Status.APIServerLoadBalancer = lbStatus
+	}
 
-			lbNetStatus.Name = lbNet.Name
-			lbNetStatus.ID = lbNet.ID
-			lbNetStatus.Tags = lbNet.Tags
-
-			// Filter out only relevant subnets specified by the spec
-			lbNetStatus.Subnets = []infrav1.Subnet{}
-			for _, s := range lbSpec.Subnets {
-				matchFound := false
-				for _, subnetID := range lbNet.Subnets {
-					subnet, err := networkingService.GetSubnetByParam(&s)
-					if s.ID != nil && subnetID == *s.ID && err == nil {
-						matchFound = true
-						lbNetStatus.Subnets = append(
-							lbNetStatus.Subnets, infrav1.Subnet{
-								ID:   subnet.ID,
-								Name: subnet.Name,
-								CIDR: subnet.CIDR,
-								Tags: subnet.Tags,
-							})
-					}
-				}
-				if !matchFound {
-					handleUpdateOSCError(openStackCluster, fmt.Errorf("no subnet match was found in the specified network (specified subnet: %v, available subnets: %v)", s, lbNet.Subnets), false)
-					return fmt.Errorf("no subnet match was found in the specified network (specified subnet: %v, available subnets: %v)", s, lbNet.Subnets)
-				}
-			}
-
-			openStackCluster.Status.APIServerLoadBalancer.LoadBalancerNetwork = lbNetStatus
+	lbNetStatus := lbStatus.LoadBalancerNetwork
+	if lbNetStatus == nil {
+		lbNetStatus = &infrav1.NetworkStatusWithSubnets{
+			NetworkStatus: infrav1.NetworkStatus{},
 		}
 	}
+
+	if lbSpec.Network != nil {
+		lbNet, err := networkingService.GetNetworkByParam(lbSpec.Network)
+		if err != nil {
+			if errors.Is(err, capoerrors.ErrFilterMatch) {
+				handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to find loadbalancer network: %w", err), true)
+			}
+			return fmt.Errorf("failed to find network: %w", err)
+		}
+
+		lbNetStatus.Name = lbNet.Name
+		lbNetStatus.ID = lbNet.ID
+		lbNetStatus.Tags = lbNet.Tags
+
+		// Filter out only relevant subnets specified by the spec
+		lbNetStatus.Subnets = []infrav1.Subnet{}
+		for _, s := range lbSpec.Subnets {
+			matchFound := false
+			for _, subnetID := range lbNet.Subnets {
+				subnet, err := networkingService.GetSubnetByParam(&s)
+				if s.ID != nil && subnetID == *s.ID && err == nil {
+					matchFound = true
+					lbNetStatus.Subnets = append(
+						lbNetStatus.Subnets, infrav1.Subnet{
+							ID:   subnet.ID,
+							Name: subnet.Name,
+							CIDR: subnet.CIDR,
+							Tags: subnet.Tags,
+						})
+				}
+			}
+			if !matchFound {
+				handleUpdateOSCError(openStackCluster, fmt.Errorf("no subnet match was found in the specified network (specified subnet: %v, available subnets: %v)", s, lbNet.Subnets), false)
+				return fmt.Errorf("no subnet match was found in the specified network (specified subnet: %v, available subnets: %v)", s, lbNet.Subnets)
+			}
+		}
+	} else {
+		lbNetStatus.ID = openStackCluster.Status.Network.ID
+		lbNetStatus.Name = openStackCluster.Status.Network.Name
+		lbNetStatus.Subnets = openStackCluster.Status.Network.Subnets
+	}
+
+	openStackCluster.Status.APIServerLoadBalancer.LoadBalancerNetwork = lbNetStatus
 
 	return nil
 }
@@ -714,11 +743,20 @@ func reconcileNetworkComponents(scope *scope.WithLogger, cluster *clusterv1.Clus
 
 	err = networkingService.ReconcileSecurityGroups(openStackCluster, clusterResourceName)
 	if err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.SecurityGroupsReadyCondition, infrav1.SecurityGroupReconcileFailedReason, clusterv1beta1.ConditionSeverityError, "Failed to reconcile security groups: %v", err)
 		handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to reconcile security groups: %w", err), false)
 		return fmt.Errorf("failed to reconcile security groups: %w", err)
 	}
+	v1beta1conditions.MarkTrue(openStackCluster, infrav1.SecurityGroupsReadyCondition)
 
-	return reconcileControlPlaneEndpoint(scope, networkingService, openStackCluster, clusterResourceName)
+	err = reconcileControlPlaneEndpoint(scope, networkingService, openStackCluster, clusterResourceName)
+	if err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.APIEndpointReadyCondition, infrav1.APIEndpointConfigFailedReason, clusterv1beta1.ConditionSeverityError, "Failed to reconcile control plane endpoint: %v", err)
+		return err
+	}
+	v1beta1conditions.MarkTrue(openStackCluster, infrav1.APIEndpointReadyCondition)
+
+	return nil
 }
 
 // reconcilePreExistingNetworkComponents reconciles the cluster network status when the cluster is
@@ -734,6 +772,7 @@ func reconcilePreExistingNetworkComponents(scope *scope.WithLogger, networkingSe
 	if openStackCluster.Spec.Network != nil {
 		network, err := networkingService.GetNetworkByParam(openStackCluster.Spec.Network)
 		if err != nil {
+			v1beta1conditions.MarkFalse(openStackCluster, infrav1.NetworkReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityError, "Failed to find network: %v", err)
 			handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to find network: %w", err), false)
 			return fmt.Errorf("error fetching cluster network: %w", err)
 		}
@@ -742,6 +781,7 @@ func reconcilePreExistingNetworkComponents(scope *scope.WithLogger, networkingSe
 
 	subnets, err := getClusterSubnets(networkingService, openStackCluster)
 	if err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.NetworkReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityError, "Failed to get cluster subnets: %v", err)
 		return err
 	}
 
@@ -757,6 +797,7 @@ func reconcilePreExistingNetworkComponents(scope *scope.WithLogger, networkingSe
 		}
 	}
 	if err := utils.ValidateSubnets(capoSubnets); err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.NetworkReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityError, "Failed to validate subnets: %v", err)
 		return err
 	}
 	openStackCluster.Status.Network.Subnets = capoSubnets
@@ -767,14 +808,18 @@ func reconcilePreExistingNetworkComponents(scope *scope.WithLogger, networkingSe
 	if openStackCluster.Status.Network.ID == "" && len(subnets) > 0 {
 		network, err := networkingService.GetNetworkByID(subnets[0].NetworkID)
 		if err != nil {
+			v1beta1conditions.MarkFalse(openStackCluster, infrav1.NetworkReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityError, "Failed to get network by ID: %v", err)
 			return err
 		}
 		setClusterNetwork(openStackCluster, network)
 	}
 
+	v1beta1conditions.MarkTrue(openStackCluster, infrav1.NetworkReadyCondition)
+
 	if openStackCluster.Spec.Router != nil {
 		router, err := networkingService.GetRouterByParam(openStackCluster.Spec.Router)
 		if err != nil {
+			v1beta1conditions.MarkFalse(openStackCluster, infrav1.RouterReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityError, "Failed to find router: %v", err)
 			handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to find router: %w", err), false)
 			return fmt.Errorf("error fetching cluster router: %w", err)
 		}
@@ -792,6 +837,7 @@ func reconcilePreExistingNetworkComponents(scope *scope.WithLogger, networkingSe
 			Tags: router.Tags,
 			IPs:  routerIPs,
 		}
+		v1beta1conditions.MarkTrue(openStackCluster, infrav1.RouterReadyCondition)
 	}
 
 	return nil
@@ -802,19 +848,25 @@ func reconcilePreExistingNetworkComponents(scope *scope.WithLogger, networkingSe
 func reconcileProvisionedNetworkComponents(networkingService *networking.Service, openStackCluster *infrav1.OpenStackCluster, clusterResourceName string) error {
 	err := networkingService.ReconcileNetwork(openStackCluster, clusterResourceName)
 	if err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.NetworkReadyCondition, infrav1.NetworkReconcileFailedReason, clusterv1beta1.ConditionSeverityError, "Failed to reconcile network: %v", err)
 		handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to reconcile network: %w", err), false)
 		return fmt.Errorf("failed to reconcile network: %w", err)
 	}
 	err = networkingService.ReconcileSubnet(openStackCluster, clusterResourceName)
 	if err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.NetworkReadyCondition, infrav1.SubnetReconcileFailedReason, clusterv1beta1.ConditionSeverityError, "Failed to reconcile subnets: %v", err)
 		handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to reconcile subnets: %w", err), false)
 		return fmt.Errorf("failed to reconcile subnets: %w", err)
 	}
+	v1beta1conditions.MarkTrue(openStackCluster, infrav1.NetworkReadyCondition)
+
 	err = networkingService.ReconcileRouter(openStackCluster, clusterResourceName)
 	if err != nil {
+		v1beta1conditions.MarkFalse(openStackCluster, infrav1.RouterReadyCondition, infrav1.RouterReconcileFailedReason, clusterv1beta1.ConditionSeverityError, "Failed to reconcile router: %v", err)
 		handleUpdateOSCError(openStackCluster, fmt.Errorf("failed to reconcile router: %w", err), false)
 		return fmt.Errorf("failed to reconcile router: %w", err)
 	}
+	v1beta1conditions.MarkTrue(openStackCluster, infrav1.RouterReadyCondition)
 
 	return nil
 }
@@ -945,6 +997,12 @@ func handleUpdateOSCError(openstackCluster *infrav1.OpenStackCluster, message er
 		err := capoerrors.DeprecatedCAPOUpdateClusterError
 		openstackCluster.Status.FailureReason = &err
 		openstackCluster.Status.FailureMessage = ptr.To(message.Error())
+		// Set the Ready condition to False for fatal errors
+		v1beta1conditions.MarkFalse(openstackCluster, clusterv1beta1.ReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityError, "%v", message)
+	} else {
+		// For transient (non-fatal) errors, set Ready condition to False with Warning severity
+		// This indicates a temporary issue that may be resolved on retry
+		v1beta1conditions.MarkFalse(openstackCluster, clusterv1beta1.ReadyCondition, infrav1.OpenStackErrorReason, clusterv1beta1.ConditionSeverityWarning, "%v", message)
 	}
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -70,6 +71,23 @@ func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) er
 		serviceNet = append(serviceNet, sn.String())
 	}
 
+	networkSpec := configv1.NetworkSpec{
+		ClusterNetwork: clusterNet,
+		ServiceNetwork: serviceNet,
+		NetworkType:    netConfig.NetworkType,
+		// Block all Service.ExternalIPs by default
+		ExternalIP: &configv1.ExternalIPConfig{
+			Policy: &configv1.ExternalIPPolicy{},
+		},
+	}
+
+	// Set networkObservability from the install config
+	if netConfig.NetworkObservability != nil && netConfig.NetworkObservability.InstallationPolicy != nil {
+		networkSpec.NetworkObservability = configv1.NetworkObservabilitySpec{
+			InstallationPolicy: configv1.NetworkObservabilityInstallationPolicy(*netConfig.NetworkObservability.InstallationPolicy),
+		}
+	}
+
 	no.Config = &configv1.Network{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
@@ -79,15 +97,7 @@ func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) er
 			Name: "cluster",
 			// not namespaced
 		},
-		Spec: configv1.NetworkSpec{
-			ClusterNetwork: clusterNet,
-			ServiceNetwork: serviceNet,
-			NetworkType:    netConfig.NetworkType,
-			// Block all Service.ExternalIPs by default
-			ExternalIP: &configv1.ExternalIPConfig{
-				Policy: &configv1.ExternalIPPolicy{},
-			},
-		},
+		Spec: networkSpec,
 	}
 
 	configData, err := yaml.Marshal(no.Config)
@@ -144,6 +154,16 @@ func clusterNetworkOperatorConfig(ic *installconfig.InstallConfig, cns []configv
 		if ic.Config.NetworkType == "OVNKubernetes" {
 			cnoCfg = ovnNetworkOperatorConfig(cns, sn)
 			cnoCfg.Spec.DefaultNetwork.OVNKubernetesConfig.GatewayConfig = &operatorv1.GatewayConfig{RoutingViaHost: true}
+		}
+	case baremetal.Name:
+		// BGP-based VIP management needs frr-k8s CRDs/namespace deployed by
+		// CNO; enable the FRR routing capability provider. Non-OVN network
+		// types are rejected by install-config validation.
+		if ic.Config.Platform.BareMetal.BGPVIPConfig != nil && ic.Config.NetworkType == string(operatorv1.NetworkTypeOVNKubernetes) {
+			cnoCfg = ovnNetworkOperatorConfig(cns, sn)
+			cnoCfg.Spec.AdditionalRoutingCapabilities = &operatorv1.AdditionalRoutingCapabilities{
+				Providers: []operatorv1.RoutingCapabilitiesProvider{operatorv1.RoutingCapabilitiesProviderFRR},
+			}
 		}
 	}
 

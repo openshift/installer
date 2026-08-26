@@ -31,6 +31,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    docker.io/golang:1.25 \
+    docker.io/golang:1.26 \
     ./hack/verify-vendor.sh "${@}"
 fi

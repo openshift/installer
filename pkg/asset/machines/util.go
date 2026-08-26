@@ -53,19 +53,15 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 			return nil, errors.Errorf("unsupported azure data disk type")
 		}
 	case vspheretypes.Name:
-		if installConfig.Config.Enabled(features.FeatureGateVSphereMultiDisk) {
-			if vsphereDataDisk, ok := dataDisk.(vsphere.DiskInfo); ok {
-				// We need to find the index of the datadisk in the array.  Each disk is added in order to the VM so
-				// we'll map to that location.  First disk is OS disk so add 1 to index for scsi location
-				device := fmt.Sprintf(VsphereScsiByPath, vsphereDataDisk.Index+1)
-				diskSetupIgn, err := machineconfig.ForDiskSetup(role, device, label, path, diskSetup.Type)
-				if err != nil {
-					return nil, errors.Wrap(err, "failed to create ignition to setup disks for master machines")
-				}
-				return diskSetupIgn, nil
+		if vsphereDataDisk, ok := dataDisk.(vsphere.DiskInfo); ok {
+			device := fmt.Sprintf(VsphereScsiByPath, vsphereDataDisk.Index+1)
+			diskSetupIgn, err := machineconfig.ForDiskSetup(role, device, label, path, diskSetup.Type)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to create ignition to setup disks for master machines")
 			}
-			return nil, errors.Errorf("unsupported vsphere data disk type")
+			return diskSetupIgn, nil
 		}
+		return nil, errors.Errorf("unsupported vsphere data disk type")
 	default:
 		return nil, errors.Errorf("unsupported platform %q", ic.Platform.Name())
 	}

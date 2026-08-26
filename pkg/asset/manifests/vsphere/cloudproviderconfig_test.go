@@ -102,8 +102,7 @@ vcenter:
 `
 
 	// expectedYamlConfigWithNodes is used by tests that exercise the yaml path
-	// with the VSphereMultiNetworks feature gate enabled and a machine network
-	// CIDR of 10.0.0.0/24 (the fallback path).
+	// with a machine network CIDR of 10.0.0.0/24 (the fallback path).
 	expectedYamlConfigWithNodes = `global:
   insecureFlag: true
   secretName: vsphere-creds
@@ -260,9 +259,8 @@ func TestCloudProviderConfig(t *testing.T) {
 			}(),
 		},
 		{
-			// VSphereMultiNetworks is enabled in inDefault() so the nodes
-			// section is always populated from the machine network CIDR when
-			// nodeNetworking is not explicitly set.
+			// The nodes section is always populated from the machine network
+			// CIDR when nodeNetworking is not explicitly set.
 			name:                "valid out of tree yaml cloud provider config",
 			platform:            validPlatform(),
 			installConfig:       makeInstallConfig(validPlatform(), "", "10.0.0.0/24"),
@@ -270,8 +268,7 @@ func TestCloudProviderConfig(t *testing.T) {
 			expectedCloudConfig: expectedYamlConfig,
 		},
 		{
-			// TechPreviewNoUpgrade also enables VSphereMultiNetworks – same
-			// result as the default case above.
+			// TechPreviewNoUpgrade – same result as the default case above.
 			name:                "valid out of tree yaml cloud provider config with node networking from machine network",
 			platform:            validPlatform(),
 			installConfig:       makeInstallConfig(validPlatform(), configv1.TechPreviewNoUpgrade, "10.0.0.0/24"),
@@ -279,8 +276,8 @@ func TestCloudProviderConfig(t *testing.T) {
 			expectedCloudConfig: expectedYamlConfigWithNodes,
 		},
 		{
-			// With VSphereMultiNetworks enabled and explicit nodeNetworking set
-			// in the install-config, the explicit values take precedence.
+			// With explicit nodeNetworking set in the install-config, the
+			// explicit values take precedence.
 			name: "valid out of tree yaml cloud provider config with explicit node networking",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()

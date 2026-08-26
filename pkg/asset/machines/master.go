@@ -278,7 +278,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 		aws.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish)
 	case gcptypes.Name:
-		mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID)
+		mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region)
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {
@@ -398,8 +398,8 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			// Publisher is case-sensitive and matched against exactly. Also the
 			// Plan's publisher might not be exactly the same as the Image's
 			// publisher
-			if img.Plan != nil && img.Plan.Publisher != nil {
-				mpool.OSImage.Publisher = *img.Plan.Publisher
+			if img.Properties != nil && img.Properties.Plan != nil && img.Properties.Plan.Publisher != nil {
+				mpool.OSImage.Publisher = *img.Properties.Plan.Publisher
 			}
 		}
 		pool.Platform.Azure = &mpool

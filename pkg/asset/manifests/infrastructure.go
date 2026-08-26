@@ -11,8 +11,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	nutanixinfra "github.com/openshift/installer/pkg/asset/manifests/nutanix"
@@ -192,6 +194,9 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		config.Spec.PlatformSpec.BareMetal.IngressIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.IngressVIPs)
 		config.Spec.PlatformSpec.BareMetal.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
 		config.Status.PlatformStatus.BareMetal.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
+		if installConfig.Config.Platform.BareMetal.BGPVIPConfig != nil {
+			config.Status.PlatformStatus.BareMetal.VIPManagement = configv1.VIPManagementTypeBGP
+		}
 	case gcp.Name:
 		config.Spec.PlatformSpec.Type = configv1.GCPPlatformType
 		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{
@@ -220,6 +225,20 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 				resourceTags[i] = configv1.GCPResourceTag{ParentID: tag.ParentID, Key: tag.Key, Value: tag.Value}
 			}
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
+		}
+
+		if installConfig.Config.Enabled(features.FeatureGateGCPSovereignCloudInstall) {
+			ssn, err := gcpic.GetSession(ctx)
+			if err != nil {
+				return fmt.Errorf("could not get GCP session: %w", err)
+			}
+			ud, err := ssn.Credentials.GetUniverseDomain()
+			if err != nil {
+				return fmt.Errorf("could not get GCP universe domain: %w", err)
+			}
+			if gcp.IsNonDefaultUniverseDomain(ud) {
+				config.Status.PlatformStatus.GCP.UniverseDomain = ud
+			}
 		}
 
 		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to

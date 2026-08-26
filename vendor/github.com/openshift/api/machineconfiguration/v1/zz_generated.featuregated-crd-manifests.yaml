@@ -36,6 +36,7 @@ controllerconfigs.machineconfiguration.openshift.io:
   - BGPBasedVIPManagement
   - DualReplica
   - DyanmicServiceEndpointIBMCloud
+  - GCPSovereignCloudInstall
   - MutableTopology
   - NutanixMultiSubnets
   - OnPremDNSRecords

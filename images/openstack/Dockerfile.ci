@@ -10,6 +10,7 @@ FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-5.0 AS b
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 ARG SKIP_ENVTEST="y"
+ARG BUILD_VERSION=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=kas-artifacts /usr/share/openshift/ cluster-api/bin/
@@ -57,7 +58,8 @@ RUN yum update -y && \
     git config --system user.email test@example.com && \
     chmod g+w /etc/passwd
 
-RUN python3 -m pip install yq
+# Exclude argcomplete 3.7.1: PEP604 annotations crash on Python 3.9.
+RUN python3 -m pip install 'yq' 'argcomplete!=3.7.1'
 
 # The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \

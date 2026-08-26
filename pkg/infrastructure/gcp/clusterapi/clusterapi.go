@@ -263,6 +263,14 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 	}
 
+	// The default health checks in CAPG are too lax & are non-configurable, so we update
+	// them in a hook to provide more resiliency during bootstrapping.
+	// TODO(padillon): https://github.com/kubernetes-sigs/cluster-api-provider-gcp/pull/1732 makes health checks configurable;
+	// once that merges, we can remove this call and the healthcheck.go file, and edit the values in the manifests.
+	if err := updateHealthChecks(ctx, in); err != nil {
+		return fmt.Errorf("failed to update health checks: %w", err)
+	}
+
 	return nil
 }
 

@@ -400,6 +400,7 @@ infrastructures.config.openshift.io:
   - BGPBasedVIPManagement
   - DualReplica
   - DyanmicServiceEndpointIBMCloud
+  - GCPSovereignCloudInstall
   - MutableTopology
   - NutanixMultiSubnets
   - OnPremDNSRecords

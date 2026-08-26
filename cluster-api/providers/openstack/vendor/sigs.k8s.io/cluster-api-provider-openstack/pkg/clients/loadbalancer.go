@@ -51,6 +51,7 @@ type LbClient interface {
 	DeletePool(id string) error
 	CreatePoolMember(poolID string, opts pools.CreateMemberOptsBuilder) (*pools.Member, error)
 	ListPoolMember(poolID string, opts pools.ListMembersOptsBuilder) ([]pools.Member, error)
+	GetPoolMember(poolID string, lbMemberID string) (*pools.Member, error)
 	DeletePoolMember(poolID string, lbMemberID string) error
 	CreateMonitor(opts monitors.CreateOptsBuilder) (*monitors.Monitor, error)
 	ListMonitors(opts monitors.ListOptsBuilder) ([]monitors.Monitor, error)
@@ -211,6 +212,15 @@ func (l lbClient) ListPoolMember(poolID string, opts pools.ListMembersOptsBuilde
 		return nil, err
 	}
 	return pools.ExtractMembers(allPages)
+}
+
+func (l lbClient) GetPoolMember(poolID string, lbMemberID string) (*pools.Member, error) {
+	mc := metrics.NewMetricPrometheusContext("loadbalancer_member", "get")
+	member, err := pools.GetMember(context.TODO(), l.serviceClient, poolID, lbMemberID).Extract()
+	if mc.ObserveRequest(err) != nil {
+		return nil, fmt.Errorf("error getting lbmember: %s", err)
+	}
+	return member, nil
 }
 
 func (l lbClient) DeletePoolMember(poolID string, lbMemberID string) error {

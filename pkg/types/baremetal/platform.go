@@ -34,6 +34,48 @@ const (
 	workerRole  string = "worker"
 )
 
+// BGPPeerConfig defines the configuration for a BGP peer.
+type BGPPeerConfig struct {
+	// PeerAddress is the IP address of the BGP peer (e.g., ToR switch).
+	PeerAddress string `json:"peerAddress"`
+
+	// PeerASN is the Autonomous System Number of the BGP peer.
+	PeerASN int64 `json:"peerASN"`
+
+	// Password is the optional TCP MD5 signature password for the BGP
+	// session (RFC 2385), consumed by FRR.
+	Password string `json:"password,omitempty"` //nolint:gosec // BGP protocol session password field, not a hardcoded credential
+
+	// Port is the TCP port for the BGP session. Defaults to 179.
+	Port int32 `json:"port,omitempty"`
+
+	// BFDEnabled configures Bi-directional Forwarding Detection.
+	// Valid values are "true" and "false".
+	BFDEnabled string `json:"bfdEnabled,omitempty"`
+
+	// EBGPMultiHop enables multi-hop eBGP when the peer is not directly connected.
+	EBGPMultiHop string `json:"ebgpMultiHop,omitempty"`
+
+	// HoldTime is the BGP hold time for this peer (e.g., "90s").
+	HoldTime string `json:"holdTime,omitempty"`
+
+	// KeepaliveTime is the BGP keepalive interval for this peer (e.g., "30s").
+	KeepaliveTime string `json:"keepaliveTime,omitempty"`
+}
+
+// BGPVIPConfig configures BGP-based VIP advertisement for API and Ingress VIPs.
+type BGPVIPConfig struct {
+	// LocalASN is the Autonomous System Number for this cluster's BGP speaker.
+	LocalASN int64 `json:"localASN"`
+
+	// Peers is the list of BGP peers to advertise VIPs to.
+	Peers []BGPPeerConfig `json:"peers"`
+
+	// Communities is an optional list of BGP communities to attach to
+	// advertised VIP routes, in the format "ASN:value" (e.g., "64512:100").
+	Communities []string `json:"communities,omitempty"`
+}
+
 // Host stores all the configuration data for a baremetal host.
 type Host struct {
 	Name            string           `json:"name,omitempty" validate:"required,uniqueField"`
@@ -44,6 +86,11 @@ type Host struct {
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 	BootMode        BootMode         `json:"bootMode,omitempty"`
 	NetworkConfig   *apiextv1.JSON   `json:"networkConfig,omitempty"`
+
+	// BGPPeers overrides the global bgpVIPConfig.peers for this specific
+	// host. When set, this host will peer with the listed BGP peers instead
+	// of the global peer list.
+	BGPPeers []BGPPeerConfig `json:"bgpPeers,omitempty"`
 }
 
 // IsMaster checks if the current host is a master
@@ -247,7 +294,6 @@ type Platform struct {
 	BootstrapExternalStaticGateway string `json:"bootstrapExternalStaticGateway,omitempty"`
 
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
-	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.BareMetalPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 
@@ -266,6 +312,13 @@ type Platform struct {
 	// +openshift:enable:FeatureGate=OnPremDNSRecords
 	// +optional
 	DNSRecordsType configv1.DNSRecordsType `json:"dnsRecordsType,omitempty"`
+
+	// BGPVIPConfig configures BGP-based advertisement of the API and
+	// Ingress VIPs. When set, kube-vip (Routing Table Mode) and frr-k8s
+	// are deployed as static pods on control plane nodes to advertise
+	// VIPs via BGP, replacing the default keepalived/VRRP mechanism.
+	// +optional
+	BGPVIPConfig *BGPVIPConfig `json:"bgpVIPConfig,omitempty"`
 
 	// BootstrapExternalStaticDNS is the static network DNS of the bootstrap node.
 	// This can be useful in environments without a DHCP server.

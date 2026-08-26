@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
 
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -93,6 +92,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.InternalReleaseImageRegistryAuthSecret{},
 		&BMCVerifyCAConfigMap{},
 		&PKIConfiguration{},
+		&BGPVIPConfigMap{},
 	}
 }
 
@@ -111,8 +111,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	mcoCfgTemplate := &manifests.MCO{}
 	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 	pkiConfig := &PKIConfiguration{}
+	bgpVIPConfigMap := &BGPVIPConfigMap{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -152,6 +153,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
 	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 	m.FileList = append(m.FileList, pkiConfig.Files()...)
+	m.FileList = append(m.FileList, bgpVIPConfigMap.Files()...)
 
 	asset.SortFiles(m.FileList)
 
@@ -238,15 +240,13 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		}
 	}
 
-	if installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
-		iri := &manifests.InternalReleaseImage{}
-		dependencies.Get(iri)
+	iri := &manifests.InternalReleaseImage{}
+	dependencies.Get(iri)
 
-		// Skip if InternalReleaseImage manifest wasn't found.
-		if len(iri.FileList) > 0 {
-			files = append(files, appendIRIcerts(dependencies))
-			files = append(files, appendIRIRegistryCredentials(dependencies))
-		}
+	// Skip if InternalReleaseImage manifest wasn't found.
+	if len(iri.FileList) > 0 {
+		files = append(files, appendIRIcerts(dependencies))
+		files = append(files, appendIRIRegistryCredentials(dependencies))
 	}
 
 	return files

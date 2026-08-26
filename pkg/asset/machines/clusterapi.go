@@ -266,8 +266,8 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			// Publisher is case-sensitive and matched against exactly. Also the
 			// Plan's publisher might not be exactly the same as the Image's
 			// publisher
-			if img.Plan != nil && img.Plan.Publisher != nil {
-				mpool.OSImage.Publisher = *img.Plan.Publisher
+			if img.Properties != nil && img.Properties.Plan != nil && img.Properties.Plan.Publisher != nil {
+				mpool.OSImage.Publisher = *img.Properties.Plan.Publisher
 			}
 		}
 		capabilities, err := installConfig.Azure.ControlPlaneCapabilities()
@@ -326,7 +326,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		c.FileList = append(c.FileList, azureMachines...)
 	case gcptypes.Name:
 		// Generate GCP master machines using ControPlane machinepool
-		mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID)
+		mpool := defaultGCPMachinePoolPlatform(pool.Architecture, ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region)
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {

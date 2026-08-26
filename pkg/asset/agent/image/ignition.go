@@ -87,6 +87,9 @@ type agentTemplateData struct {
 	AuthType                  string
 	CaBundleMount             string
 	DisableImagePolicy        bool
+	// DisabledHostValidations is a comma-separated list of assisted-service host
+	// validation IDs to disable. Set only for the add-nodes workflow.
+	DisabledHostValidations string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -180,7 +183,11 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		clusterName = fmt.Sprintf("%s.%s", agentManifests.ClusterDeployment.Spec.ClusterName, agentManifests.ClusterDeployment.Spec.BaseDomain)
 		if (agentConfigAsset.Config != nil && agentConfigAsset.Config.MinimalISO) ||
 			(agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType) {
-			imageTypeISO = "minimal-iso"
+			// s390x uses the zipl bootloader and does not support minimal ISO
+			// (no grub/isolinux to patch for kernel arguments).
+			if infraEnv.Spec.CpuArchitecture != types.ArchitectureS390X {
+				imageTypeISO = "minimal-iso"
+			}
 		}
 		// Fetch the required number of master and worker nodes.
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
@@ -297,6 +304,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		osImage,
 		infraEnv.Spec.Proxy,
 	)
+	agentTemplateData.DisabledHostValidations = disabledHostValidationsForWorkflow(agentWorkflow.Workflow)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -529,6 +537,17 @@ CLUSTER_NAME=%s
 CLUSTER_API_VIP_DNS_NAME=%s
 AUTH_TOKEN_EXPIRY=%s
 `, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName, authTokenExpiry)
+}
+
+// disabledHostValidationsForWorkflow returns assisted-service host validations to
+// disable for the given agent workflow. For add-nodes, apps DNS validation is
+// skipped because it uses the install-time baseDomain and fails when the live
+// ingress domain was changed post-install. Day-1 installs leave this empty.
+func disabledHostValidationsForWorkflow(workflowType workflow.AgentWorkflowType) string {
+	if workflowType == workflow.AgentWorkflowTypeAddNodes {
+		return "apps-domain-name-resolved-correctly"
+	}
+	return ""
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 
 	"github.com/openshift/installer/pkg/types"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 // Zone represents a DNS Zone
@@ -75,4 +76,73 @@ func GetDNSZone() (*Zone, error) {
 	}
 
 	return optionToZoneMap[zoneChoice], nil
+}
+
+// GetVPC returns a VPC name chosen by survey from those available in the resource group.
+func GetVPC(resourceGroup string, region string) (string, error) {
+	client, err := NewClient()
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	// Resolve the VPC region from the PowerVS region.
+	vpcRegion, err := powervstypes.VPCRegionForPowerVSRegion(region)
+	if err != nil {
+		return "", fmt.Errorf("could not determine VPC region for PowerVS region %q: %w", region, err)
+	}
+
+	// Resolve the resource group name to its ID.
+	resourceGroups, err := client.ListResourceGroups(ctx)
+	if err != nil {
+		return "", fmt.Errorf("could not list resource groups: %w", err)
+	}
+	resourceGroupID := ""
+	for _, rg := range resourceGroups.Resources {
+		if rg.Name != nil && *rg.Name == resourceGroup {
+			resourceGroupID = *rg.ID
+			break
+		}
+	}
+	if resourceGroupID == "" {
+		return "", fmt.Errorf("resource group %q not found", resourceGroup)
+	}
+
+	vpcs, err := client.GetVPCsInResourceGroup(ctx, resourceGroupID, vpcRegion)
+	if err != nil {
+		return "", fmt.Errorf("could not retrieve VPCs: %w", err)
+	}
+	if len(vpcs) == 0 {
+		return "", fmt.Errorf("no VPCs found in resource group %q (VPC region %q)", resourceGroup, vpcRegion)
+	}
+
+	vpcNames := make([]string, 0, len(vpcs))
+	for _, vpc := range vpcs {
+		if vpc.Name != nil {
+			vpcNames = append(vpcNames, *vpc.Name)
+		}
+	}
+	sort.Strings(vpcNames)
+
+	var vpcChoice string
+	if err := survey.AskOne(&survey.Select{
+		Message: "VPC",
+		Help:    "The VPC to use for the internal cluster. Must be in the same resource group as the PowerVS workspace.",
+		Options: vpcNames,
+	},
+		&vpcChoice,
+		survey.WithValidator(func(ans interface{}) error {
+			choice := ans.(core.OptionAnswer).Value
+			i := sort.SearchStrings(vpcNames, choice)
+			if i == len(vpcNames) || vpcNames[i] != choice {
+				return fmt.Errorf("invalid VPC %q", choice)
+			}
+			return nil
+		}),
+	); err != nil {
+		return "", fmt.Errorf("failed UserInput: %w", err)
+	}
+
+	return vpcChoice, nil
 }

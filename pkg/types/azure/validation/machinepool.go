@@ -123,6 +123,10 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	if len(p.DataDisks) > 0 {
+		allErrs = append(allErrs, validateDataDisk(p, poolName, fldPath.Child("dataDisks"))...)
+	}
+
 	if pool != nil {
 		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
 			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
@@ -364,4 +368,32 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 	}
 
 	return errs
+}
+
+func validateDataDisk(p *azure.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	switch poolName {
+	case types.MachinePoolControlPlaneRoleName, types.MachinePoolComputeRoleName:
+		for i, dataDisk := range p.DataDisks {
+			if dataDisk.ManagedDisk != nil {
+				if dataDisk.ManagedDisk.StorageAccountType == "" {
+					allErrs = append(allErrs, field.Required(
+						fldPath.Index(i).Child("managedDisk", "storageAccountType"),
+						"storageAccountType is required when managedDisk is specified",
+					))
+				}
+				if dataDisk.ManagedDisk.SecurityProfile != nil {
+					allErrs = append(allErrs, field.Forbidden(
+						fldPath.Index(i).Child("managedDisk", "securityProfile"),
+						"data disk security profiles are not yet supported by the Machine API and would be silently ignored",
+					))
+				}
+			}
+		}
+	default:
+		// defaultMachinePlatform (poolName "") is validated per-pool; skip here
+	}
+
+	return allErrs
 }

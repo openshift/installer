@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
@@ -23,15 +21,6 @@ const (
 
 	// CloudEnvironmentSovereign is the cloud environment identifier for GCP sovereign clouds.
 	CloudEnvironmentSovereign = "sovereign"
-)
-
-var (
-	// sovereignCloudProjectPrefixes contains known project ID prefixes for sovereign clouds.
-	// Project IDs in sovereign clouds use the format: <prefix>:<project-id>
-	// This list helps distinguish from organization-scoped public GCP projects (orgname:project-id).
-	sovereignCloudProjectPrefixes = []string{
-		"eu0", // European sovereign cloud (Germany)
-	}
 )
 
 // DNS contains the gcp dns zone information for the cluster.
@@ -217,18 +206,14 @@ func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
 	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
 }
 
-// GetCloudEnvironment determines the cloud environment from the project ID format.
+// GetCloudEnvironment determines the cloud environment from the project ID and region.
 // Returns CloudEnvironmentSovereign for sovereign cloud environments, empty string for public GCP.
-// Uses known sovereign cloud project ID prefixes to distinguish from organization-scoped
-// public GCP projects (orgname:project-id).
-func GetCloudEnvironment(projectID string) string {
-	// Check if project ID has a known sovereign cloud prefix
-	parts := strings.SplitN(projectID, ":", 2)
-	if len(parts) == 2 && sets.New(sovereignCloudProjectPrefixes...).Has(parts[0]) {
-		// Known sovereign prefix is definitive - this IS a sovereign cloud project
+// Sovereign cloud is identified by both a domain-scoped project ID (containing ":")
+// and a sovereign region (prefixed with "u-").
+func GetCloudEnvironment(projectID, region string) string {
+	if strings.Contains(projectID, ":") && strings.HasPrefix(region, "u-") {
 		return CloudEnvironmentSovereign
 	}
-	// No known sovereign prefix found
 	return ""
 }
 
@@ -237,4 +222,33 @@ func GetCloudEnvironment(projectID string) string {
 // This indicates a sovereign cloud or custom universe domain configuration.
 func IsNonDefaultUniverseDomain(universeDomain string) bool {
 	return universeDomain != "" && universeDomain != "googleapis.com"
+}
+
+// GetDefaultEncryptionKey returns the KMS key to use for GCS bucket encryption.
+// Returns the key from defaultMachinePlatform.osDisk.encryptionKey.kmsKey if configured,
+// otherwise returns nil.
+func GetDefaultEncryptionKey(platform *Platform) *KMSKeyReference {
+	if platform != nil &&
+		platform.DefaultMachinePlatform != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey != nil &&
+		platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey != nil {
+		return platform.DefaultMachinePlatform.OSDisk.EncryptionKey.KMSKey
+	}
+	return nil
+}
+
+// FormatKMSKeyResourcePath formats a KMSKeyReference into a full GCP resource path.
+// If the KMSKeyReference specifies a ProjectID, it uses that; otherwise, it uses the provided default projectID.
+func FormatKMSKeyResourcePath(kmsKey *KMSKeyReference, projectID string) string {
+	if kmsKey == nil {
+		return ""
+	}
+
+	keyProjectID := projectID
+	if kmsKey.ProjectID != "" {
+		keyProjectID = kmsKey.ProjectID
+	}
+
+	return fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
+		keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
 }

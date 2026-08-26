@@ -1166,3 +1166,142 @@ func (nb *networkingBuilder) Network(cidr string) *networkingBuilder {
 func (nb *networkingBuilder) build() *types.Networking {
 	return &nb.Networking
 }
+
+func TestValidateBGPVIP(t *testing.T) {
+	ovnNetwork := func() *types.Networking {
+		n := network()
+		n.NetworkType = "OVNKubernetes"
+		return n
+	}
+	bgpPlatform := func(mutate func(*baremetal.Platform)) *baremetal.Platform {
+		p := platform().build()
+		p.BGPVIPConfig = &baremetal.BGPVIPConfig{
+			LocalASN: 64512,
+			Peers:    []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.1", PeerASN: 64513}},
+		}
+		if mutate != nil {
+			mutate(p)
+		}
+		return p
+	}
+
+	cases := []struct {
+		name     string
+		platform *baremetal.Platform
+		network  *types.Networking
+		expected string
+	}{
+		{
+			name:     "valid bgp config",
+			platform: bgpPlatform(nil),
+			network:  ovnNetwork(),
+		},
+		{
+			name: "invalid peer port",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].Port = 65536
+			}),
+			network:  ovnNetwork(),
+			expected: `must be between 1 and 65535`,
+		},
+		{
+			name: "negative peer port",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].Port = -1
+			}),
+			network:  ovnNetwork(),
+			expected: `must be between 1 and 65535`,
+		},
+		{
+			name:     "bgp requires OVNKubernetes",
+			platform: bgpPlatform(nil),
+			network:  network(),
+			expected: `BGP-based VIP management requires the OVNKubernetes network type`,
+		},
+		{
+			name: "invalid holdTime",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "ninety"
+			}),
+			network:  ovnNetwork(),
+			expected: `must be a valid duration`,
+		},
+		{
+			name: "holdTime without keepaliveTime",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "90s"
+			}),
+			network:  ovnNetwork(),
+			expected: `holdTime and keepaliveTime must be set together`,
+		},
+		{
+			name: "fractional-second holdTime",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "1500ms"
+				p.BGPVIPConfig.Peers[0].KeepaliveTime = "500ms"
+			}),
+			network:  ovnNetwork(),
+			expected: `must be a whole number of seconds`,
+		},
+		{
+			name: "holdTime above the BGP 16-bit ceiling",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].HoldTime = "65536s"
+				p.BGPVIPConfig.Peers[0].KeepaliveTime = "30s"
+			}),
+			network:  ovnNetwork(),
+			expected: `must be a whole number of seconds between 0 and 65535`,
+		},
+		{
+			name: "invalid community",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"no-export"}
+			}),
+			network:  ovnNetwork(),
+			expected: `must be a standard (AA:NN) or large (AA:BB:CC) BGP community`,
+		},
+		{
+			name: "too many host override peers",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				peers := make([]baremetal.BGPPeerConfig, 17)
+				for i := range peers {
+					peers[i] = baremetal.BGPPeerConfig{PeerAddress: "192.168.111.2", PeerASN: 64513}
+				}
+				p.Hosts = append(p.Hosts, &baremetal.Host{
+					Name:           "host-0",
+					BootMACAddress: "CA:FE:CA:FE:00:00",
+					BMC:            baremetal.BMC{Address: "ipmi://192.168.111.10", Username: "u", Password: "p"},
+					BGPPeers:       peers,
+				})
+			}),
+			network:  ovnNetwork(),
+			expected: `Too many`,
+		},
+		{
+			name: "host bgpPeers without bgpVIPConfig",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig = nil
+				p.Hosts = append(p.Hosts, &baremetal.Host{
+					Name:           "host-0",
+					BootMACAddress: "CA:FE:CA:FE:00:00",
+					BMC:            baremetal.BMC{Address: "ipmi://192.168.111.10", Username: "u", Password: "p"},
+					BGPPeers:       []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.2", PeerASN: 64513}},
+				})
+			}),
+			network:  ovnNetwork(),
+			expected: `host-level BGP peer overrides require platform.baremetal.bgpVIPConfig`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := installConfig().build()
+			cfg.BareMetal = tc.platform
+			err := ValidatePlatform(tc.platform, false, tc.network, field.NewPath("baremetal"), cfg).ToAggregate()
+			if tc.expected == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, tc.expected)
+			}
+		})
+	}
+}

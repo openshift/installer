@@ -26,3 +26,4 @@ aliases:
     - salasberryfin
 
   cluster-api-gcp-reviewers:
+    - barbacbd

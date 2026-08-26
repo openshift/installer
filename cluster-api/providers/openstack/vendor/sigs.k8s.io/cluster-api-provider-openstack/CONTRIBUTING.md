@@ -45,8 +45,10 @@ Cluster API Provider OpenStack maintains the most recent release/releases for al
 
 | Minor Release | API Version  | Supported Until                                |
 |---------------|--------------|------------------------------------------------|
+| v0.14.x       | **v1beta1**  | when v0.16.0 will be released                  |
+| v0.13.x       | **v1beta1**  | when v0.15.0 will be released                  |
 | v0.12.x       | **v1beta1**  | when v0.14.0 will be released                  |
-| v0.11.x       | **v1beta1**  | when v0.13.0 will be released                  |
+| v0.11.x       | **v1beta1**  | EOL since 2025-09-11 - v0.13.0 release date    |
 | v0.10.x       | **v1beta1**  | EOL since 2025-02-06 - v0.12.0 release date    |
 | v0.9.x        | **v1alpha7** | EOL since 2024-10-24 - v0.11.0 release date    |
 | v0.8.x        | **v1alpha7** | EOL since 2024-04-17 - v0.10.0 release date    |
@@ -57,6 +59,8 @@ Cluster API Provider OpenStack maintains the most recent release/releases for al
 
 | Minor Release | v1beta1       | v1alpha7   | v1alpha6   | v1alpha5   |
 |---------------|---------------|------------|------------|------------|
+| v0.14.x       | **supported** |            |            |            |
+| v0.13.x       | **supported** |            |            |            |
 | v0.12.x       | **supported** | not served |            |            |
 | v0.11.x       | **supported** | deprecated | not served |            |
 | v0.10.x       | **supported** | supported  | deprecated | not served |

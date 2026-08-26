@@ -94,12 +94,23 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	case workflow.AgentWorkflowTypeInstall:
 		if agentconfig.Config != nil {
 			a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
-			// External platform will always create a minimal ISO
-			a.MinimalISO = agentconfig.Config.MinimalISO || agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType
-			if agentconfig.Config.MinimalISO {
-				logrus.Infof("Minimal ISO will be created based on configuration")
-			} else if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
-				logrus.Infof("Minimal ISO will be created for External platform")
+			// s390x uses the zipl bootloader and does not support minimal ISO
+			// (no grub/isolinux to patch for kernel arguments).
+			if a.CPUArch == string(types.ArchitectureS390X) {
+				if agentconfig.Config.MinimalISO {
+					return fmt.Errorf("minimal ISO is not supported on the s390x architecture; " +
+						"s390x uses the zipl bootloader which does not support GRUB/isolinux patching")
+				}
+				// For external platform on s390x, skip the minimal ISO override
+				a.MinimalISO = false
+			} else {
+				// External platform will always create a minimal ISO
+				a.MinimalISO = agentconfig.Config.MinimalISO || agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType
+				if agentconfig.Config.MinimalISO {
+					logrus.Infof("Minimal ISO will be created based on configuration")
+				} else if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
+					logrus.Infof("Minimal ISO will be created for External platform")
+				}
 			}
 		}
 	case workflow.AgentWorkflowTypeAddNodes:
