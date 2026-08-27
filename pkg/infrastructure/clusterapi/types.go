@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
+	"github.com/openshift/installer/pkg/asset/credentialsrequest"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -43,12 +44,14 @@ type PreProvider interface {
 
 // PreProvisionInput collects the args passed to the PreProvision call.
 type PreProvisionInput struct {
-	InfraID          string
-	InstallConfig    *installconfig.InstallConfig
-	RhcosImage       *rhcos.Image
-	ManifestsAsset   *manifests.Manifests
-	MachineManifests []client.Object
-	WorkersAsset     *machines.Worker
+	InfraID             string
+	InstallConfig       *installconfig.InstallConfig
+	RhcosImage          *rhcos.Image
+	ManifestsAsset      *manifests.Manifests
+	MachineManifests    []client.Object
+	WorkersAsset        *machines.Worker
+	BoundSASigningKey   *tls.BoundSASigningKey
+	CredentialsRequests *credentialsrequest.CredentialsRequests
 }
 
 // IgnitionProvider handles preconditions for bootstrap ignition,

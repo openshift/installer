@@ -683,6 +683,64 @@ func TestValidatePlatform(t *testing.T) {
 				LBType: "",
 			},
 		},
+		{
+			name: "valid STS managed",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{Mode: aws.STSModeManaged},
+			},
+			credMode: types.ManualCredentialsMode,
+		},
+		{
+			name: "valid STS manual",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{Mode: aws.STSModeManual},
+			},
+			credMode: types.ManualCredentialsMode,
+		},
+		{
+			name: "STS with no credentials mode",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{Mode: aws.STSModeManaged},
+			},
+			expected: `^credentialsMode: Required value: Manual credentials mode is required when STS is configured$`,
+		},
+		{
+			name: "STS with Passthrough credentials mode",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{Mode: aws.STSModeManaged},
+			},
+			credMode: types.PassthroughCredentialsMode,
+			expected: `^credentialsMode: Required value: Manual credentials mode is required when STS is configured$`,
+		},
+		{
+			name: "STS with Mint credentials mode",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{Mode: aws.STSModeManaged},
+			},
+			credMode: types.MintCredentialsMode,
+			expected: `^credentialsMode: Required value: Manual credentials mode is required when STS is configured$`,
+		},
+		{
+			name: "invalid STS unsupported mode",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{Mode: "Invalid"},
+			},
+			credMode: types.ManualCredentialsMode,
+			expected: `^\Qtest-path.sts.mode: Unsupported value: "Invalid"\E`,
+		},
+		{
+			name: "nil STS is valid",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    nil,
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
