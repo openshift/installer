@@ -34,12 +34,6 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 			shouldGenerate: true,
 		},
 		{
-			name:           "Skip without feature gate",
-			featureGate:    "",
-			iriManifest:    true,
-			shouldGenerate: false,
-		},
-		{
 			name:           "Skip without IRI manifest",
 			featureGate:    "TechPreviewNoUpgrade",
 			iriManifest:    false,
