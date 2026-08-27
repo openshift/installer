@@ -177,7 +177,12 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 	}
 
 	if arch != unknownArchitecture {
-		if typeArch := mapiutil.CPUArchitecture(instanceType); string(typeArch) != arch {
+		typeArch := string(mapiutil.CPUArchitecture(instanceType))
+		// WORKAROUND: machine-api-provider-gcp in 4.21 doesn't know about n4a or a4x being arm64.
+		if strings.HasPrefix(instanceType, "n4a-") || strings.HasPrefix(instanceType, "a4x-") {
+			typeArch = "arm64"
+		}
+		if typeArch != arch {
 			errMsg := fmt.Sprintf("instance type architecture %s does not match specified architecture %s", typeArch, arch)
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 		}
