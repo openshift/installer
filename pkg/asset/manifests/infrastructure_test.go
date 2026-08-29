@@ -430,6 +430,16 @@ func (b icBuildNamespace) withGCPProjectID(projectID string) icOption {
 	}
 }
 
+func (b icBuildNamespace) withGCPLoadBalancerClientAccess(clientAccess gcptypes.ClientAccess) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forGCP()(ic)
+		if ic.Platform.GCP.LoadBalancer == nil {
+			ic.Platform.GCP.LoadBalancer = &gcptypes.LoadBalancer{}
+		}
+		ic.Platform.GCP.LoadBalancer.ClientAccess = clientAccess
+	}
+}
+
 func (b icBuildNamespace) withGCPDefaultMachineKMSKey(kmsKey *gcptypes.KMSKeyReference) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forGCP()(ic)
