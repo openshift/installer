@@ -61,45 +61,50 @@ func NewStreamClient() (*MarketplaceStream, error) {
 	return &MarketplaceStream{cl}, nil
 }
 
-// Populate finds the marketplace images for a given architecture and release.
-func (az *MarketplaceStream) Populate(ctx context.Context, arch, rel string) (*rhcos.AzureMarketplace, error) {
+// Populate finds the marketplace images for a given architecture, release,
+// and RHEL major version. rhelMajor is used to filter RHEL-versioned images
+// so that e.g. RHEL 10 images are not selected for a RHEL 9 stream.
+func (az *MarketplaceStream) Populate(ctx context.Context, arch, rel string, rhelMajor int) (*rhcos.AzureMarketplace, error) {
 	s := &rhcos.AzureMarketplace{}
 
 	var err error
-	if s.NoPurchasePlan, err = az.noPurchasePlan(ctx, arch, rel); err != nil {
+	if s.NoPurchasePlan, err = az.noPurchasePlan(ctx, arch, rel, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure non-paid images: %w", err)
 	}
 
-	if s.OCP, err = az.getImages(ctx, paidImageQuery(pubRH, rel, offerOCP), arch); err != nil {
+	if s.OCP, err = az.getImages(ctx, paidImageQuery(pubRH, rel, offerOCP), arch, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure OCP marketplace images: %w", err)
 	}
 
-	if s.OPP, err = az.getImages(ctx, paidImageQuery(pubRH, rel, offerOPP), arch); err != nil {
+	if s.OPP, err = az.getImages(ctx, paidImageQuery(pubRH, rel, offerOPP), arch, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure OPP marketplace images: %w", err)
 	}
 
-	if s.OKE, err = az.getImages(ctx, paidImageQuery(pubRH, rel, offerOKE), arch); err != nil {
+	if s.OKE, err = az.getImages(ctx, paidImageQuery(pubRH, rel, offerOKE), arch, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure OKE marketplace images: %w", err)
 	}
 
-	if s.OCPEMEA, err = az.getImages(ctx, paidImageQuery(pubEMEA, rel, offerOCP), arch); err != nil {
+	if s.OCPEMEA, err = az.getImages(ctx, paidImageQuery(pubEMEA, rel, offerOCP), arch, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure OCP EMEA marketplace images: %w", err)
 	}
 
-	if s.OPPEMEA, err = az.getImages(ctx, paidImageQuery(pubEMEA, rel, offerOPP), arch); err != nil {
+	if s.OPPEMEA, err = az.getImages(ctx, paidImageQuery(pubEMEA, rel, offerOPP), arch, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure OPP EMEA marketplace images: %w", err)
 	}
 
-	if s.OKEEMEA, err = az.getImages(ctx, paidImageQuery(pubEMEA, rel, offerOKE), arch); err != nil {
+	if s.OKEEMEA, err = az.getImages(ctx, paidImageQuery(pubEMEA, rel, offerOKE), arch, rhelMajor); err != nil {
 		return nil, fmt.Errorf("failed getting Azure OKE EMEA marketplace images: %w", err)
 	}
 
 	return s, nil
 }
 
-func (az *MarketplaceStream) noPurchasePlan(ctx context.Context, arch, release string) (*rhcos.AzureMarketplaceImages, error) {
+func (az *MarketplaceStream) noPurchasePlan(ctx context.Context, arch, release string, rhelMajor int) (*rhcos.AzureMarketplaceImages, error) {
 	logrus.Info("Retrieving NoPurchase Plan Images for release: ", release)
-	gen1SKU, gen2SKU := parseAROSKUs(release, arch)
+	gen1SKU, gen2SKU, err := parseAROSKUs(release, arch)
+	if err != nil {
+		return nil, err
+	}
 	q := imgsQuery{
 		gen1: &imgQuery{
 			publisher: pubARO,
@@ -114,7 +119,7 @@ func (az *MarketplaceStream) noPurchasePlan(ctx context.Context, arch, release s
 			xyVersion: release,
 		},
 	}
-	return az.getImages(ctx, q, arch)
+	return az.getImages(ctx, q, arch, rhelMajor)
 }
 
 func paidImageQuery(pub, release, offer string) imgsQuery {
@@ -134,11 +139,11 @@ func paidImageQuery(pub, release, offer string) imgsQuery {
 	}
 }
 
-func (az *MarketplaceStream) getImages(ctx context.Context, query imgsQuery, arch string) (*rhcos.AzureMarketplaceImages, error) {
+func (az *MarketplaceStream) getImages(ctx context.Context, query imgsQuery, arch string, rhelMajor int) (*rhcos.AzureMarketplaceImages, error) {
 	imgs := &rhcos.AzureMarketplaceImages{}
 	if gen1 := query.gen1; gen1 != nil && gen1.sku != "" {
 		logrus.Infof("Searching for image with publisher: %s, offer %s, sku %s architecture %s in release %s", gen1.publisher, gen1.offer, gen1.sku, arch, gen1.xyVersion)
-		img, err := az.getImage(ctx, gen1.publisher, gen1.offer, gen1.sku, gen1.xyVersion, arch)
+		img, err := az.getImage(ctx, gen1.publisher, gen1.offer, gen1.sku, gen1.xyVersion, arch, rhelMajor)
 		if err != nil {
 			logrus.Error(err)
 		}
@@ -146,7 +151,7 @@ func (az *MarketplaceStream) getImages(ctx context.Context, query imgsQuery, arc
 	}
 	if gen2 := query.gen2; gen2 != nil && gen2.sku != "" {
 		logrus.Infof("Searching for image with publisher: %s, offer %s, sku %s architecture %s in release %s", gen2.publisher, gen2.offer, gen2.sku, arch, gen2.xyVersion)
-		img, err := az.getImage(ctx, gen2.publisher, gen2.offer, gen2.sku, gen2.xyVersion, arch)
+		img, err := az.getImage(ctx, gen2.publisher, gen2.offer, gen2.sku, gen2.xyVersion, arch, rhelMajor)
 		if err != nil {
 			logrus.Error(err)
 		}
@@ -158,8 +163,9 @@ func (az *MarketplaceStream) getImages(ctx context.Context, query imgsQuery, arc
 	return imgs, nil
 }
 
-// getImage finds the latest version matching the x.y version of the release.
-func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVersion, arch string) (*rhcos.AzureMarketplaceImage, error) {
+// getImage finds the latest version matching the x.y version of the release
+// and the target RHEL major version.
+func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVersion, arch string, rhelMajor int) (*rhcos.AzureMarketplaceImage, error) {
 	resp, err := az.client.List(ctx, region, pub, offer, sku, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list images: %w", err)
@@ -176,6 +182,11 @@ func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVe
 		v := *v.Name
 		semVer := convertToSemver(v)
 		logrus.Infof("Found potential image match, version: %s", v)
+
+		if !matchesRHELMajor(v, rhelMajor) {
+			logrus.Infof("Skipping version %s: does not match target RHEL major %d", v, rhelMajor)
+			continue
+		}
 
 		// Ensure that the image is not from a later Y stream,
 		// e.g. if we are populating a 4.19 stream, we don't want 4.20 images,
@@ -224,16 +235,39 @@ func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVe
 	}, nil
 }
 
-// parseARO takes the release from coreos stream and
-// uses conventions to generate the SKU (gen1 & gen2) and version.
-// For instance, with a coreos release of "4.22":
+// parseAROSKUs takes the release from the coreos stream and
+// uses conventions to generate the SKU (gen1 & gen2).
 //
-//	gen1SKU: "aro_422"
-//	gen2SKU: "aro_422-v2"
-//	armSKU:  "aro_422-arm"
-func parseAROSKUs(release, arch string) (string, string) {
+// For OpenShift 4.x (e.g. release "4.22"):
+//
+//	x86:   gen1 = "aro_422",  gen2 = "aro_422-v2"
+//	arm64: gen1 = "",         gen2 = "aro_422-arm"
+//
+// Starting with OpenShift 5.0 only gen2 SKUs are published,
+// using the format "aro_<major>-<minor>_<arch>_gen2":
+//
+//	x86:   gen2 = "aro_5-0_x64_gen2"
+//	arm64: gen2 = "aro_5-0_arm_gen2"
+func parseAROSKUs(release, arch string) (string, string, error) {
 	xyVersion := strings.ReplaceAll(release, ".", "")
+
+	major, minor, _ := strings.Cut(release, ".")
+	majorInt, err := strconv.Atoi(major)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to parse major version from release %q: %w", release, err)
+	}
+
 	var gen1SKU, gen2SKU string
+	if majorInt >= 5 {
+		switch arch {
+		case x86:
+			gen2SKU = fmt.Sprintf("aro_%s-%s_x64_gen2", major, minor)
+		case arm64:
+			gen2SKU = fmt.Sprintf("aro_%s-%s_arm_gen2", major, minor)
+		}
+		return gen1SKU, gen2SKU, nil
+	}
+
 	switch arch {
 	case x86:
 		gen1SKU = fmt.Sprintf("aro_%s", xyVersion)
@@ -242,7 +276,7 @@ func parseAROSKUs(release, arch string) (string, string) {
 		gen1SKU = ""
 		gen2SKU = fmt.Sprintf("aro_%s-arm", xyVersion)
 	}
-	return gen1SKU, gen2SKU
+	return gen1SKU, gen2SKU, nil
 }
 
 func getClient() (*armcompute.VirtualMachineImagesClient, error) {
@@ -305,6 +339,22 @@ func FillMissing(target, fallback *rhcos.AzureMarketplace) {
 	if target.OKEEMEA == nil {
 		target.OKEEMEA = fallback.OKEEMEA
 	}
+}
+
+// matchesRHELMajor returns true if the version belongs to the target RHEL
+// major stream. Versions starting with "9." or "10." are explicitly
+// RHEL-versioned. All other formats (OCP-style like "4.18.x", "418.94.x")
+// predate the RHEL 10 transition and are treated as RHEL 9.
+func matchesRHELMajor(ver string, rhelMajor int) bool {
+	major, _, _ := strings.Cut(ver, ".")
+	verMajor, err := strconv.Atoi(major)
+	if err != nil {
+		return rhelMajor == 9
+	}
+	if verMajor == 9 || verMajor == 10 {
+		return verMajor == rhelMajor
+	}
+	return rhelMajor == 9
 }
 
 func checkIfNewer(candidate, release string) bool {
