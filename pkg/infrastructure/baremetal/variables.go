@@ -3,6 +3,7 @@ package baremetal
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/tfvars"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -55,9 +57,20 @@ func getConfig(dir string) (baremetalConfig, error) {
 	return config, nil
 }
 
-func getMasterAddresses(dir string) ([]string, error) {
+func getMasterAddresses(dir string, machineNetworks []types.MachineNetworkEntry) ([]string, error) {
 	logrus.Debug("baremetal: getting master addresses")
 	masters := []string{}
+	if len(machineNetworks) == 0 {
+		return masters, fmt.Errorf("failed to get master addresses: machine network is not configured")
+	}
+
+	primaryIsIPv4 := isIPv4(machineNetworks[0].CIDR.IP)
+	primaryNetworks := make([]types.MachineNetworkEntry, 0, len(machineNetworks))
+	for _, machineNetwork := range machineNetworks {
+		if isIPv4(machineNetwork.CIDR.IP) == primaryIsIPv4 {
+			primaryNetworks = append(primaryNetworks, machineNetwork)
+		}
+	}
 
 	data, err := os.ReadFile(filepath.Join(dir, MastersFileName))
 	if err != nil {
@@ -75,14 +88,37 @@ func getMasterAddresses(dir string) ([]string, error) {
 		logrus.Debug("  bmh:", bmh.Name)
 
 		if bmh.Status.HardwareDetails == nil {
-			logrus.Debug("    HardwareDetails nil, skipping")
+			logrus.Warnf("baremetal: no hardware details found for master %q, skipping", bmh.Name)
 			continue
 		}
 
-		for _, nic := range bmh.Status.HardwareDetails.NIC {
-			masters = append(masters, nic.IP)
+		address, err := addressForMaster(primaryIsIPv4, bmh.Status.HardwareDetails.NIC, primaryNetworks)
+		if err != nil {
+			logrus.Warnf("baremetal: primary network error %v, %q, skipping", err, bmh.Name)
+			continue
 		}
+		masters = append(masters, address)
 	}
 
 	return masters, nil
+}
+
+func addressForMaster(primaryIsIPv4 bool, nics []baremetalhost.NIC, machineNetworks []types.MachineNetworkEntry) (string, error) {
+	for _, nic := range nics {
+		ip := net.ParseIP(nic.IP)
+		if ip == nil || ip.IsLinkLocalUnicast() || isIPv4(ip) != primaryIsIPv4 {
+			continue
+		}
+
+		for _, machineNetwork := range machineNetworks {
+			if machineNetwork.CIDR.Contains(ip) {
+				return nic.IP, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("no primary machine network found")
+}
+
+func isIPv4(ip net.IP) bool {
+	return ip.To4() != nil
 }
