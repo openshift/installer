@@ -18,12 +18,14 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 const (
 	master = "master"
 	worker = "worker"
+	edge   = "edge"
 )
 
 var (
@@ -81,6 +83,19 @@ var (
 			},
 		},
 		worker: {
+			Version: "2012-10-17",
+			Statement: []iamv1.StatementEntry{
+				{
+					Effect: "Allow",
+					Action: iamv1.Actions{
+						"ec2:DescribeInstances",
+						"ec2:DescribeRegions",
+					},
+					Resource: iamv1.Resources{"*"},
+				},
+			},
+		},
+		edge: {
 			Version: "2012-10-17",
 			Statement: []iamv1.StatementEntry{
 				{
@@ -155,7 +170,14 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 		defaultProfile = dmp.IAMProfile
 	}
 
-	for _, role := range []string{master, worker} {
+	// The edge pool is optional, so we skip creating the instance profile
+	// for edge nodes if none is requested.
+	roles := []string{master}
+	for _, compute := range ic.Config.Compute {
+		roles = append(roles, compute.Name)
+	}
+
+	for _, role := range roles {
 		instanceProfile := defaultProfile
 		switch role {
 		case master:
@@ -163,8 +185,12 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 				instanceProfile = cp.Platform.AWS.IAMProfile
 			}
 		case worker:
-			if w := ic.Config.Compute; len(w) > 0 && w[0].Platform.AWS != nil && len(w[0].Platform.AWS.IAMProfile) > 0 {
-				instanceProfile = w[0].Platform.AWS.IAMProfile
+			if wp := getComputeMachinePoolByName(ic, worker); wp != nil && wp.Platform.AWS != nil && len(wp.Platform.AWS.IAMProfile) > 0 {
+				instanceProfile = wp.Platform.AWS.IAMProfile
+			}
+		case edge:
+			if ep := getComputeMachinePoolByName(ic, edge); ep != nil && ep.Platform.AWS != nil && len(ep.Platform.AWS.IAMProfile) > 0 {
+				instanceProfile = ep.Platform.AWS.IAMProfile
 			}
 		}
 
@@ -228,8 +254,13 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 	}
 
 	workerRole := defaultRole
-	if w := ic.Config.Compute; len(w) > 0 && w[0].Platform.AWS != nil && len(w[0].Platform.AWS.IAMRole) > 0 {
-		workerRole = w[0].Platform.AWS.IAMRole
+	if wp := getComputeMachinePoolByName(&ic, worker); wp != nil && wp.Platform.AWS != nil && len(wp.Platform.AWS.IAMRole) > 0 {
+		workerRole = wp.Platform.AWS.IAMRole
+	}
+
+	edgeRole := defaultRole
+	if ep := getComputeMachinePoolByName(&ic, edge); ep != nil && ep.Platform.AWS != nil && len(ep.Platform.AWS.IAMRole) > 0 {
+		edgeRole = ep.Platform.AWS.IAMRole
 	}
 
 	switch {
@@ -237,6 +268,8 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 		return masterRole, nil
 	case nodeRole == worker && len(workerRole) > 0:
 		return workerRole, nil
+	case nodeRole == edge && len(edgeRole) > 0:
+		return edgeRole, nil
 	}
 
 	if _, err := svc.GetRole(ctx, &iam.GetRoleInput{RoleName: roleName}); err != nil {
@@ -305,4 +338,15 @@ func getEC2ServicePrincipal(region string) (string, error) {
 
 	logrus.Debugf("Using domain name: %s for EC2 service principal ID", domain)
 	return fmt.Sprintf("ec2.%s", domain), nil
+}
+
+// getComputeMachinePoolByName returns the machine pool for the compute pool with the
+// given role name (worker or edge).
+func getComputeMachinePoolByName(ic *installconfig.InstallConfig, name string) *types.MachinePool {
+	for _, compute := range ic.Config.Compute {
+		if compute.Name == name {
+			return &compute
+		}
+	}
+	return nil
 }
