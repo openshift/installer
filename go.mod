@@ -88,10 +88,10 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.27.4
-	golang.org/x/crypto v0.15.0
+	golang.org/x/crypto v0.33.0
 	golang.org/x/oauth2 v0.14.0
-	golang.org/x/sys v0.20.0
-	golang.org/x/term v0.14.0
+	golang.org/x/sys v0.30.0
+	golang.org/x/term v0.29.0
 	google.golang.org/api v0.126.0
 	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5
@@ -241,7 +241,7 @@ require (
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	gopkg.in/djherbis/times.v1 v1.2.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
@@ -298,7 +298,7 @@ replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
-replace golang.org/x/net => golang.org/x/net v0.5.0
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
