@@ -146,10 +146,10 @@ fi
 for master in "${MASTERS[@]}"
 do
     echo "Collecting info from ${master}"
-    scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -q /usr/local/bin/installer-masters-gather.sh "core@[${master}]:"
+    scp -o ConnectTimeout=30 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -q /usr/local/bin/installer-masters-gather.sh "core@[${master}]:"
     mkdir -p "${ARTIFACTS}/control-plane/${master}"
-    ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C "sudo ./installer-masters-gather.sh --id '${MASTER_GATHER_ID}'" </dev/null
-    scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@[${master}]:/tmp/artifacts-${MASTER_GATHER_ID}/*" "${ARTIFACTS}/control-plane/${master}/"
+    ssh -o ConnectTimeout=30 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C "sudo ./installer-masters-gather.sh --id '${MASTER_GATHER_ID}'" </dev/null
+    scp -o ConnectTimeout=30 -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@[${master}]:/tmp/artifacts-${MASTER_GATHER_ID}/*" "${ARTIFACTS}/control-plane/${master}/"
 done
 
 TAR_FILE="${TAR_FILE:-${HOME}/log-bundle-${GATHER_ID}.tar.gz}"
