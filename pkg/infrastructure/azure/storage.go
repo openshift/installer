@@ -578,7 +578,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		Tier: &accessTier,
 	}, !in.AllowSharedKeyAccess, wait.Backoff{
 		Duration: retryTime,
-		Factor:   1,
+		Factor:   2,
 		Steps:    retryCount,
 	})
 	if err != nil {
