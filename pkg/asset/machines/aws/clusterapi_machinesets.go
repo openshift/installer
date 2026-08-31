@@ -40,7 +40,7 @@ func ClusterAPIMachineSets(in *MachineSetInput) ([]capa.AWSMachineTemplate, []ca
 
 	instanceProfile := mpool.IAMProfile
 	if len(instanceProfile) == 0 {
-		instanceProfile = fmt.Sprintf("%s-worker-profile", in.ClusterID)
+		instanceProfile = fmt.Sprintf("%s-%s-profile", in.ClusterID, in.Role)
 	}
 
 	tags, err := CapaTagsFromUserTags(in.ClusterID, in.InstallConfigPlatformAWS.UserTags)
