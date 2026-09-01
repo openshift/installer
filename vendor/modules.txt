@@ -1813,7 +1813,7 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/crypto v0.48.0
+# golang.org/x/crypto v0.48.0 => github.com/openshift-sustaining/crypto v0.48.0-sec.3
 ## explicit; go 1.24.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -3034,3 +3034,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
 # sigs.k8s.io/cluster-api-provider-azure => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
 # golang.org/x/net => github.com/openshift-sustaining/net v0.50.0-sec.4
+# golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.48.0-sec.3
