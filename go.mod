@@ -309,7 +309,7 @@ replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
-replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.3
 
 // https://issues.redhat.com/browse/OCPBUGS-8119
 // https://issues.redhat.com/browse/OCPBUGS-27507
