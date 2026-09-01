@@ -229,6 +229,8 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/ppc64le-cloud/powervs-utils v0.0.0-20240610070307-1c0d75a5c247 h1:XY7lIZaLKFDyETNfTTiYmaXO+mk9apox4otFel88nUk=
 github.com/ppc64le-cloud/powervs-utils v0.0.0-20240610070307-1c0d75a5c247/go.mod h1:yfr6HHPYyJzVgnivMsobLMbHQqUHrzcIqWM4Nav4kc8=
+github.com/ppc64le-cloud/powervs-utils v0.0.0-20260320143638-bc9d769bbbfc h1:SWIY4l7NmQMrNuEwL01R5dHcSowtVu9oVV/HKO1pALI=
+github.com/ppc64le-cloud/powervs-utils v0.0.0-20260320143638-bc9d769bbbfc/go.mod h1:APQVGiVIdJ3HuzYdQS0319Xsk08Y8S/bbbJYLoDwYvw=
 github.com/prometheus/client_golang v1.19.1 h1:wZWJDwK+NameRJuPGDhlnFgx8e8HN3XHQeLaYJFJBOE=
 github.com/prometheus/client_golang v1.19.1/go.mod h1:mP78NwGzrVks5S2H6ab8+ZZGJLZUq1hoULYBAYBw1Ho=
 github.com/prometheus/client_model v0.6.1 h1:ZKSh/rekM+n3CeS952MLRAdFwIKqeY8b62p8ais2e9E=
