@@ -103,9 +103,9 @@ require (
 	github.com/vmware/govmomi v0.37.2
 	golang.org/x/crypto v0.28.0
 	golang.org/x/oauth2 v0.23.0
-	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.26.0
-	golang.org/x/term v0.25.0
+	golang.org/x/sync v0.11.0
+	golang.org/x/sys v0.30.0
+	golang.org/x/term v0.29.0
 	google.golang.org/api v0.189.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240711142825-46eb208f015d
 	google.golang.org/grpc v1.65.0
@@ -279,7 +279,7 @@ require (
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -324,3 +324,5 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 // https://issues.redhat.com/browse/OCPBUGS-8119
 // https://issues.redhat.com/browse/OCPBUGS-27507
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
+
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.5
