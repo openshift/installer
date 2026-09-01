@@ -1,5 +1,37 @@
 #!/usr/bin/pwsh
 
+# vCenter calls occasionally fail transiently (session hiccups, timeouts, or
+# API overload when many VM-creation jobs query vCenter concurrently), which
+# some PowerCLI cmdlets surface as a terminating "Value cannot be null"
+# exception rather than a retryable error. Wrap vCenter lookups that must
+# already exist (i.e. not a find-or-create check) with this helper so a
+# transient hiccup doesn't abort the whole install.
+function Invoke-WithRetry {
+    param(
+        [Parameter(Mandatory=$true)]
+        [scriptblock]$ScriptBlock,
+        [string]$OperationName = "vCenter operation",
+        [int]$MaxAttempts = 5,
+        [int]$InitialDelaySeconds = 5
+    )
+
+    $delay = $InitialDelaySeconds
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            return & $ScriptBlock
+        }
+        catch {
+            if ($attempt -ge $MaxAttempts) {
+                Write-Warning "Giving up on '$($OperationName)' after $($attempt) attempts: $($_.Exception.Message)"
+                throw
+            }
+            Write-Warning "Attempt $($attempt)/$($MaxAttempts) for '$($OperationName)' failed: $($_.Exception.Message). Retrying in $($delay)s..."
+            Start-Sleep -Seconds $delay
+            $delay = $delay * 2
+        }
+    }
+}
+
 function New-OpenShiftVM {
     param(
         [int]$CoresPerSocket = 1, # Default is 1 due to not knowing how many may come in via NumCpu variable
@@ -259,6 +291,16 @@ function New-OpenshiftVMs {
 
     Write-Output "Creating $($NodeType) VMs"
 
+    # Creating VMs fires one thread job per VM, each issuing several vCenter
+    # lookups. Left unthrottled, a serial cluster's 3 control-plane (or more
+    # worker) jobs hit vCenter with the same lookup burst simultaneously,
+    # which increases the odds of a transient vCenter API failure. Cap
+    # concurrency unless the caller has set $vmCreationThrottleLimit.
+    $throttleLimit = 5
+    if ($NULL -ne $vmCreationThrottleLimit -and $vmCreationThrottleLimit -gt 0) {
+        $throttleLimit = $vmCreationThrottleLimit
+    }
+
     $jobs = @()
     $vmStep = (100 / $vmHash.virtualmachines.Count)
     $vmCount = 1
@@ -269,7 +311,7 @@ function New-OpenshiftVMs {
             continue
         }
 
-        $jobs += Start-ThreadJob -n "create-vm-$($metadata.infraID)-$($key)" -ScriptBlock {
+        $jobs += Start-ThreadJob -n "create-vm-$($metadata.infraID)-$($key)" -ThrottleLimit $throttleLimit -ScriptBlock {
             param($key,$node,$vm_template,$metadata,$tag,$scriptdir,$cliContext)
             . .\variables.ps1
             . ${scriptdir}\upi-functions.ps1
@@ -278,9 +320,13 @@ function New-OpenshiftVMs {
             $name = "$($metadata.infraID)-$($key)"
             Write-Output "Creating $($name)"
 
-            $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $node.server
+            $rp = Invoke-WithRetry -OperationName "Get-ResourcePool $($metadata.infraID)" -ScriptBlock {
+                Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster) -Server $node.server -ErrorAction Stop) -Server $node.server -ErrorAction Stop
+            }
             ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
-            $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter -Server $node.server
+            $datastoreInfo = Invoke-WithRetry -OperationName "Get-Datastore $($node.datastore)" -ScriptBlock {
+                Get-Datastore -Name $node.datastore -Location $node.datacenter -Server $node.server -ErrorAction Stop
+            }
 
             # Pull network config for each node
             if ($node.type -eq "master") {
@@ -315,8 +361,12 @@ function New-OpenshiftVMs {
             $tag = Get-Tag -Server $node.server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
 
             # Get correct template / folder
-            $folder = Get-Folder -Server $node.server -Name $metadata.infraID -Location $node.datacenter
-            $template = Get-VM -Server $node.server -Name $vm_template -Location $($node.datacenter)
+            $folder = Invoke-WithRetry -OperationName "Get-Folder $($metadata.infraID)" -ScriptBlock {
+                Get-Folder -Server $node.server -Name $metadata.infraID -Location $node.datacenter -ErrorAction Stop
+            }
+            $template = Invoke-WithRetry -OperationName "Get-VM $($vm_template)" -ScriptBlock {
+                Get-VM -Server $node.server -Name $vm_template -Location $($node.datacenter) -ErrorAction Stop
+            }
 
             # Clone the virtual machine from the imported template
             #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
