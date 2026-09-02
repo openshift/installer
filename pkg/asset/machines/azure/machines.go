@@ -245,6 +245,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: machineapi.StorageAccountType(disk.ManagedDisk.StorageAccountType),
 			}
 
+			// Handle disk encryption set for data disks (OCPBUGS-59521)
 			if disk.ManagedDisk.DiskEncryptionSet != nil {
 				encryptionSetID := disk.ManagedDisk.DiskEncryptionSet.ID
 				if encryptionSetID == "" {
