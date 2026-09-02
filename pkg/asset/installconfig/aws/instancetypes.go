@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 // Networking describes the network settings for an instance type.
@@ -24,41 +25,42 @@ type InstanceType struct {
 	Features     []string
 }
 
-// instanceTypes retrieves a list of instance types for the given region.
-func instanceTypes(ctx context.Context, client *ec2.Client) (map[string]InstanceType, error) {
-	types := map[string]InstanceType{}
+// getInstanceType returns metadata for the named instance type. If the type does
+// not exist in the configured region.
+func getInstanceType(ctx context.Context, client *ec2.Client, instanceType string) (InstanceType, error) {
+	out, err := client.DescribeInstanceTypes(ctx, &ec2.DescribeInstanceTypesInput{
+		InstanceTypes: []ec2types.InstanceType{ec2types.InstanceType(instanceType)},
+	})
+	if err != nil {
+		return InstanceType{}, fmt.Errorf("failed to get instance type %s details: %w", instanceType, err)
+	}
 
-	paginator := ec2.NewDescribeInstanceTypesPaginator(client, &ec2.DescribeInstanceTypesInput{})
-	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list instance types: %w", err)
-		}
+	// A nonexistent type is reported as an InvalidInstanceType error above, so an
+	// empty result here is an unexpected API response rather than a missing type.
+	if len(out.InstanceTypes) == 0 {
+		return InstanceType{}, fmt.Errorf("unexpected empty response describing instance type %s", instanceType)
+	}
 
-		for _, sdkTypeInfo := range page.InstanceTypes {
-			typeInfo := InstanceType{
-				DefaultVCpus: int64(aws.ToInt32(sdkTypeInfo.VCpuInfo.DefaultVCpus)),
-				MemInMiB:     aws.ToInt64(sdkTypeInfo.MemoryInfo.SizeInMiB),
-				Hypervisor:   string(sdkTypeInfo.Hypervisor),
-			}
+	sdkTypeInfo := out.InstanceTypes[0]
+	typeInfo := InstanceType{
+		DefaultVCpus: int64(aws.ToInt32(sdkTypeInfo.VCpuInfo.DefaultVCpus)),
+		MemInMiB:     aws.ToInt64(sdkTypeInfo.MemoryInfo.SizeInMiB),
+		Hypervisor:   string(sdkTypeInfo.Hypervisor),
+	}
 
-			for _, arch := range sdkTypeInfo.ProcessorInfo.SupportedArchitectures {
-				typeInfo.Arches = append(typeInfo.Arches, string(arch))
-			}
+	for _, arch := range sdkTypeInfo.ProcessorInfo.SupportedArchitectures {
+		typeInfo.Arches = append(typeInfo.Arches, string(arch))
+	}
 
-			if netInfo := sdkTypeInfo.NetworkInfo; netInfo != nil {
-				typeInfo.Networking = Networking{
-					IPv6Supported: aws.ToBool(netInfo.Ipv6Supported),
-				}
-			}
-
-			for _, features := range sdkTypeInfo.ProcessorInfo.SupportedFeatures {
-				typeInfo.Features = append(typeInfo.Features, string(features))
-			}
-
-			types[string(sdkTypeInfo.InstanceType)] = typeInfo
+	if netInfo := sdkTypeInfo.NetworkInfo; netInfo != nil {
+		typeInfo.Networking = Networking{
+			IPv6Supported: aws.ToBool(netInfo.Ipv6Supported),
 		}
 	}
 
-	return types, nil
+	for _, features := range sdkTypeInfo.ProcessorInfo.SupportedFeatures {
+		typeInfo.Features = append(typeInfo.Features, string(features))
+	}
+
+	return typeInfo, nil
 }
