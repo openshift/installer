@@ -18,6 +18,8 @@ var (
 
 	errWeeksNotWithYearsOrMonth = errors.New("weeks are not allowed with years or months")
 
+	errWeeksNotAlone = errors.New("weeks are not allowed with other duration components")
+
 	errMonthsInDurationUseOverload = errors.New("months are not allowed with the ToDuration method, use the overload instead")
 
 	full = regexp.MustCompile(`P((?P<year>\d+)Y)?((?P<month>\d+)M)?((?P<day>\d+)D)?(T((?P<hour>\d+)H)?((?P<minute>\d+)M)?((?P<second>\d+(?:\.\d+))S)?)?`)
@@ -59,7 +61,7 @@ func durationFromString(dur string) (*duration, error) {
 			continue
 		}
 
-		val, err := strconv.ParseFloat(part, 10)
+		val, err := strconv.ParseFloat(part, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -130,9 +132,11 @@ func (d *duration) string() string {
 }
 
 // Normalize makes sure that all fields are represented as the smallest meaningful value possible by dividing them out by the conversion factor to the larger unit.
-// e.g. if you have a duration of 10 day, 25 hour, and 61 minute, it will be normalized to 1 week 5 days, 2 hours, and 1 minute.
+// e.g. if you have a duration of 14 days, 25 hours, and 61 minutes, it will be normalized to 2 weeks, 2 hours, and 1 minute.
 // this function does not normalize days to months, weeks to months or weeks to years as they do not always convert with the same value.
-// it also won't normalize days to weeks if months or years are present, and will return an error if the value is invalid
+// it also won't normalize days to weeks if months or years are present, or if days are not an exact multiple of 7,
+// since ISO 8601 requires the week designator to be used alone (no other date or time components).
+// it will return an error if the value is invalid.
 func (d *duration) normalize() error {
 	msToS := 1000
 	StoM := 60
@@ -156,9 +160,9 @@ func (d *duration) normalize() error {
 		d.Days += d.Hours / HtoD
 		d.Hours %= HtoD
 	}
-	if d.Days >= DtoW && d.Months == 0 && d.Years == 0 {
+	if d.Days >= DtoW && d.Days%DtoW == 0 && d.Months == 0 && d.Years == 0 {
 		d.Weeks += d.Days / DtoW
-		d.Days %= DtoW
+		d.Days = 0
 	}
 	if d.Months > MtoY {
 		d.Years += d.Months / MtoY
@@ -167,6 +171,10 @@ func (d *duration) normalize() error {
 
 	if d.Weeks != 0 && (d.Years != 0 || d.Months != 0) {
 		return errWeeksNotWithYearsOrMonth
+	}
+
+	if d.Weeks != 0 && (d.Days != 0 || d.Hours != 0 || d.Minutes != 0 || d.Seconds != 0 || d.MilliSeconds != 0) {
+		return errWeeksNotAlone
 	}
 
 	return nil

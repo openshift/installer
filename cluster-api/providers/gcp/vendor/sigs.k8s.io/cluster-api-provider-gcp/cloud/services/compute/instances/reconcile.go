@@ -35,6 +35,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const metadataKeyUserData = "user-data"
+
 // Reconcile reconcile machine instance.
 func (s *Service) Reconcile(ctx context.Context) error {
 	log := log.FromContext(ctx)
@@ -128,7 +130,7 @@ func (s *Service) Delete(ctx context.Context) error {
 func (s *Service) createOrGetInstance(ctx context.Context) (*compute.Instance, error) {
 	log := log.FromContext(ctx)
 	log.V(2).Info("Getting bootstrap data for machine")
-	bootstrapData, err := s.scope.GetBootstrapData()
+	bootstrapData, err := s.scope.GetBootstrapData(ctx)
 	if err != nil {
 		log.Error(err, "Error getting bootstrap data for machine")
 		return nil, errors.Wrap(err, "failed to retrieve bootstrap data")
@@ -138,7 +140,7 @@ func (s *Service) createOrGetInstance(ctx context.Context) (*compute.Instance, e
 	instanceName := instanceSpec.Name
 	instanceKey := meta.ZonalKey(instanceName, s.scope.Zone())
 	instanceSpec.Metadata.Items = append(instanceSpec.Metadata.Items, &compute.MetadataItems{
-		Key:   "user-data",
+		Key:   metadataKeyUserData,
 		Value: ptr.To[string](bootstrapData),
 	})
 

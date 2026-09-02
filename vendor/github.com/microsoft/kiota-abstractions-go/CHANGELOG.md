@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.4](https://github.com/microsoft/kiota-abstractions-go/compare/v1.9.3...v1.9.4) (2026-03-09)
+
+
+### Bug Fixes
+
+* duration normalization no longer produces invalid ISO 8601 week combinations ([7285e50](https://github.com/microsoft/kiota-abstractions-go/commit/7285e5075231e31a38d3d638c4c76a7aca190723))
+* ISO 8601 duration normalization must not produce partial-week combinations ([aa3357f](https://github.com/microsoft/kiota-abstractions-go/commit/aa3357f68d1dfdd9e1d39d037ddce8e046c8268d))
+
+## [1.9.3](https://github.com/microsoft/kiota-abstractions-go/compare/v1.9.2...v1.9.3) (2025-07-16)
+
+
+### Bug Fixes
+
+* for timeOnly to support string with nanosecond precision ([#206](https://github.com/microsoft/kiota-abstractions-go/issues/206)) ([fbc2113](https://github.com/microsoft/kiota-abstractions-go/commit/fbc21133d031ef3e09b6aeda2de54033bd8533ce))
+
 ## [1.9.2](https://github.com/microsoft/kiota-abstractions-go/compare/v1.9.1...v1.9.2) (2025-04-02)
 
 

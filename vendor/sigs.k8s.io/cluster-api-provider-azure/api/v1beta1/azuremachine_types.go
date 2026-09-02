@@ -139,6 +139,8 @@ type AzureMachineSpec struct {
 
 	// DisableVMBootstrapExtension specifies whether the VM bootstrap extension should be disabled on the virtual machine.
 	// Use this setting if you want to disable only the bootstrapping extension and not all extensions.
+	// If unset, CAPZ treats this as true during reconciliation, meaning the bootstrap extension is not installed on new VMs.
+	// Set to false to opt back in to the bootstrap extension.
 	// +optional
 	DisableVMBootstrapExtension *bool `json:"disableVMBootstrapExtension,omitempty"`
 
@@ -317,5 +319,5 @@ func (m *AzureMachine) SetFutures(futures Futures) {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureMachine{}, &AzureMachineList{})
+	objectTypes = append(objectTypes, &AzureMachine{}, &AzureMachineList{})
 }

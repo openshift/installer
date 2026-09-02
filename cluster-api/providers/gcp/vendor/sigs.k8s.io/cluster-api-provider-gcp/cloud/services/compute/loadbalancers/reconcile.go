@@ -44,6 +44,7 @@ const (
 	loadBalancingModeConnection = loadBalancingMode("CONNECTION")
 
 	loadBalanceTrafficInternal = "INTERNAL"
+	addressPurposeGCEEndpoint  = "GCE_ENDPOINT"
 )
 
 // Reconcile reconcile cluster control-plane loadbalancer components.
@@ -254,11 +255,7 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 
 func (s *Service) createOrGetInstanceGroups(ctx context.Context) ([]*compute.InstanceGroup, error) {
 	log := log.FromContext(ctx)
-	fd := s.scope.FailureDomains()
-	zones := make([]string, 0, len(fd))
-	for zone := range fd {
-		zones = append(zones, zone)
-	}
+	zones := s.scope.FailureDomains()
 
 	groups := make([]*compute.InstanceGroup, 0, len(zones))
 	groupsMap := s.scope.Network().APIServerInstanceGroups
@@ -531,7 +528,7 @@ func (s *Service) createOrGetInternalAddress(ctx context.Context, lbname string)
 		addrSpec.Address = *lbSpec.InternalLoadBalancer.IPAddress
 	}
 	addrSpec.Subnetwork = subnet.SelfLink
-	addrSpec.Purpose = "GCE_ENDPOINT"
+	addrSpec.Purpose = addressPurposeGCEEndpoint
 	log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
 	key := meta.RegionalKey(addrSpec.Name, s.scope.Region())
 	addr, err := s.internaladdresses.Get(ctx, key)
@@ -612,10 +609,9 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	}
 	// Ports is used instead or PortRange for passthrough Load Balancer
 	// Configure ports for k8s API to match the external API which is the first port of range
-	var ports []string
 	portList := strings.Split(spec.PortRange, "-")
+	ports := make([]string, 0, 2)
 	ports = append(ports, portList[0])
-	// Also configure ignition port
 	ports = append(ports, "22623")
 	spec.Ports = ports
 	spec.PortRange = ""

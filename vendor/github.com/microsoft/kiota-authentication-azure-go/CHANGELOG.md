@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1](https://github.com/microsoft/kiota-authentication-azure-go/compare/v1.3.0...v1.3.1) (2025-07-16)
+
+
+### Bug Fixes
+
+* scopes default assignment is not cached to avoid issues the the provider being used against multiple services ([6048e90](https://github.com/microsoft/kiota-authentication-azure-go/commit/6048e901241a0f5257f86cc6224ef3e6aaf2fdfe))
+
 ## [1.3.0](https://github.com/microsoft/kiota-authentication-azure-go/compare/v1.2.1...v1.3.0) (2025-04-02)
 
 

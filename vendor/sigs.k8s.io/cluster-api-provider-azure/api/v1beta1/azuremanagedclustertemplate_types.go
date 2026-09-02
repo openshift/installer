@@ -48,7 +48,7 @@ type AzureManagedClusterTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureManagedClusterTemplate{}, &AzureManagedClusterTemplateList{})
+	objectTypes = append(objectTypes, &AzureManagedClusterTemplate{}, &AzureManagedClusterTemplateList{})
 }
 
 // AzureManagedClusterTemplateResource describes the data needed to create an AzureManagedCluster from a template.

@@ -5,6 +5,14 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+// Apply sets values from the default machine platform to the machinepool.
+func Apply(defaultMachinePlatform, machinePool *gcp.MachinePool) {
+	tempMP := &gcp.MachinePool{}
+	tempMP.Set(defaultMachinePlatform)
+	tempMP.Set(machinePool)
+	machinePool.Set(tempMP)
+}
+
 // SetMachinePoolDefaults sets the defaults for the platform.
 func SetMachinePoolDefaults(platform *types.Platform, pool *gcp.MachinePool) {
 	if pool == nil {
@@ -27,7 +35,7 @@ func SetMachinePoolDefaults(platform *types.Platform, pool *gcp.MachinePool) {
 	if pool.InstanceType != "" && pool.OSDisk.DiskType == "" {
 		family := gcp.GetGCPInstanceFamily(pool.InstanceType)
 		if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; ok {
-			pool.OSDisk.DiskType = gcp.DefaultDiskTypeForInstance(pool.InstanceType)
+			pool.OSDisk.DiskType = gcp.DefaultDiskTypeForInstanceAndProjectID(pool.InstanceType, platform.GCP.ProjectID, platform.GCP.Region)
 		}
 	}
 }

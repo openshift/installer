@@ -34,10 +34,12 @@ type global struct {
 	NetworkProjectID string `gcfg:"network-project-id"`
 
 	FirewallManagement string `gcfg:"firewall-rules-management"`
+
+	TokenURL string `gcfg:"token-url"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
-func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, firewallManagement string) (string, error) {
+func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, firewallManagement, tokenURL string) (string, error) {
 	config := &config{
 		Global: global{
 			ProjectID: projectID,
@@ -59,6 +61,8 @@ func CloudProviderConfig(infraID, projectID, subnet, networkProjectID, firewallM
 			NetworkProjectID: networkProjectID,
 
 			FirewallManagement: firewallManagement,
+
+			TokenURL: tokenURL,
 		},
 	}
 
@@ -82,5 +86,6 @@ external-instance-groups-prefix = {{.Global.ExternalInstanceGroupsPrefix}}
 subnetwork-name = {{.Global.SubnetworkName}}
 {{- if ne .Global.NetworkProjectID "" }}{{"\n"}}network-project-id = {{.Global.NetworkProjectID}}{{ end }}
 {{- if ne .Global.FirewallManagement "" }}{{"\n"}}firewall-rules-management = {{.Global.FirewallManagement}}{{ end }}
+{{- if ne .Global.TokenURL "" }}{{"\n"}}token-url = {{.Global.TokenURL}}{{ end }}
 
 `
