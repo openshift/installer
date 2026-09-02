@@ -180,6 +180,7 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 		WatcherAuthToken:          authConfig.WatcherAuthToken,
 		AuthType:                  authConfig.AuthType,
 		DisableImagePolicy:        shouldDisableImagePolicy(),
+		InstallInvokerSuffix:      "-postconfig",
 	}
 
 	enabledServices := getDefaultEnabledServices()
