@@ -10,6 +10,9 @@ import (
 	"strings"
 	"testing"
 
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
@@ -1803,8 +1806,38 @@ func TestValidate(t *testing.T) {
 		})
 	}
 
+	// Provide a mock EC2 client to avoid a live API call when looking up an instance type.
+	// The EC2 query API POSTs to the root path, so the request URL carries a trailing slash.
+	// httpmock matches responders by exact URL, so the endpoint includes the slash to match what the SDK sends.
+	//
+	// Instance types referenced by the tests are pre-seeded in Metadata.instanceTypes, so only
+	// unknown types reach the API. DescribeInstanceTypes returns an InvalidInstanceType error for a
+	// type that does not exist, which getInstanceType translates into an *InstanceTypeNotFoundError.
+	const mockEC2Endpoint = "https://ec2.mock.local/"
+	httpmock.RegisterResponder(http.MethodPost, mockEC2Endpoint, func(r *http.Request) (*http.Response, error) {
+		const invalidInstanceTypeResp = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Errors>
+        <Error>
+            <Code>InvalidInstanceType</Code>
+            <Message>The following supplied instance types do not exist</Message>
+        </Error>
+    </Errors>
+    <RequestID>req-mock</RequestID>
+</Response>`
+		return httpmock.NewStringResponse(http.StatusBadRequest, invalidInstanceTypeResp), nil
+	})
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ec2Mock := ec2.New(ec2.Options{
+				Region:       test.installConfig.Platform.AWS.Region,
+				Credentials:  credentials.NewStaticCredentialsProvider("id", "secret", "token"),
+				BaseEndpoint: awssdk.String(mockEC2Endpoint),
+				// An HTTP client must be defined so that the SDK doesn't build
+				// its own transport, which escapes the mock.
+				HTTPClient: &http.Client{},
+			})
 			meta := &Metadata{
 				availabilityZones: test.availZones,
 				availableRegions:  test.availRegions,
@@ -1821,6 +1854,7 @@ func TestValidate(t *testing.T) {
 				Hosts:           test.hosts,
 				Region:          test.installConfig.Platform.AWS.Region,
 				ProvidedSubnets: test.installConfig.Platform.AWS.VPC.Subnets,
+				ec2Client:       ec2Mock,
 			}
 
 			if test.subnetsInVPC != nil {
