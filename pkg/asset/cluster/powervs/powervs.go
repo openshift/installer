@@ -61,6 +61,7 @@ func Metadata(config *types.InstallConfig, meta *icpowervs.Metadata) (*powervs.M
 		BaseDomain:           config.BaseDomain,
 		PowerVSResourceGroup: config.Platform.PowerVS.PowerVSResourceGroup,
 		CISInstanceCRN:       cisCRN,
+		COSInstanceCRN:       config.Platform.PowerVS.COSInstanceCRN,
 		DNSInstanceCRN:       dnsCRN,
 		Region:               config.Platform.PowerVS.Region,
 		VPCRegion:            config.Platform.PowerVS.VPCRegion,
