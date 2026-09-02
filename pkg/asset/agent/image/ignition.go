@@ -90,6 +90,8 @@ type agentTemplateData struct {
 	// DisabledHostValidations is a comma-separated list of assisted-service host
 	// validation IDs to disable. Set only for the add-nodes workflow.
 	DisabledHostValidations string
+	// InstallInvokerSuffix is appended to "agent-installer" for INSTALL_INVOKER.
+	InstallInvokerSuffix string
 }
 
 // Name returns the human-friendly name of the asset.
