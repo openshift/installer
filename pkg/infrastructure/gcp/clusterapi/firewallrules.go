@@ -38,6 +38,73 @@ func getHealthChecksPorts() []*compute.FirewallAllowed {
 	}
 }
 
+// getServiceLoadBalancerHealthCheckPorts returns the ports probed for
+// service-type LoadBalancer health checks: 10256 (externalTrafficPolicy=Cluster,
+// the shared node health-check port) and the nodeport range
+// (externalTrafficPolicy=Local, the dynamically allocated healthCheckNodePort).
+func getServiceLoadBalancerHealthCheckPorts() []*compute.FirewallAllowed {
+	return []*compute.FirewallAllowed{
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				"10256",
+				"30000-32767",
+			},
+		},
+	}
+}
+
+// gcpHealthCheckSourceRanges are the health-check prober ranges for public GCP.
+var gcpHealthCheckSourceRanges = []string{
+	"35.191.0.0/16",
+	"130.211.0.0/22",
+}
+
+// gcpExternalHealthCheckSourceRanges are additionally required for external
+// (public-facing) load balancers on public GCP.
+var gcpExternalHealthCheckSourceRanges = []string{
+	"209.85.152.0/22",
+	"209.85.204.0/22",
+}
+
+// gcdHealthCheckSourceRanges maps a GCD region to its health-check prober
+// ranges, which differ from public GCP and per region. Sourced from the
+// "Probe IP ranges" section of each region's load-balancing/docs/firewall-rules
+// (u-france-east1: https://documentation.s3ns.fr).
+var gcdHealthCheckSourceRanges = map[string][]string{
+	"u-germany-northeast1": {
+		"34.3.144.0/23",
+		"34.3.151.0/26",
+		"34.3.151.64/26",
+		"136.124.104.0/22",
+		"136.124.108.0/22",
+	},
+	"u-france-east1": {
+		"177.222.80.0/23",
+		"177.222.87.0/26",
+		"177.222.87.64/26",
+		"136.124.104.0/22",
+		"136.124.108.0/22",
+	},
+}
+
+// healthCheckSourceRanges returns the health-check prober ranges the ingress
+// firewall rule must allow for the given region. GCD regions use their
+// region-specific ranges; other regions use the public GCP ranges, appending
+// the external ranges when external is true (GCD is private-only).
+func healthCheckSourceRanges(region string, external bool) []string {
+	if ranges, ok := gcdHealthCheckSourceRanges[region]; ok {
+		// Return a copy so callers cannot mutate the package-level slice.
+		return append([]string(nil), ranges...)
+	}
+
+	ranges := append([]string(nil), gcpHealthCheckSourceRanges...)
+	if external {
+		ranges = append(ranges, gcpExternalHealthCheckSourceRanges...)
+	}
+	return ranges
+}
+
 func getControlPlanePorts() []*compute.FirewallAllowed {
 	return []*compute.FirewallAllowed{
 		{
@@ -246,13 +313,21 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	firewallName = fmt.Sprintf("%s-health-checks", in.InfraID)
 	srcTags = []string{}
 	targetTags = []string{masterTag}
-	srcRanges = []string{"35.191.0.0/16", "130.211.0.0/22"}
-	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
-		// public installs require additional google ip addresses for health checks
-		srcRanges = append(srcRanges, []string{"209.85.152.0/22", "209.85.204.0/22"}...)
-	}
+	srcRanges = healthCheckSourceRanges(in.InstallConfig.Config.GCP.Region, in.InstallConfig.Config.PublicAPI())
 	if err := addFirewallRule(ctx, svc, firewallName, network, projectID, getHealthChecksPorts(), srcTags, targetTags, srcRanges); err != nil {
 		return err
+	}
+
+	// On GCD, cloud-provider-gcp creates service-type LoadBalancer health-check firewall rules using the
+	// public-GCP prober ranges, which GCD does not use, so pre-create an additive rule with the correct
+	// GCD ranges.
+	if gcdRanges, ok := gcdHealthCheckSourceRanges[in.InstallConfig.Config.GCP.Region]; ok {
+		firewallName = fmt.Sprintf("%s-gcd-service-health-checks", in.InfraID)
+		srcTags = []string{}
+		targetTags = []string{workerTag, masterTag}
+		if err := addFirewallRule(ctx, svc, firewallName, network, projectID, getServiceLoadBalancerHealthCheckPorts(), srcTags, targetTags, gcdRanges); err != nil {
+			return err
+		}
 	}
 
 	// internal-cluster rules are needed for worker<->master communication for k8s nodes
