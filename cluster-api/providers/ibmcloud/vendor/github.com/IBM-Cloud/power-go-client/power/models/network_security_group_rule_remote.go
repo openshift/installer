@@ -42,7 +42,7 @@ func (m *NetworkSecurityGroupRuleRemote) Validate(formats strfmt.Registry) error
 	return nil
 }
 
-var networkSecurityGroupRuleRemoteTypeTypePropEnum []interface{}
+var networkSecurityGroupRuleRemoteTypeTypePropEnum []any
 
 func init() {
 	var res []string

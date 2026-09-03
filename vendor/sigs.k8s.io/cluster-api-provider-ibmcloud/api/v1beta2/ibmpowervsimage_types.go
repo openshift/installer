@@ -37,8 +37,9 @@ type IBMPowerVSImageSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
 
-	// ServiceInstanceID is the id of the power cloud instance where the image will get imported.
 	// Deprecated: use ServiceInstance instead
+	//
+	// ServiceInstanceID is the id of the power cloud instance where the image will get imported.
 	ServiceInstanceID string `json:"serviceInstanceID"`
 
 	// serviceInstance is the reference to the Power VS workspace on which the server instance(VM) will be created.

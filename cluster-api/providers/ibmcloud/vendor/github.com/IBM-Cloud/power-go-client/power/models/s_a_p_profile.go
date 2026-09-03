@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -54,8 +55,11 @@ type SAPProfile struct {
 
 	// Type of profile
 	// Required: true
-	// Enum: ["balanced","compute","memory","non-production","ultra-memory","small","SAP Rise Optimized"]
+	// Enum: ["balanced","compute","memory","ultra-memory","small","sap-rise","sap-rise-app"]
 	Type *string `json:"type"`
+
+	// vpmem volume
+	VpmemVolume *SAPProfileVpmemVolume `json:"vpmemVolume,omitempty"`
 
 	// List of supported workload types
 	WorkloadTypes []string `json:"workloadTypes"`
@@ -86,6 +90,10 @@ func (m *SAPProfile) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateVpmemVolume(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -131,7 +139,7 @@ func (m *SAPProfile) validateProfileID(formats strfmt.Registry) error {
 	return nil
 }
 
-var sAPProfileTypeSmtModePropEnum []interface{}
+var sAPProfileTypeSmtModePropEnum []any
 
 func init() {
 	var res []int64
@@ -164,11 +172,11 @@ func (m *SAPProfile) validateSmtMode(formats strfmt.Registry) error {
 	return nil
 }
 
-var sAPProfileTypeTypePropEnum []interface{}
+var sAPProfileTypeTypePropEnum []any
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["balanced","compute","memory","non-production","ultra-memory","small","SAP Rise Optimized"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["balanced","compute","memory","ultra-memory","small","sap-rise","sap-rise-app"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -187,17 +195,17 @@ const (
 	// SAPProfileTypeMemory captures enum value "memory"
 	SAPProfileTypeMemory string = "memory"
 
-	// SAPProfileTypeNonDashProduction captures enum value "non-production"
-	SAPProfileTypeNonDashProduction string = "non-production"
-
 	// SAPProfileTypeUltraDashMemory captures enum value "ultra-memory"
 	SAPProfileTypeUltraDashMemory string = "ultra-memory"
 
 	// SAPProfileTypeSmall captures enum value "small"
 	SAPProfileTypeSmall string = "small"
 
-	// SAPProfileTypeSAPRiseOptimized captures enum value "SAP Rise Optimized"
-	SAPProfileTypeSAPRiseOptimized string = "SAP Rise Optimized"
+	// SAPProfileTypeSapDashRise captures enum value "sap-rise"
+	SAPProfileTypeSapDashRise string = "sap-rise"
+
+	// SAPProfileTypeSapDashRiseDashApp captures enum value "sap-rise-app"
+	SAPProfileTypeSapDashRiseDashApp string = "sap-rise-app"
 )
 
 // prop value enum
@@ -222,8 +230,65 @@ func (m *SAPProfile) validateType(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this s a p profile based on context it is used
+func (m *SAPProfile) validateVpmemVolume(formats strfmt.Registry) error {
+	if swag.IsZero(m.VpmemVolume) { // not required
+		return nil
+	}
+
+	if m.VpmemVolume != nil {
+		if err := m.VpmemVolume.Validate(formats); err != nil {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
+				return ve.ValidateName("vpmemVolume")
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
+				return ce.ValidateName("vpmemVolume")
+			}
+
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this s a p profile based on the context it is used
 func (m *SAPProfile) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateVpmemVolume(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SAPProfile) contextValidateVpmemVolume(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.VpmemVolume != nil {
+
+		if swag.IsZero(m.VpmemVolume) { // not required
+			return nil
+		}
+
+		if err := m.VpmemVolume.ContextValidate(ctx, formats); err != nil {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
+				return ve.ValidateName("vpmemVolume")
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
+				return ce.ValidateName("vpmemVolume")
+			}
+
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -238,6 +303,46 @@ func (m *SAPProfile) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *SAPProfile) UnmarshalBinary(b []byte) error {
 	var res SAPProfile
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*m = res
+	return nil
+}
+
+// SAPProfileVpmemVolume vPMEM volume details for the profile
+//
+// swagger:model SAPProfileVpmemVolume
+type SAPProfileVpmemVolume struct {
+
+	// Maximum percent of memory to be assigned for carved out vPMEM volume
+	MaxPercent int64 `json:"maxPercent,omitempty"`
+
+	// Minimum percent of memory to be assigned for carved out vPMEM volume
+	MinPercent int64 `json:"minPercent,omitempty"`
+}
+
+// Validate validates this s a p profile vpmem volume
+func (m *SAPProfileVpmemVolume) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this s a p profile vpmem volume based on context it is used
+func (m *SAPProfileVpmemVolume) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (m *SAPProfileVpmemVolume) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(m)
+}
+
+// UnmarshalBinary interface implementation
+func (m *SAPProfileVpmemVolume) UnmarshalBinary(b []byte) error {
+	var res SAPProfileVpmemVolume
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

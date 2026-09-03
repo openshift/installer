@@ -41,7 +41,7 @@ const (
 )
 
 // for schema
-var pinPolicyEnum []interface{}
+var pinPolicyEnum []any
 
 func init() {
 	var res []PinPolicy

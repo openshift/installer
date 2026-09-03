@@ -8,8 +8,10 @@ package models
 import (
 	"context"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // SnapshotUpdate snapshot update
@@ -17,15 +19,59 @@ import (
 // swagger:model SnapshotUpdate
 type SnapshotUpdate struct {
 
-	// Description of the PVM instance snapshot
-	Description string `json:"description,omitempty"`
+	// Description of the PVM instance snapshot with a maximum of 255 characters allowed.
+	// Max Length: 255
+	Description *string `json:"description,omitempty"`
 
 	// Name of the PVM instance snapshot
-	Name string `json:"name,omitempty"`
+	// Max Length: 120
+	// Pattern: ^[a-zA-Z0-9_.-]+$
+	Name *string `json:"name,omitempty"`
 }
 
 // Validate validates this snapshot update
 func (m *SnapshotUpdate) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateDescription(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SnapshotUpdate) validateDescription(formats strfmt.Registry) error {
+	if swag.IsZero(m.Description) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("description", "body", *m.Description, 255); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *SnapshotUpdate) validateName(formats strfmt.Registry) error {
+	if swag.IsZero(m.Name) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("name", "body", *m.Name, 120); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", *m.Name, `^[a-zA-Z0-9_.-]+$`); err != nil {
+		return err
+	}
+
 	return nil
 }
 

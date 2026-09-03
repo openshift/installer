@@ -7,6 +7,7 @@ package p_cloud_service_d_h_c_p
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 
@@ -22,7 +23,7 @@ type PcloudDhcpDeleteReader struct {
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *PcloudDhcpDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *PcloudDhcpDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
 	switch response.Code() {
 	case 202:
 		result := NewPcloudDhcpDeleteAccepted()
@@ -67,7 +68,7 @@ func NewPcloudDhcpDeleteAccepted() *PcloudDhcpDeleteAccepted {
 /*
 PcloudDhcpDeleteAccepted describes a response with status code 202, with default header values.
 
-OK
+Accepted
 */
 type PcloudDhcpDeleteAccepted struct {
 	Payload models.Object
@@ -120,7 +121,7 @@ func (o *PcloudDhcpDeleteAccepted) GetPayload() models.Object {
 func (o *PcloudDhcpDeleteAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	// response payload
-	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -190,7 +191,7 @@ func (o *PcloudDhcpDeleteBadRequest) readResponse(response runtime.ClientRespons
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -260,7 +261,7 @@ func (o *PcloudDhcpDeleteForbidden) readResponse(response runtime.ClientResponse
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -330,7 +331,7 @@ func (o *PcloudDhcpDeleteNotFound) readResponse(response runtime.ClientResponse,
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -400,7 +401,7 @@ func (o *PcloudDhcpDeleteInternalServerError) readResponse(response runtime.Clie
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 

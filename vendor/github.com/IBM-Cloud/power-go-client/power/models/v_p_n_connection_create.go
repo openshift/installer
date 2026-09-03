@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -113,7 +114,7 @@ func (m *VPNConnectionCreate) validateIPSecPolicy(formats strfmt.Registry) error
 	return nil
 }
 
-var vPNConnectionCreateTypeModePropEnum []interface{}
+var vPNConnectionCreateTypeModePropEnum []any
 
 func init() {
 	var res []string
@@ -186,11 +187,15 @@ func (m *VPNConnectionCreate) validatePeerGatewayAddress(formats strfmt.Registry
 
 	if m.PeerGatewayAddress != nil {
 		if err := m.PeerGatewayAddress.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("peerGatewayAddress")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("peerGatewayAddress")
 			}
+
 			return err
 		}
 	}
@@ -226,11 +231,15 @@ func (m *VPNConnectionCreate) contextValidatePeerGatewayAddress(ctx context.Cont
 	if m.PeerGatewayAddress != nil {
 
 		if err := m.PeerGatewayAddress.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("peerGatewayAddress")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("peerGatewayAddress")
 			}
+
 			return err
 		}
 	}

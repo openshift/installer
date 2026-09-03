@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -34,6 +35,9 @@ type PVMInstanceUpdate struct {
 
 	// pin policy
 	PinPolicy PinPolicy `json:"pinPolicy,omitempty"`
+
+	// Preferred processor compatibility mode
+	PreferredProcessorCompatibilityMode string `json:"preferredProcessorCompatibilityMode,omitempty"`
 
 	// Processor type (dedicated, shared, capped)
 	// Enum: ["dedicated","shared","capped"]
@@ -95,11 +99,15 @@ func (m *PVMInstanceUpdate) validateCloudInitialization(formats strfmt.Registry)
 
 	if m.CloudInitialization != nil {
 		if err := m.CloudInitialization.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("cloudInitialization")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("cloudInitialization")
 			}
+
 			return err
 		}
 	}
@@ -113,18 +121,22 @@ func (m *PVMInstanceUpdate) validatePinPolicy(formats strfmt.Registry) error {
 	}
 
 	if err := m.PinPolicy.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("pinPolicy")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("pinPolicy")
 		}
+
 		return err
 	}
 
 	return nil
 }
 
-var pVmInstanceUpdateTypeProcTypePropEnum []interface{}
+var pVmInstanceUpdateTypeProcTypePropEnum []any
 
 func init() {
 	var res []string
@@ -176,11 +188,15 @@ func (m *PVMInstanceUpdate) validateSoftwareLicenses(formats strfmt.Registry) er
 
 	if m.SoftwareLicenses != nil {
 		if err := m.SoftwareLicenses.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("softwareLicenses")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("softwareLicenses")
 			}
+
 			return err
 		}
 	}
@@ -195,11 +211,15 @@ func (m *PVMInstanceUpdate) validateVirtualCores(formats strfmt.Registry) error 
 
 	if m.VirtualCores != nil {
 		if err := m.VirtualCores.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("virtualCores")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("virtualCores")
 			}
+
 			return err
 		}
 	}
@@ -242,11 +262,15 @@ func (m *PVMInstanceUpdate) contextValidateCloudInitialization(ctx context.Conte
 		}
 
 		if err := m.CloudInitialization.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("cloudInitialization")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("cloudInitialization")
 			}
+
 			return err
 		}
 	}
@@ -261,11 +285,15 @@ func (m *PVMInstanceUpdate) contextValidatePinPolicy(ctx context.Context, format
 	}
 
 	if err := m.PinPolicy.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("pinPolicy")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("pinPolicy")
 		}
+
 		return err
 	}
 
@@ -281,11 +309,15 @@ func (m *PVMInstanceUpdate) contextValidateSoftwareLicenses(ctx context.Context,
 		}
 
 		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("softwareLicenses")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("softwareLicenses")
 			}
+
 			return err
 		}
 	}
@@ -302,11 +334,15 @@ func (m *PVMInstanceUpdate) contextValidateVirtualCores(ctx context.Context, for
 		}
 
 		if err := m.VirtualCores.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("virtualCores")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("virtualCores")
 			}
+
 			return err
 		}
 	}

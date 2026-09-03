@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -115,7 +116,7 @@ func (m *CreateCosImageImportJob) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var createCosImageImportJobTypeBucketAccessPropEnum []interface{}
+var createCosImageImportJobTypeBucketAccessPropEnum []any
 
 func init() {
 	var res []string
@@ -191,11 +192,15 @@ func (m *CreateCosImageImportJob) validateImportDetails(formats strfmt.Registry)
 
 	if m.ImportDetails != nil {
 		if err := m.ImportDetails.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("importDetails")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("importDetails")
 			}
+
 			return err
 		}
 	}
@@ -203,7 +208,7 @@ func (m *CreateCosImageImportJob) validateImportDetails(formats strfmt.Registry)
 	return nil
 }
 
-var createCosImageImportJobTypeOsTypePropEnum []interface{}
+var createCosImageImportJobTypeOsTypePropEnum []any
 
 func init() {
 	var res []string
@@ -267,11 +272,15 @@ func (m *CreateCosImageImportJob) validateStorageAffinity(formats strfmt.Registr
 
 	if m.StorageAffinity != nil {
 		if err := m.StorageAffinity.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("storageAffinity")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("storageAffinity")
 			}
+
 			return err
 		}
 	}
@@ -285,11 +294,15 @@ func (m *CreateCosImageImportJob) validateUserTags(formats strfmt.Registry) erro
 	}
 
 	if err := m.UserTags.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 
@@ -327,11 +340,15 @@ func (m *CreateCosImageImportJob) contextValidateImportDetails(ctx context.Conte
 		}
 
 		if err := m.ImportDetails.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("importDetails")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("importDetails")
 			}
+
 			return err
 		}
 	}
@@ -348,11 +365,15 @@ func (m *CreateCosImageImportJob) contextValidateStorageAffinity(ctx context.Con
 		}
 
 		if err := m.StorageAffinity.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("storageAffinity")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("storageAffinity")
 			}
+
 			return err
 		}
 	}
@@ -363,11 +384,15 @@ func (m *CreateCosImageImportJob) contextValidateStorageAffinity(ctx context.Con
 func (m *CreateCosImageImportJob) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 

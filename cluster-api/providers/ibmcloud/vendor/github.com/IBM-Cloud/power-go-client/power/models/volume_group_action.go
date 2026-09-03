@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -32,7 +33,7 @@ type VolumeGroupAction struct {
 	Stop *VolumeGroupActionStop `json:"stop,omitempty"`
 
 	// volume group action additional properties
-	VolumeGroupActionAdditionalProperties map[string]interface{} `json:"-"`
+	VolumeGroupActionAdditionalProperties map[string]any `json:"-"`
 }
 
 // UnmarshalJSON unmarshals this object with additional properties from JSON
@@ -70,9 +71,9 @@ func (m *VolumeGroupAction) UnmarshalJSON(data []byte) error {
 	delete(stage2, "stop")
 	// stage 3, add additional properties values
 	if len(stage2) > 0 {
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		for k, v := range stage2 {
-			var toadd interface{}
+			var toadd any
 			if err := json.Unmarshal(v, &toadd); err != nil {
 				return err
 			}
@@ -182,11 +183,15 @@ func (m *VolumeGroupAction) validateReset(formats strfmt.Registry) error {
 
 	if m.Reset != nil {
 		if err := m.Reset.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("reset")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("reset")
 			}
+
 			return err
 		}
 	}
@@ -201,11 +206,15 @@ func (m *VolumeGroupAction) validateStart(formats strfmt.Registry) error {
 
 	if m.Start != nil {
 		if err := m.Start.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("start")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("start")
 			}
+
 			return err
 		}
 	}
@@ -220,11 +229,15 @@ func (m *VolumeGroupAction) validateStop(formats strfmt.Registry) error {
 
 	if m.Stop != nil {
 		if err := m.Stop.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("stop")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("stop")
 			}
+
 			return err
 		}
 	}
@@ -263,11 +276,15 @@ func (m *VolumeGroupAction) contextValidateReset(ctx context.Context, formats st
 		}
 
 		if err := m.Reset.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("reset")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("reset")
 			}
+
 			return err
 		}
 	}
@@ -284,11 +301,15 @@ func (m *VolumeGroupAction) contextValidateStart(ctx context.Context, formats st
 		}
 
 		if err := m.Start.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("start")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("start")
 			}
+
 			return err
 		}
 	}
@@ -305,11 +326,15 @@ func (m *VolumeGroupAction) contextValidateStop(ctx context.Context, formats str
 		}
 
 		if err := m.Stop.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("stop")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("stop")
 			}
+
 			return err
 		}
 	}

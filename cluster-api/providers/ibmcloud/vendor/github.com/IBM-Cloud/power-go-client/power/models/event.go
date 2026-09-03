@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -38,7 +39,7 @@ type Event struct {
 	Message *string `json:"message"`
 
 	// Any metadata associated with the event
-	Metadata interface{} `json:"metadata,omitempty"`
+	Metadata any `json:"metadata,omitempty"`
 
 	// Type of resource for this event
 	// Required: true
@@ -117,7 +118,7 @@ func (m *Event) validateEventID(formats strfmt.Registry) error {
 	return nil
 }
 
-var eventTypeLevelPropEnum []interface{}
+var eventTypeLevelPropEnum []any
 
 func init() {
 	var res []string
@@ -213,11 +214,15 @@ func (m *Event) validateUser(formats strfmt.Registry) error {
 
 	if m.User != nil {
 		if err := m.User.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("user")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("user")
 			}
+
 			return err
 		}
 	}
@@ -248,11 +253,15 @@ func (m *Event) contextValidateUser(ctx context.Context, formats strfmt.Registry
 		}
 
 		if err := m.User.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("user")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("user")
 			}
+
 			return err
 		}
 	}
