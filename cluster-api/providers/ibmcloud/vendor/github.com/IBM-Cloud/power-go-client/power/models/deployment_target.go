@@ -57,7 +57,7 @@ func (m *DeploymentTarget) validateID(formats strfmt.Registry) error {
 	return nil
 }
 
-var deploymentTargetTypeTypePropEnum []interface{}
+var deploymentTargetTypeTypePropEnum []any
 
 func init() {
 	var res []string

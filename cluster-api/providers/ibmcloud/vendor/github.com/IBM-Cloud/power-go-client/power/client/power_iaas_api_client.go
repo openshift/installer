@@ -17,6 +17,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms"
 	"github.com/IBM-Cloud/power-go-client/power/client/host_groups"
 	"github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker"
+	"github.com/IBM-Cloud/power-go-client/power/client/internal_capacity_management"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_dedicated_hosts"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_images"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_address_groups"
@@ -26,6 +27,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_pvm_instances"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_shared_processor_pools"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_snapshots"
+	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_v_p_mem_volumes"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_operations_volumes"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_instances"
 	"github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_locations"
@@ -57,6 +59,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tasks"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants_ssh_keys"
+	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_mem_volumes"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_connections"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_policies"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_virtual_serial_number"
@@ -64,9 +67,11 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_onboarding"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes"
 	"github.com/IBM-Cloud/power-go-client/power/client/power_edge_router"
+	"github.com/IBM-Cloud/power-go-client/power/client/routes"
 	"github.com/IBM-Cloud/power-go-client/power/client/service_bindings"
 	"github.com/IBM-Cloud/power-go-client/power/client/service_instances"
 	"github.com/IBM-Cloud/power-go-client/power/client/snapshots"
+	"github.com/IBM-Cloud/power-go-client/power/client/ssh_keys"
 	"github.com/IBM-Cloud/power-go-client/power/client/storage_types"
 	"github.com/IBM-Cloud/power-go-client/power/client/swagger_spec"
 	"github.com/IBM-Cloud/power-go-client/power/client/workspaces"
@@ -121,6 +126,7 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PowerIaasA
 	cli.HardwarePlatforms = hardware_platforms.New(transport, formats)
 	cli.HostGroups = host_groups.New(transport, formats)
 	cli.IaasServiceBroker = iaas_service_broker.New(transport, formats)
+	cli.InternalCapacityManagement = internal_capacity_management.New(transport, formats)
 	cli.InternalOperationsDedicatedHosts = internal_operations_dedicated_hosts.New(transport, formats)
 	cli.InternalOperationsImages = internal_operations_images.New(transport, formats)
 	cli.InternalOperationsNetworkAddressGroups = internal_operations_network_address_groups.New(transport, formats)
@@ -130,6 +136,7 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PowerIaasA
 	cli.InternalOperationsPvmInstances = internal_operations_pvm_instances.New(transport, formats)
 	cli.InternalOperationsSharedProcessorPools = internal_operations_shared_processor_pools.New(transport, formats)
 	cli.InternalOperationsSnapshots = internal_operations_snapshots.New(transport, formats)
+	cli.InternalOperationsvpMemVolumes = internal_operations_v_p_mem_volumes.New(transport, formats)
 	cli.InternalOperationsVolumes = internal_operations_volumes.New(transport, formats)
 	cli.InternalPowervsInstances = internal_power_v_s_instances.New(transport, formats)
 	cli.InternalPowervsLocations = internal_power_v_s_locations.New(transport, formats)
@@ -161,6 +168,7 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PowerIaasA
 	cli.PCloudTasks = p_cloud_tasks.New(transport, formats)
 	cli.PCloudTenants = p_cloud_tenants.New(transport, formats)
 	cli.PCloudTenantsSSHKeys = p_cloud_tenants_ssh_keys.New(transport, formats)
+	cli.PCloudvpMemVolumes = p_cloud_v_p_mem_volumes.New(transport, formats)
 	cli.PCloudvpnConnections = p_cloud_v_p_n_connections.New(transport, formats)
 	cli.PCloudvpnPolicies = p_cloud_v_p_n_policies.New(transport, formats)
 	cli.PCloudVirtualSerialNumber = p_cloud_virtual_serial_number.New(transport, formats)
@@ -168,9 +176,11 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PowerIaasA
 	cli.PCloudVolumeOnboarding = p_cloud_volume_onboarding.New(transport, formats)
 	cli.PCloudVolumes = p_cloud_volumes.New(transport, formats)
 	cli.PowerEdgeRouter = power_edge_router.New(transport, formats)
+	cli.Routes = routes.New(transport, formats)
 	cli.ServiceBindings = service_bindings.New(transport, formats)
 	cli.ServiceInstances = service_instances.New(transport, formats)
 	cli.Snapshots = snapshots.New(transport, formats)
+	cli.SSHKeys = ssh_keys.New(transport, formats)
 	cli.StorageTypes = storage_types.New(transport, formats)
 	cli.SwaggerSpec = swagger_spec.New(transport, formats)
 	cli.Workspaces = workspaces.New(transport, formats)
@@ -232,6 +242,8 @@ type PowerIaasAPI struct {
 
 	IaasServiceBroker iaas_service_broker.ClientService
 
+	InternalCapacityManagement internal_capacity_management.ClientService
+
 	InternalOperationsDedicatedHosts internal_operations_dedicated_hosts.ClientService
 
 	InternalOperationsImages internal_operations_images.ClientService
@@ -249,6 +261,8 @@ type PowerIaasAPI struct {
 	InternalOperationsSharedProcessorPools internal_operations_shared_processor_pools.ClientService
 
 	InternalOperationsSnapshots internal_operations_snapshots.ClientService
+
+	InternalOperationsvpMemVolumes internal_operations_v_p_mem_volumes.ClientService
 
 	InternalOperationsVolumes internal_operations_volumes.ClientService
 
@@ -312,6 +326,8 @@ type PowerIaasAPI struct {
 
 	PCloudTenantsSSHKeys p_cloud_tenants_ssh_keys.ClientService
 
+	PCloudvpMemVolumes p_cloud_v_p_mem_volumes.ClientService
+
 	PCloudvpnConnections p_cloud_v_p_n_connections.ClientService
 
 	PCloudvpnPolicies p_cloud_v_p_n_policies.ClientService
@@ -326,11 +342,15 @@ type PowerIaasAPI struct {
 
 	PowerEdgeRouter power_edge_router.ClientService
 
+	Routes routes.ClientService
+
 	ServiceBindings service_bindings.ClientService
 
 	ServiceInstances service_instances.ClientService
 
 	Snapshots snapshots.ClientService
+
+	SSHKeys ssh_keys.ClientService
 
 	StorageTypes storage_types.ClientService
 
@@ -351,6 +371,7 @@ func (c *PowerIaasAPI) SetTransport(transport runtime.ClientTransport) {
 	c.HardwarePlatforms.SetTransport(transport)
 	c.HostGroups.SetTransport(transport)
 	c.IaasServiceBroker.SetTransport(transport)
+	c.InternalCapacityManagement.SetTransport(transport)
 	c.InternalOperationsDedicatedHosts.SetTransport(transport)
 	c.InternalOperationsImages.SetTransport(transport)
 	c.InternalOperationsNetworkAddressGroups.SetTransport(transport)
@@ -360,6 +381,7 @@ func (c *PowerIaasAPI) SetTransport(transport runtime.ClientTransport) {
 	c.InternalOperationsPvmInstances.SetTransport(transport)
 	c.InternalOperationsSharedProcessorPools.SetTransport(transport)
 	c.InternalOperationsSnapshots.SetTransport(transport)
+	c.InternalOperationsvpMemVolumes.SetTransport(transport)
 	c.InternalOperationsVolumes.SetTransport(transport)
 	c.InternalPowervsInstances.SetTransport(transport)
 	c.InternalPowervsLocations.SetTransport(transport)
@@ -391,6 +413,7 @@ func (c *PowerIaasAPI) SetTransport(transport runtime.ClientTransport) {
 	c.PCloudTasks.SetTransport(transport)
 	c.PCloudTenants.SetTransport(transport)
 	c.PCloudTenantsSSHKeys.SetTransport(transport)
+	c.PCloudvpMemVolumes.SetTransport(transport)
 	c.PCloudvpnConnections.SetTransport(transport)
 	c.PCloudvpnPolicies.SetTransport(transport)
 	c.PCloudVirtualSerialNumber.SetTransport(transport)
@@ -398,9 +421,11 @@ func (c *PowerIaasAPI) SetTransport(transport runtime.ClientTransport) {
 	c.PCloudVolumeOnboarding.SetTransport(transport)
 	c.PCloudVolumes.SetTransport(transport)
 	c.PowerEdgeRouter.SetTransport(transport)
+	c.Routes.SetTransport(transport)
 	c.ServiceBindings.SetTransport(transport)
 	c.ServiceInstances.SetTransport(transport)
 	c.Snapshots.SetTransport(transport)
+	c.SSHKeys.SetTransport(transport)
 	c.StorageTypes.SetTransport(transport)
 	c.SwaggerSpec.SetTransport(transport)
 	c.Workspaces.SetTransport(transport)

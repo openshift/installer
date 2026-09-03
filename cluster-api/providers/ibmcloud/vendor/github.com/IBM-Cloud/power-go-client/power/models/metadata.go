@@ -8,4 +8,4 @@ package models
 // Metadata See [Service Metadata Conventions](https://github.com/openservicebrokerapi/servicebroker/blob/master/profile.md#service-metadata) for more details.
 //
 // swagger:model Metadata
-type Metadata interface{}
+type Metadata any

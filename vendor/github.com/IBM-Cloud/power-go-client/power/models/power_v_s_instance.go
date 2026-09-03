@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -131,11 +132,15 @@ func (m *PowerVSInstance) validateCapabilities(formats strfmt.Registry) error {
 
 	if m.Capabilities != nil {
 		if err := m.Capabilities.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("capabilities")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("capabilities")
 			}
+
 			return err
 		}
 	}
@@ -241,11 +246,15 @@ func (m *PowerVSInstance) ContextValidate(ctx context.Context, formats strfmt.Re
 func (m *PowerVSInstance) contextValidateCapabilities(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.Capabilities.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("capabilities")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("capabilities")
 		}
+
 		return err
 	}
 

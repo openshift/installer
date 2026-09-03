@@ -73,7 +73,7 @@ type ClientService interface {
 ServiceBrokerOpenstacksGet lists all open stack instances being managed
 */
 func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksGetParams()
 	}
@@ -93,17 +93,22 @@ func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetPa
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*ServiceBrokerOpenstacksGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -112,7 +117,7 @@ func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetPa
 ServiceBrokerOpenstacksHostsGet lists account information for all pvm instances on hostname
 */
 func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacksHostsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksHostsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksHostsGetParams()
 	}
@@ -132,17 +137,22 @@ func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacks
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*ServiceBrokerOpenstacksHostsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.hosts.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -151,7 +161,7 @@ func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacks
 ServiceBrokerOpenstacksOpenstackGet lists account information for all pvm instances on hostname
 */
 func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenstacksOpenstackGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksOpenstackGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksOpenstackGetParams()
 	}
@@ -171,17 +181,22 @@ func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenst
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*ServiceBrokerOpenstacksOpenstackGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.openstack.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -190,7 +205,7 @@ func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenst
 ServiceBrokerOpenstacksPost creates a new open stack instance to be managed
 */
 func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksPostOK, *ServiceBrokerOpenstacksPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksPostParams()
 	}
@@ -210,18 +225,22 @@ func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPost
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// several success responses have to be checked
 	switch value := result.(type) {
 	case *ServiceBrokerOpenstacksPostOK:
 		return value, nil, nil
 	case *ServiceBrokerOpenstacksPostCreated:
 		return nil, value, nil
 	}
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for open_stacks: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -230,7 +249,7 @@ func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPost
 ServiceBrokerOpenstacksServersGet lists account information for a pvm instance
 */
 func (a *Client) ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstacksServersGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksServersGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewServiceBrokerOpenstacksServersGetParams()
 	}
@@ -250,17 +269,22 @@ func (a *Client) ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstac
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*ServiceBrokerOpenstacksServersGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceBroker.openstacks.servers.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

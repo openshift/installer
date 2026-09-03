@@ -201,7 +201,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Public: ptr.To(true),
 					AdditionalListeners: []capibm.AdditionalListenerSpec{
 						{
-							Port: 22,
+							Port:     22,
+							Protocol: ptr.To(capibm.VPCLoadBalancerListenerProtocolTCP),
 						},
 						// @BUG We should be able to specify this:
 						// capibm.AdditionalListenerSpec{
@@ -218,7 +219,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						//	Port: 6443,
 						// },
 						{
-							Port: 22623,
+							Port:     22623,
+							Protocol: ptr.To(capibm.VPCLoadBalancerListenerProtocolTCP),
 						},
 					},
 				},

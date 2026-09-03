@@ -58,7 +58,7 @@ func (m *ImageImportDetails) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var imageImportDetailsTypeLicenseTypePropEnum []interface{}
+var imageImportDetailsTypeLicenseTypePropEnum []any
 
 func init() {
 	var res []string
@@ -98,7 +98,7 @@ func (m *ImageImportDetails) validateLicenseType(formats strfmt.Registry) error 
 	return nil
 }
 
-var imageImportDetailsTypeProductPropEnum []interface{}
+var imageImportDetailsTypeProductPropEnum []any
 
 func init() {
 	var res []string
@@ -141,7 +141,7 @@ func (m *ImageImportDetails) validateProduct(formats strfmt.Registry) error {
 	return nil
 }
 
-var imageImportDetailsTypeVendorPropEnum []interface{}
+var imageImportDetailsTypeVendorPropEnum []any
 
 func init() {
 	var res []string

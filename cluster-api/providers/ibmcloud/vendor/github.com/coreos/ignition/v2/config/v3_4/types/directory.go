@@ -22,5 +22,6 @@ import (
 func (d Directory) Validate(c path.ContextPath) (r report.Report) {
 	r.Merge(d.Node.Validate(c))
 	r.AddOnError(c.Append("mode"), validateMode(d.Mode))
+	r.AddOnWarn(c.Append("mode"), validateModeSpecialBits(d.Mode))
 	return
 }

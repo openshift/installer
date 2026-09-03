@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -49,11 +50,15 @@ func (m *VolumeSnapshotList) validateVolumeSnapshots(formats strfmt.Registry) er
 
 		if m.VolumeSnapshots[i] != nil {
 			if err := m.VolumeSnapshots[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("volumeSnapshots" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("volumeSnapshots" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -88,11 +93,15 @@ func (m *VolumeSnapshotList) contextValidateVolumeSnapshots(ctx context.Context,
 			}
 
 			if err := m.VolumeSnapshots[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("volumeSnapshots" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("volumeSnapshots" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

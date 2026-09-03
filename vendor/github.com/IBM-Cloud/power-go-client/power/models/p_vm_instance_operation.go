@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -56,11 +57,15 @@ func (m *PVMInstanceOperation) validateOperation(formats strfmt.Registry) error 
 
 	if m.Operation != nil {
 		if err := m.Operation.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("operation")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("operation")
 			}
+
 			return err
 		}
 	}
@@ -68,7 +73,7 @@ func (m *PVMInstanceOperation) validateOperation(formats strfmt.Registry) error 
 	return nil
 }
 
-var pVmInstanceOperationTypeOperationTypePropEnum []interface{}
+var pVmInstanceOperationTypeOperationTypePropEnum []any
 
 func init() {
 	var res []string
@@ -130,11 +135,15 @@ func (m *PVMInstanceOperation) contextValidateOperation(ctx context.Context, for
 	if m.Operation != nil {
 
 		if err := m.Operation.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("operation")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("operation")
 			}
+
 			return err
 		}
 	}

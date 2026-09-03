@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -68,11 +69,15 @@ func (m *ServiceAuthenticationInfo) validateCapabilities(formats strfmt.Registry
 
 	if m.Capabilities != nil {
 		if err := m.Capabilities.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("capabilities")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("capabilities")
 			}
+
 			return err
 		}
 	}
@@ -106,11 +111,15 @@ func (m *ServiceAuthenticationInfo) validateToken(formats strfmt.Registry) error
 
 	if m.Token != nil {
 		if err := m.Token.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("token")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("token")
 			}
+
 			return err
 		}
 	}
@@ -143,11 +152,15 @@ func (m *ServiceAuthenticationInfo) contextValidateCapabilities(ctx context.Cont
 	}
 
 	if err := m.Capabilities.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("capabilities")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("capabilities")
 		}
+
 		return err
 	}
 
@@ -159,11 +172,15 @@ func (m *ServiceAuthenticationInfo) contextValidateToken(ctx context.Context, fo
 	if m.Token != nil {
 
 		if err := m.Token.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("token")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("token")
 			}
+
 			return err
 		}
 	}
