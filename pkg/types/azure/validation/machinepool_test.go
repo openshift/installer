@@ -989,6 +989,26 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 		},
 		{
+			name:          "data disks on Azure Stack Hub are rejected",
+			azurePlatform: azure.StackCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 128,
+							ManagedDisk: &capz.ManagedDiskParameters{
+								StorageAccountType: "Premium_LRS",
+							},
+							Lun: ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `test-path\.dataDisks: Forbidden: data disks are not supported on AzureStackCloud`,
+		},
+		{
 			name:          "azure VM Identity is unrecognized type",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
