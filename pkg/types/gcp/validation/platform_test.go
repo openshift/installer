@@ -242,6 +242,39 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "valid global client access",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: gcp.ClientAccessGlobal,
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "valid local client access",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: gcp.ClientAccessLocal,
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "invalid client access",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: "Regional",
+				},
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
