@@ -92,9 +92,6 @@ var (
 )
 
 const (
-	// EnabledFeature indicates that the feature is configured as enabled.
-	EnabledFeature FeatureSwitch = "Enabled"
-
 	// DisabledFeature indicates that the feature is configured as disabled.
 	DisabledFeature FeatureSwitch = "Disabled"
 
@@ -103,9 +100,6 @@ const (
 
 	// OnHostMaintenanceTerminate indicates that the OnHostMaintenance feature is set to Terminate.
 	OnHostMaintenanceTerminate OnHostMaintenanceType = "Terminate"
-
-	// ConfidentialComputePolicySEV indicates that the ConfidentialCompute feature is set to AMDEncryptedVirtualization.
-	ConfidentialComputePolicySEV ConfidentialComputePolicy = "AMDEncryptedVirtualization"
 
 	// ConfidentialComputePolicySEVSNP indicates that the ConfidentialCompute feature is set to AMDEncryptedVirtualizationNestedPaging.
 	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
@@ -117,7 +111,6 @@ const (
 var (
 	// ConfidentialComputePolicyToSupportedInstanceType is a map containing machine types and the list of confidential computing technologies each of them support.
 	ConfidentialComputePolicyToSupportedInstanceType = map[ConfidentialComputePolicy][]string{
-		ConfidentialComputePolicySEV:    {"c2d", "n2d", "c3d"},
 		ConfidentialComputePolicySEVSNP: {"n2d"},
 		ConfidentialComputePolicyTDX:    {"c3"},
 	}
@@ -170,11 +163,6 @@ type MachinePool struct {
 	// confidentialCompute is an optional field defining whether the instance should have
 	// Confidential Computing enabled or not, and the Confidential Computing technology of choice.
 	//     With Disabled, Confidential Computing is disabled.
-	//     With Enabled, Confidential Computing is enabled with no preference on the
-	// Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
-	// which is subject to change over time.
-	//     With AMDEncryptedVirtualization, Confidential Computing is enabled with
-	// AMD Secure Encrypted Virtualization (AMD SEV).
 	//     With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
 	// enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
 	// (AMD SEV-SNP).
