@@ -456,11 +456,14 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		}
 	}
 	if pool.InstanceType != "" {
-		instanceTypes, err := meta.InstanceTypes(ctx)
-		if err != nil {
+		typeMeta, err := meta.InstanceType(ctx, pool.InstanceType)
+		switch {
+		case IsInvalidInstanceType(err):
+			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+		case err != nil:
 			return append(allErrs, field.InternalError(fldPath, err))
-		}
-		if typeMeta, ok := instanceTypes[pool.InstanceType]; ok {
+		default:
 			if typeMeta.DefaultVCpus < req.minimumVCpus {
 				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
@@ -489,9 +492,6 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 				}
 			}
-		} else {
-			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
 	}
 
@@ -1173,17 +1173,14 @@ func validateInstanceTypeForSEVSNP(ctx context.Context, meta *Metadata, fldPath 
 		return allErrs
 	}
 
-	// Fetch instance types metadata
-	instanceTypes, err := meta.InstanceTypes(ctx)
+	// Fetch instance type metadata
+	typeMeta, err := meta.InstanceType(ctx, pool.InstanceType)
 	if err != nil {
+		// The instance type is not found; already caught in validateMachinePool.
+		if IsInvalidInstanceType(err) {
+			return allErrs
+		}
 		return append(allErrs, field.InternalError(fldPath, err))
-	}
-
-	// Validate the specified instance type supports SEV-SNP
-	// If the instance type is not found, it's already caught in validateMachinePool
-	typeMeta, ok := instanceTypes[pool.InstanceType]
-	if !ok {
-		return allErrs
 	}
 
 	if !slices.Contains(typeMeta.Features, string(ec2types.SupportedAdditionalProcessorFeatureAmdSevSnp)) {
