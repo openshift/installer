@@ -11,7 +11,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -224,18 +223,16 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
 		}
 
-		if installConfig.Config.Enabled(features.FeatureGateGCPSovereignCloudInstall) {
-			ssn, err := gcpic.GetSession(ctx)
-			if err != nil {
-				return fmt.Errorf("could not get GCP session: %w", err)
-			}
-			ud, err := ssn.Credentials.GetUniverseDomain()
-			if err != nil {
-				return fmt.Errorf("could not get GCP universe domain: %w", err)
-			}
-			if gcp.IsNonDefaultUniverseDomain(ud) {
-				config.Status.PlatformStatus.GCP.UniverseDomain = ud
-			}
+		ssn, err := gcpic.GetSession(ctx)
+		if err != nil {
+			return fmt.Errorf("could not get GCP session: %w", err)
+		}
+		ud, err := ssn.Credentials.GetUniverseDomain()
+		if err != nil {
+			return fmt.Errorf("could not get GCP universe domain: %w", err)
+		}
+		if gcp.IsNonDefaultUniverseDomain(ud) {
+			config.Status.PlatformStatus.GCP.UniverseDomain = ud
 		}
 
 		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to

@@ -2,9 +2,13 @@ package manifests
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
@@ -37,6 +41,9 @@ func TestGenerateInfrastructure(t *testing.T) {
 		installConfig          *types.InstallConfig
 		expectedInfrastructure *configv1.Infrastructure
 		expectedFilesGenerated int
+		// setup, when non-nil, runs before the asset is generated. Platforms
+		// that reach a cloud API during Generate can use it to stub credentials.
+		setup func(t *testing.T)
 	}{{
 		name:          "vanilla aws",
 		installConfig: icBuild.build(icBuild.forAWS()),
@@ -71,6 +78,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 	}, {
 		name:          "default GCP custom DNS",
 		installConfig: icBuild.build(icBuild.forGCP()),
+		setup:         mockGCPCredentials("googleapis.com"),
 		expectedInfrastructure: infraBuild.build(
 			infraBuild.forPlatform(configv1.GCPPlatformType),
 			infraBuild.withGCPClusterHostedDNS("Disabled"),
@@ -82,9 +90,20 @@ func TestGenerateInfrastructure(t *testing.T) {
 			icBuild.forGCP(),
 			icBuild.withGCPUserProvisionedDNS("Enabled"),
 		),
+		setup: mockGCPCredentials("googleapis.com"),
 		expectedInfrastructure: infraBuild.build(
 			infraBuild.forPlatform(configv1.GCPPlatformType),
 			infraBuild.withGCPClusterHostedDNS("Enabled"),
+		),
+		expectedFilesGenerated: 2,
+	}, {
+		name:          "GCP non-default universe domain",
+		installConfig: icBuild.build(icBuild.forGCP()),
+		setup:         mockGCPCredentials("test.googleapis.com"),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.GCPPlatformType),
+			infraBuild.withGCPClusterHostedDNS("Disabled"),
+			infraBuild.withGCPUniverseDomain("test.googleapis.com"),
 		),
 		expectedFilesGenerated: 2,
 	}, {
@@ -284,6 +303,10 @@ func TestGenerateInfrastructure(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.setup != nil {
+				tc.setup(t)
+			}
+
 			parents := asset.Parents{}
 			parents.Add(
 				&installconfig.ClusterID{
@@ -628,6 +651,13 @@ func (b infraBuildNamespace) withGCPPlatformStatus() infraOption {
 	}
 }
 
+func (b infraBuildNamespace) withGCPUniverseDomain(domain string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withGCPPlatformStatus()(infra)
+		infra.Status.PlatformStatus.GCP.UniverseDomain = domain
+	}
+}
+
 func (b infraBuildNamespace) withGCPClusterHostedDNS(enabled string) infraOption {
 	return func(infra *configv1.Infrastructure) {
 		b.withGCPPlatformStatus()(infra)
@@ -729,5 +759,30 @@ func (b infraBuildNamespace) withVSphereIngressVIP(vip string) infraOption {
 		b.withVSpherePlatformStatus()(infra)
 		infra.Spec.PlatformSpec.VSphere.IngressIPs = append(infra.Spec.PlatformSpec.VSphere.IngressIPs, configv1.IP(vip))
 		infra.Status.PlatformStatus.VSphere.IngressIPs = append(infra.Status.PlatformStatus.VSphere.IngressIPs, vip)
+	}
+}
+
+// mockGCPCredentials returns a setup func that points the GCP session loader at
+// a throwaway service_account credentials file so unit tests need no real
+// credentials. The service_account type lets the test set the reported universe domain.
+func mockGCPCredentials(universeDomain string) func(t *testing.T) {
+	return func(t *testing.T) {
+		t.Helper()
+
+		creds := fmt.Sprintf(`{
+  "type": "service_account",
+  "project_id": "fake-project",
+  "private_key": "fake",
+  "client_email": "fake@fake-project.iam.gserviceaccount.com",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "universe_domain": %q
+}`, universeDomain)
+
+		path := filepath.Join(t.TempDir(), "gcp-creds.json")
+		require.NoError(t, os.WriteFile(path, []byte(creds), 0o600))
+		// GOOGLE_APPLICATION_CREDENTIALS is the first entry in the session loader
+		// chain, so this takes precedence over any real credentials in the
+		// environment. t.Setenv restores the previous value after the test.
+		t.Setenv("GOOGLE_APPLICATION_CREDENTIALS", path)
 	}
 }
