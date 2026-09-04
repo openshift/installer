@@ -122,11 +122,7 @@ func validateInstanceAndConfidentialCompute(fldPath *field.Path, instanceType st
 	}
 
 	machineType, _, _ := strings.Cut(instanceType, "-")
-	machineSupportMatrixSelector := confidentialCompute
-	if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.EnabledFeature) {
-		machineSupportMatrixSelector = gcp.ConfidentialComputePolicySEV
-	}
-	supportedMachineTypes, ok := gcp.ConfidentialComputePolicyToSupportedInstanceType[machineSupportMatrixSelector]
+	supportedMachineTypes, ok := gcp.ConfidentialComputePolicyToSupportedInstanceType[confidentialCompute]
 	if !ok {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("confidentialCompute"), confidentialCompute, fmt.Sprintf("Unknown confidential computing technology %s", confidentialCompute)))
 	} else if !slices.Contains(supportedMachineTypes, machineType) {
