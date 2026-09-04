@@ -61,7 +61,11 @@ func (a Provider) ExtractHostAddresses(dir string, ic *types.InstallConfig, ha *
 		ha.Bootstrap = ic.Platform.BareMetal.APIVIPs[0]
 	}
 
-	masters, err := getMasterAddresses(dir)
+	machineNetworks := []types.MachineNetworkEntry{}
+	if ic.Networking != nil {
+		machineNetworks = ic.Networking.MachineNetwork
+	}
+	masters, err := getMasterAddresses(dir, machineNetworks)
 	if err != nil {
 		return err
 	}
