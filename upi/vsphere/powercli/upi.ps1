@@ -169,7 +169,9 @@ foreach ($fd in $fds)
 {
     Write-Output "Getting viserver for $($fd.server)"
     $viserver = $viservers[$fd.server]
-    $datastoreInfo = Get-Datastore -Server $viserver -Name $fd.datastore -Location $fd.datacenter
+    $datastoreInfo = Invoke-WithRetry -OperationName "Get-Datastore $($fd.datastore)" -ScriptBlock {
+        Get-Datastore -Server $viserver -Name $fd.datastore -Location $fd.datacenter -ErrorAction Stop
+    }
 
     # Load tags for this FD.
     $tagCategory = Get-TagCategory -Server $viserver -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
@@ -255,10 +257,18 @@ Write-Output "Creating LB"
 # Data needed for LB VM creation
 $tagCategory = Get-TagCategory -Server $fds[0].server -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
 $tag = Get-Tag -Server $fds[0].server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
-$rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Server $fds[0].server -Name $($fds[0].cluster))
-$datastoreInfo = Get-Datastore -Name $fds[0].datastore -Server $fds[0].server -Location $fds[0].datacenter
-$folder = Get-Folder -Server $fds[0].server -Name $metadata.infraID -Location $fds[0].datacenter
-$template = Get-VM -Server $fds[0].server -Name $vm_template -Location $fds[0].datacenter
+$rp = Invoke-WithRetry -OperationName "Get-ResourcePool $($metadata.infraID)" -ScriptBlock {
+    Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Server $fds[0].server -Name $($fds[0].cluster) -ErrorAction Stop) -Server $fds[0].server -ErrorAction Stop
+}
+$datastoreInfo = Invoke-WithRetry -OperationName "Get-Datastore $($fds[0].datastore)" -ScriptBlock {
+    Get-Datastore -Name $fds[0].datastore -Server $fds[0].server -Location $fds[0].datacenter -ErrorAction Stop
+}
+$folder = Invoke-WithRetry -OperationName "Get-Folder $($metadata.infraID)" -ScriptBlock {
+    Get-Folder -Server $fds[0].server -Name $metadata.infraID -Location $fds[0].datacenter -ErrorAction Stop
+}
+$template = Invoke-WithRetry -OperationName "Get-VM $($vm_template)" -ScriptBlock {
+    Get-VM -Server $fds[0].server -Name $vm_template -Location $fds[0].datacenter -ErrorAction Stop
+}
 
 # Create LB for Cluster
 $ignition = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((New-LoadBalancerIgnition $sshKey)))
