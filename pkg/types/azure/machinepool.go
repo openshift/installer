@@ -83,6 +83,10 @@ type MachinePool struct {
 	// DataDisk specifies the parameters that are used to add one or more data disks to the machine.
 	// +optional
 	DataDisks []capz.DataDisk `json:"dataDisks,omitempty"`
+	// CapacityReservationGroup specifies the capacity reservation group that should be used
+	// for allocating the virtual machine.
+	// +optional
+	CapacityReservationGroup *CapacityReservationGroup `json:"capacityReservationGroup,omitempty"`
 }
 
 // SecuritySettings define the security type and the UEFI settings of the virtual machine.
@@ -239,6 +243,29 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if required.DataDisks != nil {
 		a.DataDisks = required.DataDisks
 	}
+
+	if required.CapacityReservationGroup != nil {
+		a.CapacityReservationGroup = required.CapacityReservationGroup
+	}
+}
+
+// CapacityReservationGroup defines an Azure capacity reservation group.
+type CapacityReservationGroup struct {
+	// SubscriptionID defines the Azure subscription containing the capacity reservation group.
+	// If omitted, the cluster subscription is used.
+	//
+	// +optional
+	SubscriptionID string `json:"subscriptionId"`
+	// ResourceGroup defines the Azure resource group containing the capacity reservation group.
+	ResourceGroup string `json:"resourceGroup"`
+	// Name is the name of the capacity reservation group.
+	Name string `json:"name"`
+}
+
+// ToID returns the Azure resource ID of the capacity reservation group.
+func (g *CapacityReservationGroup) ToID() string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/capacityReservationGroups/%s",
+		g.SubscriptionID, g.ResourceGroup, g.Name)
 }
 
 // ImagePurchasePlan defines the purchase plan of a Marketplace image.

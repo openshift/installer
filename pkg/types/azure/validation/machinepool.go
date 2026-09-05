@@ -135,7 +135,29 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
 	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
+	allErrs = append(allErrs, validateCapacityReservationGroup(p.CapacityReservationGroup, platform.CloudName, fldPath.Child("capacityReservationGroup"))...)
 
+	return allErrs
+}
+
+func validateCapacityReservationGroup(group *azure.CapacityReservationGroup, cloudName azure.CloudEnvironment, fldPath *field.Path) field.ErrorList {
+	if group == nil {
+		return nil
+	}
+	if cloudName == azure.StackCloud {
+		return field.ErrorList{field.Forbidden(fldPath, "capacity reservation groups are not supported on Azure Stack")}
+	}
+
+	allErrs := field.ErrorList{}
+	if !RxSubscriptionID.MatchString(group.SubscriptionID) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("subscriptionId"), group.SubscriptionID, "invalid subscription ID format"))
+	}
+	if !RxResourceGroup.MatchString(group.ResourceGroup) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("resourceGroup"), group.ResourceGroup, "invalid resource group format"))
+	}
+	if !RxCapacityReservationGroupName.MatchString(group.Name) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("name"), group.Name, "invalid capacity reservation group name format"))
+	}
 	return allErrs
 }
 
