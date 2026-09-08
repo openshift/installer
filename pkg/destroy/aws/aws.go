@@ -434,7 +434,47 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, delete
 			resources.Insert(arnString)
 		}
 	}
+
+	oidcProviderARN, err := o.findOIDCProvider(ctx)
+	if err != nil {
+		return resources, fmt.Errorf("failed to search for OIDC provider: %w", err)
+	}
+	if oidcProviderARN != "" && !deleted.Has(oidcProviderARN) {
+		resources.Insert(oidcProviderARN)
+	}
+
 	return resources, nil
+}
+
+// findOIDCProvider searches for an IAM OIDC provider tagged with the
+// cluster's ownership tag. OIDC providers are not discoverable via the
+// Resource Groups Tagging API, so we enumerate them and check tags.
+func (o *ClusterUninstaller) findOIDCProvider(ctx context.Context) (string, error) {
+	o.Logger.Debug("search for IAM OIDC provider")
+	response, err := o.IAMClient.ListOpenIDConnectProviders(ctx, &iamv2.ListOpenIDConnectProvidersInput{})
+	if err != nil {
+		return "", fmt.Errorf("failed to list OIDC providers: %w", err)
+	}
+
+	for _, provider := range response.OpenIDConnectProviderList {
+		detail, err := o.IAMClient.GetOpenIDConnectProvider(ctx, &iamv2.GetOpenIDConnectProviderInput{
+			OpenIDConnectProviderArn: provider.Arn,
+		})
+		if err != nil {
+			o.Logger.WithError(err).Debugf("failed to get OIDC provider %s", *provider.Arn)
+			continue
+		}
+		tags := make(map[string]string, len(detail.Tags))
+		for _, tag := range detail.Tags {
+			tags[*tag.Key] = *tag.Value
+		}
+		if tagMatch(o.Filters, tags) {
+			o.Logger.Debugf("found OIDC provider %s", *provider.Arn)
+			return *provider.Arn, nil
+		}
+	}
+
+	return "", nil
 }
 
 // findResourcesToDelete returns the resources that should be deleted.

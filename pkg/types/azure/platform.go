@@ -32,7 +32,25 @@ const (
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
 	UserDefinedRoutingOutboundType OutboundType = "UserDefinedRouting"
+
+	// WIFManagedMode sets the installer to create a storage account with the OIDC provider token.
+	WIFManagedMode = "Managed"
+
+	// WIFManualMode expects the user to provide an existing OIDC issuer URL.
+	WIFManualMode = "Manual"
 )
+
+// WIFMode specifies the Workload Identity Federation configuration.
+type WIFMode struct {
+	// Type is the WIF mode: "Managed" (installer creates OIDC) or "Manual" (user provides OIDC URL).
+	// +kubebuilder:validation:Enum="Managed";"Manual"
+	Type string `json:"type"`
+
+	// IssuerURL is the OIDC issuer URL for manual WIF mode.
+	// Required when Type is "Manual", ignored when Type is "Managed".
+	// +optional
+	IssuerURL string `json:"issuerURL,omitempty"`
+}
 
 // Platform stores all the global configuration that all machinesets
 // use.
@@ -141,6 +159,10 @@ type Platform struct {
 	// +kubebuilder:validation:Enum="IPv4";"DualStackIPv4Primary";"DualStackIPv6Primary"
 	// +optional
 	IPFamily network.IPFamily `json:"ipFamily,omitempty"`
+
+	// WIFMode specifies the Workload Identity Federation configuration.
+	// +optional
+	WIFMode *WIFMode `json:"wifMode,omitempty"`
 }
 
 // SubnetSpec specifies the properties the subnet needs to be used in the cluster.
@@ -249,4 +271,48 @@ func GetStorageAccountName(infraID string) string {
 	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
 
 	return storageAccountName
+}
+
+// WIFStorageAccountName returns a sanitized storage account name for OIDC.
+// Azure storage accounts: 3-24 chars, lowercase alphanumeric only.
+func WIFStorageAccountName(infraID string) string {
+	name := strings.ReplaceAll(infraID, "-", "")
+	name = strings.ToLower(name)
+	maxLen := 24 - 4
+	if len(name) > maxLen {
+		name = name[:maxLen]
+	}
+	return name + "oidc"
+}
+
+// WIFManagedIdentityName returns a deterministic managed identity name
+// for a credential request. Azure identity names: max 128 chars.
+func WIFManagedIdentityName(infraID, namespace, name string) string {
+	identityName := fmt.Sprintf("%s-%s-%s", infraID, namespace, name)
+	if len(identityName) > 128 {
+		identityName = identityName[:128]
+	}
+	return identityName
+}
+
+// WIFContainerName is the blob container name for OIDC documents.
+const WIFContainerName = "openid"
+
+// WIFDefaultTokenPath is the default projected SA token mount path.
+const WIFDefaultTokenPath = "/var/run/secrets/openshift/serviceaccount/token" //nolint:gosec // not a credential, just the mount path for the projected token
+
+// IsWIFEnabled returns true if Workload Identity Federation is configured.
+func (p *Platform) IsWIFEnabled() bool {
+	return p != nil && p.WIFMode != nil
+}
+
+// IsWIFManaged specifies if the user provided WIF mode managed indicating the installer to
+// create creds request yaml files in the manifests.
+func (p *Platform) IsWIFManaged() bool {
+	return p.IsWIFEnabled() && p.WIFMode.Type == WIFManagedMode
+}
+
+// IsWIFManual returns true if WIF is enabled and mode is Manual.
+func (p *Platform) IsWIFManual() bool {
+	return p.IsWIFEnabled() && p.WIFMode.Type == WIFManualMode
 }
