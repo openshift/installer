@@ -252,3 +252,17 @@ func FormatKMSKeyResourcePath(kmsKey *KMSKeyReference, projectID string) string 
 	return fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
 		keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
 }
+
+// NeedsRHCOSUpload returns true when the installer must upload a
+// cluster-specific RHCOS image. This is required for sovereign clouds
+// where the public rhcos-cloud images are inaccessible, and only when
+// the user has not provided a custom osImage.
+func NeedsRHCOSUpload(projectID, region string, mpool *MachinePool) bool {
+	return GetCloudEnvironment(projectID, region) == CloudEnvironmentSovereign && mpool.OSImage == nil
+}
+
+// RHCOSImageRef returns the fully-qualified GCP image reference for the
+// cluster-specific RHCOS image that will be uploaded during provisioning.
+func RHCOSImageRef(projectID, infraID string) string {
+	return fmt.Sprintf("projects/%s/global/images/%s-rhcos", projectID, infraID)
+}

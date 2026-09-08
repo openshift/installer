@@ -338,11 +338,16 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 		pool.Platform.GCP = &mpool
 
+		controlPlaneImage := rhcosImage.ControlPlane
+		if gcptypes.NeedsRHCOSUpload(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, &mpool) {
+			controlPlaneImage = gcptypes.RHCOSImageRef(ic.Platform.GCP.ProjectID, clusterID.InfraID)
+		}
+
 		gcpMachines, err := gcp.GenerateMachines(
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			rhcosImage.ControlPlane,
+			controlPlaneImage,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects %w", err)
@@ -355,7 +360,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			rhcosImage.ControlPlane,
+			controlPlaneImage,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine objects %w", err)

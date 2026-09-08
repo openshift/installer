@@ -102,6 +102,16 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 	}
 
+	// Upload a cluster-specific RHCOS image for sovereign clouds where the
+	// pre-built images in the rhcos-cloud project are not accessible.
+	// Machine manifests are already populated with the deterministic image
+	// reference during generation.
+	if gcptypes.NeedsRHCOSUpload(projectID, platform.Region, controlPlaneMpool) {
+		if _, err := uploadRHCOSImage(ctx, in); err != nil {
+			return fmt.Errorf("failed to upload RHCOS image: %w", err)
+		}
+	}
+
 	return nil
 }
 
