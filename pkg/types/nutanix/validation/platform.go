@@ -3,6 +3,8 @@ package validation
 import (
 	"fmt"
 	"regexp"
+	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -103,9 +105,30 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("failureDomain", "name"), fmt.Errorf("fail to compile the pattern %q: %w", pattern, err)))
 		} else {
-			for _, fd := range p.FailureDomains {
+			fdNames := make(map[string]bool, len(p.FailureDomains))
+			fdTopologies := make(map[string]string, len(p.FailureDomains))
+			for i := range p.FailureDomains {
+				fd := &p.FailureDomains[i]
 				if !rexp.MatchString(fd.Name) {
 					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "name"), fd.Name, fmt.Sprintf("failureDomain name should match the pattern %q.", pattern)))
+				}
+
+				// A failure domain name must be unique so that machines can be
+				// unambiguously assigned to a failure domain.
+				if fdNames[fd.Name] {
+					allErrs = append(allErrs, field.Duplicate(fldPath.Child("failureDomain", "name"), fd.Name))
+				} else {
+					fdNames[fd.Name] = true
+				}
+
+				// Two failure domains that reference the same Prism Element and
+				// the same set of subnets point to identical underlying
+				// infrastructure, so they provide no additional fault tolerance.
+				topology := failureDomainTopologyKey(fd)
+				if existing, ok := fdTopologies[topology]; ok {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "name"), fd.Name, fmt.Sprintf("failureDomain has the same topology (prismElement %q and subnetUUIDs) as failureDomain %q, each failureDomain must reference distinct infrastructure", fd.PrismElement.UUID, existing)))
+				} else {
+					fdTopologies[topology] = fd.Name
 				}
 
 				if fd.PrismElement.UUID == "" {
@@ -141,6 +164,16 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 	}
 
 	return allErrs
+}
+
+// failureDomainTopologyKey returns a string that uniquely identifies the
+// underlying infrastructure (Prism Element and subnets) that a failure domain
+// references. Two failure domains with the same key point to the same
+// infrastructure and therefore provide no additional fault tolerance.
+func failureDomainTopologyKey(fd *nutanix.FailureDomain) string {
+	subnets := append([]string(nil), fd.SubnetUUIDs...)
+	sort.Strings(subnets)
+	return fmt.Sprintf("%s/[%s]", fd.PrismElement.UUID, strings.Join(subnets, ","))
 }
 
 // validateLoadBalancer returns an error if the load balancer is not valid.
