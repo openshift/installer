@@ -80436,8 +80436,11 @@ func UnmarshalNetworkACLRule(m map[string]json.RawMessage, result interface{}) (
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
 	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+		// Fallback to base NetworkACLRule for unknown protocols
+		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleGeneric)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleGeneric-error", common.GetComponentInfo())
+		}
 	}
 	return
 }
@@ -80741,9 +80744,154 @@ func UnmarshalNetworkACLRuleItem(m map[string]json.RawMessage, result interface{
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
 	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+		// Fallback to base NetworkACLRuleItem for unknown protocols
+		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemGeneric)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemGeneric-error", common.GetComponentInfo())
+		}
 	}
+	return
+}
+
+// UnmarshalNetworkACLRuleItemGeneric unmarshals the base NetworkACLRuleItem fields for unknown protocol types
+func UnmarshalNetworkACLRuleItemGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NetworkACLRuleItem)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "before", &obj.Before, UnmarshalNetworkACLRuleReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "before-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "destination", &obj.Destination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "destination-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
+		return
+	}
+
+	// Attempt to unmarshal optional protocol-specific fields - ignore errors as these may not be present
+	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	_ = core.UnmarshalPrimitive(m, "destination_port_max", &obj.DestinationPortMax)
+	_ = core.UnmarshalPrimitive(m, "destination_port_min", &obj.DestinationPortMin)
+	_ = core.UnmarshalPrimitive(m, "source_port_max", &obj.SourcePortMax)
+	_ = core.UnmarshalPrimitive(m, "source_port_min", &obj.SourcePortMin)
+
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UnmarshalNetworkACLRuleGeneric unmarshals the base NetworkACLRuleItem fields for unknown protocol types
+func UnmarshalNetworkACLRuleGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NetworkACLRule)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "before", &obj.Before, UnmarshalNetworkACLRuleReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "before-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "destination", &obj.Destination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "destination-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
+		return
+	}
+
+	// Attempt to unmarshal optional protocol-specific fields - ignore errors as these may not be present
+	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	_ = core.UnmarshalPrimitive(m, "destination_port_max", &obj.DestinationPortMax)
+	_ = core.UnmarshalPrimitive(m, "destination_port_min", &obj.DestinationPortMin)
+	_ = core.UnmarshalPrimitive(m, "source_port_max", &obj.SourcePortMax)
+	_ = core.UnmarshalPrimitive(m, "source_port_min", &obj.SourcePortMin)
+
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -87835,9 +87983,58 @@ func UnmarshalSecurityGroupRule(m map[string]json.RawMessage, result interface{}
 			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleSecurityGroupRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
 	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+		// Fallback to base SecurityGroupRule for unknown protocols
+		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleGeneric)
 	}
+	return
+}
+
+// UnmarshalSecurityGroupRuleGeneric unmarshals the base SecurityGroupRule fields for unknown protocol types
+func UnmarshalSecurityGroupRuleGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SecurityGroupRule)
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalSecurityGroupRuleLocal)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+
+	// Attempt to unmarshal optional fields - ignore errors as these may not be present
+	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	_ = core.UnmarshalPrimitive(m, "port_max", &obj.PortMax)
+	_ = core.UnmarshalPrimitive(m, "port_min", &obj.PortMin)
+
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
