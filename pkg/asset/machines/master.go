@@ -1064,7 +1064,7 @@ func IsFencingCredentialsFile(filepath string) (bool, error) {
 // a platform.
 func supportedSingleNodePlatform(bootstrapInPlace bool, platformName string) bool {
 	switch platformName {
-	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name, nonetypes.Name, ibmcloudtypes.Name:
+	case awstypes.Name, gcptypes.Name, azuretypes.Name, powervstypes.Name, nonetypes.Name, ibmcloudtypes.Name, baremetaltypes.Name:
 		// Single node OpenShift installations supported without `bootstrapInPlace`
 		return true
 	case externaltypes.Name:
