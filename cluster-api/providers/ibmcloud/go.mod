@@ -1,8 +1,6 @@
 module openshift/installer/cluster-api/providers/ibmcloud
 
-go 1.23.2
-
-toolchain go1.23.7
+go 1.25.8
 
 require sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20260422073953-8064d488f9da
 
@@ -76,7 +74,7 @@ require (
 	github.com/onsi/gomega v1.36.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/ppc64le-cloud/powervs-utils v0.0.0-20240610070307-1c0d75a5c247 // indirect
+	github.com/ppc64le-cloud/powervs-utils v0.0.0-20260320143638-bc9d769bbbfc // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
