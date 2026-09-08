@@ -314,7 +314,6 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	if err != nil {
 		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
 	}
-	logrus.Debugf("PostProvision: NewClient returns %+v", client)
 
 	// We need to set the region we will eventually query inside
 	vpcRegion = in.InstallConfig.Config.Platform.PowerVS.VPCRegion
