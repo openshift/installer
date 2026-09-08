@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.87.0-91c7c775-20240320-213027
+ * IBM OpenAPI SDK Code Generator Version: 3.100.0-2ad7a784-20250212-162551
  */
 
 // Package globalsearchv2 : Operations and models for the GlobalSearchV2 service
@@ -178,21 +178,18 @@ func (globalSearch *GlobalSearchV2) DisableRetries() {
 
 // Search : Find instances of resources (v3)
 // Find IAM-enabled resources or storage and network resources that run on classic infrastructure in a specific account
-// ID. You can apply query strings if necessary.
-//
-// To filter results, you can insert a string by using the Lucene syntax and the query string is parsed into a series of
-// terms and operators. A term can be a single word or a phrase, in which case the search is performed for all the
-// words, in the same order. To filter for a specific value regardless of the property that contains it, type the search
-// term without specifying a field. Only resources that belong to the account ID and that are accessible by the client
-// are returned.
+// ID.
 //
 // You must use `/v3/resources/search` when you need to fetch more than `10000` resource items. On the first call, the
 // operation returns a live cursor on the data that you must use on all the subsequent calls to get the next batch of
 // results until you get the empty result set.
 //
-// By default, the fields that are returned for every resource are `crn`, `name`,
-// `family`, `type`, and `account_id`. You can specify the subset of the fields you want in your request using the
-// `fields` request body attribute. Set `"fields": ["*"]` to discover the set of fields which are available to request.
+// To filter results, you can apply query strings following the *Lucene* query syntax.
+//
+// By default, the fields that are returned for every resource are **crn**, **name**,
+// **family**, **type**, and **account_id**. You can specify the subset of the fields you want in your request using the
+// `fields` request body attribute. Set `"fields": ["*"]` to discover the complete set of fields which are available to
+// request.
 func (globalSearch *GlobalSearchV2) Search(searchOptions *SearchOptions) (result *ScanResult, response *core.DetailedResponse, err error) {
 	result, response, err = globalSearch.SearchWithContext(context.Background(), searchOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -256,9 +253,6 @@ func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searc
 	if searchOptions.IsReclaimed != nil {
 		builder.AddQuery("is_reclaimed", fmt.Sprint(*searchOptions.IsReclaimed))
 	}
-	if searchOptions.IsPublic != nil {
-		builder.AddQuery("is_public", fmt.Sprint(*searchOptions.IsPublic))
-	}
 	if searchOptions.ImpersonateUser != nil {
 		builder.AddQuery("impersonate_user", fmt.Sprint(*searchOptions.ImpersonateUser))
 	}
@@ -315,15 +309,16 @@ func getServiceComponentInfo() *core.ProblemComponent {
 
 // ResultItem : A resource returned in a search result, which is identified by its `crn`. It contains other properties that depend on
 // the resource type.
+// This type supports additional properties of type interface{}.
 type ResultItem struct {
 	// Resource identifier in CRN format.
 	CRN *string `json:"crn" validate:"required"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type interface{}.
 	additionalProperties map[string]interface{}
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of ResultItem
+// SetProperty allows the user to set an arbitrary property on an instance of ResultItem.
 func (o *ResultItem) SetProperty(key string, value interface{}) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]interface{})
@@ -331,7 +326,7 @@ func (o *ResultItem) SetProperty(key string, value interface{}) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of ResultItem
+// SetProperties allows the user to set a map of arbitrary properties on an instance of ResultItem.
 func (o *ResultItem) SetProperties(m map[string]interface{}) {
 	o.additionalProperties = make(map[string]interface{})
 	for k, v := range m {
@@ -339,12 +334,12 @@ func (o *ResultItem) SetProperties(m map[string]interface{}) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of ResultItem
+// GetProperty allows the user to retrieve an arbitrary property from an instance of ResultItem.
 func (o *ResultItem) GetProperty(key string) interface{} {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of ResultItem
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of ResultItem.
 func (o *ResultItem) GetProperties() map[string]interface{} {
 	return o.additionalProperties
 }
@@ -436,7 +431,9 @@ type SearchOptions struct {
 	Fields []string `json:"fields,omitempty"`
 
 	// An opaque cursor that is returned on each call and that must be set on the subsequent call to get the next batch of
-	// items. If the search returns no items, then the search_cursor is not present in the response.
+	// items. You can stop paging when the search returns less items than the specified `limit` or when the `search_cursor`
+	// is not present in the response. NOTE: when setting this parameter, any other properties present in the body will be
+	// ignored.
 	SearchCursor *string `json:"search_cursor,omitempty"`
 
 	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
@@ -477,11 +474,6 @@ type SearchOptions struct {
 	// both reclaimed and not reclaimed documents are returned.
 	IsReclaimed *string `json:"is_reclaimed,omitempty"`
 
-	// Determines if public resources should be included in result set or not. Possible values are false (default), true or
-	// any. If false, do not search public resources; if true, search only public resources; If any, search also public
-	// resources.
-	IsPublic *string `json:"is_public,omitempty"`
-
 	// The user on whose behalf the search must be performed. Only a GhoST admin can impersonate a user, so be sure you set
 	// a GhoST admin IAM token in the Authorization header if you set this parameter. (_for administrators only_).
 	ImpersonateUser *string `json:"impersonate_user,omitempty"`
@@ -497,7 +489,7 @@ type SearchOptions struct {
 	// authorized ServiceIds can use this query parameter.
 	IsProjectResource *string `json:"is_project_resource,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -519,16 +511,6 @@ const (
 	SearchOptionsIsReclaimedAnyConst = "any"
 	SearchOptionsIsReclaimedFalseConst = "false"
 	SearchOptionsIsReclaimedTrueConst = "true"
-)
-
-// Constants associated with the SearchOptions.IsPublic property.
-// Determines if public resources should be included in result set or not. Possible values are false (default), true or
-// any. If false, do not search public resources; if true, search only public resources; If any, search also public
-// resources.
-const (
-	SearchOptionsIsPublicAnyConst = "any"
-	SearchOptionsIsPublicFalseConst = "false"
-	SearchOptionsIsPublicTrueConst = "true"
 )
 
 // Constants associated with the SearchOptions.CanTag property.
@@ -619,12 +601,6 @@ func (_options *SearchOptions) SetIsDeleted(isDeleted string) *SearchOptions {
 // SetIsReclaimed : Allow user to set IsReclaimed
 func (_options *SearchOptions) SetIsReclaimed(isReclaimed string) *SearchOptions {
 	_options.IsReclaimed = core.StringPtr(isReclaimed)
-	return _options
-}
-
-// SetIsPublic : Allow user to set IsPublic
-func (_options *SearchOptions) SetIsPublic(isPublic string) *SearchOptions {
-	_options.IsPublic = core.StringPtr(isPublic)
 	return _options
 }
 

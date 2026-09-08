@@ -7,6 +7,7 @@ package internal_transit_gateway
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 
@@ -22,7 +23,7 @@ type InternalV1TransitgatewayGetReader struct {
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *InternalV1TransitgatewayGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *InternalV1TransitgatewayGetReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
 	switch response.Code() {
 	case 200:
 		result := NewInternalV1TransitgatewayGetOK()
@@ -104,7 +105,7 @@ func (o *InternalV1TransitgatewayGetOK) readResponse(response runtime.ClientResp
 	o.Payload = new(models.TransitGatewayInstance)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -174,7 +175,7 @@ func (o *InternalV1TransitgatewayGetForbidden) readResponse(response runtime.Cli
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 

@@ -23,6 +23,9 @@ type SystemResources struct {
 	// Required: true
 	Cores *float64 `json:"cores"`
 
+	// The host MTMS name
+	HostMTMSName string `json:"hostMTMSName,omitempty"`
+
 	// The host identifier
 	// Required: true
 	ID *int64 `json:"id"`

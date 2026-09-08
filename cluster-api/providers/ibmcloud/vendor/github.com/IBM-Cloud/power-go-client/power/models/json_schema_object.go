@@ -8,4 +8,4 @@ package models
 // JSONSchemaObject JSON schema object
 //
 // swagger:model JSONSchemaObject
-type JSONSchemaObject interface{}
+type JSONSchemaObject any

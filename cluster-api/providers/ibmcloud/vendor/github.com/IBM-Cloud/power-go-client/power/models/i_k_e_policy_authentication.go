@@ -45,7 +45,7 @@ const (
 )
 
 // for schema
-var iKEPolicyAuthenticationEnum []interface{}
+var iKEPolicyAuthenticationEnum []any
 
 func init() {
 	var res []IKEPolicyAuthentication

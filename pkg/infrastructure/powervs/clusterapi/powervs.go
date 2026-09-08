@@ -406,6 +406,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		return fmt.Errorf("could not handle powerVSMachine.Spec.ServiceInstance")
 	}
 
+	logrus.Debugf("InfraReady: Zone = %s", in.InstallConfig.Config.Platform.PowerVS.Zone)
 	backoff := wait.Backoff{
 		Duration: 15 * time.Second,
 		Factor:   1.1,
@@ -415,7 +416,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 		err2 := client.CreateSSHKey(ctx,
 			*instanceID,
-			*powerVSMachine.Status.Zone,
+			in.InstallConfig.Config.Platform.PowerVS.Zone,
 			sshKeyName,
 			in.InstallConfig.Config.SSHKey)
 		if err2 == nil {

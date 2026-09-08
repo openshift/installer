@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -68,11 +69,15 @@ func (m *PVMInstanceConfiguration) validateConsoleLanguage(formats strfmt.Regist
 
 	if m.ConsoleLanguage != nil {
 		if err := m.ConsoleLanguage.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("consoleLanguage")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("consoleLanguage")
 			}
+
 			return err
 		}
 	}
@@ -87,11 +92,15 @@ func (m *PVMInstanceConfiguration) validateSapProfile(formats strfmt.Registry) e
 
 	if m.SapProfile != nil {
 		if err := m.SapProfile.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sapProfile")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sapProfile")
 			}
+
 			return err
 		}
 	}
@@ -106,11 +115,15 @@ func (m *PVMInstanceConfiguration) validateSoftwareLicenses(formats strfmt.Regis
 
 	if m.SoftwareLicenses != nil {
 		if err := m.SoftwareLicenses.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("softwareLicenses")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("softwareLicenses")
 			}
+
 			return err
 		}
 	}
@@ -132,11 +145,15 @@ func (m *PVMInstanceConfiguration) validateSystemReferenceCodes(formats strfmt.R
 
 			if m.SystemReferenceCodes[i][ii] != nil {
 				if err := m.SystemReferenceCodes[i][ii].Validate(formats); err != nil {
-					if ve, ok := err.(*errors.Validation); ok {
+					ve := new(errors.Validation)
+					if stderrors.As(err, &ve) {
 						return ve.ValidateName("systemReferenceCodes" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
-					} else if ce, ok := err.(*errors.CompositeError); ok {
+					}
+					ce := new(errors.CompositeError)
+					if stderrors.As(err, &ce) {
 						return ce.ValidateName("systemReferenceCodes" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
 					}
+
 					return err
 				}
 			}
@@ -183,11 +200,15 @@ func (m *PVMInstanceConfiguration) contextValidateConsoleLanguage(ctx context.Co
 		}
 
 		if err := m.ConsoleLanguage.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("consoleLanguage")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("consoleLanguage")
 			}
+
 			return err
 		}
 	}
@@ -204,11 +225,15 @@ func (m *PVMInstanceConfiguration) contextValidateSapProfile(ctx context.Context
 		}
 
 		if err := m.SapProfile.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sapProfile")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sapProfile")
 			}
+
 			return err
 		}
 	}
@@ -225,11 +250,15 @@ func (m *PVMInstanceConfiguration) contextValidateSoftwareLicenses(ctx context.C
 		}
 
 		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("softwareLicenses")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("softwareLicenses")
 			}
+
 			return err
 		}
 	}
@@ -250,11 +279,15 @@ func (m *PVMInstanceConfiguration) contextValidateSystemReferenceCodes(ctx conte
 				}
 
 				if err := m.SystemReferenceCodes[i][ii].ContextValidate(ctx, formats); err != nil {
-					if ve, ok := err.(*errors.Validation); ok {
+					ve := new(errors.Validation)
+					if stderrors.As(err, &ve) {
 						return ve.ValidateName("systemReferenceCodes" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
-					} else if ce, ok := err.(*errors.CompositeError); ok {
+					}
+					ce := new(errors.CompositeError)
+					if stderrors.As(err, &ce) {
 						return ce.ValidateName("systemReferenceCodes" + "." + strconv.Itoa(i) + "." + strconv.Itoa(ii))
 					}
+
 					return err
 				}
 			}

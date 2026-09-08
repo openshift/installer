@@ -83,7 +83,7 @@ type ClientService interface {
 V1AvailableHosts lists all the hosts that can be reserved
 */
 func (a *Client) V1AvailableHosts(params *V1AvailableHostsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1AvailableHostsOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1AvailableHostsParams()
 	}
@@ -103,17 +103,22 @@ func (a *Client) V1AvailableHosts(params *V1AvailableHostsParams, authInfo runti
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1AvailableHostsOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.availableHosts: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -122,7 +127,7 @@ func (a *Client) V1AvailableHosts(params *V1AvailableHostsParams, authInfo runti
 V1HostGroupsGet gets the list of host groups for the workspace
 */
 func (a *Client) V1HostGroupsGet(params *V1HostGroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostGroupsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostGroupsGetParams()
 	}
@@ -142,17 +147,22 @@ func (a *Client) V1HostGroupsGet(params *V1HostGroupsGetParams, authInfo runtime
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostGroupsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hostGroups.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -161,7 +171,7 @@ func (a *Client) V1HostGroupsGet(params *V1HostGroupsGetParams, authInfo runtime
 V1HostGroupsIDGet gets the details of a host group
 */
 func (a *Client) V1HostGroupsIDGet(params *V1HostGroupsIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostGroupsIDGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostGroupsIDGetParams()
 	}
@@ -181,17 +191,22 @@ func (a *Client) V1HostGroupsIDGet(params *V1HostGroupsIDGetParams, authInfo run
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostGroupsIDGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hostGroups.id.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -200,7 +215,7 @@ func (a *Client) V1HostGroupsIDGet(params *V1HostGroupsIDGetParams, authInfo run
 V1HostGroupsIDPut shares unshare a host group with another workspace
 */
 func (a *Client) V1HostGroupsIDPut(params *V1HostGroupsIDPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostGroupsIDPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostGroupsIDPutParams()
 	}
@@ -220,17 +235,22 @@ func (a *Client) V1HostGroupsIDPut(params *V1HostGroupsIDPutParams, authInfo run
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostGroupsIDPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hostGroups.id.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -239,7 +259,7 @@ func (a *Client) V1HostGroupsIDPut(params *V1HostGroupsIDPutParams, authInfo run
 V1HostGroupsPost creates a host group with one or more host
 */
 func (a *Client) V1HostGroupsPost(params *V1HostGroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostGroupsPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostGroupsPostParams()
 	}
@@ -259,17 +279,22 @@ func (a *Client) V1HostGroupsPost(params *V1HostGroupsPostParams, authInfo runti
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostGroupsPostCreated)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hostGroups.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -278,7 +303,7 @@ func (a *Client) V1HostGroupsPost(params *V1HostGroupsPostParams, authInfo runti
 V1HostsGet gets the list of all the hosts the workspace has access to
 */
 func (a *Client) V1HostsGet(params *V1HostsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostsGetParams()
 	}
@@ -298,17 +323,22 @@ func (a *Client) V1HostsGet(params *V1HostsGetParams, authInfo runtime.ClientAut
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hosts.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -317,7 +347,7 @@ func (a *Client) V1HostsGet(params *V1HostsGetParams, authInfo runtime.ClientAut
 V1HostsIDDelete releases a host from its host group
 */
 func (a *Client) V1HostsIDDelete(params *V1HostsIDDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostsIDDeleteAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostsIDDeleteParams()
 	}
@@ -337,17 +367,22 @@ func (a *Client) V1HostsIDDelete(params *V1HostsIDDeleteParams, authInfo runtime
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostsIDDeleteAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hosts.id.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -356,7 +391,7 @@ func (a *Client) V1HostsIDDelete(params *V1HostsIDDeleteParams, authInfo runtime
 V1HostsIDGet gets the details about a host
 */
 func (a *Client) V1HostsIDGet(params *V1HostsIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostsIDGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostsIDGetParams()
 	}
@@ -376,17 +411,22 @@ func (a *Client) V1HostsIDGet(params *V1HostsIDGetParams, authInfo runtime.Clien
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostsIDGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hosts.id.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -395,7 +435,7 @@ func (a *Client) V1HostsIDGet(params *V1HostsIDGetParams, authInfo runtime.Clien
 V1HostsIDPut modifies the display name of a host
 */
 func (a *Client) V1HostsIDPut(params *V1HostsIDPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostsIDPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostsIDPutParams()
 	}
@@ -415,17 +455,22 @@ func (a *Client) V1HostsIDPut(params *V1HostsIDPutParams, authInfo runtime.Clien
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostsIDPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hosts.id.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -434,7 +479,7 @@ func (a *Client) V1HostsIDPut(params *V1HostsIDPutParams, authInfo runtime.Clien
 V1HostsPost adds new host s to an existing host group
 */
 func (a *Client) V1HostsPost(params *V1HostsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1HostsPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1HostsPostParams()
 	}
@@ -454,17 +499,22 @@ func (a *Client) V1HostsPost(params *V1HostsPostParams, authInfo runtime.ClientA
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1HostsPostCreated)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.hosts.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

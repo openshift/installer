@@ -87,7 +87,7 @@ type ClientService interface {
 V1NetworkSecurityGroupsActionPost performs a network security groups action enable disable on a workspace on enablement a default network security group is created to allow all traffic for all active network iterfaces
 */
 func (a *Client) V1NetworkSecurityGroupsActionPost(params *V1NetworkSecurityGroupsActionPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsActionPostOK, *V1NetworkSecurityGroupsActionPostAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsActionPostParams()
 	}
@@ -107,18 +107,22 @@ func (a *Client) V1NetworkSecurityGroupsActionPost(params *V1NetworkSecurityGrou
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// several success responses have to be checked
 	switch value := result.(type) {
 	case *V1NetworkSecurityGroupsActionPostOK:
 		return value, nil, nil
 	case *V1NetworkSecurityGroupsActionPostAccepted:
 		return nil, value, nil
 	}
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for network_security_groups: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -127,7 +131,7 @@ func (a *Client) V1NetworkSecurityGroupsActionPost(params *V1NetworkSecurityGrou
 V1NetworkSecurityGroupsIDDelete deletes a network security group from a workspace
 */
 func (a *Client) V1NetworkSecurityGroupsIDDelete(params *V1NetworkSecurityGroupsIDDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsIDDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsIDDeleteParams()
 	}
@@ -147,17 +151,22 @@ func (a *Client) V1NetworkSecurityGroupsIDDelete(params *V1NetworkSecurityGroups
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsIDDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.id.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -166,7 +175,7 @@ func (a *Client) V1NetworkSecurityGroupsIDDelete(params *V1NetworkSecurityGroups
 V1NetworkSecurityGroupsIDGet gets the detail of a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsIDGet(params *V1NetworkSecurityGroupsIDGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsIDGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsIDGetParams()
 	}
@@ -186,17 +195,22 @@ func (a *Client) V1NetworkSecurityGroupsIDGet(params *V1NetworkSecurityGroupsIDG
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsIDGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.id.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -205,7 +219,7 @@ func (a *Client) V1NetworkSecurityGroupsIDGet(params *V1NetworkSecurityGroupsIDG
 V1NetworkSecurityGroupsIDPost clones a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsIDPost(params *V1NetworkSecurityGroupsIDPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsIDPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsIDPostParams()
 	}
@@ -225,17 +239,22 @@ func (a *Client) V1NetworkSecurityGroupsIDPost(params *V1NetworkSecurityGroupsID
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsIDPostCreated)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.id.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -244,7 +263,7 @@ func (a *Client) V1NetworkSecurityGroupsIDPost(params *V1NetworkSecurityGroupsID
 V1NetworkSecurityGroupsIDPut updates a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsIDPut(params *V1NetworkSecurityGroupsIDPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsIDPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsIDPutParams()
 	}
@@ -264,17 +283,22 @@ func (a *Client) V1NetworkSecurityGroupsIDPut(params *V1NetworkSecurityGroupsIDP
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsIDPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.id.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -283,7 +307,7 @@ func (a *Client) V1NetworkSecurityGroupsIDPut(params *V1NetworkSecurityGroupsIDP
 V1NetworkSecurityGroupsList gets the list of network security groups for a workspace
 */
 func (a *Client) V1NetworkSecurityGroupsList(params *V1NetworkSecurityGroupsListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsListOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsListParams()
 	}
@@ -303,17 +327,22 @@ func (a *Client) V1NetworkSecurityGroupsList(params *V1NetworkSecurityGroupsList
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsListOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.list: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -322,7 +351,7 @@ func (a *Client) V1NetworkSecurityGroupsList(params *V1NetworkSecurityGroupsList
 V1NetworkSecurityGroupsMembersDelete deletes the member from a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsMembersDelete(params *V1NetworkSecurityGroupsMembersDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsMembersDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsMembersDeleteParams()
 	}
@@ -342,17 +371,22 @@ func (a *Client) V1NetworkSecurityGroupsMembersDelete(params *V1NetworkSecurityG
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsMembersDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.members.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -361,7 +395,7 @@ func (a *Client) V1NetworkSecurityGroupsMembersDelete(params *V1NetworkSecurityG
 V1NetworkSecurityGroupsMembersPost adds a member to a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsMembersPost(params *V1NetworkSecurityGroupsMembersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsMembersPostOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsMembersPostParams()
 	}
@@ -381,17 +415,22 @@ func (a *Client) V1NetworkSecurityGroupsMembersPost(params *V1NetworkSecurityGro
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsMembersPostOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.members.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -400,7 +439,7 @@ func (a *Client) V1NetworkSecurityGroupsMembersPost(params *V1NetworkSecurityGro
 V1NetworkSecurityGroupsMoveMemberPost moves a network security group member to another network security group
 */
 func (a *Client) V1NetworkSecurityGroupsMoveMemberPost(params *V1NetworkSecurityGroupsMoveMemberPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsMoveMemberPostOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsMoveMemberPostParams()
 	}
@@ -420,17 +459,22 @@ func (a *Client) V1NetworkSecurityGroupsMoveMemberPost(params *V1NetworkSecurity
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsMoveMemberPostOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.move_member.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -439,7 +483,7 @@ func (a *Client) V1NetworkSecurityGroupsMoveMemberPost(params *V1NetworkSecurity
 V1NetworkSecurityGroupsPost creates a new network security group
 */
 func (a *Client) V1NetworkSecurityGroupsPost(params *V1NetworkSecurityGroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsPostOK, *V1NetworkSecurityGroupsPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsPostParams()
 	}
@@ -459,18 +503,22 @@ func (a *Client) V1NetworkSecurityGroupsPost(params *V1NetworkSecurityGroupsPost
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// several success responses have to be checked
 	switch value := result.(type) {
 	case *V1NetworkSecurityGroupsPostOK:
 		return value, nil, nil
 	case *V1NetworkSecurityGroupsPostCreated:
 		return nil, value, nil
 	}
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for network_security_groups: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -479,7 +527,7 @@ func (a *Client) V1NetworkSecurityGroupsPost(params *V1NetworkSecurityGroupsPost
 V1NetworkSecurityGroupsRulesDelete deletes the rule from a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsRulesDelete(params *V1NetworkSecurityGroupsRulesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsRulesDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsRulesDeleteParams()
 	}
@@ -499,17 +547,22 @@ func (a *Client) V1NetworkSecurityGroupsRulesDelete(params *V1NetworkSecurityGro
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsRulesDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.rules.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -518,7 +571,7 @@ func (a *Client) V1NetworkSecurityGroupsRulesDelete(params *V1NetworkSecurityGro
 V1NetworkSecurityGroupsRulesPost adds a rule to a network security group
 */
 func (a *Client) V1NetworkSecurityGroupsRulesPost(params *V1NetworkSecurityGroupsRulesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*V1NetworkSecurityGroupsRulesPostOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewV1NetworkSecurityGroupsRulesPostParams()
 	}
@@ -538,17 +591,22 @@ func (a *Client) V1NetworkSecurityGroupsRulesPost(params *V1NetworkSecurityGroup
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*V1NetworkSecurityGroupsRulesPostOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for v1.networkSecurityGroups.rules.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

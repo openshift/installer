@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// NetworkAddressTranslation Contains the Network Address Translation Details
+// NetworkAddressTranslation [DEPRECATED] Contains the Network Address Translation Details
 //
 // swagger:model NetworkAddressTranslation
 type NetworkAddressTranslation struct {

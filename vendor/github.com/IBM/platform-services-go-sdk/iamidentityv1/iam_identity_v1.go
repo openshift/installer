@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.106.0-09823488-20250707-071701
+ * IBM OpenAPI SDK Code Generator Version: 3.107.1-41b0fbd0-20250825-080732
  */
 
 // Package iamidentityv1 : Operations and models for the IamIdentityV1 service
@@ -3559,6 +3559,9 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Cont
 	if getAccountSettingsOptions.IncludeHistory != nil {
 		builder.AddQuery("include_history", fmt.Sprint(*getAccountSettingsOptions.IncludeHistory))
 	}
+	if getAccountSettingsOptions.ResolveUserMfa != nil {
+		builder.AddQuery("resolve_user_mfa", fmt.Sprint(*getAccountSettingsOptions.ResolveUserMfa))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -3664,6 +3667,12 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.C
 	}
 	if updateAccountSettingsOptions.SystemRefreshTokenExpirationInSeconds != nil {
 		body["system_refresh_token_expiration_in_seconds"] = updateAccountSettingsOptions.SystemRefreshTokenExpirationInSeconds
+	}
+	if updateAccountSettingsOptions.RestrictUserListVisibility != nil {
+		body["restrict_user_list_visibility"] = updateAccountSettingsOptions.RestrictUserListVisibility
+	}
+	if updateAccountSettingsOptions.RestrictUserDomains != nil {
+		body["restrict_user_domains"] = updateAccountSettingsOptions.RestrictUserDomains
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -6729,206 +6738,35 @@ func UnmarshalAccountBasedMfaEnrollment(m map[string]json.RawMessage, result int
 	return
 }
 
-// AccountSettingsAccountSection : AccountSettingsAccountSection struct
-type AccountSettingsAccountSection struct {
-	// Unique ID of the account.
-	AccountID *string `json:"account_id,omitempty"`
-
-	// Defines whether or not creating a service ID is access controlled. Valid values:
-	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-	// IDs, including the account owner
-	//   * NOT_RESTRICTED - all members of an account can create service IDs
-	//   * NOT_SET - to 'unset' a previous set value.
-	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
-
-	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
-	//   * NOT_SET - to 'unset' a previous set value.
-	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
-
-	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
-	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
-
-	// Defines the MFA requirement for the user. Valid values:
-	//   * NONE - No MFA trait set
-	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-	//   * TOTP - For all non-federated IBMId users
-	//   * TOTP4ALL - For all users
-	//   * LEVEL1 - Email-based MFA for all users
-	//   * LEVEL2 - TOTP-based MFA for all users
-	//   * LEVEL3 - U2F MFA for all users.
-	Mfa *string `json:"mfa,omitempty"`
-
-	// List of users that are exempted from the MFA requirement of the account.
-	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
-
-	// History of the Account Settings.
-	History []EnityHistoryRecord `json:"history,omitempty"`
-
-	// Defines the session expiration in seconds for the account. Valid values:
-	//   * Any whole number between between '900' and '86400'
-	//   * NOT_SET - To unset account setting and use service default.
-	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
-
-	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
-	//   * Any whole number between '900' and '7200'
-	//   * NOT_SET - To unset account setting and use service default.
-	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
-
-	// Defines the max allowed sessions per identity required by the account. Valid values:
-	//   * Any whole number greater than 0
-	//   * NOT_SET - To unset account setting and use service default.
-	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
-
-	// Defines the access token expiration in seconds. Valid values:
-	//   * Any whole number between '900' and '3600'
-	//   * NOT_SET - To unset account setting and use service default.
-	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
-
-	// Defines the refresh token expiration in seconds. Valid values:
-	//   * Any whole number between '900' and '259200'
-	//   * NOT_SET - To unset account setting and use service default.
-	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
-}
-
-// Constants associated with the AccountSettingsAccountSection.RestrictCreateServiceID property.
-// Defines whether or not creating a service ID is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-// IDs, including the account owner
-//   * NOT_RESTRICTED - all members of an account can create service IDs
-//   * NOT_SET - to 'unset' a previous set value.
-const (
-	AccountSettingsAccountSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsAccountSectionRestrictCreateServiceIDNotSetConst = "NOT_SET"
-	AccountSettingsAccountSectionRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
-)
-
-// Constants associated with the AccountSettingsAccountSection.RestrictCreatePlatformApikey property.
-// Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
-//   * NOT_SET - to 'unset' a previous set value.
-const (
-	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
-	AccountSettingsAccountSectionRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
-)
-
-// Constants associated with the AccountSettingsAccountSection.Mfa property.
-// Defines the MFA requirement for the user. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
-const (
-	AccountSettingsAccountSectionMfaLevel1Const = "LEVEL1"
-	AccountSettingsAccountSectionMfaLevel2Const = "LEVEL2"
-	AccountSettingsAccountSectionMfaLevel3Const = "LEVEL3"
-	AccountSettingsAccountSectionMfaNoneConst = "NONE"
-	AccountSettingsAccountSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsAccountSectionMfaTotpConst = "TOTP"
-	AccountSettingsAccountSectionMfaTotp4allConst = "TOTP4ALL"
-)
-
-// UnmarshalAccountSettingsAccountSection unmarshals an instance of AccountSettingsAccountSection from the specified map of raw messages.
-func UnmarshalAccountSettingsAccountSection(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(AccountSettingsAccountSection)
-	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// AccountSettingsAssignedTemplatesSection : AccountSettingsAssignedTemplatesSection struct
+// AccountSettingsAssignedTemplatesSection : Input body parameters for the Account Settings REST request.
 type AccountSettingsAssignedTemplatesSection struct {
 	// Template Id.
-	TemplateID *string `json:"template_id,omitempty"`
+	TemplateID *string `json:"template_id" validate:"required"`
 
 	// Template version.
-	TemplateVersion *int64 `json:"template_version,omitempty"`
+	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
 	// Template name.
-	TemplateName *string `json:"template_name,omitempty"`
+	TemplateName *string `json:"template_name" validate:"required"`
 
-	// Defines whether or not creating a service ID is access controlled. Valid values:
+	// Defines whether or not creating the resource is access controlled. Valid values:
 	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 	// IDs, including the account owner
 	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
 
-	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
+	// Defines whether or not creating the resource is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
 
 	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
 	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
 
-	// Defines the MFA requirement for the user. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -6937,9 +6775,6 @@ type AccountSettingsAssignedTemplatesSection struct {
 	//   * LEVEL2 - TOTP-based MFA for all users
 	//   * LEVEL3 - U2F MFA for all users.
 	Mfa *string `json:"mfa,omitempty"`
-
-	// List of users that are exempted from the MFA requirement of the account.
-	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
 
 	// Defines the session expiration in seconds for the account. Valid values:
 	//   * Any whole number between between '900' and '86400'
@@ -6965,10 +6800,22 @@ type AccountSettingsAssignedTemplatesSection struct {
 	//   * Any whole number between '900' and '259200'
 	//   * NOT_SET - To unset account setting and use service default.
 	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+
+	// Defines whether or not user visibility is access controlled. Valid values:
+	//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+	// the account, or descendants of those users based on the classic infrastructure hierarchy
+	//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictUserListVisibility *string `json:"restrict_user_list_visibility,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []AccountSettingsUserMfaResponse `json:"user_mfa,omitempty"`
+
+	RestrictUserDomains *AssignedTemplatesAccountSettingsRestrictUserDomains `json:"restrict_user_domains,omitempty"`
 }
 
 // Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreateServiceID property.
-// Defines whether or not creating a service ID is access controlled. Valid values:
+// Defines whether or not creating the resource is access controlled. Valid values:
 //   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
 //   * NOT_RESTRICTED - all members of an account can create service IDs
@@ -6980,9 +6827,10 @@ const (
 )
 
 // Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreatePlatformApikey property.
-// Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
+// Defines whether or not creating the resource is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
@@ -6991,7 +6839,7 @@ const (
 )
 
 // Constants associated with the AccountSettingsAssignedTemplatesSection.Mfa property.
-// Defines the MFA requirement for the user. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -7007,6 +6855,18 @@ const (
 	AccountSettingsAssignedTemplatesSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
 	AccountSettingsAssignedTemplatesSectionMfaTotpConst = "TOTP"
 	AccountSettingsAssignedTemplatesSectionMfaTotp4allConst = "TOTP4ALL"
+)
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictUserListVisibility property.
+// Defines whether or not user visibility is access controlled. Valid values:
+//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+// the account, or descendants of those users based on the classic infrastructure hierarchy
+//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console
+//   * NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAssignedTemplatesSectionRestrictUserListVisibilityNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictUserListVisibilityNotSetConst = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictUserListVisibilityRestrictedConst = "RESTRICTED"
 )
 
 // UnmarshalAccountSettingsAssignedTemplatesSection unmarshals an instance of AccountSettingsAssignedTemplatesSection from the specified map of raw messages.
@@ -7047,11 +6907,6 @@ func UnmarshalAccountSettingsAssignedTemplatesSection(m map[string]json.RawMessa
 		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
@@ -7077,160 +6932,19 @@ func UnmarshalAccountSettingsAssignedTemplatesSection(m map[string]json.RawMessa
 		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// AccountSettingsComponent : AccountSettingsComponent struct
-type AccountSettingsComponent struct {
-	// Defines whether or not creating a service ID is access controlled. Valid values:
-	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-	// IDs, including the account owner
-	//   * NOT_RESTRICTED - all members of an account can create service IDs
-	//   * NOT_SET - to 'unset' a previous set value.
-	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
-
-	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
-	//   * NOT_SET - to 'unset' a previous set value.
-	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
-
-	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
-	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
-
-	// Defines the MFA trait for the account. Valid values:
-	//   * NONE - No MFA trait set
-	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-	//   * TOTP - For all non-federated IBMId users
-	//   * TOTP4ALL - For all users
-	//   * LEVEL1 - Email-based MFA for all users
-	//   * LEVEL2 - TOTP-based MFA for all users
-	//   * LEVEL3 - U2F MFA for all users.
-	Mfa *string `json:"mfa,omitempty"`
-
-	// List of users that are exempted from the MFA requirement of the account.
-	UserMfa []AccountSettingsUserMfa `json:"user_mfa,omitempty"`
-
-	// Defines the session expiration in seconds for the account. Valid values:
-	//   * Any whole number between between '900' and '86400'
-	//   * NOT_SET - To unset account setting and use service default.
-	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
-
-	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
-	//   * Any whole number between '900' and '7200'
-	//   * NOT_SET - To unset account setting and use service default.
-	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
-
-	// Defines the max allowed sessions per identity required by the account. Valid values:
-	//   * Any whole number greater than 0
-	//   * NOT_SET - To unset account setting and use service default.
-	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
-
-	// Defines the access token expiration in seconds. Valid values:
-	//   * Any whole number between '900' and '3600'
-	//   * NOT_SET - To unset account setting and use service default.
-	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
-
-	// Defines the refresh token expiration in seconds. Valid values:
-	//   * Any whole number between '900' and '259200'
-	//   * NOT_SET - To unset account setting and use service default.
-	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
-}
-
-// Constants associated with the AccountSettingsComponent.RestrictCreateServiceID property.
-// Defines whether or not creating a service ID is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-// IDs, including the account owner
-//   * NOT_RESTRICTED - all members of an account can create service IDs
-//   * NOT_SET - to 'unset' a previous set value.
-const (
-	AccountSettingsComponentRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsComponentRestrictCreateServiceIDNotSetConst = "NOT_SET"
-	AccountSettingsComponentRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
-)
-
-// Constants associated with the AccountSettingsComponent.RestrictCreatePlatformApikey property.
-// Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
-//   * NOT_SET - to 'unset' a previous set value.
-const (
-	AccountSettingsComponentRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsComponentRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
-	AccountSettingsComponentRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
-)
-
-// Constants associated with the AccountSettingsComponent.Mfa property.
-// Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
-const (
-	AccountSettingsComponentMfaLevel1Const = "LEVEL1"
-	AccountSettingsComponentMfaLevel2Const = "LEVEL2"
-	AccountSettingsComponentMfaLevel3Const = "LEVEL3"
-	AccountSettingsComponentMfaNoneConst = "NONE"
-	AccountSettingsComponentMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsComponentMfaTotpConst = "TOTP"
-	AccountSettingsComponentMfaTotp4allConst = "TOTP4ALL"
-)
-
-// UnmarshalAccountSettingsComponent unmarshals an instance of AccountSettingsComponent from the specified map of raw messages.
-func UnmarshalAccountSettingsComponent(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(AccountSettingsComponent)
-	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	err = core.UnmarshalPrimitive(m, "restrict_user_list_visibility", &obj.RestrictUserListVisibility)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "restrict_user_list_visibility-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfa)
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfaResponse)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	err = core.UnmarshalModel(m, "restrict_user_domains", &obj.RestrictUserDomains, UnmarshalAssignedTemplatesAccountSettingsRestrictUserDomains)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "restrict_user_domains-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7239,23 +6953,30 @@ func UnmarshalAccountSettingsComponent(m map[string]json.RawMessage, result inte
 
 // AccountSettingsEffectiveSection : AccountSettingsEffectiveSection struct
 type AccountSettingsEffectiveSection struct {
-	// Defines whether or not creating a service ID is access controlled. Valid values:
+	// Defines whether or not creating the resource is access controlled. Valid values:
 	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 	// IDs, including the account owner
 	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
 
-	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
+	// Defines whether or not creating the resource is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines whether or not user visibility is access controlled. Valid values:
+	//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+	// the account, or descendants of those users based on the classic infrastructure hierarchy
+	//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console.
+	RestrictUserListVisibility *string `json:"restrict_user_list_visibility,omitempty"`
 
 	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
 	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
 
-	// Defines the MFA requirement for the user. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -7266,7 +6987,7 @@ type AccountSettingsEffectiveSection struct {
 	Mfa *string `json:"mfa,omitempty"`
 
 	// List of users that are exempted from the MFA requirement of the account.
-	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+	UserMfa []AccountSettingsUserMfaResponse `json:"user_mfa,omitempty"`
 
 	// Defines the session expiration in seconds for the account. Valid values:
 	//   * Any whole number between between '900' and '86400'
@@ -7295,7 +7016,7 @@ type AccountSettingsEffectiveSection struct {
 }
 
 // Constants associated with the AccountSettingsEffectiveSection.RestrictCreateServiceID property.
-// Defines whether or not creating a service ID is access controlled. Valid values:
+// Defines whether or not creating the resource is access controlled. Valid values:
 //   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
 //   * NOT_RESTRICTED - all members of an account can create service IDs
@@ -7307,9 +7028,10 @@ const (
 )
 
 // Constants associated with the AccountSettingsEffectiveSection.RestrictCreatePlatformApikey property.
-// Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
+// Defines whether or not creating the resource is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
@@ -7317,8 +7039,18 @@ const (
 	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
+// Constants associated with the AccountSettingsEffectiveSection.RestrictUserListVisibility property.
+// Defines whether or not user visibility is access controlled. Valid values:
+//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+// the account, or descendants of those users based on the classic infrastructure hierarchy
+//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console.
+const (
+	AccountSettingsEffectiveSectionRestrictUserListVisibilityNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictUserListVisibilityRestrictedConst = "RESTRICTED"
+)
+
 // Constants associated with the AccountSettingsEffectiveSection.Mfa property.
-// Defines the MFA requirement for the user. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -7349,6 +7081,11 @@ func UnmarshalAccountSettingsEffectiveSection(m map[string]json.RawMessage, resu
 		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "restrict_user_list_visibility", &obj.RestrictUserListVisibility)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_user_list_visibility-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
@@ -7359,7 +7096,7 @@ func UnmarshalAccountSettingsEffectiveSection(m map[string]json.RawMessage, resu
 		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfaResponse)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
 		return
@@ -7393,7 +7130,7 @@ func UnmarshalAccountSettingsEffectiveSection(m map[string]json.RawMessage, resu
 	return
 }
 
-// AccountSettingsResponse : Response body format for Account Settings REST requests.
+// AccountSettingsResponse : Input body parameters for the Account Settings REST request.
 type AccountSettingsResponse struct {
 	// Context with key properties for problem determination.
 	Context *ResponseContext `json:"context,omitempty"`
@@ -7401,26 +7138,30 @@ type AccountSettingsResponse struct {
 	// Unique ID of the account.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// Defines whether or not creating a service ID is access controlled. Valid values:
+	// Version of the account settings.
+	EntityTag *string `json:"entity_tag" validate:"required"`
+
+	// History of the Account Settings.
+	History []EnityHistoryRecord `json:"history,omitempty"`
+
+	// Defines whether or not creating the resource is access controlled. Valid values:
 	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 	// IDs, including the account owner
 	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id" validate:"required"`
 
-	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
+	// Defines whether or not creating the resource is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey" validate:"required"`
 
 	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
 	AllowedIPAddresses *string `json:"allowed_ip_addresses" validate:"required"`
 
-	// Version of the account settings.
-	EntityTag *string `json:"entity_tag" validate:"required"`
-
-	// Defines the MFA trait for the account. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -7429,12 +7170,6 @@ type AccountSettingsResponse struct {
 	//   * LEVEL2 - TOTP-based MFA for all users
 	//   * LEVEL3 - U2F MFA for all users.
 	Mfa *string `json:"mfa" validate:"required"`
-
-	// List of users that are exempted from the MFA requirement of the account.
-	UserMfa []AccountSettingsUserMfa `json:"user_mfa" validate:"required"`
-
-	// History of the Account Settings.
-	History []EnityHistoryRecord `json:"history,omitempty"`
 
 	// Defines the session expiration in seconds for the account. Valid values:
 	//   * Any whole number between between '900' and '86400'
@@ -7460,10 +7195,23 @@ type AccountSettingsResponse struct {
 	//   * Any whole number between '900' and '259200'
 	//   * NOT_SET - To unset account setting and use service default.
 	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds" validate:"required"`
+
+	// Defines whether or not user visibility is access controlled. Valid values:
+	//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+	// the account, or descendants of those users based on the classic infrastructure hierarchy
+	//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console.
+	RestrictUserListVisibility *string `json:"restrict_user_list_visibility" validate:"required"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []AccountSettingsUserMfaResponse `json:"user_mfa" validate:"required"`
+
+	// Defines if account invitations are restricted to specified domains. To remove an entry for a realm_id, perform an
+	// update (PUT) request with only the realm_id set.
+	RestrictUserDomains []AccountSettingsUserDomainRestriction `json:"restrict_user_domains" validate:"required"`
 }
 
 // Constants associated with the AccountSettingsResponse.RestrictCreateServiceID property.
-// Defines whether or not creating a service ID is access controlled. Valid values:
+// Defines whether or not creating the resource is access controlled. Valid values:
 //   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
 //   * NOT_RESTRICTED - all members of an account can create service IDs
@@ -7475,9 +7223,10 @@ const (
 )
 
 // Constants associated with the AccountSettingsResponse.RestrictCreatePlatformApikey property.
-// Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
+// Defines whether or not creating the resource is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsResponseRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
@@ -7486,7 +7235,7 @@ const (
 )
 
 // Constants associated with the AccountSettingsResponse.Mfa property.
-// Defines the MFA trait for the account. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -7504,6 +7253,16 @@ const (
 	AccountSettingsResponseMfaTotp4allConst = "TOTP4ALL"
 )
 
+// Constants associated with the AccountSettingsResponse.RestrictUserListVisibility property.
+// Defines whether or not user visibility is access controlled. Valid values:
+//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+// the account, or descendants of those users based on the classic infrastructure hierarchy
+//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console.
+const (
+	AccountSettingsResponseRestrictUserListVisibilityNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsResponseRestrictUserListVisibilityRestrictedConst = "RESTRICTED"
+)
+
 // UnmarshalAccountSettingsResponse unmarshals an instance of AccountSettingsResponse from the specified map of raw messages.
 func UnmarshalAccountSettingsResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(AccountSettingsResponse)
@@ -7515,6 +7274,16 @@ func UnmarshalAccountSettingsResponse(m map[string]json.RawMessage, result inter
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
@@ -7532,24 +7301,9 @@ func UnmarshalAccountSettingsResponse(m map[string]json.RawMessage, result inter
 		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfa)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
@@ -7575,6 +7329,21 @@ func UnmarshalAccountSettingsResponse(m map[string]json.RawMessage, result inter
 	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_user_list_visibility", &obj.RestrictUserListVisibility)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_user_list_visibility-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfaResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "restrict_user_domains", &obj.RestrictUserDomains, UnmarshalAccountSettingsUserDomainRestriction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_user_domains-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7669,7 +7438,8 @@ type AccountSettingsTemplateResponse struct {
 	// Committed flag determines if the template is ready for assignment.
 	Committed *bool `json:"committed" validate:"required"`
 
-	AccountSettings *AccountSettingsComponent `json:"account_settings" validate:"required"`
+	// Input body parameters for the Account Settings REST request.
+	AccountSettings *TemplateAccountSettings `json:"account_settings" validate:"required"`
 
 	// History of the Template.
 	History []EnityHistoryRecord `json:"history,omitempty"`
@@ -7726,7 +7496,7 @@ func UnmarshalAccountSettingsTemplateResponse(m map[string]json.RawMessage, resu
 		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "account_settings", &obj.AccountSettings, UnmarshalAccountSettingsComponent)
+	err = core.UnmarshalModel(m, "account_settings", &obj.AccountSettings, UnmarshalTemplateAccountSettings)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "account_settings-error", common.GetComponentInfo())
 		return
@@ -7770,46 +7540,24 @@ func UnmarshalAccountSettingsTemplateResponse(m map[string]json.RawMessage, resu
 	return
 }
 
-// AccountSettingsUserMfa : AccountSettingsUserMfa struct
-type AccountSettingsUserMfa struct {
-	// The iam_id of the user.
-	IamID *string `json:"iam_id" validate:"required"`
+// AccountSettingsUserDomainRestriction : Input body parameters for the Account Settings REST request.
+type AccountSettingsUserDomainRestriction struct {
+	// The realm that the restrictions apply to.
+	RealmID *string `json:"realm_id" validate:"required"`
 
-	// Defines the MFA requirement for the user. Valid values:
-	//   * NONE - No MFA trait set
-	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-	//   * TOTP - For all non-federated IBMId users
-	//   * TOTP4ALL - For all users
-	//   * LEVEL1 - Email-based MFA for all users
-	//   * LEVEL2 - TOTP-based MFA for all users
-	//   * LEVEL3 - U2F MFA for all users.
-	Mfa *string `json:"mfa" validate:"required"`
+	// The list of allowed email patterns. Wildcard syntax is supported, '*' represents any sequence of zero or more
+	// characters in the string, except for '.' and '@'. The sequence ends if a '.' or '@' was found. '**' represents any
+	// sequence of zero or more characters in the string - without limit.
+	InvitationEmailAllowPatterns []string `json:"invitation_email_allow_patterns,omitempty"`
+
+	// When true invites will only be possible to the domain patterns provided, otherwise invites are unrestricted.
+	RestrictInvitation *bool `json:"restrict_invitation,omitempty"`
 }
 
-// Constants associated with the AccountSettingsUserMfa.Mfa property.
-// Defines the MFA requirement for the user. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
-const (
-	AccountSettingsUserMfaMfaLevel1Const = "LEVEL1"
-	AccountSettingsUserMfaMfaLevel2Const = "LEVEL2"
-	AccountSettingsUserMfaMfaLevel3Const = "LEVEL3"
-	AccountSettingsUserMfaMfaNoneConst = "NONE"
-	AccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsUserMfaMfaTotpConst = "TOTP"
-	AccountSettingsUserMfaMfaTotp4allConst = "TOTP4ALL"
-)
-
-// NewAccountSettingsUserMfa : Instantiate AccountSettingsUserMfa (Generic Model Constructor)
-func (*IamIdentityV1) NewAccountSettingsUserMfa(iamID string, mfa string) (_model *AccountSettingsUserMfa, err error) {
-	_model = &AccountSettingsUserMfa{
-		IamID: core.StringPtr(iamID),
-		Mfa: core.StringPtr(mfa),
+// NewAccountSettingsUserDomainRestriction : Instantiate AccountSettingsUserDomainRestriction (Generic Model Constructor)
+func (*IamIdentityV1) NewAccountSettingsUserDomainRestriction(realmID string) (_model *AccountSettingsUserDomainRestriction, err error) {
+	_model = &AccountSettingsUserDomainRestriction{
+		RealmID: core.StringPtr(realmID),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -7818,9 +7566,78 @@ func (*IamIdentityV1) NewAccountSettingsUserMfa(iamID string, mfa string) (_mode
 	return
 }
 
-// UnmarshalAccountSettingsUserMfa unmarshals an instance of AccountSettingsUserMfa from the specified map of raw messages.
-func UnmarshalAccountSettingsUserMfa(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(AccountSettingsUserMfa)
+// UnmarshalAccountSettingsUserDomainRestriction unmarshals an instance of AccountSettingsUserDomainRestriction from the specified map of raw messages.
+func UnmarshalAccountSettingsUserDomainRestriction(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsUserDomainRestriction)
+	err = core.UnmarshalPrimitive(m, "realm_id", &obj.RealmID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "realm_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "invitation_email_allow_patterns", &obj.InvitationEmailAllowPatterns)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "invitation_email_allow_patterns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_invitation", &obj.RestrictInvitation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_invitation-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AccountSettingsUserMfaResponse : AccountSettingsUserMfaResponse struct
+type AccountSettingsUserMfaResponse struct {
+	// The iam_id of the user.
+	IamID *string `json:"iam_id" validate:"required"`
+
+	// MFA trait definitions as follows:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa" validate:"required"`
+
+	// name of the user account.
+	Name *string `json:"name,omitempty"`
+
+	// userName of the user.
+	UserName *string `json:"userName,omitempty"`
+
+	// email of the user.
+	Email *string `json:"email,omitempty"`
+
+	// optional description.
+	Description *string `json:"description,omitempty"`
+}
+
+// Constants associated with the AccountSettingsUserMfaResponse.Mfa property.
+// MFA trait definitions as follows:
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsUserMfaResponseMfaLevel1Const = "LEVEL1"
+	AccountSettingsUserMfaResponseMfaLevel2Const = "LEVEL2"
+	AccountSettingsUserMfaResponseMfaLevel3Const = "LEVEL3"
+	AccountSettingsUserMfaResponseMfaNoneConst = "NONE"
+	AccountSettingsUserMfaResponseMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsUserMfaResponseMfaTotpConst = "TOTP"
+	AccountSettingsUserMfaResponseMfaTotp4allConst = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsUserMfaResponse unmarshals an instance of AccountSettingsUserMfaResponse from the specified map of raw messages.
+func UnmarshalAccountSettingsUserMfaResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsUserMfaResponse)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
@@ -7829,6 +7646,26 @@ func UnmarshalAccountSettingsUserMfa(m map[string]json.RawMessage, result interf
 	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "userName", &obj.UserName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "userName-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8434,6 +8271,32 @@ func UnmarshalApikeyActivityUser(m map[string]json.RawMessage, result interface{
 	return
 }
 
+// AssignedTemplatesAccountSettingsRestrictUserDomains : AssignedTemplatesAccountSettingsRestrictUserDomains struct
+type AssignedTemplatesAccountSettingsRestrictUserDomains struct {
+	AccountSufficient *bool `json:"account_sufficient,omitempty"`
+
+	// Defines if account invitations are restricted to specified domains. To remove an entry for a realm_id, perform an
+	// update (PUT) request with only the realm_id set.
+	Restrictions []AccountSettingsUserDomainRestriction `json:"restrictions,omitempty"`
+}
+
+// UnmarshalAssignedTemplatesAccountSettingsRestrictUserDomains unmarshals an instance of AssignedTemplatesAccountSettingsRestrictUserDomains from the specified map of raw messages.
+func UnmarshalAssignedTemplatesAccountSettingsRestrictUserDomains(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AssignedTemplatesAccountSettingsRestrictUserDomains)
+	err = core.UnmarshalPrimitive(m, "account_sufficient", &obj.AccountSufficient)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_sufficient-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "restrictions", &obj.Restrictions, UnmarshalAccountSettingsUserDomainRestriction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrictions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CommitAccountSettingsTemplateOptions : The CommitAccountSettingsTemplate options.
 type CommitAccountSettingsTemplateOptions struct {
 	// ID of the account settings template.
@@ -8586,7 +8449,8 @@ type CreateAccountSettingsTemplateOptions struct {
 	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
-	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
+	// Input body parameters for the Account Settings REST request.
+	AccountSettings *TemplateAccountSettings `json:"account_settings,omitempty"`
 
 	// Allows users to set headers on API requests.
 	Headers map[string]string
@@ -8616,7 +8480,7 @@ func (_options *CreateAccountSettingsTemplateOptions) SetDescription(description
 }
 
 // SetAccountSettings : Allow user to set AccountSettings
-func (_options *CreateAccountSettingsTemplateOptions) SetAccountSettings(accountSettings *AccountSettingsComponent) *CreateAccountSettingsTemplateOptions {
+func (_options *CreateAccountSettingsTemplateOptions) SetAccountSettings(accountSettings *TemplateAccountSettings) *CreateAccountSettingsTemplateOptions {
 	_options.AccountSettings = accountSettings
 	return _options
 }
@@ -8641,7 +8505,8 @@ type CreateAccountSettingsTemplateVersionOptions struct {
 	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
-	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
+	// Input body parameters for the Account Settings REST request.
+	AccountSettings *TemplateAccountSettings `json:"account_settings,omitempty"`
 
 	// Allows users to set headers on API requests.
 	Headers map[string]string
@@ -8679,7 +8544,7 @@ func (_options *CreateAccountSettingsTemplateVersionOptions) SetDescription(desc
 }
 
 // SetAccountSettings : Allow user to set AccountSettings
-func (_options *CreateAccountSettingsTemplateVersionOptions) SetAccountSettings(accountSettings *AccountSettingsComponent) *CreateAccountSettingsTemplateVersionOptions {
+func (_options *CreateAccountSettingsTemplateVersionOptions) SetAccountSettings(accountSettings *TemplateAccountSettings) *CreateAccountSettingsTemplateVersionOptions {
 	_options.AccountSettings = accountSettings
 	return _options
 }
@@ -10139,7 +10004,8 @@ type EffectiveAccountSettingsResponse struct {
 
 	Effective *AccountSettingsEffectiveSection `json:"effective" validate:"required"`
 
-	Account *AccountSettingsAccountSection `json:"account" validate:"required"`
+	// Input body parameters for the Account Settings REST request.
+	Account *AccountSettingsResponse `json:"account" validate:"required"`
 
 	// assigned template section.
 	AssignedTemplates []AccountSettingsAssignedTemplatesSection `json:"assigned_templates,omitempty"`
@@ -10163,7 +10029,7 @@ func UnmarshalEffectiveAccountSettingsResponse(m map[string]json.RawMessage, res
 		err = core.SDKErrorf(err, "", "effective-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountSettingsAccountSection)
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountSettingsResponse)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
 		return
@@ -10171,90 +10037,6 @@ func UnmarshalEffectiveAccountSettingsResponse(m map[string]json.RawMessage, res
 	err = core.UnmarshalModel(m, "assigned_templates", &obj.AssignedTemplates, UnmarshalAccountSettingsAssignedTemplatesSection)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "assigned_templates-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// EffectiveAccountSettingsUserMfa : EffectiveAccountSettingsUserMfa struct
-type EffectiveAccountSettingsUserMfa struct {
-	// The iam_id of the user.
-	IamID *string `json:"iam_id" validate:"required"`
-
-	// Defines the MFA requirement for the user. Valid values:
-	//   * NONE - No MFA trait set
-	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-	//   * TOTP - For all non-federated IBMId users
-	//   * TOTP4ALL - For all users
-	//   * LEVEL1 - Email-based MFA for all users
-	//   * LEVEL2 - TOTP-based MFA for all users
-	//   * LEVEL3 - U2F MFA for all users.
-	Mfa *string `json:"mfa" validate:"required"`
-
-	// name of the user account.
-	Name *string `json:"name,omitempty"`
-
-	// userName of the user.
-	UserName *string `json:"userName,omitempty"`
-
-	// email of the user.
-	Email *string `json:"email,omitempty"`
-
-	// optional description.
-	Description *string `json:"description,omitempty"`
-}
-
-// Constants associated with the EffectiveAccountSettingsUserMfa.Mfa property.
-// Defines the MFA requirement for the user. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
-const (
-	EffectiveAccountSettingsUserMfaMfaLevel1Const = "LEVEL1"
-	EffectiveAccountSettingsUserMfaMfaLevel2Const = "LEVEL2"
-	EffectiveAccountSettingsUserMfaMfaLevel3Const = "LEVEL3"
-	EffectiveAccountSettingsUserMfaMfaNoneConst = "NONE"
-	EffectiveAccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	EffectiveAccountSettingsUserMfaMfaTotpConst = "TOTP"
-	EffectiveAccountSettingsUserMfaMfaTotp4allConst = "TOTP4ALL"
-)
-
-// UnmarshalEffectiveAccountSettingsUserMfa unmarshals an instance of EffectiveAccountSettingsUserMfa from the specified map of raw messages.
-func UnmarshalEffectiveAccountSettingsUserMfa(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EffectiveAccountSettingsUserMfa)
-	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "userName", &obj.UserName)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "userName-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10512,6 +10294,9 @@ type GetAccountSettingsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
+	// Enrich MFA exemptions with user PI.
+	ResolveUserMfa *bool `json:"resolve_user_mfa,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -10532,6 +10317,12 @@ func (_options *GetAccountSettingsOptions) SetAccountID(accountID string) *GetAc
 // SetIncludeHistory : Allow user to set IncludeHistory
 func (_options *GetAccountSettingsOptions) SetIncludeHistory(includeHistory bool) *GetAccountSettingsOptions {
 	_options.IncludeHistory = core.BoolPtr(includeHistory)
+	return _options
+}
+
+// SetResolveUserMfa : Allow user to set ResolveUserMfa
+func (_options *GetAccountSettingsOptions) SetResolveUserMfa(resolveUserMfa bool) *GetAccountSettingsOptions {
+	_options.ResolveUserMfa = core.BoolPtr(resolveUserMfa)
 	return _options
 }
 
@@ -11368,7 +11159,7 @@ func (options *GetTrustedProfileAssignmentOptions) SetHeaders(param map[string]s
 
 // IDBasedMfaEnrollment : IDBasedMfaEnrollment struct
 type IDBasedMfaEnrollment struct {
-	// Defines the MFA trait for the account. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -11378,7 +11169,7 @@ type IDBasedMfaEnrollment struct {
 	//   * LEVEL3 - U2F MFA for all users.
 	TraitAccountDefault *string `json:"trait_account_default" validate:"required"`
 
-	// Defines the MFA trait for the account. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -11388,7 +11179,7 @@ type IDBasedMfaEnrollment struct {
 	//   * LEVEL3 - U2F MFA for all users.
 	TraitUserSpecific *string `json:"trait_user_specific,omitempty"`
 
-	// Defines the MFA trait for the account. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -11410,7 +11201,7 @@ type IDBasedMfaEnrollment struct {
 }
 
 // Constants associated with the IDBasedMfaEnrollment.TraitAccountDefault property.
-// Defines the MFA trait for the account. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -11429,7 +11220,7 @@ const (
 )
 
 // Constants associated with the IDBasedMfaEnrollment.TraitUserSpecific property.
-// Defines the MFA trait for the account. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -11448,7 +11239,7 @@ const (
 )
 
 // Constants associated with the IDBasedMfaEnrollment.TraitEffective property.
-// Defines the MFA trait for the account. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -13954,6 +13745,221 @@ func (options *SetProfileIdentityOptions) SetHeaders(param map[string]string) *S
 	return options
 }
 
+// TemplateAccountSettings : Input body parameters for the Account Settings REST request.
+type TemplateAccountSettings struct {
+	// Defines whether or not creating the resource is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating the resource is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// MFA trait definitions as follows:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []UserMfa `json:"user_mfa,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+
+	// Defines whether or not user visibility is access controlled. Valid values:
+	//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+	// the account, or descendants of those users based on the classic infrastructure hierarchy
+	//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictUserListVisibility *string `json:"restrict_user_list_visibility,omitempty"`
+
+	RestrictUserDomains *TemplateAccountSettingsRestrictUserDomains `json:"restrict_user_domains,omitempty"`
+}
+
+// Constants associated with the TemplateAccountSettings.RestrictCreateServiceID property.
+// Defines whether or not creating the resource is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
+const (
+	TemplateAccountSettingsRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	TemplateAccountSettingsRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	TemplateAccountSettingsRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
+)
+
+// Constants associated with the TemplateAccountSettings.RestrictCreatePlatformApikey property.
+// Defines whether or not creating the resource is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
+const (
+	TemplateAccountSettingsRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	TemplateAccountSettingsRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	TemplateAccountSettingsRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
+)
+
+// Constants associated with the TemplateAccountSettings.Mfa property.
+// MFA trait definitions as follows:
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
+const (
+	TemplateAccountSettingsMfaLevel1Const = "LEVEL1"
+	TemplateAccountSettingsMfaLevel2Const = "LEVEL2"
+	TemplateAccountSettingsMfaLevel3Const = "LEVEL3"
+	TemplateAccountSettingsMfaNoneConst = "NONE"
+	TemplateAccountSettingsMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	TemplateAccountSettingsMfaTotpConst = "TOTP"
+	TemplateAccountSettingsMfaTotp4allConst = "TOTP4ALL"
+)
+
+// Constants associated with the TemplateAccountSettings.RestrictUserListVisibility property.
+// Defines whether or not user visibility is access controlled. Valid values:
+//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+// the account, or descendants of those users based on the classic infrastructure hierarchy
+//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console
+//   * NOT_SET - to 'unset' a previous set value.
+const (
+	TemplateAccountSettingsRestrictUserListVisibilityNotRestrictedConst = "NOT_RESTRICTED"
+	TemplateAccountSettingsRestrictUserListVisibilityNotSetConst = "NOT_SET"
+	TemplateAccountSettingsRestrictUserListVisibilityRestrictedConst = "RESTRICTED"
+)
+
+// UnmarshalTemplateAccountSettings unmarshals an instance of TemplateAccountSettings from the specified map of raw messages.
+func UnmarshalTemplateAccountSettings(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateAccountSettings)
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_user_list_visibility", &obj.RestrictUserListVisibility)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_user_list_visibility-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "restrict_user_domains", &obj.RestrictUserDomains, UnmarshalTemplateAccountSettingsRestrictUserDomains)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_user_domains-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateAccountSettingsRestrictUserDomains : TemplateAccountSettingsRestrictUserDomains struct
+type TemplateAccountSettingsRestrictUserDomains struct {
+	AccountSufficient *bool `json:"account_sufficient,omitempty"`
+
+	// Defines if account invitations are restricted to specified domains. To remove an entry for a realm_id, perform an
+	// update (PUT) request with only the realm_id set.
+	Restrictions []AccountSettingsUserDomainRestriction `json:"restrictions,omitempty"`
+}
+
+// UnmarshalTemplateAccountSettingsRestrictUserDomains unmarshals an instance of TemplateAccountSettingsRestrictUserDomains from the specified map of raw messages.
+func UnmarshalTemplateAccountSettingsRestrictUserDomains(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateAccountSettingsRestrictUserDomains)
+	err = core.UnmarshalPrimitive(m, "account_sufficient", &obj.AccountSufficient)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_sufficient-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "restrictions", &obj.Restrictions, UnmarshalAccountSettingsUserDomainRestriction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrictions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // TemplateAssignmentListResponse : List Response body format for Template Assignments Records.
 type TemplateAssignmentListResponse struct {
 	// Context with key properties for problem determination.
@@ -15053,24 +15059,24 @@ type UpdateAccountSettingsOptions struct {
 	// The id of the account to update the settings for.
 	AccountID *string `json:"account_id" validate:"required,ne="`
 
-	// Defines whether or not creating a service ID is access controlled. Valid values:
+	// Defines whether or not creating the resource is access controlled. Valid values:
 	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 	// IDs, including the account owner
 	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
 
-	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API
-	// keys, including the account owner
-	//   * NOT_RESTRICTED - all members of an account can create platform API keys
+	// Defines whether or not creating the resource is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
 
 	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
 	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
 
-	// Defines the MFA trait for the account. Valid values:
+	// MFA trait definitions as follows:
 	//   * NONE - No MFA trait set
 	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 	//   * TOTP - For all non-federated IBMId users
@@ -15081,7 +15087,7 @@ type UpdateAccountSettingsOptions struct {
 	Mfa *string `json:"mfa,omitempty"`
 
 	// List of users that are exempted from the MFA requirement of the account.
-	UserMfa []AccountSettingsUserMfa `json:"user_mfa,omitempty"`
+	UserMfa []UserMfa `json:"user_mfa,omitempty"`
 
 	// Defines the session expiration in seconds for the account. Valid values:
 	//   * Any whole number between between '900' and '86400'
@@ -15093,7 +15099,7 @@ type UpdateAccountSettingsOptions struct {
 	//   * NOT_SET - To unset account setting and use service default.
 	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
 
-	// Defines the max allowed sessions per identity required by the account. Value values:
+	// Defines the max allowed sessions per identity required by the account. Valid values:
 	//   * Any whole number greater than 0
 	//   * NOT_SET - To unset account setting and use service default.
 	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
@@ -15108,12 +15114,22 @@ type UpdateAccountSettingsOptions struct {
 	//   * NOT_SET - To unset account setting and use service default.
 	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
 
+	// Defines whether or not user visibility is access controlled. Valid values:
+	//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+	// the account, or descendants of those users based on the classic infrastructure hierarchy
+	//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console.
+	RestrictUserListVisibility *string `json:"restrict_user_list_visibility,omitempty"`
+
+	// Defines if account invitations are restricted to specified domains. To remove an entry for a realm_id, perform an
+	// update (PUT) request with only the realm_id set.
+	RestrictUserDomains []AccountSettingsUserDomainRestriction `json:"restrict_user_domains,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreateServiceID property.
-// Defines whether or not creating a service ID is access controlled. Valid values:
+// Defines whether or not creating the resource is access controlled. Valid values:
 //   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
 //   * NOT_RESTRICTED - all members of an account can create service IDs
@@ -15125,10 +15141,10 @@ const (
 )
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreatePlatformApikey property.
-// Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API keys,
-// including the account owner
-//   * NOT_RESTRICTED - all members of an account can create platform API keys
+// Defines whether or not creating the resource is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
@@ -15137,7 +15153,7 @@ const (
 )
 
 // Constants associated with the UpdateAccountSettingsOptions.Mfa property.
-// Defines the MFA trait for the account. Valid values:
+// MFA trait definitions as follows:
 //   * NONE - No MFA trait set
 //   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
 //   * TOTP - For all non-federated IBMId users
@@ -15153,6 +15169,16 @@ const (
 	UpdateAccountSettingsOptionsMfaNoneNoRopcConst = "NONE_NO_ROPC"
 	UpdateAccountSettingsOptionsMfaTotpConst = "TOTP"
 	UpdateAccountSettingsOptionsMfaTotp4allConst = "TOTP4ALL"
+)
+
+// Constants associated with the UpdateAccountSettingsOptions.RestrictUserListVisibility property.
+// Defines whether or not user visibility is access controlled. Valid values:
+//   * RESTRICTED - users can view only specific types of users in the account, such as those the user has invited to
+// the account, or descendants of those users based on the classic infrastructure hierarchy
+//   * NOT_RESTRICTED - any user in the account can view other users from the Users page in IBM Cloud console.
+const (
+	UpdateAccountSettingsOptionsRestrictUserListVisibilityNotRestrictedConst = "NOT_RESTRICTED"
+	UpdateAccountSettingsOptionsRestrictUserListVisibilityRestrictedConst = "RESTRICTED"
 )
 
 // NewUpdateAccountSettingsOptions : Instantiate UpdateAccountSettingsOptions
@@ -15200,7 +15226,7 @@ func (_options *UpdateAccountSettingsOptions) SetMfa(mfa string) *UpdateAccountS
 }
 
 // SetUserMfa : Allow user to set UserMfa
-func (_options *UpdateAccountSettingsOptions) SetUserMfa(userMfa []AccountSettingsUserMfa) *UpdateAccountSettingsOptions {
+func (_options *UpdateAccountSettingsOptions) SetUserMfa(userMfa []UserMfa) *UpdateAccountSettingsOptions {
 	_options.UserMfa = userMfa
 	return _options
 }
@@ -15235,6 +15261,18 @@ func (_options *UpdateAccountSettingsOptions) SetSystemRefreshTokenExpirationInS
 	return _options
 }
 
+// SetRestrictUserListVisibility : Allow user to set RestrictUserListVisibility
+func (_options *UpdateAccountSettingsOptions) SetRestrictUserListVisibility(restrictUserListVisibility string) *UpdateAccountSettingsOptions {
+	_options.RestrictUserListVisibility = core.StringPtr(restrictUserListVisibility)
+	return _options
+}
+
+// SetRestrictUserDomains : Allow user to set RestrictUserDomains
+func (_options *UpdateAccountSettingsOptions) SetRestrictUserDomains(restrictUserDomains []AccountSettingsUserDomainRestriction) *UpdateAccountSettingsOptions {
+	_options.RestrictUserDomains = restrictUserDomains
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *UpdateAccountSettingsOptions) SetHeaders(param map[string]string) *UpdateAccountSettingsOptions {
 	options.Headers = param
@@ -15263,7 +15301,8 @@ type UpdateAccountSettingsTemplateVersionOptions struct {
 	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
-	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
+	// Input body parameters for the Account Settings REST request.
+	AccountSettings *TemplateAccountSettings `json:"account_settings,omitempty"`
 
 	// Allows users to set headers on API requests.
 	Headers map[string]string
@@ -15315,7 +15354,7 @@ func (_options *UpdateAccountSettingsTemplateVersionOptions) SetDescription(desc
 }
 
 // SetAccountSettings : Allow user to set AccountSettings
-func (_options *UpdateAccountSettingsTemplateVersionOptions) SetAccountSettings(accountSettings *AccountSettingsComponent) *UpdateAccountSettingsTemplateVersionOptions {
+func (_options *UpdateAccountSettingsTemplateVersionOptions) SetAccountSettings(accountSettings *TemplateAccountSettings) *UpdateAccountSettingsTemplateVersionOptions {
 	_options.AccountSettings = accountSettings
 	return _options
 }
@@ -16010,6 +16049,58 @@ func UnmarshalUserActivity(m map[string]json.RawMessage, result interface{}) (er
 	err = core.UnmarshalPrimitive(m, "last_authn", &obj.LastAuthn)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "last_authn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserMfa : UserMfa struct
+type UserMfa struct {
+	// The iam_id of the user.
+	IamID *string `json:"iam_id,omitempty"`
+
+	// MFA trait definitions as follows:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+}
+
+// Constants associated with the UserMfa.Mfa property.
+// MFA trait definitions as follows:
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
+const (
+	UserMfaMfaLevel1Const = "LEVEL1"
+	UserMfaMfaLevel2Const = "LEVEL2"
+	UserMfaMfaLevel3Const = "LEVEL3"
+	UserMfaMfaNoneConst = "NONE"
+	UserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	UserMfaMfaTotpConst = "TOTP"
+	UserMfaMfaTotp4allConst = "TOTP4ALL"
+)
+
+// UnmarshalUserMfa unmarshals an instance of UserMfa from the specified map of raw messages.
+func UnmarshalUserMfa(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserMfa)
+	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

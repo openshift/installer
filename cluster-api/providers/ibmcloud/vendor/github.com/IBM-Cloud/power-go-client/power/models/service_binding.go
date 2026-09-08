@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -58,11 +59,15 @@ func (m *ServiceBinding) validateVolumeMounts(formats strfmt.Registry) error {
 
 		if m.VolumeMounts[i] != nil {
 			if err := m.VolumeMounts[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("volume_mounts" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("volume_mounts" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -97,11 +102,15 @@ func (m *ServiceBinding) contextValidateVolumeMounts(ctx context.Context, format
 			}
 
 			if err := m.VolumeMounts[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("volume_mounts" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("volume_mounts" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

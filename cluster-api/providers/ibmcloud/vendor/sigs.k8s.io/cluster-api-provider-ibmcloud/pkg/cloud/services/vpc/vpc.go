@@ -51,6 +51,7 @@ type Vpc interface {
 	CreateLoadBalancerPoolMember(options *vpcv1.CreateLoadBalancerPoolMemberOptions) (*vpcv1.LoadBalancerPoolMember, *core.DetailedResponse, error)
 	DeleteLoadBalancerPoolMember(options *vpcv1.DeleteLoadBalancerPoolMemberOptions) (*core.DetailedResponse, error)
 	ListLoadBalancerPoolMembers(options *vpcv1.ListLoadBalancerPoolMembersOptions) (*vpcv1.LoadBalancerPoolMemberCollection, *core.DetailedResponse, error)
+	GetLoadBalancerListener(options *vpcv1.GetLoadBalancerListenerOptions) (*vpcv1.LoadBalancerListener, *core.DetailedResponse, error)
 	ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection, *core.DetailedResponse, error)
 	CreateImage(options *vpcv1.CreateImageOptions) (*vpcv1.Image, *core.DetailedResponse, error)
 	ListImages(options *vpcv1.ListImagesOptions) (*vpcv1.ImageCollection, *core.DetailedResponse, error)
@@ -72,4 +73,8 @@ type Vpc interface {
 	GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error)
 	ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error)
 	GetVPCZonesByRegion(region string) ([]string, error)
+	CreateVolume(options *vpcv1.CreateVolumeOptions) (*vpcv1.Volume, *core.DetailedResponse, error)
+	AttachVolumeToInstance(options *vpcv1.CreateInstanceVolumeAttachmentOptions) (*vpcv1.VolumeAttachment, *core.DetailedResponse, error)
+	GetVolumeAttachments(options *vpcv1.ListInstanceVolumeAttachmentsOptions) (result *vpcv1.VolumeAttachmentCollection, response *core.DetailedResponse, err error)
+	GetVolume(options *vpcv1.GetVolumeOptions) (result *vpcv1.Volume, response *core.DetailedResponse, err error)
 }

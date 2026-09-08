@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -143,11 +144,15 @@ func (m *CloudConnection) validateClassic(formats strfmt.Registry) error {
 
 	if m.Classic != nil {
 		if err := m.Classic.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("classic")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("classic")
 			}
+
 			return err
 		}
 	}
@@ -234,11 +239,15 @@ func (m *CloudConnection) validateNetworks(formats strfmt.Registry) error {
 
 		if m.Networks[i] != nil {
 			if err := m.Networks[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -282,11 +291,15 @@ func (m *CloudConnection) validateVpc(formats strfmt.Registry) error {
 
 	if m.Vpc != nil {
 		if err := m.Vpc.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("vpc")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("vpc")
 			}
+
 			return err
 		}
 	}
@@ -325,11 +338,15 @@ func (m *CloudConnection) contextValidateClassic(ctx context.Context, formats st
 		}
 
 		if err := m.Classic.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("classic")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("classic")
 			}
+
 			return err
 		}
 	}
@@ -348,11 +365,15 @@ func (m *CloudConnection) contextValidateNetworks(ctx context.Context, formats s
 			}
 
 			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -371,11 +392,15 @@ func (m *CloudConnection) contextValidateVpc(ctx context.Context, formats strfmt
 		}
 
 		if err := m.Vpc.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("vpc")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("vpc")
 			}
+
 			return err
 		}
 	}

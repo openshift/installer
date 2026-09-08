@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -98,6 +99,9 @@ type VolumeReference struct {
 
 	// shows the replication status of a volume
 	ReplicationStatus string `json:"replicationStatus,omitempty"`
+
+	// CRN of the replication targert workspace; for a primary replicated volume this is the target workspace that owns the auxiliary data; for an auxiliary replicated volume this is the target workspace that owns the primary data.
+	ReplicationTargetCRN string `json:"replicationTargetCRN,omitempty"`
 
 	// type of replication(metro, global)s
 	ReplicationType string `json:"replicationType,omitempty"`
@@ -230,11 +234,15 @@ func (m *VolumeReference) validateCrn(formats strfmt.Registry) error {
 	}
 
 	if err := m.Crn.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("crn")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("crn")
 		}
+
 		return err
 	}
 
@@ -293,7 +301,7 @@ func (m *VolumeReference) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
-var volumeReferenceTypePrimaryRolePropEnum []interface{}
+var volumeReferenceTypePrimaryRolePropEnum []any
 
 func init() {
 	var res []string
@@ -368,11 +376,15 @@ func (m *VolumeReference) validateUserTags(formats strfmt.Registry) error {
 	}
 
 	if err := m.UserTags.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 
@@ -422,11 +434,15 @@ func (m *VolumeReference) contextValidateCrn(ctx context.Context, formats strfmt
 	}
 
 	if err := m.Crn.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("crn")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("crn")
 		}
+
 		return err
 	}
 
@@ -436,11 +452,15 @@ func (m *VolumeReference) contextValidateCrn(ctx context.Context, formats strfmt
 func (m *VolumeReference) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 

@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -29,7 +30,7 @@ type Snapshot struct {
 	// crn
 	Crn CRN `json:"crn,omitempty"`
 
-	// Description of the PVM instance snapshot
+	// Description of the PVM instance snapshot with a maximum of 255 characters allowed.
 	Description string `json:"description,omitempty"`
 
 	// Last Update Date
@@ -118,11 +119,15 @@ func (m *Snapshot) validateCrn(formats strfmt.Registry) error {
 	}
 
 	if err := m.Crn.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("crn")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("crn")
 		}
+
 		return err
 	}
 
@@ -198,11 +203,15 @@ func (m *Snapshot) contextValidateCrn(ctx context.Context, formats strfmt.Regist
 	}
 
 	if err := m.Crn.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("crn")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("crn")
 		}
+
 		return err
 	}
 

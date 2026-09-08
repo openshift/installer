@@ -8,4 +8,4 @@ package models
 // Context See [Context Conventions](https://github.com/openservicebrokerapi/servicebroker/blob/master/profile.md#context-object) for more details.
 //
 // swagger:model Context
-type Context interface{}
+type Context any

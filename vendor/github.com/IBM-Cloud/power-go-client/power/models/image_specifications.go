@@ -38,6 +38,9 @@ type ImageSpecifications struct {
 	// Operating System
 	OperatingSystem string `json:"operatingSystem,omitempty"`
 
+	// Shared Image
+	Shared *bool `json:"shared,omitempty"`
+
 	// Checksum of the source file (imported images only)
 	SourceChecksum string `json:"sourceChecksum,omitempty"`
 }

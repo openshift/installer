@@ -48,7 +48,7 @@ func (m *StorageType) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var storageTypeTypeStatePropEnum []interface{}
+var storageTypeTypeStatePropEnum []any
 
 func init() {
 	var res []string

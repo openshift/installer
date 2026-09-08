@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -38,6 +39,9 @@ type VolumeGroupDetails struct {
 
 	// Replication status of volume group
 	ReplicationStatus string `json:"replicationStatus,omitempty"`
+
+	// CRN of the replication targert workspace; for a primary replicated volume this is the target workspace that owns the auxiliary data; for an auxiliary replicated volume this is the target workspace that owns the primary data.
+	ReplicationTargetCRN string `json:"replicationTargetCRN,omitempty"`
 
 	// Status of the volume group
 	Status string `json:"status,omitempty"`
@@ -99,11 +103,15 @@ func (m *VolumeGroupDetails) validateStatusDescription(formats strfmt.Registry) 
 
 	if m.StatusDescription != nil {
 		if err := m.StatusDescription.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("statusDescription")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("statusDescription")
 			}
+
 			return err
 		}
 	}
@@ -134,11 +142,15 @@ func (m *VolumeGroupDetails) contextValidateStatusDescription(ctx context.Contex
 		}
 
 		if err := m.StatusDescription.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("statusDescription")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("statusDescription")
 			}
+
 			return err
 		}
 	}

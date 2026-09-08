@@ -14,7 +14,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// AccessConfig (deprecated - replaced by network peer id)
+// AccessConfig [DEPRECATED]
 // Network communication configuration (for satellite locations only)
 //   - `internal-only` - network is only used for internal host communication
 //   - `outbound-only` - network will be capable of egress traffic
@@ -53,7 +53,7 @@ const (
 )
 
 // for schema
-var accessConfigEnum []interface{}
+var accessConfigEnum []any
 
 func init() {
 	var res []AccessConfig

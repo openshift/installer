@@ -133,7 +133,8 @@ func FetchVPCEndpoint(region string, serviceEndpoint []ServiceEndpoint) string {
 }
 
 // FetchPVSEndpoint will return PowerVS service endpoint.
-// Deprecated: User FetchEndpoints instead.
+//
+// Deprecated: Use FetchEndpoints instead.
 func FetchPVSEndpoint(region string, serviceEndpoint []ServiceEndpoint) string {
 	for _, powervsEndpoint := range serviceEndpoint {
 		if powervsEndpoint.Region == region && powervsEndpoint.ID == string(PowerVS) {
@@ -144,7 +145,8 @@ func FetchPVSEndpoint(region string, serviceEndpoint []ServiceEndpoint) string {
 }
 
 // FetchRCEndpoint will return resource controller endpoint.
-// Deprecated: User FetchEndpoints instead.
+//
+// Deprecated: Use FetchEndpoints instead.
 func FetchRCEndpoint(serviceEndpoint []ServiceEndpoint) string {
 	for _, rcEndpoint := range serviceEndpoint {
 		if rcEndpoint.ID == string(RC) {

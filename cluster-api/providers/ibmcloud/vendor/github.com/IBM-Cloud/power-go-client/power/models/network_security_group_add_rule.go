@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -84,7 +85,7 @@ func (m *NetworkSecurityGroupAddRule) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var networkSecurityGroupAddRuleTypeActionPropEnum []interface{}
+var networkSecurityGroupAddRuleTypeActionPropEnum []any
 
 func init() {
 	var res []string
@@ -134,11 +135,15 @@ func (m *NetworkSecurityGroupAddRule) validateDestinationPort(formats strfmt.Reg
 
 	if m.DestinationPort != nil {
 		if err := m.DestinationPort.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("destinationPort")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("destinationPort")
 			}
+
 			return err
 		}
 	}
@@ -153,11 +158,15 @@ func (m *NetworkSecurityGroupAddRule) validateDestinationPorts(formats strfmt.Re
 
 	if m.DestinationPorts != nil {
 		if err := m.DestinationPorts.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("destinationPorts")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("destinationPorts")
 			}
+
 			return err
 		}
 	}
@@ -173,11 +182,15 @@ func (m *NetworkSecurityGroupAddRule) validateProtocol(formats strfmt.Registry) 
 
 	if m.Protocol != nil {
 		if err := m.Protocol.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("protocol")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("protocol")
 			}
+
 			return err
 		}
 	}
@@ -193,11 +206,15 @@ func (m *NetworkSecurityGroupAddRule) validateRemote(formats strfmt.Registry) er
 
 	if m.Remote != nil {
 		if err := m.Remote.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("remote")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("remote")
 			}
+
 			return err
 		}
 	}
@@ -212,11 +229,15 @@ func (m *NetworkSecurityGroupAddRule) validateSourcePort(formats strfmt.Registry
 
 	if m.SourcePort != nil {
 		if err := m.SourcePort.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sourcePort")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sourcePort")
 			}
+
 			return err
 		}
 	}
@@ -231,11 +252,15 @@ func (m *NetworkSecurityGroupAddRule) validateSourcePorts(formats strfmt.Registr
 
 	if m.SourcePorts != nil {
 		if err := m.SourcePorts.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sourcePorts")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sourcePorts")
 			}
+
 			return err
 		}
 	}
@@ -286,11 +311,15 @@ func (m *NetworkSecurityGroupAddRule) contextValidateDestinationPort(ctx context
 		}
 
 		if err := m.DestinationPort.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("destinationPort")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("destinationPort")
 			}
+
 			return err
 		}
 	}
@@ -307,11 +336,15 @@ func (m *NetworkSecurityGroupAddRule) contextValidateDestinationPorts(ctx contex
 		}
 
 		if err := m.DestinationPorts.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("destinationPorts")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("destinationPorts")
 			}
+
 			return err
 		}
 	}
@@ -324,11 +357,15 @@ func (m *NetworkSecurityGroupAddRule) contextValidateProtocol(ctx context.Contex
 	if m.Protocol != nil {
 
 		if err := m.Protocol.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("protocol")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("protocol")
 			}
+
 			return err
 		}
 	}
@@ -341,11 +378,15 @@ func (m *NetworkSecurityGroupAddRule) contextValidateRemote(ctx context.Context,
 	if m.Remote != nil {
 
 		if err := m.Remote.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("remote")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("remote")
 			}
+
 			return err
 		}
 	}
@@ -362,11 +403,15 @@ func (m *NetworkSecurityGroupAddRule) contextValidateSourcePort(ctx context.Cont
 		}
 
 		if err := m.SourcePort.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sourcePort")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sourcePort")
 			}
+
 			return err
 		}
 	}
@@ -383,11 +428,15 @@ func (m *NetworkSecurityGroupAddRule) contextValidateSourcePorts(ctx context.Con
 		}
 
 		if err := m.SourcePorts.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sourcePorts")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sourcePorts")
 			}
+
 			return err
 		}
 	}

@@ -32,8 +32,10 @@ const (
 
 // IBMPowerVSClusterSpec defines the desired state of IBMPowerVSCluster.
 type IBMPowerVSClusterSpec struct {
-	// ServiceInstanceID is the id of the power cloud instance where the vsi instance will get deployed.
+
 	// Deprecated: use ServiceInstance instead
+	//
+	// ServiceInstanceID is the id of the power cloud instance where the vsi instance will get deployed.
 	ServiceInstanceID string `json:"serviceInstanceID"`
 
 	// Network is the reference to the Network to use for this cluster.

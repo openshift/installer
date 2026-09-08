@@ -68,7 +68,7 @@ func (m *TransitGatewayLocation) validateLocation(formats strfmt.Registry) error
 	return nil
 }
 
-var transitGatewayLocationTypeLocationTypePropEnum []interface{}
+var transitGatewayLocationTypeLocationTypePropEnum []any
 
 func init() {
 	var res []string

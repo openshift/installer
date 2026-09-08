@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -54,11 +55,15 @@ func (m *ClonedVolumeDetail) validateClone(formats strfmt.Registry) error {
 
 	if m.Clone != nil {
 		if err := m.Clone.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("clone")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("clone")
 			}
+
 			return err
 		}
 	}
@@ -74,11 +79,15 @@ func (m *ClonedVolumeDetail) validateSource(formats strfmt.Registry) error {
 
 	if m.Source != nil {
 		if err := m.Source.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("source")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("source")
 			}
+
 			return err
 		}
 	}
@@ -109,11 +118,15 @@ func (m *ClonedVolumeDetail) contextValidateClone(ctx context.Context, formats s
 	if m.Clone != nil {
 
 		if err := m.Clone.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("clone")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("clone")
 			}
+
 			return err
 		}
 	}
@@ -126,11 +139,15 @@ func (m *ClonedVolumeDetail) contextValidateSource(ctx context.Context, formats 
 	if m.Source != nil {
 
 		if err := m.Source.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("source")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("source")
 			}
+
 			return err
 		}
 	}

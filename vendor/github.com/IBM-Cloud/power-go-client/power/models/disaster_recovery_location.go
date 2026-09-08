@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -45,11 +46,15 @@ func (m *DisasterRecoveryLocation) validateReplicationSites(formats strfmt.Regis
 	}
 
 	if err := m.ReplicationSites.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("replicationSites")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("replicationSites")
 		}
+
 		return err
 	}
 
@@ -73,11 +78,15 @@ func (m *DisasterRecoveryLocation) ContextValidate(ctx context.Context, formats 
 func (m *DisasterRecoveryLocation) contextValidateReplicationSites(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.ReplicationSites.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("replicationSites")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("replicationSites")
 		}
+
 		return err
 	}
 
