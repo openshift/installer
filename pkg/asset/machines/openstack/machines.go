@@ -251,12 +251,20 @@ func generateProviderSpec(ctx context.Context, clusterID string, config *types.I
 		serverGroupName += "-" + failureDomain.AvailabilityZone
 	}
 
+	// Determine the flavor to use for this machine.
+	// Bootstrap machines use BootstrapFlavor when specified; otherwise fall back to the
+	// control plane flavor from the machine pool. Master machines always use FlavorName.
+	flavorName := mpool.FlavorName
+	if role == bootstrapRole && platform.BootstrapFlavor != "" {
+		flavorName = platform.BootstrapFlavor
+	}
+
 	spec := machinev1alpha1.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machinev1alpha1.GroupVersion.String(),
 			Kind:       "OpenstackProviderSpec",
 		},
-		Flavor:           mpool.FlavorName,
+		Flavor:           flavorName,
 		CloudName:        CloudName,
 		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
