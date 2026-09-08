@@ -63,6 +63,11 @@ $compute_hostnames = "compute-0", "compute-1", "compute-2"
 # You can also set this if you want to change the default name of template when its uploaded.
 $vm_template = ""
 
+# Maximum number of VM-creation jobs to run concurrently against vCenter.
+# Lower this if you see transient vCenter API failures during VM creation.
+# Defaults to 5 if unset.
+$vmCreationThrottleLimit = 5
+
 $failure_domains = @"
 [
     {
