@@ -53,7 +53,7 @@ ENV ART_DNF_WRAPPER_POLICY=append
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \      
       gettext \
-      google-cloud-cli-447.0.0-1 \
+      google-cloud-cli-563.0.0-1 \
       gzip \
       jq \
       unzip \
