@@ -44,48 +44,49 @@ type API interface {
 	GetVCenterName() string
 }
 
-// Client makes calls to the Azure API.
+// Client makes calls to the vSphere API.
 type Client struct {
 	vcenter    string
 	client     *vim25.Client
 	restClient *rest.Client
 	cnsClient  *cns.Client
-	cleanup    vsphere.ClientLogout
+	session    *vsphere.Session
 	logger     logrus.FieldLogger
 }
-
 const defaultTimeout = time.Minute * 5
 
-// NewClient initializes a client.
-// Logout() must be called when you are done with the client.
+// NewClient initializes a client for cluster destruction.
+//
+// This calls NewSession for connection pooling but stores the
+// cleanup function separately since the destroy client needs
+// to explicitly close its session lifecycle.
 func NewClient(vCenter, username, password string, logger logrus.FieldLogger) (*Client, error) {
-	vim25Client, restClient, cleanup, err := vsphere.CreateVSphereClients(
-		context.TODO(),
-		vCenter,
-		username,
-		password)
+	sess, _, err := vsphere.NewSession(context.TODO(), vCenter, username, password)
 	if err != nil {
 		return nil, err
 	}
 
-	cnsClient, err := cns.NewClient(context.TODO(), vim25Client)
+	cnsClient, err := cns.NewClient(context.TODO(), sess.Vim25Client())
 	if err != nil {
+		sess.Close()
 		return nil, err
 	}
 
 	return &Client{
 		vcenter:    vCenter,
-		client:     vim25Client,
-		restClient: restClient,
-		cleanup:    cleanup,
+		client:     sess.Vim25Client(),
+		restClient: sess.RestClient(),
 		cnsClient:  cnsClient,
+		session:    sess,
 		logger:     logger,
 	}, nil
 }
 
 // Logout logs out from the clients used.
 func (c *Client) Logout() {
-	c.cleanup()
+	if c.session != nil {
+		c.session.Close()
+	}
 }
 
 func isNotFound(err error) bool {
