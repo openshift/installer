@@ -3,7 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
-	"path/filepath"
+	"path"
 	"regexp"
 	"strings"
 
@@ -161,6 +161,11 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
 	zoneNames := make(map[string]string)
+	type topologyEntry struct {
+		name     string
+		networks []string
+	}
+	fdTopologies := make(map[vsphereTopologyKey][]topologyEntry)
 
 	for index, failureDomain := range p.FailureDomains {
 		var associatedVCenter *vsphere.VCenter
@@ -168,6 +173,20 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 			zoneNames[failureDomain.Zone] = failureDomain.Region
 		} else if regionName == failureDomain.Region {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zone"), failureDomain.Zone, fmt.Sprintf("cannot be used more than once for the failure domain region %q", failureDomain.Region)))
+		}
+
+		topoKey := normalizedTopologyKey(failureDomain)
+		duplicate := false
+		for _, entry := range fdTopologies[topoKey] {
+			if slices.Equal(failureDomain.Topology.Networks, entry.networks) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(index), failureDomain.Name,
+					fmt.Sprintf("failure domain %q has identical topology (same server, datacenter, computeCluster, datastore, networks, resourcePool, hostGroup) as %q; this provides no additional fault tolerance", failureDomain.Name, entry.name)))
+				duplicate = true
+				break
+			}
+		}
+		if !duplicate {
+			fdTopologies[topoKey] = append(fdTopologies[topoKey], topologyEntry{name: failureDomain.Name, networks: failureDomain.Topology.Networks})
 		}
 
 		if failureDomain.ZoneType == "" && failureDomain.RegionType == "" {
@@ -248,7 +267,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 			if !strings.Contains(failureDomain.Topology.Datastore, failureDomain.Topology.Datacenter) {
 				return append(allErrs, field.Invalid(topologyFld.Child("datastore"), failureDomain.Topology.Datastore, "the datastore defined does not exist in the correct datacenter"))
 			}
-			p.FailureDomains[index].Topology.Datastore = filepath.Clean(p.FailureDomains[index].Topology.Datastore)
+			p.FailureDomains[index].Topology.Datastore = path.Clean(p.FailureDomains[index].Topology.Datastore)
 		}
 
 		if len(failureDomain.Topology.TagIDs) > 10 {
@@ -303,7 +322,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 			if len(failureDomain.Topology.Datacenter) != 0 && !strings.Contains(failureDomain.Topology.Datacenter, datacenterName) {
 				return append(allErrs, field.Invalid(topologyFld.Child("computeCluster"), computeCluster, fmt.Sprintf("compute cluster must be in datacenter %s", failureDomain.Topology.Datacenter)))
 			}
-			p.FailureDomains[index].Topology.ComputeCluster = filepath.Clean(p.FailureDomains[index].Topology.ComputeCluster)
+			p.FailureDomains[index].Topology.ComputeCluster = path.Clean(p.FailureDomains[index].Topology.ComputeCluster)
 		}
 
 		if len(failureDomain.Topology.ResourcePool) != 0 {
@@ -322,7 +341,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 				return append(allErrs, field.Invalid(topologyFld.Child("resourcePool"), resourcePool, fmt.Sprintf("resource pool must be in compute cluster %s", failureDomain.Topology.ComputeCluster)))
 			}
 
-			p.FailureDomains[index].Topology.ResourcePool = filepath.Clean(p.FailureDomains[index].Topology.ResourcePool)
+			p.FailureDomains[index].Topology.ResourcePool = path.Clean(p.FailureDomains[index].Topology.ResourcePool)
 		}
 
 		// Validate that template and clusterOSImage are mutually exclusive
@@ -332,11 +351,53 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 		}
 
 		if len(failureDomain.Topology.Template) > 0 {
-			p.FailureDomains[index].Topology.Template = filepath.Clean(p.FailureDomains[index].Topology.Template)
+			p.FailureDomains[index].Topology.Template = path.Clean(p.FailureDomains[index].Topology.Template)
 		}
 	}
 
 	return allErrs
+}
+
+// vsphereTopologyKey is a comparable struct representing the scalar physical
+// infrastructure fields of a failure domain. Used as a map key for first-pass
+// dedup. Networks are compared separately (order-sensitive slice comparison)
+// because Go map keys cannot contain slices.
+//
+// Included fields (define physical placement):
+//   - server, datacenter, computeCluster, datastore, resourcePool, hostGroup
+//
+// Excluded fields (identity/metadata, not infrastructure):
+//   - Name, Region, Zone, RegionType, ZoneType (scheduling labels)
+//   - Folder, Template, TagIDs (VM metadata, not fault-zone identity)
+//   - Networks (compared separately via slices.Equal, order matters)
+type vsphereTopologyKey struct {
+	server         string
+	datacenter     string
+	computeCluster string
+	datastore      string
+	resourcePool   string
+	hostGroup      string
+}
+
+// normalizedTopologyKey builds a comparable struct key from a failure domain.
+// Inventory paths are canonicalized with path.Clean (vSphere paths are URL-style,
+// always use forward slashes).
+func normalizedTopologyKey(fd vsphere.FailureDomain) vsphereTopologyKey {
+	normalizePath := func(p string) string {
+		if p == "" {
+			return ""
+		}
+		return path.Clean(p)
+	}
+
+	return vsphereTopologyKey{
+		server:         fd.Server,
+		datacenter:     fd.Topology.Datacenter,
+		computeCluster: normalizePath(fd.Topology.ComputeCluster),
+		datastore:      normalizePath(fd.Topology.Datastore),
+		resourcePool:   normalizePath(fd.Topology.ResourcePool),
+		hostGroup:      fd.Topology.HostGroup,
+	}
 }
 
 // validateDiskType checks that the specified diskType is valid.
