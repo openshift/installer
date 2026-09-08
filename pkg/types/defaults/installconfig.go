@@ -59,7 +59,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
-
 	if c.Publish == "" {
 		c.Publish = types.ExternalPublishingStrategy
 	}
