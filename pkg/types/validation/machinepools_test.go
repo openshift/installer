@@ -364,6 +364,22 @@ func TestValidateMachinePool(t *testing.T) {
 			expectedError: `^test-path\.diskSetup\.etcd: Invalid value: "type: etcd\\n": etcd configuration must be created$`,
 		},
 		{
+			name:     "invalid swap disk on master machine pool",
+			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type: "swap",
+					Swap: &types.DiskSwap{PlatformDiskID: "swap"},
+				})
+				p.Platform = types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{},
+				}
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\.swap: Invalid value: "swap:\\n  platformDiskID: swap\\ntype: swap\\n": swap is unsupported on control plane nodes$`,
+		},
+		{
 			name:     "valid swap disk",
 			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
 			pool: func() *types.MachinePool {
