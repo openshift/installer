@@ -888,6 +888,48 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path.hosts.gateway: Invalid value: "8888:666:7777:5555:3333:0000:9999:JENNY": "8888:666:7777:5555:3333:0000:9999:JENNY" is not a valid IP$`,
 		},
 		{
+			name: "Static IP - valid IPAddrs IPv6 CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs = []string{"2001:db8:3333:4444::1/64"}
+				p.Hosts[1].NetworkDevice.Gateway = "2001:db8:3333:4444::ffff"
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - valid Nameservers IPv4",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Nameservers = []string{"8.8.8.8", "1.1.1.1"}
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - valid Nameservers IPv6",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Nameservers = []string{"2001:4860:4860::8888"}
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - invalid Nameserver",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Nameservers = []string{"not-an-ip"}
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.nameservers: Invalid value: "not-an-ip": "not-an-ip" is not a valid IP$`,
+		},
+		{
 			name: "Static IP - More than 3 nameservers",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
