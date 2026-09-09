@@ -98,6 +98,10 @@ type Sku struct {
 
 // ARM ResourceId of a resource
 type ArmResourceId struct {
+	// ResourceId: Arm ResourceId is in the format
+	// "/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Storage/storageAccounts/{StorageAccountName}"
+	// or
+	// "/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{AcrName}"
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -122,6 +126,9 @@ var managedServiceIdentityType_Values = map[string]ManagedServiceIdentityType{
 
 // Private endpoint connection definition.
 type RegistryPrivateEndpointConnection struct {
+	// Id: This is the private endpoint connection name created on SRP
+	// Full resource id:
+	// /subscriptions/{subId}/resourceGroups/{rgName}/providers/Microsoft.MachineLearningServices/{resourceType}/{resourceName}/registryPrivateEndpointConnections/{peConnectionName}
 	Id *string `json:"id,omitempty"`
 
 	// Location: Same as workspace location.
@@ -196,6 +203,7 @@ type StorageAccountDetails struct {
 
 // The PE network resource that is linked to this PE connection.
 type PrivateEndpointResource struct {
+	// SubnetArmId: The subnetId that the private endpoint is connected to.
 	SubnetArmId *string `json:"subnetArmId,omitempty"`
 }
 

@@ -103,7 +103,7 @@ Disk: Resource
 │   ├── Tags: map[string]string
 │   ├── Tier: *string
 │   └── Zones: string[]
-└── Status: Object (44 properties)
+└── Status: Object (45 properties)
     ├── BurstingEnabled: *bool
     ├── BurstingEnabledTime: *string
     ├── CompletionPercent: *float64
@@ -208,6 +208,14 @@ Disk: Resource
     │   ├── DiskControllerTypes: *string
     │   └── PropertyBag: genruntime.PropertyBag
     ├── SupportsHibernation: *bool
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     ├── Tier: *string
     ├── TimeCreated: *string
@@ -232,7 +240,7 @@ DiskAccess: Resource
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
 │   └── Tags: map[string]string
-└── Status: Object (11 properties)
+└── Status: Object (12 properties)
     ├── Conditions: conditions.Condition[]
     ├── ExtendedLocation: *Object (3 properties)
     │   ├── Name: *string
@@ -246,6 +254,14 @@ DiskAccess: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── PropertyBag: genruntime.PropertyBag
     ├── ProvisioningState: *string
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     ├── TimeCreated: *string
     └── Type: *string
@@ -280,7 +296,7 @@ DiskEncryptionSet: Resource
 │   ├── PropertyBag: genruntime.PropertyBag
 │   ├── RotationToLatestKeyVersionEnabled: *bool
 │   └── Tags: map[string]string
-└── Status: Object (16 properties)
+└── Status: Object (17 properties)
     ├── ActiveKey: *Object (3 properties)
     │   ├── KeyUrl: *string
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -326,12 +342,20 @@ DiskEncryptionSet: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── ProvisioningState: *string
     ├── RotationToLatestKeyVersionEnabled: *bool
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
 
 Snapshot: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (27 properties)
+├── Spec: Object (26 properties)
 │   ├── AzureName: string
 │   ├── CompletionPercent: *float64
 │   ├── CopyCompletionError: *Object (3 properties)
@@ -365,7 +389,6 @@ Snapshot: Resource
 │   ├── DataAccessAuthMode: *string
 │   ├── DiskAccessReference: *genruntime.ResourceReference
 │   ├── DiskSizeGB: *int
-│   ├── DiskState: *string
 │   ├── Encryption: *Object (3 properties)
 │   │   ├── DiskEncryptionSetReference: *genruntime.ResourceReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
@@ -425,7 +448,7 @@ Snapshot: Resource
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── SupportsHibernation: *bool
 │   └── Tags: map[string]string
-└── Status: Object (33 properties)
+└── Status: Object (34 properties)
     ├── CompletionPercent: *float64
     ├── Conditions: conditions.Condition[]
     ├── CopyCompletionError: *Object (3 properties)
@@ -520,8 +543,18 @@ Snapshot: Resource
     │   ├── DiskControllerTypes: *string
     │   └── PropertyBag: genruntime.PropertyBag
     ├── SupportsHibernation: *bool
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     ├── TimeCreated: *string
     ├── Type: *string
     └── UniqueId: *string
+
+augmentConversionForSystemData_STATUS: Interface
 

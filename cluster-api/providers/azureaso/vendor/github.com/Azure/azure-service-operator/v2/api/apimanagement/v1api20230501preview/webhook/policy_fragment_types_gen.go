@@ -116,7 +116,12 @@ func (fragment *PolicyFragment) ValidateUpdate(ctx context.Context, oldResource 
 
 // createValidations validates the creation of the resource
 func (fragment *PolicyFragment) createValidations() []func(ctx context.Context, obj *v20230501p.PolicyFragment) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.PolicyFragment) (admission.Warnings, error){fragment.validateResourceReferences, fragment.validateOwnerReference, fragment.validateSecretDestinations, fragment.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.PolicyFragment) (admission.Warnings, error){
+		fragment.validateResourceReferences,
+		fragment.validateOwnerReference,
+		fragment.validateSecretDestinations,
+		fragment.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

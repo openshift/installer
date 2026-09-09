@@ -104,7 +104,12 @@ func (schedule *RedisPatchSchedule) ValidateUpdate(ctx context.Context, oldResou
 
 // createValidations validates the creation of the resource
 func (schedule *RedisPatchSchedule) createValidations() []func(ctx context.Context, obj *v20201201.RedisPatchSchedule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201201.RedisPatchSchedule) (admission.Warnings, error){schedule.validateResourceReferences, schedule.validateOwnerReference, schedule.validateSecretDestinations, schedule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201201.RedisPatchSchedule) (admission.Warnings, error){
+		schedule.validateResourceReferences,
+		schedule.validateOwnerReference,
+		schedule.validateSecretDestinations,
+		schedule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

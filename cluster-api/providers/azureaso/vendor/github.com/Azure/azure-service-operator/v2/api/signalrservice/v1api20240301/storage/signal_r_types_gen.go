@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=signalrservice.azure.com,resources={signalrs/status,signalrs/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,signalrservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.SignalR
 // Generator information:
-// - Generated from: /signalr/resource-manager/Microsoft.SignalRService/stable/2024-03-01/signalr.json
+// - Generated from: /signalr/resource-manager/Microsoft.SignalRService/SignalRService/stable/2024-03-01/signalr.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.SignalRService/signalR/{resourceName}
 type SignalR struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (signalR *SignalR) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.SignalR
 // Generator information:
-// - Generated from: /signalr/resource-manager/Microsoft.SignalRService/stable/2024-03-01/signalr.json
+// - Generated from: /signalr/resource-manager/Microsoft.SignalRService/SignalRService/stable/2024-03-01/signalr.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.SignalRService/signalR/{resourceName}
 type SignalRList struct {
 	metav1.TypeMeta `json:",inline"`

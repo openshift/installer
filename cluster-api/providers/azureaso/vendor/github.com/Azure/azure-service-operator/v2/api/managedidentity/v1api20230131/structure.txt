@@ -10,7 +10,8 @@ FederatedIdentityCredential: Resource
 │   ├── Audiences: string[]
 │   ├── AzureName: Validated<string> (1 rule)
 │   │   └── Rule 0: Pattern: "^[a-zA-Z0-9]{1}[a-zA-Z0-9-_]{2,119}$"
-│   ├── Issuer: *string
+│   ├── Issuer: Validated<*string> (1 rule)
+│   │   └── Rule 0: Pattern: "^[a-zA-Z][a-zA-Z0-9+-.]*:[^\\s]*$"
 │   ├── IssuerFromConfig: *genruntime.ConfigMapReference
 │   ├── OperatorSpec: *Object (2 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
@@ -54,9 +55,10 @@ UserAssignedIdentity: Resource
 │   │   │   ├── PrincipalId: *genruntime.ConfigMapDestination
 │   │   │   └── TenantId: *genruntime.ConfigMapDestination
 │   │   ├── SecretExpressions: *core.DestinationExpression[]
-│   │   └── Secrets: *Object (3 properties)
+│   │   └── Secrets: *Object (4 properties)
 │   │       ├── ClientId: *genruntime.SecretDestination
 │   │       ├── PrincipalId: *genruntime.SecretDestination
+│   │       ├── SubscriptionId: *genruntime.SecretDestination
 │   │       └── TenantId: *genruntime.SecretDestination
 │   ├── Owner: *genruntime.KnownResourceReference
 │   └── Tags: map[string]string

@@ -116,7 +116,12 @@ func (rule *Rule) ValidateUpdate(ctx context.Context, oldResource runtime.Object
 
 // createValidations validates the creation of the resource
 func (rule *Rule) createValidations() []func(ctx context.Context, obj *v20230501.Rule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501.Rule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501.Rule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

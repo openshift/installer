@@ -19,6 +19,7 @@ import (
 // +kubebuilder:rbac:groups=containerinstance.azure.com,resources={containergroups/status,containergroups/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerinstance}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -27,7 +28,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20211001.ContainerGroup
 // Generator information:
-// - Generated from: /containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/containerInstance.json
+// - Generated from: /containerinstance/resource-manager/Microsoft.ContainerInstance/ContainerInstance/stable/2021-10-01/containerInstance.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}
 type ContainerGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -158,7 +159,7 @@ func (group *ContainerGroup) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20211001.ContainerGroup
 // Generator information:
-// - Generated from: /containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/containerInstance.json
+// - Generated from: /containerinstance/resource-manager/Microsoft.ContainerInstance/ContainerInstance/stable/2021-10-01/containerInstance.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerInstance/containerGroups/{containerGroupName}
 type ContainerGroupList struct {
 	metav1.TypeMeta `json:",inline"`

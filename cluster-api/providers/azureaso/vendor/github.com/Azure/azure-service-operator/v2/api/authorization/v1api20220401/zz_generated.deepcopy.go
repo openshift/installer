@@ -334,7 +334,7 @@ func (in *RoleAssignment_Spec) DeepCopyInto(out *RoleAssignment_Spec) {
 	}
 	if in.RoleDefinitionReference != nil {
 		in, out := &in.RoleDefinitionReference, &out.RoleDefinitionReference
-		*out = new(genruntime.ResourceReference)
+		*out = new(genruntime.WellKnownResourceReference)
 		**out = **in
 	}
 }

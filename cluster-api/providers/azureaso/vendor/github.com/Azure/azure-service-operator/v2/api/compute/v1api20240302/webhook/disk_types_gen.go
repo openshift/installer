@@ -116,7 +116,12 @@ func (disk *Disk) ValidateUpdate(ctx context.Context, oldResource runtime.Object
 
 // createValidations validates the creation of the resource
 func (disk *Disk) createValidations() []func(ctx context.Context, obj *v20240302.Disk) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240302.Disk) (admission.Warnings, error){disk.validateResourceReferences, disk.validateOwnerReference, disk.validateSecretDestinations, disk.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240302.Disk) (admission.Warnings, error){
+		disk.validateResourceReferences,
+		disk.validateOwnerReference,
+		disk.validateSecretDestinations,
+		disk.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -116,7 +116,12 @@ func (store *ConfigurationStore) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (store *ConfigurationStore) createValidations() []func(ctx context.Context, obj *v20220501.ConfigurationStore) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220501.ConfigurationStore) (admission.Warnings, error){store.validateResourceReferences, store.validateOwnerReference, store.validateSecretDestinations, store.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220501.ConfigurationStore) (admission.Warnings, error){
+		store.validateResourceReferences,
+		store.validateOwnerReference,
+		store.validateSecretDestinations,
+		store.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

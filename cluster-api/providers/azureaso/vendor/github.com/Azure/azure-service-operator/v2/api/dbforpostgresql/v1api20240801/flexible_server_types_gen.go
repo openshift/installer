@@ -23,6 +23,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -54,22 +55,36 @@ var _ conversion.Convertible = &FlexibleServer{}
 
 // ConvertFrom populates our FlexibleServer from the provided hub FlexibleServer
 func (server *FlexibleServer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServer)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServer
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return server.AssignProperties_From_FlexibleServer(source)
+	err = server.AssignProperties_From_FlexibleServer(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to server")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServer from our FlexibleServer
 func (server *FlexibleServer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServer)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServer
+	err := server.AssignProperties_To_FlexibleServer(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from server")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return server.AssignProperties_To_FlexibleServer(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServer{}
@@ -90,17 +105,6 @@ func (server *FlexibleServer) SecretDestinationExpressions() []*core.Destination
 		return nil
 	}
 	return server.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServer{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (server *FlexibleServer) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServer_STATUS); ok {
-		return server.Spec.Initialize_From_FlexibleServer_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServer_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesConfigExporter = &FlexibleServer{}
@@ -272,17 +276,20 @@ type APIVersion string
 const APIVersion_Value = APIVersion("2024-08-01")
 
 type FlexibleServer_Spec struct {
-	// AdministratorLogin: The administrator's login name of a server. Can only be specified when the server is being created
-	// (and is required for creation).
+	// AdministratorLogin: Name of the login designated as the first password based administrator assigned to your instance of
+	// PostgreSQL. Must be specified the first time that you enable password based authentication on a server. Once set to a
+	// given value, it cannot be changed for the rest of the life of a server. If you disable password based authentication on
+	// a server which had it enabled, this password based role isn't deleted.
 	AdministratorLogin *string `json:"administratorLogin,omitempty"`
 
-	// AdministratorLoginPassword: The administrator login password (required for server creation).
+	// AdministratorLoginPassword: Password assigned to the administrator login. As long as password authentication is enabled,
+	// this password can be changed at any time.
 	AdministratorLoginPassword *genruntime.SecretReference `json:"administratorLoginPassword,omitempty"`
 
-	// AuthConfig: AuthConfig properties of a server.
+	// AuthConfig: Authentication configuration properties of a flexible server.
 	AuthConfig *AuthConfig `json:"authConfig,omitempty"`
 
-	// AvailabilityZone: availability zone information of the server.
+	// AvailabilityZone: Availability zone of a flexible server.
 	AvailabilityZone *string `json:"availabilityZone,omitempty"`
 
 	// +kubebuilder:validation:MaxLength=63
@@ -292,30 +299,30 @@ type FlexibleServer_Spec struct {
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
-	// Backup: Backup properties of a server.
+	// Backup: Backup properties of a flexible server.
 	Backup *Backup `json:"backup,omitempty"`
 
-	// CreateMode: The mode to create a new PostgreSQL server.
+	// CreateMode: Creation mode of a new flexible server.
 	CreateMode *ServerProperties_CreateMode `json:"createMode,omitempty"`
 
-	// DataEncryption: Data encryption properties of a server.
+	// DataEncryption: Data encryption properties of a flexible server.
 	DataEncryption *DataEncryption `json:"dataEncryption,omitempty"`
 
-	// HighAvailability: High availability properties of a server.
+	// HighAvailability: High availability properties of a flexible server.
 	HighAvailability *HighAvailability `json:"highAvailability,omitempty"`
 
-	// Identity: Describes the identity of the application.
+	// Identity: User assigned managed identities assigned to the flexible server.
 	Identity *UserAssignedIdentity `json:"identity,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
-	// MaintenanceWindow: Maintenance window properties of a server.
+	// MaintenanceWindow: Maintenance window properties of a flexible server.
 	MaintenanceWindow *MaintenanceWindow `json:"maintenanceWindow,omitempty"`
 
-	// Network: Network properties of a server. This Network property is required to be passed only in case you want the server
-	// to be Private access server.
+	// Network: Network properties of a flexible server. Only required if you want your server to be integrated into a virtual
+	// network provided by customer.
 	Network *Network `json:"network,omitempty"`
 
 	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
@@ -328,31 +335,31 @@ type FlexibleServer_Spec struct {
 	// reference to a resources.azure.com/ResourceGroup resource
 	Owner *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 
-	// PointInTimeUTC: Restore point creation time (ISO8601 format), specifying the time to restore from. It's required when
-	// 'createMode' is 'PointInTimeRestore' or 'GeoRestore' or 'ReviveDropped'.
+	// PointInTimeUTC: Creation time (in ISO8601 format) of the backup which you want to restore in the new flexible server.
+	// It's required when 'createMode' is 'PointInTimeRestore', 'GeoRestore', or 'ReviveDropped'.
 	PointInTimeUTC *string `json:"pointInTimeUTC,omitempty"`
 
-	// Replica: Replica properties of a server. These Replica properties are required to be passed only in case you want to
-	// Promote a server.
+	// Replica: Read replica properties of a flexible server. Required only in case that you want to promote a server.
 	Replica *Replica `json:"replica,omitempty"`
 
-	// ReplicationRole: Replication role of the server
+	// ReplicationRole: Role of the server in a replication set.
 	ReplicationRole *ReplicationRole `json:"replicationRole,omitempty"`
 
-	// Sku: The SKU (pricing tier) of the server.
+	// Sku: Compute tier and size of a flexible server.
 	Sku *Sku `json:"sku,omitempty"`
 
-	// SourceServerResourceReference: The source server resource ID to restore from. It's required when 'createMode' is
-	// 'PointInTimeRestore' or 'GeoRestore' or 'Replica' or 'ReviveDropped'. This property is returned only for Replica server
+	// SourceServerResourceReference: Identifier of the flexible server to be used as the source of the new flexible server.
+	// Required when 'createMode' is 'PointInTimeRestore', 'GeoRestore', 'Replica', or 'ReviveDropped'. This property is
+	// returned only when the target flexible server is a read replica.
 	SourceServerResourceReference *genruntime.ResourceReference `armReference:"SourceServerResourceId" json:"sourceServerResourceReference,omitempty"`
 
-	// Storage: Storage properties of a server.
+	// Storage: Storage properties of a flexible server.
 	Storage *Storage `json:"storage,omitempty"`
 
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// Version: PostgreSQL Server version.
+	// Version: Major version of PostgreSQL database engine.
 	Version *ServerVersion `json:"version,omitempty"`
 }
 
@@ -367,7 +374,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "Identity":
 	if server.Identity != nil {
-		identity_ARM, err := (*server.Identity).ConvertToARM(resolved)
+		identity_ARM, err := server.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -416,7 +423,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.AdministratorLoginPassword = &administratorLoginPassword
 	}
 	if server.AuthConfig != nil {
-		authConfig_ARM, err := (*server.AuthConfig).ConvertToARM(resolved)
+		authConfig_ARM, err := server.AuthConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -428,7 +435,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.AvailabilityZone = &availabilityZone
 	}
 	if server.Backup != nil {
-		backup_ARM, err := (*server.Backup).ConvertToARM(resolved)
+		backup_ARM, err := server.Backup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -442,7 +449,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.CreateMode = &createMode
 	}
 	if server.DataEncryption != nil {
-		dataEncryption_ARM, err := (*server.DataEncryption).ConvertToARM(resolved)
+		dataEncryption_ARM, err := server.DataEncryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -450,7 +457,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.DataEncryption = &dataEncryption
 	}
 	if server.HighAvailability != nil {
-		highAvailability_ARM, err := (*server.HighAvailability).ConvertToARM(resolved)
+		highAvailability_ARM, err := server.HighAvailability.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -458,7 +465,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.HighAvailability = &highAvailability
 	}
 	if server.MaintenanceWindow != nil {
-		maintenanceWindow_ARM, err := (*server.MaintenanceWindow).ConvertToARM(resolved)
+		maintenanceWindow_ARM, err := server.MaintenanceWindow.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -466,7 +473,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.MaintenanceWindow = &maintenanceWindow
 	}
 	if server.Network != nil {
-		network_ARM, err := (*server.Network).ConvertToARM(resolved)
+		network_ARM, err := server.Network.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -478,7 +485,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.PointInTimeUTC = &pointInTimeUTC
 	}
 	if server.Replica != nil {
-		replica_ARM, err := (*server.Replica).ConvertToARM(resolved)
+		replica_ARM, err := server.Replica.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -500,7 +507,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.SourceServerResourceId = &sourceServerResourceId
 	}
 	if server.Storage != nil {
-		storage_ARM, err := (*server.Storage).ConvertToARM(resolved)
+		storage_ARM, err := server.Storage.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -516,7 +523,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "Sku":
 	if server.Sku != nil {
-		sku_ARM, err := (*server.Sku).ConvertToARM(resolved)
+		sku_ARM, err := server.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1248,180 +1255,6 @@ func (server *FlexibleServer_Spec) AssignProperties_To_FlexibleServer_Spec(desti
 	return nil
 }
 
-// Initialize_From_FlexibleServer_STATUS populates our FlexibleServer_Spec from the provided source FlexibleServer_STATUS
-func (server *FlexibleServer_Spec) Initialize_From_FlexibleServer_STATUS(source *FlexibleServer_STATUS) error {
-
-	// AdministratorLogin
-	server.AdministratorLogin = genruntime.ClonePointerToString(source.AdministratorLogin)
-
-	// AuthConfig
-	if source.AuthConfig != nil {
-		var authConfig AuthConfig
-		err := authConfig.Initialize_From_AuthConfig_STATUS(source.AuthConfig)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AuthConfig_STATUS() to populate field AuthConfig")
-		}
-		server.AuthConfig = &authConfig
-	} else {
-		server.AuthConfig = nil
-	}
-
-	// AvailabilityZone
-	server.AvailabilityZone = genruntime.ClonePointerToString(source.AvailabilityZone)
-
-	// Backup
-	if source.Backup != nil {
-		var backup Backup
-		err := backup.Initialize_From_Backup_STATUS(source.Backup)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Backup_STATUS() to populate field Backup")
-		}
-		server.Backup = &backup
-	} else {
-		server.Backup = nil
-	}
-
-	// CreateMode
-	if source.CreateMode != nil {
-		createMode := genruntime.ToEnum(string(*source.CreateMode), serverProperties_CreateMode_Values)
-		server.CreateMode = &createMode
-	} else {
-		server.CreateMode = nil
-	}
-
-	// DataEncryption
-	if source.DataEncryption != nil {
-		var dataEncryption DataEncryption
-		err := dataEncryption.Initialize_From_DataEncryption_STATUS(source.DataEncryption)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DataEncryption_STATUS() to populate field DataEncryption")
-		}
-		server.DataEncryption = &dataEncryption
-	} else {
-		server.DataEncryption = nil
-	}
-
-	// HighAvailability
-	if source.HighAvailability != nil {
-		var highAvailability HighAvailability
-		err := highAvailability.Initialize_From_HighAvailability_STATUS(source.HighAvailability)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_HighAvailability_STATUS() to populate field HighAvailability")
-		}
-		server.HighAvailability = &highAvailability
-	} else {
-		server.HighAvailability = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity UserAssignedIdentity
-		err := identity.Initialize_From_UserAssignedIdentity_STATUS(source.Identity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_UserAssignedIdentity_STATUS() to populate field Identity")
-		}
-		server.Identity = &identity
-	} else {
-		server.Identity = nil
-	}
-
-	// Location
-	server.Location = genruntime.ClonePointerToString(source.Location)
-
-	// MaintenanceWindow
-	if source.MaintenanceWindow != nil {
-		var maintenanceWindow MaintenanceWindow
-		err := maintenanceWindow.Initialize_From_MaintenanceWindow_STATUS(source.MaintenanceWindow)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
-		}
-		server.MaintenanceWindow = &maintenanceWindow
-	} else {
-		server.MaintenanceWindow = nil
-	}
-
-	// Network
-	if source.Network != nil {
-		var network Network
-		err := network.Initialize_From_Network_STATUS(source.Network)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Network_STATUS() to populate field Network")
-		}
-		server.Network = &network
-	} else {
-		server.Network = nil
-	}
-
-	// PointInTimeUTC
-	server.PointInTimeUTC = genruntime.ClonePointerToString(source.PointInTimeUTC)
-
-	// Replica
-	if source.Replica != nil {
-		var replica Replica
-		err := replica.Initialize_From_Replica_STATUS(source.Replica)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Replica_STATUS() to populate field Replica")
-		}
-		server.Replica = &replica
-	} else {
-		server.Replica = nil
-	}
-
-	// ReplicationRole
-	if source.ReplicationRole != nil {
-		replicationRole := genruntime.ToEnum(string(*source.ReplicationRole), replicationRole_Values)
-		server.ReplicationRole = &replicationRole
-	} else {
-		server.ReplicationRole = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku Sku
-		err := sku.Initialize_From_Sku_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
-		}
-		server.Sku = &sku
-	} else {
-		server.Sku = nil
-	}
-
-	// SourceServerResourceReference
-	if source.SourceServerResourceId != nil {
-		sourceServerResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.SourceServerResourceId)
-		server.SourceServerResourceReference = &sourceServerResourceReference
-	} else {
-		server.SourceServerResourceReference = nil
-	}
-
-	// Storage
-	if source.Storage != nil {
-		var storage Storage
-		err := storage.Initialize_From_Storage_STATUS(source.Storage)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Storage_STATUS() to populate field Storage")
-		}
-		server.Storage = &storage
-	} else {
-		server.Storage = nil
-	}
-
-	// Tags
-	server.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// Version
-	if source.Version != nil {
-		version := genruntime.ToEnum(string(*source.Version), serverVersion_Values)
-		server.Version = &version
-	} else {
-		server.Version = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (server *FlexibleServer_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -1431,85 +1264,87 @@ func (server *FlexibleServer_Spec) OriginalVersion() string {
 func (server *FlexibleServer_Spec) SetAzureName(azureName string) { server.AzureName = azureName }
 
 type FlexibleServer_STATUS struct {
-	// AdministratorLogin: The administrator's login name of a server. Can only be specified when the server is being created
-	// (and is required for creation).
+	// AdministratorLogin: Name of the login designated as the first password based administrator assigned to your instance of
+	// PostgreSQL. Must be specified the first time that you enable password based authentication on a server. Once set to a
+	// given value, it cannot be changed for the rest of the life of a server. If you disable password based authentication on
+	// a server which had it enabled, this password based role isn't deleted.
 	AdministratorLogin *string `json:"administratorLogin,omitempty"`
 
-	// AuthConfig: AuthConfig properties of a server.
+	// AuthConfig: Authentication configuration properties of a flexible server.
 	AuthConfig *AuthConfig_STATUS `json:"authConfig,omitempty"`
 
-	// AvailabilityZone: availability zone information of the server.
+	// AvailabilityZone: Availability zone of a flexible server.
 	AvailabilityZone *string `json:"availabilityZone,omitempty"`
 
-	// Backup: Backup properties of a server.
+	// Backup: Backup properties of a flexible server.
 	Backup *Backup_STATUS `json:"backup,omitempty"`
 
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
-	// CreateMode: The mode to create a new PostgreSQL server.
+	// CreateMode: Creation mode of a new flexible server.
 	CreateMode *ServerProperties_CreateMode_STATUS `json:"createMode,omitempty"`
 
-	// DataEncryption: Data encryption properties of a server.
+	// DataEncryption: Data encryption properties of a flexible server.
 	DataEncryption *DataEncryption_STATUS `json:"dataEncryption,omitempty"`
 
-	// FullyQualifiedDomainName: The fully qualified domain name of a server.
+	// FullyQualifiedDomainName: Fully qualified domain name of a flexible server.
 	FullyQualifiedDomainName *string `json:"fullyQualifiedDomainName,omitempty"`
 
-	// HighAvailability: High availability properties of a server.
+	// HighAvailability: High availability properties of a flexible server.
 	HighAvailability *HighAvailability_STATUS `json:"highAvailability,omitempty"`
 
 	// Id: Fully qualified resource ID for the resource. E.g.
 	// "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
 	Id *string `json:"id,omitempty"`
 
-	// Identity: Describes the identity of the application.
+	// Identity: User assigned managed identities assigned to the flexible server.
 	Identity *UserAssignedIdentity_STATUS `json:"identity,omitempty"`
 
 	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
-	// MaintenanceWindow: Maintenance window properties of a server.
+	// MaintenanceWindow: Maintenance window properties of a flexible server.
 	MaintenanceWindow *MaintenanceWindow_STATUS `json:"maintenanceWindow,omitempty"`
 
-	// MinorVersion: The minor version of the server.
+	// MinorVersion: Minor version of PostgreSQL database engine.
 	MinorVersion *string `json:"minorVersion,omitempty"`
 
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Network: Network properties of a server. This Network property is required to be passed only in case you want the server
-	// to be Private access server.
+	// Network: Network properties of a flexible server. Only required if you want your server to be integrated into a virtual
+	// network provided by customer.
 	Network *Network_STATUS `json:"network,omitempty"`
 
-	// PointInTimeUTC: Restore point creation time (ISO8601 format), specifying the time to restore from. It's required when
-	// 'createMode' is 'PointInTimeRestore' or 'GeoRestore' or 'ReviveDropped'.
+	// PointInTimeUTC: Creation time (in ISO8601 format) of the backup which you want to restore in the new flexible server.
+	// It's required when 'createMode' is 'PointInTimeRestore', 'GeoRestore', or 'ReviveDropped'.
 	PointInTimeUTC *string `json:"pointInTimeUTC,omitempty"`
 
-	// PrivateEndpointConnections: List of private endpoint connections associated with the specified resource.
+	// PrivateEndpointConnections: List of private endpoint connections associated with the specified flexible server.
 	PrivateEndpointConnections []PrivateEndpointConnection_STATUS `json:"privateEndpointConnections,omitempty"`
 
-	// Replica: Replica properties of a server. These Replica properties are required to be passed only in case you want to
-	// Promote a server.
+	// Replica: Read replica properties of a flexible server. Required only in case that you want to promote a server.
 	Replica *Replica_STATUS `json:"replica,omitempty"`
 
-	// ReplicaCapacity: Replicas allowed for a server.
+	// ReplicaCapacity: Maximum number of read replicas allowed for a flexible server.
 	ReplicaCapacity *int `json:"replicaCapacity,omitempty"`
 
-	// ReplicationRole: Replication role of the server
+	// ReplicationRole: Role of the server in a replication set.
 	ReplicationRole *ReplicationRole_STATUS `json:"replicationRole,omitempty"`
 
-	// Sku: The SKU (pricing tier) of the server.
+	// Sku: Compute tier and size of a flexible server.
 	Sku *Sku_STATUS `json:"sku,omitempty"`
 
-	// SourceServerResourceId: The source server resource ID to restore from. It's required when 'createMode' is
-	// 'PointInTimeRestore' or 'GeoRestore' or 'Replica' or 'ReviveDropped'. This property is returned only for Replica server
+	// SourceServerResourceId: Identifier of the flexible server to be used as the source of the new flexible server. Required
+	// when 'createMode' is 'PointInTimeRestore', 'GeoRestore', 'Replica', or 'ReviveDropped'. This property is returned only
+	// when the target flexible server is a read replica.
 	SourceServerResourceId *string `json:"sourceServerResourceId,omitempty"`
 
-	// State: A state of a server that is visible to user.
+	// State: Possible states of a flexible server.
 	State *ServerProperties_State_STATUS `json:"state,omitempty"`
 
-	// Storage: Storage properties of a server.
+	// Storage: Storage properties of a flexible server.
 	Storage *Storage_STATUS `json:"storage,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -1521,7 +1356,7 @@ type FlexibleServer_STATUS struct {
 	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
-	// Version: PostgreSQL Server version.
+	// Version: Major version of PostgreSQL database engine.
 	Version *ServerVersion_STATUS `json:"version,omitempty"`
 }
 
@@ -2019,8 +1854,6 @@ func (server *FlexibleServer_STATUS) AssignProperties_From_FlexibleServer_STATUS
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -2252,8 +2085,6 @@ func (server *FlexibleServer_STATUS) AssignProperties_To_FlexibleServer_STATUS(d
 	if server.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(server.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range server.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -2361,15 +2192,15 @@ func (server *FlexibleServer_STATUS) AssignProperties_To_FlexibleServer_STATUS(d
 	return nil
 }
 
-// Authentication configuration properties of a server
+// Authentication configuration properties of a flexible server.
 type AuthConfig struct {
-	// ActiveDirectoryAuth: If Enabled, Azure Active Directory authentication is enabled.
+	// ActiveDirectoryAuth: Indicates if the server supports Microsoft Entra authentication.
 	ActiveDirectoryAuth *AuthConfig_ActiveDirectoryAuth `json:"activeDirectoryAuth,omitempty"`
 
-	// PasswordAuth: If Enabled, Password authentication is enabled.
+	// PasswordAuth: Indicates if the server supports password based authentication.
 	PasswordAuth *AuthConfig_PasswordAuth `json:"passwordAuth,omitempty"`
 
-	// TenantId: Tenant id of the server.
+	// TenantId: Identifier of the tenant of the delegated resource.
 	TenantId *string `json:"tenantId,omitempty"`
 }
 
@@ -2507,41 +2338,15 @@ func (config *AuthConfig) AssignProperties_To_AuthConfig(destination *storage.Au
 	return nil
 }
 
-// Initialize_From_AuthConfig_STATUS populates our AuthConfig from the provided source AuthConfig_STATUS
-func (config *AuthConfig) Initialize_From_AuthConfig_STATUS(source *AuthConfig_STATUS) error {
-
-	// ActiveDirectoryAuth
-	if source.ActiveDirectoryAuth != nil {
-		activeDirectoryAuth := genruntime.ToEnum(string(*source.ActiveDirectoryAuth), authConfig_ActiveDirectoryAuth_Values)
-		config.ActiveDirectoryAuth = &activeDirectoryAuth
-	} else {
-		config.ActiveDirectoryAuth = nil
-	}
-
-	// PasswordAuth
-	if source.PasswordAuth != nil {
-		passwordAuth := genruntime.ToEnum(string(*source.PasswordAuth), authConfig_PasswordAuth_Values)
-		config.PasswordAuth = &passwordAuth
-	} else {
-		config.PasswordAuth = nil
-	}
-
-	// TenantId
-	config.TenantId = genruntime.ClonePointerToString(source.TenantId)
-
-	// No error
-	return nil
-}
-
-// Authentication configuration properties of a server
+// Authentication configuration properties of a flexible server.
 type AuthConfig_STATUS struct {
-	// ActiveDirectoryAuth: If Enabled, Azure Active Directory authentication is enabled.
+	// ActiveDirectoryAuth: Indicates if the server supports Microsoft Entra authentication.
 	ActiveDirectoryAuth *AuthConfig_ActiveDirectoryAuth_STATUS `json:"activeDirectoryAuth,omitempty"`
 
-	// PasswordAuth: If Enabled, Password authentication is enabled.
+	// PasswordAuth: Indicates if the server supports password based authentication.
 	PasswordAuth *AuthConfig_PasswordAuth_STATUS `json:"passwordAuth,omitempty"`
 
-	// TenantId: Tenant id of the server.
+	// TenantId: Identifier of the tenant of the delegated resource.
 	TenantId *string `json:"tenantId,omitempty"`
 }
 
@@ -2648,12 +2453,12 @@ func (config *AuthConfig_STATUS) AssignProperties_To_AuthConfig_STATUS(destinati
 	return nil
 }
 
-// Backup properties of a server
+// Backup properties of a flexible server.
 type Backup struct {
-	// BackupRetentionDays: Backup retention days for the server.
+	// BackupRetentionDays: Backup retention days for the flexible server.
 	BackupRetentionDays *int `json:"backupRetentionDays,omitempty"`
 
-	// GeoRedundantBackup: A value indicating whether Geo-Redundant backup is enabled on the server.
+	// GeoRedundantBackup: Indicates if the server is configured to create geographically redundant backups.
 	GeoRedundantBackup *Backup_GeoRedundantBackup `json:"geoRedundantBackup,omitempty"`
 }
 
@@ -2758,33 +2563,15 @@ func (backup *Backup) AssignProperties_To_Backup(destination *storage.Backup) er
 	return nil
 }
 
-// Initialize_From_Backup_STATUS populates our Backup from the provided source Backup_STATUS
-func (backup *Backup) Initialize_From_Backup_STATUS(source *Backup_STATUS) error {
-
-	// BackupRetentionDays
-	backup.BackupRetentionDays = genruntime.ClonePointerToInt(source.BackupRetentionDays)
-
-	// GeoRedundantBackup
-	if source.GeoRedundantBackup != nil {
-		geoRedundantBackup := genruntime.ToEnum(string(*source.GeoRedundantBackup), backup_GeoRedundantBackup_Values)
-		backup.GeoRedundantBackup = &geoRedundantBackup
-	} else {
-		backup.GeoRedundantBackup = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Backup properties of a server
+// Backup properties of a flexible server.
 type Backup_STATUS struct {
-	// BackupRetentionDays: Backup retention days for the server.
+	// BackupRetentionDays: Backup retention days for the flexible server.
 	BackupRetentionDays *int `json:"backupRetentionDays,omitempty"`
 
-	// EarliestRestoreDate: The earliest restore point time (ISO8601 format) for server.
+	// EarliestRestoreDate: Earliest restore point time (ISO8601 format) for a flexible server.
 	EarliestRestoreDate *string `json:"earliestRestoreDate,omitempty"`
 
-	// GeoRedundantBackup: A value indicating whether Geo-Redundant backup is enabled on the server.
+	// GeoRedundantBackup: Indicates if the server is configured to create geographically redundant backups.
 	GeoRedundantBackup *Backup_GeoRedundantBackup_STATUS `json:"geoRedundantBackup,omitempty"`
 }
 
@@ -2878,35 +2665,45 @@ func (backup *Backup_STATUS) AssignProperties_To_Backup_STATUS(destination *stor
 	return nil
 }
 
-// Data encryption properties of a server
+// Data encryption properties of a flexible server.
 type DataEncryption struct {
-	// GeoBackupEncryptionKeyStatus: Geo-backup encryption key status for Data encryption enabled server.
+	// GeoBackupEncryptionKeyStatus: Status of key used by a flexible server configured with data encryption based on customer
+	// managed key, to encrypt the geographically redundant storage associated to the server when it is configured to support
+	// geographically redundant backups.
 	GeoBackupEncryptionKeyStatus *DataEncryption_GeoBackupEncryptionKeyStatus `json:"geoBackupEncryptionKeyStatus,omitempty"`
 
-	// GeoBackupKeyURI: URI for the key in keyvault for data encryption for geo-backup of server.
+	// GeoBackupKeyURI: Identifier of the user assigned managed identity used to access the key in Azure Key Vault for data
+	// encryption of the geographically redundant storage associated to a flexible server that is configured to support
+	// geographically redundant backups.
 	GeoBackupKeyURI *string `json:"geoBackupKeyURI,omitempty" optionalConfigMapPair:"GeoBackupKeyURI"`
 
-	// GeoBackupKeyURIFromConfig: URI for the key in keyvault for data encryption for geo-backup of server.
+	// GeoBackupKeyURIFromConfig: Identifier of the user assigned managed identity used to access the key in Azure Key Vault
+	// for data encryption of the geographically redundant storage associated to a flexible server that is configured to
+	// support geographically redundant backups.
 	GeoBackupKeyURIFromConfig *genruntime.ConfigMapReference `json:"geoBackupKeyURIFromConfig,omitempty" optionalConfigMapPair:"GeoBackupKeyURI"`
 
-	// GeoBackupUserAssignedIdentityReference: Resource Id for the User assigned identity to be used for data encryption for
-	// geo-backup of server.
+	// GeoBackupUserAssignedIdentityReference: Identifier of the user assigned managed identity used to access the key in Azure
+	// Key Vault for data encryption of the geographically redundant storage associated to a flexible server that is configured
+	// to support geographically redundant backups.
 	GeoBackupUserAssignedIdentityReference *genruntime.ResourceReference `armReference:"GeoBackupUserAssignedIdentityId" json:"geoBackupUserAssignedIdentityReference,omitempty"`
 
-	// PrimaryEncryptionKeyStatus: Primary encryption key status for Data encryption enabled server.
+	// PrimaryEncryptionKeyStatus: Status of key used by a flexible server configured with data encryption based on customer
+	// managed key, to encrypt the primary storage associated to the server.
 	PrimaryEncryptionKeyStatus *DataEncryption_PrimaryEncryptionKeyStatus `json:"primaryEncryptionKeyStatus,omitempty"`
 
-	// PrimaryKeyURI: URI for the key in keyvault for data encryption of the primary server.
+	// PrimaryKeyURI: URI of the key in Azure Key Vault used for data encryption of the primary storage associated to a
+	// flexible server.
 	PrimaryKeyURI *string `json:"primaryKeyURI,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
 
-	// PrimaryKeyURIFromConfig: URI for the key in keyvault for data encryption of the primary server.
+	// PrimaryKeyURIFromConfig: URI of the key in Azure Key Vault used for data encryption of the primary storage associated to
+	// a flexible server.
 	PrimaryKeyURIFromConfig *genruntime.ConfigMapReference `json:"primaryKeyURIFromConfig,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
 
-	// PrimaryUserAssignedIdentityReference: Resource Id for the User assigned identity to be used for data encryption of the
-	// primary server.
+	// PrimaryUserAssignedIdentityReference: Identifier of the user assigned managed identity used to access the key in Azure
+	// Key Vault for data encryption of the primary storage associated to a flexible server.
 	PrimaryUserAssignedIdentityReference *genruntime.ResourceReference `armReference:"PrimaryUserAssignedIdentityId" json:"primaryUserAssignedIdentityReference,omitempty"`
 
-	// Type: Data encryption type to depict if it is System Managed vs Azure Key vault.
+	// Type: Data encryption type used by a flexible server.
 	Type *DataEncryption_Type `json:"type,omitempty"`
 }
 
@@ -3203,82 +3000,36 @@ func (encryption *DataEncryption) AssignProperties_To_DataEncryption(destination
 	return nil
 }
 
-// Initialize_From_DataEncryption_STATUS populates our DataEncryption from the provided source DataEncryption_STATUS
-func (encryption *DataEncryption) Initialize_From_DataEncryption_STATUS(source *DataEncryption_STATUS) error {
-
-	// GeoBackupEncryptionKeyStatus
-	if source.GeoBackupEncryptionKeyStatus != nil {
-		geoBackupEncryptionKeyStatus := genruntime.ToEnum(string(*source.GeoBackupEncryptionKeyStatus), dataEncryption_GeoBackupEncryptionKeyStatus_Values)
-		encryption.GeoBackupEncryptionKeyStatus = &geoBackupEncryptionKeyStatus
-	} else {
-		encryption.GeoBackupEncryptionKeyStatus = nil
-	}
-
-	// GeoBackupKeyURI
-	encryption.GeoBackupKeyURI = genruntime.ClonePointerToString(source.GeoBackupKeyURI)
-
-	// GeoBackupUserAssignedIdentityReference
-	if source.GeoBackupUserAssignedIdentityId != nil {
-		geoBackupUserAssignedIdentityReference := genruntime.CreateResourceReferenceFromARMID(*source.GeoBackupUserAssignedIdentityId)
-		encryption.GeoBackupUserAssignedIdentityReference = &geoBackupUserAssignedIdentityReference
-	} else {
-		encryption.GeoBackupUserAssignedIdentityReference = nil
-	}
-
-	// PrimaryEncryptionKeyStatus
-	if source.PrimaryEncryptionKeyStatus != nil {
-		primaryEncryptionKeyStatus := genruntime.ToEnum(string(*source.PrimaryEncryptionKeyStatus), dataEncryption_PrimaryEncryptionKeyStatus_Values)
-		encryption.PrimaryEncryptionKeyStatus = &primaryEncryptionKeyStatus
-	} else {
-		encryption.PrimaryEncryptionKeyStatus = nil
-	}
-
-	// PrimaryKeyURI
-	encryption.PrimaryKeyURI = genruntime.ClonePointerToString(source.PrimaryKeyURI)
-
-	// PrimaryUserAssignedIdentityReference
-	if source.PrimaryUserAssignedIdentityId != nil {
-		primaryUserAssignedIdentityReference := genruntime.CreateResourceReferenceFromARMID(*source.PrimaryUserAssignedIdentityId)
-		encryption.PrimaryUserAssignedIdentityReference = &primaryUserAssignedIdentityReference
-	} else {
-		encryption.PrimaryUserAssignedIdentityReference = nil
-	}
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), dataEncryption_Type_Values)
-		encryption.Type = &typeVar
-	} else {
-		encryption.Type = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Data encryption properties of a server
+// Data encryption properties of a flexible server.
 type DataEncryption_STATUS struct {
-	// GeoBackupEncryptionKeyStatus: Geo-backup encryption key status for Data encryption enabled server.
+	// GeoBackupEncryptionKeyStatus: Status of key used by a flexible server configured with data encryption based on customer
+	// managed key, to encrypt the geographically redundant storage associated to the server when it is configured to support
+	// geographically redundant backups.
 	GeoBackupEncryptionKeyStatus *DataEncryption_GeoBackupEncryptionKeyStatus_STATUS `json:"geoBackupEncryptionKeyStatus,omitempty"`
 
-	// GeoBackupKeyURI: URI for the key in keyvault for data encryption for geo-backup of server.
+	// GeoBackupKeyURI: Identifier of the user assigned managed identity used to access the key in Azure Key Vault for data
+	// encryption of the geographically redundant storage associated to a flexible server that is configured to support
+	// geographically redundant backups.
 	GeoBackupKeyURI *string `json:"geoBackupKeyURI,omitempty"`
 
-	// GeoBackupUserAssignedIdentityId: Resource Id for the User assigned identity to be used for data encryption for
-	// geo-backup of server.
+	// GeoBackupUserAssignedIdentityId: Identifier of the user assigned managed identity used to access the key in Azure Key
+	// Vault for data encryption of the geographically redundant storage associated to a flexible server that is configured to
+	// support geographically redundant backups.
 	GeoBackupUserAssignedIdentityId *string `json:"geoBackupUserAssignedIdentityId,omitempty"`
 
-	// PrimaryEncryptionKeyStatus: Primary encryption key status for Data encryption enabled server.
+	// PrimaryEncryptionKeyStatus: Status of key used by a flexible server configured with data encryption based on customer
+	// managed key, to encrypt the primary storage associated to the server.
 	PrimaryEncryptionKeyStatus *DataEncryption_PrimaryEncryptionKeyStatus_STATUS `json:"primaryEncryptionKeyStatus,omitempty"`
 
-	// PrimaryKeyURI: URI for the key in keyvault for data encryption of the primary server.
+	// PrimaryKeyURI: URI of the key in Azure Key Vault used for data encryption of the primary storage associated to a
+	// flexible server.
 	PrimaryKeyURI *string `json:"primaryKeyURI,omitempty"`
 
-	// PrimaryUserAssignedIdentityId: Resource Id for the User assigned identity to be used for data encryption of the primary
-	// server.
+	// PrimaryUserAssignedIdentityId: Identifier of the user assigned managed identity used to access the key in Azure Key
+	// Vault for data encryption of the primary storage associated to a flexible server.
 	PrimaryUserAssignedIdentityId *string `json:"primaryUserAssignedIdentityId,omitempty"`
 
-	// Type: Data encryption type to depict if it is System Managed vs Azure Key vault.
+	// Type: Data encryption type used by a flexible server.
 	Type *DataEncryption_Type_STATUS `json:"type,omitempty"`
 }
 
@@ -3468,8 +3219,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServer
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3498,8 +3247,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServer
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3537,8 +3284,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3567,8 +3312,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3604,12 +3347,13 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	return nil
 }
 
-// High availability properties of a server
+// High availability properties of a flexible server.
 type HighAvailability struct {
-	// Mode: The HA mode for the server.
+	// Mode: High availability mode for a flexible server.
 	Mode *HighAvailability_Mode `json:"mode,omitempty"`
 
-	// StandbyAvailabilityZone: availability zone information of the standby.
+	// StandbyAvailabilityZone: Availability zone associated to the standby server created when high availability is set to
+	// SameZone or ZoneRedundant.
 	StandbyAvailabilityZone *string `json:"standbyAvailabilityZone,omitempty"`
 }
 
@@ -3714,33 +3458,16 @@ func (availability *HighAvailability) AssignProperties_To_HighAvailability(desti
 	return nil
 }
 
-// Initialize_From_HighAvailability_STATUS populates our HighAvailability from the provided source HighAvailability_STATUS
-func (availability *HighAvailability) Initialize_From_HighAvailability_STATUS(source *HighAvailability_STATUS) error {
-
-	// Mode
-	if source.Mode != nil {
-		mode := genruntime.ToEnum(string(*source.Mode), highAvailability_Mode_Values)
-		availability.Mode = &mode
-	} else {
-		availability.Mode = nil
-	}
-
-	// StandbyAvailabilityZone
-	availability.StandbyAvailabilityZone = genruntime.ClonePointerToString(source.StandbyAvailabilityZone)
-
-	// No error
-	return nil
-}
-
-// High availability properties of a server
+// High availability properties of a flexible server.
 type HighAvailability_STATUS struct {
-	// Mode: The HA mode for the server.
+	// Mode: High availability mode for a flexible server.
 	Mode *HighAvailability_Mode_STATUS `json:"mode,omitempty"`
 
-	// StandbyAvailabilityZone: availability zone information of the standby.
+	// StandbyAvailabilityZone: Availability zone associated to the standby server created when high availability is set to
+	// SameZone or ZoneRedundant.
 	StandbyAvailabilityZone *string `json:"standbyAvailabilityZone,omitempty"`
 
-	// State: A state of a HA server that is visible to user.
+	// State: Possible states of the standby server created when high availability is set to SameZone or ZoneRedundant.
 	State *HighAvailability_State_STATUS `json:"state,omitempty"`
 }
 
@@ -3847,18 +3574,18 @@ func (availability *HighAvailability_STATUS) AssignProperties_To_HighAvailabilit
 	return nil
 }
 
-// Maintenance window properties of a server.
+// Maintenance window properties of a flexible server.
 type MaintenanceWindow struct {
-	// CustomWindow: indicates whether custom window is enabled or disabled
+	// CustomWindow: Indicates whether custom window is enabled or disabled.
 	CustomWindow *string `json:"customWindow,omitempty"`
 
-	// DayOfWeek: day of week for maintenance window
+	// DayOfWeek: Day of the week to be used for maintenance window.
 	DayOfWeek *int `json:"dayOfWeek,omitempty"`
 
-	// StartHour: start hour for maintenance window
+	// StartHour: Start hour to be used for maintenance window.
 	StartHour *int `json:"startHour,omitempty"`
 
-	// StartMinute: start minute for maintenance window
+	// StartMinute: Start minute to be used for maintenance window.
 	StartMinute *int `json:"startMinute,omitempty"`
 }
 
@@ -3984,37 +3711,18 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 	return nil
 }
 
-// Initialize_From_MaintenanceWindow_STATUS populates our MaintenanceWindow from the provided source MaintenanceWindow_STATUS
-func (window *MaintenanceWindow) Initialize_From_MaintenanceWindow_STATUS(source *MaintenanceWindow_STATUS) error {
-
-	// CustomWindow
-	window.CustomWindow = genruntime.ClonePointerToString(source.CustomWindow)
-
-	// DayOfWeek
-	window.DayOfWeek = genruntime.ClonePointerToInt(source.DayOfWeek)
-
-	// StartHour
-	window.StartHour = genruntime.ClonePointerToInt(source.StartHour)
-
-	// StartMinute
-	window.StartMinute = genruntime.ClonePointerToInt(source.StartMinute)
-
-	// No error
-	return nil
-}
-
-// Maintenance window properties of a server.
+// Maintenance window properties of a flexible server.
 type MaintenanceWindow_STATUS struct {
-	// CustomWindow: indicates whether custom window is enabled or disabled
+	// CustomWindow: Indicates whether custom window is enabled or disabled.
 	CustomWindow *string `json:"customWindow,omitempty"`
 
-	// DayOfWeek: day of week for maintenance window
+	// DayOfWeek: Day of the week to be used for maintenance window.
 	DayOfWeek *int `json:"dayOfWeek,omitempty"`
 
-	// StartHour: start hour for maintenance window
+	// StartHour: Start hour to be used for maintenance window.
 	StartHour *int `json:"startHour,omitempty"`
 
-	// StartMinute: start minute for maintenance window
+	// StartMinute: Start minute to be used for maintenance window.
 	StartMinute *int `json:"startMinute,omitempty"`
 }
 
@@ -4107,19 +3815,19 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_To_MaintenanceWindow_ST
 	return nil
 }
 
-// Network properties of a server.
+// Network properties of a flexible server.
 type Network struct {
-	// DelegatedSubnetResourceReference: Delegated subnet arm resource id. This is required to be passed during create, in case
-	// we want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update
-	// the value for Private DNS zone.
+	// DelegatedSubnetResourceReference: Resource identifier of the delegated subnet. Required during creation of a new server,
+	// in case you want the server to be integrated into your own virtual network. For an update operation, you only have to
+	// provide this property if you want to change the value assigned for the private DNS zone.
 	DelegatedSubnetResourceReference *genruntime.ResourceReference `armReference:"DelegatedSubnetResourceId" json:"delegatedSubnetResourceReference,omitempty"`
 
-	// PrivateDnsZoneArmResourceReference: Private dns zone arm resource id. This is required to be passed during create, in
-	// case we want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to
-	// update the value for Private DNS zone.
+	// PrivateDnsZoneArmResourceReference: Identifier of the private DNS zone. Required during creation of a new server, in
+	// case you want the server to be integrated into your own virtual network. For an update operation, you only have to
+	// provide this property if you want to change the value assigned for the private DNS zone.
 	PrivateDnsZoneArmResourceReference *genruntime.ResourceReference `armReference:"PrivateDnsZoneArmResourceId" json:"privateDnsZoneArmResourceReference,omitempty"`
 
-	// PublicNetworkAccess: public network access is enabled or not
+	// PublicNetworkAccess: Indicates if public network access is enabled or not.
 	PublicNetworkAccess *Network_PublicNetworkAccess `json:"publicNetworkAccess,omitempty"`
 }
 
@@ -4262,50 +3970,19 @@ func (network *Network) AssignProperties_To_Network(destination *storage.Network
 	return nil
 }
 
-// Initialize_From_Network_STATUS populates our Network from the provided source Network_STATUS
-func (network *Network) Initialize_From_Network_STATUS(source *Network_STATUS) error {
-
-	// DelegatedSubnetResourceReference
-	if source.DelegatedSubnetResourceId != nil {
-		delegatedSubnetResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.DelegatedSubnetResourceId)
-		network.DelegatedSubnetResourceReference = &delegatedSubnetResourceReference
-	} else {
-		network.DelegatedSubnetResourceReference = nil
-	}
-
-	// PrivateDnsZoneArmResourceReference
-	if source.PrivateDnsZoneArmResourceId != nil {
-		privateDnsZoneArmResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.PrivateDnsZoneArmResourceId)
-		network.PrivateDnsZoneArmResourceReference = &privateDnsZoneArmResourceReference
-	} else {
-		network.PrivateDnsZoneArmResourceReference = nil
-	}
-
-	// PublicNetworkAccess
-	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), network_PublicNetworkAccess_Values)
-		network.PublicNetworkAccess = &publicNetworkAccess
-	} else {
-		network.PublicNetworkAccess = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Network properties of a server.
+// Network properties of a flexible server.
 type Network_STATUS struct {
-	// DelegatedSubnetResourceId: Delegated subnet arm resource id. This is required to be passed during create, in case we
-	// want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update the
-	// value for Private DNS zone.
+	// DelegatedSubnetResourceId: Resource identifier of the delegated subnet. Required during creation of a new server, in
+	// case you want the server to be integrated into your own virtual network. For an update operation, you only have to
+	// provide this property if you want to change the value assigned for the private DNS zone.
 	DelegatedSubnetResourceId *string `json:"delegatedSubnetResourceId,omitempty"`
 
-	// PrivateDnsZoneArmResourceId: Private dns zone arm resource id. This is required to be passed during create, in case we
-	// want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update the
-	// value for Private DNS zone.
+	// PrivateDnsZoneArmResourceId: Identifier of the private DNS zone. Required during creation of a new server, in case you
+	// want the server to be integrated into your own virtual network. For an update operation, you only have to provide this
+	// property if you want to change the value assigned for the private DNS zone.
 	PrivateDnsZoneArmResourceId *string `json:"privateDnsZoneArmResourceId,omitempty"`
 
-	// PublicNetworkAccess: public network access is enabled or not
+	// PublicNetworkAccess: Indicates if public network access is enabled or not.
 	PublicNetworkAccess *Network_PublicNetworkAccess_STATUS `json:"publicNetworkAccess,omitempty"`
 }
 
@@ -4459,15 +4136,20 @@ func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateE
 	return nil
 }
 
-// Replica properties of a server
+// Replica properties of a flexible server.
 type Replica struct {
-	// PromoteMode: Sets the promote mode for a replica server. This is a write only property.
+	// PromoteMode: Type of operation to apply on the read replica. This property is write only. Standalone means that the read
+	// replica will be promoted to a standalone server, and will become a completely independent entity from the replication
+	// set. Switchover means that the read replica will roles with the primary server.
 	PromoteMode *Replica_PromoteMode `json:"promoteMode,omitempty"`
 
-	// PromoteOption: Sets the promote options for a replica server. This is a write only property.
+	// PromoteOption: Data synchronization option to use when processing the operation specified in the promoteMode property
+	// This property is write only. Planned means that the operation will wait for data in the read replica to be fully
+	// synchronized with its source server before it initiates the operation. Forced means that the operation will not wait for
+	// data in the read replica to be synchronized with its source server before it initiates the operation.
 	PromoteOption *Replica_PromoteOption `json:"promoteOption,omitempty"`
 
-	// Role: Used to indicate role of the server in replication set.
+	// Role: Role of the server in a replication set.
 	Role *ReplicationRole `json:"role,omitempty"`
 }
 
@@ -4620,53 +4302,28 @@ func (replica *Replica) AssignProperties_To_Replica(destination *storage.Replica
 	return nil
 }
 
-// Initialize_From_Replica_STATUS populates our Replica from the provided source Replica_STATUS
-func (replica *Replica) Initialize_From_Replica_STATUS(source *Replica_STATUS) error {
-
-	// PromoteMode
-	if source.PromoteMode != nil {
-		promoteMode := genruntime.ToEnum(string(*source.PromoteMode), replica_PromoteMode_Values)
-		replica.PromoteMode = &promoteMode
-	} else {
-		replica.PromoteMode = nil
-	}
-
-	// PromoteOption
-	if source.PromoteOption != nil {
-		promoteOption := genruntime.ToEnum(string(*source.PromoteOption), replica_PromoteOption_Values)
-		replica.PromoteOption = &promoteOption
-	} else {
-		replica.PromoteOption = nil
-	}
-
-	// Role
-	if source.Role != nil {
-		role := genruntime.ToEnum(string(*source.Role), replicationRole_Values)
-		replica.Role = &role
-	} else {
-		replica.Role = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Replica properties of a server
+// Replica properties of a flexible server.
 type Replica_STATUS struct {
-	// Capacity: Replicas allowed for a server.
+	// Capacity: Maximum number of read replicas allowed for a flexible server.
 	Capacity *int `json:"capacity,omitempty"`
 
-	// PromoteMode: Sets the promote mode for a replica server. This is a write only property.
+	// PromoteMode: Type of operation to apply on the read replica. This property is write only. Standalone means that the read
+	// replica will be promoted to a standalone server, and will become a completely independent entity from the replication
+	// set. Switchover means that the read replica will roles with the primary server.
 	PromoteMode *Replica_PromoteMode_STATUS `json:"promoteMode,omitempty"`
 
-	// PromoteOption: Sets the promote options for a replica server. This is a write only property.
+	// PromoteOption: Data synchronization option to use when processing the operation specified in the promoteMode property
+	// This property is write only. Planned means that the operation will wait for data in the read replica to be fully
+	// synchronized with its source server before it initiates the operation. Forced means that the operation will not wait for
+	// data in the read replica to be synchronized with its source server before it initiates the operation.
 	PromoteOption *Replica_PromoteOption_STATUS `json:"promoteOption,omitempty"`
 
-	// ReplicationState: Gets the replication state of a replica server. This property is returned only for replicas api call.
-	// Supported values are Active, Catchup, Provisioning, Updating, Broken, Reconfiguring
+	// ReplicationState: Indicates the replication state of a read replica. This property is returned only when the target
+	// flexible server is a read replica. Possible  values are Active, Broken, Catchup, Provisioning, Reconfiguring, and
+	// Updating
 	ReplicationState *Replica_ReplicationState_STATUS `json:"replicationState,omitempty"`
 
-	// Role: Used to indicate role of the server in replication set.
+	// Role: Role of the server in a replication set.
 	Role *ReplicationRole_STATUS `json:"role,omitempty"`
 }
 
@@ -4823,7 +4480,7 @@ func (replica *Replica_STATUS) AssignProperties_To_Replica_STATUS(destination *s
 	return nil
 }
 
-// Used to indicate role of the server in replication set.
+// Role of the flexible server in a replication set.
 // +kubebuilder:validation:Enum={"AsyncReplica","GeoAsyncReplica","None","Primary"}
 type ReplicationRole string
 
@@ -4842,7 +4499,7 @@ var replicationRole_Values = map[string]ReplicationRole{
 	"primary":         ReplicationRole_Primary,
 }
 
-// Used to indicate role of the server in replication set.
+// Role of the flexible server in a replication set.
 type ReplicationRole_STATUS string
 
 const (
@@ -4930,7 +4587,7 @@ var serverProperties_State_STATUS_Values = map[string]ServerProperties_State_STA
 	"updating": ServerProperties_State_STATUS_Updating,
 }
 
-// The version of a server.
+// Major version of PostgreSQL database engine.
 // +kubebuilder:validation:Enum={"11","12","13","14","15","16"}
 type ServerVersion string
 
@@ -4953,7 +4610,7 @@ var serverVersion_Values = map[string]ServerVersion{
 	"16": ServerVersion_16,
 }
 
-// The version of a server.
+// Major version of PostgreSQL database engine.
 type ServerVersion_STATUS string
 
 const (
@@ -4975,14 +4632,14 @@ var serverVersion_STATUS_Values = map[string]ServerVersion_STATUS{
 	"16": ServerVersion_STATUS_16,
 }
 
-// Sku information related properties of a server.
+// Compute information of a flexible server.
 type Sku struct {
 	// +kubebuilder:validation:Required
-	// Name: The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3.
+	// Name: Name by which is known a given compute size assigned to a flexible server.
 	Name *string `json:"name,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// Tier: The tier of the particular SKU, e.g. Burstable.
+	// Tier: Tier of the compute assigned to a flexible server.
 	Tier *Sku_Tier `json:"tier,omitempty"`
 }
 
@@ -5087,30 +4744,12 @@ func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	return nil
 }
 
-// Initialize_From_Sku_STATUS populates our Sku from the provided source Sku_STATUS
-func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
-
-	// Name
-	sku.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Tier
-	if source.Tier != nil {
-		tier := genruntime.ToEnum(string(*source.Tier), sku_Tier_Values)
-		sku.Tier = &tier
-	} else {
-		sku.Tier = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Sku information related properties of a server.
+// Compute information of a flexible server.
 type Sku_STATUS struct {
-	// Name: The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3.
+	// Name: Name by which is known a given compute size assigned to a flexible server.
 	Name *string `json:"name,omitempty"`
 
-	// Tier: The tier of the particular SKU, e.g. Burstable.
+	// Tier: Tier of the compute assigned to a flexible server.
 	Tier *Sku_Tier_STATUS `json:"tier,omitempty"`
 }
 
@@ -5192,25 +4831,26 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_S
 	return nil
 }
 
-// Storage properties of a server
+// Storage properties of a flexible server.
 type Storage struct {
-	// AutoGrow: Flag to enable / disable Storage Auto grow for flexible server.
+	// AutoGrow: Flag to enable or disable the automatic growth of storage size of a flexible server when available space is
+	// nearing zero and conditions allow for automatically growing storage size.
 	AutoGrow *Storage_AutoGrow `json:"autoGrow,omitempty"`
 
-	// Iops: Storage tier IOPS quantity. This property is required to be set for storage Type PremiumV2_LRS
+	// Iops: Maximum IOPS supported for storage. Required when type of storage is PremiumV2_LRS.
 	Iops *int `json:"iops,omitempty"`
 
-	// StorageSizeGB: Max storage allowed for a server.
+	// StorageSizeGB: Size of storage assigned to a flexible server.
 	StorageSizeGB *int `json:"storageSizeGB,omitempty"`
 
-	// Throughput: Storage throughput for the server. This is required to be set for storage Type PremiumV2_LRS
+	// Throughput: Maximum throughput supported for storage. Required when type of storage is PremiumV2_LRS.
 	Throughput *int `json:"throughput,omitempty"`
 
-	// Tier: Name of storage tier for IOPS.
+	// Tier: Storage tier of a flexible server.
 	Tier *Storage_Tier `json:"tier,omitempty"`
 
-	// Type: Storage type for the server. Allowed values are Premium_LRS and PremiumV2_LRS, and default is Premium_LRS if not
-	// specified
+	// Type: Type of storage assigned to a flexible server. Allowed values are Premium_LRS or PremiumV2_LRS. If not specified,
+	// it defaults to Premium_LRS.
 	Type *Storage_Type `json:"type,omitempty"`
 }
 
@@ -5417,65 +5057,26 @@ func (storage *Storage) AssignProperties_To_Storage(destination *storage.Storage
 	return nil
 }
 
-// Initialize_From_Storage_STATUS populates our Storage from the provided source Storage_STATUS
-func (storage *Storage) Initialize_From_Storage_STATUS(source *Storage_STATUS) error {
-
-	// AutoGrow
-	if source.AutoGrow != nil {
-		autoGrow := genruntime.ToEnum(string(*source.AutoGrow), storage_AutoGrow_Values)
-		storage.AutoGrow = &autoGrow
-	} else {
-		storage.AutoGrow = nil
-	}
-
-	// Iops
-	storage.Iops = genruntime.ClonePointerToInt(source.Iops)
-
-	// StorageSizeGB
-	storage.StorageSizeGB = genruntime.ClonePointerToInt(source.StorageSizeGB)
-
-	// Throughput
-	storage.Throughput = genruntime.ClonePointerToInt(source.Throughput)
-
-	// Tier
-	if source.Tier != nil {
-		tier := genruntime.ToEnum(string(*source.Tier), storage_Tier_Values)
-		storage.Tier = &tier
-	} else {
-		storage.Tier = nil
-	}
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), storage_Type_Values)
-		storage.Type = &typeVar
-	} else {
-		storage.Type = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Storage properties of a server
+// Storage properties of a flexible server.
 type Storage_STATUS struct {
-	// AutoGrow: Flag to enable / disable Storage Auto grow for flexible server.
+	// AutoGrow: Flag to enable or disable the automatic growth of storage size of a flexible server when available space is
+	// nearing zero and conditions allow for automatically growing storage size.
 	AutoGrow *Storage_AutoGrow_STATUS `json:"autoGrow,omitempty"`
 
-	// Iops: Storage tier IOPS quantity. This property is required to be set for storage Type PremiumV2_LRS
+	// Iops: Maximum IOPS supported for storage. Required when type of storage is PremiumV2_LRS.
 	Iops *int `json:"iops,omitempty"`
 
-	// StorageSizeGB: Max storage allowed for a server.
+	// StorageSizeGB: Size of storage assigned to a flexible server.
 	StorageSizeGB *int `json:"storageSizeGB,omitempty"`
 
-	// Throughput: Storage throughput for the server. This is required to be set for storage Type PremiumV2_LRS
+	// Throughput: Maximum throughput supported for storage. Required when type of storage is PremiumV2_LRS.
 	Throughput *int `json:"throughput,omitempty"`
 
-	// Tier: Name of storage tier for IOPS.
+	// Tier: Storage tier of a flexible server.
 	Tier *Storage_Tier_STATUS `json:"tier,omitempty"`
 
-	// Type: Storage type for the server. Allowed values are Premium_LRS and PremiumV2_LRS, and default is Premium_LRS if not
-	// specified
+	// Type: Type of storage assigned to a flexible server. Allowed values are Premium_LRS or PremiumV2_LRS. If not specified,
+	// it defaults to Premium_LRS.
 	Type *Storage_Type_STATUS `json:"type,omitempty"`
 }
 
@@ -5791,16 +5392,16 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 	return nil
 }
 
-// Information describing the identities associated with this application.
+// Identities associated with a flexible server.
 type UserAssignedIdentity struct {
-	// PrincipalId: the identity principal Id of the server.
+	// PrincipalId: Identifier of the object of the service principal associated to the user assigned managed identity.
 	PrincipalId *string `json:"principalId,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// Type: the types of identities associated with this resource
+	// Type: Types of identities associated with a flexible server.
 	Type *UserAssignedIdentity_Type `json:"type,omitempty"`
 
-	// UserAssignedIdentities: represents user assigned identities map.
+	// UserAssignedIdentities: Map of user assigned managed identities.
 	UserAssignedIdentities []UserAssignedIdentityDetails `json:"userAssignedIdentities,omitempty"`
 }
 
@@ -5891,8 +5492,6 @@ func (identity *UserAssignedIdentity) AssignProperties_From_UserAssignedIdentity
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -5929,8 +5528,6 @@ func (identity *UserAssignedIdentity) AssignProperties_To_UserAssignedIdentity(d
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -5954,48 +5551,18 @@ func (identity *UserAssignedIdentity) AssignProperties_To_UserAssignedIdentity(d
 	return nil
 }
 
-// Initialize_From_UserAssignedIdentity_STATUS populates our UserAssignedIdentity from the provided source UserAssignedIdentity_STATUS
-func (identity *UserAssignedIdentity) Initialize_From_UserAssignedIdentity_STATUS(source *UserAssignedIdentity_STATUS) error {
-
-	// PrincipalId
-	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), userAssignedIdentity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Information describing the identities associated with this application.
+// Identities associated with a flexible server.
 type UserAssignedIdentity_STATUS struct {
-	// PrincipalId: the identity principal Id of the server.
+	// PrincipalId: Identifier of the object of the service principal associated to the user assigned managed identity.
 	PrincipalId *string `json:"principalId,omitempty"`
 
-	// TenantId: Tenant id of the server.
+	// TenantId: Identifier of the tenant of a flexible server.
 	TenantId *string `json:"tenantId,omitempty"`
 
-	// Type: the types of identities associated with this resource
+	// Type: Types of identities associated with a flexible server.
 	Type *UserAssignedIdentity_Type_STATUS `json:"type,omitempty"`
 
-	// UserAssignedIdentities: represents user assigned identities map.
+	// UserAssignedIdentities: Map of user assigned managed identities.
 	UserAssignedIdentities map[string]UserIdentity_STATUS `json:"userAssignedIdentities,omitempty"`
 }
 
@@ -6072,8 +5639,6 @@ func (identity *UserAssignedIdentity_STATUS) AssignProperties_From_UserAssignedI
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -6113,8 +5678,6 @@ func (identity *UserAssignedIdentity_STATUS) AssignProperties_To_UserAssignedIde
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -6807,12 +6370,12 @@ func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIden
 	return nil
 }
 
-// Describes a single user-assigned identity associated with the application.
+// User assigned managed identity associated with a flexible server.
 type UserIdentity_STATUS struct {
-	// ClientId: the client identifier of the Service Principal which this identity represents.
+	// ClientId: Identifier of the client of the service principal associated to the user assigned managed identity.
 	ClientId *string `json:"clientId,omitempty"`
 
-	// PrincipalId: the object identifier of the Service Principal which this identity represents.
+	// PrincipalId: Identifier of the object of the service principal associated to the user assigned managed identity.
 	PrincipalId *string `json:"principalId,omitempty"`
 }
 

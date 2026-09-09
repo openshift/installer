@@ -49,7 +49,7 @@ func newVirtualNetworkLinksClient(auth azure.Authorizer, apiCallTimeout time.Dur
 }
 
 // Get gets the specified virtual network link.
-func (avc *azureVirtualNetworkLinksClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (avc *azureVirtualNetworkLinksClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "privatedns.azureVirtualNetworkLinksClient.Get")
 	defer done()
 
@@ -63,7 +63,7 @@ func (avc *azureVirtualNetworkLinksClient) Get(ctx context.Context, spec azure.R
 // CreateOrUpdateAsync creates or updates a virtual network link asynchronously.
 // It sends a PUT request to Azure and if accepted without error, the func will return a poller which can be used to track the ongoing
 // progress of the operation.
-func (avc *azureVirtualNetworkLinksClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armprivatedns.VirtualNetworkLinksClientCreateOrUpdateResponse], err error) {
+func (avc *azureVirtualNetworkLinksClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armprivatedns.VirtualNetworkLinksClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "privatedns.azureVirtualNetworkLinksClient.CreateOrUpdateAsync")
 	defer done()
 

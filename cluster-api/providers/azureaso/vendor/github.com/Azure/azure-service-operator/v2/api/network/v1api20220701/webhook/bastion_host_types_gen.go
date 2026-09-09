@@ -116,7 +116,12 @@ func (host *BastionHost) ValidateUpdate(ctx context.Context, oldResource runtime
 
 // createValidations validates the creation of the resource
 func (host *BastionHost) createValidations() []func(ctx context.Context, obj *v20220701.BastionHost) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.BastionHost) (admission.Warnings, error){host.validateResourceReferences, host.validateOwnerReference, host.validateSecretDestinations, host.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.BastionHost) (admission.Warnings, error){
+		host.validateResourceReferences,
+		host.validateOwnerReference,
+		host.validateSecretDestinations,
+		host.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

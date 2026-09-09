@@ -18,19 +18,17 @@ package webhooks
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/feature"
+	"sigs.k8s.io/cluster-api/internal/util/taints"
 	"sigs.k8s.io/cluster-api/util/labels"
 	"sigs.k8s.io/cluster-api/util/version"
 )
@@ -38,29 +36,23 @@ import (
 const defaultNodeDeletionTimeoutSeconds = int32(10)
 
 func (webhook *Machine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&clusterv1.Machine{}).
+	return ctrl.NewWebhookManagedBy(mgr, &clusterv1.Machine{}).
 		WithDefaulter(webhook).
 		WithValidator(webhook).
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta2,name=validation.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta2,name=default.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta2,name=validation.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta2,name=default.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // Machine implements a validation and defaulting webhook for Machine.
 type Machine struct{}
 
-var _ webhook.CustomValidator = &Machine{}
-var _ webhook.CustomDefaulter = &Machine{}
+var _ admission.Validator[*clusterv1.Machine] = &Machine{}
+var _ admission.Defaulter[*clusterv1.Machine] = &Machine{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *Machine) Default(_ context.Context, obj runtime.Object) error {
-	m, ok := obj.(*clusterv1.Machine)
-	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a Machine but got a %T", obj))
-	}
-
+func (webhook *Machine) Default(_ context.Context, m *clusterv1.Machine) error {
 	if m.Labels == nil {
 		m.Labels = make(map[string]string)
 	}
@@ -71,40 +63,30 @@ func (webhook *Machine) Default(_ context.Context, obj runtime.Object) error {
 		m.Spec.Version = normalizedVersion
 	}
 
-	if m.Spec.Deletion.NodeDeletionTimeoutSeconds == nil {
-		m.Spec.Deletion.NodeDeletionTimeoutSeconds = ptr.To(defaultNodeDeletionTimeoutSeconds)
-	}
+	DefaultMachineNodeDeletionTimeoutSeconds(m)
 
 	return nil
 }
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (webhook *Machine) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	m, ok := obj.(*clusterv1.Machine)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a Machine but got a %T", obj))
+// DefaultMachineNodeDeletionTimeoutSeconds defaults the Machine NodeDeletionTimeoutSeconds field.
+func DefaultMachineNodeDeletionTimeoutSeconds(m *clusterv1.Machine) {
+	if m.Spec.Deletion.NodeDeletionTimeoutSeconds == nil {
+		m.Spec.Deletion.NodeDeletionTimeoutSeconds = ptr.To(defaultNodeDeletionTimeoutSeconds)
 	}
+}
 
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (webhook *Machine) ValidateCreate(_ context.Context, m *clusterv1.Machine) (admission.Warnings, error) {
 	return nil, webhook.validate(nil, m)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *Machine) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	oldM, ok := oldObj.(*clusterv1.Machine)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a Machine but got a %T", oldObj))
-	}
-
-	newM, ok := newObj.(*clusterv1.Machine)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a Machine but got a %T", newObj))
-	}
-
+func (webhook *Machine) ValidateUpdate(_ context.Context, oldM, newM *clusterv1.Machine) (admission.Warnings, error) {
 	return nil, webhook.validate(oldM, newM)
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
-func (webhook *Machine) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *Machine) ValidateDelete(_ context.Context, _ *clusterv1.Machine) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -137,48 +119,13 @@ func (webhook *Machine) validate(oldM, newM *clusterv1.Machine) error {
 		}
 	}
 
-	allErrs = append(allErrs, validateMachineTaints(newM.Spec.Taints, specPath.Child("taints"))...)
+	allErrs = append(allErrs, taints.ValidateMachineTaints(newM.Spec.Taints, specPath.Child("taints"))...)
 	allErrs = append(allErrs, validateMachineTaintsForWorkers(newM.Spec.Taints, newM, specPath.Child("taints"))...)
 
 	if len(allErrs) == 0 {
 		return nil
 	}
 	return apierrors.NewInvalid(clusterv1.GroupVersion.WithKind("Machine").GroupKind(), newM.Name, allErrs)
-}
-
-func validateMachineTaints(taints []clusterv1.MachineTaint, taintsPath *field.Path) field.ErrorList {
-	var allErrs field.ErrorList
-
-	if !feature.Gates.Enabled(feature.MachineTaintPropagation) {
-		if len(taints) > 0 {
-			allErrs = append(allErrs, field.Forbidden(taintsPath, "taints are not allowed to be set when the feature gate MachineTaintPropagation is disabled"))
-		}
-	}
-
-	for i, taint := range taints {
-		idxPath := taintsPath.Index(i)
-
-		// The following validations uses a switch statement, because if one of them matches, then the others won't.
-
-		switch {
-		// Validate for keys which are reserved for usage by the cluster-api or providers.
-		case taint.Key == clusterv1.NodeUninitializedTaint.Key:
-			allErrs = append(allErrs, field.Invalid(idxPath.Child("key"), taint.Key, "taint key is not allowed"))
-		case taint.Key == clusterv1.NodeOutdatedRevisionTaint.Key:
-			allErrs = append(allErrs, field.Invalid(idxPath.Child("key"), taint.Key, "taint key is not allowed"))
-		// Validate for keys which are reserved for usage by the node or node-lifecycle-controller, but allow `node.kubernetes.io/out-of-service`.
-		case strings.HasPrefix(taint.Key, "node.kubernetes.io/") && taint.Key != "node.kubernetes.io/out-of-service":
-			allErrs = append(allErrs, field.Invalid(idxPath.Child("key"), taint.Key, "taint key must not have the prefix node.kubernetes.io/, except for node.kubernetes.io/out-of-service"))
-		// Validate for keys which are reserved for usage by the cloud-controller-manager or kubelet.
-		case strings.HasPrefix(taint.Key, "node.cloudprovider.kubernetes.io/"):
-			allErrs = append(allErrs, field.Invalid(idxPath.Child("key"), taint.Key, "taint key must not have the prefix node.cloudprovider.kubernetes.io/"))
-		// Validate for the deprecated kubeadm node-role taint.
-		case taint.Key == "node-role.kubernetes.io/master":
-			allErrs = append(allErrs, field.Invalid(idxPath.Child("key"), taint.Key, "taint is deprecated since 1.24 and should not be used anymore"))
-		}
-	}
-
-	return allErrs
 }
 
 func validateMachineTaintsForWorkers(taints []clusterv1.MachineTaint, machine *clusterv1.Machine, taintsPath *field.Path) field.ErrorList {

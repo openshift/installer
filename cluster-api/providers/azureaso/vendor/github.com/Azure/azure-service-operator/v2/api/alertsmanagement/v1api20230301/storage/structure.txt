@@ -80,3 +80,25 @@ PrometheusRuleGroup: Resource
     ├── Tags: map[string]string
     └── Type: *string
 
+augmentConversionForPrometheusRule: Interface
+
+augmentConversionForPrometheusRuleGroup: Interface
+
+augmentConversionForPrometheusRuleGroupAction: Interface
+
+augmentConversionForPrometheusRuleGroupAction_STATUS: Interface
+
+augmentConversionForPrometheusRuleGroupOperatorSpec: Interface
+
+augmentConversionForPrometheusRuleGroup_STATUS: Interface
+
+augmentConversionForPrometheusRuleGroup_Spec: Interface
+
+augmentConversionForPrometheusRuleResolveConfiguration: Interface
+
+augmentConversionForPrometheusRuleResolveConfiguration_STATUS: Interface
+
+augmentConversionForPrometheusRule_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+

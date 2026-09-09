@@ -116,7 +116,12 @@ func (configuration *Configuration) ValidateUpdate(ctx context.Context, oldResou
 
 // createValidations validates the creation of the resource
 func (configuration *Configuration) createValidations() []func(ctx context.Context, obj *v20180601.Configuration) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20180601.Configuration) (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20180601.Configuration) (admission.Warnings, error){
+		configuration.validateResourceReferences,
+		configuration.validateOwnerReference,
+		configuration.validateSecretDestinations,
+		configuration.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

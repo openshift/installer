@@ -866,12 +866,12 @@ VirtualNetworkGateway: Resource
 │   │   ├── AadTenant: *string
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── RadiusServerAddress: *string
-│   │   ├── RadiusServerSecret: *string
+│   │   ├── RadiusServerSecret: *genruntime.SecretReference
 │   │   ├── RadiusServers: Object (4 properties)[]
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   ├── RadiusServerAddress: *string
 │   │   │   ├── RadiusServerScore: *int
-│   │   │   └── RadiusServerSecret: *string
+│   │   │   └── RadiusServerSecret: *genruntime.SecretReference
 │   │   ├── VpnAuthenticationTypes: string[]
 │   │   ├── VpnClientAddressPool: *Object (2 properties)
 │   │   │   ├── AddressPrefixes: string[]
@@ -955,18 +955,16 @@ VirtualNetworkGateway: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     ├── VNetExtendedLocationResourceId: *string
-    ├── VpnClientConfiguration: *Object (13 properties)
+    ├── VpnClientConfiguration: *Object (12 properties)
     │   ├── AadAudience: *string
     │   ├── AadIssuer: *string
     │   ├── AadTenant: *string
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── RadiusServerAddress: *string
-    │   ├── RadiusServerSecret: *string
-    │   ├── RadiusServers: Object (4 properties)[]
+    │   ├── RadiusServers: Object (3 properties)[]
     │   │   ├── PropertyBag: genruntime.PropertyBag
     │   │   ├── RadiusServerAddress: *string
-    │   │   ├── RadiusServerScore: *int
-    │   │   └── RadiusServerSecret: *string
+    │   │   └── RadiusServerScore: *int
     │   ├── VpnAuthenticationTypes: string[]
     │   ├── VpnClientAddressPool: *Object (2 properties)
     │   │   ├── AddressPrefixes: string[]
@@ -1287,7 +1285,7 @@ augmentConversionForNetworkInterfaceOperatorSpec: Interface
 
 augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded: Interface
 
-augmentConversionForNetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+augmentConversionForNetworkInterface_STATUS: Interface
 
 augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Interface
 
@@ -1301,9 +1299,9 @@ augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedde
 
 augmentConversionForNetworkSecurityGroupSpec_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
 
-augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded: Interface
+augmentConversionForNetworkSecurityGroup_STATUS: Interface
 
-augmentConversionForNetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Interface
+augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded: Interface
 
 augmentConversionForNetworkSecurityGroup_STATUS_VirtualNetworks_Subnet_SubResourceEmbedded: Interface
 

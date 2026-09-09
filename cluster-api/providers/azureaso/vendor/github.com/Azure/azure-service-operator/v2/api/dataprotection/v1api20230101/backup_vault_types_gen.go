@@ -23,13 +23,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dataprotection}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /dataprotection/resource-manager/Microsoft.DataProtection/stable/2023-01-01/dataprotection.json
+// - Generated from: /dataprotection/resource-manager/Microsoft.DataProtection/DataProtection/stable/2023-01-01/dataprotection.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataProtection/backupVaults/{vaultName}
 type BackupVault struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -263,7 +264,7 @@ func (vault *BackupVault) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /dataprotection/resource-manager/Microsoft.DataProtection/stable/2023-01-01/dataprotection.json
+// - Generated from: /dataprotection/resource-manager/Microsoft.DataProtection/DataProtection/stable/2023-01-01/dataprotection.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataProtection/backupVaults/{vaultName}
 type BackupVaultList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -316,7 +317,7 @@ func (vault *BackupVault_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Identity":
 	if vault.Identity != nil {
-		identity_ARM, err := (*vault.Identity).ConvertToARM(resolved)
+		identity_ARM, err := vault.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -335,7 +336,7 @@ func (vault *BackupVault_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Properties":
 	if vault.Properties != nil {
-		properties_ARM, err := (*vault.Properties).ConvertToARM(resolved)
+		properties_ARM, err := vault.Properties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1119,8 +1120,6 @@ func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source
 	if source.StorageSettings != nil {
 		storageSettingList := make([]StorageSetting_STATUS, len(source.StorageSettings))
 		for storageSettingIndex, storageSettingItem := range source.StorageSettings {
-			// Shadow the loop variable to avoid aliasing
-			storageSettingItem := storageSettingItem
 			var storageSetting StorageSetting_STATUS
 			err := storageSetting.AssignProperties_From_StorageSetting_STATUS(&storageSettingItem)
 			if err != nil {
@@ -1218,8 +1217,6 @@ func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destinat
 	if vault.StorageSettings != nil {
 		storageSettingList := make([]storage.StorageSetting_STATUS, len(vault.StorageSettings))
 		for storageSettingIndex, storageSettingItem := range vault.StorageSettings {
-			// Shadow the loop variable to avoid aliasing
-			storageSettingItem := storageSettingItem
 			var storageSetting storage.StorageSetting_STATUS
 			err := storageSettingItem.AssignProperties_To_StorageSetting_STATUS(&storageSetting)
 			if err != nil {
@@ -1262,8 +1259,6 @@ func (operator *BackupVaultOperatorSpec) AssignProperties_From_BackupVaultOperat
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1292,8 +1287,6 @@ func (operator *BackupVaultOperatorSpec) AssignProperties_From_BackupVaultOperat
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1319,8 +1312,6 @@ func (operator *BackupVaultOperatorSpec) AssignProperties_To_BackupVaultOperator
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1349,8 +1340,6 @@ func (operator *BackupVaultOperatorSpec) AssignProperties_To_BackupVaultOperator
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1401,7 +1390,7 @@ func (vault *BackupVaultSpec) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "FeatureSettings":
 	if vault.FeatureSettings != nil {
-		featureSettings_ARM, err := (*vault.FeatureSettings).ConvertToARM(resolved)
+		featureSettings_ARM, err := vault.FeatureSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1411,7 +1400,7 @@ func (vault *BackupVaultSpec) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "MonitoringSettings":
 	if vault.MonitoringSettings != nil {
-		monitoringSettings_ARM, err := (*vault.MonitoringSettings).ConvertToARM(resolved)
+		monitoringSettings_ARM, err := vault.MonitoringSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1421,7 +1410,7 @@ func (vault *BackupVaultSpec) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "SecuritySettings":
 	if vault.SecuritySettings != nil {
-		securitySettings_ARM, err := (*vault.SecuritySettings).ConvertToARM(resolved)
+		securitySettings_ARM, err := vault.SecuritySettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1542,8 +1531,6 @@ func (vault *BackupVaultSpec) AssignProperties_From_BackupVaultSpec(source *stor
 	if source.StorageSettings != nil {
 		storageSettingList := make([]StorageSetting, len(source.StorageSettings))
 		for storageSettingIndex, storageSettingItem := range source.StorageSettings {
-			// Shadow the loop variable to avoid aliasing
-			storageSettingItem := storageSettingItem
 			var storageSetting StorageSetting
 			err := storageSetting.AssignProperties_From_StorageSetting(&storageSettingItem)
 			if err != nil {
@@ -1605,8 +1592,6 @@ func (vault *BackupVaultSpec) AssignProperties_To_BackupVaultSpec(destination *s
 	if vault.StorageSettings != nil {
 		storageSettingList := make([]storage.StorageSetting, len(vault.StorageSettings))
 		for storageSettingIndex, storageSettingItem := range vault.StorageSettings {
-			// Shadow the loop variable to avoid aliasing
-			storageSettingItem := storageSettingItem
 			var storageSetting storage.StorageSetting
 			err := storageSettingItem.AssignProperties_To_StorageSetting(&storageSetting)
 			if err != nil {
@@ -2063,7 +2048,7 @@ func (settings *FeatureSettings) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "CrossSubscriptionRestoreSettings":
 	if settings.CrossSubscriptionRestoreSettings != nil {
-		crossSubscriptionRestoreSettings_ARM, err := (*settings.CrossSubscriptionRestoreSettings).ConvertToARM(resolved)
+		crossSubscriptionRestoreSettings_ARM, err := settings.CrossSubscriptionRestoreSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2246,7 +2231,7 @@ func (settings *MonitoringSettings) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "AzureMonitorAlertSettings":
 	if settings.AzureMonitorAlertSettings != nil {
-		azureMonitorAlertSettings_ARM, err := (*settings.AzureMonitorAlertSettings).ConvertToARM(resolved)
+		azureMonitorAlertSettings_ARM, err := settings.AzureMonitorAlertSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2551,7 +2536,7 @@ func (settings *SecuritySettings) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "ImmutabilitySettings":
 	if settings.ImmutabilitySettings != nil {
-		immutabilitySettings_ARM, err := (*settings.ImmutabilitySettings).ConvertToARM(resolved)
+		immutabilitySettings_ARM, err := settings.ImmutabilitySettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2561,7 +2546,7 @@ func (settings *SecuritySettings) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "SoftDeleteSettings":
 	if settings.SoftDeleteSettings != nil {
-		softDeleteSettings_ARM, err := (*settings.SoftDeleteSettings).ConvertToARM(resolved)
+		softDeleteSettings_ARM, err := settings.SoftDeleteSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &StorageAccountsManagementPolicy{}
 
 // ConvertFrom populates our StorageAccountsManagementPolicy from the provided hub StorageAccountsManagementPolicy
 func (policy *StorageAccountsManagementPolicy) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.StorageAccountsManagementPolicy)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsManagementPolicy but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.StorageAccountsManagementPolicy
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return policy.AssignProperties_From_StorageAccountsManagementPolicy(source)
+	err = policy.AssignProperties_From_StorageAccountsManagementPolicy(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to policy")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsManagementPolicy from our StorageAccountsManagementPolicy
 func (policy *StorageAccountsManagementPolicy) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.StorageAccountsManagementPolicy)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsManagementPolicy but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.StorageAccountsManagementPolicy
+	err := policy.AssignProperties_To_StorageAccountsManagementPolicy(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from policy")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return policy.AssignProperties_To_StorageAccountsManagementPolicy(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &StorageAccountsManagementPolicy{}
@@ -86,17 +101,6 @@ func (policy *StorageAccountsManagementPolicy) SecretDestinationExpressions() []
 		return nil
 	}
 	return policy.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &StorageAccountsManagementPolicy{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (policy *StorageAccountsManagementPolicy) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccountsManagementPolicy_STATUS); ok {
-		return policy.Spec.Initialize_From_StorageAccountsManagementPolicy_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccountsManagementPolicy_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &StorageAccountsManagementPolicy{}
@@ -279,7 +283,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) ConvertToARM(resolved genrun
 		result.Properties = &arm.ManagementPolicyProperties{}
 	}
 	if policy.Policy != nil {
-		policy_ARM, err := (*policy.Policy).ConvertToARM(resolved)
+		policy_ARM, err := policy.Policy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -461,25 +465,6 @@ func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_To_StorageA
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageAccountsManagementPolicy_STATUS populates our StorageAccountsManagementPolicy_Spec from the provided source StorageAccountsManagementPolicy_STATUS
-func (policy *StorageAccountsManagementPolicy_Spec) Initialize_From_StorageAccountsManagementPolicy_STATUS(source *StorageAccountsManagementPolicy_STATUS) error {
-
-	// Policy
-	if source.Policy != nil {
-		var policyLocal ManagementPolicySchema
-		err := policyLocal.Initialize_From_ManagementPolicySchema_STATUS(source.Policy)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicySchema_STATUS() to populate field Policy")
-		}
-		policy.Policy = &policyLocal
-	} else {
-		policy.Policy = nil
 	}
 
 	// No error
@@ -763,8 +748,6 @@ func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySche
 	if source.Rules != nil {
 		ruleList := make([]ManagementPolicyRule, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ManagementPolicyRule
 			err := rule.AssignProperties_From_ManagementPolicyRule(&ruleItem)
 			if err != nil {
@@ -790,8 +773,6 @@ func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema
 	if schema.Rules != nil {
 		ruleList := make([]storage.ManagementPolicyRule, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ManagementPolicyRule
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule(&rule)
 			if err != nil {
@@ -809,31 +790,6 @@ func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicySchema_STATUS populates our ManagementPolicySchema from the provided source ManagementPolicySchema_STATUS
-func (schema *ManagementPolicySchema) Initialize_From_ManagementPolicySchema_STATUS(source *ManagementPolicySchema_STATUS) error {
-
-	// Rules
-	if source.Rules != nil {
-		ruleList := make([]ManagementPolicyRule, len(source.Rules))
-		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
-			var rule ManagementPolicyRule
-			err := rule.Initialize_From_ManagementPolicyRule_STATUS(&ruleItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_ManagementPolicyRule_STATUS() to populate field Rules")
-			}
-			ruleList[ruleIndex] = rule
-		}
-		schema.Rules = ruleList
-	} else {
-		schema.Rules = nil
 	}
 
 	// No error
@@ -883,8 +839,6 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPol
 	if source.Rules != nil {
 		ruleList := make([]ManagementPolicyRule_STATUS, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ManagementPolicyRule_STATUS
 			err := rule.AssignProperties_From_ManagementPolicyRule_STATUS(&ruleItem)
 			if err != nil {
@@ -910,8 +864,6 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolic
 	if schema.Rules != nil {
 		ruleList := make([]storage.ManagementPolicyRule_STATUS, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ManagementPolicyRule_STATUS
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule_STATUS(&rule)
 			if err != nil {
@@ -951,8 +903,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_Fr
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -969,8 +919,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_Fr
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -996,8 +944,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1014,8 +960,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1069,7 +1013,7 @@ func (rule *ManagementPolicyRule) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "Definition":
 	if rule.Definition != nil {
-		definition_ARM, err := (*rule.Definition).ConvertToARM(resolved)
+		definition_ARM, err := rule.Definition.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1226,44 +1170,6 @@ func (rule *ManagementPolicyRule) AssignProperties_To_ManagementPolicyRule(desti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicyRule_STATUS populates our ManagementPolicyRule from the provided source ManagementPolicyRule_STATUS
-func (rule *ManagementPolicyRule) Initialize_From_ManagementPolicyRule_STATUS(source *ManagementPolicyRule_STATUS) error {
-
-	// Definition
-	if source.Definition != nil {
-		var definition ManagementPolicyDefinition
-		err := definition.Initialize_From_ManagementPolicyDefinition_STATUS(source.Definition)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyDefinition_STATUS() to populate field Definition")
-		}
-		rule.Definition = &definition
-	} else {
-		rule.Definition = nil
-	}
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		rule.Enabled = &enabled
-	} else {
-		rule.Enabled = nil
-	}
-
-	// Name
-	rule.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), managementPolicyRule_Type_Values)
-		rule.Type = &typeVar
-	} else {
-		rule.Type = nil
 	}
 
 	// No error
@@ -1442,7 +1348,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 
 	// Set property "Actions":
 	if definition.Actions != nil {
-		actions_ARM, err := (*definition.Actions).ConvertToARM(resolved)
+		actions_ARM, err := definition.Actions.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1452,7 +1358,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 
 	// Set property "Filters":
 	if definition.Filters != nil {
-		filters_ARM, err := (*definition.Filters).ConvertToARM(resolved)
+		filters_ARM, err := definition.Filters.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1565,37 +1471,6 @@ func (definition *ManagementPolicyDefinition) AssignProperties_To_ManagementPoli
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicyDefinition_STATUS populates our ManagementPolicyDefinition from the provided source ManagementPolicyDefinition_STATUS
-func (definition *ManagementPolicyDefinition) Initialize_From_ManagementPolicyDefinition_STATUS(source *ManagementPolicyDefinition_STATUS) error {
-
-	// Actions
-	if source.Actions != nil {
-		var action ManagementPolicyAction
-		err := action.Initialize_From_ManagementPolicyAction_STATUS(source.Actions)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyAction_STATUS() to populate field Actions")
-		}
-		definition.Actions = &action
-	} else {
-		definition.Actions = nil
-	}
-
-	// Filters
-	if source.Filters != nil {
-		var filter ManagementPolicyFilter
-		err := filter.Initialize_From_ManagementPolicyFilter_STATUS(source.Filters)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyFilter_STATUS() to populate field Filters")
-		}
-		definition.Filters = &filter
-	} else {
-		definition.Filters = nil
 	}
 
 	// No error
@@ -1764,7 +1639,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "BaseBlob":
 	if action.BaseBlob != nil {
-		baseBlob_ARM, err := (*action.BaseBlob).ConvertToARM(resolved)
+		baseBlob_ARM, err := action.BaseBlob.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1774,7 +1649,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Snapshot":
 	if action.Snapshot != nil {
-		snapshot_ARM, err := (*action.Snapshot).ConvertToARM(resolved)
+		snapshot_ARM, err := action.Snapshot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1784,7 +1659,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Version":
 	if action.Version != nil {
-		version_ARM, err := (*action.Version).ConvertToARM(resolved)
+		version_ARM, err := action.Version.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1932,49 +1807,6 @@ func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicyAction_STATUS populates our ManagementPolicyAction from the provided source ManagementPolicyAction_STATUS
-func (action *ManagementPolicyAction) Initialize_From_ManagementPolicyAction_STATUS(source *ManagementPolicyAction_STATUS) error {
-
-	// BaseBlob
-	if source.BaseBlob != nil {
-		var baseBlob ManagementPolicyBaseBlob
-		err := baseBlob.Initialize_From_ManagementPolicyBaseBlob_STATUS(source.BaseBlob)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
-		}
-		action.BaseBlob = &baseBlob
-	} else {
-		action.BaseBlob = nil
-	}
-
-	// Snapshot
-	if source.Snapshot != nil {
-		var snapshot ManagementPolicySnapShot
-		err := snapshot.Initialize_From_ManagementPolicySnapShot_STATUS(source.Snapshot)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
-		}
-		action.Snapshot = &snapshot
-	} else {
-		action.Snapshot = nil
-	}
-
-	// Version
-	if source.Version != nil {
-		var version ManagementPolicyVersion
-		err := version.Initialize_From_ManagementPolicyVersion_STATUS(source.Version)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyVersion_STATUS() to populate field Version")
-		}
-		action.Version = &version
-	} else {
-		action.Version = nil
 	}
 
 	// No error
@@ -2227,8 +2059,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilt
 	if source.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]TagFilter, len(source.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch TagFilter
 			err := blobIndexMatch.AssignProperties_From_TagFilter(&blobIndexMatchItem)
 			if err != nil {
@@ -2260,8 +2090,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter
 	if filter.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]storage.TagFilter, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch storage.TagFilter
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter(&blobIndexMatch)
 			if err != nil {
@@ -2286,37 +2114,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicyFilter_STATUS populates our ManagementPolicyFilter from the provided source ManagementPolicyFilter_STATUS
-func (filter *ManagementPolicyFilter) Initialize_From_ManagementPolicyFilter_STATUS(source *ManagementPolicyFilter_STATUS) error {
-
-	// BlobIndexMatch
-	if source.BlobIndexMatch != nil {
-		blobIndexMatchList := make([]TagFilter, len(source.BlobIndexMatch))
-		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
-			var blobIndexMatch TagFilter
-			err := blobIndexMatch.Initialize_From_TagFilter_STATUS(&blobIndexMatchItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_TagFilter_STATUS() to populate field BlobIndexMatch")
-			}
-			blobIndexMatchList[blobIndexMatchIndex] = blobIndexMatch
-		}
-		filter.BlobIndexMatch = blobIndexMatchList
-	} else {
-		filter.BlobIndexMatch = nil
-	}
-
-	// BlobTypes
-	filter.BlobTypes = genruntime.CloneSliceOfString(source.BlobTypes)
-
-	// PrefixMatch
-	filter.PrefixMatch = genruntime.CloneSliceOfString(source.PrefixMatch)
 
 	// No error
 	return nil
@@ -2381,8 +2178,6 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPol
 	if source.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]TagFilter_STATUS, len(source.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch TagFilter_STATUS
 			err := blobIndexMatch.AssignProperties_From_TagFilter_STATUS(&blobIndexMatchItem)
 			if err != nil {
@@ -2414,8 +2209,6 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_To_ManagementPolic
 	if filter.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]storage.TagFilter_STATUS, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch storage.TagFilter_STATUS
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter_STATUS(&blobIndexMatch)
 			if err != nil {
@@ -2479,7 +2272,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Delete":
 	if blob.Delete != nil {
-		delete_ARM, err := (*blob.Delete).ConvertToARM(resolved)
+		delete_ARM, err := blob.Delete.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2495,7 +2288,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToArchive":
 	if blob.TierToArchive != nil {
-		tierToArchive_ARM, err := (*blob.TierToArchive).ConvertToARM(resolved)
+		tierToArchive_ARM, err := blob.TierToArchive.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2505,7 +2298,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCold":
 	if blob.TierToCold != nil {
-		tierToCold_ARM, err := (*blob.TierToCold).ConvertToARM(resolved)
+		tierToCold_ARM, err := blob.TierToCold.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2515,7 +2308,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCool":
 	if blob.TierToCool != nil {
-		tierToCool_ARM, err := (*blob.TierToCool).ConvertToARM(resolved)
+		tierToCool_ARM, err := blob.TierToCool.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2525,7 +2318,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToHot":
 	if blob.TierToHot != nil {
-		tierToHot_ARM, err := (*blob.TierToHot).ConvertToARM(resolved)
+		tierToHot_ARM, err := blob.TierToHot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2765,81 +2558,6 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicyBaseBlob_STATUS populates our ManagementPolicyBaseBlob from the provided source ManagementPolicyBaseBlob_STATUS
-func (blob *ManagementPolicyBaseBlob) Initialize_From_ManagementPolicyBaseBlob_STATUS(source *ManagementPolicyBaseBlob_STATUS) error {
-
-	// Delete
-	if source.Delete != nil {
-		var delete DateAfterModification
-		err := delete.Initialize_From_DateAfterModification_STATUS(source.Delete)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field Delete")
-		}
-		blob.Delete = &delete
-	} else {
-		blob.Delete = nil
-	}
-
-	// EnableAutoTierToHotFromCool
-	if source.EnableAutoTierToHotFromCool != nil {
-		enableAutoTierToHotFromCool := *source.EnableAutoTierToHotFromCool
-		blob.EnableAutoTierToHotFromCool = &enableAutoTierToHotFromCool
-	} else {
-		blob.EnableAutoTierToHotFromCool = nil
-	}
-
-	// TierToArchive
-	if source.TierToArchive != nil {
-		var tierToArchive DateAfterModification
-		err := tierToArchive.Initialize_From_DateAfterModification_STATUS(source.TierToArchive)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToArchive")
-		}
-		blob.TierToArchive = &tierToArchive
-	} else {
-		blob.TierToArchive = nil
-	}
-
-	// TierToCold
-	if source.TierToCold != nil {
-		var tierToCold DateAfterModification
-		err := tierToCold.Initialize_From_DateAfterModification_STATUS(source.TierToCold)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToCold")
-		}
-		blob.TierToCold = &tierToCold
-	} else {
-		blob.TierToCold = nil
-	}
-
-	// TierToCool
-	if source.TierToCool != nil {
-		var tierToCool DateAfterModification
-		err := tierToCool.Initialize_From_DateAfterModification_STATUS(source.TierToCool)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToCool")
-		}
-		blob.TierToCool = &tierToCool
-	} else {
-		blob.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		var tierToHot DateAfterModification
-		err := tierToHot.Initialize_From_DateAfterModification_STATUS(source.TierToHot)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToHot")
-		}
-		blob.TierToHot = &tierToHot
-	} else {
-		blob.TierToHot = nil
 	}
 
 	// No error
@@ -3137,7 +2855,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Delete":
 	if shot.Delete != nil {
-		delete_ARM, err := (*shot.Delete).ConvertToARM(resolved)
+		delete_ARM, err := shot.Delete.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3147,7 +2865,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToArchive":
 	if shot.TierToArchive != nil {
-		tierToArchive_ARM, err := (*shot.TierToArchive).ConvertToARM(resolved)
+		tierToArchive_ARM, err := shot.TierToArchive.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3157,7 +2875,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCold":
 	if shot.TierToCold != nil {
-		tierToCold_ARM, err := (*shot.TierToCold).ConvertToARM(resolved)
+		tierToCold_ARM, err := shot.TierToCold.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3167,7 +2885,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCool":
 	if shot.TierToCool != nil {
-		tierToCool_ARM, err := (*shot.TierToCool).ConvertToARM(resolved)
+		tierToCool_ARM, err := shot.TierToCool.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3177,7 +2895,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToHot":
 	if shot.TierToHot != nil {
-		tierToHot_ARM, err := (*shot.TierToHot).ConvertToARM(resolved)
+		tierToHot_ARM, err := shot.TierToHot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3395,73 +3113,6 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicySnapShot_STATUS populates our ManagementPolicySnapShot from the provided source ManagementPolicySnapShot_STATUS
-func (shot *ManagementPolicySnapShot) Initialize_From_ManagementPolicySnapShot_STATUS(source *ManagementPolicySnapShot_STATUS) error {
-
-	// Delete
-	if source.Delete != nil {
-		var delete DateAfterCreation
-		err := delete.Initialize_From_DateAfterCreation_STATUS(source.Delete)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field Delete")
-		}
-		shot.Delete = &delete
-	} else {
-		shot.Delete = nil
-	}
-
-	// TierToArchive
-	if source.TierToArchive != nil {
-		var tierToArchive DateAfterCreation
-		err := tierToArchive.Initialize_From_DateAfterCreation_STATUS(source.TierToArchive)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToArchive")
-		}
-		shot.TierToArchive = &tierToArchive
-	} else {
-		shot.TierToArchive = nil
-	}
-
-	// TierToCold
-	if source.TierToCold != nil {
-		var tierToCold DateAfterCreation
-		err := tierToCold.Initialize_From_DateAfterCreation_STATUS(source.TierToCold)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCold")
-		}
-		shot.TierToCold = &tierToCold
-	} else {
-		shot.TierToCold = nil
-	}
-
-	// TierToCool
-	if source.TierToCool != nil {
-		var tierToCool DateAfterCreation
-		err := tierToCool.Initialize_From_DateAfterCreation_STATUS(source.TierToCool)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCool")
-		}
-		shot.TierToCool = &tierToCool
-	} else {
-		shot.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		var tierToHot DateAfterCreation
-		err := tierToHot.Initialize_From_DateAfterCreation_STATUS(source.TierToHot)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToHot")
-		}
-		shot.TierToHot = &tierToHot
-	} else {
-		shot.TierToHot = nil
 	}
 
 	// No error
@@ -3733,7 +3384,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "Delete":
 	if version.Delete != nil {
-		delete_ARM, err := (*version.Delete).ConvertToARM(resolved)
+		delete_ARM, err := version.Delete.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3743,7 +3394,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToArchive":
 	if version.TierToArchive != nil {
-		tierToArchive_ARM, err := (*version.TierToArchive).ConvertToARM(resolved)
+		tierToArchive_ARM, err := version.TierToArchive.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3753,7 +3404,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToCold":
 	if version.TierToCold != nil {
-		tierToCold_ARM, err := (*version.TierToCold).ConvertToARM(resolved)
+		tierToCold_ARM, err := version.TierToCold.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3763,7 +3414,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToCool":
 	if version.TierToCool != nil {
-		tierToCool_ARM, err := (*version.TierToCool).ConvertToARM(resolved)
+		tierToCool_ARM, err := version.TierToCool.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3773,7 +3424,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToHot":
 	if version.TierToHot != nil {
-		tierToHot_ARM, err := (*version.TierToHot).ConvertToARM(resolved)
+		tierToHot_ARM, err := version.TierToHot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3991,73 +3642,6 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagementPolicyVersion_STATUS populates our ManagementPolicyVersion from the provided source ManagementPolicyVersion_STATUS
-func (version *ManagementPolicyVersion) Initialize_From_ManagementPolicyVersion_STATUS(source *ManagementPolicyVersion_STATUS) error {
-
-	// Delete
-	if source.Delete != nil {
-		var delete DateAfterCreation
-		err := delete.Initialize_From_DateAfterCreation_STATUS(source.Delete)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field Delete")
-		}
-		version.Delete = &delete
-	} else {
-		version.Delete = nil
-	}
-
-	// TierToArchive
-	if source.TierToArchive != nil {
-		var tierToArchive DateAfterCreation
-		err := tierToArchive.Initialize_From_DateAfterCreation_STATUS(source.TierToArchive)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToArchive")
-		}
-		version.TierToArchive = &tierToArchive
-	} else {
-		version.TierToArchive = nil
-	}
-
-	// TierToCold
-	if source.TierToCold != nil {
-		var tierToCold DateAfterCreation
-		err := tierToCold.Initialize_From_DateAfterCreation_STATUS(source.TierToCold)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCold")
-		}
-		version.TierToCold = &tierToCold
-	} else {
-		version.TierToCold = nil
-	}
-
-	// TierToCool
-	if source.TierToCool != nil {
-		var tierToCool DateAfterCreation
-		err := tierToCool.Initialize_From_DateAfterCreation_STATUS(source.TierToCool)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCool")
-		}
-		version.TierToCool = &tierToCool
-	} else {
-		version.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		var tierToHot DateAfterCreation
-		err := tierToHot.Initialize_From_DateAfterCreation_STATUS(source.TierToHot)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToHot")
-		}
-		version.TierToHot = &tierToHot
-	} else {
-		version.TierToHot = nil
 	}
 
 	// No error
@@ -4423,22 +4007,6 @@ func (filter *TagFilter) AssignProperties_To_TagFilter(destination *storage.TagF
 	return nil
 }
 
-// Initialize_From_TagFilter_STATUS populates our TagFilter from the provided source TagFilter_STATUS
-func (filter *TagFilter) Initialize_From_TagFilter_STATUS(source *TagFilter_STATUS) error {
-
-	// Name
-	filter.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Op
-	filter.Op = genruntime.ClonePointerToString(source.Op)
-
-	// Value
-	filter.Value = genruntime.ClonePointerToString(source.Value)
-
-	// No error
-	return nil
-}
-
 // Blob index tag based filtering for blob objects
 type TagFilter_STATUS struct {
 	// Name: This is the filter tag name, it can have 1 - 128 characters
@@ -4625,29 +4193,6 @@ func (creation *DateAfterCreation) AssignProperties_To_DateAfterCreation(destina
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DateAfterCreation_STATUS populates our DateAfterCreation from the provided source DateAfterCreation_STATUS
-func (creation *DateAfterCreation) Initialize_From_DateAfterCreation_STATUS(source *DateAfterCreation_STATUS) error {
-
-	// DaysAfterCreationGreaterThan
-	if source.DaysAfterCreationGreaterThan != nil {
-		daysAfterCreationGreaterThan := genruntime.GetIntFromFloat(*source.DaysAfterCreationGreaterThan)
-		creation.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		creation.DaysAfterCreationGreaterThan = nil
-	}
-
-	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		daysAfterLastTierChangeGreaterThan := genruntime.GetIntFromFloat(*source.DaysAfterLastTierChangeGreaterThan)
-		creation.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		creation.DaysAfterLastTierChangeGreaterThan = nil
 	}
 
 	// No error
@@ -4896,45 +4441,6 @@ func (modification *DateAfterModification) AssignProperties_To_DateAfterModifica
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DateAfterModification_STATUS populates our DateAfterModification from the provided source DateAfterModification_STATUS
-func (modification *DateAfterModification) Initialize_From_DateAfterModification_STATUS(source *DateAfterModification_STATUS) error {
-
-	// DaysAfterCreationGreaterThan
-	if source.DaysAfterCreationGreaterThan != nil {
-		daysAfterCreationGreaterThan := genruntime.GetIntFromFloat(*source.DaysAfterCreationGreaterThan)
-		modification.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		modification.DaysAfterCreationGreaterThan = nil
-	}
-
-	// DaysAfterLastAccessTimeGreaterThan
-	if source.DaysAfterLastAccessTimeGreaterThan != nil {
-		daysAfterLastAccessTimeGreaterThan := genruntime.GetIntFromFloat(*source.DaysAfterLastAccessTimeGreaterThan)
-		modification.DaysAfterLastAccessTimeGreaterThan = &daysAfterLastAccessTimeGreaterThan
-	} else {
-		modification.DaysAfterLastAccessTimeGreaterThan = nil
-	}
-
-	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		daysAfterLastTierChangeGreaterThan := genruntime.GetIntFromFloat(*source.DaysAfterLastTierChangeGreaterThan)
-		modification.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		modification.DaysAfterLastTierChangeGreaterThan = nil
-	}
-
-	// DaysAfterModificationGreaterThan
-	if source.DaysAfterModificationGreaterThan != nil {
-		daysAfterModificationGreaterThan := genruntime.GetIntFromFloat(*source.DaysAfterModificationGreaterThan)
-		modification.DaysAfterModificationGreaterThan = &daysAfterModificationGreaterThan
-	} else {
-		modification.DaysAfterModificationGreaterThan = nil
 	}
 
 	// No error

@@ -8,7 +8,7 @@ import "github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 type FlexibleServersDatabase_Spec struct {
 	Name string `json:"name,omitempty"`
 
-	// Properties: The properties of a database.
+	// Properties: Properties of a database.
 	Properties *DatabaseProperties `json:"properties,omitempty"`
 }
 
@@ -29,11 +29,11 @@ func (database *FlexibleServersDatabase_Spec) GetType() string {
 	return "Microsoft.DBforPostgreSQL/flexibleServers/databases"
 }
 
-// The properties of a database.
+// Properties of a database.
 type DatabaseProperties struct {
-	// Charset: The charset of the database.
+	// Charset: Character set of the database.
 	Charset *string `json:"charset,omitempty"`
 
-	// Collation: The collation of the database.
+	// Collation: Collation of the database.
 	Collation *string `json:"collation,omitempty"`
 }

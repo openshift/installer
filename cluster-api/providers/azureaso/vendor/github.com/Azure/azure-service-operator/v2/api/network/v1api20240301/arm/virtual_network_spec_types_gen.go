@@ -102,6 +102,7 @@ var privateEndpointVNetPolicies_Values = map[string]PrivateEndpointVNetPolicies{
 
 // Subnet in a virtual network resource.
 type Subnet_VirtualNetwork_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 
 	// Name: The name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -132,6 +133,7 @@ type VirtualNetworkEncryption struct {
 
 // Peerings in a virtual network resource.
 type VirtualNetworkPeering struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 
 	// Name: The name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -207,20 +209,24 @@ var virtualNetworkEncryption_Enforcement_Values = map[string]VirtualNetworkEncry
 
 // IP configuration of an application gateway. Currently 1 public and 1 private IP configuration is allowed.
 type ApplicationGatewayIPConfiguration_VirtualNetwork_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // NetworkSecurityGroup resource.
 type NetworkSecurityGroupSpec_VirtualNetwork_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Route table resource.
 type RouteTableSpec_VirtualNetwork_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Service End point policy resource.
 type ServiceEndpointPolicySpec_VirtualNetwork_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }

@@ -40,5 +40,6 @@ type CustomDomainProperties struct {
 
 // Reference to a resource.
 type ResourceReference struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }

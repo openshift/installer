@@ -116,7 +116,12 @@ func (backend *Backend) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (backend *Backend) createValidations() []func(ctx context.Context, obj *v20230501p.Backend) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.Backend) (admission.Warnings, error){backend.validateResourceReferences, backend.validateOwnerReference, backend.validateSecretDestinations, backend.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.Backend) (admission.Warnings, error){
+		backend.validateResourceReferences,
+		backend.validateOwnerReference,
+		backend.validateSecretDestinations,
+		backend.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

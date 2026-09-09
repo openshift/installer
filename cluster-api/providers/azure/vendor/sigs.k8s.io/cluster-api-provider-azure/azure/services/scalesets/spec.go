@@ -18,8 +18,10 @@ package scalesets
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
@@ -33,6 +35,8 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/util/generators"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
+
+const customDataHashTagName = "capz-custom-data-hash"
 
 // ScaleSetSpec defines the specification for a Scale Set.
 type ScaleSetSpec struct {
@@ -70,7 +74,6 @@ type ScaleSetSpec struct {
 	VMSSInstances                []armcompute.VirtualMachineScaleSetVM
 	MaxSurge                     int
 	ClusterName                  string
-	ShouldPatchCustomData        bool
 	HasReplicasExternallyManaged bool
 	AdditionalTags               infrav1.Tags
 	PlatformFaultDomainCount     *int32
@@ -92,7 +95,7 @@ func (s *ScaleSetSpec) OwnerResourceName() string {
 	return ""
 }
 
-func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing any) (parameters any, err error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "scalesets.ScaleSetSpec.existingParameters")
 	defer done()
 
@@ -129,26 +132,29 @@ func (s *ScaleSetSpec) existingParameters(ctx context.Context, existing interfac
 	}
 
 	// If there are no model changes and no increase in the replica count, do not update the VMSS.
-	// Decreases in replica count is handled by deleting AzureMachinePoolMachine instances in the MachinePoolScope
-	if *vmss.SKU.Capacity <= existingInfraVMSS.Capacity && !hasModelChanges && !s.ShouldPatchCustomData {
+	// Decreases in replica count is handled by deleting AzureMachinePoolMachine instances in the MachinePoolScope.
+	// Bootstrap data is allowed to get stale here and will be updated alongside changes to the model or
+	// replica count which require fresh bootstrap data.
+	if *vmss.SKU.Capacity <= existingInfraVMSS.Capacity && !hasModelChanges {
 		// up to date, nothing to do
 		return nil, nil
 	}
 
 	// if there are no model changes and no change in custom data, remove VirtualMachineProfile to avoid unnecessary VMSS model
 	// updates.
-	if !hasModelChanges && !s.ShouldPatchCustomData {
-		log.V(4).Info("removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", s.ShouldPatchCustomData)
+	shouldPatchCustomData := ptr.Deref(existingVMSS.Tags[customDataHashTagName], "") != ptr.Deref(vmss.Tags[customDataHashTagName], "")
+	if !hasModelChanges && !shouldPatchCustomData {
+		log.V(4).Info("removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", shouldPatchCustomData)
 		vmss.Properties.VirtualMachineProfile = nil
 	} else {
-		log.V(4).Info("has changes, not removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", s.ShouldPatchCustomData)
+		log.V(4).Info("has changes, not removing virtual machine profile from parameters", "hasModelChanges", hasModelChanges, "shouldPatchCustomData", shouldPatchCustomData)
 	}
 
 	return vmss, nil
 }
 
 // Parameters returns the parameters for the Scale Set.
-func (s *ScaleSetSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+func (s *ScaleSetSpec) Parameters(ctx context.Context, existing any) (parameters any, err error) {
 	if existing != nil {
 		return s.existingParameters(ctx, existing)
 	}
@@ -293,6 +299,15 @@ func (s *ScaleSetSpec) Parameters(ctx context.Context, existing interface{}) (pa
 	})
 
 	vmss.Tags = converters.TagsToMap(tags)
+
+	// Custom data is not returned in GET responses, so we store a hash to detect when it changes. This allows
+	// CAPZ to update the VMSS model only when necessary.
+	customDataHash, err := calculateBootstrapDataHash(s.BootstrapData)
+	if err != nil {
+		return armcompute.VirtualMachineScaleSet{}, err
+	}
+	vmss.Tags[customDataHashTagName] = ptr.To(customDataHash)
+
 	return vmss, nil
 }
 
@@ -510,28 +525,7 @@ func (s *ScaleSetSpec) generateImagePlan(ctx context.Context) *armcompute.Plan {
 		log.V(2).Info("no vm image found, disabling plan")
 		return nil
 	}
-
-	if s.VMImage.SharedGallery != nil && s.VMImage.SharedGallery.Publisher != nil && s.VMImage.SharedGallery.SKU != nil && s.VMImage.SharedGallery.Offer != nil {
-		return &armcompute.Plan{
-			Publisher: s.VMImage.SharedGallery.Publisher,
-			Name:      s.VMImage.SharedGallery.SKU,
-			Product:   s.VMImage.SharedGallery.Offer,
-		}
-	}
-
-	if s.VMImage.Marketplace == nil || !s.VMImage.Marketplace.ThirdPartyImage {
-		return nil
-	}
-
-	if s.VMImage.Marketplace.Publisher == "" || s.VMImage.Marketplace.SKU == "" || s.VMImage.Marketplace.Offer == "" {
-		return nil
-	}
-
-	return &armcompute.Plan{
-		Publisher: ptr.To(s.VMImage.Marketplace.Publisher),
-		Name:      ptr.To(s.VMImage.Marketplace.SKU),
-		Product:   ptr.To(s.VMImage.Marketplace.Offer),
-	}
+	return converters.ImageToPlan(s.VMImage)
 }
 
 func (s *ScaleSetSpec) getSecurityProfile() (*armcompute.SecurityProfile, error) {
@@ -546,4 +540,14 @@ func (s *ScaleSetSpec) getSecurityProfile() (*armcompute.SecurityProfile, error)
 	return &armcompute.SecurityProfile{
 		EncryptionAtHost: ptr.To(*s.SecurityProfile.EncryptionAtHost),
 	}, nil
+}
+
+// calculateBootstrapDataHash calculates the sha256 hash of the bootstrap data.
+func calculateBootstrapDataHash(bootstrapData string) (string, error) {
+	h := sha256.New()
+	n, err := io.WriteString(h, bootstrapData)
+	if err != nil || n == 0 {
+		return "", fmt.Errorf("unable to write custom data (bytes written: %q): %w", n, err)
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

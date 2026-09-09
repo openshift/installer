@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20210601 "github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601"
-	storage "github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601/storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601/storage"
+	v20250701 "github.com/Azure/azure-service-operator/v2/api/operationalinsights/v20250701"
+	v20250701s "github.com/Azure/azure-service-operator/v2/api/operationalinsights/v20250701/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type WorkspaceExtension struct {
 func (extension *WorkspaceExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20210601.Workspace{},
-		&storage.Workspace{}}
+		&v20210601s.Workspace{},
+		&v20250701.Workspace{},
+		&v20250701s.Workspace{}}
 }

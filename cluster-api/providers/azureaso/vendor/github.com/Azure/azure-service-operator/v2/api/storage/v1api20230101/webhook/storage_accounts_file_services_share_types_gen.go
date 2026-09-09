@@ -116,7 +116,12 @@ func (share *StorageAccountsFileServicesShare) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (share *StorageAccountsFileServicesShare) createValidations() []func(ctx context.Context, obj *v20230101.StorageAccountsFileServicesShare) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230101.StorageAccountsFileServicesShare) (admission.Warnings, error){share.validateResourceReferences, share.validateOwnerReference, share.validateSecretDestinations, share.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230101.StorageAccountsFileServicesShare) (admission.Warnings, error){
+		share.validateResourceReferences,
+		share.validateOwnerReference,
+		share.validateSecretDestinations,
+		share.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

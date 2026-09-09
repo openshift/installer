@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=eventhub.azure.com,resources={namespaceseventhubsconsumergroups/status,namespaceseventhubsconsumergroups/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventhub}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240101.NamespacesEventhubsConsumerGroup
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2024-01-01/consumergroups.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2024-01-01/consumergroups.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}/consumergroups/{consumerGroupName}
 type NamespacesEventhubsConsumerGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (group *NamespacesEventhubsConsumerGroup) OriginalGVK() *schema.GroupVersio
 // +kubebuilder:object:root=true
 // Storage version of v1api20240101.NamespacesEventhubsConsumerGroup
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2024-01-01/consumergroups.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2024-01-01/consumergroups.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}/consumergroups/{consumerGroupName}
 type NamespacesEventhubsConsumerGroupList struct {
 	metav1.TypeMeta `json:",inline"`

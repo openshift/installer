@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=compute.azure.com,resources={snapshots/status,snapshots/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240302.Snapshot
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/snapshot.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}
 type Snapshot struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (snapshot *Snapshot) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240302.Snapshot
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/snapshot.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}
 type SnapshotList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -178,7 +179,6 @@ type Snapshot_Spec struct {
 	// DiskAccessReference: ARM id of the DiskAccess resource for using private endpoints on disks.
 	DiskAccessReference          *genruntime.ResourceReference `armReference:"DiskAccessId" json:"diskAccessReference,omitempty"`
 	DiskSizeGB                   *int                          `json:"diskSizeGB,omitempty"`
-	DiskState                    *string                       `json:"diskState,omitempty"`
 	Encryption                   *Encryption                   `json:"encryption,omitempty"`
 	EncryptionSettingsCollection *EncryptionSettingsCollection `json:"encryptionSettingsCollection,omitempty"`
 	ExtendedLocation             *ExtendedLocation             `json:"extendedLocation,omitempty"`
@@ -197,7 +197,7 @@ type Snapshot_Spec struct {
 	Owner                 *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 	PropertyBag           genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 	PublicNetworkAccess   *string                            `json:"publicNetworkAccess,omitempty"`
-	PurchasePlan          *PurchasePlan                      `json:"purchasePlan,omitempty"`
+	PurchasePlan          *DiskPurchasePlan                  `json:"purchasePlan,omitempty"`
 	SecurityProfile       *DiskSecurityProfile               `json:"securityProfile,omitempty"`
 	Sku                   *SnapshotSku                       `json:"sku,omitempty"`
 	SupportedCapabilities *SupportedCapabilities             `json:"supportedCapabilities,omitempty"`
@@ -252,11 +252,12 @@ type Snapshot_STATUS struct {
 	PropertyBag                  genruntime.PropertyBag               `json:"$propertyBag,omitempty"`
 	ProvisioningState            *string                              `json:"provisioningState,omitempty"`
 	PublicNetworkAccess          *string                              `json:"publicNetworkAccess,omitempty"`
-	PurchasePlan                 *PurchasePlan_STATUS                 `json:"purchasePlan,omitempty"`
+	PurchasePlan                 *DiskPurchasePlan_STATUS             `json:"purchasePlan,omitempty"`
 	SecurityProfile              *DiskSecurityProfile_STATUS          `json:"securityProfile,omitempty"`
 	Sku                          *SnapshotSku_STATUS                  `json:"sku,omitempty"`
 	SupportedCapabilities        *SupportedCapabilities_STATUS        `json:"supportedCapabilities,omitempty"`
 	SupportsHibernation          *bool                                `json:"supportsHibernation,omitempty"`
+	SystemData                   *SystemData_STATUS                   `json:"systemData,omitempty"`
 	Tags                         map[string]string                    `json:"tags,omitempty"`
 	TimeCreated                  *string                              `json:"timeCreated,omitempty"`
 	Type                         *string                              `json:"type,omitempty"`

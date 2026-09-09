@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventgrid}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /{scope}/providers/Microsoft.EventGrid/eventSubscriptions/{eventSubscriptionName}
 type EventSubscription struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -236,7 +237,7 @@ func (subscription *EventSubscription) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /{scope}/providers/Microsoft.EventGrid/eventSubscriptions/{eventSubscriptionName}
 type EventSubscriptionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -305,7 +306,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties = &arm.EventSubscriptionProperties{}
 	}
 	if subscription.DeadLetterDestination != nil {
-		deadLetterDestination_ARM, err := (*subscription.DeadLetterDestination).ConvertToARM(resolved)
+		deadLetterDestination_ARM, err := subscription.DeadLetterDestination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -313,7 +314,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.DeadLetterDestination = &deadLetterDestination
 	}
 	if subscription.Destination != nil {
-		destination_ARM, err := (*subscription.Destination).ConvertToARM(resolved)
+		destination_ARM, err := subscription.Destination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +332,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.ExpirationTimeUtc = &expirationTimeUtc
 	}
 	if subscription.Filter != nil {
-		filter_ARM, err := (*subscription.Filter).ConvertToARM(resolved)
+		filter_ARM, err := subscription.Filter.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +343,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.Labels = append(result.Properties.Labels, item)
 	}
 	if subscription.RetryPolicy != nil {
-		retryPolicy_ARM, err := (*subscription.RetryPolicy).ConvertToARM(resolved)
+		retryPolicy_ARM, err := subscription.RetryPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1270,7 +1271,7 @@ func (destination *DeadLetterDestination) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "StorageBlob":
 	if destination.StorageBlob != nil {
-		storageBlob_ARM, err := (*destination.StorageBlob).ConvertToARM(resolved)
+		storageBlob_ARM, err := destination.StorageBlob.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1488,7 +1489,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "AzureFunction":
 	if destination.AzureFunction != nil {
-		azureFunction_ARM, err := (*destination.AzureFunction).ConvertToARM(resolved)
+		azureFunction_ARM, err := destination.AzureFunction.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1498,7 +1499,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "EventHub":
 	if destination.EventHub != nil {
-		eventHub_ARM, err := (*destination.EventHub).ConvertToARM(resolved)
+		eventHub_ARM, err := destination.EventHub.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1508,7 +1509,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "HybridConnection":
 	if destination.HybridConnection != nil {
-		hybridConnection_ARM, err := (*destination.HybridConnection).ConvertToARM(resolved)
+		hybridConnection_ARM, err := destination.HybridConnection.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1518,7 +1519,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "ServiceBusQueue":
 	if destination.ServiceBusQueue != nil {
-		serviceBusQueue_ARM, err := (*destination.ServiceBusQueue).ConvertToARM(resolved)
+		serviceBusQueue_ARM, err := destination.ServiceBusQueue.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1528,7 +1529,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "ServiceBusTopic":
 	if destination.ServiceBusTopic != nil {
-		serviceBusTopic_ARM, err := (*destination.ServiceBusTopic).ConvertToARM(resolved)
+		serviceBusTopic_ARM, err := destination.ServiceBusTopic.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1538,7 +1539,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "StorageQueue":
 	if destination.StorageQueue != nil {
-		storageQueue_ARM, err := (*destination.StorageQueue).ConvertToARM(resolved)
+		storageQueue_ARM, err := destination.StorageQueue.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1548,7 +1549,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "WebHook":
 	if destination.WebHook != nil {
-		webHook_ARM, err := (*destination.WebHook).ConvertToARM(resolved)
+		webHook_ARM, err := destination.WebHook.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2364,8 +2365,6 @@ func (filter *EventSubscriptionFilter) AssignProperties_From_EventSubscriptionFi
 	if source.AdvancedFilters != nil {
 		advancedFilterList := make([]AdvancedFilter, len(source.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range source.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter AdvancedFilter
 			err := advancedFilter.AssignProperties_From_AdvancedFilter(&advancedFilterItem)
 			if err != nil {
@@ -2408,8 +2407,6 @@ func (filter *EventSubscriptionFilter) AssignProperties_To_EventSubscriptionFilt
 	if filter.AdvancedFilters != nil {
 		advancedFilterList := make([]storage.AdvancedFilter, len(filter.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range filter.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter storage.AdvancedFilter
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter(&advancedFilter)
 			if err != nil {
@@ -2457,8 +2454,6 @@ func (filter *EventSubscriptionFilter) Initialize_From_EventSubscriptionFilter_S
 	if source.AdvancedFilters != nil {
 		advancedFilterList := make([]AdvancedFilter, len(source.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range source.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter AdvancedFilter
 			err := advancedFilter.Initialize_From_AdvancedFilter_STATUS(&advancedFilterItem)
 			if err != nil {
@@ -2573,8 +2568,6 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_From_EventSubscri
 	if source.AdvancedFilters != nil {
 		advancedFilterList := make([]AdvancedFilter_STATUS, len(source.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range source.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter AdvancedFilter_STATUS
 			err := advancedFilter.AssignProperties_From_AdvancedFilter_STATUS(&advancedFilterItem)
 			if err != nil {
@@ -2617,8 +2610,6 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_To_EventSubscript
 	if filter.AdvancedFilters != nil {
 		advancedFilterList := make([]storage.AdvancedFilter_STATUS, len(filter.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range filter.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter storage.AdvancedFilter_STATUS
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter_STATUS(&advancedFilter)
 			if err != nil {
@@ -2675,8 +2666,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_From_EventSubscr
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2693,8 +2682,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_From_EventSubscr
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2720,8 +2707,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_To_EventSubscrip
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2738,8 +2723,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_To_EventSubscrip
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3048,7 +3031,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "BoolEquals":
 	if filter.BoolEquals != nil {
-		boolEquals_ARM, err := (*filter.BoolEquals).ConvertToARM(resolved)
+		boolEquals_ARM, err := filter.BoolEquals.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3058,7 +3041,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberGreaterThan":
 	if filter.NumberGreaterThan != nil {
-		numberGreaterThan_ARM, err := (*filter.NumberGreaterThan).ConvertToARM(resolved)
+		numberGreaterThan_ARM, err := filter.NumberGreaterThan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3068,7 +3051,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberGreaterThanOrEquals":
 	if filter.NumberGreaterThanOrEquals != nil {
-		numberGreaterThanOrEquals_ARM, err := (*filter.NumberGreaterThanOrEquals).ConvertToARM(resolved)
+		numberGreaterThanOrEquals_ARM, err := filter.NumberGreaterThanOrEquals.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3078,7 +3061,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberIn":
 	if filter.NumberIn != nil {
-		numberIn_ARM, err := (*filter.NumberIn).ConvertToARM(resolved)
+		numberIn_ARM, err := filter.NumberIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3088,7 +3071,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberLessThan":
 	if filter.NumberLessThan != nil {
-		numberLessThan_ARM, err := (*filter.NumberLessThan).ConvertToARM(resolved)
+		numberLessThan_ARM, err := filter.NumberLessThan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3098,7 +3081,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberLessThanOrEquals":
 	if filter.NumberLessThanOrEquals != nil {
-		numberLessThanOrEquals_ARM, err := (*filter.NumberLessThanOrEquals).ConvertToARM(resolved)
+		numberLessThanOrEquals_ARM, err := filter.NumberLessThanOrEquals.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3108,7 +3091,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberNotIn":
 	if filter.NumberNotIn != nil {
-		numberNotIn_ARM, err := (*filter.NumberNotIn).ConvertToARM(resolved)
+		numberNotIn_ARM, err := filter.NumberNotIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3118,7 +3101,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringBeginsWith":
 	if filter.StringBeginsWith != nil {
-		stringBeginsWith_ARM, err := (*filter.StringBeginsWith).ConvertToARM(resolved)
+		stringBeginsWith_ARM, err := filter.StringBeginsWith.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3128,7 +3111,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringContains":
 	if filter.StringContains != nil {
-		stringContains_ARM, err := (*filter.StringContains).ConvertToARM(resolved)
+		stringContains_ARM, err := filter.StringContains.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3138,7 +3121,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringEndsWith":
 	if filter.StringEndsWith != nil {
-		stringEndsWith_ARM, err := (*filter.StringEndsWith).ConvertToARM(resolved)
+		stringEndsWith_ARM, err := filter.StringEndsWith.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3148,7 +3131,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringIn":
 	if filter.StringIn != nil {
-		stringIn_ARM, err := (*filter.StringIn).ConvertToARM(resolved)
+		stringIn_ARM, err := filter.StringIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3158,7 +3141,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringNotIn":
 	if filter.StringNotIn != nil {
-		stringNotIn_ARM, err := (*filter.StringNotIn).ConvertToARM(resolved)
+		stringNotIn_ARM, err := filter.StringNotIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -7487,8 +7470,6 @@ func (filter *NumberInAdvancedFilter) AssignProperties_From_NumberInAdvancedFilt
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -7520,8 +7501,6 @@ func (filter *NumberInAdvancedFilter) AssignProperties_To_NumberInAdvancedFilter
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -7558,8 +7537,6 @@ func (filter *NumberInAdvancedFilter) Initialize_From_NumberInAdvancedFilter_STA
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -7637,8 +7614,6 @@ func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_From_NumberInAdvan
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -7670,8 +7645,6 @@ func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_To_NumberInAdvance
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -8340,8 +8313,6 @@ func (filter *NumberNotInAdvancedFilter) AssignProperties_From_NumberNotInAdvanc
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -8373,8 +8344,6 @@ func (filter *NumberNotInAdvancedFilter) AssignProperties_To_NumberNotInAdvanced
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -8411,8 +8380,6 @@ func (filter *NumberNotInAdvancedFilter) Initialize_From_NumberNotInAdvancedFilt
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -8490,8 +8457,6 @@ func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_From_NumberNotI
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -8523,8 +8488,6 @@ func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_To_NumberNotInA
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList

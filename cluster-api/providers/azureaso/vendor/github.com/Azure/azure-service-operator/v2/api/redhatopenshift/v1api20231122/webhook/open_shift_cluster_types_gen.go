@@ -116,7 +116,13 @@ func (cluster *OpenShiftCluster) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (cluster *OpenShiftCluster) createValidations() []func(ctx context.Context, obj *v20231122.OpenShiftCluster) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231122.OpenShiftCluster) (admission.Warnings, error){cluster.validateResourceReferences, cluster.validateOwnerReference, cluster.validateSecretDestinations, cluster.validateConfigMapDestinations, cluster.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20231122.OpenShiftCluster) (admission.Warnings, error){
+		cluster.validateResourceReferences,
+		cluster.validateOwnerReference,
+		cluster.validateSecretDestinations,
+		cluster.validateConfigMapDestinations,
+		cluster.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}
 type VirtualNetwork struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (network *VirtualNetwork) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}
 type VirtualNetworkList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -306,7 +307,7 @@ func (network *VirtualNetwork_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "ExtendedLocation":
 	if network.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*network.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := network.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -334,7 +335,7 @@ func (network *VirtualNetwork_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties = &arm.VirtualNetworkPropertiesFormat{}
 	}
 	if network.AddressSpace != nil {
-		addressSpace_ARM, err := (*network.AddressSpace).ConvertToARM(resolved)
+		addressSpace_ARM, err := network.AddressSpace.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +343,7 @@ func (network *VirtualNetwork_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.AddressSpace = &addressSpace
 	}
 	if network.BgpCommunities != nil {
-		bgpCommunities_ARM, err := (*network.BgpCommunities).ConvertToARM(resolved)
+		bgpCommunities_ARM, err := network.BgpCommunities.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +351,7 @@ func (network *VirtualNetwork_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.BgpCommunities = &bgpCommunities
 	}
 	if network.DdosProtectionPlan != nil {
-		ddosProtectionPlan_ARM, err := (*network.DdosProtectionPlan).ConvertToARM(resolved)
+		ddosProtectionPlan_ARM, err := network.DdosProtectionPlan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +359,7 @@ func (network *VirtualNetwork_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.DdosProtectionPlan = &ddosProtectionPlan
 	}
 	if network.DhcpOptions != nil {
-		dhcpOptions_ARM, err := (*network.DhcpOptions).ConvertToARM(resolved)
+		dhcpOptions_ARM, err := network.DhcpOptions.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -666,8 +667,6 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 	if source.IpAllocations != nil {
 		ipAllocationList := make([]SubResource, len(source.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range source.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var ipAllocation SubResource
 			err := ipAllocation.AssignProperties_From_SubResource(&ipAllocationItem)
 			if err != nil {
@@ -798,8 +797,6 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 	if network.IpAllocations != nil {
 		ipAllocationList := make([]storage.SubResource, len(network.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range network.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var ipAllocation storage.SubResource
 			err := ipAllocationItem.AssignProperties_To_SubResource(&ipAllocation)
 			if err != nil {
@@ -1233,8 +1230,6 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 	if source.IpAllocations != nil {
 		ipAllocationList := make([]SubResource_STATUS, len(source.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range source.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var ipAllocation SubResource_STATUS
 			err := ipAllocation.AssignProperties_From_SubResource_STATUS(&ipAllocationItem)
 			if err != nil {
@@ -1369,8 +1364,6 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 	if network.IpAllocations != nil {
 		ipAllocationList := make([]storage.SubResource_STATUS, len(network.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range network.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var ipAllocation storage.SubResource_STATUS
 			err := ipAllocationItem.AssignProperties_To_SubResource_STATUS(&ipAllocation)
 			if err != nil {
@@ -1844,8 +1837,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_From_VirtualNetwork
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1862,8 +1853,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_From_VirtualNetwork
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1889,8 +1878,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_To_VirtualNetworkOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1907,8 +1894,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_To_VirtualNetworkOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

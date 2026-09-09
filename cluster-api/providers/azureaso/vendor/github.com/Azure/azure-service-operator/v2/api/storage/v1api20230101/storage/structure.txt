@@ -96,10 +96,11 @@ StorageAccount: Resource
 │   ├── NetworkAcls: *Object (6 properties)
 │   │   ├── Bypass: *string
 │   │   ├── DefaultAction: *string
-│   │   ├── IpRules: Object (3 properties)[]
+│   │   ├── IpRules: Object (4 properties)[]
 │   │   │   ├── Action: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   │   └── Value: *string
+│   │   │   ├── Value: *string
+│   │   │   └── ValueFromConfig: *genruntime.ConfigMapReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── ResourceAccessRules: Object (3 properties)[]
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
@@ -1013,4 +1014,302 @@ StorageAccountsTableServicesTable: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── TableName: *string
     └── Type: *string
+
+augmentConversionForAccessPolicy: Interface
+
+augmentConversionForAccessPolicy_STATUS: Interface
+
+augmentConversionForAccountImmutabilityPolicyProperties: Interface
+
+augmentConversionForAccountImmutabilityPolicyProperties_STATUS: Interface
+
+augmentConversionForActiveDirectoryProperties: Interface
+
+augmentConversionForActiveDirectoryProperties_STATUS: Interface
+
+augmentConversionForAzureFilesIdentityBasedAuthentication: Interface
+
+augmentConversionForAzureFilesIdentityBasedAuthentication_STATUS: Interface
+
+augmentConversionForBlobRestoreParameters_STATUS: Interface
+
+augmentConversionForBlobRestoreRange_STATUS: Interface
+
+augmentConversionForBlobRestoreStatus_STATUS: Interface
+
+augmentConversionForChangeFeed: Interface
+
+augmentConversionForChangeFeed_STATUS: Interface
+
+augmentConversionForCorsRule: Interface
+
+augmentConversionForCorsRule_STATUS: Interface
+
+augmentConversionForCorsRules: Interface
+
+augmentConversionForCorsRules_STATUS: Interface
+
+augmentConversionForCustomDomain: Interface
+
+augmentConversionForCustomDomain_STATUS: Interface
+
+augmentConversionForDateAfterCreation: Interface
+
+augmentConversionForDateAfterCreation_STATUS: Interface
+
+augmentConversionForDateAfterModification: Interface
+
+augmentConversionForDateAfterModification_STATUS: Interface
+
+augmentConversionForDeleteRetentionPolicy: Interface
+
+augmentConversionForDeleteRetentionPolicy_STATUS: Interface
+
+augmentConversionForEncryption: Interface
+
+augmentConversionForEncryptionIdentity: Interface
+
+augmentConversionForEncryptionIdentity_STATUS: Interface
+
+augmentConversionForEncryptionService: Interface
+
+augmentConversionForEncryptionService_STATUS: Interface
+
+augmentConversionForEncryptionServices: Interface
+
+augmentConversionForEncryptionServices_STATUS: Interface
+
+augmentConversionForEncryption_STATUS: Interface
+
+augmentConversionForEndpoints_STATUS: Interface
+
+augmentConversionForExtendedLocation: Interface
+
+augmentConversionForExtendedLocation_STATUS: Interface
+
+augmentConversionForGeoReplicationStats_STATUS: Interface
+
+augmentConversionForIPRule: Interface
+
+augmentConversionForIPRule_STATUS: Interface
+
+augmentConversionForIdentity: Interface
+
+augmentConversionForIdentity_STATUS: Interface
+
+augmentConversionForImmutabilityPolicyProperties_STATUS: Interface
+
+augmentConversionForImmutableStorageAccount: Interface
+
+augmentConversionForImmutableStorageAccount_STATUS: Interface
+
+augmentConversionForImmutableStorageWithVersioning: Interface
+
+augmentConversionForImmutableStorageWithVersioning_STATUS: Interface
+
+augmentConversionForKeyCreationTime_STATUS: Interface
+
+augmentConversionForKeyPolicy: Interface
+
+augmentConversionForKeyPolicy_STATUS: Interface
+
+augmentConversionForKeyVaultProperties: Interface
+
+augmentConversionForKeyVaultProperties_STATUS: Interface
+
+augmentConversionForLastAccessTimeTrackingPolicy: Interface
+
+augmentConversionForLastAccessTimeTrackingPolicy_STATUS: Interface
+
+augmentConversionForLegalHoldProperties_STATUS: Interface
+
+augmentConversionForManagementPolicyAction: Interface
+
+augmentConversionForManagementPolicyAction_STATUS: Interface
+
+augmentConversionForManagementPolicyBaseBlob: Interface
+
+augmentConversionForManagementPolicyBaseBlob_STATUS: Interface
+
+augmentConversionForManagementPolicyDefinition: Interface
+
+augmentConversionForManagementPolicyDefinition_STATUS: Interface
+
+augmentConversionForManagementPolicyFilter: Interface
+
+augmentConversionForManagementPolicyFilter_STATUS: Interface
+
+augmentConversionForManagementPolicyRule: Interface
+
+augmentConversionForManagementPolicyRule_STATUS: Interface
+
+augmentConversionForManagementPolicySchema: Interface
+
+augmentConversionForManagementPolicySchema_STATUS: Interface
+
+augmentConversionForManagementPolicySnapShot: Interface
+
+augmentConversionForManagementPolicySnapShot_STATUS: Interface
+
+augmentConversionForManagementPolicyVersion: Interface
+
+augmentConversionForManagementPolicyVersion_STATUS: Interface
+
+augmentConversionForMultichannel: Interface
+
+augmentConversionForMultichannel_STATUS: Interface
+
+augmentConversionForNetworkRuleSet: Interface
+
+augmentConversionForNetworkRuleSet_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForProtectedAppendWritesHistory_STATUS: Interface
+
+augmentConversionForProtocolSettings: Interface
+
+augmentConversionForProtocolSettings_STATUS: Interface
+
+augmentConversionForResourceAccessRule: Interface
+
+augmentConversionForResourceAccessRule_STATUS: Interface
+
+augmentConversionForRestorePolicyProperties: Interface
+
+augmentConversionForRestorePolicyProperties_STATUS: Interface
+
+augmentConversionForRoutingPreference: Interface
+
+augmentConversionForRoutingPreference_STATUS: Interface
+
+augmentConversionForSasPolicy: Interface
+
+augmentConversionForSasPolicy_STATUS: Interface
+
+augmentConversionForSignedIdentifier: Interface
+
+augmentConversionForSignedIdentifier_STATUS: Interface
+
+augmentConversionForSku: Interface
+
+augmentConversionForSku_STATUS: Interface
+
+augmentConversionForSmbSetting: Interface
+
+augmentConversionForSmbSetting_STATUS: Interface
+
+augmentConversionForStorageAccount: Interface
+
+augmentConversionForStorageAccountInternetEndpoints_STATUS: Interface
+
+augmentConversionForStorageAccountMicrosoftEndpoints_STATUS: Interface
+
+augmentConversionForStorageAccountOperatorConfigMaps: Interface
+
+augmentConversionForStorageAccountOperatorSecrets: Interface
+
+augmentConversionForStorageAccountOperatorSpec: Interface
+
+augmentConversionForStorageAccountSkuConversionStatus_STATUS: Interface
+
+augmentConversionForStorageAccount_STATUS: Interface
+
+augmentConversionForStorageAccount_Spec: Interface
+
+augmentConversionForStorageAccountsBlobService: Interface
+
+augmentConversionForStorageAccountsBlobServiceOperatorSpec: Interface
+
+augmentConversionForStorageAccountsBlobService_STATUS: Interface
+
+augmentConversionForStorageAccountsBlobService_Spec: Interface
+
+augmentConversionForStorageAccountsBlobServicesContainer: Interface
+
+augmentConversionForStorageAccountsBlobServicesContainerOperatorSpec: Interface
+
+augmentConversionForStorageAccountsBlobServicesContainer_STATUS: Interface
+
+augmentConversionForStorageAccountsBlobServicesContainer_Spec: Interface
+
+augmentConversionForStorageAccountsFileService: Interface
+
+augmentConversionForStorageAccountsFileServiceOperatorSpec: Interface
+
+augmentConversionForStorageAccountsFileService_STATUS: Interface
+
+augmentConversionForStorageAccountsFileService_Spec: Interface
+
+augmentConversionForStorageAccountsFileServicesShare: Interface
+
+augmentConversionForStorageAccountsFileServicesShareOperatorSpec: Interface
+
+augmentConversionForStorageAccountsFileServicesShare_STATUS: Interface
+
+augmentConversionForStorageAccountsFileServicesShare_Spec: Interface
+
+augmentConversionForStorageAccountsManagementPolicy: Interface
+
+augmentConversionForStorageAccountsManagementPolicyOperatorSpec: Interface
+
+augmentConversionForStorageAccountsManagementPolicy_STATUS: Interface
+
+augmentConversionForStorageAccountsManagementPolicy_Spec: Interface
+
+augmentConversionForStorageAccountsQueueService: Interface
+
+augmentConversionForStorageAccountsQueueServiceOperatorSpec: Interface
+
+augmentConversionForStorageAccountsQueueService_STATUS: Interface
+
+augmentConversionForStorageAccountsQueueService_Spec: Interface
+
+augmentConversionForStorageAccountsQueueServicesQueue: Interface
+
+augmentConversionForStorageAccountsQueueServicesQueueOperatorSpec: Interface
+
+augmentConversionForStorageAccountsQueueServicesQueue_STATUS: Interface
+
+augmentConversionForStorageAccountsQueueServicesQueue_Spec: Interface
+
+augmentConversionForStorageAccountsTableService: Interface
+
+augmentConversionForStorageAccountsTableServiceOperatorSpec: Interface
+
+augmentConversionForStorageAccountsTableService_STATUS: Interface
+
+augmentConversionForStorageAccountsTableService_Spec: Interface
+
+augmentConversionForStorageAccountsTableServicesTable: Interface
+
+augmentConversionForStorageAccountsTableServicesTableOperatorSpec: Interface
+
+augmentConversionForStorageAccountsTableServicesTable_STATUS: Interface
+
+augmentConversionForStorageAccountsTableServicesTable_Spec: Interface
+
+augmentConversionForTableAccessPolicy: Interface
+
+augmentConversionForTableAccessPolicy_STATUS: Interface
+
+augmentConversionForTableSignedIdentifier: Interface
+
+augmentConversionForTableSignedIdentifier_STATUS: Interface
+
+augmentConversionForTagFilter: Interface
+
+augmentConversionForTagFilter_STATUS: Interface
+
+augmentConversionForTagProperty_STATUS: Interface
+
+augmentConversionForUpdateHistoryProperty_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedIdentity_STATUS: Interface
+
+augmentConversionForVirtualNetworkRule: Interface
+
+augmentConversionForVirtualNetworkRule_STATUS: Interface
 

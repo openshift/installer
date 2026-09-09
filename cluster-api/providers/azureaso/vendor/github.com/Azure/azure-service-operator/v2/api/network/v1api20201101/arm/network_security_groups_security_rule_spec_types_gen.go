@@ -86,6 +86,7 @@ type SecurityRulePropertiesFormat_NetworkSecurityGroups_SecurityRule_SubResource
 
 // An application security group in a resource group.
 type ApplicationSecurityGroupSpec_NetworkSecurityGroups_SecurityRule_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

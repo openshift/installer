@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=compute.azure.com,resources={diskencryptionsets/status,diskencryptionsets/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240302.DiskEncryptionSet
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/diskEncryptionSet.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}
 type DiskEncryptionSet struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (encryptionSet *DiskEncryptionSet) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240302.DiskEncryptionSet
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/diskEncryptionSet.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}
 type DiskEncryptionSetList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -227,6 +228,7 @@ type DiskEncryptionSet_STATUS struct {
 	PropertyBag                       genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 	ProvisioningState                 *string                          `json:"provisioningState,omitempty"`
 	RotationToLatestKeyVersionEnabled *bool                            `json:"rotationToLatestKeyVersionEnabled,omitempty"`
+	SystemData                        *SystemData_STATUS               `json:"systemData,omitempty"`
 	Tags                              map[string]string                `json:"tags,omitempty"`
 	Type                              *string                          `json:"type,omitempty"`
 }
@@ -283,11 +285,11 @@ type EncryptionSetIdentity struct {
 // The managed identity for the disk encryption set. It should be given permission on the key vault before it can be used
 // to encrypt disks.
 type EncryptionSetIdentity_STATUS struct {
-	PrincipalId            *string                                                        `json:"principalId,omitempty"`
-	PropertyBag            genruntime.PropertyBag                                         `json:"$propertyBag,omitempty"`
-	TenantId               *string                                                        `json:"tenantId,omitempty"`
-	Type                   *string                                                        `json:"type,omitempty"`
-	UserAssignedIdentities map[string]EncryptionSetIdentity_UserAssignedIdentities_STATUS `json:"userAssignedIdentities,omitempty"`
+	PrincipalId            *string                                       `json:"principalId,omitempty"`
+	PropertyBag            genruntime.PropertyBag                        `json:"$propertyBag,omitempty"`
+	TenantId               *string                                       `json:"tenantId,omitempty"`
+	Type                   *string                                       `json:"type,omitempty"`
+	UserAssignedIdentities map[string]UserAssignedIdentitiesValue_STATUS `json:"userAssignedIdentities,omitempty"`
 }
 
 // Storage version of v1api20240302.KeyForDiskEncryptionSet
@@ -316,13 +318,6 @@ type ApiErrorBase_STATUS struct {
 	Target      *string                `json:"target,omitempty"`
 }
 
-// Storage version of v1api20240302.EncryptionSetIdentity_UserAssignedIdentities_STATUS
-type EncryptionSetIdentity_UserAssignedIdentities_STATUS struct {
-	ClientId    *string                `json:"clientId,omitempty"`
-	PrincipalId *string                `json:"principalId,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-}
-
 // Storage version of v1api20240302.InnerError_STATUS
 // Inner error details.
 type InnerError_STATUS struct {
@@ -346,6 +341,13 @@ type SourceVault struct {
 // /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}
 type SourceVault_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
+	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20240302.UserAssignedIdentitiesValue_STATUS
+type UserAssignedIdentitiesValue_STATUS struct {
+	ClientId    *string                `json:"clientId,omitempty"`
+	PrincipalId *string                `json:"principalId,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 

@@ -17,6 +17,8 @@ limitations under the License.
 package clustercache
 
 import (
+	"time"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -30,10 +32,21 @@ func NewFakeClusterCache(workloadClient client.Client, clusterKey client.ObjectK
 	testCacheTracker.clusterAccessors[clusterKey] = &clusterAccessor{
 		lockedState: clusterAccessorLockedState{
 			connection: &clusterAccessorLockedConnectionState{
-				cachedClient: workloadClient,
-				watches:      sets.Set[string]{}.Insert(watchObjects...),
+				cachedClient:   workloadClient,
+				uncachedClient: workloadClient,
+				watches:        sets.Set[string]{}.Insert(watchObjects...),
+			},
+			healthChecking: clusterAccessorLockedHealthCheckingState{
+				lastProbeTime:        time.Now(),
+				lastProbeSuccessTime: time.Now(),
+				consecutiveFailures:  0,
 			},
 		},
 	}
 	return testCacheTracker
+}
+
+// NewFakeEmptyClusterCache creates a new empty ClusterCache that can be used by unit tests.
+func NewFakeEmptyClusterCache() ClusterCache {
+	return &clusterCache{}
 }

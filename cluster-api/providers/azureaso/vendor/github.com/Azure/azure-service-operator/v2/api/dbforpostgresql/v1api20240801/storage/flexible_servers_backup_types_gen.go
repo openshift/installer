@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,14 +14,12 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=dbforpostgresql.azure.com,resources=flexibleserversbackups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=dbforpostgresql.azure.com,resources={flexibleserversbackups/status,flexibleserversbackups/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +45,28 @@ func (backup *FlexibleServersBackup) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (backup *FlexibleServersBackup) SetConditions(conditions conditions.Conditions) {
 	backup.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &FlexibleServersBackup{}
+
+// ConvertFrom populates our FlexibleServersBackup from the provided hub FlexibleServersBackup
+func (backup *FlexibleServersBackup) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.FlexibleServersBackup)
+	if !ok {
+		return fmt.Errorf("expected dbforpostgresql/v20250801/storage/FlexibleServersBackup but received %T instead", hub)
+	}
+
+	return backup.AssignProperties_From_FlexibleServersBackup(source)
+}
+
+// ConvertTo populates the provided hub FlexibleServersBackup from our FlexibleServersBackup
+func (backup *FlexibleServersBackup) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.FlexibleServersBackup)
+	if !ok {
+		return fmt.Errorf("expected dbforpostgresql/v20250801/storage/FlexibleServersBackup but received %T instead", hub)
+	}
+
+	return backup.AssignProperties_To_FlexibleServersBackup(destination)
 }
 
 var _ configmaps.Exporter = &FlexibleServersBackup{}
@@ -142,8 +164,75 @@ func (backup *FlexibleServersBackup) SetStatus(status genruntime.ConvertibleStat
 	return nil
 }
 
-// Hub marks that this FlexibleServersBackup is the hub type for conversion
-func (backup *FlexibleServersBackup) Hub() {}
+// AssignProperties_From_FlexibleServersBackup populates our FlexibleServersBackup from the provided source FlexibleServersBackup
+func (backup *FlexibleServersBackup) AssignProperties_From_FlexibleServersBackup(source *storage.FlexibleServersBackup) error {
+
+	// ObjectMeta
+	backup.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec FlexibleServersBackup_Spec
+	err := spec.AssignProperties_From_FlexibleServersBackup_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersBackup_Spec() to populate field Spec")
+	}
+	backup.Spec = spec
+
+	// Status
+	var status FlexibleServersBackup_STATUS
+	err = status.AssignProperties_From_FlexibleServersBackup_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersBackup_STATUS() to populate field Status")
+	}
+	backup.Status = status
+
+	// Invoke the augmentConversionForFlexibleServersBackup interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForFlexibleServersBackup); ok {
+		err := augmentedBackup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServersBackup populates the provided destination FlexibleServersBackup from our FlexibleServersBackup
+func (backup *FlexibleServersBackup) AssignProperties_To_FlexibleServersBackup(destination *storage.FlexibleServersBackup) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *backup.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.FlexibleServersBackup_Spec
+	err := backup.Spec.AssignProperties_To_FlexibleServersBackup_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersBackup_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.FlexibleServersBackup_STATUS
+	err = backup.Status.AssignProperties_To_FlexibleServersBackup_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersBackup_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForFlexibleServersBackup interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForFlexibleServersBackup); ok {
+		err := augmentedBackup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (backup *FlexibleServersBackup) OriginalGVK() *schema.GroupVersionKind {
@@ -163,6 +252,11 @@ type FlexibleServersBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []FlexibleServersBackup `json:"items"`
+}
+
+type augmentConversionForFlexibleServersBackup interface {
+	AssignPropertiesFrom(src *storage.FlexibleServersBackup) error
+	AssignPropertiesTo(dst *storage.FlexibleServersBackup) error
 }
 
 // Storage version of v1api20240801.FlexibleServersBackup_Spec
@@ -185,20 +279,152 @@ var _ genruntime.ConvertibleSpec = &FlexibleServersBackup_Spec{}
 
 // ConvertSpecFrom populates our FlexibleServersBackup_Spec from the provided source
 func (backup *FlexibleServersBackup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == backup {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.FlexibleServersBackup_Spec)
+	if ok {
+		// Populate our instance from source
+		return backup.AssignProperties_From_FlexibleServersBackup_Spec(src)
 	}
 
-	return source.ConvertSpecTo(backup)
+	// Convert to an intermediate form
+	src = &storage.FlexibleServersBackup_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = backup.AssignProperties_From_FlexibleServersBackup_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our FlexibleServersBackup_Spec
 func (backup *FlexibleServersBackup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == backup {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.FlexibleServersBackup_Spec)
+	if ok {
+		// Populate destination from our instance
+		return backup.AssignProperties_To_FlexibleServersBackup_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(backup)
+	// Convert to an intermediate form
+	dst = &storage.FlexibleServersBackup_Spec{}
+	err := backup.AssignProperties_To_FlexibleServersBackup_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_FlexibleServersBackup_Spec populates our FlexibleServersBackup_Spec from the provided source FlexibleServersBackup_Spec
+func (backup *FlexibleServersBackup_Spec) AssignProperties_From_FlexibleServersBackup_Spec(source *storage.FlexibleServersBackup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	backup.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec FlexibleServersBackupOperatorSpec
+		err := operatorSpec.AssignProperties_From_FlexibleServersBackupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersBackupOperatorSpec() to populate field OperatorSpec")
+		}
+		backup.OperatorSpec = &operatorSpec
+	} else {
+		backup.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	backup.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		backup.Owner = &owner
+	} else {
+		backup.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		backup.PropertyBag = propertyBag
+	} else {
+		backup.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServersBackup_Spec interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForFlexibleServersBackup_Spec); ok {
+		err := augmentedBackup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServersBackup_Spec populates the provided destination FlexibleServersBackup_Spec from our FlexibleServersBackup_Spec
+func (backup *FlexibleServersBackup_Spec) AssignProperties_To_FlexibleServersBackup_Spec(destination *storage.FlexibleServersBackup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(backup.PropertyBag)
+
+	// AzureName
+	destination.AzureName = backup.AzureName
+
+	// OperatorSpec
+	if backup.OperatorSpec != nil {
+		var operatorSpec storage.FlexibleServersBackupOperatorSpec
+		err := backup.OperatorSpec.AssignProperties_To_FlexibleServersBackupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersBackupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = backup.OriginalVersion
+
+	// Owner
+	if backup.Owner != nil {
+		owner := backup.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServersBackup_Spec interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForFlexibleServersBackup_Spec); ok {
+		err := augmentedBackup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240801.FlexibleServersBackup_STATUS
@@ -218,20 +444,176 @@ var _ genruntime.ConvertibleStatus = &FlexibleServersBackup_STATUS{}
 
 // ConvertStatusFrom populates our FlexibleServersBackup_STATUS from the provided source
 func (backup *FlexibleServersBackup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == backup {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.FlexibleServersBackup_STATUS)
+	if ok {
+		// Populate our instance from source
+		return backup.AssignProperties_From_FlexibleServersBackup_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(backup)
+	// Convert to an intermediate form
+	src = &storage.FlexibleServersBackup_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = backup.AssignProperties_From_FlexibleServersBackup_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our FlexibleServersBackup_STATUS
 func (backup *FlexibleServersBackup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == backup {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.FlexibleServersBackup_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return backup.AssignProperties_To_FlexibleServersBackup_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(backup)
+	// Convert to an intermediate form
+	dst = &storage.FlexibleServersBackup_STATUS{}
+	err := backup.AssignProperties_To_FlexibleServersBackup_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_FlexibleServersBackup_STATUS populates our FlexibleServersBackup_STATUS from the provided source FlexibleServersBackup_STATUS
+func (backup *FlexibleServersBackup_STATUS) AssignProperties_From_FlexibleServersBackup_STATUS(source *storage.FlexibleServersBackup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupType
+	backup.BackupType = genruntime.ClonePointerToString(source.BackupType)
+
+	// CompletedTime
+	backup.CompletedTime = genruntime.ClonePointerToString(source.CompletedTime)
+
+	// Conditions
+	backup.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	backup.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	backup.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Source
+	backup.Source = genruntime.ClonePointerToString(source.Source)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		backup.SystemData = &systemDatum
+	} else {
+		backup.SystemData = nil
+	}
+
+	// Type
+	backup.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		backup.PropertyBag = propertyBag
+	} else {
+		backup.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServersBackup_STATUS interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForFlexibleServersBackup_STATUS); ok {
+		err := augmentedBackup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServersBackup_STATUS populates the provided destination FlexibleServersBackup_STATUS from our FlexibleServersBackup_STATUS
+func (backup *FlexibleServersBackup_STATUS) AssignProperties_To_FlexibleServersBackup_STATUS(destination *storage.FlexibleServersBackup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(backup.PropertyBag)
+
+	// BackupType
+	destination.BackupType = genruntime.ClonePointerToString(backup.BackupType)
+
+	// CompletedTime
+	destination.CompletedTime = genruntime.ClonePointerToString(backup.CompletedTime)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(backup.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(backup.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(backup.Name)
+
+	// Source
+	destination.Source = genruntime.ClonePointerToString(backup.Source)
+
+	// SystemData
+	if backup.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := backup.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(backup.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServersBackup_STATUS interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForFlexibleServersBackup_STATUS); ok {
+		err := augmentedBackup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFlexibleServersBackup_Spec interface {
+	AssignPropertiesFrom(src *storage.FlexibleServersBackup_Spec) error
+	AssignPropertiesTo(dst *storage.FlexibleServersBackup_Spec) error
+}
+
+type augmentConversionForFlexibleServersBackup_STATUS interface {
+	AssignPropertiesFrom(src *storage.FlexibleServersBackup_STATUS) error
+	AssignPropertiesTo(dst *storage.FlexibleServersBackup_STATUS) error
 }
 
 // Storage version of v1api20240801.FlexibleServersBackupOperatorSpec
@@ -240,6 +622,125 @@ type FlexibleServersBackupOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_FlexibleServersBackupOperatorSpec populates our FlexibleServersBackupOperatorSpec from the provided source FlexibleServersBackupOperatorSpec
+func (operator *FlexibleServersBackupOperatorSpec) AssignProperties_From_FlexibleServersBackupOperatorSpec(source *storage.FlexibleServersBackupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServersBackupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFlexibleServersBackupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServersBackupOperatorSpec populates the provided destination FlexibleServersBackupOperatorSpec from our FlexibleServersBackupOperatorSpec
+func (operator *FlexibleServersBackupOperatorSpec) AssignProperties_To_FlexibleServersBackupOperatorSpec(destination *storage.FlexibleServersBackupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServersBackupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFlexibleServersBackupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFlexibleServersBackupOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.FlexibleServersBackupOperatorSpec) error
+	AssignPropertiesTo(dst *storage.FlexibleServersBackupOperatorSpec) error
 }
 
 func init() {

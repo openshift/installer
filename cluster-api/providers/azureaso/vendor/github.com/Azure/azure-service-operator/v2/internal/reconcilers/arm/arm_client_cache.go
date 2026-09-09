@@ -15,7 +15,6 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
 	"github.com/Azure/azure-service-operator/v2/internal/metrics"
-	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -26,14 +25,12 @@ type ARMClientCache struct {
 	clients            map[string]*armClient
 	cloudConfig        cloud.Configuration
 	credentialProvider identity.CredentialProvider
-	kubeClient         kubeclient.Client
 	httpClient         *http.Client
 	armMetrics         *metrics.ARMClientMetrics
 }
 
 func NewARMClientCache(
 	credentialProvider identity.CredentialProvider,
-	kubeClient kubeclient.Client,
 	configuration cloud.Configuration,
 	httpClient *http.Client,
 	armMetrics *metrics.ARMClientMetrics,
@@ -42,7 +39,6 @@ func NewARMClientCache(
 		lock:               sync.Mutex{},
 		clients:            make(map[string]*armClient),
 		cloudConfig:        configuration,
-		kubeClient:         kubeClient,
 		credentialProvider: credentialProvider,
 		httpClient:         httpClient,
 		armMetrics:         armMetrics,
@@ -83,12 +79,18 @@ func (c *ARMClientCache) getARMClientFromCredential(cred *identity.Credential) (
 		return client, nil
 	}
 
+	// Use credential-specific cloud config if provided, otherwise use global
+	cloudConfig := c.cloudConfig
+	if cred.CloudConfig() != nil {
+		cloudConfig = *cred.CloudConfig()
+	}
+
 	options := &genericarmclient.GenericClientOptions{
 		HTTPClient:        c.httpClient,
 		Metrics:           c.armMetrics,
 		AdditionalTenants: cred.AdditionalTenants(),
 	}
-	newClient, err := genericarmclient.NewGenericClient(c.cloudConfig, cred.TokenCredential(), options)
+	newClient, err := genericarmclient.NewGenericClient(cloudConfig, cred.TokenCredential(), options)
 	if err != nil {
 		return nil, err
 	}

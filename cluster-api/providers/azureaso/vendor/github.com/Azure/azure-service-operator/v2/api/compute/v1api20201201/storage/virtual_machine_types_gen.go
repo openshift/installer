@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -1365,8 +1366,6 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 	if source.Resources != nil {
 		resourceList := make([]VirtualMachineExtension_STATUS, len(source.Resources))
 		for resourceIndex, resourceItem := range source.Resources {
-			// Shadow the loop variable to avoid aliasing
-			resourceItem := resourceItem
 			var resource VirtualMachineExtension_STATUS
 			err := resource.AssignProperties_From_VirtualMachineExtension_STATUS(&resourceItem)
 			if err != nil {
@@ -1731,8 +1730,6 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 	if machine.Resources != nil {
 		resourceList := make([]v20220301s.VirtualMachineExtension_STATUS, len(machine.Resources))
 		for resourceIndex, resourceItem := range machine.Resources {
-			// Shadow the loop variable to avoid aliasing
-			resourceItem := resourceItem
 			var resource v20220301s.VirtualMachineExtension_STATUS
 			err := resourceItem.AssignProperties_To_VirtualMachineExtension_STATUS(&resource)
 			if err != nil {
@@ -2701,8 +2698,6 @@ func (profile *NetworkProfile) AssignProperties_From_NetworkProfile(source *v202
 	if source.NetworkInterfaces != nil {
 		networkInterfaceList := make([]NetworkInterfaceReference, len(source.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface NetworkInterfaceReference
 			err := networkInterface.AssignProperties_From_NetworkInterfaceReference(&networkInterfaceItem)
 			if err != nil {
@@ -2770,8 +2765,6 @@ func (profile *NetworkProfile) AssignProperties_To_NetworkProfile(destination *v
 	if profile.NetworkInterfaces != nil {
 		networkInterfaceList := make([]v20220301s.NetworkInterfaceReference, len(profile.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range profile.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface v20220301s.NetworkInterfaceReference
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterfaceReference(&networkInterface)
 			if err != nil {
@@ -2834,8 +2827,6 @@ func (profile *NetworkProfile_STATUS) AssignProperties_From_NetworkProfile_STATU
 	if source.NetworkInterfaces != nil {
 		networkInterfaceList := make([]NetworkInterfaceReference_STATUS, len(source.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface NetworkInterfaceReference_STATUS
 			err := networkInterface.AssignProperties_From_NetworkInterfaceReference_STATUS(&networkInterfaceItem)
 			if err != nil {
@@ -2903,8 +2894,6 @@ func (profile *NetworkProfile_STATUS) AssignProperties_To_NetworkProfile_STATUS(
 	if profile.NetworkInterfaces != nil {
 		networkInterfaceList := make([]v20220301s.NetworkInterfaceReference_STATUS, len(profile.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range profile.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface v20220301s.NetworkInterfaceReference_STATUS
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterfaceReference_STATUS(&networkInterface)
 			if err != nil {
@@ -3007,8 +2996,6 @@ func (profile *OSProfile) AssignProperties_From_OSProfile(source *v20220301s.OSP
 	if source.Secrets != nil {
 		secretList := make([]VaultSecretGroup, len(source.Secrets))
 		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret VaultSecretGroup
 			err := secret.AssignProperties_From_VaultSecretGroup(&secretItem)
 			if err != nil {
@@ -3107,8 +3094,6 @@ func (profile *OSProfile) AssignProperties_To_OSProfile(destination *v20220301s.
 	if profile.Secrets != nil {
 		secretList := make([]v20220301s.VaultSecretGroup, len(profile.Secrets))
 		for secretIndex, secretItem := range profile.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret v20220301s.VaultSecretGroup
 			err := secretItem.AssignProperties_To_VaultSecretGroup(&secret)
 			if err != nil {
@@ -3214,8 +3199,6 @@ func (profile *OSProfile_STATUS) AssignProperties_From_OSProfile_STATUS(source *
 	if source.Secrets != nil {
 		secretList := make([]VaultSecretGroup_STATUS, len(source.Secrets))
 		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret VaultSecretGroup_STATUS
 			err := secret.AssignProperties_From_VaultSecretGroup_STATUS(&secretItem)
 			if err != nil {
@@ -3306,8 +3289,6 @@ func (profile *OSProfile_STATUS) AssignProperties_To_OSProfile_STATUS(destinatio
 	if profile.Secrets != nil {
 		secretList := make([]v20220301s.VaultSecretGroup_STATUS, len(profile.Secrets))
 		for secretIndex, secretItem := range profile.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret v20220301s.VaultSecretGroup_STATUS
 			err := secretItem.AssignProperties_To_VaultSecretGroup_STATUS(&secret)
 			if err != nil {
@@ -3754,8 +3735,6 @@ func (profile *StorageProfile) AssignProperties_From_StorageProfile(source *v202
 	if source.DataDisks != nil {
 		dataDiskList := make([]DataDisk, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk DataDisk
 			err := dataDisk.AssignProperties_From_DataDisk(&dataDiskItem)
 			if err != nil {
@@ -3821,8 +3800,6 @@ func (profile *StorageProfile) AssignProperties_To_StorageProfile(destination *v
 	if profile.DataDisks != nil {
 		dataDiskList := make([]v20220301s.DataDisk, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk v20220301s.DataDisk
 			err := dataDiskItem.AssignProperties_To_DataDisk(&dataDisk)
 			if err != nil {
@@ -3897,8 +3874,6 @@ func (profile *StorageProfile_STATUS) AssignProperties_From_StorageProfile_STATU
 	if source.DataDisks != nil {
 		dataDiskList := make([]DataDisk_STATUS, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk DataDisk_STATUS
 			err := dataDisk.AssignProperties_From_DataDisk_STATUS(&dataDiskItem)
 			if err != nil {
@@ -3964,8 +3939,6 @@ func (profile *StorageProfile_STATUS) AssignProperties_To_StorageProfile_STATUS(
 	if profile.DataDisks != nil {
 		dataDiskList := make([]v20220301s.DataDisk_STATUS, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk v20220301s.DataDisk_STATUS
 			err := dataDiskItem.AssignProperties_To_DataDisk_STATUS(&dataDisk)
 			if err != nil {
@@ -4243,8 +4216,6 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_From_VirtualMa
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -4359,8 +4330,6 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_To_VirtualMach
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -4430,8 +4399,6 @@ func (identity *VirtualMachineIdentity) AssignProperties_From_VirtualMachineIden
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -4476,8 +4443,6 @@ func (identity *VirtualMachineIdentity) AssignProperties_To_VirtualMachineIdenti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]v20220301s.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity v20220301s.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -4538,8 +4503,6 @@ func (identity *VirtualMachineIdentity_STATUS) AssignProperties_From_VirtualMach
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]VirtualMachineIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity VirtualMachineIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_VirtualMachineIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -4590,8 +4553,6 @@ func (identity *VirtualMachineIdentity_STATUS) AssignProperties_To_VirtualMachin
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v20220301s.VirtualMachineIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity v20220301s.VirtualMachineIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_VirtualMachineIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -4673,8 +4634,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 	if source.Disks != nil {
 		diskList := make([]DiskInstanceView_STATUS, len(source.Disks))
 		for diskIndex, diskItem := range source.Disks {
-			// Shadow the loop variable to avoid aliasing
-			diskItem := diskItem
 			var disk DiskInstanceView_STATUS
 			err := disk.AssignProperties_From_DiskInstanceView_STATUS(&diskItem)
 			if err != nil {
@@ -4691,8 +4650,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 	if source.Extensions != nil {
 		extensionList := make([]VirtualMachineExtensionInstanceView_STATUS, len(source.Extensions))
 		for extensionIndex, extensionItem := range source.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension VirtualMachineExtensionInstanceView_STATUS
 			err := extension.AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS(&extensionItem)
 			if err != nil {
@@ -4751,8 +4708,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -4836,8 +4791,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 	if view.Disks != nil {
 		diskList := make([]v20220301s.DiskInstanceView_STATUS, len(view.Disks))
 		for diskIndex, diskItem := range view.Disks {
-			// Shadow the loop variable to avoid aliasing
-			diskItem := diskItem
 			var disk v20220301s.DiskInstanceView_STATUS
 			err := diskItem.AssignProperties_To_DiskInstanceView_STATUS(&disk)
 			if err != nil {
@@ -4854,8 +4807,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 	if view.Extensions != nil {
 		extensionList := make([]v20220301s.VirtualMachineExtensionInstanceView_STATUS, len(view.Extensions))
 		for extensionIndex, extensionItem := range view.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension v20220301s.VirtualMachineExtensionInstanceView_STATUS
 			err := extensionItem.AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(&extension)
 			if err != nil {
@@ -4914,8 +4865,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 	if view.Statuses != nil {
 		statusList := make([]v20220301s.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status v20220301s.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -4989,8 +4938,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_From_VirtualMachine
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -5007,8 +4954,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_From_VirtualMachine
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -5050,8 +4995,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_To_VirtualMachineOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -5068,8 +5011,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_To_VirtualMachineOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -5984,8 +5925,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_From_DiskInstanceView_STAT
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]DiskEncryptionSettings_STATUS, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting DiskEncryptionSettings_STATUS
 			err := encryptionSetting.AssignProperties_From_DiskEncryptionSettings_STATUS(&encryptionSettingItem)
 			if err != nil {
@@ -6005,8 +5944,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_From_DiskInstanceView_STAT
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -6048,8 +5985,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_To_DiskInstanceView_STATUS
 	if view.EncryptionSettings != nil {
 		encryptionSettingList := make([]v20220301s.DiskEncryptionSettings_STATUS, len(view.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range view.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting v20220301s.DiskEncryptionSettings_STATUS
 			err := encryptionSettingItem.AssignProperties_To_DiskEncryptionSettings_STATUS(&encryptionSetting)
 			if err != nil {
@@ -6069,8 +6004,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_To_DiskInstanceView_STATUS
 	if view.Statuses != nil {
 		statusList := make([]v20220301s.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status v20220301s.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -7891,8 +7824,6 @@ func (group *VaultSecretGroup) AssignProperties_From_VaultSecretGroup(source *v2
 	if source.VaultCertificates != nil {
 		vaultCertificateList := make([]VaultCertificate, len(source.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range source.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate VaultCertificate
 			err := vaultCertificate.AssignProperties_From_VaultCertificate(&vaultCertificateItem)
 			if err != nil {
@@ -7951,8 +7882,6 @@ func (group *VaultSecretGroup) AssignProperties_To_VaultSecretGroup(destination 
 	if group.VaultCertificates != nil {
 		vaultCertificateList := make([]v20220301s.VaultCertificate, len(group.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range group.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate v20220301s.VaultCertificate
 			err := vaultCertificateItem.AssignProperties_To_VaultCertificate(&vaultCertificate)
 			if err != nil {
@@ -8019,8 +7948,6 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_From_VaultSecretGroup_STA
 	if source.VaultCertificates != nil {
 		vaultCertificateList := make([]VaultCertificate_STATUS, len(source.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range source.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate VaultCertificate_STATUS
 			err := vaultCertificate.AssignProperties_From_VaultCertificate_STATUS(&vaultCertificateItem)
 			if err != nil {
@@ -8079,8 +8006,6 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_To_VaultSecretGroup_STATU
 	if group.VaultCertificates != nil {
 		vaultCertificateList := make([]v20220301s.VaultCertificate_STATUS, len(group.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range group.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate v20220301s.VaultCertificate_STATUS
 			err := vaultCertificateItem.AssignProperties_To_VaultCertificate_STATUS(&vaultCertificate)
 			if err != nil {
@@ -8131,8 +8056,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_From_Virtua
 	if source.ExtensionHandlers != nil {
 		extensionHandlerList := make([]VirtualMachineExtensionHandlerInstanceView_STATUS, len(source.ExtensionHandlers))
 		for extensionHandlerIndex, extensionHandlerItem := range source.ExtensionHandlers {
-			// Shadow the loop variable to avoid aliasing
-			extensionHandlerItem := extensionHandlerItem
 			var extensionHandler VirtualMachineExtensionHandlerInstanceView_STATUS
 			err := extensionHandler.AssignProperties_From_VirtualMachineExtensionHandlerInstanceView_STATUS(&extensionHandlerItem)
 			if err != nil {
@@ -8149,8 +8072,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_From_Virtua
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -8195,8 +8116,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_To_VirtualM
 	if view.ExtensionHandlers != nil {
 		extensionHandlerList := make([]v20220301s.VirtualMachineExtensionHandlerInstanceView_STATUS, len(view.ExtensionHandlers))
 		for extensionHandlerIndex, extensionHandlerItem := range view.ExtensionHandlers {
-			// Shadow the loop variable to avoid aliasing
-			extensionHandlerItem := extensionHandlerItem
 			var extensionHandler v20220301s.VirtualMachineExtensionHandlerInstanceView_STATUS
 			err := extensionHandlerItem.AssignProperties_To_VirtualMachineExtensionHandlerInstanceView_STATUS(&extensionHandler)
 			if err != nil {
@@ -8213,8 +8132,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_To_VirtualM
 	if view.Statuses != nil {
 		statusList := make([]v20220301s.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status v20220301s.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -8430,8 +8347,6 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_From_VirtualMac
 	if source.ConfigurationStatuses != nil {
 		configurationStatusList := make([]InstanceViewStatus_STATUS, len(source.ConfigurationStatuses))
 		for configurationStatusIndex, configurationStatusItem := range source.ConfigurationStatuses {
-			// Shadow the loop variable to avoid aliasing
-			configurationStatusItem := configurationStatusItem
 			var configurationStatus InstanceViewStatus_STATUS
 			err := configurationStatus.AssignProperties_From_InstanceViewStatus_STATUS(&configurationStatusItem)
 			if err != nil {
@@ -8497,8 +8412,6 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_To_VirtualMachi
 	if status.ConfigurationStatuses != nil {
 		configurationStatusList := make([]v20220301s.InstanceViewStatus_STATUS, len(status.ConfigurationStatuses))
 		for configurationStatusIndex, configurationStatusItem := range status.ConfigurationStatuses {
-			// Shadow the loop variable to avoid aliasing
-			configurationStatusItem := configurationStatusItem
 			var configurationStatus v20220301s.InstanceViewStatus_STATUS
 			err := configurationStatusItem.AssignProperties_To_InstanceViewStatus_STATUS(&configurationStatus)
 			if err != nil {
@@ -8564,8 +8477,6 @@ func (configuration *WindowsConfiguration) AssignProperties_From_WindowsConfigur
 	if source.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]AdditionalUnattendContent, len(source.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range source.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent AdditionalUnattendContent
 			err := additionalUnattendContent.AssignProperties_From_AdditionalUnattendContent(&additionalUnattendContentItem)
 			if err != nil {
@@ -8650,8 +8561,6 @@ func (configuration *WindowsConfiguration) AssignProperties_To_WindowsConfigurat
 	if configuration.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]v20220301s.AdditionalUnattendContent, len(configuration.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range configuration.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent v20220301s.AdditionalUnattendContent
 			err := additionalUnattendContentItem.AssignProperties_To_AdditionalUnattendContent(&additionalUnattendContent)
 			if err != nil {
@@ -8748,8 +8657,6 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_From_WindowsC
 	if source.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]AdditionalUnattendContent_STATUS, len(source.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range source.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent AdditionalUnattendContent_STATUS
 			err := additionalUnattendContent.AssignProperties_From_AdditionalUnattendContent_STATUS(&additionalUnattendContentItem)
 			if err != nil {
@@ -8834,8 +8741,6 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_To_WindowsCon
 	if configuration.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]v20220301s.AdditionalUnattendContent_STATUS, len(configuration.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range configuration.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent v20220301s.AdditionalUnattendContent_STATUS
 			err := additionalUnattendContentItem.AssignProperties_To_AdditionalUnattendContent_STATUS(&additionalUnattendContent)
 			if err != nil {
@@ -10631,8 +10536,6 @@ func (configuration *SshConfiguration) AssignProperties_From_SshConfiguration(so
 	if source.PublicKeys != nil {
 		publicKeyList := make([]SshPublicKeySpec, len(source.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey SshPublicKeySpec
 			err := publicKey.AssignProperties_From_SshPublicKeySpec(&publicKeyItem)
 			if err != nil {
@@ -10674,8 +10577,6 @@ func (configuration *SshConfiguration) AssignProperties_To_SshConfiguration(dest
 	if configuration.PublicKeys != nil {
 		publicKeyList := make([]v20220301s.SshPublicKeySpec, len(configuration.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range configuration.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey v20220301s.SshPublicKeySpec
 			err := publicKeyItem.AssignProperties_To_SshPublicKeySpec(&publicKey)
 			if err != nil {
@@ -10724,8 +10625,6 @@ func (configuration *SshConfiguration_STATUS) AssignProperties_From_SshConfigura
 	if source.PublicKeys != nil {
 		publicKeyList := make([]SshPublicKey_STATUS, len(source.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey SshPublicKey_STATUS
 			err := publicKey.AssignProperties_From_SshPublicKey_STATUS(&publicKeyItem)
 			if err != nil {
@@ -10767,8 +10666,6 @@ func (configuration *SshConfiguration_STATUS) AssignProperties_To_SshConfigurati
 	if configuration.PublicKeys != nil {
 		publicKeyList := make([]v20220301s.SshPublicKey_STATUS, len(configuration.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range configuration.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey v20220301s.SshPublicKey_STATUS
 			err := publicKeyItem.AssignProperties_To_SshPublicKey_STATUS(&publicKey)
 			if err != nil {
@@ -11178,8 +11075,6 @@ func (configuration *WinRMConfiguration) AssignProperties_From_WinRMConfiguratio
 	if source.Listeners != nil {
 		listenerList := make([]WinRMListener, len(source.Listeners))
 		for listenerIndex, listenerItem := range source.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener WinRMListener
 			err := listener.AssignProperties_From_WinRMListener(&listenerItem)
 			if err != nil {
@@ -11221,8 +11116,6 @@ func (configuration *WinRMConfiguration) AssignProperties_To_WinRMConfiguration(
 	if configuration.Listeners != nil {
 		listenerList := make([]v20220301s.WinRMListener, len(configuration.Listeners))
 		for listenerIndex, listenerItem := range configuration.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener v20220301s.WinRMListener
 			err := listenerItem.AssignProperties_To_WinRMListener(&listener)
 			if err != nil {
@@ -11271,8 +11164,6 @@ func (configuration *WinRMConfiguration_STATUS) AssignProperties_From_WinRMConfi
 	if source.Listeners != nil {
 		listenerList := make([]WinRMListener_STATUS, len(source.Listeners))
 		for listenerIndex, listenerItem := range source.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener WinRMListener_STATUS
 			err := listener.AssignProperties_From_WinRMListener_STATUS(&listenerItem)
 			if err != nil {
@@ -11314,8 +11205,6 @@ func (configuration *WinRMConfiguration_STATUS) AssignProperties_To_WinRMConfigu
 	if configuration.Listeners != nil {
 		listenerList := make([]v20220301s.WinRMListener_STATUS, len(configuration.Listeners))
 		for listenerIndex, listenerItem := range configuration.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener v20220301s.WinRMListener_STATUS
 			err := listenerItem.AssignProperties_To_WinRMListener_STATUS(&listener)
 			if err != nil {
@@ -11371,8 +11260,6 @@ func (error *ApiError_STATUS) AssignProperties_From_ApiError_STATUS(source *v202
 	if source.Details != nil {
 		detailList := make([]ApiErrorBase_STATUS, len(source.Details))
 		for detailIndex, detailItem := range source.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detail ApiErrorBase_STATUS
 			err := detail.AssignProperties_From_ApiErrorBase_STATUS(&detailItem)
 			if err != nil {
@@ -11435,8 +11322,6 @@ func (error *ApiError_STATUS) AssignProperties_To_ApiError_STATUS(destination *v
 	if error.Details != nil {
 		detailList := make([]v20220301s.ApiErrorBase_STATUS, len(error.Details))
 		for detailIndex, detailItem := range error.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detail v20220301s.ApiErrorBase_STATUS
 			err := detailItem.AssignProperties_To_ApiErrorBase_STATUS(&detail)
 			if err != nil {

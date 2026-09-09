@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/bastionHost.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/bastionHost.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}
 type BastionHost struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &BastionHost{}
 
 // ConvertFrom populates our BastionHost from the provided hub BastionHost
 func (host *BastionHost) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.BastionHost)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/BastionHost but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.BastionHost
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return host.AssignProperties_From_BastionHost(source)
+	err = host.AssignProperties_From_BastionHost(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to host")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub BastionHost from our BastionHost
 func (host *BastionHost) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.BastionHost)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/BastionHost but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.BastionHost
+	err := host.AssignProperties_To_BastionHost(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from host")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return host.AssignProperties_To_BastionHost(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &BastionHost{}
@@ -86,17 +101,6 @@ func (host *BastionHost) SecretDestinationExpressions() []*core.DestinationExpre
 		return nil
 	}
 	return host.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &BastionHost{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (host *BastionHost) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*BastionHost_STATUS); ok {
-		return host.Spec.Initialize_From_BastionHost_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type BastionHost_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &BastionHost{}
@@ -237,18 +241,13 @@ func (host *BastionHost) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/bastionHost.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/bastionHost.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}
 type BastionHostList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []BastionHost `json:"items"`
 }
-
-// +kubebuilder:validation:Enum={"2024-03-01"}
-type APIVersion string
-
-const APIVersion_Value = APIVersion("2024-03-01")
 
 type BastionHost_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
@@ -387,7 +386,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.BastionHostIPConfiguration))
 	}
 	if host.NetworkAcls != nil {
-		networkAcls_ARM, err := (*host.NetworkAcls).ConvertToARM(resolved)
+		networkAcls_ARM, err := host.NetworkAcls.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -399,7 +398,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		result.Properties.ScaleUnits = &scaleUnits
 	}
 	if host.VirtualNetwork != nil {
-		virtualNetwork_ARM, err := (*host.VirtualNetwork).ConvertToARM(resolved)
+		virtualNetwork_ARM, err := host.VirtualNetwork.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -409,7 +408,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "Sku":
 	if host.Sku != nil {
-		sku_ARM, err := (*host.Sku).ConvertToARM(resolved)
+		sku_ARM, err := host.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -730,8 +729,6 @@ func (host *BastionHost_Spec) AssignProperties_From_BastionHost_Spec(source *sto
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]BastionHostIPConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration BastionHostIPConfiguration
 			err := ipConfiguration.AssignProperties_From_BastionHostIPConfiguration(&ipConfigurationItem)
 			if err != nil {
@@ -887,8 +884,6 @@ func (host *BastionHost_Spec) AssignProperties_To_BastionHost_Spec(destination *
 	if host.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.BastionHostIPConfiguration, len(host.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range host.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.BastionHostIPConfiguration
 			err := ipConfigurationItem.AssignProperties_To_BastionHostIPConfiguration(&ipConfiguration)
 			if err != nil {
@@ -978,138 +973,6 @@ func (host *BastionHost_Spec) AssignProperties_To_BastionHost_Spec(destination *
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BastionHost_STATUS populates our BastionHost_Spec from the provided source BastionHost_STATUS
-func (host *BastionHost_Spec) Initialize_From_BastionHost_STATUS(source *BastionHost_STATUS) error {
-
-	// DisableCopyPaste
-	if source.DisableCopyPaste != nil {
-		disableCopyPaste := *source.DisableCopyPaste
-		host.DisableCopyPaste = &disableCopyPaste
-	} else {
-		host.DisableCopyPaste = nil
-	}
-
-	// DnsName
-	host.DnsName = genruntime.ClonePointerToString(source.DnsName)
-
-	// EnableFileCopy
-	if source.EnableFileCopy != nil {
-		enableFileCopy := *source.EnableFileCopy
-		host.EnableFileCopy = &enableFileCopy
-	} else {
-		host.EnableFileCopy = nil
-	}
-
-	// EnableIpConnect
-	if source.EnableIpConnect != nil {
-		enableIpConnect := *source.EnableIpConnect
-		host.EnableIpConnect = &enableIpConnect
-	} else {
-		host.EnableIpConnect = nil
-	}
-
-	// EnableKerberos
-	if source.EnableKerberos != nil {
-		enableKerbero := *source.EnableKerberos
-		host.EnableKerberos = &enableKerbero
-	} else {
-		host.EnableKerberos = nil
-	}
-
-	// EnableSessionRecording
-	if source.EnableSessionRecording != nil {
-		enableSessionRecording := *source.EnableSessionRecording
-		host.EnableSessionRecording = &enableSessionRecording
-	} else {
-		host.EnableSessionRecording = nil
-	}
-
-	// EnableShareableLink
-	if source.EnableShareableLink != nil {
-		enableShareableLink := *source.EnableShareableLink
-		host.EnableShareableLink = &enableShareableLink
-	} else {
-		host.EnableShareableLink = nil
-	}
-
-	// EnableTunneling
-	if source.EnableTunneling != nil {
-		enableTunneling := *source.EnableTunneling
-		host.EnableTunneling = &enableTunneling
-	} else {
-		host.EnableTunneling = nil
-	}
-
-	// IpConfigurations
-	if source.IpConfigurations != nil {
-		ipConfigurationList := make([]BastionHostIPConfiguration, len(source.IpConfigurations))
-		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration BastionHostIPConfiguration
-			err := ipConfiguration.Initialize_From_BastionHostIPConfiguration_STATUS(&ipConfigurationItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_BastionHostIPConfiguration_STATUS() to populate field IpConfigurations")
-			}
-			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
-		}
-		host.IpConfigurations = ipConfigurationList
-	} else {
-		host.IpConfigurations = nil
-	}
-
-	// Location
-	host.Location = genruntime.ClonePointerToString(source.Location)
-
-	// NetworkAcls
-	if source.NetworkAcls != nil {
-		var networkAcl BastionHostPropertiesFormat_NetworkAcls
-		err := networkAcl.Initialize_From_BastionHostPropertiesFormat_NetworkAcls_STATUS(source.NetworkAcls)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BastionHostPropertiesFormat_NetworkAcls_STATUS() to populate field NetworkAcls")
-		}
-		host.NetworkAcls = &networkAcl
-	} else {
-		host.NetworkAcls = nil
-	}
-
-	// ScaleUnits
-	host.ScaleUnits = genruntime.ClonePointerToInt(source.ScaleUnits)
-
-	// Sku
-	if source.Sku != nil {
-		var sku Sku
-		err := sku.Initialize_From_Sku_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
-		}
-		host.Sku = &sku
-	} else {
-		host.Sku = nil
-	}
-
-	// Tags
-	host.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// VirtualNetwork
-	if source.VirtualNetwork != nil {
-		var virtualNetwork SubResource
-		err := virtualNetwork.Initialize_From_SubResource_STATUS(source.VirtualNetwork)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field VirtualNetwork")
-		}
-		host.VirtualNetwork = &virtualNetwork
-	} else {
-		host.VirtualNetwork = nil
-	}
-
-	// Zones
-	host.Zones = genruntime.CloneSliceOfString(source.Zones)
 
 	// No error
 	return nil
@@ -1522,8 +1385,6 @@ func (host *BastionHost_STATUS) AssignProperties_From_BastionHost_STATUS(source 
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]BastionHostIPConfiguration_STATUS, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration BastionHostIPConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_BastionHostIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -1680,8 +1541,6 @@ func (host *BastionHost_STATUS) AssignProperties_To_BastionHost_STATUS(destinati
 	if host.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.BastionHostIPConfiguration_STATUS, len(host.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range host.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.BastionHostIPConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_BastionHostIPConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
@@ -1812,7 +1671,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 		result.Properties.PrivateIPAllocationMethod = &privateIPAllocationMethod
 	}
 	if configuration.PublicIPAddress != nil {
-		publicIPAddress_ARM, err := (*configuration.PublicIPAddress).ConvertToARM(resolved)
+		publicIPAddress_ARM, err := configuration.PublicIPAddress.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1820,7 +1679,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 		result.Properties.PublicIPAddress = &publicIPAddress
 	}
 	if configuration.Subnet != nil {
-		subnet_ARM, err := (*configuration.Subnet).ConvertToARM(resolved)
+		subnet_ARM, err := configuration.Subnet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1985,13 +1844,6 @@ func (configuration *BastionHostIPConfiguration) AssignProperties_To_BastionHost
 	return nil
 }
 
-// Initialize_From_BastionHostIPConfiguration_STATUS populates our BastionHostIPConfiguration from the provided source BastionHostIPConfiguration_STATUS
-func (configuration *BastionHostIPConfiguration) Initialize_From_BastionHostIPConfiguration_STATUS(source *BastionHostIPConfiguration_STATUS) error {
-
-	// No error
-	return nil
-}
-
 // IP configuration of an Bastion Host.
 type BastionHostIPConfiguration_STATUS struct {
 	// Id: Resource ID.
@@ -2067,8 +1919,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_From_BastionHostOperat
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2085,8 +1935,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_From_BastionHostOperat
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2112,8 +1960,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_To_BastionHostOperator
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2130,8 +1976,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_To_BastionHostOperator
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2213,8 +2057,6 @@ func (acls *BastionHostPropertiesFormat_NetworkAcls) AssignProperties_From_Basti
 	if source.IpRules != nil {
 		ipRuleList := make([]IPRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IPRule
 			err := ipRule.AssignProperties_From_IPRule(&ipRuleItem)
 			if err != nil {
@@ -2240,8 +2082,6 @@ func (acls *BastionHostPropertiesFormat_NetworkAcls) AssignProperties_To_Bastion
 	if acls.IpRules != nil {
 		ipRuleList := make([]storage.IPRule, len(acls.IpRules))
 		for ipRuleIndex, ipRuleItem := range acls.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IPRule
 			err := ipRuleItem.AssignProperties_To_IPRule(&ipRule)
 			if err != nil {
@@ -2259,31 +2099,6 @@ func (acls *BastionHostPropertiesFormat_NetworkAcls) AssignProperties_To_Bastion
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BastionHostPropertiesFormat_NetworkAcls_STATUS populates our BastionHostPropertiesFormat_NetworkAcls from the provided source BastionHostPropertiesFormat_NetworkAcls_STATUS
-func (acls *BastionHostPropertiesFormat_NetworkAcls) Initialize_From_BastionHostPropertiesFormat_NetworkAcls_STATUS(source *BastionHostPropertiesFormat_NetworkAcls_STATUS) error {
-
-	// IpRules
-	if source.IpRules != nil {
-		ipRuleList := make([]IPRule, len(source.IpRules))
-		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
-			var ipRule IPRule
-			err := ipRule.Initialize_From_IPRule_STATUS(&ipRuleItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_IPRule_STATUS() to populate field IpRules")
-			}
-			ipRuleList[ipRuleIndex] = ipRule
-		}
-		acls.IpRules = ipRuleList
-	} else {
-		acls.IpRules = nil
 	}
 
 	// No error
@@ -2330,8 +2145,6 @@ func (acls *BastionHostPropertiesFormat_NetworkAcls_STATUS) AssignProperties_Fro
 	if source.IpRules != nil {
 		ipRuleList := make([]IPRule_STATUS, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IPRule_STATUS
 			err := ipRule.AssignProperties_From_IPRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -2357,8 +2170,6 @@ func (acls *BastionHostPropertiesFormat_NetworkAcls_STATUS) AssignProperties_To_
 	if acls.IpRules != nil {
 		ipRuleList := make([]storage.IPRule_STATUS, len(acls.IpRules))
 		for ipRuleIndex, ipRuleItem := range acls.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IPRule_STATUS
 			err := ipRuleItem.AssignProperties_To_IPRule_STATUS(&ipRule)
 			if err != nil {
@@ -2380,24 +2191,6 @@ func (acls *BastionHostPropertiesFormat_NetworkAcls_STATUS) AssignProperties_To_
 
 	// No error
 	return nil
-}
-
-// The current provisioning state.
-type ProvisioningState_STATUS string
-
-const (
-	ProvisioningState_STATUS_Deleting  = ProvisioningState_STATUS("Deleting")
-	ProvisioningState_STATUS_Failed    = ProvisioningState_STATUS("Failed")
-	ProvisioningState_STATUS_Succeeded = ProvisioningState_STATUS("Succeeded")
-	ProvisioningState_STATUS_Updating  = ProvisioningState_STATUS("Updating")
-)
-
-// Mapping from string to ProvisioningState_STATUS
-var provisioningState_STATUS_Values = map[string]ProvisioningState_STATUS{
-	"deleting":  ProvisioningState_STATUS_Deleting,
-	"failed":    ProvisioningState_STATUS_Failed,
-	"succeeded": ProvisioningState_STATUS_Succeeded,
-	"updating":  ProvisioningState_STATUS_Updating,
 }
 
 // The sku of this Bastion Host.
@@ -2489,21 +2282,6 @@ func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	return nil
 }
 
-// Initialize_From_Sku_STATUS populates our Sku from the provided source Sku_STATUS
-func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), sku_Name_Values)
-		sku.Name = &name
-	} else {
-		sku.Name = nil
-	}
-
-	// No error
-	return nil
-}
-
 // The sku of this Bastion Host.
 type Sku_STATUS struct {
 	// Name: The name of the sku of this Bastion Host.
@@ -2564,164 +2342,6 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_S
 	} else {
 		destination.Name = nil
 	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Reference to another subresource.
-type SubResource struct {
-	// Reference: Resource ID.
-	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
-}
-
-var _ genruntime.ARMTransformer = &SubResource{}
-
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (resource *SubResource) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if resource == nil {
-		return nil, nil
-	}
-	result := &arm.SubResource{}
-
-	// Set property "Id":
-	if resource.Reference != nil {
-		referenceARMID, err := resolved.ResolvedReferences.Lookup(*resource.Reference)
-		if err != nil {
-			return nil, err
-		}
-		reference := referenceARMID
-		result.Id = &reference
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (resource *SubResource) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.SubResource{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (resource *SubResource) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(arm.SubResource)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SubResource, got %T", armInput)
-	}
-
-	// no assignment for property "Reference"
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_SubResource populates our SubResource from the provided source SubResource
-func (resource *SubResource) AssignProperties_From_SubResource(source *storage.SubResource) error {
-
-	// Reference
-	if source.Reference != nil {
-		reference := source.Reference.Copy()
-		resource.Reference = &reference
-	} else {
-		resource.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_SubResource populates the provided destination SubResource from our SubResource
-func (resource *SubResource) AssignProperties_To_SubResource(destination *storage.SubResource) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Reference
-	if resource.Reference != nil {
-		reference := resource.Reference.Copy()
-		destination.Reference = &reference
-	} else {
-		destination.Reference = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SubResource_STATUS populates our SubResource from the provided source SubResource_STATUS
-func (resource *SubResource) Initialize_From_SubResource_STATUS(source *SubResource_STATUS) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		resource.Reference = &reference
-	} else {
-		resource.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Reference to another subresource.
-type SubResource_STATUS struct {
-	// Id: Resource ID.
-	Id *string `json:"id,omitempty"`
-}
-
-var _ genruntime.FromARMConverter = &SubResource_STATUS{}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (resource *SubResource_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.SubResource_STATUS{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (resource *SubResource_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.SubResource_STATUS)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SubResource_STATUS, got %T", armInput)
-	}
-
-	// Set property "Id":
-	if typedInput.Id != nil {
-		id := *typedInput.Id
-		resource.Id = &id
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_SubResource_STATUS populates our SubResource_STATUS from the provided source SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(source *storage.SubResource_STATUS) error {
-
-	// Id
-	resource.Id = genruntime.ClonePointerToString(source.Id)
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_SubResource_STATUS populates the provided destination SubResource_STATUS from our SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(destination *storage.SubResource_STATUS) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Id
-	destination.Id = genruntime.ClonePointerToString(resource.Id)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2802,16 +2422,6 @@ func (rule *IPRule) AssignProperties_To_IPRule(destination *storage.IPRule) erro
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_IPRule_STATUS populates our IPRule from the provided source IPRule_STATUS
-func (rule *IPRule) Initialize_From_IPRule_STATUS(source *IPRule_STATUS) error {
-
-	// AddressPrefix
-	rule.AddressPrefix = genruntime.ClonePointerToString(source.AddressPrefix)
 
 	// No error
 	return nil

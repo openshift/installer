@@ -23,7 +23,7 @@ import (
 	// then updated to the user-defined value. If the field is immutable, this
 	// update will fail. The linter should catch if there are missing fields,
 	// but verify that check is actually working.
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/storage"
 	"k8s.io/utils/ptr"
 )
 
@@ -40,12 +40,15 @@ func AgentPoolToManagedClusterAgentPoolProfile(pool *asocontainerservicev1hub.Ma
 		EnableFIPS:                        properties.EnableFIPS,
 		EnableNodePublicIP:                properties.EnableNodePublicIP,
 		EnableUltraSSD:                    properties.EnableUltraSSD,
+		GatewayProfile:                    properties.GatewayProfile,
 		GpuInstanceProfile:                properties.GpuInstanceProfile,
+		GpuProfile:                        properties.GpuProfile,
 		HostGroupReference:                properties.HostGroupReference,
 		KubeletConfig:                     properties.KubeletConfig,
 		KubeletDiskType:                   properties.KubeletDiskType,
 		LinuxOSConfig:                     properties.LinuxOSConfig,
 		MaxCount:                          properties.MaxCount,
+		MessageOfTheDay:                   properties.MessageOfTheDay,
 		MaxPods:                           properties.MaxPods,
 		MinCount:                          properties.MinCount,
 		Mode:                              properties.Mode,
@@ -59,6 +62,7 @@ func AgentPoolToManagedClusterAgentPoolProfile(pool *asocontainerservicev1hub.Ma
 		OsDiskType:                        properties.OsDiskType,
 		OsSKU:                             properties.OsSKU,
 		OsType:                            properties.OsType,
+		PodIPAllocationMode:               properties.PodIPAllocationMode,
 		PodSubnetReference:                properties.PodSubnetReference,
 		PowerState:                        properties.PowerState,
 		PropertyBag:                       properties.PropertyBag,
@@ -71,6 +75,8 @@ func AgentPoolToManagedClusterAgentPoolProfile(pool *asocontainerservicev1hub.Ma
 		Tags:                              properties.Tags,
 		Type:                              properties.Type,
 		UpgradeSettings:                   properties.UpgradeSettings,
+		VirtualMachineNodesStatus:         properties.VirtualMachineNodesStatus,
+		VirtualMachinesProfile:            properties.VirtualMachinesProfile,
 		VmSize:                            properties.VmSize,
 		VnetSubnetReference:               properties.VnetSubnetReference,
 		WindowsProfile:                    properties.WindowsProfile,

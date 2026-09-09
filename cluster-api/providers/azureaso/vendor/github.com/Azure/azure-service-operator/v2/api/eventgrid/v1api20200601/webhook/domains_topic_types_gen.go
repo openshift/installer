@@ -116,7 +116,12 @@ func (topic *DomainsTopic) ValidateUpdate(ctx context.Context, oldResource runti
 
 // createValidations validates the creation of the resource
 func (topic *DomainsTopic) createValidations() []func(ctx context.Context, obj *v20200601.DomainsTopic) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200601.DomainsTopic) (admission.Warnings, error){topic.validateResourceReferences, topic.validateOwnerReference, topic.validateSecretDestinations, topic.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20200601.DomainsTopic) (admission.Warnings, error){
+		topic.validateResourceReferences,
+		topic.validateOwnerReference,
+		topic.validateSecretDestinations,
+		topic.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

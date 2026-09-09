@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/diskAccess.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}
 type DiskAccess struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (access *DiskAccess) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/diskAccess.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}
 type DiskAccessList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -254,7 +255,7 @@ type DiskAccess_Spec struct {
 	ExtendedLocation *ExtendedLocation `json:"extendedLocation,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
@@ -267,7 +268,7 @@ type DiskAccess_Spec struct {
 	// reference to a resources.azure.com/ResourceGroup resource
 	Owner *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 
-	// Tags: Resource tags
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
@@ -282,7 +283,7 @@ func (access *DiskAccess_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "ExtendedLocation":
 	if access.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*access.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := access.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -560,13 +561,14 @@ type DiskAccess_STATUS struct {
 	// ExtendedLocation: The extended location where the disk access will be created. Extended location cannot be changed.
 	ExtendedLocation *ExtendedLocation_STATUS `json:"extendedLocation,omitempty"`
 
-	// Id: Resource Id
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
-	// Name: Resource name
+	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
 	// PrivateEndpointConnections: A readonly collection of private endpoint connections created on the disk. Currently only
@@ -576,13 +578,16 @@ type DiskAccess_STATUS struct {
 	// ProvisioningState: The disk access resource provisioning state.
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 
-	// Tags: Resource tags
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
+
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// TimeCreated: The time when the disk access was created.
 	TimeCreated *string `json:"timeCreated,omitempty"`
 
-	// Type: Resource type
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 }
 
@@ -703,6 +708,17 @@ func (access *DiskAccess_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 		}
 	}
 
+	// Set property "SystemData":
+	if typedInput.SystemData != nil {
+		var systemData1 SystemData_STATUS
+		err := systemData1.PopulateFromARM(owner, *typedInput.SystemData)
+		if err != nil {
+			return err
+		}
+		systemData := systemData1
+		access.SystemData = &systemData
+	}
+
 	// Set property "Tags":
 	if typedInput.Tags != nil {
 		access.Tags = make(map[string]string, len(typedInput.Tags))
@@ -761,8 +777,6 @@ func (access *DiskAccess_STATUS) AssignProperties_From_DiskAccess_STATUS(source 
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -777,6 +791,18 @@ func (access *DiskAccess_STATUS) AssignProperties_From_DiskAccess_STATUS(source 
 
 	// ProvisioningState
 	access.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		access.SystemData = &systemDatum
+	} else {
+		access.SystemData = nil
+	}
 
 	// Tags
 	access.Tags = genruntime.CloneMapOfStringToString(source.Tags)
@@ -824,8 +850,6 @@ func (access *DiskAccess_STATUS) AssignProperties_To_DiskAccess_STATUS(destinati
 	if access.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(access.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range access.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -840,6 +864,18 @@ func (access *DiskAccess_STATUS) AssignProperties_To_DiskAccess_STATUS(destinati
 
 	// ProvisioningState
 	destination.ProvisioningState = genruntime.ClonePointerToString(access.ProvisioningState)
+
+	// SystemData
+	if access.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := access.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
 
 	// Tags
 	destination.Tags = genruntime.CloneMapOfStringToString(access.Tags)
@@ -877,8 +913,6 @@ func (operator *DiskAccessOperatorSpec) AssignProperties_From_DiskAccessOperator
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -895,8 +929,6 @@ func (operator *DiskAccessOperatorSpec) AssignProperties_From_DiskAccessOperator
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -922,8 +954,6 @@ func (operator *DiskAccessOperatorSpec) AssignProperties_To_DiskAccessOperatorSp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -940,8 +970,6 @@ func (operator *DiskAccessOperatorSpec) AssignProperties_To_DiskAccessOperatorSp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -967,7 +995,8 @@ func (operator *DiskAccessOperatorSpec) AssignProperties_To_DiskAccessOperatorSp
 
 // The Private Endpoint Connection resource.
 type PrivateEndpointConnection_STATUS struct {
-	// Id: private endpoint connection Id
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 }
 

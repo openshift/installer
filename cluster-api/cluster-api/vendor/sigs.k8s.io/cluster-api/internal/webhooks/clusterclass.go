@@ -24,14 +24,12 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -40,55 +38,38 @@ import (
 	"sigs.k8s.io/cluster-api/internal/topology/check"
 	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
 	"sigs.k8s.io/cluster-api/internal/topology/variables"
+	"sigs.k8s.io/cluster-api/internal/util/taints"
 	clog "sigs.k8s.io/cluster-api/util/log"
 	"sigs.k8s.io/cluster-api/util/version"
 )
 
 func (webhook *ClusterClass) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&clusterv1.ClusterClass{}).
+	return ctrl.NewWebhookManagedBy(mgr, &clusterv1.ClusterClass{}).
 		WithValidator(webhook).
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-cluster-x-k8s-io-v1beta2-clusterclass,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=clusterclasses,versions=v1beta2,name=validation.clusterclass.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-cluster-x-k8s-io-v1beta2-clusterclass,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=clusterclasses,versions=v1beta2,name=validation.clusterclass.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // ClusterClass implements a validation and defaulting webhook for ClusterClass.
 type ClusterClass struct {
 	Client client.Reader
 }
 
-var _ webhook.CustomValidator = &ClusterClass{}
+var _ admission.Validator[*clusterv1.ClusterClass] = &ClusterClass{}
 
 // ValidateCreate implements validation for ClusterClass create.
-func (webhook *ClusterClass) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	in, ok := obj.(*clusterv1.ClusterClass)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a ClusterClass but got a %T", obj))
-	}
+func (webhook *ClusterClass) ValidateCreate(ctx context.Context, in *clusterv1.ClusterClass) (admission.Warnings, error) {
 	return nil, webhook.validate(ctx, nil, in)
 }
 
 // ValidateUpdate implements validation for ClusterClass update.
-func (webhook *ClusterClass) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	newClusterClass, ok := newObj.(*clusterv1.ClusterClass)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a ClusterClass but got a %T", newObj))
-	}
-	oldClusterClass, ok := oldObj.(*clusterv1.ClusterClass)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a ClusterClass but got a %T", oldObj))
-	}
+func (webhook *ClusterClass) ValidateUpdate(ctx context.Context, oldClusterClass, newClusterClass *clusterv1.ClusterClass) (admission.Warnings, error) {
 	return nil, webhook.validate(ctx, oldClusterClass, newClusterClass)
 }
 
 // ValidateDelete implements validation for ClusterClass delete.
-func (webhook *ClusterClass) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	clusterClass, ok := obj.(*clusterv1.ClusterClass)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a ClusterClass but got a %T", obj))
-	}
-
+func (webhook *ClusterClass) ValidateDelete(ctx context.Context, clusterClass *clusterv1.ClusterClass) (admission.Warnings, error) {
 	clusters, err := webhook.getClustersUsingClusterClass(ctx, clusterClass)
 	if err != nil {
 		return nil, apierrors.NewInternalError(errors.Wrapf(err, "could not retrieve Clusters using ClusterClass"))
@@ -131,6 +112,9 @@ func (webhook *ClusterClass) validate(ctx context.Context, oldClusterClass, newC
 
 	// Ensure NamingStrategies are valid.
 	allErrs = append(allErrs, validateNamingStrategies(newClusterClass)...)
+
+	// Ensure Taints are valid.
+	allErrs = append(allErrs, validateTaints(newClusterClass)...)
 
 	// Validate variables.
 	var oldClusterClassVariables []clusterv1.ClusterClassVariable
@@ -524,6 +508,24 @@ func validateClusterClassMetadata(clusterClass *clusterv1.ClusterClass) field.Er
 	for _, m := range clusterClass.Spec.Workers.MachinePools {
 		allErrs = append(allErrs, m.Metadata.Validate(field.NewPath("spec", "workers", "machinePools").Key(m.Class).Child("template", "metadata"))...)
 	}
+	return allErrs
+}
+
+func validateTaints(clusterClass *clusterv1.ClusterClass) field.ErrorList {
+	var allErrs field.ErrorList
+
+	allErrs = append(allErrs, taints.ValidateMachineTaints(clusterClass.Spec.ControlPlane.Taints, field.NewPath("spec", "controlPlane", "taints"))...)
+
+	for _, md := range clusterClass.Spec.Workers.MachineDeployments {
+		fldPath := field.NewPath("spec", "workers", "machineDeployments").Key(md.Class).Child("taints")
+		allErrs = append(allErrs, taints.ValidateMachineTaints(md.Taints, fldPath)...)
+	}
+
+	for _, mp := range clusterClass.Spec.Workers.MachinePools {
+		fldPath := field.NewPath("spec", "workers", "machinePools").Key(mp.Class).Child("taints")
+		allErrs = append(allErrs, taints.ValidateMachineTaints(mp.Taints, fldPath)...)
+	}
+
 	return allErrs
 }
 

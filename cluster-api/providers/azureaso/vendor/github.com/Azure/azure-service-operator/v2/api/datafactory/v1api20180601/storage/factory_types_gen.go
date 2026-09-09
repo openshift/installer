@@ -19,6 +19,7 @@ import (
 // +kubebuilder:rbac:groups=datafactory.azure.com,resources={factories/status,factories/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,datafactory}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -27,7 +28,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20180601.Factory
 // Generator information:
-// - Generated from: /datafactory/resource-manager/Microsoft.DataFactory/stable/2018-06-01/datafactory.json
+// - Generated from: /datafactory/resource-manager/Microsoft.DataFactory/DataFactory/stable/2018-06-01/datafactory.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}
 type Factory struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -158,7 +159,7 @@ func (factory *Factory) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20180601.Factory
 // Generator information:
-// - Generated from: /datafactory/resource-manager/Microsoft.DataFactory/stable/2018-06-01/datafactory.json
+// - Generated from: /datafactory/resource-manager/Microsoft.DataFactory/DataFactory/stable/2018-06-01/datafactory.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}
 type FactoryList struct {
 	metav1.TypeMeta `json:",inline"`

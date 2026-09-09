@@ -32,6 +32,8 @@ func (rule *ServersVirtualNetworkRule_Spec) GetType() string {
 // Properties of a virtual network rule.
 type VirtualNetworkRuleProperties struct {
 	// IgnoreMissingVnetServiceEndpoint: Create firewall rule before the virtual network has vnet service endpoint enabled.
-	IgnoreMissingVnetServiceEndpoint *bool   `json:"ignoreMissingVnetServiceEndpoint,omitempty"`
-	VirtualNetworkSubnetId           *string `json:"virtualNetworkSubnetId,omitempty"`
+	IgnoreMissingVnetServiceEndpoint *bool `json:"ignoreMissingVnetServiceEndpoint,omitempty"`
+
+	// VirtualNetworkSubnetId: The ARM resource id of the virtual network subnet.
+	VirtualNetworkSubnetId *string `json:"virtualNetworkSubnetId,omitempty"`
 }

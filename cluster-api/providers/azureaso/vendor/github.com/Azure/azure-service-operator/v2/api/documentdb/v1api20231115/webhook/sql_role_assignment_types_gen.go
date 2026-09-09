@@ -104,7 +104,13 @@ func (assignment *SqlRoleAssignment) ValidateUpdate(ctx context.Context, oldReso
 
 // createValidations validates the creation of the resource
 func (assignment *SqlRoleAssignment) createValidations() []func(ctx context.Context, obj *v20231115.SqlRoleAssignment) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231115.SqlRoleAssignment) (admission.Warnings, error){assignment.validateResourceReferences, assignment.validateOwnerReference, assignment.validateSecretDestinations, assignment.validateConfigMapDestinations, assignment.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20231115.SqlRoleAssignment) (admission.Warnings, error){
+		assignment.validateResourceReferences,
+		assignment.validateOwnerReference,
+		assignment.validateSecretDestinations,
+		assignment.validateConfigMapDestinations,
+		assignment.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

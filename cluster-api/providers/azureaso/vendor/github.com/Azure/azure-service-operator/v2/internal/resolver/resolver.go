@@ -276,6 +276,16 @@ func (r *Resolver) Scheme() *runtime.Scheme {
 	return r.client.Scheme()
 }
 
+// FindGVKForGroupKind looks up the GVK for a given Group and Kind.
+// Returns an error if the Group/Kind is not registered.
+func (r *Resolver) FindGVKForGroupKind(groupKind schema.GroupKind) (schema.GroupVersionKind, error) {
+	gvk, ok := r.reconciledResourceLookup[groupKind]
+	if !ok {
+		return schema.GroupVersionKind{}, eris.Errorf("group: %q, kind: %q was not in reconciledResourceLookup", groupKind.Group, groupKind.Kind)
+	}
+	return gvk, nil
+}
+
 func (r *Resolver) findGVK(ref genruntime.NamespacedResourceReference) (schema.GroupVersionKind, error) {
 	var ownerGvk schema.GroupVersionKind
 
@@ -284,9 +294,9 @@ func (r *Resolver) findGVK(ref genruntime.NamespacedResourceReference) (schema.G
 	}
 
 	groupKind := schema.GroupKind{Group: ref.Group, Kind: ref.Kind}
-	gvk, ok := r.reconciledResourceLookup[groupKind]
-	if !ok {
-		return ownerGvk, eris.Errorf("group: %q, kind: %q was not in reconciledResourceLookup", ref.Group, ref.Kind)
+	gvk, err := r.FindGVKForGroupKind(groupKind)
+	if err != nil {
+		return ownerGvk, err
 	}
 
 	return gvk, nil

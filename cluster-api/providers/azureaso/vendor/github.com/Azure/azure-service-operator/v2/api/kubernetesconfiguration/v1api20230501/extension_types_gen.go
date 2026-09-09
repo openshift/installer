@@ -24,6 +24,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kubernetesconfiguration}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -341,7 +342,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Identity":
 	if extension.Identity != nil {
-		identity_ARM, err := (*extension.Identity).ConvertToARM(resolved)
+		identity_ARM, err := extension.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +355,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Plan":
 	if extension.Plan != nil {
-		plan_ARM, err := (*extension.Plan).ConvertToARM(resolved)
+		plan_ARM, err := extension.Plan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -374,7 +375,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties = &arm.Extension_Properties_Spec{}
 	}
 	if extension.AksAssignedIdentity != nil {
-		aksAssignedIdentity_ARM, err := (*extension.AksAssignedIdentity).ConvertToARM(resolved)
+		aksAssignedIdentity_ARM, err := extension.AksAssignedIdentity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -409,7 +410,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.ReleaseTrain = &releaseTrain
 	}
 	if extension.Scope != nil {
-		scope_ARM, err := (*extension.Scope).ConvertToARM(resolved)
+		scope_ARM, err := extension.Scope.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -423,7 +424,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "SystemData":
 	if extension.SystemData != nil {
-		systemData_ARM, err := (*extension.SystemData).ConvertToARM(resolved)
+		systemData_ARM, err := extension.SystemData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1353,8 +1354,6 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 	if source.Statuses != nil {
 		statusList := make([]ExtensionStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status ExtensionStatus_STATUS
 			err := status.AssignProperties_From_ExtensionStatus_STATUS(&statusItem)
 			if err != nil {
@@ -1512,8 +1511,6 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 	if extension.Statuses != nil {
 		statusList := make([]storage.ExtensionStatus_STATUS, len(extension.Statuses))
 		for statusIndex, statusItem := range extension.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.ExtensionStatus_STATUS
 			err := statusItem.AssignProperties_To_ExtensionStatus_STATUS(&status)
 			if err != nil {
@@ -1636,8 +1633,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 	if source.AdditionalInfo != nil {
 		additionalInfoList := make([]ErrorAdditionalInfo_STATUS, len(source.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range source.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
@@ -1657,8 +1652,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 	if source.Details != nil {
 		detailList := make([]ErrorDetail_STATUS_Unrolled, len(source.Details))
 		for detailIndex, detailItem := range source.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detailLocal ErrorDetail_STATUS_Unrolled
 			err := detailLocal.AssignProperties_From_ErrorDetail_STATUS_Unrolled(&detailItem)
 			if err != nil {
@@ -1690,8 +1683,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 	if detail.AdditionalInfo != nil {
 		additionalInfoList := make([]storage.ErrorAdditionalInfo_STATUS, len(detail.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range detail.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
@@ -1711,8 +1702,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 	if detail.Details != nil {
 		detailList := make([]storage.ErrorDetail_STATUS_Unrolled, len(detail.Details))
 		for detailIndex, detailItem := range detail.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detailLocal storage.ErrorDetail_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
 			if err != nil {
@@ -1950,8 +1939,6 @@ func (operator *ExtensionOperatorSpec) AssignProperties_From_ExtensionOperatorSp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1980,8 +1967,6 @@ func (operator *ExtensionOperatorSpec) AssignProperties_From_ExtensionOperatorSp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2007,8 +1992,6 @@ func (operator *ExtensionOperatorSpec) AssignProperties_To_ExtensionOperatorSpec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2037,8 +2020,6 @@ func (operator *ExtensionOperatorSpec) AssignProperties_To_ExtensionOperatorSpec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2709,7 +2690,7 @@ func (scope *Scope) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "Cluster":
 	if scope.Cluster != nil {
-		cluster_ARM, err := (*scope.Cluster).ConvertToARM(resolved)
+		cluster_ARM, err := scope.Cluster.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2719,7 +2700,7 @@ func (scope *Scope) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "Namespace":
 	if scope.Namespace != nil {
-		namespace_ARM, err := (*scope.Namespace).ConvertToARM(resolved)
+		namespace_ARM, err := scope.Namespace.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3375,8 +3356,6 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInf
 	if source.Info != nil {
 		infoMap := make(map[string]v1.JSON, len(source.Info))
 		for infoKey, infoValue := range source.Info {
-			// Shadow the loop variable to avoid aliasing
-			infoValue := infoValue
 			infoMap[infoKey] = *infoValue.DeepCopy()
 		}
 		info.Info = infoMap
@@ -3400,8 +3379,6 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_To_ErrorAdditionalInfo_
 	if info.Info != nil {
 		infoMap := make(map[string]v1.JSON, len(info.Info))
 		for infoKey, infoValue := range info.Info {
-			// Shadow the loop variable to avoid aliasing
-			infoValue := infoValue
 			infoMap[infoKey] = *infoValue.DeepCopy()
 		}
 		destination.Info = infoMap
@@ -3490,8 +3467,6 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 	if source.AdditionalInfo != nil {
 		additionalInfoList := make([]ErrorAdditionalInfo_STATUS, len(source.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range source.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
@@ -3526,8 +3501,6 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STA
 	if unrolled.AdditionalInfo != nil {
 		additionalInfoList := make([]storage.ErrorAdditionalInfo_STATUS, len(unrolled.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range unrolled.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {

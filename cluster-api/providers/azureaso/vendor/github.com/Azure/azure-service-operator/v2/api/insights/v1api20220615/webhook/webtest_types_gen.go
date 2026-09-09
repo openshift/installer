@@ -116,7 +116,12 @@ func (webtest *Webtest) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (webtest *Webtest) createValidations() []func(ctx context.Context, obj *v20220615.Webtest) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220615.Webtest) (admission.Warnings, error){webtest.validateResourceReferences, webtest.validateOwnerReference, webtest.validateSecretDestinations, webtest.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220615.Webtest) (admission.Warnings, error){
+		webtest.validateResourceReferences,
+		webtest.validateOwnerReference,
+		webtest.validateSecretDestinations,
+		webtest.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

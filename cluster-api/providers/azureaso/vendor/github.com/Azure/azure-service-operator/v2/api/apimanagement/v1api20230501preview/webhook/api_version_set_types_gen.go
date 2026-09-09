@@ -116,7 +116,12 @@ func (versionSet *ApiVersionSet) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (versionSet *ApiVersionSet) createValidations() []func(ctx context.Context, obj *v20230501p.ApiVersionSet) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.ApiVersionSet) (admission.Warnings, error){versionSet.validateResourceReferences, versionSet.validateOwnerReference, versionSet.validateSecretDestinations, versionSet.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.ApiVersionSet) (admission.Warnings, error){
+		versionSet.validateResourceReferences,
+		versionSet.validateOwnerReference,
+		versionSet.validateSecretDestinations,
+		versionSet.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

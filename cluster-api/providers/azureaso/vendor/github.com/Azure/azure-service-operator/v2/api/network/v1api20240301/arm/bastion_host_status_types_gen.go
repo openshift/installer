@@ -90,24 +90,6 @@ type BastionHostPropertiesFormat_NetworkAcls_STATUS struct {
 	IpRules []IPRule_STATUS `json:"ipRules,omitempty"`
 }
 
-// The current provisioning state.
-type ProvisioningState_STATUS string
-
-const (
-	ProvisioningState_STATUS_Deleting  = ProvisioningState_STATUS("Deleting")
-	ProvisioningState_STATUS_Failed    = ProvisioningState_STATUS("Failed")
-	ProvisioningState_STATUS_Succeeded = ProvisioningState_STATUS("Succeeded")
-	ProvisioningState_STATUS_Updating  = ProvisioningState_STATUS("Updating")
-)
-
-// Mapping from string to ProvisioningState_STATUS
-var provisioningState_STATUS_Values = map[string]ProvisioningState_STATUS{
-	"deleting":  ProvisioningState_STATUS_Deleting,
-	"failed":    ProvisioningState_STATUS_Failed,
-	"succeeded": ProvisioningState_STATUS_Succeeded,
-	"updating":  ProvisioningState_STATUS_Updating,
-}
-
 type Sku_Name_STATUS string
 
 const (
@@ -123,12 +105,6 @@ var sku_Name_STATUS_Values = map[string]Sku_Name_STATUS{
 	"developer": Sku_Name_STATUS_Developer,
 	"premium":   Sku_Name_STATUS_Premium,
 	"standard":  Sku_Name_STATUS_Standard,
-}
-
-// Reference to another subresource.
-type SubResource_STATUS struct {
-	// Id: Resource ID.
-	Id *string `json:"id,omitempty"`
 }
 
 type IPRule_STATUS struct {

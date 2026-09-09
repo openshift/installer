@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=privateendpointsprivatednszonegroups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={privateendpointsprivatednszonegroups/status,privateendpointsprivatednszonegroups/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.PrivateEndpointsPrivateDnsZoneGroup
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/privateEndpoint.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/privateEndpoint.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateEndpoints/{privateEndpointName}/privateDnsZoneGroups/{privateDnsZoneGroupName}
 type PrivateEndpointsPrivateDnsZoneGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) GetConditions() conditions.Con
 // SetConditions sets the conditions on the resource status
 func (group *PrivateEndpointsPrivateDnsZoneGroup) SetConditions(conditions conditions.Conditions) {
 	group.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &PrivateEndpointsPrivateDnsZoneGroup{}
+
+// ConvertFrom populates our PrivateEndpointsPrivateDnsZoneGroup from the provided hub PrivateEndpointsPrivateDnsZoneGroup
+func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.PrivateEndpointsPrivateDnsZoneGroup)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/PrivateEndpointsPrivateDnsZoneGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup(source)
+}
+
+// ConvertTo populates the provided hub PrivateEndpointsPrivateDnsZoneGroup from our PrivateEndpointsPrivateDnsZoneGroup
+func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.PrivateEndpointsPrivateDnsZoneGroup)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/PrivateEndpointsPrivateDnsZoneGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup(destination)
 }
 
 var _ configmaps.Exporter = &PrivateEndpointsPrivateDnsZoneGroup{}
@@ -142,8 +164,75 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) SetStatus(status genruntime.Co
 	return nil
 }
 
-// Hub marks that this PrivateEndpointsPrivateDnsZoneGroup is the hub type for conversion
-func (group *PrivateEndpointsPrivateDnsZoneGroup) Hub() {}
+// AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup populates our PrivateEndpointsPrivateDnsZoneGroup from the provided source PrivateEndpointsPrivateDnsZoneGroup
+func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup(source *storage.PrivateEndpointsPrivateDnsZoneGroup) error {
+
+	// ObjectMeta
+	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec PrivateEndpointsPrivateDnsZoneGroup_Spec
+	err := spec.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_Spec() to populate field Spec")
+	}
+	group.Spec = spec
+
+	// Status
+	var status PrivateEndpointsPrivateDnsZoneGroup_STATUS
+	err = status.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_STATUS() to populate field Status")
+	}
+	group.Status = status
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroup); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup populates the provided destination PrivateEndpointsPrivateDnsZoneGroup from our PrivateEndpointsPrivateDnsZoneGroup
+func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup(destination *storage.PrivateEndpointsPrivateDnsZoneGroup) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.PrivateEndpointsPrivateDnsZoneGroup_Spec
+	err := group.Spec.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS
+	err = group.Status.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroup); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (group *PrivateEndpointsPrivateDnsZoneGroup) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) OriginalGVK() *schema.GroupVer
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.PrivateEndpointsPrivateDnsZoneGroup
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/privateEndpoint.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/privateEndpoint.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateEndpoints/{privateEndpointName}/privateDnsZoneGroups/{privateDnsZoneGroupName}
 type PrivateEndpointsPrivateDnsZoneGroupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []PrivateEndpointsPrivateDnsZoneGroup `json:"items"`
+}
+
+type augmentConversionForPrivateEndpointsPrivateDnsZoneGroup interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointsPrivateDnsZoneGroup) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointsPrivateDnsZoneGroup) error
 }
 
 // Storage version of v1api20240301.PrivateEndpointsPrivateDnsZoneGroup_Spec
@@ -186,20 +280,184 @@ var _ genruntime.ConvertibleSpec = &PrivateEndpointsPrivateDnsZoneGroup_Spec{}
 
 // ConvertSpecFrom populates our PrivateEndpointsPrivateDnsZoneGroup_Spec from the provided source
 func (group *PrivateEndpointsPrivateDnsZoneGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.PrivateEndpointsPrivateDnsZoneGroup_Spec)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_Spec(src)
 	}
 
-	return source.ConvertSpecTo(group)
+	// Convert to an intermediate form
+	src = &storage.PrivateEndpointsPrivateDnsZoneGroup_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our PrivateEndpointsPrivateDnsZoneGroup_Spec
 func (group *PrivateEndpointsPrivateDnsZoneGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.PrivateEndpointsPrivateDnsZoneGroup_Spec)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.PrivateEndpointsPrivateDnsZoneGroup_Spec{}
+	err := group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_Spec populates our PrivateEndpointsPrivateDnsZoneGroup_Spec from the provided source PrivateEndpointsPrivateDnsZoneGroup_Spec
+func (group *PrivateEndpointsPrivateDnsZoneGroup_Spec) AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_Spec(source *storage.PrivateEndpointsPrivateDnsZoneGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	group.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec PrivateEndpointsPrivateDnsZoneGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	group.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		group.Owner = &owner
+	} else {
+		group.Owner = nil
+	}
+
+	// PrivateDnsZoneConfigs
+	if source.PrivateDnsZoneConfigs != nil {
+		privateDnsZoneConfigList := make([]PrivateDnsZoneConfig, len(source.PrivateDnsZoneConfigs))
+		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range source.PrivateDnsZoneConfigs {
+			var privateDnsZoneConfig PrivateDnsZoneConfig
+			err := privateDnsZoneConfig.AssignProperties_From_PrivateDnsZoneConfig(&privateDnsZoneConfigItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZoneConfig() to populate field PrivateDnsZoneConfigs")
+			}
+			privateDnsZoneConfigList[privateDnsZoneConfigIndex] = privateDnsZoneConfig
+		}
+		group.PrivateDnsZoneConfigs = privateDnsZoneConfigList
+	} else {
+		group.PrivateDnsZoneConfigs = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_Spec populates the provided destination PrivateEndpointsPrivateDnsZoneGroup_Spec from our PrivateEndpointsPrivateDnsZoneGroup_Spec
+func (group *PrivateEndpointsPrivateDnsZoneGroup_Spec) AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_Spec(destination *storage.PrivateEndpointsPrivateDnsZoneGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// AzureName
+	destination.AzureName = group.AzureName
+
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.PrivateEndpointsPrivateDnsZoneGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = group.OriginalVersion
+
+	// Owner
+	if group.Owner != nil {
+		owner := group.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PrivateDnsZoneConfigs
+	if group.PrivateDnsZoneConfigs != nil {
+		privateDnsZoneConfigList := make([]storage.PrivateDnsZoneConfig, len(group.PrivateDnsZoneConfigs))
+		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range group.PrivateDnsZoneConfigs {
+			var privateDnsZoneConfig storage.PrivateDnsZoneConfig
+			err := privateDnsZoneConfigItem.AssignProperties_To_PrivateDnsZoneConfig(&privateDnsZoneConfig)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZoneConfig() to populate field PrivateDnsZoneConfigs")
+			}
+			privateDnsZoneConfigList[privateDnsZoneConfigIndex] = privateDnsZoneConfig
+		}
+		destination.PrivateDnsZoneConfigs = privateDnsZoneConfigList
+	} else {
+		destination.PrivateDnsZoneConfigs = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PrivateEndpointsPrivateDnsZoneGroup_STATUS
@@ -217,20 +475,172 @@ var _ genruntime.ConvertibleStatus = &PrivateEndpointsPrivateDnsZoneGroup_STATUS
 
 // ConvertStatusFrom populates our PrivateEndpointsPrivateDnsZoneGroup_STATUS from the provided source
 func (group *PrivateEndpointsPrivateDnsZoneGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(group)
+	// Convert to an intermediate form
+	src = &storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our PrivateEndpointsPrivateDnsZoneGroup_STATUS
 func (group *PrivateEndpointsPrivateDnsZoneGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS{}
+	err := group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_STATUS populates our PrivateEndpointsPrivateDnsZoneGroup_STATUS from the provided source PrivateEndpointsPrivateDnsZoneGroup_STATUS
+func (group *PrivateEndpointsPrivateDnsZoneGroup_STATUS) AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup_STATUS(source *storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Etag
+	group.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	group.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	group.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateDnsZoneConfigs
+	if source.PrivateDnsZoneConfigs != nil {
+		privateDnsZoneConfigList := make([]PrivateDnsZoneConfig_STATUS, len(source.PrivateDnsZoneConfigs))
+		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range source.PrivateDnsZoneConfigs {
+			var privateDnsZoneConfig PrivateDnsZoneConfig_STATUS
+			err := privateDnsZoneConfig.AssignProperties_From_PrivateDnsZoneConfig_STATUS(&privateDnsZoneConfigItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZoneConfig_STATUS() to populate field PrivateDnsZoneConfigs")
+			}
+			privateDnsZoneConfigList[privateDnsZoneConfigIndex] = privateDnsZoneConfig
+		}
+		group.PrivateDnsZoneConfigs = privateDnsZoneConfigList
+	} else {
+		group.PrivateDnsZoneConfigs = nil
+	}
+
+	// ProvisioningState
+	group.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_STATUS populates the provided destination PrivateEndpointsPrivateDnsZoneGroup_STATUS from our PrivateEndpointsPrivateDnsZoneGroup_STATUS
+func (group *PrivateEndpointsPrivateDnsZoneGroup_STATUS) AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup_STATUS(destination *storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(group.Conditions)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(group.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(group.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(group.Name)
+
+	// PrivateDnsZoneConfigs
+	if group.PrivateDnsZoneConfigs != nil {
+		privateDnsZoneConfigList := make([]storage.PrivateDnsZoneConfig_STATUS, len(group.PrivateDnsZoneConfigs))
+		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range group.PrivateDnsZoneConfigs {
+			var privateDnsZoneConfig storage.PrivateDnsZoneConfig_STATUS
+			err := privateDnsZoneConfigItem.AssignProperties_To_PrivateDnsZoneConfig_STATUS(&privateDnsZoneConfig)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZoneConfig_STATUS() to populate field PrivateDnsZoneConfigs")
+			}
+			privateDnsZoneConfigList[privateDnsZoneConfigIndex] = privateDnsZoneConfig
+		}
+		destination.PrivateDnsZoneConfigs = privateDnsZoneConfigList
+	} else {
+		destination.PrivateDnsZoneConfigs = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(group.ProvisioningState)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointsPrivateDnsZoneGroup_Spec) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointsPrivateDnsZoneGroup_Spec) error
+}
+
+type augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointsPrivateDnsZoneGroup_STATUS) error
 }
 
 // Storage version of v1api20240301.PrivateDnsZoneConfig
@@ -243,6 +653,78 @@ type PrivateDnsZoneConfig struct {
 	PropertyBag             genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_PrivateDnsZoneConfig populates our PrivateDnsZoneConfig from the provided source PrivateDnsZoneConfig
+func (config *PrivateDnsZoneConfig) AssignProperties_From_PrivateDnsZoneConfig(source *storage.PrivateDnsZoneConfig) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	config.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateDnsZoneReference
+	if source.PrivateDnsZoneReference != nil {
+		privateDnsZoneReference := source.PrivateDnsZoneReference.Copy()
+		config.PrivateDnsZoneReference = &privateDnsZoneReference
+	} else {
+		config.PrivateDnsZoneReference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		config.PropertyBag = propertyBag
+	} else {
+		config.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZoneConfig interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForPrivateDnsZoneConfig); ok {
+		err := augmentedConfig.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateDnsZoneConfig populates the provided destination PrivateDnsZoneConfig from our PrivateDnsZoneConfig
+func (config *PrivateDnsZoneConfig) AssignProperties_To_PrivateDnsZoneConfig(destination *storage.PrivateDnsZoneConfig) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(config.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(config.Name)
+
+	// PrivateDnsZoneReference
+	if config.PrivateDnsZoneReference != nil {
+		privateDnsZoneReference := config.PrivateDnsZoneReference.Copy()
+		destination.PrivateDnsZoneReference = &privateDnsZoneReference
+	} else {
+		destination.PrivateDnsZoneReference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZoneConfig interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForPrivateDnsZoneConfig); ok {
+		err := augmentedConfig.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PrivateDnsZoneConfig_STATUS
 // PrivateDnsZoneConfig resource.
 type PrivateDnsZoneConfig_STATUS struct {
@@ -252,12 +734,235 @@ type PrivateDnsZoneConfig_STATUS struct {
 	RecordSets       []RecordSet_STATUS     `json:"recordSets,omitempty"`
 }
 
+// AssignProperties_From_PrivateDnsZoneConfig_STATUS populates our PrivateDnsZoneConfig_STATUS from the provided source PrivateDnsZoneConfig_STATUS
+func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_From_PrivateDnsZoneConfig_STATUS(source *storage.PrivateDnsZoneConfig_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	config.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateDnsZoneId
+	config.PrivateDnsZoneId = genruntime.ClonePointerToString(source.PrivateDnsZoneId)
+
+	// RecordSets
+	if source.RecordSets != nil {
+		recordSetList := make([]RecordSet_STATUS, len(source.RecordSets))
+		for recordSetIndex, recordSetItem := range source.RecordSets {
+			var recordSet RecordSet_STATUS
+			err := recordSet.AssignProperties_From_RecordSet_STATUS(&recordSetItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_RecordSet_STATUS() to populate field RecordSets")
+			}
+			recordSetList[recordSetIndex] = recordSet
+		}
+		config.RecordSets = recordSetList
+	} else {
+		config.RecordSets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		config.PropertyBag = propertyBag
+	} else {
+		config.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZoneConfig_STATUS interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForPrivateDnsZoneConfig_STATUS); ok {
+		err := augmentedConfig.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateDnsZoneConfig_STATUS populates the provided destination PrivateDnsZoneConfig_STATUS from our PrivateDnsZoneConfig_STATUS
+func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_To_PrivateDnsZoneConfig_STATUS(destination *storage.PrivateDnsZoneConfig_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(config.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(config.Name)
+
+	// PrivateDnsZoneId
+	destination.PrivateDnsZoneId = genruntime.ClonePointerToString(config.PrivateDnsZoneId)
+
+	// RecordSets
+	if config.RecordSets != nil {
+		recordSetList := make([]storage.RecordSet_STATUS, len(config.RecordSets))
+		for recordSetIndex, recordSetItem := range config.RecordSets {
+			var recordSet storage.RecordSet_STATUS
+			err := recordSetItem.AssignProperties_To_RecordSet_STATUS(&recordSet)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_RecordSet_STATUS() to populate field RecordSets")
+			}
+			recordSetList[recordSetIndex] = recordSet
+		}
+		destination.RecordSets = recordSetList
+	} else {
+		destination.RecordSets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateDnsZoneConfig_STATUS interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForPrivateDnsZoneConfig_STATUS); ok {
+		err := augmentedConfig.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PrivateEndpointsPrivateDnsZoneGroupOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type PrivateEndpointsPrivateDnsZoneGroupOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec populates our PrivateEndpointsPrivateDnsZoneGroupOperatorSpec from the provided source PrivateEndpointsPrivateDnsZoneGroupOperatorSpec
+func (operator *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec(source *storage.PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec populates the provided destination PrivateEndpointsPrivateDnsZoneGroupOperatorSpec from our PrivateEndpointsPrivateDnsZoneGroupOperatorSpec
+func (operator *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroupOperatorSpec(destination *storage.PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrivateDnsZoneConfig interface {
+	AssignPropertiesFrom(src *storage.PrivateDnsZoneConfig) error
+	AssignPropertiesTo(dst *storage.PrivateDnsZoneConfig) error
+}
+
+type augmentConversionForPrivateDnsZoneConfig_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateDnsZoneConfig_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateDnsZoneConfig_STATUS) error
+}
+
+type augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) error
 }
 
 // Storage version of v1api20240301.RecordSet_STATUS
@@ -270,6 +975,97 @@ type RecordSet_STATUS struct {
 	RecordSetName     *string                `json:"recordSetName,omitempty"`
 	RecordType        *string                `json:"recordType,omitempty"`
 	Ttl               *int                   `json:"ttl,omitempty"`
+}
+
+// AssignProperties_From_RecordSet_STATUS populates our RecordSet_STATUS from the provided source RecordSet_STATUS
+func (recordSet *RecordSet_STATUS) AssignProperties_From_RecordSet_STATUS(source *storage.RecordSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Fqdn
+	recordSet.Fqdn = genruntime.ClonePointerToString(source.Fqdn)
+
+	// IpAddresses
+	recordSet.IpAddresses = genruntime.CloneSliceOfString(source.IpAddresses)
+
+	// ProvisioningState
+	recordSet.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RecordSetName
+	recordSet.RecordSetName = genruntime.ClonePointerToString(source.RecordSetName)
+
+	// RecordType
+	recordSet.RecordType = genruntime.ClonePointerToString(source.RecordType)
+
+	// Ttl
+	recordSet.Ttl = genruntime.ClonePointerToInt(source.Ttl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		recordSet.PropertyBag = propertyBag
+	} else {
+		recordSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRecordSet_STATUS interface (if implemented) to customize the conversion
+	var recordSetAsAny any = recordSet
+	if augmentedRecordSet, ok := recordSetAsAny.(augmentConversionForRecordSet_STATUS); ok {
+		err := augmentedRecordSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RecordSet_STATUS populates the provided destination RecordSet_STATUS from our RecordSet_STATUS
+func (recordSet *RecordSet_STATUS) AssignProperties_To_RecordSet_STATUS(destination *storage.RecordSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(recordSet.PropertyBag)
+
+	// Fqdn
+	destination.Fqdn = genruntime.ClonePointerToString(recordSet.Fqdn)
+
+	// IpAddresses
+	destination.IpAddresses = genruntime.CloneSliceOfString(recordSet.IpAddresses)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(recordSet.ProvisioningState)
+
+	// RecordSetName
+	destination.RecordSetName = genruntime.ClonePointerToString(recordSet.RecordSetName)
+
+	// RecordType
+	destination.RecordType = genruntime.ClonePointerToString(recordSet.RecordType)
+
+	// Ttl
+	destination.Ttl = genruntime.ClonePointerToInt(recordSet.Ttl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRecordSet_STATUS interface (if implemented) to customize the conversion
+	var recordSetAsAny any = recordSet
+	if augmentedRecordSet, ok := recordSetAsAny.(augmentConversionForRecordSet_STATUS); ok {
+		err := augmentedRecordSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForRecordSet_STATUS interface {
+	AssignPropertiesFrom(src *storage.RecordSet_STATUS) error
+	AssignPropertiesTo(dst *storage.RecordSet_STATUS) error
 }
 
 func init() {

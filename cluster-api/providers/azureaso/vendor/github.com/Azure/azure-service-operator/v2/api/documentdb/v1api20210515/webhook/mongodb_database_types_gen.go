@@ -116,7 +116,12 @@ func (database *MongodbDatabase) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (database *MongodbDatabase) createValidations() []func(ctx context.Context, obj *v20210515.MongodbDatabase) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210515.MongodbDatabase) (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210515.MongodbDatabase) (admission.Warnings, error){
+		database.validateResourceReferences,
+		database.validateOwnerReference,
+		database.validateSecretDestinations,
+		database.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

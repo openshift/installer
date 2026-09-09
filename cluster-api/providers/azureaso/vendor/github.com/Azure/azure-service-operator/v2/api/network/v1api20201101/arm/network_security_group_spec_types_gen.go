@@ -42,6 +42,7 @@ type NetworkSecurityGroupPropertiesFormat struct {
 
 // Network security rule.
 type SecurityRule struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 
 	// Name: The name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -110,5 +111,6 @@ type SecurityRulePropertiesFormat_NetworkSecurityGroup_SubResourceEmbedded struc
 
 // An application security group in a resource group.
 type ApplicationSecurityGroupSpec_NetworkSecurityGroup_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }

@@ -24,13 +24,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbformysql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/legacy/stable/2021-05-01/mysql.json
+// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/FlexibleServers/stable/2021-05-01/mysql.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DBforMySQL/flexibleServers/{serverName}
 type FlexibleServer struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -267,7 +268,7 @@ func (server *FlexibleServer) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/legacy/stable/2021-05-01/mysql.json
+// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/FlexibleServers/stable/2021-05-01/mysql.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DBforMySQL/flexibleServers/{serverName}
 type FlexibleServerList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -349,7 +350,7 @@ type FlexibleServer_Spec struct {
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// Version: Server version.
-	Version *ServerVersion `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &FlexibleServer_Spec{}
@@ -363,7 +364,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "Identity":
 	if server.Identity != nil {
-		identity_ARM, err := (*server.Identity).ConvertToARM(resolved)
+		identity_ARM, err := server.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +415,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.AvailabilityZone = &availabilityZone
 	}
 	if server.Backup != nil {
-		backup_ARM, err := (*server.Backup).ConvertToARM(resolved)
+		backup_ARM, err := server.Backup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -428,7 +429,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.CreateMode = &createMode
 	}
 	if server.DataEncryption != nil {
-		dataEncryption_ARM, err := (*server.DataEncryption).ConvertToARM(resolved)
+		dataEncryption_ARM, err := server.DataEncryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -436,7 +437,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.DataEncryption = &dataEncryption
 	}
 	if server.HighAvailability != nil {
-		highAvailability_ARM, err := (*server.HighAvailability).ConvertToARM(resolved)
+		highAvailability_ARM, err := server.HighAvailability.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -444,7 +445,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.HighAvailability = &highAvailability
 	}
 	if server.MaintenanceWindow != nil {
-		maintenanceWindow_ARM, err := (*server.MaintenanceWindow).ConvertToARM(resolved)
+		maintenanceWindow_ARM, err := server.MaintenanceWindow.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -452,7 +453,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.MaintenanceWindow = &maintenanceWindow
 	}
 	if server.Network != nil {
-		network_ARM, err := (*server.Network).ConvertToARM(resolved)
+		network_ARM, err := server.Network.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -474,7 +475,7 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.SourceServerResourceId = &sourceServerResourceId
 	}
 	if server.Storage != nil {
-		storage_ARM, err := (*server.Storage).ConvertToARM(resolved)
+		storage_ARM, err := server.Storage.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -482,15 +483,13 @@ func (server *FlexibleServer_Spec) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.Storage = &storage
 	}
 	if server.Version != nil {
-		var temp string
-		temp = string(*server.Version)
-		version := arm.ServerVersion(temp)
+		version := *server.Version
 		result.Properties.Version = &version
 	}
 
 	// Set property "Sku":
 	if server.Sku != nil {
-		sku_ARM, err := (*server.Sku).ConvertToARM(resolved)
+		sku_ARM, err := server.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -715,9 +714,7 @@ func (server *FlexibleServer_Spec) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Version != nil {
-			var temp string
-			temp = string(*typedInput.Properties.Version)
-			version := ServerVersion(temp)
+			version := *typedInput.Properties.Version
 			server.Version = &version
 		}
 	}
@@ -943,13 +940,7 @@ func (server *FlexibleServer_Spec) AssignProperties_From_FlexibleServer_Spec(sou
 	server.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// Version
-	if source.Version != nil {
-		version := *source.Version
-		versionTemp := genruntime.ToEnum(version, serverVersion_Values)
-		server.Version = &versionTemp
-	} else {
-		server.Version = nil
-	}
+	server.Version = genruntime.ClonePointerToString(source.Version)
 
 	// No error
 	return nil
@@ -1125,12 +1116,7 @@ func (server *FlexibleServer_Spec) AssignProperties_To_FlexibleServer_Spec(desti
 	destination.Tags = genruntime.CloneMapOfStringToString(server.Tags)
 
 	// Version
-	if server.Version != nil {
-		version := string(*server.Version)
-		destination.Version = &version
-	} else {
-		destination.Version = nil
-	}
+	destination.Version = genruntime.ClonePointerToString(server.Version)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -1227,7 +1213,7 @@ type FlexibleServer_STATUS struct {
 	Type *string `json:"type,omitempty"`
 
 	// Version: Server version.
-	Version *ServerVersion_STATUS `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &FlexibleServer_STATUS{}
@@ -1536,9 +1522,7 @@ func (server *FlexibleServer_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Version != nil {
-			var temp string
-			temp = string(*typedInput.Properties.Version)
-			version := ServerVersion_STATUS(temp)
+			version := *typedInput.Properties.Version
 			server.Version = &version
 		}
 	}
@@ -1722,13 +1706,7 @@ func (server *FlexibleServer_STATUS) AssignProperties_From_FlexibleServer_STATUS
 	server.Type = genruntime.ClonePointerToString(source.Type)
 
 	// Version
-	if source.Version != nil {
-		version := *source.Version
-		versionTemp := genruntime.ToEnum(version, serverVersion_STATUS_Values)
-		server.Version = &versionTemp
-	} else {
-		server.Version = nil
-	}
+	server.Version = genruntime.ClonePointerToString(source.Version)
 
 	// No error
 	return nil
@@ -1908,12 +1886,7 @@ func (server *FlexibleServer_STATUS) AssignProperties_To_FlexibleServer_STATUS(d
 	destination.Type = genruntime.ClonePointerToString(server.Type)
 
 	// Version
-	if server.Version != nil {
-		version := string(*server.Version)
-		destination.Version = &version
-	} else {
-		destination.Version = nil
-	}
+	destination.Version = genruntime.ClonePointerToString(server.Version)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2487,8 +2460,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServer
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2517,8 +2488,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServer
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2556,8 +2525,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2586,8 +2553,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2929,8 +2894,6 @@ func (identity *Identity) AssignProperties_From_Identity(source *storage.Identit
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -2964,8 +2927,6 @@ func (identity *Identity) AssignProperties_To_Identity(destination *storage.Iden
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -3072,8 +3033,6 @@ func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v1.JSON, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			userAssignedIdentityMap[userAssignedIdentityKey] = *userAssignedIdentityValue.DeepCopy()
 		}
 		identity.UserAssignedIdentities = userAssignedIdentityMap
@@ -3108,8 +3067,6 @@ func (identity *Identity_STATUS) AssignProperties_To_Identity_STATUS(destination
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v1.JSON, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			userAssignedIdentityMap[userAssignedIdentityKey] = *userAssignedIdentityValue.DeepCopy()
 		}
 		destination.UserAssignedIdentities = userAssignedIdentityMap
@@ -3676,35 +3633,6 @@ var serverProperties_State_STATUS_Values = map[string]ServerProperties_State_STA
 	"stopped":  ServerProperties_State_STATUS_Stopped,
 	"stopping": ServerProperties_State_STATUS_Stopping,
 	"updating": ServerProperties_State_STATUS_Updating,
-}
-
-// The version of a server.
-// +kubebuilder:validation:Enum={"5.7","8.0.21"}
-type ServerVersion string
-
-const (
-	ServerVersion_57   = ServerVersion("5.7")
-	ServerVersion_8021 = ServerVersion("8.0.21")
-)
-
-// Mapping from string to ServerVersion
-var serverVersion_Values = map[string]ServerVersion{
-	"5.7":    ServerVersion_57,
-	"8.0.21": ServerVersion_8021,
-}
-
-// The version of a server.
-type ServerVersion_STATUS string
-
-const (
-	ServerVersion_STATUS_57   = ServerVersion_STATUS("5.7")
-	ServerVersion_STATUS_8021 = ServerVersion_STATUS("8.0.21")
-)
-
-// Mapping from string to ServerVersion_STATUS
-var serverVersion_STATUS_Values = map[string]ServerVersion_STATUS{
-	"5.7":    ServerVersion_STATUS_57,
-	"8.0.21": ServerVersion_STATUS_8021,
 }
 
 // Billing information related properties of a server.

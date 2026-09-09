@@ -192,7 +192,9 @@ type AKS struct {
 
 	// Properties: AKS properties
 	Properties *AKS_Properties `json:"properties,omitempty"`
-	ResourceId *string         `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type AmlCompute struct {
@@ -211,7 +213,9 @@ type AmlCompute struct {
 
 	// Properties: Properties of AmlCompute
 	Properties *AmlComputeProperties `json:"properties,omitempty"`
-	ResourceId *string               `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type ComputeInstance struct {
@@ -230,7 +234,9 @@ type ComputeInstance struct {
 
 	// Properties: Properties of ComputeInstance
 	Properties *ComputeInstanceProperties `json:"properties,omitempty"`
-	ResourceId *string                    `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type Databricks struct {
@@ -249,7 +255,9 @@ type Databricks struct {
 
 	// Properties: Properties of Databricks
 	Properties *DatabricksProperties `json:"properties,omitempty"`
-	ResourceId *string               `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type DataFactory struct {
@@ -264,8 +272,10 @@ type DataFactory struct {
 
 	// DisableLocalAuth: Opt-out of local authentication and ensure customers can use only MSI and AAD exclusively for
 	// authentication.
-	DisableLocalAuth *bool   `json:"disableLocalAuth,omitempty"`
-	ResourceId       *string `json:"resourceId,omitempty"`
+	DisableLocalAuth *bool `json:"disableLocalAuth,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type DataLakeAnalytics struct {
@@ -282,7 +292,9 @@ type DataLakeAnalytics struct {
 	// authentication.
 	DisableLocalAuth *bool                         `json:"disableLocalAuth,omitempty"`
 	Properties       *DataLakeAnalytics_Properties `json:"properties,omitempty"`
-	ResourceId       *string                       `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type HDInsight struct {
@@ -301,7 +313,9 @@ type HDInsight struct {
 
 	// Properties: HDInsight compute properties
 	Properties *HDInsightProperties `json:"properties,omitempty"`
-	ResourceId *string              `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type Kubernetes struct {
@@ -320,7 +334,9 @@ type Kubernetes struct {
 
 	// Properties: Properties of Kubernetes
 	Properties *KubernetesProperties `json:"properties,omitempty"`
-	ResourceId *string               `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type SynapseSpark struct {
@@ -337,7 +353,9 @@ type SynapseSpark struct {
 	// authentication.
 	DisableLocalAuth *bool                    `json:"disableLocalAuth,omitempty"`
 	Properties       *SynapseSpark_Properties `json:"properties,omitempty"`
-	ResourceId       *string                  `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type VirtualMachine struct {
@@ -354,7 +372,9 @@ type VirtualMachine struct {
 	// authentication.
 	DisableLocalAuth *bool                      `json:"disableLocalAuth,omitempty"`
 	Properties       *VirtualMachine_Properties `json:"properties,omitempty"`
-	ResourceId       *string                    `json:"resourceId,omitempty"`
+
+	// ResourceId: ARM resource id of the underlying compute
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 // +kubebuilder:validation:Enum={"AKS"}
@@ -693,7 +713,9 @@ type AksNetworkingConfiguration struct {
 	// ServiceCidr: A CIDR notation IP range from which to assign service cluster IPs. It must not overlap with any Subnet IP
 	// ranges.
 	ServiceCidr *string `json:"serviceCidr,omitempty"`
-	SubnetId    *string `json:"subnetId,omitempty"`
+
+	// SubnetId: Virtual network subnet resource ID the compute nodes belong to
+	SubnetId *string `json:"subnetId,omitempty"`
 }
 
 // +kubebuilder:validation:Enum={"Linux","Windows"}
@@ -806,6 +828,7 @@ type PersonalComputeInstanceSettings struct {
 
 // Represents a resource ID. For example, for a subnet, it is the resource URL for the subnet.
 type ResourceId struct {
+	// Id: The ID of the resource
 	Id *string `json:"id,omitempty"`
 }
 
@@ -862,6 +885,7 @@ type UserAccountCredentials struct {
 
 // Virtual Machine image for Windows AML Compute
 type VirtualMachineImage struct {
+	// Id: Virtual Machine image path
 	Id *string `json:"id,omitempty"`
 }
 
