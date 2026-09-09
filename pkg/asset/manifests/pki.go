@@ -11,7 +11,6 @@ import (
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/tls"
-	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 var pkiCfgFilename = path.Join(manifestDir, "cluster-pki-02-config.yaml")
@@ -46,14 +45,13 @@ func (p *PKIConfiguration) Generate(_ context.Context, dependencies asset.Parent
 		return nil
 	}
 
+	// A user-provided pki stanza selects Custom management so the configured
+	// profile stays pinned across releases; otherwise Default is used, allowing
+	// the profile to track OpenShift best practices as they evolve.
 	certMgmt := configv1alpha1.PKICertificateManagement{
 		Mode: configv1alpha1.PKICertificateManagementModeDefault,
 	}
-
-	// When ConfigurablePKIEnabled is true but the profile equals the default,
-	// it means no user customization was provided.
-	defaultProfile := libpki.DefaultPKIProfile()
-	if signerKeyParams.Profile != defaultProfile {
+	if signerKeyParams.UserProvidedProfile {
 		certMgmt = configv1alpha1.PKICertificateManagement{
 			Mode: configv1alpha1.PKICertificateManagementModeCustom,
 			Custom: configv1alpha1.CustomPKIPolicy{

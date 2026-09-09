@@ -24,6 +24,12 @@ type SignerKeyParams struct {
 	// ConfigurablePKIEnabled indicates whether the ConfigurablePKI feature
 	// gate is active. When false, cert assets take the legacy code path.
 	ConfigurablePKIEnabled bool
+
+	// UserProvidedProfile indicates whether the user specified a pki stanza in
+	// install-config. It selects Custom over Default certificate management so
+	// that an explicitly configured profile stays pinned even when it matches
+	// the current default. Only meaningful when ConfigurablePKIEnabled is true.
+	UserProvidedProfile bool
 }
 
 var _ asset.WritableAsset = (*SignerKeyParams)(nil)
@@ -67,5 +73,6 @@ func (s *SignerKeyParams) Load(f asset.FileFetcher) (bool, error) {
 		return found, err
 	}
 	s.Profile, s.ConfigurablePKIEnabled = pkidefaults.EffectiveProfile(base.Config)
+	s.UserProvidedProfile = s.ConfigurablePKIEnabled && base.Config.PKI != nil
 	return true, nil
 }
