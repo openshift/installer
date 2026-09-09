@@ -3,7 +3,6 @@ package tls
 import (
 	"bytes"
 	"context"
-	"crypto/x509"
 	"fmt"
 	"os"
 
@@ -180,17 +179,15 @@ func (c *SignedCertKey) Generate(_ context.Context,
 		libcrypto.WithLifetime(cfg.Validity),
 	}
 
+	// library-go sets the key usage from the key algorithm and the extended key
+	// usage from the certificate type (serving -> ServerAuth, client ->
+	// ClientAuth, peer -> both), so cfg.KeyUsages and cfg.ExtKeyUsages are not
+	// applied on this path.
 	switch cfg.CertType {
 	case libpki.CertificateTypeServing:
 		hostnames := hostnamesFromCfg(cfg)
 		if hostnames.Len() == 0 {
 			return fmt.Errorf("serving certificate %q requires at least one DNS name or IP address", filenameBase)
-		}
-		if len(cfg.ExtKeyUsages) > 0 {
-			opts = append(opts, libcrypto.WithExtensions(func(template *x509.Certificate) error {
-				template.ExtKeyUsage = cfg.ExtKeyUsages
-				return nil
-			}))
 		}
 		tlsCfg, err = ca.NewServerCertificate(hostnames, keyGen, opts...)
 	case libpki.CertificateTypeClient:
@@ -202,12 +199,6 @@ func (c *SignedCertKey) Generate(_ context.Context,
 			return fmt.Errorf("peer certificate %q requires at least one DNS name or IP address", filenameBase)
 		}
 		u := userInfoFromCfg(cfg)
-		if len(cfg.ExtKeyUsages) > 0 {
-			opts = append(opts, libcrypto.WithExtensions(func(template *x509.Certificate) error {
-				template.ExtKeyUsage = cfg.ExtKeyUsages
-				return nil
-			}))
-		}
 		tlsCfg, err = ca.NewPeerCertificate(hostnames, u, keyGen, opts...)
 	default:
 		return fmt.Errorf("unsupported certificate type: %v", cfg.CertType)
