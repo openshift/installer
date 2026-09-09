@@ -124,7 +124,12 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 	}
 
 	if len(p.DataDisks) > 0 {
-		allErrs = append(allErrs, validateDataDisk(p, poolName, fldPath.Child("dataDisks"))...)
+		if platform.CloudName == azure.StackCloud {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("dataDisks"),
+				fmt.Sprintf("data disks are not supported on %s", azure.StackCloud)))
+		} else {
+			allErrs = append(allErrs, validateDataDisk(p, poolName, fldPath.Child("dataDisks"))...)
+		}
 	}
 
 	if pool != nil {
