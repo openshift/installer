@@ -1510,9 +1510,15 @@ func TestValidateDiskTypeAvailability(t *testing.T) {
 		{
 			name:           "GCP API error returns field error",
 			diskType:       "pd-ssd",
-			mockErr:        &googleapi.Error{Code: http.StatusForbidden, Message: "forbidden"},
+			mockErr:        &googleapi.Error{Code: http.StatusBadRequest, Message: "bad request"},
 			expectedError:  true,
-			expectedErrMsg: `forbidden`,
+			expectedErrMsg: `bad request`,
+		},
+		{
+			name:         "GCP 403 permission denied degrades gracefully",
+			diskType:     "pd-ssd",
+			mockErr:      &googleapi.Error{Code: http.StatusForbidden, Message: "Required 'compute.diskTypes.get' permission"},
+			expectedWarn: `could not verify disk type pd-ssd availability`,
 		},
 		{
 			name:         "GCP 503 server error degrades gracefully",

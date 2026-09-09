@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -201,8 +202,12 @@ func validateDiskTypeAvailability(client API, fieldPath *field.Path, project, re
 
 	dt, dtZones, err := client.GetDiskTypeWithZones(context.TODO(), project, region, diskType)
 	if err != nil {
+		// Reading a disk type is not required to install, so a service account
+		// holding only the minimum set of install permissions is denied here. That
+		// says nothing about the configured disk type, so skip the check rather
+		// than report a bad value.
 		var gerr *googleapi.Error
-		if errors.As(err, &gerr) && gerr.Code < 500 {
+		if errors.As(err, &gerr) && gerr.Code < 500 && gerr.Code != http.StatusForbidden {
 			return append(allErrs, field.Invalid(fieldPath.Child("diskType"), diskType, err.Error()))
 		}
 		logrus.Warnf("could not verify disk type %s availability in %s, skipping API check: %v", diskType, region, err)
