@@ -237,6 +237,52 @@ func TestSignedCertKeyGenerateWithKeyGen(t *testing.T) {
 	}
 }
 
+func TestSignedCertKeyGenerateEmptyHostnames(t *testing.T) {
+	testCases := []struct {
+		name        string
+		certType    libpki.CertificateType
+		expectedErr string
+	}{
+		{
+			name:        "serving cert without SANs",
+			certType:    libpki.CertificateTypeServing,
+			expectedErr: `serving certificate "test-leaf" requires at least one DNS name or IP address`,
+		},
+		{
+			name:        "peer cert without SANs",
+			certType:    libpki.CertificateTypePeer,
+			expectedErr: `peer certificate "test-leaf" requires at least one DNS name or IP address`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			keyGen := libcrypto.RSAKeyPairGenerator{Bits: 2048}
+
+			rootCA := &SelfSignedCertKey{}
+			rootCACfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				IsCA:     true,
+			}
+			err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", keyGen)
+			assert.NoError(t, err, "failed to generate root CA")
+
+			// No DNSNames or IPAddresses: library-go would panic indexing the
+			// first hostname, so Generate must return an error instead.
+			leafCfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test.openshift.io"},
+				Validity: ValidityTenYears(),
+				CertType: tc.certType,
+			}
+
+			certKey := &SignedCertKey{}
+			err = certKey.Generate(context.Background(), leafCfg, rootCA, "test-leaf", DoNotAppendParent, keyGen)
+			assert.EqualError(t, err, tc.expectedErr)
+		})
+	}
+}
+
 func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
 	testCases := []struct {
 		name            string

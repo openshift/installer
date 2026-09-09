@@ -183,6 +183,9 @@ func (c *SignedCertKey) Generate(_ context.Context,
 	switch cfg.CertType {
 	case libpki.CertificateTypeServing:
 		hostnames := hostnamesFromCfg(cfg)
+		if hostnames.Len() == 0 {
+			return fmt.Errorf("serving certificate %q requires at least one DNS name or IP address", filenameBase)
+		}
 		if len(cfg.ExtKeyUsages) > 0 {
 			opts = append(opts, libcrypto.WithExtensions(func(template *x509.Certificate) error {
 				template.ExtKeyUsage = cfg.ExtKeyUsages
@@ -195,6 +198,9 @@ func (c *SignedCertKey) Generate(_ context.Context,
 		tlsCfg, err = ca.NewClientCertificate(u, keyGen, opts...)
 	case libpki.CertificateTypePeer:
 		hostnames := hostnamesFromCfg(cfg)
+		if hostnames.Len() == 0 {
+			return fmt.Errorf("peer certificate %q requires at least one DNS name or IP address", filenameBase)
+		}
 		u := userInfoFromCfg(cfg)
 		if len(cfg.ExtKeyUsages) > 0 {
 			opts = append(opts, libcrypto.WithExtensions(func(template *x509.Certificate) error {
