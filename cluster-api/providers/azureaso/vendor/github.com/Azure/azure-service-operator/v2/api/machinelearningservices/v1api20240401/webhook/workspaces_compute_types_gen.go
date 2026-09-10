@@ -116,7 +116,13 @@ func (compute *WorkspacesCompute) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (compute *WorkspacesCompute) createValidations() []func(ctx context.Context, obj *v20240401.WorkspacesCompute) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240401.WorkspacesCompute) (admission.Warnings, error){compute.validateResourceReferences, compute.validateOwnerReference, compute.validateSecretDestinations, compute.validateConfigMapDestinations, compute.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20240401.WorkspacesCompute) (admission.Warnings, error){
+		compute.validateResourceReferences,
+		compute.validateOwnerReference,
+		compute.validateSecretDestinations,
+		compute.validateConfigMapDestinations,
+		compute.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

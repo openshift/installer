@@ -104,7 +104,12 @@ func (authentication *ServersAzureADOnlyAuthentication) ValidateUpdate(ctx conte
 
 // createValidations validates the creation of the resource
 func (authentication *ServersAzureADOnlyAuthentication) createValidations() []func(ctx context.Context, obj *v20211101.ServersAzureADOnlyAuthentication) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersAzureADOnlyAuthentication) (admission.Warnings, error){authentication.validateResourceReferences, authentication.validateOwnerReference, authentication.validateSecretDestinations, authentication.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersAzureADOnlyAuthentication) (admission.Warnings, error){
+		authentication.validateResourceReferences,
+		authentication.validateOwnerReference,
+		authentication.validateSecretDestinations,
+		authentication.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

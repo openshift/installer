@@ -116,7 +116,12 @@ func (link *PrivateDnsZonesVirtualNetworkLink) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (link *PrivateDnsZonesVirtualNetworkLink) createValidations() []func(ctx context.Context, obj *v20200601.PrivateDnsZonesVirtualNetworkLink) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200601.PrivateDnsZonesVirtualNetworkLink) (admission.Warnings, error){link.validateResourceReferences, link.validateOwnerReference, link.validateSecretDestinations, link.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20200601.PrivateDnsZonesVirtualNetworkLink) (admission.Warnings, error){
+		link.validateResourceReferences,
+		link.validateOwnerReference,
+		link.validateSecretDestinations,
+		link.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

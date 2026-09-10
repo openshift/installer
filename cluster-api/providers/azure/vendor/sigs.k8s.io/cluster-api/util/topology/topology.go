@@ -21,14 +21,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
-// ShouldSkipImmutabilityChecks returns true if it is a dry-run request and the object has the
+// IsDryRunRequest returns true if it is a dry-run request and the object has the
 // TopologyDryRunAnnotation annotation set, false otherwise.
-// This ensures that the immutability check is skipped only when dry-running and when the operations has been invoked by the topology controller.
-// Instead, kubectl dry-run behavior remains consistent with the one user gets when doing kubectl apply (immutability is enforced).
-func ShouldSkipImmutabilityChecks(req admission.Request, obj metav1.Object) bool {
+func IsDryRunRequest(req admission.Request, obj metav1.Object) bool {
 	// Check if the request is a dry-run
 	if req.DryRun == nil || !*req.DryRun {
 		return false

@@ -69,25 +69,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
-	specs := s.Scope.VnetPeeringSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	// We go through the list of VnetPeeringSpecs to reconcile each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error creating) -> operationNotDoneError (i.e. creating in progress) -> no error (i.e. created)
-	var result error
-	for _, peeringSpec := range specs {
-		if _, err := s.CreateOrUpdateResource(ctx, peeringSpec, ServiceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-
-	s.Scope.UpdatePutStatus(infrav1.VnetPeeringReadyCondition, ServiceName, result)
-	return result
+	return azure.ReconcileAll(ctx, s.Reconciler, s.Scope, s.Scope.VnetPeeringSpecs(), ServiceName, infrav1.VnetPeeringReadyCondition)
 }
 
 // Delete deletes the peering with the provided name.
@@ -98,24 +80,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
-	specs := s.Scope.VnetPeeringSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	// We go through the list of VnetPeeringSpecs to delete each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error deleting) -> operationNotDoneError (i.e. deleting in progress) -> no error (i.e. deleted)
-	var result error
-	for _, peeringSpec := range specs {
-		if err := s.DeleteResource(ctx, peeringSpec, ServiceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-	s.Scope.UpdateDeleteStatus(infrav1.VnetPeeringReadyCondition, ServiceName, result)
-	return result
+	return azure.DeleteAll(ctx, s.Reconciler, s.Scope, s.Scope.VnetPeeringSpecs(), ServiceName, infrav1.VnetPeeringReadyCondition)
 }
 
 // IsManaged returns always returns true as CAPZ does not support BYO VNet peering.

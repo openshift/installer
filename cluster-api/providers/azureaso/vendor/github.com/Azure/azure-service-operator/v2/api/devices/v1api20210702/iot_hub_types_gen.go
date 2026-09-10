@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,devices}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /iothub/resource-manager/Microsoft.Devices/stable/2021-07-02/iothub.json
+// - Generated from: /iothub/resource-manager/Microsoft.Devices/IoTHub/stable/2021-07-02/iothub.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}
 type IotHub struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (iotHub *IotHub) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /iothub/resource-manager/Microsoft.Devices/stable/2021-07-02/iothub.json
+// - Generated from: /iothub/resource-manager/Microsoft.Devices/IoTHub/stable/2021-07-02/iothub.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{resourceName}
 type IotHubList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -294,7 +295,7 @@ func (iotHub *IotHub_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Identity":
 	if iotHub.Identity != nil {
-		identity_ARM, err := (*iotHub.Identity).ConvertToARM(resolved)
+		identity_ARM, err := iotHub.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -313,7 +314,7 @@ func (iotHub *IotHub_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Properties":
 	if iotHub.Properties != nil {
-		properties_ARM, err := (*iotHub.Properties).ConvertToARM(resolved)
+		properties_ARM, err := iotHub.Properties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -323,7 +324,7 @@ func (iotHub *IotHub_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Sku":
 	if iotHub.Sku != nil {
-		sku_ARM, err := (*iotHub.Sku).ConvertToARM(resolved)
+		sku_ARM, err := iotHub.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1106,8 +1107,6 @@ func (identity *ArmIdentity) AssignProperties_From_ArmIdentity(source *storage.A
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -1141,8 +1140,6 @@ func (identity *ArmIdentity) AssignProperties_To_ArmIdentity(destination *storag
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -1279,8 +1276,6 @@ func (identity *ArmIdentity_STATUS) AssignProperties_From_ArmIdentity_STATUS(sou
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]ArmUserIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity ArmUserIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ArmUserIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -1320,8 +1315,6 @@ func (identity *ArmIdentity_STATUS) AssignProperties_To_ArmIdentity_STATUS(desti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.ArmUserIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.ArmUserIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_ArmUserIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -1364,8 +1357,6 @@ func (operator *IotHubOperatorSpec) AssignProperties_From_IotHubOperatorSpec(sou
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1382,8 +1373,6 @@ func (operator *IotHubOperatorSpec) AssignProperties_From_IotHubOperatorSpec(sou
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1421,8 +1410,6 @@ func (operator *IotHubOperatorSpec) AssignProperties_To_IotHubOperatorSpec(desti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1439,8 +1426,6 @@ func (operator *IotHubOperatorSpec) AssignProperties_To_IotHubOperatorSpec(desti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1569,7 +1554,7 @@ func (properties *IotHubProperties) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "CloudToDevice":
 	if properties.CloudToDevice != nil {
-		cloudToDevice_ARM, err := (*properties.CloudToDevice).ConvertToARM(resolved)
+		cloudToDevice_ARM, err := properties.CloudToDevice.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1662,7 +1647,7 @@ func (properties *IotHubProperties) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "NetworkRuleSets":
 	if properties.NetworkRuleSets != nil {
-		networkRuleSets_ARM, err := (*properties.NetworkRuleSets).ConvertToARM(resolved)
+		networkRuleSets_ARM, err := properties.NetworkRuleSets.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1686,7 +1671,7 @@ func (properties *IotHubProperties) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Routing":
 	if properties.Routing != nil {
-		routing_ARM, err := (*properties.Routing).ConvertToARM(resolved)
+		routing_ARM, err := properties.Routing.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1895,8 +1880,6 @@ func (properties *IotHubProperties) AssignProperties_From_IotHubProperties(sourc
 	if source.AuthorizationPolicies != nil {
 		authorizationPolicyList := make([]SharedAccessSignatureAuthorizationRule, len(source.AuthorizationPolicies))
 		for authorizationPolicyIndex, authorizationPolicyItem := range source.AuthorizationPolicies {
-			// Shadow the loop variable to avoid aliasing
-			authorizationPolicyItem := authorizationPolicyItem
 			var authorizationPolicy SharedAccessSignatureAuthorizationRule
 			err := authorizationPolicy.AssignProperties_From_SharedAccessSignatureAuthorizationRule(&authorizationPolicyItem)
 			if err != nil {
@@ -1968,8 +1951,6 @@ func (properties *IotHubProperties) AssignProperties_From_IotHubProperties(sourc
 	if source.EventHubEndpoints != nil {
 		eventHubEndpointMap := make(map[string]EventHubProperties, len(source.EventHubEndpoints))
 		for eventHubEndpointKey, eventHubEndpointValue := range source.EventHubEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			eventHubEndpointValue := eventHubEndpointValue
 			var eventHubEndpoint EventHubProperties
 			err := eventHubEndpoint.AssignProperties_From_EventHubProperties(&eventHubEndpointValue)
 			if err != nil {
@@ -1995,8 +1976,6 @@ func (properties *IotHubProperties) AssignProperties_From_IotHubProperties(sourc
 	if source.IpFilterRules != nil {
 		ipFilterRuleList := make([]IpFilterRule, len(source.IpFilterRules))
 		for ipFilterRuleIndex, ipFilterRuleItem := range source.IpFilterRules {
-			// Shadow the loop variable to avoid aliasing
-			ipFilterRuleItem := ipFilterRuleItem
 			var ipFilterRule IpFilterRule
 			err := ipFilterRule.AssignProperties_From_IpFilterRule(&ipFilterRuleItem)
 			if err != nil {
@@ -2013,8 +1992,6 @@ func (properties *IotHubProperties) AssignProperties_From_IotHubProperties(sourc
 	if source.MessagingEndpoints != nil {
 		messagingEndpointMap := make(map[string]MessagingEndpointProperties, len(source.MessagingEndpoints))
 		for messagingEndpointKey, messagingEndpointValue := range source.MessagingEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			messagingEndpointValue := messagingEndpointValue
 			var messagingEndpoint MessagingEndpointProperties
 			err := messagingEndpoint.AssignProperties_From_MessagingEndpointProperties(&messagingEndpointValue)
 			if err != nil {
@@ -2075,8 +2052,6 @@ func (properties *IotHubProperties) AssignProperties_From_IotHubProperties(sourc
 	if source.StorageEndpoints != nil {
 		storageEndpointMap := make(map[string]StorageEndpointProperties, len(source.StorageEndpoints))
 		for storageEndpointKey, storageEndpointValue := range source.StorageEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			storageEndpointValue := storageEndpointValue
 			var storageEndpoint StorageEndpointProperties
 			err := storageEndpoint.AssignProperties_From_StorageEndpointProperties(&storageEndpointValue)
 			if err != nil {
@@ -2105,8 +2080,6 @@ func (properties *IotHubProperties) AssignProperties_To_IotHubProperties(destina
 	if properties.AuthorizationPolicies != nil {
 		authorizationPolicyList := make([]storage.SharedAccessSignatureAuthorizationRule, len(properties.AuthorizationPolicies))
 		for authorizationPolicyIndex, authorizationPolicyItem := range properties.AuthorizationPolicies {
-			// Shadow the loop variable to avoid aliasing
-			authorizationPolicyItem := authorizationPolicyItem
 			var authorizationPolicy storage.SharedAccessSignatureAuthorizationRule
 			err := authorizationPolicyItem.AssignProperties_To_SharedAccessSignatureAuthorizationRule(&authorizationPolicy)
 			if err != nil {
@@ -2178,8 +2151,6 @@ func (properties *IotHubProperties) AssignProperties_To_IotHubProperties(destina
 	if properties.EventHubEndpoints != nil {
 		eventHubEndpointMap := make(map[string]storage.EventHubProperties, len(properties.EventHubEndpoints))
 		for eventHubEndpointKey, eventHubEndpointValue := range properties.EventHubEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			eventHubEndpointValue := eventHubEndpointValue
 			var eventHubEndpoint storage.EventHubProperties
 			err := eventHubEndpointValue.AssignProperties_To_EventHubProperties(&eventHubEndpoint)
 			if err != nil {
@@ -2204,8 +2175,6 @@ func (properties *IotHubProperties) AssignProperties_To_IotHubProperties(destina
 	if properties.IpFilterRules != nil {
 		ipFilterRuleList := make([]storage.IpFilterRule, len(properties.IpFilterRules))
 		for ipFilterRuleIndex, ipFilterRuleItem := range properties.IpFilterRules {
-			// Shadow the loop variable to avoid aliasing
-			ipFilterRuleItem := ipFilterRuleItem
 			var ipFilterRule storage.IpFilterRule
 			err := ipFilterRuleItem.AssignProperties_To_IpFilterRule(&ipFilterRule)
 			if err != nil {
@@ -2222,8 +2191,6 @@ func (properties *IotHubProperties) AssignProperties_To_IotHubProperties(destina
 	if properties.MessagingEndpoints != nil {
 		messagingEndpointMap := make(map[string]storage.MessagingEndpointProperties, len(properties.MessagingEndpoints))
 		for messagingEndpointKey, messagingEndpointValue := range properties.MessagingEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			messagingEndpointValue := messagingEndpointValue
 			var messagingEndpoint storage.MessagingEndpointProperties
 			err := messagingEndpointValue.AssignProperties_To_MessagingEndpointProperties(&messagingEndpoint)
 			if err != nil {
@@ -2283,8 +2250,6 @@ func (properties *IotHubProperties) AssignProperties_To_IotHubProperties(destina
 	if properties.StorageEndpoints != nil {
 		storageEndpointMap := make(map[string]storage.StorageEndpointProperties, len(properties.StorageEndpoints))
 		for storageEndpointKey, storageEndpointValue := range properties.StorageEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			storageEndpointValue := storageEndpointValue
 			var storageEndpoint storage.StorageEndpointProperties
 			err := storageEndpointValue.AssignProperties_To_StorageEndpointProperties(&storageEndpoint)
 			if err != nil {
@@ -2318,8 +2283,6 @@ func (properties *IotHubProperties) Initialize_From_IotHubProperties_STATUS(sour
 	if source.AuthorizationPolicies != nil {
 		authorizationPolicyList := make([]SharedAccessSignatureAuthorizationRule, len(source.AuthorizationPolicies))
 		for authorizationPolicyIndex, authorizationPolicyItem := range source.AuthorizationPolicies {
-			// Shadow the loop variable to avoid aliasing
-			authorizationPolicyItem := authorizationPolicyItem
 			var authorizationPolicy SharedAccessSignatureAuthorizationRule
 			err := authorizationPolicy.Initialize_From_SharedAccessSignatureAuthorizationRule_STATUS(&authorizationPolicyItem)
 			if err != nil {
@@ -2391,8 +2354,6 @@ func (properties *IotHubProperties) Initialize_From_IotHubProperties_STATUS(sour
 	if source.EventHubEndpoints != nil {
 		eventHubEndpointMap := make(map[string]EventHubProperties, len(source.EventHubEndpoints))
 		for eventHubEndpointKey, eventHubEndpointValue := range source.EventHubEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			eventHubEndpointValue := eventHubEndpointValue
 			var eventHubEndpoint EventHubProperties
 			err := eventHubEndpoint.Initialize_From_EventHubProperties_STATUS(&eventHubEndpointValue)
 			if err != nil {
@@ -2417,8 +2378,6 @@ func (properties *IotHubProperties) Initialize_From_IotHubProperties_STATUS(sour
 	if source.IpFilterRules != nil {
 		ipFilterRuleList := make([]IpFilterRule, len(source.IpFilterRules))
 		for ipFilterRuleIndex, ipFilterRuleItem := range source.IpFilterRules {
-			// Shadow the loop variable to avoid aliasing
-			ipFilterRuleItem := ipFilterRuleItem
 			var ipFilterRule IpFilterRule
 			err := ipFilterRule.Initialize_From_IpFilterRule_STATUS(&ipFilterRuleItem)
 			if err != nil {
@@ -2435,8 +2394,6 @@ func (properties *IotHubProperties) Initialize_From_IotHubProperties_STATUS(sour
 	if source.MessagingEndpoints != nil {
 		messagingEndpointMap := make(map[string]MessagingEndpointProperties, len(source.MessagingEndpoints))
 		for messagingEndpointKey, messagingEndpointValue := range source.MessagingEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			messagingEndpointValue := messagingEndpointValue
 			var messagingEndpoint MessagingEndpointProperties
 			err := messagingEndpoint.Initialize_From_MessagingEndpointProperties_STATUS(&messagingEndpointValue)
 			if err != nil {
@@ -2496,8 +2453,6 @@ func (properties *IotHubProperties) Initialize_From_IotHubProperties_STATUS(sour
 	if source.StorageEndpoints != nil {
 		storageEndpointMap := make(map[string]StorageEndpointProperties, len(source.StorageEndpoints))
 		for storageEndpointKey, storageEndpointValue := range source.StorageEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			storageEndpointValue := storageEndpointValue
 			var storageEndpoint StorageEndpointProperties
 			err := storageEndpoint.Initialize_From_StorageEndpointProperties_STATUS(&storageEndpointValue)
 			if err != nil {
@@ -2824,8 +2779,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.AuthorizationPolicies != nil {
 		authorizationPolicyList := make([]SharedAccessSignatureAuthorizationRule_STATUS, len(source.AuthorizationPolicies))
 		for authorizationPolicyIndex, authorizationPolicyItem := range source.AuthorizationPolicies {
-			// Shadow the loop variable to avoid aliasing
-			authorizationPolicyItem := authorizationPolicyItem
 			var authorizationPolicy SharedAccessSignatureAuthorizationRule_STATUS
 			err := authorizationPolicy.AssignProperties_From_SharedAccessSignatureAuthorizationRule_STATUS(&authorizationPolicyItem)
 			if err != nil {
@@ -2897,8 +2850,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.EventHubEndpoints != nil {
 		eventHubEndpointMap := make(map[string]EventHubProperties_STATUS, len(source.EventHubEndpoints))
 		for eventHubEndpointKey, eventHubEndpointValue := range source.EventHubEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			eventHubEndpointValue := eventHubEndpointValue
 			var eventHubEndpoint EventHubProperties_STATUS
 			err := eventHubEndpoint.AssignProperties_From_EventHubProperties_STATUS(&eventHubEndpointValue)
 			if err != nil {
@@ -2927,8 +2878,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.IpFilterRules != nil {
 		ipFilterRuleList := make([]IpFilterRule_STATUS, len(source.IpFilterRules))
 		for ipFilterRuleIndex, ipFilterRuleItem := range source.IpFilterRules {
-			// Shadow the loop variable to avoid aliasing
-			ipFilterRuleItem := ipFilterRuleItem
 			var ipFilterRule IpFilterRule_STATUS
 			err := ipFilterRule.AssignProperties_From_IpFilterRule_STATUS(&ipFilterRuleItem)
 			if err != nil {
@@ -2945,8 +2894,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.Locations != nil {
 		locationList := make([]IotHubLocationDescription_STATUS, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location IotHubLocationDescription_STATUS
 			err := location.AssignProperties_From_IotHubLocationDescription_STATUS(&locationItem)
 			if err != nil {
@@ -2963,8 +2910,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.MessagingEndpoints != nil {
 		messagingEndpointMap := make(map[string]MessagingEndpointProperties_STATUS, len(source.MessagingEndpoints))
 		for messagingEndpointKey, messagingEndpointValue := range source.MessagingEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			messagingEndpointValue := messagingEndpointValue
 			var messagingEndpoint MessagingEndpointProperties_STATUS
 			err := messagingEndpoint.AssignProperties_From_MessagingEndpointProperties_STATUS(&messagingEndpointValue)
 			if err != nil {
@@ -2996,8 +2941,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -3049,8 +2992,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_From_IotHubPropertie
 	if source.StorageEndpoints != nil {
 		storageEndpointMap := make(map[string]StorageEndpointProperties_STATUS, len(source.StorageEndpoints))
 		for storageEndpointKey, storageEndpointValue := range source.StorageEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			storageEndpointValue := storageEndpointValue
 			var storageEndpoint StorageEndpointProperties_STATUS
 			err := storageEndpoint.AssignProperties_From_StorageEndpointProperties_STATUS(&storageEndpointValue)
 			if err != nil {
@@ -3079,8 +3020,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.AuthorizationPolicies != nil {
 		authorizationPolicyList := make([]storage.SharedAccessSignatureAuthorizationRule_STATUS, len(properties.AuthorizationPolicies))
 		for authorizationPolicyIndex, authorizationPolicyItem := range properties.AuthorizationPolicies {
-			// Shadow the loop variable to avoid aliasing
-			authorizationPolicyItem := authorizationPolicyItem
 			var authorizationPolicy storage.SharedAccessSignatureAuthorizationRule_STATUS
 			err := authorizationPolicyItem.AssignProperties_To_SharedAccessSignatureAuthorizationRule_STATUS(&authorizationPolicy)
 			if err != nil {
@@ -3152,8 +3091,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.EventHubEndpoints != nil {
 		eventHubEndpointMap := make(map[string]storage.EventHubProperties_STATUS, len(properties.EventHubEndpoints))
 		for eventHubEndpointKey, eventHubEndpointValue := range properties.EventHubEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			eventHubEndpointValue := eventHubEndpointValue
 			var eventHubEndpoint storage.EventHubProperties_STATUS
 			err := eventHubEndpointValue.AssignProperties_To_EventHubProperties_STATUS(&eventHubEndpoint)
 			if err != nil {
@@ -3181,8 +3118,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.IpFilterRules != nil {
 		ipFilterRuleList := make([]storage.IpFilterRule_STATUS, len(properties.IpFilterRules))
 		for ipFilterRuleIndex, ipFilterRuleItem := range properties.IpFilterRules {
-			// Shadow the loop variable to avoid aliasing
-			ipFilterRuleItem := ipFilterRuleItem
 			var ipFilterRule storage.IpFilterRule_STATUS
 			err := ipFilterRuleItem.AssignProperties_To_IpFilterRule_STATUS(&ipFilterRule)
 			if err != nil {
@@ -3199,8 +3134,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.Locations != nil {
 		locationList := make([]storage.IotHubLocationDescription_STATUS, len(properties.Locations))
 		for locationIndex, locationItem := range properties.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location storage.IotHubLocationDescription_STATUS
 			err := locationItem.AssignProperties_To_IotHubLocationDescription_STATUS(&location)
 			if err != nil {
@@ -3217,8 +3150,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.MessagingEndpoints != nil {
 		messagingEndpointMap := make(map[string]storage.MessagingEndpointProperties_STATUS, len(properties.MessagingEndpoints))
 		for messagingEndpointKey, messagingEndpointValue := range properties.MessagingEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			messagingEndpointValue := messagingEndpointValue
 			var messagingEndpoint storage.MessagingEndpointProperties_STATUS
 			err := messagingEndpointValue.AssignProperties_To_MessagingEndpointProperties_STATUS(&messagingEndpoint)
 			if err != nil {
@@ -3250,8 +3181,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(properties.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range properties.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -3302,8 +3231,6 @@ func (properties *IotHubProperties_STATUS) AssignProperties_To_IotHubProperties_
 	if properties.StorageEndpoints != nil {
 		storageEndpointMap := make(map[string]storage.StorageEndpointProperties_STATUS, len(properties.StorageEndpoints))
 		for storageEndpointKey, storageEndpointValue := range properties.StorageEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			storageEndpointValue := storageEndpointValue
 			var storageEndpoint storage.StorageEndpointProperties_STATUS
 			err := storageEndpointValue.AssignProperties_To_StorageEndpointProperties_STATUS(&storageEndpoint)
 			if err != nil {
@@ -3871,7 +3798,7 @@ func (properties *CloudToDeviceProperties) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "Feedback":
 	if properties.Feedback != nil {
-		feedback_ARM, err := (*properties.Feedback).ConvertToARM(resolved)
+		feedback_ARM, err := properties.Feedback.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5380,8 +5307,6 @@ func (properties *NetworkRuleSetProperties) AssignProperties_From_NetworkRuleSet
 	if source.IpRules != nil {
 		ipRuleList := make([]NetworkRuleSetIpRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule NetworkRuleSetIpRule
 			err := ipRule.AssignProperties_From_NetworkRuleSetIpRule(&ipRuleItem)
 			if err != nil {
@@ -5423,8 +5348,6 @@ func (properties *NetworkRuleSetProperties) AssignProperties_To_NetworkRuleSetPr
 	if properties.IpRules != nil {
 		ipRuleList := make([]storage.NetworkRuleSetIpRule, len(properties.IpRules))
 		for ipRuleIndex, ipRuleItem := range properties.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.NetworkRuleSetIpRule
 			err := ipRuleItem.AssignProperties_To_NetworkRuleSetIpRule(&ipRule)
 			if err != nil {
@@ -5471,8 +5394,6 @@ func (properties *NetworkRuleSetProperties) Initialize_From_NetworkRuleSetProper
 	if source.IpRules != nil {
 		ipRuleList := make([]NetworkRuleSetIpRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule NetworkRuleSetIpRule
 			err := ipRule.Initialize_From_NetworkRuleSetIpRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -5567,8 +5488,6 @@ func (properties *NetworkRuleSetProperties_STATUS) AssignProperties_From_Network
 	if source.IpRules != nil {
 		ipRuleList := make([]NetworkRuleSetIpRule_STATUS, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule NetworkRuleSetIpRule_STATUS
 			err := ipRule.AssignProperties_From_NetworkRuleSetIpRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -5610,8 +5529,6 @@ func (properties *NetworkRuleSetProperties_STATUS) AssignProperties_To_NetworkRu
 	if properties.IpRules != nil {
 		ipRuleList := make([]storage.NetworkRuleSetIpRule_STATUS, len(properties.IpRules))
 		for ipRuleIndex, ipRuleItem := range properties.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.NetworkRuleSetIpRule_STATUS
 			err := ipRuleItem.AssignProperties_To_NetworkRuleSetIpRule_STATUS(&ipRule)
 			if err != nil {
@@ -5727,7 +5644,7 @@ func (properties *RoutingProperties) ConvertToARM(resolved genruntime.ConvertToA
 
 	// Set property "Endpoints":
 	if properties.Endpoints != nil {
-		endpoints_ARM, err := (*properties.Endpoints).ConvertToARM(resolved)
+		endpoints_ARM, err := properties.Endpoints.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5746,7 +5663,7 @@ func (properties *RoutingProperties) ConvertToARM(resolved genruntime.ConvertToA
 
 	// Set property "FallbackRoute":
 	if properties.FallbackRoute != nil {
-		fallbackRoute_ARM, err := (*properties.FallbackRoute).ConvertToARM(resolved)
+		fallbackRoute_ARM, err := properties.FallbackRoute.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5842,8 +5759,6 @@ func (properties *RoutingProperties) AssignProperties_From_RoutingProperties(sou
 	if source.Enrichments != nil {
 		enrichmentList := make([]EnrichmentProperties, len(source.Enrichments))
 		for enrichmentIndex, enrichmentItem := range source.Enrichments {
-			// Shadow the loop variable to avoid aliasing
-			enrichmentItem := enrichmentItem
 			var enrichment EnrichmentProperties
 			err := enrichment.AssignProperties_From_EnrichmentProperties(&enrichmentItem)
 			if err != nil {
@@ -5872,8 +5787,6 @@ func (properties *RoutingProperties) AssignProperties_From_RoutingProperties(sou
 	if source.Routes != nil {
 		routeList := make([]RouteProperties, len(source.Routes))
 		for routeIndex, routeItem := range source.Routes {
-			// Shadow the loop variable to avoid aliasing
-			routeItem := routeItem
 			var route RouteProperties
 			err := route.AssignProperties_From_RouteProperties(&routeItem)
 			if err != nil {
@@ -5911,8 +5824,6 @@ func (properties *RoutingProperties) AssignProperties_To_RoutingProperties(desti
 	if properties.Enrichments != nil {
 		enrichmentList := make([]storage.EnrichmentProperties, len(properties.Enrichments))
 		for enrichmentIndex, enrichmentItem := range properties.Enrichments {
-			// Shadow the loop variable to avoid aliasing
-			enrichmentItem := enrichmentItem
 			var enrichment storage.EnrichmentProperties
 			err := enrichmentItem.AssignProperties_To_EnrichmentProperties(&enrichment)
 			if err != nil {
@@ -5941,8 +5852,6 @@ func (properties *RoutingProperties) AssignProperties_To_RoutingProperties(desti
 	if properties.Routes != nil {
 		routeList := make([]storage.RouteProperties, len(properties.Routes))
 		for routeIndex, routeItem := range properties.Routes {
-			// Shadow the loop variable to avoid aliasing
-			routeItem := routeItem
 			var route storage.RouteProperties
 			err := routeItem.AssignProperties_To_RouteProperties(&route)
 			if err != nil {
@@ -5985,8 +5894,6 @@ func (properties *RoutingProperties) Initialize_From_RoutingProperties_STATUS(so
 	if source.Enrichments != nil {
 		enrichmentList := make([]EnrichmentProperties, len(source.Enrichments))
 		for enrichmentIndex, enrichmentItem := range source.Enrichments {
-			// Shadow the loop variable to avoid aliasing
-			enrichmentItem := enrichmentItem
 			var enrichment EnrichmentProperties
 			err := enrichment.Initialize_From_EnrichmentProperties_STATUS(&enrichmentItem)
 			if err != nil {
@@ -6015,8 +5922,6 @@ func (properties *RoutingProperties) Initialize_From_RoutingProperties_STATUS(so
 	if source.Routes != nil {
 		routeList := make([]RouteProperties, len(source.Routes))
 		for routeIndex, routeItem := range source.Routes {
-			// Shadow the loop variable to avoid aliasing
-			routeItem := routeItem
 			var route RouteProperties
 			err := route.Initialize_From_RouteProperties_STATUS(&routeItem)
 			if err != nil {
@@ -6134,8 +6039,6 @@ func (properties *RoutingProperties_STATUS) AssignProperties_From_RoutingPropert
 	if source.Enrichments != nil {
 		enrichmentList := make([]EnrichmentProperties_STATUS, len(source.Enrichments))
 		for enrichmentIndex, enrichmentItem := range source.Enrichments {
-			// Shadow the loop variable to avoid aliasing
-			enrichmentItem := enrichmentItem
 			var enrichment EnrichmentProperties_STATUS
 			err := enrichment.AssignProperties_From_EnrichmentProperties_STATUS(&enrichmentItem)
 			if err != nil {
@@ -6164,8 +6067,6 @@ func (properties *RoutingProperties_STATUS) AssignProperties_From_RoutingPropert
 	if source.Routes != nil {
 		routeList := make([]RouteProperties_STATUS, len(source.Routes))
 		for routeIndex, routeItem := range source.Routes {
-			// Shadow the loop variable to avoid aliasing
-			routeItem := routeItem
 			var route RouteProperties_STATUS
 			err := route.AssignProperties_From_RouteProperties_STATUS(&routeItem)
 			if err != nil {
@@ -6203,8 +6104,6 @@ func (properties *RoutingProperties_STATUS) AssignProperties_To_RoutingPropertie
 	if properties.Enrichments != nil {
 		enrichmentList := make([]storage.EnrichmentProperties_STATUS, len(properties.Enrichments))
 		for enrichmentIndex, enrichmentItem := range properties.Enrichments {
-			// Shadow the loop variable to avoid aliasing
-			enrichmentItem := enrichmentItem
 			var enrichment storage.EnrichmentProperties_STATUS
 			err := enrichmentItem.AssignProperties_To_EnrichmentProperties_STATUS(&enrichment)
 			if err != nil {
@@ -6233,8 +6132,6 @@ func (properties *RoutingProperties_STATUS) AssignProperties_To_RoutingPropertie
 	if properties.Routes != nil {
 		routeList := make([]storage.RouteProperties_STATUS, len(properties.Routes))
 		for routeIndex, routeItem := range properties.Routes {
-			// Shadow the loop variable to avoid aliasing
-			routeItem := routeItem
 			var route storage.RouteProperties_STATUS
 			err := routeItem.AssignProperties_To_RouteProperties_STATUS(&route)
 			if err != nil {
@@ -6532,7 +6429,7 @@ func (properties *StorageEndpointProperties) ConvertToARM(resolved genruntime.Co
 
 	// Set property "Identity":
 	if properties.Identity != nil {
-		identity_ARM, err := (*properties.Identity).ConvertToARM(resolved)
+		identity_ARM, err := properties.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -8713,8 +8610,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_From_RoutingEndpoints(source
 	if source.EventHubs != nil {
 		eventHubList := make([]RoutingEventHubProperties, len(source.EventHubs))
 		for eventHubIndex, eventHubItem := range source.EventHubs {
-			// Shadow the loop variable to avoid aliasing
-			eventHubItem := eventHubItem
 			var eventHub RoutingEventHubProperties
 			err := eventHub.AssignProperties_From_RoutingEventHubProperties(&eventHubItem)
 			if err != nil {
@@ -8731,8 +8626,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_From_RoutingEndpoints(source
 	if source.ServiceBusQueues != nil {
 		serviceBusQueueList := make([]RoutingServiceBusQueueEndpointProperties, len(source.ServiceBusQueues))
 		for serviceBusQueueIndex, serviceBusQueueItem := range source.ServiceBusQueues {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusQueueItem := serviceBusQueueItem
 			var serviceBusQueue RoutingServiceBusQueueEndpointProperties
 			err := serviceBusQueue.AssignProperties_From_RoutingServiceBusQueueEndpointProperties(&serviceBusQueueItem)
 			if err != nil {
@@ -8749,8 +8642,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_From_RoutingEndpoints(source
 	if source.ServiceBusTopics != nil {
 		serviceBusTopicList := make([]RoutingServiceBusTopicEndpointProperties, len(source.ServiceBusTopics))
 		for serviceBusTopicIndex, serviceBusTopicItem := range source.ServiceBusTopics {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusTopicItem := serviceBusTopicItem
 			var serviceBusTopic RoutingServiceBusTopicEndpointProperties
 			err := serviceBusTopic.AssignProperties_From_RoutingServiceBusTopicEndpointProperties(&serviceBusTopicItem)
 			if err != nil {
@@ -8767,8 +8658,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_From_RoutingEndpoints(source
 	if source.StorageContainers != nil {
 		storageContainerList := make([]RoutingStorageContainerProperties, len(source.StorageContainers))
 		for storageContainerIndex, storageContainerItem := range source.StorageContainers {
-			// Shadow the loop variable to avoid aliasing
-			storageContainerItem := storageContainerItem
 			var storageContainer RoutingStorageContainerProperties
 			err := storageContainer.AssignProperties_From_RoutingStorageContainerProperties(&storageContainerItem)
 			if err != nil {
@@ -8794,8 +8683,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_To_RoutingEndpoints(destinat
 	if endpoints.EventHubs != nil {
 		eventHubList := make([]storage.RoutingEventHubProperties, len(endpoints.EventHubs))
 		for eventHubIndex, eventHubItem := range endpoints.EventHubs {
-			// Shadow the loop variable to avoid aliasing
-			eventHubItem := eventHubItem
 			var eventHub storage.RoutingEventHubProperties
 			err := eventHubItem.AssignProperties_To_RoutingEventHubProperties(&eventHub)
 			if err != nil {
@@ -8812,8 +8699,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_To_RoutingEndpoints(destinat
 	if endpoints.ServiceBusQueues != nil {
 		serviceBusQueueList := make([]storage.RoutingServiceBusQueueEndpointProperties, len(endpoints.ServiceBusQueues))
 		for serviceBusQueueIndex, serviceBusQueueItem := range endpoints.ServiceBusQueues {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusQueueItem := serviceBusQueueItem
 			var serviceBusQueue storage.RoutingServiceBusQueueEndpointProperties
 			err := serviceBusQueueItem.AssignProperties_To_RoutingServiceBusQueueEndpointProperties(&serviceBusQueue)
 			if err != nil {
@@ -8830,8 +8715,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_To_RoutingEndpoints(destinat
 	if endpoints.ServiceBusTopics != nil {
 		serviceBusTopicList := make([]storage.RoutingServiceBusTopicEndpointProperties, len(endpoints.ServiceBusTopics))
 		for serviceBusTopicIndex, serviceBusTopicItem := range endpoints.ServiceBusTopics {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusTopicItem := serviceBusTopicItem
 			var serviceBusTopic storage.RoutingServiceBusTopicEndpointProperties
 			err := serviceBusTopicItem.AssignProperties_To_RoutingServiceBusTopicEndpointProperties(&serviceBusTopic)
 			if err != nil {
@@ -8848,8 +8731,6 @@ func (endpoints *RoutingEndpoints) AssignProperties_To_RoutingEndpoints(destinat
 	if endpoints.StorageContainers != nil {
 		storageContainerList := make([]storage.RoutingStorageContainerProperties, len(endpoints.StorageContainers))
 		for storageContainerIndex, storageContainerItem := range endpoints.StorageContainers {
-			// Shadow the loop variable to avoid aliasing
-			storageContainerItem := storageContainerItem
 			var storageContainer storage.RoutingStorageContainerProperties
 			err := storageContainerItem.AssignProperties_To_RoutingStorageContainerProperties(&storageContainer)
 			if err != nil {
@@ -8880,8 +8761,6 @@ func (endpoints *RoutingEndpoints) Initialize_From_RoutingEndpoints_STATUS(sourc
 	if source.EventHubs != nil {
 		eventHubList := make([]RoutingEventHubProperties, len(source.EventHubs))
 		for eventHubIndex, eventHubItem := range source.EventHubs {
-			// Shadow the loop variable to avoid aliasing
-			eventHubItem := eventHubItem
 			var eventHub RoutingEventHubProperties
 			err := eventHub.Initialize_From_RoutingEventHubProperties_STATUS(&eventHubItem)
 			if err != nil {
@@ -8898,8 +8777,6 @@ func (endpoints *RoutingEndpoints) Initialize_From_RoutingEndpoints_STATUS(sourc
 	if source.ServiceBusQueues != nil {
 		serviceBusQueueList := make([]RoutingServiceBusQueueEndpointProperties, len(source.ServiceBusQueues))
 		for serviceBusQueueIndex, serviceBusQueueItem := range source.ServiceBusQueues {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusQueueItem := serviceBusQueueItem
 			var serviceBusQueue RoutingServiceBusQueueEndpointProperties
 			err := serviceBusQueue.Initialize_From_RoutingServiceBusQueueEndpointProperties_STATUS(&serviceBusQueueItem)
 			if err != nil {
@@ -8916,8 +8793,6 @@ func (endpoints *RoutingEndpoints) Initialize_From_RoutingEndpoints_STATUS(sourc
 	if source.ServiceBusTopics != nil {
 		serviceBusTopicList := make([]RoutingServiceBusTopicEndpointProperties, len(source.ServiceBusTopics))
 		for serviceBusTopicIndex, serviceBusTopicItem := range source.ServiceBusTopics {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusTopicItem := serviceBusTopicItem
 			var serviceBusTopic RoutingServiceBusTopicEndpointProperties
 			err := serviceBusTopic.Initialize_From_RoutingServiceBusTopicEndpointProperties_STATUS(&serviceBusTopicItem)
 			if err != nil {
@@ -8934,8 +8809,6 @@ func (endpoints *RoutingEndpoints) Initialize_From_RoutingEndpoints_STATUS(sourc
 	if source.StorageContainers != nil {
 		storageContainerList := make([]RoutingStorageContainerProperties, len(source.StorageContainers))
 		for storageContainerIndex, storageContainerItem := range source.StorageContainers {
-			// Shadow the loop variable to avoid aliasing
-			storageContainerItem := storageContainerItem
 			var storageContainer RoutingStorageContainerProperties
 			err := storageContainer.Initialize_From_RoutingStorageContainerProperties_STATUS(&storageContainerItem)
 			if err != nil {
@@ -9037,8 +8910,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_From_RoutingEndpoints
 	if source.EventHubs != nil {
 		eventHubList := make([]RoutingEventHubProperties_STATUS, len(source.EventHubs))
 		for eventHubIndex, eventHubItem := range source.EventHubs {
-			// Shadow the loop variable to avoid aliasing
-			eventHubItem := eventHubItem
 			var eventHub RoutingEventHubProperties_STATUS
 			err := eventHub.AssignProperties_From_RoutingEventHubProperties_STATUS(&eventHubItem)
 			if err != nil {
@@ -9055,8 +8926,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_From_RoutingEndpoints
 	if source.ServiceBusQueues != nil {
 		serviceBusQueueList := make([]RoutingServiceBusQueueEndpointProperties_STATUS, len(source.ServiceBusQueues))
 		for serviceBusQueueIndex, serviceBusQueueItem := range source.ServiceBusQueues {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusQueueItem := serviceBusQueueItem
 			var serviceBusQueue RoutingServiceBusQueueEndpointProperties_STATUS
 			err := serviceBusQueue.AssignProperties_From_RoutingServiceBusQueueEndpointProperties_STATUS(&serviceBusQueueItem)
 			if err != nil {
@@ -9073,8 +8942,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_From_RoutingEndpoints
 	if source.ServiceBusTopics != nil {
 		serviceBusTopicList := make([]RoutingServiceBusTopicEndpointProperties_STATUS, len(source.ServiceBusTopics))
 		for serviceBusTopicIndex, serviceBusTopicItem := range source.ServiceBusTopics {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusTopicItem := serviceBusTopicItem
 			var serviceBusTopic RoutingServiceBusTopicEndpointProperties_STATUS
 			err := serviceBusTopic.AssignProperties_From_RoutingServiceBusTopicEndpointProperties_STATUS(&serviceBusTopicItem)
 			if err != nil {
@@ -9091,8 +8958,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_From_RoutingEndpoints
 	if source.StorageContainers != nil {
 		storageContainerList := make([]RoutingStorageContainerProperties_STATUS, len(source.StorageContainers))
 		for storageContainerIndex, storageContainerItem := range source.StorageContainers {
-			// Shadow the loop variable to avoid aliasing
-			storageContainerItem := storageContainerItem
 			var storageContainer RoutingStorageContainerProperties_STATUS
 			err := storageContainer.AssignProperties_From_RoutingStorageContainerProperties_STATUS(&storageContainerItem)
 			if err != nil {
@@ -9118,8 +8983,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_To_RoutingEndpoints_S
 	if endpoints.EventHubs != nil {
 		eventHubList := make([]storage.RoutingEventHubProperties_STATUS, len(endpoints.EventHubs))
 		for eventHubIndex, eventHubItem := range endpoints.EventHubs {
-			// Shadow the loop variable to avoid aliasing
-			eventHubItem := eventHubItem
 			var eventHub storage.RoutingEventHubProperties_STATUS
 			err := eventHubItem.AssignProperties_To_RoutingEventHubProperties_STATUS(&eventHub)
 			if err != nil {
@@ -9136,8 +8999,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_To_RoutingEndpoints_S
 	if endpoints.ServiceBusQueues != nil {
 		serviceBusQueueList := make([]storage.RoutingServiceBusQueueEndpointProperties_STATUS, len(endpoints.ServiceBusQueues))
 		for serviceBusQueueIndex, serviceBusQueueItem := range endpoints.ServiceBusQueues {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusQueueItem := serviceBusQueueItem
 			var serviceBusQueue storage.RoutingServiceBusQueueEndpointProperties_STATUS
 			err := serviceBusQueueItem.AssignProperties_To_RoutingServiceBusQueueEndpointProperties_STATUS(&serviceBusQueue)
 			if err != nil {
@@ -9154,8 +9015,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_To_RoutingEndpoints_S
 	if endpoints.ServiceBusTopics != nil {
 		serviceBusTopicList := make([]storage.RoutingServiceBusTopicEndpointProperties_STATUS, len(endpoints.ServiceBusTopics))
 		for serviceBusTopicIndex, serviceBusTopicItem := range endpoints.ServiceBusTopics {
-			// Shadow the loop variable to avoid aliasing
-			serviceBusTopicItem := serviceBusTopicItem
 			var serviceBusTopic storage.RoutingServiceBusTopicEndpointProperties_STATUS
 			err := serviceBusTopicItem.AssignProperties_To_RoutingServiceBusTopicEndpointProperties_STATUS(&serviceBusTopic)
 			if err != nil {
@@ -9172,8 +9031,6 @@ func (endpoints *RoutingEndpoints_STATUS) AssignProperties_To_RoutingEndpoints_S
 	if endpoints.StorageContainers != nil {
 		storageContainerList := make([]storage.RoutingStorageContainerProperties_STATUS, len(endpoints.StorageContainers))
 		for storageContainerIndex, storageContainerItem := range endpoints.StorageContainers {
-			// Shadow the loop variable to avoid aliasing
-			storageContainerItem := storageContainerItem
 			var storageContainer storage.RoutingStorageContainerProperties_STATUS
 			err := storageContainerItem.AssignProperties_To_RoutingStorageContainerProperties_STATUS(&storageContainer)
 			if err != nil {
@@ -9469,7 +9326,7 @@ func (properties *RoutingEventHubProperties) ConvertToARM(resolved genruntime.Co
 
 	// Set property "Identity":
 	if properties.Identity != nil {
-		identity_ARM, err := (*properties.Identity).ConvertToARM(resolved)
+		identity_ARM, err := properties.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10029,7 +9886,7 @@ func (properties *RoutingServiceBusQueueEndpointProperties) ConvertToARM(resolve
 
 	// Set property "Identity":
 	if properties.Identity != nil {
-		identity_ARM, err := (*properties.Identity).ConvertToARM(resolved)
+		identity_ARM, err := properties.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10589,7 +10446,7 @@ func (properties *RoutingServiceBusTopicEndpointProperties) ConvertToARM(resolve
 
 	// Set property "Identity":
 	if properties.Identity != nil {
-		identity_ARM, err := (*properties.Identity).ConvertToARM(resolved)
+		identity_ARM, err := properties.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11190,7 +11047,7 @@ func (properties *RoutingStorageContainerProperties) ConvertToARM(resolved genru
 
 	// Set property "Identity":
 	if properties.Identity != nil {
-		identity_ARM, err := (*properties.Identity).ConvertToARM(resolved)
+		identity_ARM, err := properties.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

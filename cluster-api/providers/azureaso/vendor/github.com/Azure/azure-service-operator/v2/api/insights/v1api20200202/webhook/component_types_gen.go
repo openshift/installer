@@ -116,7 +116,12 @@ func (component *Component) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (component *Component) createValidations() []func(ctx context.Context, obj *v20200202.Component) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200202.Component) (admission.Warnings, error){component.validateResourceReferences, component.validateOwnerReference, component.validateSecretDestinations, component.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20200202.Component) (admission.Warnings, error){
+		component.validateResourceReferences,
+		component.validateOwnerReference,
+		component.validateSecretDestinations,
+		component.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

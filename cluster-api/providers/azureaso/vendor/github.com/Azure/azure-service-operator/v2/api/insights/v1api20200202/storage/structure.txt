@@ -76,3 +76,5 @@ Component: Resource
     ├── Type: *string
     └── WorkspaceResourceId: *string
 
+augmentConversionForPrivateLinkScopedResource_STATUS: Interface
+

@@ -1342,11 +1342,6 @@ func (in *Snapshot_Spec) DeepCopyInto(out *Snapshot_Spec) {
 		*out = new(int)
 		**out = **in
 	}
-	if in.DiskState != nil {
-		in, out := &in.DiskState, &out.DiskState
-		*out = new(DiskState)
-		**out = **in
-	}
 	if in.Encryption != nil {
 		in, out := &in.Encryption, &out.Encryption
 		*out = new(Encryption)

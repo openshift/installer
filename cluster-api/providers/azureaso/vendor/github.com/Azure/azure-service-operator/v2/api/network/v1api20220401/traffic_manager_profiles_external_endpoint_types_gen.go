@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}/ExternalEndpoints/{endpointName}
 type TrafficManagerProfilesExternalEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) OriginalGVK() *schema.Gr
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}/ExternalEndpoints/{endpointName}
 type TrafficManagerProfilesExternalEndpointList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -248,25 +249,25 @@ type TrafficManagerProfilesExternalEndpointList struct {
 type TrafficManagerProfilesExternalEndpoint_Spec struct {
 	// AlwaysServe: If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in
 	// the traffic routing method.
-	AlwaysServe *EndpointProperties_AlwaysServe `json:"alwaysServe,omitempty"`
+	AlwaysServe *AlwaysServe `json:"alwaysServe,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
 	// CustomHeaders: List of custom headers.
-	CustomHeaders []EndpointProperties_CustomHeaders `json:"customHeaders,omitempty"`
+	CustomHeaders []EndpointPropertiesCustomHeadersItem `json:"customHeaders,omitempty"`
 
 	// EndpointLocation: Specifies the location of the external or nested endpoints when using the 'Performance' traffic
 	// routing method.
 	EndpointLocation *string `json:"endpointLocation,omitempty"`
 
 	// EndpointMonitorStatus: The monitoring status of the endpoint.
-	EndpointMonitorStatus *EndpointProperties_EndpointMonitorStatus `json:"endpointMonitorStatus,omitempty"`
+	EndpointMonitorStatus *EndpointMonitorStatus `json:"endpointMonitorStatus,omitempty"`
 
 	// EndpointStatus: The status of the endpoint. If the endpoint is Enabled, it is probed for endpoint health and is included
 	// in the traffic routing method.
-	EndpointStatus *EndpointProperties_EndpointStatus `json:"endpointStatus,omitempty"`
+	EndpointStatus *EndpointStatus `json:"endpointStatus,omitempty"`
 
 	// GeoMapping: The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
 	// Please consult Traffic Manager Geographic documentation for a full list of accepted values.
@@ -303,7 +304,7 @@ type TrafficManagerProfilesExternalEndpoint_Spec struct {
 
 	// Subnets: The list of subnets, IP addresses, and/or address ranges mapped to this endpoint when using the 'Subnet'
 	// traffic routing method. An empty list will match all ranges not covered by other endpoints.
-	Subnets []EndpointProperties_Subnets `json:"subnets,omitempty"`
+	Subnets []EndpointPropertiesSubnetsItem `json:"subnets,omitempty"`
 
 	// Target: The fully-qualified DNS name or IP address of the endpoint. Traffic Manager returns this value in DNS responses
 	// to direct traffic to this endpoint.
@@ -352,7 +353,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertToARM(resolv
 	if endpoint.AlwaysServe != nil {
 		var temp string
 		temp = string(*endpoint.AlwaysServe)
-		alwaysServe := arm.EndpointProperties_AlwaysServe(temp)
+		alwaysServe := arm.AlwaysServe(temp)
 		result.Properties.AlwaysServe = &alwaysServe
 	}
 	for _, item := range endpoint.CustomHeaders {
@@ -360,7 +361,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertToARM(resolv
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.CustomHeaders = append(result.Properties.CustomHeaders, *item_ARM.(*arm.EndpointProperties_CustomHeaders))
+		result.Properties.CustomHeaders = append(result.Properties.CustomHeaders, *item_ARM.(*arm.EndpointPropertiesCustomHeadersItem))
 	}
 	if endpoint.EndpointLocation != nil {
 		endpointLocation := *endpoint.EndpointLocation
@@ -369,13 +370,13 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertToARM(resolv
 	if endpoint.EndpointMonitorStatus != nil {
 		var temp string
 		temp = string(*endpoint.EndpointMonitorStatus)
-		endpointMonitorStatus := arm.EndpointProperties_EndpointMonitorStatus(temp)
+		endpointMonitorStatus := arm.EndpointMonitorStatus(temp)
 		result.Properties.EndpointMonitorStatus = &endpointMonitorStatus
 	}
 	if endpoint.EndpointStatus != nil {
 		var temp string
 		temp = string(*endpoint.EndpointStatus)
-		endpointStatus := arm.EndpointProperties_EndpointStatus(temp)
+		endpointStatus := arm.EndpointStatus(temp)
 		result.Properties.EndpointStatus = &endpointStatus
 	}
 	for _, item := range endpoint.GeoMapping {
@@ -402,7 +403,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) ConvertToARM(resolv
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.Subnets = append(result.Properties.Subnets, *item_ARM.(*arm.EndpointProperties_Subnets))
+		result.Properties.Subnets = append(result.Properties.Subnets, *item_ARM.(*arm.EndpointPropertiesSubnetsItem))
 	}
 	if endpoint.Target != nil {
 		target := *endpoint.Target
@@ -447,7 +448,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) PopulateFromARM(own
 		if typedInput.Properties.AlwaysServe != nil {
 			var temp string
 			temp = string(*typedInput.Properties.AlwaysServe)
-			alwaysServe := EndpointProperties_AlwaysServe(temp)
+			alwaysServe := AlwaysServe(temp)
 			endpoint.AlwaysServe = &alwaysServe
 		}
 	}
@@ -459,7 +460,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) PopulateFromARM(own
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		for _, item := range typedInput.Properties.CustomHeaders {
-			var item1 EndpointProperties_CustomHeaders
+			var item1 EndpointPropertiesCustomHeadersItem
 			err := item1.PopulateFromARM(owner, item)
 			if err != nil {
 				return err
@@ -483,7 +484,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) PopulateFromARM(own
 		if typedInput.Properties.EndpointMonitorStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.EndpointMonitorStatus)
-			endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus(temp)
+			endpointMonitorStatus := EndpointMonitorStatus(temp)
 			endpoint.EndpointMonitorStatus = &endpointMonitorStatus
 		}
 	}
@@ -494,7 +495,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) PopulateFromARM(own
 		if typedInput.Properties.EndpointStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.EndpointStatus)
-			endpointStatus := EndpointProperties_EndpointStatus(temp)
+			endpointStatus := EndpointStatus(temp)
 			endpoint.EndpointStatus = &endpointStatus
 		}
 	}
@@ -555,7 +556,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) PopulateFromARM(own
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		for _, item := range typedInput.Properties.Subnets {
-			var item1 EndpointProperties_Subnets
+			var item1 EndpointPropertiesSubnetsItem
 			err := item1.PopulateFromARM(owner, item)
 			if err != nil {
 				return err
@@ -650,7 +651,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_Fr
 	// AlwaysServe
 	if source.AlwaysServe != nil {
 		alwaysServe := *source.AlwaysServe
-		alwaysServeTemp := genruntime.ToEnum(alwaysServe, endpointProperties_AlwaysServe_Values)
+		alwaysServeTemp := genruntime.ToEnum(alwaysServe, alwaysServe_Values)
 		endpoint.AlwaysServe = &alwaysServeTemp
 	} else {
 		endpoint.AlwaysServe = nil
@@ -661,14 +662,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_Fr
 
 	// CustomHeaders
 	if source.CustomHeaders != nil {
-		customHeaderList := make([]EndpointProperties_CustomHeaders, len(source.CustomHeaders))
+		customHeaderList := make([]EndpointPropertiesCustomHeadersItem, len(source.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader EndpointProperties_CustomHeaders
-			err := customHeader.AssignProperties_From_EndpointProperties_CustomHeaders(&customHeaderItem)
+			var customHeader EndpointPropertiesCustomHeadersItem
+			err := customHeader.AssignProperties_From_EndpointPropertiesCustomHeadersItem(&customHeaderItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_EndpointProperties_CustomHeaders() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_EndpointPropertiesCustomHeadersItem() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -683,7 +682,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_Fr
 	// EndpointMonitorStatus
 	if source.EndpointMonitorStatus != nil {
 		endpointMonitorStatus := *source.EndpointMonitorStatus
-		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointProperties_EndpointMonitorStatus_Values)
+		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointMonitorStatus_Values)
 		endpoint.EndpointMonitorStatus = &endpointMonitorStatusTemp
 	} else {
 		endpoint.EndpointMonitorStatus = nil
@@ -692,7 +691,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_Fr
 	// EndpointStatus
 	if source.EndpointStatus != nil {
 		endpointStatus := *source.EndpointStatus
-		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointProperties_EndpointStatus_Values)
+		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointStatus_Values)
 		endpoint.EndpointStatus = &endpointStatusTemp
 	} else {
 		endpoint.EndpointStatus = nil
@@ -735,14 +734,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_Fr
 
 	// Subnets
 	if source.Subnets != nil {
-		subnetList := make([]EndpointProperties_Subnets, len(source.Subnets))
+		subnetList := make([]EndpointPropertiesSubnetsItem, len(source.Subnets))
 		for subnetIndex, subnetItem := range source.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
-			var subnet EndpointProperties_Subnets
-			err := subnet.AssignProperties_From_EndpointProperties_Subnets(&subnetItem)
+			var subnet EndpointPropertiesSubnetsItem
+			err := subnet.AssignProperties_From_EndpointPropertiesSubnetsItem(&subnetItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_EndpointProperties_Subnets() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_From_EndpointPropertiesSubnetsItem() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -790,14 +787,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_To
 
 	// CustomHeaders
 	if endpoint.CustomHeaders != nil {
-		customHeaderList := make([]storage.EndpointProperties_CustomHeaders, len(endpoint.CustomHeaders))
+		customHeaderList := make([]storage.EndpointPropertiesCustomHeadersItem, len(endpoint.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range endpoint.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader storage.EndpointProperties_CustomHeaders
-			err := customHeaderItem.AssignProperties_To_EndpointProperties_CustomHeaders(&customHeader)
+			var customHeader storage.EndpointPropertiesCustomHeadersItem
+			err := customHeaderItem.AssignProperties_To_EndpointPropertiesCustomHeadersItem(&customHeader)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_EndpointProperties_CustomHeaders() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_EndpointPropertiesCustomHeadersItem() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -865,14 +860,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) AssignProperties_To
 
 	// Subnets
 	if endpoint.Subnets != nil {
-		subnetList := make([]storage.EndpointProperties_Subnets, len(endpoint.Subnets))
+		subnetList := make([]storage.EndpointPropertiesSubnetsItem, len(endpoint.Subnets))
 		for subnetIndex, subnetItem := range endpoint.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
-			var subnet storage.EndpointProperties_Subnets
-			err := subnetItem.AssignProperties_To_EndpointProperties_Subnets(&subnet)
+			var subnet storage.EndpointPropertiesSubnetsItem
+			err := subnetItem.AssignProperties_To_EndpointPropertiesSubnetsItem(&subnet)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_EndpointProperties_Subnets() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_To_EndpointPropertiesSubnetsItem() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -914,7 +907,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) Initialize_From_Tra
 
 	// AlwaysServe
 	if source.AlwaysServe != nil {
-		alwaysServe := genruntime.ToEnum(string(*source.AlwaysServe), endpointProperties_AlwaysServe_Values)
+		alwaysServe := genruntime.ToEnum(string(*source.AlwaysServe), alwaysServe_Values)
 		endpoint.AlwaysServe = &alwaysServe
 	} else {
 		endpoint.AlwaysServe = nil
@@ -922,14 +915,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) Initialize_From_Tra
 
 	// CustomHeaders
 	if source.CustomHeaders != nil {
-		customHeaderList := make([]EndpointProperties_CustomHeaders, len(source.CustomHeaders))
+		customHeaderList := make([]EndpointPropertiesCustomHeadersItem, len(source.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader EndpointProperties_CustomHeaders
-			err := customHeader.Initialize_From_EndpointProperties_CustomHeaders_STATUS(&customHeaderItem)
+			var customHeader EndpointPropertiesCustomHeadersItem
+			err := customHeader.Initialize_From_EndpointPropertiesCustomHeadersItem_STATUS(&customHeaderItem)
 			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_EndpointProperties_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling Initialize_From_EndpointPropertiesCustomHeadersItem_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -943,7 +934,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) Initialize_From_Tra
 
 	// EndpointMonitorStatus
 	if source.EndpointMonitorStatus != nil {
-		endpointMonitorStatus := genruntime.ToEnum(string(*source.EndpointMonitorStatus), endpointProperties_EndpointMonitorStatus_Values)
+		endpointMonitorStatus := genruntime.ToEnum(string(*source.EndpointMonitorStatus), endpointMonitorStatus_Values)
 		endpoint.EndpointMonitorStatus = &endpointMonitorStatus
 	} else {
 		endpoint.EndpointMonitorStatus = nil
@@ -951,7 +942,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) Initialize_From_Tra
 
 	// EndpointStatus
 	if source.EndpointStatus != nil {
-		endpointStatus := genruntime.ToEnum(string(*source.EndpointStatus), endpointProperties_EndpointStatus_Values)
+		endpointStatus := genruntime.ToEnum(string(*source.EndpointStatus), endpointStatus_Values)
 		endpoint.EndpointStatus = &endpointStatus
 	} else {
 		endpoint.EndpointStatus = nil
@@ -974,14 +965,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) Initialize_From_Tra
 
 	// Subnets
 	if source.Subnets != nil {
-		subnetList := make([]EndpointProperties_Subnets, len(source.Subnets))
+		subnetList := make([]EndpointPropertiesSubnetsItem, len(source.Subnets))
 		for subnetIndex, subnetItem := range source.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
-			var subnet EndpointProperties_Subnets
-			err := subnet.Initialize_From_EndpointProperties_Subnets_STATUS(&subnetItem)
+			var subnet EndpointPropertiesSubnetsItem
+			err := subnet.Initialize_From_EndpointPropertiesSubnetsItem_STATUS(&subnetItem)
 			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_EndpointProperties_Subnets_STATUS() to populate field Subnets")
+				return eris.Wrap(err, "calling Initialize_From_EndpointPropertiesSubnetsItem_STATUS() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -1024,24 +1013,24 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_Spec) SetAzureName(azureN
 type TrafficManagerProfilesExternalEndpoint_STATUS struct {
 	// AlwaysServe: If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in
 	// the traffic routing method.
-	AlwaysServe *EndpointProperties_AlwaysServe_STATUS `json:"alwaysServe,omitempty"`
+	AlwaysServe *AlwaysServe_STATUS `json:"alwaysServe,omitempty"`
 
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
 	// CustomHeaders: List of custom headers.
-	CustomHeaders []EndpointProperties_CustomHeaders_STATUS `json:"customHeaders,omitempty"`
+	CustomHeaders []EndpointPropertiesCustomHeadersItem_STATUS `json:"customHeaders,omitempty"`
 
 	// EndpointLocation: Specifies the location of the external or nested endpoints when using the 'Performance' traffic
 	// routing method.
 	EndpointLocation *string `json:"endpointLocation,omitempty"`
 
 	// EndpointMonitorStatus: The monitoring status of the endpoint.
-	EndpointMonitorStatus *EndpointProperties_EndpointMonitorStatus_STATUS `json:"endpointMonitorStatus,omitempty"`
+	EndpointMonitorStatus *EndpointMonitorStatus_STATUS `json:"endpointMonitorStatus,omitempty"`
 
 	// EndpointStatus: The status of the endpoint. If the endpoint is Enabled, it is probed for endpoint health and is included
 	// in the traffic routing method.
-	EndpointStatus *EndpointProperties_EndpointStatus_STATUS `json:"endpointStatus,omitempty"`
+	EndpointStatus *EndpointStatus_STATUS `json:"endpointStatus,omitempty"`
 
 	// GeoMapping: The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
 	// Please consult Traffic Manager Geographic documentation for a full list of accepted values.
@@ -1075,7 +1064,7 @@ type TrafficManagerProfilesExternalEndpoint_STATUS struct {
 
 	// Subnets: The list of subnets, IP addresses, and/or address ranges mapped to this endpoint when using the 'Subnet'
 	// traffic routing method. An empty list will match all ranges not covered by other endpoints.
-	Subnets []EndpointProperties_Subnets_STATUS `json:"subnets,omitempty"`
+	Subnets []EndpointPropertiesSubnetsItem_STATUS `json:"subnets,omitempty"`
 
 	// Target: The fully-qualified DNS name or IP address of the endpoint. Traffic Manager returns this value in DNS responses
 	// to direct traffic to this endpoint.
@@ -1161,7 +1150,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) PopulateFromARM(o
 		if typedInput.Properties.AlwaysServe != nil {
 			var temp string
 			temp = string(*typedInput.Properties.AlwaysServe)
-			alwaysServe := EndpointProperties_AlwaysServe_STATUS(temp)
+			alwaysServe := AlwaysServe_STATUS(temp)
 			endpoint.AlwaysServe = &alwaysServe
 		}
 	}
@@ -1172,7 +1161,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) PopulateFromARM(o
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		for _, item := range typedInput.Properties.CustomHeaders {
-			var item1 EndpointProperties_CustomHeaders_STATUS
+			var item1 EndpointPropertiesCustomHeadersItem_STATUS
 			err := item1.PopulateFromARM(owner, item)
 			if err != nil {
 				return err
@@ -1196,7 +1185,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) PopulateFromARM(o
 		if typedInput.Properties.EndpointMonitorStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.EndpointMonitorStatus)
-			endpointMonitorStatus := EndpointProperties_EndpointMonitorStatus_STATUS(temp)
+			endpointMonitorStatus := EndpointMonitorStatus_STATUS(temp)
 			endpoint.EndpointMonitorStatus = &endpointMonitorStatus
 		}
 	}
@@ -1207,7 +1196,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) PopulateFromARM(o
 		if typedInput.Properties.EndpointStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.EndpointStatus)
-			endpointStatus := EndpointProperties_EndpointStatus_STATUS(temp)
+			endpointStatus := EndpointStatus_STATUS(temp)
 			endpoint.EndpointStatus = &endpointStatus
 		}
 	}
@@ -1272,7 +1261,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) PopulateFromARM(o
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		for _, item := range typedInput.Properties.Subnets {
-			var item1 EndpointProperties_Subnets_STATUS
+			var item1 EndpointPropertiesSubnetsItem_STATUS
 			err := item1.PopulateFromARM(owner, item)
 			if err != nil {
 				return err
@@ -1324,7 +1313,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 	// AlwaysServe
 	if source.AlwaysServe != nil {
 		alwaysServe := *source.AlwaysServe
-		alwaysServeTemp := genruntime.ToEnum(alwaysServe, endpointProperties_AlwaysServe_STATUS_Values)
+		alwaysServeTemp := genruntime.ToEnum(alwaysServe, alwaysServe_STATUS_Values)
 		endpoint.AlwaysServe = &alwaysServeTemp
 	} else {
 		endpoint.AlwaysServe = nil
@@ -1335,14 +1324,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 
 	// CustomHeaders
 	if source.CustomHeaders != nil {
-		customHeaderList := make([]EndpointProperties_CustomHeaders_STATUS, len(source.CustomHeaders))
+		customHeaderList := make([]EndpointPropertiesCustomHeadersItem_STATUS, len(source.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader EndpointProperties_CustomHeaders_STATUS
-			err := customHeader.AssignProperties_From_EndpointProperties_CustomHeaders_STATUS(&customHeaderItem)
+			var customHeader EndpointPropertiesCustomHeadersItem_STATUS
+			err := customHeader.AssignProperties_From_EndpointPropertiesCustomHeadersItem_STATUS(&customHeaderItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_EndpointProperties_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_EndpointPropertiesCustomHeadersItem_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -1357,7 +1344,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 	// EndpointMonitorStatus
 	if source.EndpointMonitorStatus != nil {
 		endpointMonitorStatus := *source.EndpointMonitorStatus
-		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointProperties_EndpointMonitorStatus_STATUS_Values)
+		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointMonitorStatus_STATUS_Values)
 		endpoint.EndpointMonitorStatus = &endpointMonitorStatusTemp
 	} else {
 		endpoint.EndpointMonitorStatus = nil
@@ -1366,7 +1353,7 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 	// EndpointStatus
 	if source.EndpointStatus != nil {
 		endpointStatus := *source.EndpointStatus
-		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointProperties_EndpointStatus_STATUS_Values)
+		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointStatus_STATUS_Values)
 		endpoint.EndpointStatus = &endpointStatusTemp
 	} else {
 		endpoint.EndpointStatus = nil
@@ -1395,14 +1382,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 
 	// Subnets
 	if source.Subnets != nil {
-		subnetList := make([]EndpointProperties_Subnets_STATUS, len(source.Subnets))
+		subnetList := make([]EndpointPropertiesSubnetsItem_STATUS, len(source.Subnets))
 		for subnetIndex, subnetItem := range source.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
-			var subnet EndpointProperties_Subnets_STATUS
-			err := subnet.AssignProperties_From_EndpointProperties_Subnets_STATUS(&subnetItem)
+			var subnet EndpointPropertiesSubnetsItem_STATUS
+			err := subnet.AssignProperties_From_EndpointPropertiesSubnetsItem_STATUS(&subnetItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_EndpointProperties_Subnets_STATUS() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_From_EndpointPropertiesSubnetsItem_STATUS() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -1445,14 +1430,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 
 	// CustomHeaders
 	if endpoint.CustomHeaders != nil {
-		customHeaderList := make([]storage.EndpointProperties_CustomHeaders_STATUS, len(endpoint.CustomHeaders))
+		customHeaderList := make([]storage.EndpointPropertiesCustomHeadersItem_STATUS, len(endpoint.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range endpoint.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader storage.EndpointProperties_CustomHeaders_STATUS
-			err := customHeaderItem.AssignProperties_To_EndpointProperties_CustomHeaders_STATUS(&customHeader)
+			var customHeader storage.EndpointPropertiesCustomHeadersItem_STATUS
+			err := customHeaderItem.AssignProperties_To_EndpointPropertiesCustomHeadersItem_STATUS(&customHeader)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_EndpointProperties_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_EndpointPropertiesCustomHeadersItem_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -1503,14 +1486,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint_STATUS) AssignProperties_
 
 	// Subnets
 	if endpoint.Subnets != nil {
-		subnetList := make([]storage.EndpointProperties_Subnets_STATUS, len(endpoint.Subnets))
+		subnetList := make([]storage.EndpointPropertiesSubnetsItem_STATUS, len(endpoint.Subnets))
 		for subnetIndex, subnetItem := range endpoint.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
-			var subnet storage.EndpointProperties_Subnets_STATUS
-			err := subnetItem.AssignProperties_To_EndpointProperties_Subnets_STATUS(&subnet)
+			var subnet storage.EndpointPropertiesSubnetsItem_STATUS
+			err := subnetItem.AssignProperties_To_EndpointPropertiesSubnetsItem_STATUS(&subnet)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_EndpointProperties_Subnets_STATUS() to populate field Subnets")
+				return eris.Wrap(err, "calling AssignProperties_To_EndpointPropertiesSubnetsItem_STATUS() to populate field Subnets")
 			}
 			subnetList[subnetIndex] = subnet
 		}
@@ -1558,8 +1539,6 @@ func (operator *TrafficManagerProfilesExternalEndpointOperatorSpec) AssignProper
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1576,8 +1555,6 @@ func (operator *TrafficManagerProfilesExternalEndpointOperatorSpec) AssignProper
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1603,8 +1580,6 @@ func (operator *TrafficManagerProfilesExternalEndpointOperatorSpec) AssignProper
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1621,8 +1596,6 @@ func (operator *TrafficManagerProfilesExternalEndpointOperatorSpec) AssignProper
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

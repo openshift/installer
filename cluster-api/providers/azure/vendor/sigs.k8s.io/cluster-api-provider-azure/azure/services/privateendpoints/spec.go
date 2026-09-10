@@ -105,8 +105,10 @@ func (s *PrivateEndpointSpec) Parameters(_ context.Context, existingPrivateEndpo
 		for _, privateLinkServiceConnection := range s.PrivateLinkServiceConnections {
 			linkServiceConnection := asonetworkv1.PrivateLinkServiceConnection{
 				Name: ptr.To(privateLinkServiceConnection.Name),
-				PrivateLinkServiceReference: &genruntime.ResourceReference{
-					ARMID: privateLinkServiceConnection.PrivateLinkServiceID,
+				PrivateLinkServiceReference: &genruntime.WellKnownResourceReference{
+					ResourceReference: genruntime.ResourceReference{
+						ARMID: privateLinkServiceConnection.PrivateLinkServiceID,
+					},
 				},
 			}
 

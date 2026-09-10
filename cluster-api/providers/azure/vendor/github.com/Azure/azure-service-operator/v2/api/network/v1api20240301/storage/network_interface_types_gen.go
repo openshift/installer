@@ -4,6 +4,9 @@
 package storage
 
 import (
+	"fmt"
+	v20240601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,27 +15,25 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=networkinterfaces,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={networkinterfaces/status,networkinterfaces/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.NetworkInterface
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/networkInterface.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/networkInterface.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}
 type NetworkInterface struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              NetworkInterface_Spec                                        `json:"spec,omitempty"`
-	Status            NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              NetworkInterface_Spec   `json:"spec,omitempty"`
+	Status            NetworkInterface_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NetworkInterface{}
@@ -45,6 +46,28 @@ func (networkInterface *NetworkInterface) GetConditions() conditions.Conditions 
 // SetConditions sets the conditions on the resource status
 func (networkInterface *NetworkInterface) SetConditions(conditions conditions.Conditions) {
 	networkInterface.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &NetworkInterface{}
+
+// ConvertFrom populates our NetworkInterface from the provided hub NetworkInterface
+func (networkInterface *NetworkInterface) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.NetworkInterface)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/NetworkInterface but received %T instead", hub)
+	}
+
+	return networkInterface.AssignProperties_From_NetworkInterface(source)
+}
+
+// ConvertTo populates the provided hub NetworkInterface from our NetworkInterface
+func (networkInterface *NetworkInterface) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.NetworkInterface)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/NetworkInterface but received %T instead", hub)
+	}
+
+	return networkInterface.AssignProperties_To_NetworkInterface(destination)
 }
 
 var _ configmaps.Exporter = &NetworkInterface{}
@@ -110,7 +133,7 @@ func (networkInterface *NetworkInterface) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (networkInterface *NetworkInterface) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded{}
+	return &NetworkInterface_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -126,13 +149,13 @@ func (networkInterface *NetworkInterface) Owner() *genruntime.ResourceReference 
 // SetStatus sets the status of this resource
 func (networkInterface *NetworkInterface) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+	if st, ok := status.(*NetworkInterface_STATUS); ok {
 		networkInterface.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
+	var st NetworkInterface_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -142,8 +165,75 @@ func (networkInterface *NetworkInterface) SetStatus(status genruntime.Convertibl
 	return nil
 }
 
-// Hub marks that this NetworkInterface is the hub type for conversion
-func (networkInterface *NetworkInterface) Hub() {}
+// AssignProperties_From_NetworkInterface populates our NetworkInterface from the provided source NetworkInterface
+func (networkInterface *NetworkInterface) AssignProperties_From_NetworkInterface(source *v20250301s.NetworkInterface) error {
+
+	// ObjectMeta
+	networkInterface.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec NetworkInterface_Spec
+	err := spec.AssignProperties_From_NetworkInterface_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NetworkInterface_Spec() to populate field Spec")
+	}
+	networkInterface.Spec = spec
+
+	// Status
+	var status NetworkInterface_STATUS
+	err = status.AssignProperties_From_NetworkInterface_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NetworkInterface_STATUS() to populate field Status")
+	}
+	networkInterface.Status = status
+
+	// Invoke the augmentConversionForNetworkInterface interface (if implemented) to customize the conversion
+	var networkInterfaceAsAny any = networkInterface
+	if augmentedNetworkInterface, ok := networkInterfaceAsAny.(augmentConversionForNetworkInterface); ok {
+		err := augmentedNetworkInterface.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterface populates the provided destination NetworkInterface from our NetworkInterface
+func (networkInterface *NetworkInterface) AssignProperties_To_NetworkInterface(destination *v20250301s.NetworkInterface) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *networkInterface.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.NetworkInterface_Spec
+	err := networkInterface.Spec.AssignProperties_To_NetworkInterface_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NetworkInterface_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.NetworkInterface_STATUS
+	err = networkInterface.Status.AssignProperties_To_NetworkInterface_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NetworkInterface_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForNetworkInterface interface (if implemented) to customize the conversion
+	var networkInterfaceAsAny any = networkInterface
+	if augmentedNetworkInterface, ok := networkInterfaceAsAny.(augmentConversionForNetworkInterface); ok {
+		err := augmentedNetworkInterface.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (networkInterface *NetworkInterface) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +247,17 @@ func (networkInterface *NetworkInterface) OriginalGVK() *schema.GroupVersionKind
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.NetworkInterface
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/networkInterface.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/networkInterface.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}
 type NetworkInterfaceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NetworkInterface `json:"items"`
+}
+
+type augmentConversionForNetworkInterface interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterface) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterface) error
 }
 
 // Storage version of v1api20240301.NetworkInterface_Spec
@@ -200,25 +295,369 @@ var _ genruntime.ConvertibleSpec = &NetworkInterface_Spec{}
 
 // ConvertSpecFrom populates our NetworkInterface_Spec from the provided source
 func (networkInterface *NetworkInterface_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == networkInterface {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.NetworkInterface_Spec)
+	if ok {
+		// Populate our instance from source
+		return networkInterface.AssignProperties_From_NetworkInterface_Spec(src)
 	}
 
-	return source.ConvertSpecTo(networkInterface)
+	// Convert to an intermediate form
+	src = &v20250301s.NetworkInterface_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = networkInterface.AssignProperties_From_NetworkInterface_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our NetworkInterface_Spec
 func (networkInterface *NetworkInterface_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == networkInterface {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.NetworkInterface_Spec)
+	if ok {
+		// Populate destination from our instance
+		return networkInterface.AssignProperties_To_NetworkInterface_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(networkInterface)
+	// Convert to an intermediate form
+	dst = &v20250301s.NetworkInterface_Spec{}
+	err := networkInterface.AssignProperties_To_NetworkInterface_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
 }
 
-// Storage version of v1api20240301.NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
+// AssignProperties_From_NetworkInterface_Spec populates our NetworkInterface_Spec from the provided source NetworkInterface_Spec
+func (networkInterface *NetworkInterface_Spec) AssignProperties_From_NetworkInterface_Spec(source *v20250301s.NetworkInterface_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuxiliaryMode
+	networkInterface.AuxiliaryMode = genruntime.ClonePointerToString(source.AuxiliaryMode)
+
+	// AuxiliarySku
+	networkInterface.AuxiliarySku = genruntime.ClonePointerToString(source.AuxiliarySku)
+
+	// AzureName
+	networkInterface.AzureName = source.AzureName
+
+	// DisableTcpStateTracking
+	if source.DisableTcpStateTracking != nil {
+		disableTcpStateTracking := *source.DisableTcpStateTracking
+		networkInterface.DisableTcpStateTracking = &disableTcpStateTracking
+	} else {
+		networkInterface.DisableTcpStateTracking = nil
+	}
+
+	// DnsSettings
+	if source.DnsSettings != nil {
+		var dnsSetting NetworkInterfaceDnsSettings
+		err := dnsSetting.AssignProperties_From_NetworkInterfaceDnsSettings(source.DnsSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceDnsSettings() to populate field DnsSettings")
+		}
+		networkInterface.DnsSettings = &dnsSetting
+	} else {
+		networkInterface.DnsSettings = nil
+	}
+
+	// EnableAcceleratedNetworking
+	if source.EnableAcceleratedNetworking != nil {
+		enableAcceleratedNetworking := *source.EnableAcceleratedNetworking
+		networkInterface.EnableAcceleratedNetworking = &enableAcceleratedNetworking
+	} else {
+		networkInterface.EnableAcceleratedNetworking = nil
+	}
+
+	// EnableIPForwarding
+	if source.EnableIPForwarding != nil {
+		enableIPForwarding := *source.EnableIPForwarding
+		networkInterface.EnableIPForwarding = &enableIPForwarding
+	} else {
+		networkInterface.EnableIPForwarding = nil
+	}
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation
+		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		networkInterface.ExtendedLocation = &extendedLocation
+	} else {
+		networkInterface.ExtendedLocation = nil
+	}
+
+	// IpConfigurations
+	if source.IpConfigurations != nil {
+		ipConfigurationList := make([]NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded, len(source.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
+			var ipConfiguration NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded
+			err := ipConfiguration.AssignProperties_From_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded(&ipConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		networkInterface.IpConfigurations = ipConfigurationList
+	} else {
+		networkInterface.IpConfigurations = nil
+	}
+
+	// Location
+	networkInterface.Location = genruntime.ClonePointerToString(source.Location)
+
+	// NetworkSecurityGroup
+	if source.NetworkSecurityGroup != nil {
+		var networkSecurityGroup NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+		err := networkSecurityGroup.AssignProperties_From_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(source.NetworkSecurityGroup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded() to populate field NetworkSecurityGroup")
+		}
+		networkInterface.NetworkSecurityGroup = &networkSecurityGroup
+	} else {
+		networkInterface.NetworkSecurityGroup = nil
+	}
+
+	// NicType
+	networkInterface.NicType = genruntime.ClonePointerToString(source.NicType)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NetworkInterfaceOperatorSpec
+		err := operatorSpec.AssignProperties_From_NetworkInterfaceOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceOperatorSpec() to populate field OperatorSpec")
+		}
+		networkInterface.OperatorSpec = &operatorSpec
+	} else {
+		networkInterface.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	networkInterface.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		networkInterface.Owner = &owner
+	} else {
+		networkInterface.Owner = nil
+	}
+
+	// PrivateLinkService
+	if source.PrivateLinkService != nil {
+		var privateLinkService PrivateLinkServiceSpec
+		err := privateLinkService.AssignProperties_From_PrivateLinkServiceSpec(source.PrivateLinkService)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceSpec() to populate field PrivateLinkService")
+		}
+		networkInterface.PrivateLinkService = &privateLinkService
+	} else {
+		networkInterface.PrivateLinkService = nil
+	}
+
+	// Tags
+	networkInterface.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// WorkloadType
+	networkInterface.WorkloadType = genruntime.ClonePointerToString(source.WorkloadType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		networkInterface.PropertyBag = propertyBag
+	} else {
+		networkInterface.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_Spec interface (if implemented) to customize the conversion
+	var networkInterfaceAsAny any = networkInterface
+	if augmentedNetworkInterface, ok := networkInterfaceAsAny.(augmentConversionForNetworkInterface_Spec); ok {
+		err := augmentedNetworkInterface.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterface_Spec populates the provided destination NetworkInterface_Spec from our NetworkInterface_Spec
+func (networkInterface *NetworkInterface_Spec) AssignProperties_To_NetworkInterface_Spec(destination *v20250301s.NetworkInterface_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(networkInterface.PropertyBag)
+
+	// AuxiliaryMode
+	destination.AuxiliaryMode = genruntime.ClonePointerToString(networkInterface.AuxiliaryMode)
+
+	// AuxiliarySku
+	destination.AuxiliarySku = genruntime.ClonePointerToString(networkInterface.AuxiliarySku)
+
+	// AzureName
+	destination.AzureName = networkInterface.AzureName
+
+	// DisableTcpStateTracking
+	if networkInterface.DisableTcpStateTracking != nil {
+		disableTcpStateTracking := *networkInterface.DisableTcpStateTracking
+		destination.DisableTcpStateTracking = &disableTcpStateTracking
+	} else {
+		destination.DisableTcpStateTracking = nil
+	}
+
+	// DnsSettings
+	if networkInterface.DnsSettings != nil {
+		var dnsSetting v20250301s.NetworkInterfaceDnsSettings
+		err := networkInterface.DnsSettings.AssignProperties_To_NetworkInterfaceDnsSettings(&dnsSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceDnsSettings() to populate field DnsSettings")
+		}
+		destination.DnsSettings = &dnsSetting
+	} else {
+		destination.DnsSettings = nil
+	}
+
+	// EnableAcceleratedNetworking
+	if networkInterface.EnableAcceleratedNetworking != nil {
+		enableAcceleratedNetworking := *networkInterface.EnableAcceleratedNetworking
+		destination.EnableAcceleratedNetworking = &enableAcceleratedNetworking
+	} else {
+		destination.EnableAcceleratedNetworking = nil
+	}
+
+	// EnableIPForwarding
+	if networkInterface.EnableIPForwarding != nil {
+		enableIPForwarding := *networkInterface.EnableIPForwarding
+		destination.EnableIPForwarding = &enableIPForwarding
+	} else {
+		destination.EnableIPForwarding = nil
+	}
+
+	// ExtendedLocation
+	if networkInterface.ExtendedLocation != nil {
+		var extendedLocation v20250301s.ExtendedLocation
+		err := networkInterface.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// IpConfigurations
+	if networkInterface.IpConfigurations != nil {
+		ipConfigurationList := make([]v20250301s.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded, len(networkInterface.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range networkInterface.IpConfigurations {
+			var ipConfiguration v20250301s.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded
+			err := ipConfigurationItem.AssignProperties_To_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded(&ipConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		destination.IpConfigurations = ipConfigurationList
+	} else {
+		destination.IpConfigurations = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(networkInterface.Location)
+
+	// NetworkSecurityGroup
+	if networkInterface.NetworkSecurityGroup != nil {
+		var networkSecurityGroup v20250301s.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+		err := networkInterface.NetworkSecurityGroup.AssignProperties_To_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(&networkSecurityGroup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded() to populate field NetworkSecurityGroup")
+		}
+		destination.NetworkSecurityGroup = &networkSecurityGroup
+	} else {
+		destination.NetworkSecurityGroup = nil
+	}
+
+	// NicType
+	destination.NicType = genruntime.ClonePointerToString(networkInterface.NicType)
+
+	// OperatorSpec
+	if networkInterface.OperatorSpec != nil {
+		var operatorSpec v20250301s.NetworkInterfaceOperatorSpec
+		err := networkInterface.OperatorSpec.AssignProperties_To_NetworkInterfaceOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = networkInterface.OriginalVersion
+
+	// Owner
+	if networkInterface.Owner != nil {
+		owner := networkInterface.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PrivateLinkService
+	if networkInterface.PrivateLinkService != nil {
+		var privateLinkService v20250301s.PrivateLinkServiceSpec
+		err := networkInterface.PrivateLinkService.AssignProperties_To_PrivateLinkServiceSpec(&privateLinkService)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceSpec() to populate field PrivateLinkService")
+		}
+		destination.PrivateLinkService = &privateLinkService
+	} else {
+		destination.PrivateLinkService = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(networkInterface.Tags)
+
+	// WorkloadType
+	destination.WorkloadType = genruntime.ClonePointerToString(networkInterface.WorkloadType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_Spec interface (if implemented) to customize the conversion
+	var networkInterfaceAsAny any = networkInterface
+	if augmentedNetworkInterface, ok := networkInterfaceAsAny.(augmentConversionForNetworkInterface_Spec); ok {
+		err := augmentedNetworkInterface.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20240301.NetworkInterface_STATUS
 // A network interface in a resource group.
-type NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded struct {
+type NetworkInterface_STATUS struct {
 	AuxiliaryMode               *string                                                                        `json:"auxiliaryMode,omitempty"`
 	AuxiliarySku                *string                                                                        `json:"auxiliarySku,omitempty"`
 	Conditions                  []conditions.Condition                                                         `json:"conditions,omitempty"`
@@ -252,24 +691,562 @@ type NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	WorkloadType                *string                                                                        `json:"workloadType,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &NetworkInterface_STATUS{}
 
-// ConvertStatusFrom populates our NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded from the provided source
-func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusFrom populates our NetworkInterface_STATUS from the provided source
+func (networkInterface *NetworkInterface_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*v20250301s.NetworkInterface_STATUS)
+	if ok {
+		// Populate our instance from source
+		return networkInterface.AssignProperties_From_NetworkInterface_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(embedded)
+	// Convert to an intermediate form
+	src = &v20250301s.NetworkInterface_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = networkInterface.AssignProperties_From_NetworkInterface_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusTo populates the provided destination from our NetworkInterface_STATUS
+func (networkInterface *NetworkInterface_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*v20250301s.NetworkInterface_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return networkInterface.AssignProperties_To_NetworkInterface_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	// Convert to an intermediate form
+	dst = &v20250301s.NetworkInterface_STATUS{}
+	err := networkInterface.AssignProperties_To_NetworkInterface_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NetworkInterface_STATUS populates our NetworkInterface_STATUS from the provided source NetworkInterface_STATUS
+func (networkInterface *NetworkInterface_STATUS) AssignProperties_From_NetworkInterface_STATUS(source *v20250301s.NetworkInterface_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuxiliaryMode
+	networkInterface.AuxiliaryMode = genruntime.ClonePointerToString(source.AuxiliaryMode)
+
+	// AuxiliarySku
+	networkInterface.AuxiliarySku = genruntime.ClonePointerToString(source.AuxiliarySku)
+
+	// Conditions
+	networkInterface.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DefaultOutboundConnectivityEnabled
+	if source.DefaultOutboundConnectivityEnabled != nil {
+		propertyBag.Add("DefaultOutboundConnectivityEnabled", *source.DefaultOutboundConnectivityEnabled)
+	} else {
+		propertyBag.Remove("DefaultOutboundConnectivityEnabled")
+	}
+
+	// DisableTcpStateTracking
+	if source.DisableTcpStateTracking != nil {
+		disableTcpStateTracking := *source.DisableTcpStateTracking
+		networkInterface.DisableTcpStateTracking = &disableTcpStateTracking
+	} else {
+		networkInterface.DisableTcpStateTracking = nil
+	}
+
+	// DnsSettings
+	if source.DnsSettings != nil {
+		var dnsSetting NetworkInterfaceDnsSettings_STATUS
+		err := dnsSetting.AssignProperties_From_NetworkInterfaceDnsSettings_STATUS(source.DnsSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceDnsSettings_STATUS() to populate field DnsSettings")
+		}
+		networkInterface.DnsSettings = &dnsSetting
+	} else {
+		networkInterface.DnsSettings = nil
+	}
+
+	// DscpConfiguration
+	if source.DscpConfiguration != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.DscpConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from DscpConfiguration")
+		}
+		var dscpConfiguration SubResource_STATUS
+		err = dscpConfiguration.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DscpConfiguration from SubResource_STATUSStash")
+		}
+		networkInterface.DscpConfiguration = &dscpConfiguration
+	} else {
+		networkInterface.DscpConfiguration = nil
+	}
+
+	// EnableAcceleratedNetworking
+	if source.EnableAcceleratedNetworking != nil {
+		enableAcceleratedNetworking := *source.EnableAcceleratedNetworking
+		networkInterface.EnableAcceleratedNetworking = &enableAcceleratedNetworking
+	} else {
+		networkInterface.EnableAcceleratedNetworking = nil
+	}
+
+	// EnableIPForwarding
+	if source.EnableIPForwarding != nil {
+		enableIPForwarding := *source.EnableIPForwarding
+		networkInterface.EnableIPForwarding = &enableIPForwarding
+	} else {
+		networkInterface.EnableIPForwarding = nil
+	}
+
+	// Etag
+	networkInterface.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation_STATUS
+		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		networkInterface.ExtendedLocation = &extendedLocation
+	} else {
+		networkInterface.ExtendedLocation = nil
+	}
+
+	// HostedWorkloads
+	networkInterface.HostedWorkloads = genruntime.CloneSliceOfString(source.HostedWorkloads)
+
+	// Id
+	networkInterface.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IpConfigurations
+	if source.IpConfigurations != nil {
+		ipConfigurationList := make([]NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded, len(source.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
+			var ipConfiguration NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+			err := ipConfiguration.AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(&ipConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		networkInterface.IpConfigurations = ipConfigurationList
+	} else {
+		networkInterface.IpConfigurations = nil
+	}
+
+	// Location
+	networkInterface.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MacAddress
+	networkInterface.MacAddress = genruntime.ClonePointerToString(source.MacAddress)
+
+	// MigrationPhase
+	networkInterface.MigrationPhase = genruntime.ClonePointerToString(source.MigrationPhase)
+
+	// Name
+	networkInterface.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NetworkSecurityGroup
+	if source.NetworkSecurityGroup != nil {
+		var networkSecurityGroup NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+		err := networkSecurityGroup.AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(source.NetworkSecurityGroup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded() to populate field NetworkSecurityGroup")
+		}
+		networkInterface.NetworkSecurityGroup = &networkSecurityGroup
+	} else {
+		networkInterface.NetworkSecurityGroup = nil
+	}
+
+	// NicType
+	networkInterface.NicType = genruntime.ClonePointerToString(source.NicType)
+
+	// Primary
+	if source.Primary != nil {
+		primary := *source.Primary
+		networkInterface.Primary = &primary
+	} else {
+		networkInterface.Primary = nil
+	}
+
+	// PrivateEndpoint
+	if source.PrivateEndpoint != nil {
+		var privateEndpoint PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded
+		err := privateEndpoint.AssignProperties_From_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded(source.PrivateEndpoint)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PrivateEndpoint")
+		}
+		networkInterface.PrivateEndpoint = &privateEndpoint
+	} else {
+		networkInterface.PrivateEndpoint = nil
+	}
+
+	// PrivateLinkService
+	if source.PrivateLinkService != nil {
+		var privateLinkService PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded
+		err := privateLinkService.AssignProperties_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded(source.PrivateLinkService)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PrivateLinkService")
+		}
+		networkInterface.PrivateLinkService = &privateLinkService
+	} else {
+		networkInterface.PrivateLinkService = nil
+	}
+
+	// ProvisioningState
+	networkInterface.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// ResourceGuid
+	networkInterface.ResourceGuid = genruntime.ClonePointerToString(source.ResourceGuid)
+
+	// Tags
+	networkInterface.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// TapConfigurations
+	if source.TapConfigurations != nil {
+		tapConfigurationList := make([]NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded, len(source.TapConfigurations))
+		for tapConfigurationIndex, tapConfigurationItem := range source.TapConfigurations {
+			var tapConfiguration NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+			err := tapConfiguration.AssignProperties_From_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(&tapConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded() to populate field TapConfigurations")
+			}
+			tapConfigurationList[tapConfigurationIndex] = tapConfiguration
+		}
+		networkInterface.TapConfigurations = tapConfigurationList
+	} else {
+		networkInterface.TapConfigurations = nil
+	}
+
+	// Type
+	networkInterface.Type = genruntime.ClonePointerToString(source.Type)
+
+	// VirtualMachine
+	if source.VirtualMachine != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.VirtualMachine)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from VirtualMachine")
+		}
+		var virtualMachine SubResource_STATUS
+		err = virtualMachine.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field VirtualMachine from SubResource_STATUSStash")
+		}
+		networkInterface.VirtualMachine = &virtualMachine
+	} else {
+		networkInterface.VirtualMachine = nil
+	}
+
+	// VnetEncryptionSupported
+	if source.VnetEncryptionSupported != nil {
+		vnetEncryptionSupported := *source.VnetEncryptionSupported
+		networkInterface.VnetEncryptionSupported = &vnetEncryptionSupported
+	} else {
+		networkInterface.VnetEncryptionSupported = nil
+	}
+
+	// WorkloadType
+	networkInterface.WorkloadType = genruntime.ClonePointerToString(source.WorkloadType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		networkInterface.PropertyBag = propertyBag
+	} else {
+		networkInterface.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_STATUS interface (if implemented) to customize the conversion
+	var networkInterfaceAsAny any = networkInterface
+	if augmentedNetworkInterface, ok := networkInterfaceAsAny.(augmentConversionForNetworkInterface_STATUS); ok {
+		err := augmentedNetworkInterface.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterface_STATUS populates the provided destination NetworkInterface_STATUS from our NetworkInterface_STATUS
+func (networkInterface *NetworkInterface_STATUS) AssignProperties_To_NetworkInterface_STATUS(destination *v20250301s.NetworkInterface_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(networkInterface.PropertyBag)
+
+	// AuxiliaryMode
+	destination.AuxiliaryMode = genruntime.ClonePointerToString(networkInterface.AuxiliaryMode)
+
+	// AuxiliarySku
+	destination.AuxiliarySku = genruntime.ClonePointerToString(networkInterface.AuxiliarySku)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(networkInterface.Conditions)
+
+	// DefaultOutboundConnectivityEnabled
+	if propertyBag.Contains("DefaultOutboundConnectivityEnabled") {
+		var defaultOutboundConnectivityEnabled bool
+		err := propertyBag.Pull("DefaultOutboundConnectivityEnabled", &defaultOutboundConnectivityEnabled)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'DefaultOutboundConnectivityEnabled' from propertyBag")
+		}
+
+		destination.DefaultOutboundConnectivityEnabled = &defaultOutboundConnectivityEnabled
+	} else {
+		destination.DefaultOutboundConnectivityEnabled = nil
+	}
+
+	// DisableTcpStateTracking
+	if networkInterface.DisableTcpStateTracking != nil {
+		disableTcpStateTracking := *networkInterface.DisableTcpStateTracking
+		destination.DisableTcpStateTracking = &disableTcpStateTracking
+	} else {
+		destination.DisableTcpStateTracking = nil
+	}
+
+	// DnsSettings
+	if networkInterface.DnsSettings != nil {
+		var dnsSetting v20250301s.NetworkInterfaceDnsSettings_STATUS
+		err := networkInterface.DnsSettings.AssignProperties_To_NetworkInterfaceDnsSettings_STATUS(&dnsSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceDnsSettings_STATUS() to populate field DnsSettings")
+		}
+		destination.DnsSettings = &dnsSetting
+	} else {
+		destination.DnsSettings = nil
+	}
+
+	// DscpConfiguration
+	if networkInterface.DscpConfiguration != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := networkInterface.DscpConfiguration.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from DscpConfiguration")
+		}
+		var dscpConfiguration v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&dscpConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DscpConfiguration from SubResource_STATUSStash")
+		}
+		destination.DscpConfiguration = &dscpConfiguration
+	} else {
+		destination.DscpConfiguration = nil
+	}
+
+	// EnableAcceleratedNetworking
+	if networkInterface.EnableAcceleratedNetworking != nil {
+		enableAcceleratedNetworking := *networkInterface.EnableAcceleratedNetworking
+		destination.EnableAcceleratedNetworking = &enableAcceleratedNetworking
+	} else {
+		destination.EnableAcceleratedNetworking = nil
+	}
+
+	// EnableIPForwarding
+	if networkInterface.EnableIPForwarding != nil {
+		enableIPForwarding := *networkInterface.EnableIPForwarding
+		destination.EnableIPForwarding = &enableIPForwarding
+	} else {
+		destination.EnableIPForwarding = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(networkInterface.Etag)
+
+	// ExtendedLocation
+	if networkInterface.ExtendedLocation != nil {
+		var extendedLocation v20250301s.ExtendedLocation_STATUS
+		err := networkInterface.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// HostedWorkloads
+	destination.HostedWorkloads = genruntime.CloneSliceOfString(networkInterface.HostedWorkloads)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(networkInterface.Id)
+
+	// IpConfigurations
+	if networkInterface.IpConfigurations != nil {
+		ipConfigurationList := make([]v20250301s.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded, len(networkInterface.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range networkInterface.IpConfigurations {
+			var ipConfiguration v20250301s.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+			err := ipConfigurationItem.AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(&ipConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		destination.IpConfigurations = ipConfigurationList
+	} else {
+		destination.IpConfigurations = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(networkInterface.Location)
+
+	// MacAddress
+	destination.MacAddress = genruntime.ClonePointerToString(networkInterface.MacAddress)
+
+	// MigrationPhase
+	destination.MigrationPhase = genruntime.ClonePointerToString(networkInterface.MigrationPhase)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(networkInterface.Name)
+
+	// NetworkSecurityGroup
+	if networkInterface.NetworkSecurityGroup != nil {
+		var networkSecurityGroup v20250301s.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+		err := networkInterface.NetworkSecurityGroup.AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(&networkSecurityGroup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded() to populate field NetworkSecurityGroup")
+		}
+		destination.NetworkSecurityGroup = &networkSecurityGroup
+	} else {
+		destination.NetworkSecurityGroup = nil
+	}
+
+	// NicType
+	destination.NicType = genruntime.ClonePointerToString(networkInterface.NicType)
+
+	// Primary
+	if networkInterface.Primary != nil {
+		primary := *networkInterface.Primary
+		destination.Primary = &primary
+	} else {
+		destination.Primary = nil
+	}
+
+	// PrivateEndpoint
+	if networkInterface.PrivateEndpoint != nil {
+		var privateEndpoint v20250301s.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded
+		err := networkInterface.PrivateEndpoint.AssignProperties_To_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded(&privateEndpoint)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PrivateEndpoint")
+		}
+		destination.PrivateEndpoint = &privateEndpoint
+	} else {
+		destination.PrivateEndpoint = nil
+	}
+
+	// PrivateLinkService
+	if networkInterface.PrivateLinkService != nil {
+		var privateLinkService v20250301s.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded
+		err := networkInterface.PrivateLinkService.AssignProperties_To_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded(&privateLinkService)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PrivateLinkService")
+		}
+		destination.PrivateLinkService = &privateLinkService
+	} else {
+		destination.PrivateLinkService = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(networkInterface.ProvisioningState)
+
+	// ResourceGuid
+	destination.ResourceGuid = genruntime.ClonePointerToString(networkInterface.ResourceGuid)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(networkInterface.Tags)
+
+	// TapConfigurations
+	if networkInterface.TapConfigurations != nil {
+		tapConfigurationList := make([]v20250301s.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded, len(networkInterface.TapConfigurations))
+		for tapConfigurationIndex, tapConfigurationItem := range networkInterface.TapConfigurations {
+			var tapConfiguration v20250301s.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+			err := tapConfigurationItem.AssignProperties_To_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(&tapConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded() to populate field TapConfigurations")
+			}
+			tapConfigurationList[tapConfigurationIndex] = tapConfiguration
+		}
+		destination.TapConfigurations = tapConfigurationList
+	} else {
+		destination.TapConfigurations = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(networkInterface.Type)
+
+	// VirtualMachine
+	if networkInterface.VirtualMachine != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := networkInterface.VirtualMachine.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from VirtualMachine")
+		}
+		var virtualMachine v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&virtualMachine)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field VirtualMachine from SubResource_STATUSStash")
+		}
+		destination.VirtualMachine = &virtualMachine
+	} else {
+		destination.VirtualMachine = nil
+	}
+
+	// VnetEncryptionSupported
+	if networkInterface.VnetEncryptionSupported != nil {
+		vnetEncryptionSupported := *networkInterface.VnetEncryptionSupported
+		destination.VnetEncryptionSupported = &vnetEncryptionSupported
+	} else {
+		destination.VnetEncryptionSupported = nil
+	}
+
+	// WorkloadType
+	destination.WorkloadType = genruntime.ClonePointerToString(networkInterface.WorkloadType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_STATUS interface (if implemented) to customize the conversion
+	var networkInterfaceAsAny any = networkInterface
+	if augmentedNetworkInterface, ok := networkInterfaceAsAny.(augmentConversionForNetworkInterface_STATUS); ok {
+		err := augmentedNetworkInterface.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNetworkInterface_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterface_Spec) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterface_Spec) error
+}
+
+type augmentConversionForNetworkInterface_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterface_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterface_STATUS) error
 }
 
 // Storage version of v1api20240301.NetworkInterfaceDnsSettings
@@ -278,6 +1255,68 @@ type NetworkInterfaceDnsSettings struct {
 	DnsServers           []string               `json:"dnsServers,omitempty"`
 	InternalDnsNameLabel *string                `json:"internalDnsNameLabel,omitempty"`
 	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterfaceDnsSettings populates our NetworkInterfaceDnsSettings from the provided source NetworkInterfaceDnsSettings
+func (settings *NetworkInterfaceDnsSettings) AssignProperties_From_NetworkInterfaceDnsSettings(source *v20250301s.NetworkInterfaceDnsSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DnsServers
+	settings.DnsServers = genruntime.CloneSliceOfString(source.DnsServers)
+
+	// InternalDnsNameLabel
+	settings.InternalDnsNameLabel = genruntime.ClonePointerToString(source.InternalDnsNameLabel)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceDnsSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForNetworkInterfaceDnsSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceDnsSettings populates the provided destination NetworkInterfaceDnsSettings from our NetworkInterfaceDnsSettings
+func (settings *NetworkInterfaceDnsSettings) AssignProperties_To_NetworkInterfaceDnsSettings(destination *v20250301s.NetworkInterfaceDnsSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// DnsServers
+	destination.DnsServers = genruntime.CloneSliceOfString(settings.DnsServers)
+
+	// InternalDnsNameLabel
+	destination.InternalDnsNameLabel = genruntime.ClonePointerToString(settings.InternalDnsNameLabel)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceDnsSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForNetworkInterfaceDnsSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkInterfaceDnsSettings_STATUS
@@ -289,6 +1328,86 @@ type NetworkInterfaceDnsSettings_STATUS struct {
 	InternalDomainNameSuffix *string                `json:"internalDomainNameSuffix,omitempty"`
 	InternalFqdn             *string                `json:"internalFqdn,omitempty"`
 	PropertyBag              genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterfaceDnsSettings_STATUS populates our NetworkInterfaceDnsSettings_STATUS from the provided source NetworkInterfaceDnsSettings_STATUS
+func (settings *NetworkInterfaceDnsSettings_STATUS) AssignProperties_From_NetworkInterfaceDnsSettings_STATUS(source *v20250301s.NetworkInterfaceDnsSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AppliedDnsServers
+	settings.AppliedDnsServers = genruntime.CloneSliceOfString(source.AppliedDnsServers)
+
+	// DnsServers
+	settings.DnsServers = genruntime.CloneSliceOfString(source.DnsServers)
+
+	// InternalDnsNameLabel
+	settings.InternalDnsNameLabel = genruntime.ClonePointerToString(source.InternalDnsNameLabel)
+
+	// InternalDomainNameSuffix
+	settings.InternalDomainNameSuffix = genruntime.ClonePointerToString(source.InternalDomainNameSuffix)
+
+	// InternalFqdn
+	settings.InternalFqdn = genruntime.ClonePointerToString(source.InternalFqdn)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceDnsSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForNetworkInterfaceDnsSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceDnsSettings_STATUS populates the provided destination NetworkInterfaceDnsSettings_STATUS from our NetworkInterfaceDnsSettings_STATUS
+func (settings *NetworkInterfaceDnsSettings_STATUS) AssignProperties_To_NetworkInterfaceDnsSettings_STATUS(destination *v20250301s.NetworkInterfaceDnsSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// AppliedDnsServers
+	destination.AppliedDnsServers = genruntime.CloneSliceOfString(settings.AppliedDnsServers)
+
+	// DnsServers
+	destination.DnsServers = genruntime.CloneSliceOfString(settings.DnsServers)
+
+	// InternalDnsNameLabel
+	destination.InternalDnsNameLabel = genruntime.ClonePointerToString(settings.InternalDnsNameLabel)
+
+	// InternalDomainNameSuffix
+	destination.InternalDomainNameSuffix = genruntime.ClonePointerToString(settings.InternalDomainNameSuffix)
+
+	// InternalFqdn
+	destination.InternalFqdn = genruntime.ClonePointerToString(settings.InternalFqdn)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceDnsSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForNetworkInterfaceDnsSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded
@@ -309,6 +1428,344 @@ type NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded struct
 	PublicIPAddress                       *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded                   `json:"publicIPAddress,omitempty"`
 	Subnet                                *Subnet_NetworkInterface_SubResourceEmbedded                                `json:"subnet,omitempty"`
 	VirtualNetworkTaps                    []VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded                `json:"virtualNetworkTaps,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded populates our NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded from the provided source NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) AssignProperties_From_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded(source *v20250301s.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ApplicationGatewayBackendAddressPools
+	if source.ApplicationGatewayBackendAddressPools != nil {
+		applicationGatewayBackendAddressPoolList := make([]ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded, len(source.ApplicationGatewayBackendAddressPools))
+		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
+			var applicationGatewayBackendAddressPool ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded
+			err := applicationGatewayBackendAddressPool.AssignProperties_From_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded(&applicationGatewayBackendAddressPoolItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded() to populate field ApplicationGatewayBackendAddressPools")
+			}
+			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
+		}
+		embedded.ApplicationGatewayBackendAddressPools = applicationGatewayBackendAddressPoolList
+	} else {
+		embedded.ApplicationGatewayBackendAddressPools = nil
+	}
+
+	// ApplicationSecurityGroups
+	if source.ApplicationSecurityGroups != nil {
+		applicationSecurityGroupList := make([]ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded, len(source.ApplicationSecurityGroups))
+		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
+			var applicationSecurityGroup ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+			err := applicationSecurityGroup.AssignProperties_From_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(&applicationSecurityGroupItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded() to populate field ApplicationSecurityGroups")
+			}
+			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
+		}
+		embedded.ApplicationSecurityGroups = applicationSecurityGroupList
+	} else {
+		embedded.ApplicationSecurityGroups = nil
+	}
+
+	// GatewayLoadBalancer
+	if source.GatewayLoadBalancer != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.GatewayLoadBalancer)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from GatewayLoadBalancer")
+		}
+		var gatewayLoadBalancer SubResource
+		err = gatewayLoadBalancer.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field GatewayLoadBalancer from SubResourceStash")
+		}
+		embedded.GatewayLoadBalancer = &gatewayLoadBalancer
+	} else {
+		embedded.GatewayLoadBalancer = nil
+	}
+
+	// LoadBalancerBackendAddressPools
+	if source.LoadBalancerBackendAddressPools != nil {
+		loadBalancerBackendAddressPoolList := make([]BackendAddressPool_NetworkInterface_SubResourceEmbedded, len(source.LoadBalancerBackendAddressPools))
+		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
+			var loadBalancerBackendAddressPool BackendAddressPool_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerBackendAddressPool.AssignProperties_From_BackendAddressPool_NetworkInterface_SubResourceEmbedded(&loadBalancerBackendAddressPoolItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_BackendAddressPool_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerBackendAddressPools")
+			}
+			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
+		}
+		embedded.LoadBalancerBackendAddressPools = loadBalancerBackendAddressPoolList
+	} else {
+		embedded.LoadBalancerBackendAddressPools = nil
+	}
+
+	// LoadBalancerInboundNatRules
+	if source.LoadBalancerInboundNatRules != nil {
+		loadBalancerInboundNatRuleList := make([]InboundNatRule_NetworkInterface_SubResourceEmbedded, len(source.LoadBalancerInboundNatRules))
+		for loadBalancerInboundNatRuleIndex, loadBalancerInboundNatRuleItem := range source.LoadBalancerInboundNatRules {
+			var loadBalancerInboundNatRule InboundNatRule_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerInboundNatRule.AssignProperties_From_InboundNatRule_NetworkInterface_SubResourceEmbedded(&loadBalancerInboundNatRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_InboundNatRule_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerInboundNatRules")
+			}
+			loadBalancerInboundNatRuleList[loadBalancerInboundNatRuleIndex] = loadBalancerInboundNatRule
+		}
+		embedded.LoadBalancerInboundNatRules = loadBalancerInboundNatRuleList
+	} else {
+		embedded.LoadBalancerInboundNatRules = nil
+	}
+
+	// Name
+	embedded.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Primary
+	if source.Primary != nil {
+		primary := *source.Primary
+		embedded.Primary = &primary
+	} else {
+		embedded.Primary = nil
+	}
+
+	// PrivateIPAddress
+	embedded.PrivateIPAddress = genruntime.ClonePointerToString(source.PrivateIPAddress)
+
+	// PrivateIPAddressPrefixLength
+	embedded.PrivateIPAddressPrefixLength = genruntime.ClonePointerToInt(source.PrivateIPAddressPrefixLength)
+
+	// PrivateIPAddressVersion
+	embedded.PrivateIPAddressVersion = genruntime.ClonePointerToString(source.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	embedded.PrivateIPAllocationMethod = genruntime.ClonePointerToString(source.PrivateIPAllocationMethod)
+
+	// PublicIPAddress
+	if source.PublicIPAddress != nil {
+		var publicIPAddress PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded
+		err := publicIPAddress.AssignProperties_From_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded(source.PublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded() to populate field PublicIPAddress")
+		}
+		embedded.PublicIPAddress = &publicIPAddress
+	} else {
+		embedded.PublicIPAddress = nil
+	}
+
+	// Subnet
+	if source.Subnet != nil {
+		var subnet Subnet_NetworkInterface_SubResourceEmbedded
+		err := subnet.AssignProperties_From_Subnet_NetworkInterface_SubResourceEmbedded(source.Subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Subnet_NetworkInterface_SubResourceEmbedded() to populate field Subnet")
+		}
+		embedded.Subnet = &subnet
+	} else {
+		embedded.Subnet = nil
+	}
+
+	// VirtualNetworkTaps
+	if source.VirtualNetworkTaps != nil {
+		virtualNetworkTapList := make([]VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded, len(source.VirtualNetworkTaps))
+		for virtualNetworkTapIndex, virtualNetworkTapItem := range source.VirtualNetworkTaps {
+			var virtualNetworkTap VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded
+			err := virtualNetworkTap.AssignProperties_From_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded(&virtualNetworkTapItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded() to populate field VirtualNetworkTaps")
+			}
+			virtualNetworkTapList[virtualNetworkTapIndex] = virtualNetworkTap
+		}
+		embedded.VirtualNetworkTaps = virtualNetworkTapList
+	} else {
+		embedded.VirtualNetworkTaps = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded populates the provided destination NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded from our NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) AssignProperties_To_NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded(destination *v20250301s.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// ApplicationGatewayBackendAddressPools
+	if embedded.ApplicationGatewayBackendAddressPools != nil {
+		applicationGatewayBackendAddressPoolList := make([]v20250301s.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded, len(embedded.ApplicationGatewayBackendAddressPools))
+		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range embedded.ApplicationGatewayBackendAddressPools {
+			var applicationGatewayBackendAddressPool v20250301s.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded
+			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded(&applicationGatewayBackendAddressPool)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded() to populate field ApplicationGatewayBackendAddressPools")
+			}
+			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
+		}
+		destination.ApplicationGatewayBackendAddressPools = applicationGatewayBackendAddressPoolList
+	} else {
+		destination.ApplicationGatewayBackendAddressPools = nil
+	}
+
+	// ApplicationSecurityGroups
+	if embedded.ApplicationSecurityGroups != nil {
+		applicationSecurityGroupList := make([]v20250301s.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded, len(embedded.ApplicationSecurityGroups))
+		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range embedded.ApplicationSecurityGroups {
+			var applicationSecurityGroup v20250301s.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+			err := applicationSecurityGroupItem.AssignProperties_To_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(&applicationSecurityGroup)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded() to populate field ApplicationSecurityGroups")
+			}
+			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
+		}
+		destination.ApplicationSecurityGroups = applicationSecurityGroupList
+	} else {
+		destination.ApplicationSecurityGroups = nil
+	}
+
+	// GatewayLoadBalancer
+	if embedded.GatewayLoadBalancer != nil {
+		var subResourceStash v20240601s.SubResource
+		err := embedded.GatewayLoadBalancer.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from GatewayLoadBalancer")
+		}
+		var gatewayLoadBalancer v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&gatewayLoadBalancer)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field GatewayLoadBalancer from SubResourceStash")
+		}
+		destination.GatewayLoadBalancer = &gatewayLoadBalancer
+	} else {
+		destination.GatewayLoadBalancer = nil
+	}
+
+	// LoadBalancerBackendAddressPools
+	if embedded.LoadBalancerBackendAddressPools != nil {
+		loadBalancerBackendAddressPoolList := make([]v20250301s.BackendAddressPool_NetworkInterface_SubResourceEmbedded, len(embedded.LoadBalancerBackendAddressPools))
+		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range embedded.LoadBalancerBackendAddressPools {
+			var loadBalancerBackendAddressPool v20250301s.BackendAddressPool_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_BackendAddressPool_NetworkInterface_SubResourceEmbedded(&loadBalancerBackendAddressPool)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_BackendAddressPool_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerBackendAddressPools")
+			}
+			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
+		}
+		destination.LoadBalancerBackendAddressPools = loadBalancerBackendAddressPoolList
+	} else {
+		destination.LoadBalancerBackendAddressPools = nil
+	}
+
+	// LoadBalancerInboundNatRules
+	if embedded.LoadBalancerInboundNatRules != nil {
+		loadBalancerInboundNatRuleList := make([]v20250301s.InboundNatRule_NetworkInterface_SubResourceEmbedded, len(embedded.LoadBalancerInboundNatRules))
+		for loadBalancerInboundNatRuleIndex, loadBalancerInboundNatRuleItem := range embedded.LoadBalancerInboundNatRules {
+			var loadBalancerInboundNatRule v20250301s.InboundNatRule_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerInboundNatRuleItem.AssignProperties_To_InboundNatRule_NetworkInterface_SubResourceEmbedded(&loadBalancerInboundNatRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_InboundNatRule_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerInboundNatRules")
+			}
+			loadBalancerInboundNatRuleList[loadBalancerInboundNatRuleIndex] = loadBalancerInboundNatRule
+		}
+		destination.LoadBalancerInboundNatRules = loadBalancerInboundNatRuleList
+	} else {
+		destination.LoadBalancerInboundNatRules = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(embedded.Name)
+
+	// Primary
+	if embedded.Primary != nil {
+		primary := *embedded.Primary
+		destination.Primary = &primary
+	} else {
+		destination.Primary = nil
+	}
+
+	// PrivateIPAddress
+	destination.PrivateIPAddress = genruntime.ClonePointerToString(embedded.PrivateIPAddress)
+
+	// PrivateIPAddressPrefixLength
+	destination.PrivateIPAddressPrefixLength = genruntime.ClonePointerToInt(embedded.PrivateIPAddressPrefixLength)
+
+	// PrivateIPAddressVersion
+	destination.PrivateIPAddressVersion = genruntime.ClonePointerToString(embedded.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	destination.PrivateIPAllocationMethod = genruntime.ClonePointerToString(embedded.PrivateIPAllocationMethod)
+
+	// PublicIPAddress
+	if embedded.PublicIPAddress != nil {
+		var publicIPAddress v20250301s.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded
+		err := embedded.PublicIPAddress.AssignProperties_To_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded(&publicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded() to populate field PublicIPAddress")
+		}
+		destination.PublicIPAddress = &publicIPAddress
+	} else {
+		destination.PublicIPAddress = nil
+	}
+
+	// Subnet
+	if embedded.Subnet != nil {
+		var subnet v20250301s.Subnet_NetworkInterface_SubResourceEmbedded
+		err := embedded.Subnet.AssignProperties_To_Subnet_NetworkInterface_SubResourceEmbedded(&subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Subnet_NetworkInterface_SubResourceEmbedded() to populate field Subnet")
+		}
+		destination.Subnet = &subnet
+	} else {
+		destination.Subnet = nil
+	}
+
+	// VirtualNetworkTaps
+	if embedded.VirtualNetworkTaps != nil {
+		virtualNetworkTapList := make([]v20250301s.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded, len(embedded.VirtualNetworkTaps))
+		for virtualNetworkTapIndex, virtualNetworkTapItem := range embedded.VirtualNetworkTaps {
+			var virtualNetworkTap v20250301s.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded
+			err := virtualNetworkTapItem.AssignProperties_To_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded(&virtualNetworkTap)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded() to populate field VirtualNetworkTaps")
+			}
+			virtualNetworkTapList[virtualNetworkTapIndex] = virtualNetworkTap
+		}
+		destination.VirtualNetworkTaps = virtualNetworkTapList
+	} else {
+		destination.VirtualNetworkTaps = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
@@ -336,12 +1793,512 @@ type NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
 	VirtualNetworkTaps                    []VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded                    `json:"virtualNetworkTaps,omitempty"`
 }
 
+// AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded populates our NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded from the provided source NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ApplicationGatewayBackendAddressPools
+	if source.ApplicationGatewayBackendAddressPools != nil {
+		applicationGatewayBackendAddressPoolList := make([]ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded, len(source.ApplicationGatewayBackendAddressPools))
+		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
+			var applicationGatewayBackendAddressPool ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+			err := applicationGatewayBackendAddressPool.AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(&applicationGatewayBackendAddressPoolItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded() to populate field ApplicationGatewayBackendAddressPools")
+			}
+			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
+		}
+		embedded.ApplicationGatewayBackendAddressPools = applicationGatewayBackendAddressPoolList
+	} else {
+		embedded.ApplicationGatewayBackendAddressPools = nil
+	}
+
+	// ApplicationSecurityGroups
+	if source.ApplicationSecurityGroups != nil {
+		applicationSecurityGroupList := make([]ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded, len(source.ApplicationSecurityGroups))
+		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
+			var applicationSecurityGroup ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+			err := applicationSecurityGroup.AssignProperties_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(&applicationSecurityGroupItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded() to populate field ApplicationSecurityGroups")
+			}
+			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
+		}
+		embedded.ApplicationSecurityGroups = applicationSecurityGroupList
+	} else {
+		embedded.ApplicationSecurityGroups = nil
+	}
+
+	// Etag
+	embedded.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// GatewayLoadBalancer
+	if source.GatewayLoadBalancer != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.GatewayLoadBalancer)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from GatewayLoadBalancer")
+		}
+		var gatewayLoadBalancer SubResource_STATUS
+		err = gatewayLoadBalancer.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field GatewayLoadBalancer from SubResource_STATUSStash")
+		}
+		embedded.GatewayLoadBalancer = &gatewayLoadBalancer
+	} else {
+		embedded.GatewayLoadBalancer = nil
+	}
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// LoadBalancerBackendAddressPools
+	if source.LoadBalancerBackendAddressPools != nil {
+		loadBalancerBackendAddressPoolList := make([]BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded, len(source.LoadBalancerBackendAddressPools))
+		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
+			var loadBalancerBackendAddressPool BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerBackendAddressPool.AssignProperties_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(&loadBalancerBackendAddressPoolItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerBackendAddressPools")
+			}
+			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
+		}
+		embedded.LoadBalancerBackendAddressPools = loadBalancerBackendAddressPoolList
+	} else {
+		embedded.LoadBalancerBackendAddressPools = nil
+	}
+
+	// LoadBalancerInboundNatRules
+	if source.LoadBalancerInboundNatRules != nil {
+		loadBalancerInboundNatRuleList := make([]InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded, len(source.LoadBalancerInboundNatRules))
+		for loadBalancerInboundNatRuleIndex, loadBalancerInboundNatRuleItem := range source.LoadBalancerInboundNatRules {
+			var loadBalancerInboundNatRule InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerInboundNatRule.AssignProperties_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded(&loadBalancerInboundNatRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerInboundNatRules")
+			}
+			loadBalancerInboundNatRuleList[loadBalancerInboundNatRuleIndex] = loadBalancerInboundNatRule
+		}
+		embedded.LoadBalancerInboundNatRules = loadBalancerInboundNatRuleList
+	} else {
+		embedded.LoadBalancerInboundNatRules = nil
+	}
+
+	// Name
+	embedded.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Primary
+	if source.Primary != nil {
+		primary := *source.Primary
+		embedded.Primary = &primary
+	} else {
+		embedded.Primary = nil
+	}
+
+	// PrivateIPAddress
+	embedded.PrivateIPAddress = genruntime.ClonePointerToString(source.PrivateIPAddress)
+
+	// PrivateIPAddressPrefixLength
+	embedded.PrivateIPAddressPrefixLength = genruntime.ClonePointerToInt(source.PrivateIPAddressPrefixLength)
+
+	// PrivateIPAddressVersion
+	embedded.PrivateIPAddressVersion = genruntime.ClonePointerToString(source.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	embedded.PrivateIPAllocationMethod = genruntime.ClonePointerToString(source.PrivateIPAllocationMethod)
+
+	// PrivateLinkConnectionProperties
+	if source.PrivateLinkConnectionProperties != nil {
+		var privateLinkConnectionProperty NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS
+		err := privateLinkConnectionProperty.AssignProperties_From_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS(source.PrivateLinkConnectionProperties)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS() to populate field PrivateLinkConnectionProperties")
+		}
+		embedded.PrivateLinkConnectionProperties = &privateLinkConnectionProperty
+	} else {
+		embedded.PrivateLinkConnectionProperties = nil
+	}
+
+	// ProvisioningState
+	embedded.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// PublicIPAddress
+	if source.PublicIPAddress != nil {
+		var publicIPAddress PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded
+		err := publicIPAddress.AssignProperties_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded(source.PublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PublicIPAddress")
+		}
+		embedded.PublicIPAddress = &publicIPAddress
+	} else {
+		embedded.PublicIPAddress = nil
+	}
+
+	// Subnet
+	if source.Subnet != nil {
+		var subnet Subnet_STATUS_NetworkInterface_SubResourceEmbedded
+		err := subnet.AssignProperties_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded(source.Subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded() to populate field Subnet")
+		}
+		embedded.Subnet = &subnet
+	} else {
+		embedded.Subnet = nil
+	}
+
+	// Type
+	embedded.Type = genruntime.ClonePointerToString(source.Type)
+
+	// VirtualNetworkTaps
+	if source.VirtualNetworkTaps != nil {
+		virtualNetworkTapList := make([]VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded, len(source.VirtualNetworkTaps))
+		for virtualNetworkTapIndex, virtualNetworkTapItem := range source.VirtualNetworkTaps {
+			var virtualNetworkTap VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded
+			err := virtualNetworkTap.AssignProperties_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded(&virtualNetworkTapItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded() to populate field VirtualNetworkTaps")
+			}
+			virtualNetworkTapList[virtualNetworkTapIndex] = virtualNetworkTap
+		}
+		embedded.VirtualNetworkTaps = virtualNetworkTapList
+	} else {
+		embedded.VirtualNetworkTaps = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded from our NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// ApplicationGatewayBackendAddressPools
+	if embedded.ApplicationGatewayBackendAddressPools != nil {
+		applicationGatewayBackendAddressPoolList := make([]v20250301s.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded, len(embedded.ApplicationGatewayBackendAddressPools))
+		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range embedded.ApplicationGatewayBackendAddressPools {
+			var applicationGatewayBackendAddressPool v20250301s.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(&applicationGatewayBackendAddressPool)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded() to populate field ApplicationGatewayBackendAddressPools")
+			}
+			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
+		}
+		destination.ApplicationGatewayBackendAddressPools = applicationGatewayBackendAddressPoolList
+	} else {
+		destination.ApplicationGatewayBackendAddressPools = nil
+	}
+
+	// ApplicationSecurityGroups
+	if embedded.ApplicationSecurityGroups != nil {
+		applicationSecurityGroupList := make([]v20250301s.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded, len(embedded.ApplicationSecurityGroups))
+		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range embedded.ApplicationSecurityGroups {
+			var applicationSecurityGroup v20250301s.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+			err := applicationSecurityGroupItem.AssignProperties_To_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(&applicationSecurityGroup)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded() to populate field ApplicationSecurityGroups")
+			}
+			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
+		}
+		destination.ApplicationSecurityGroups = applicationSecurityGroupList
+	} else {
+		destination.ApplicationSecurityGroups = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(embedded.Etag)
+
+	// GatewayLoadBalancer
+	if embedded.GatewayLoadBalancer != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := embedded.GatewayLoadBalancer.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from GatewayLoadBalancer")
+		}
+		var gatewayLoadBalancer v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&gatewayLoadBalancer)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field GatewayLoadBalancer from SubResource_STATUSStash")
+		}
+		destination.GatewayLoadBalancer = &gatewayLoadBalancer
+	} else {
+		destination.GatewayLoadBalancer = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// LoadBalancerBackendAddressPools
+	if embedded.LoadBalancerBackendAddressPools != nil {
+		loadBalancerBackendAddressPoolList := make([]v20250301s.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded, len(embedded.LoadBalancerBackendAddressPools))
+		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range embedded.LoadBalancerBackendAddressPools {
+			var loadBalancerBackendAddressPool v20250301s.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(&loadBalancerBackendAddressPool)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerBackendAddressPools")
+			}
+			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
+		}
+		destination.LoadBalancerBackendAddressPools = loadBalancerBackendAddressPoolList
+	} else {
+		destination.LoadBalancerBackendAddressPools = nil
+	}
+
+	// LoadBalancerInboundNatRules
+	if embedded.LoadBalancerInboundNatRules != nil {
+		loadBalancerInboundNatRuleList := make([]v20250301s.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded, len(embedded.LoadBalancerInboundNatRules))
+		for loadBalancerInboundNatRuleIndex, loadBalancerInboundNatRuleItem := range embedded.LoadBalancerInboundNatRules {
+			var loadBalancerInboundNatRule v20250301s.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded
+			err := loadBalancerInboundNatRuleItem.AssignProperties_To_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded(&loadBalancerInboundNatRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded() to populate field LoadBalancerInboundNatRules")
+			}
+			loadBalancerInboundNatRuleList[loadBalancerInboundNatRuleIndex] = loadBalancerInboundNatRule
+		}
+		destination.LoadBalancerInboundNatRules = loadBalancerInboundNatRuleList
+	} else {
+		destination.LoadBalancerInboundNatRules = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(embedded.Name)
+
+	// Primary
+	if embedded.Primary != nil {
+		primary := *embedded.Primary
+		destination.Primary = &primary
+	} else {
+		destination.Primary = nil
+	}
+
+	// PrivateIPAddress
+	destination.PrivateIPAddress = genruntime.ClonePointerToString(embedded.PrivateIPAddress)
+
+	// PrivateIPAddressPrefixLength
+	destination.PrivateIPAddressPrefixLength = genruntime.ClonePointerToInt(embedded.PrivateIPAddressPrefixLength)
+
+	// PrivateIPAddressVersion
+	destination.PrivateIPAddressVersion = genruntime.ClonePointerToString(embedded.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	destination.PrivateIPAllocationMethod = genruntime.ClonePointerToString(embedded.PrivateIPAllocationMethod)
+
+	// PrivateLinkConnectionProperties
+	if embedded.PrivateLinkConnectionProperties != nil {
+		var privateLinkConnectionProperty v20250301s.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS
+		err := embedded.PrivateLinkConnectionProperties.AssignProperties_To_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS(&privateLinkConnectionProperty)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS() to populate field PrivateLinkConnectionProperties")
+		}
+		destination.PrivateLinkConnectionProperties = &privateLinkConnectionProperty
+	} else {
+		destination.PrivateLinkConnectionProperties = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(embedded.ProvisioningState)
+
+	// PublicIPAddress
+	if embedded.PublicIPAddress != nil {
+		var publicIPAddress v20250301s.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded
+		err := embedded.PublicIPAddress.AssignProperties_To_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded(&publicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded() to populate field PublicIPAddress")
+		}
+		destination.PublicIPAddress = &publicIPAddress
+	} else {
+		destination.PublicIPAddress = nil
+	}
+
+	// Subnet
+	if embedded.Subnet != nil {
+		var subnet v20250301s.Subnet_STATUS_NetworkInterface_SubResourceEmbedded
+		err := embedded.Subnet.AssignProperties_To_Subnet_STATUS_NetworkInterface_SubResourceEmbedded(&subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Subnet_STATUS_NetworkInterface_SubResourceEmbedded() to populate field Subnet")
+		}
+		destination.Subnet = &subnet
+	} else {
+		destination.Subnet = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(embedded.Type)
+
+	// VirtualNetworkTaps
+	if embedded.VirtualNetworkTaps != nil {
+		virtualNetworkTapList := make([]v20250301s.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded, len(embedded.VirtualNetworkTaps))
+		for virtualNetworkTapIndex, virtualNetworkTapItem := range embedded.VirtualNetworkTaps {
+			var virtualNetworkTap v20250301s.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded
+			err := virtualNetworkTapItem.AssignProperties_To_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded(&virtualNetworkTap)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded() to populate field VirtualNetworkTaps")
+			}
+			virtualNetworkTapList[virtualNetworkTapIndex] = virtualNetworkTap
+		}
+		destination.VirtualNetworkTaps = virtualNetworkTapList
+	} else {
+		destination.VirtualNetworkTaps = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.NetworkInterfaceOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type NetworkInterfaceOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterfaceOperatorSpec populates our NetworkInterfaceOperatorSpec from the provided source NetworkInterfaceOperatorSpec
+func (operator *NetworkInterfaceOperatorSpec) AssignProperties_From_NetworkInterfaceOperatorSpec(source *v20250301s.NetworkInterfaceOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNetworkInterfaceOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceOperatorSpec populates the provided destination NetworkInterfaceOperatorSpec from our NetworkInterfaceOperatorSpec
+func (operator *NetworkInterfaceOperatorSpec) AssignProperties_To_NetworkInterfaceOperatorSpec(destination *v20250301s.NetworkInterfaceOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNetworkInterfaceOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
@@ -351,11 +2308,123 @@ type NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedde
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded populates our NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded from the provided source NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded from our NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
 // NetworkSecurityGroup resource.
 type NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded populates our NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded from the provided source NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded from our NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
@@ -367,6 +2436,72 @@ type NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded populates our NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded from the provided source NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_From_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(source *v20250301s.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded populates the provided destination NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded from our NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_To_NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(destination *v20250301s.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded
 // Private endpoint resource.
 type PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded struct {
@@ -374,11 +2509,123 @@ type PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded populates our PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded from the provided source PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded from our PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded
 // Private link service resource.
 type PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded populates our PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded from the provided source PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded from our PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PrivateLinkServiceSpec
@@ -390,6 +2637,72 @@ type PrivateLinkServiceSpec struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_PrivateLinkServiceSpec populates our PrivateLinkServiceSpec from the provided source PrivateLinkServiceSpec
+func (service *PrivateLinkServiceSpec) AssignProperties_From_PrivateLinkServiceSpec(source *v20250301s.PrivateLinkServiceSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		service.Reference = &reference
+	} else {
+		service.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		service.PropertyBag = propertyBag
+	} else {
+		service.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceSpec interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkServiceSpec); ok {
+		err := augmentedService.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkServiceSpec populates the provided destination PrivateLinkServiceSpec from our PrivateLinkServiceSpec
+func (service *PrivateLinkServiceSpec) AssignProperties_To_PrivateLinkServiceSpec(destination *v20250301s.PrivateLinkServiceSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(service.PropertyBag)
+
+	// Reference
+	if service.Reference != nil {
+		reference := service.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceSpec interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkServiceSpec); ok {
+		err := augmentedService.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded
 // Backend Address Pool of an application gateway.
 type ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
@@ -399,6 +2712,72 @@ type ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded s
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded populates our ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded from the provided source ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) AssignProperties_From_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded(source *v20250301s.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded populates the provided destination ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded from our ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) AssignProperties_To_ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded(destination *v20250301s.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
 // Backend Address Pool of an application gateway.
 type ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded struct {
@@ -406,11 +2785,123 @@ type ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmb
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded populates our ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded from the provided source ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded from our ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
 // An application security group in a resource group.
 type ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded populates our ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded from the provided source ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded from our ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
@@ -422,6 +2913,127 @@ type ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded populates our ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded from the provided source ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_From_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(source *v20250301s.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded populates the provided destination ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded from our ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_To_ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded(destination *v20250301s.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNetworkInterfaceDnsSettings interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceDnsSettings) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceDnsSettings) error
+}
+
+type augmentConversionForNetworkInterfaceDnsSettings_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceDnsSettings_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceDnsSettings_STATUS) error
+}
+
+type augmentConversionForNetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceIPConfiguration_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceIPConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkInterfaceOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceOperatorSpec) error
+}
+
+type augmentConversionForNetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceTapConfiguration_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NetworkSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForPrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.PrivateEndpoint_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForPrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.PrivateLinkService_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForPrivateLinkServiceSpec interface {
+	AssignPropertiesFrom(src *v20250301s.PrivateLinkServiceSpec) error
+	AssignPropertiesTo(dst *v20250301s.PrivateLinkServiceSpec) error
+}
+
 // Storage version of v1api20240301.BackendAddressPool_NetworkInterface_SubResourceEmbedded
 // Pool of backend IP addresses.
 type BackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
@@ -431,11 +3043,133 @@ type BackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_BackendAddressPool_NetworkInterface_SubResourceEmbedded populates our BackendAddressPool_NetworkInterface_SubResourceEmbedded from the provided source BackendAddressPool_NetworkInterface_SubResourceEmbedded
+func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) AssignProperties_From_BackendAddressPool_NetworkInterface_SubResourceEmbedded(source *v20250301s.BackendAddressPool_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackendAddressPool_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForBackendAddressPool_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackendAddressPool_NetworkInterface_SubResourceEmbedded populates the provided destination BackendAddressPool_NetworkInterface_SubResourceEmbedded from our BackendAddressPool_NetworkInterface_SubResourceEmbedded
+func (embedded *BackendAddressPool_NetworkInterface_SubResourceEmbedded) AssignProperties_To_BackendAddressPool_NetworkInterface_SubResourceEmbedded(destination *v20250301s.BackendAddressPool_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackendAddressPool_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForBackendAddressPool_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
 // Pool of backend IP addresses.
 type BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded populates our BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded from the provided source BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded from our BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.InboundNatRule_NetworkInterface_SubResourceEmbedded
@@ -447,11 +3181,133 @@ type InboundNatRule_NetworkInterface_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_InboundNatRule_NetworkInterface_SubResourceEmbedded populates our InboundNatRule_NetworkInterface_SubResourceEmbedded from the provided source InboundNatRule_NetworkInterface_SubResourceEmbedded
+func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) AssignProperties_From_InboundNatRule_NetworkInterface_SubResourceEmbedded(source *v20250301s.InboundNatRule_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundNatRule_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForInboundNatRule_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InboundNatRule_NetworkInterface_SubResourceEmbedded populates the provided destination InboundNatRule_NetworkInterface_SubResourceEmbedded from our InboundNatRule_NetworkInterface_SubResourceEmbedded
+func (embedded *InboundNatRule_NetworkInterface_SubResourceEmbedded) AssignProperties_To_InboundNatRule_NetworkInterface_SubResourceEmbedded(destination *v20250301s.InboundNatRule_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundNatRule_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForInboundNatRule_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded
 // Inbound NAT rule of the load balancer.
 type InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded populates our InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded from the provided source InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForInboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded from our InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForInboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS
@@ -463,11 +3319,135 @@ type NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS struc
 	RequiredMemberName *string                `json:"requiredMemberName,omitempty"`
 }
 
+// AssignProperties_From_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS populates our NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS from the provided source NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS
+func (properties *NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) AssignProperties_From_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS(source *v20250301s.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Fqdns
+	properties.Fqdns = genruntime.CloneSliceOfString(source.Fqdns)
+
+	// GroupId
+	properties.GroupId = genruntime.ClonePointerToString(source.GroupId)
+
+	// RequiredMemberName
+	properties.RequiredMemberName = genruntime.ClonePointerToString(source.RequiredMemberName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForNetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS populates the provided destination NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS from our NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS
+func (properties *NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) AssignProperties_To_NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS(destination *v20250301s.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// Fqdns
+	destination.Fqdns = genruntime.CloneSliceOfString(properties.Fqdns)
+
+	// GroupId
+	destination.GroupId = genruntime.ClonePointerToString(properties.GroupId)
+
+	// RequiredMemberName
+	destination.RequiredMemberName = genruntime.ClonePointerToString(properties.RequiredMemberName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForNetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded
 // Public IP address resource.
 type PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded populates our PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded from the provided source PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded from our PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded
@@ -479,6 +3459,72 @@ type PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded populates our PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded from the provided source PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_From_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded(source *v20250301s.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddressSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded populates the provided destination PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded from our PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_To_PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded(destination *v20250301s.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddressSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.Subnet_NetworkInterface_SubResourceEmbedded
 // Subnet in a virtual network resource.
 type Subnet_NetworkInterface_SubResourceEmbedded struct {
@@ -488,11 +3534,133 @@ type Subnet_NetworkInterface_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_Subnet_NetworkInterface_SubResourceEmbedded populates our Subnet_NetworkInterface_SubResourceEmbedded from the provided source Subnet_NetworkInterface_SubResourceEmbedded
+func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) AssignProperties_From_Subnet_NetworkInterface_SubResourceEmbedded(source *v20250301s.Subnet_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Subnet_NetworkInterface_SubResourceEmbedded populates the provided destination Subnet_NetworkInterface_SubResourceEmbedded from our Subnet_NetworkInterface_SubResourceEmbedded
+func (embedded *Subnet_NetworkInterface_SubResourceEmbedded) AssignProperties_To_Subnet_NetworkInterface_SubResourceEmbedded(destination *v20250301s.Subnet_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.Subnet_STATUS_NetworkInterface_SubResourceEmbedded
 // Subnet in a virtual network resource.
 type Subnet_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded populates our Subnet_STATUS_NetworkInterface_SubResourceEmbedded from the provided source Subnet_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *Subnet_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_Subnet_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.Subnet_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Subnet_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination Subnet_STATUS_NetworkInterface_SubResourceEmbedded from our Subnet_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *Subnet_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_Subnet_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.Subnet_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded
@@ -502,6 +3670,62 @@ type VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded populates our VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded from the provided source VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_From_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded(source *v20250301s.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForVirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded populates the provided destination VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded from our VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded
+func (embedded *VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) AssignProperties_To_VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded(destination *v20250301s.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForVirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded
 // Virtual Network Tap resource.
 type VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded struct {
@@ -509,6 +3733,147 @@ type VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded struct {
 
 	// Reference: Resource ID.
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
+}
+
+// AssignProperties_From_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded populates our VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded from the provided source VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_From_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded(source *v20250301s.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForVirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded populates the provided destination VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded from our VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded
+func (embedded *VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) AssignProperties_To_VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded(destination *v20250301s.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForVirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.ApplicationGatewayBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.ApplicationSecurityGroup_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForBackendAddressPool_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.BackendAddressPool_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.BackendAddressPool_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForBackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.BackendAddressPool_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForInboundNatRule_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.InboundNatRule_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.InboundNatRule_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForInboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.InboundNatRule_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.NetworkInterfaceIPConfigurationPrivateLinkConnectionProperties_STATUS) error
+}
+
+type augmentConversionForPublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddress_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForPublicIPAddressSpec_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForSubnet_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.Subnet_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.Subnet_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForSubnet_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.Subnet_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.Subnet_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForVirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.VirtualNetworkTap_STATUS_NetworkInterface_SubResourceEmbedded) error
+}
+
+type augmentConversionForVirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded) error
 }
 
 func init() {

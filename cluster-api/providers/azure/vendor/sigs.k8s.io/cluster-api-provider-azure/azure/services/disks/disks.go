@@ -77,24 +77,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
-	specs := s.Scope.DiskSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	// We go through the list of DiskSpecs to delete each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error creating) -> operationNotDoneError (i.e. creating in progress) -> no error (i.e. created)
-	var result error
-	for _, diskSpec := range specs {
-		if err := s.DeleteResource(ctx, diskSpec, serviceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-	s.Scope.UpdateDeleteStatus(infrav1.DisksReadyCondition, serviceName, result)
-	return result
+	return azure.DeleteAll(ctx, s.Reconciler, s.Scope, s.Scope.DiskSpecs(), serviceName, infrav1.DisksReadyCondition)
 }
 
 // IsManaged returns always returns true as CAPZ does not support BYO disk.

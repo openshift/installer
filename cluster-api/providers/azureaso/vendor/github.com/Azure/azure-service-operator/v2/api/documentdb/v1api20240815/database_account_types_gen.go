@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,documentdb}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}
 type DatabaseAccount struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (account *DatabaseAccount) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}
 type DatabaseAccountList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -284,10 +285,6 @@ type DatabaseAccount_Spec struct {
 
 	// CreateMode: Enum to indicate the mode of account creation.
 	CreateMode *CreateMode `json:"createMode,omitempty"`
-
-	// CustomerManagedKeyStatus: Indicates the status of the Customer Managed Key feature on the account. In case there are
-	// errors, the property provides troubleshooting guidance.
-	CustomerManagedKeyStatus *string `json:"customerManagedKeyStatus,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// DatabaseAccountOfferType: The offer type for the database
@@ -392,7 +389,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 
 	// Set property "Identity":
 	if account.Identity != nil {
-		identity_ARM, err := (*account.Identity).ConvertToARM(resolved)
+		identity_ARM, err := account.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -427,7 +424,6 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		account.ConsistencyPolicy != nil ||
 		account.Cors != nil ||
 		account.CreateMode != nil ||
-		account.CustomerManagedKeyStatus != nil ||
 		account.DatabaseAccountOfferType != nil ||
 		account.DefaultIdentity != nil ||
 		account.DisableKeyBasedMetadataWriteAccess != nil ||
@@ -452,7 +448,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties = &arm.DatabaseAccountCreateUpdateProperties{}
 	}
 	if account.AnalyticalStorageConfiguration != nil {
-		analyticalStorageConfiguration_ARM, err := (*account.AnalyticalStorageConfiguration).ConvertToARM(resolved)
+		analyticalStorageConfiguration_ARM, err := account.AnalyticalStorageConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -460,7 +456,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties.AnalyticalStorageConfiguration = &analyticalStorageConfiguration
 	}
 	if account.ApiProperties != nil {
-		apiProperties_ARM, err := (*account.ApiProperties).ConvertToARM(resolved)
+		apiProperties_ARM, err := account.ApiProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -468,7 +464,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties.ApiProperties = &apiProperties
 	}
 	if account.BackupPolicy != nil {
-		backupPolicy_ARM, err := (*account.BackupPolicy).ConvertToARM(resolved)
+		backupPolicy_ARM, err := account.BackupPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -483,7 +479,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties.Capabilities = append(result.Properties.Capabilities, *item_ARM.(*arm.Capability))
 	}
 	if account.Capacity != nil {
-		capacity_ARM, err := (*account.Capacity).ConvertToARM(resolved)
+		capacity_ARM, err := account.Capacity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -497,7 +493,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties.ConnectorOffer = &connectorOffer
 	}
 	if account.ConsistencyPolicy != nil {
-		consistencyPolicy_ARM, err := (*account.ConsistencyPolicy).ConvertToARM(resolved)
+		consistencyPolicy_ARM, err := account.ConsistencyPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -516,10 +512,6 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		temp = string(*account.CreateMode)
 		createMode := arm.CreateMode(temp)
 		result.Properties.CreateMode = &createMode
-	}
-	if account.CustomerManagedKeyStatus != nil {
-		customerManagedKeyStatus := *account.CustomerManagedKeyStatus
-		result.Properties.CustomerManagedKeyStatus = &customerManagedKeyStatus
 	}
 	if account.DatabaseAccountOfferType != nil {
 		var temp string
@@ -615,7 +607,7 @@ func (account *DatabaseAccount_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if account.RestoreParameters != nil {
-		restoreParameters_ARM, err := (*account.RestoreParameters).ConvertToARM(resolved)
+		restoreParameters_ARM, err := account.RestoreParameters.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -770,15 +762,6 @@ func (account *DatabaseAccount_Spec) PopulateFromARM(owner genruntime.ArbitraryO
 			temp = string(*typedInput.Properties.CreateMode)
 			createMode := CreateMode(temp)
 			account.CreateMode = &createMode
-		}
-	}
-
-	// Set property "CustomerManagedKeyStatus":
-	// copying flattened property:
-	if typedInput.Properties != nil {
-		if typedInput.Properties.CustomerManagedKeyStatus != nil {
-			customerManagedKeyStatus := *typedInput.Properties.CustomerManagedKeyStatus
-			account.CustomerManagedKeyStatus = &customerManagedKeyStatus
 		}
 	}
 
@@ -1130,8 +1113,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	if source.Capabilities != nil {
 		capabilityList := make([]Capability, len(source.Capabilities))
 		for capabilityIndex, capabilityItem := range source.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability Capability
 			err := capability.AssignProperties_From_Capability(&capabilityItem)
 			if err != nil {
@@ -1181,8 +1162,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	if source.Cors != nil {
 		corList := make([]CorsPolicy, len(source.Cors))
 		for corIndex, corItem := range source.Cors {
-			// Shadow the loop variable to avoid aliasing
-			corItem := corItem
 			var cor CorsPolicy
 			err := cor.AssignProperties_From_CorsPolicy(&corItem)
 			if err != nil {
@@ -1203,9 +1182,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	} else {
 		account.CreateMode = nil
 	}
-
-	// CustomerManagedKeyStatus
-	account.CustomerManagedKeyStatus = genruntime.ClonePointerToString(source.CustomerManagedKeyStatus)
 
 	// DatabaseAccountOfferType
 	if source.DatabaseAccountOfferType != nil {
@@ -1307,8 +1283,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	if source.IpRules != nil {
 		ipRuleList := make([]IpAddressOrRange, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IpAddressOrRange
 			err := ipRule.AssignProperties_From_IpAddressOrRange(&ipRuleItem)
 			if err != nil {
@@ -1348,8 +1322,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	if source.Locations != nil {
 		locationList := make([]Location, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location Location
 			err := location.AssignProperties_From_Location(&locationItem)
 			if err != nil {
@@ -1384,8 +1356,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	if source.NetworkAclBypassResourceReferences != nil {
 		networkAclBypassResourceReferenceList := make([]genruntime.ResourceReference, len(source.NetworkAclBypassResourceReferences))
 		for networkAclBypassResourceReferenceIndex, networkAclBypassResourceReferenceItem := range source.NetworkAclBypassResourceReferences {
-			// Shadow the loop variable to avoid aliasing
-			networkAclBypassResourceReferenceItem := networkAclBypassResourceReferenceItem
 			networkAclBypassResourceReferenceList[networkAclBypassResourceReferenceIndex] = networkAclBypassResourceReferenceItem.Copy()
 		}
 		account.NetworkAclBypassResourceReferences = networkAclBypassResourceReferenceList
@@ -1441,8 +1411,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_From_DatabaseAccount_Spec(
 	if source.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]VirtualNetworkRule, len(source.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range source.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule VirtualNetworkRule
 			err := virtualNetworkRule.AssignProperties_From_VirtualNetworkRule(&virtualNetworkRuleItem)
 			if err != nil {
@@ -1507,8 +1475,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	if account.Capabilities != nil {
 		capabilityList := make([]storage.Capability, len(account.Capabilities))
 		for capabilityIndex, capabilityItem := range account.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability storage.Capability
 			err := capabilityItem.AssignProperties_To_Capability(&capability)
 			if err != nil {
@@ -1557,8 +1523,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	if account.Cors != nil {
 		corList := make([]storage.CorsPolicy, len(account.Cors))
 		for corIndex, corItem := range account.Cors {
-			// Shadow the loop variable to avoid aliasing
-			corItem := corItem
 			var cor storage.CorsPolicy
 			err := corItem.AssignProperties_To_CorsPolicy(&cor)
 			if err != nil {
@@ -1578,9 +1542,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	} else {
 		destination.CreateMode = nil
 	}
-
-	// CustomerManagedKeyStatus
-	destination.CustomerManagedKeyStatus = genruntime.ClonePointerToString(account.CustomerManagedKeyStatus)
 
 	// DatabaseAccountOfferType
 	if account.DatabaseAccountOfferType != nil {
@@ -1681,8 +1642,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	if account.IpRules != nil {
 		ipRuleList := make([]storage.IpAddressOrRange, len(account.IpRules))
 		for ipRuleIndex, ipRuleItem := range account.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IpAddressOrRange
 			err := ipRuleItem.AssignProperties_To_IpAddressOrRange(&ipRule)
 			if err != nil {
@@ -1721,8 +1680,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	if account.Locations != nil {
 		locationList := make([]storage.Location, len(account.Locations))
 		for locationIndex, locationItem := range account.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location storage.Location
 			err := locationItem.AssignProperties_To_Location(&location)
 			if err != nil {
@@ -1755,8 +1712,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	if account.NetworkAclBypassResourceReferences != nil {
 		networkAclBypassResourceReferenceList := make([]genruntime.ResourceReference, len(account.NetworkAclBypassResourceReferences))
 		for networkAclBypassResourceReferenceIndex, networkAclBypassResourceReferenceItem := range account.NetworkAclBypassResourceReferences {
-			// Shadow the loop variable to avoid aliasing
-			networkAclBypassResourceReferenceItem := networkAclBypassResourceReferenceItem
 			networkAclBypassResourceReferenceList[networkAclBypassResourceReferenceIndex] = networkAclBypassResourceReferenceItem.Copy()
 		}
 		destination.NetworkAclBypassResourceReferences = networkAclBypassResourceReferenceList
@@ -1814,8 +1769,6 @@ func (account *DatabaseAccount_Spec) AssignProperties_To_DatabaseAccount_Spec(de
 	if account.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]storage.VirtualNetworkRule, len(account.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range account.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule storage.VirtualNetworkRule
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule(&virtualNetworkRule)
 			if err != nil {
@@ -1882,8 +1835,6 @@ func (account *DatabaseAccount_Spec) Initialize_From_DatabaseAccount_STATUS(sour
 	if source.Capabilities != nil {
 		capabilityList := make([]Capability, len(source.Capabilities))
 		for capabilityIndex, capabilityItem := range source.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability Capability
 			err := capability.Initialize_From_Capability_STATUS(&capabilityItem)
 			if err != nil {
@@ -1932,8 +1883,6 @@ func (account *DatabaseAccount_Spec) Initialize_From_DatabaseAccount_STATUS(sour
 	if source.Cors != nil {
 		corList := make([]CorsPolicy, len(source.Cors))
 		for corIndex, corItem := range source.Cors {
-			// Shadow the loop variable to avoid aliasing
-			corItem := corItem
 			var cor CorsPolicy
 			err := cor.Initialize_From_CorsPolicy_STATUS(&corItem)
 			if err != nil {
@@ -1953,9 +1902,6 @@ func (account *DatabaseAccount_Spec) Initialize_From_DatabaseAccount_STATUS(sour
 	} else {
 		account.CreateMode = nil
 	}
-
-	// CustomerManagedKeyStatus
-	account.CustomerManagedKeyStatus = genruntime.ClonePointerToString(source.CustomerManagedKeyStatus)
 
 	// DatabaseAccountOfferType
 	if source.DatabaseAccountOfferType != nil {
@@ -2056,8 +2002,6 @@ func (account *DatabaseAccount_Spec) Initialize_From_DatabaseAccount_STATUS(sour
 	if source.IpRules != nil {
 		ipRuleList := make([]IpAddressOrRange, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IpAddressOrRange
 			err := ipRule.Initialize_From_IpAddressOrRange_STATUS(&ipRuleItem)
 			if err != nil {
@@ -2096,8 +2040,6 @@ func (account *DatabaseAccount_Spec) Initialize_From_DatabaseAccount_STATUS(sour
 	if source.Locations != nil {
 		locationList := make([]Location, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location Location
 			err := location.Initialize_From_Location_STATUS(&locationItem)
 			if err != nil {
@@ -2153,8 +2095,6 @@ func (account *DatabaseAccount_Spec) Initialize_From_DatabaseAccount_STATUS(sour
 	if source.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]VirtualNetworkRule, len(source.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range source.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule VirtualNetworkRule
 			err := virtualNetworkRule.Initialize_From_VirtualNetworkRule_STATUS(&virtualNetworkRuleItem)
 			if err != nil {
@@ -2935,8 +2875,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.Capabilities != nil {
 		capabilityList := make([]Capability_STATUS, len(source.Capabilities))
 		for capabilityIndex, capabilityItem := range source.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability Capability_STATUS
 			err := capability.AssignProperties_From_Capability_STATUS(&capabilityItem)
 			if err != nil {
@@ -2989,8 +2927,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.Cors != nil {
 		corList := make([]CorsPolicy_STATUS, len(source.Cors))
 		for corIndex, corItem := range source.Cors {
-			// Shadow the loop variable to avoid aliasing
-			corItem := corItem
 			var cor CorsPolicy_STATUS
 			err := cor.AssignProperties_From_CorsPolicy_STATUS(&corItem)
 			if err != nil {
@@ -3106,8 +3042,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.FailoverPolicies != nil {
 		failoverPolicyList := make([]FailoverPolicy_STATUS, len(source.FailoverPolicies))
 		for failoverPolicyIndex, failoverPolicyItem := range source.FailoverPolicies {
-			// Shadow the loop variable to avoid aliasing
-			failoverPolicyItem := failoverPolicyItem
 			var failoverPolicy FailoverPolicy_STATUS
 			err := failoverPolicy.AssignProperties_From_FailoverPolicy_STATUS(&failoverPolicyItem)
 			if err != nil {
@@ -3142,8 +3076,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.IpRules != nil {
 		ipRuleList := make([]IpAddressOrRange_STATUS, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IpAddressOrRange_STATUS
 			err := ipRule.AssignProperties_From_IpAddressOrRange_STATUS(&ipRuleItem)
 			if err != nil {
@@ -3195,8 +3127,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.Locations != nil {
 		locationList := make([]Location_STATUS, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location Location_STATUS
 			err := location.AssignProperties_From_Location_STATUS(&locationItem)
 			if err != nil {
@@ -3237,8 +3167,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -3267,8 +3195,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.ReadLocations != nil {
 		readLocationList := make([]Location_STATUS, len(source.ReadLocations))
 		for readLocationIndex, readLocationItem := range source.ReadLocations {
-			// Shadow the loop variable to avoid aliasing
-			readLocationItem := readLocationItem
 			var readLocation Location_STATUS
 			err := readLocation.AssignProperties_From_Location_STATUS(&readLocationItem)
 			if err != nil {
@@ -3315,8 +3241,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]VirtualNetworkRule_STATUS, len(source.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range source.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule VirtualNetworkRule_STATUS
 			err := virtualNetworkRule.AssignProperties_From_VirtualNetworkRule_STATUS(&virtualNetworkRuleItem)
 			if err != nil {
@@ -3333,8 +3257,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_From_DatabaseAccount_STA
 	if source.WriteLocations != nil {
 		writeLocationList := make([]Location_STATUS, len(source.WriteLocations))
 		for writeLocationIndex, writeLocationItem := range source.WriteLocations {
-			// Shadow the loop variable to avoid aliasing
-			writeLocationItem := writeLocationItem
 			var writeLocation Location_STATUS
 			err := writeLocation.AssignProperties_From_Location_STATUS(&writeLocationItem)
 			if err != nil {
@@ -3396,8 +3318,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.Capabilities != nil {
 		capabilityList := make([]storage.Capability_STATUS, len(account.Capabilities))
 		for capabilityIndex, capabilityItem := range account.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability storage.Capability_STATUS
 			err := capabilityItem.AssignProperties_To_Capability_STATUS(&capability)
 			if err != nil {
@@ -3449,8 +3369,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.Cors != nil {
 		corList := make([]storage.CorsPolicy_STATUS, len(account.Cors))
 		for corIndex, corItem := range account.Cors {
-			// Shadow the loop variable to avoid aliasing
-			corItem := corItem
 			var cor storage.CorsPolicy_STATUS
 			err := corItem.AssignProperties_To_CorsPolicy_STATUS(&cor)
 			if err != nil {
@@ -3564,8 +3482,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.FailoverPolicies != nil {
 		failoverPolicyList := make([]storage.FailoverPolicy_STATUS, len(account.FailoverPolicies))
 		for failoverPolicyIndex, failoverPolicyItem := range account.FailoverPolicies {
-			// Shadow the loop variable to avoid aliasing
-			failoverPolicyItem := failoverPolicyItem
 			var failoverPolicy storage.FailoverPolicy_STATUS
 			err := failoverPolicyItem.AssignProperties_To_FailoverPolicy_STATUS(&failoverPolicy)
 			if err != nil {
@@ -3600,8 +3516,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.IpRules != nil {
 		ipRuleList := make([]storage.IpAddressOrRange_STATUS, len(account.IpRules))
 		for ipRuleIndex, ipRuleItem := range account.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IpAddressOrRange_STATUS
 			err := ipRuleItem.AssignProperties_To_IpAddressOrRange_STATUS(&ipRule)
 			if err != nil {
@@ -3652,8 +3566,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.Locations != nil {
 		locationList := make([]storage.Location_STATUS, len(account.Locations))
 		for locationIndex, locationItem := range account.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location storage.Location_STATUS
 			err := locationItem.AssignProperties_To_Location_STATUS(&location)
 			if err != nil {
@@ -3692,8 +3604,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(account.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range account.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -3721,8 +3631,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.ReadLocations != nil {
 		readLocationList := make([]storage.Location_STATUS, len(account.ReadLocations))
 		for readLocationIndex, readLocationItem := range account.ReadLocations {
-			// Shadow the loop variable to avoid aliasing
-			readLocationItem := readLocationItem
 			var readLocation storage.Location_STATUS
 			err := readLocationItem.AssignProperties_To_Location_STATUS(&readLocation)
 			if err != nil {
@@ -3769,8 +3677,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]storage.VirtualNetworkRule_STATUS, len(account.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range account.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule storage.VirtualNetworkRule_STATUS
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule_STATUS(&virtualNetworkRule)
 			if err != nil {
@@ -3787,8 +3693,6 @@ func (account *DatabaseAccount_STATUS) AssignProperties_To_DatabaseAccount_STATU
 	if account.WriteLocations != nil {
 		writeLocationList := make([]storage.Location_STATUS, len(account.WriteLocations))
 		for writeLocationIndex, writeLocationItem := range account.WriteLocations {
-			// Shadow the loop variable to avoid aliasing
-			writeLocationItem := writeLocationItem
 			var writeLocation storage.Location_STATUS
 			err := writeLocationItem.AssignProperties_To_Location_STATUS(&writeLocation)
 			if err != nil {
@@ -4181,7 +4085,7 @@ func (policy *BackupPolicy) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 	// Set property "Continuous":
 	if policy.Continuous != nil {
-		continuous_ARM, err := (*policy.Continuous).ConvertToARM(resolved)
+		continuous_ARM, err := policy.Continuous.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4191,7 +4095,7 @@ func (policy *BackupPolicy) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 	// Set property "Periodic":
 	if policy.Periodic != nil {
-		periodic_ARM, err := (*policy.Periodic).ConvertToARM(resolved)
+		periodic_ARM, err := policy.Periodic.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5641,8 +5545,6 @@ func (operator *DatabaseAccountOperatorSpec) AssignProperties_From_DatabaseAccou
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -5659,8 +5561,6 @@ func (operator *DatabaseAccountOperatorSpec) AssignProperties_From_DatabaseAccou
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -5698,8 +5598,6 @@ func (operator *DatabaseAccountOperatorSpec) AssignProperties_To_DatabaseAccount
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -5716,8 +5614,6 @@ func (operator *DatabaseAccountOperatorSpec) AssignProperties_To_DatabaseAccount
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -6373,8 +6269,6 @@ func (identity *ManagedServiceIdentity) AssignProperties_From_ManagedServiceIden
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -6408,8 +6302,6 @@ func (identity *ManagedServiceIdentity) AssignProperties_To_ManagedServiceIdenti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -6553,8 +6445,6 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_From_ManagedServ
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]ManagedServiceIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity ManagedServiceIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedServiceIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -6594,8 +6484,6 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_To_ManagedServic
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.ManagedServiceIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.ManagedServiceIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_ManagedServiceIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -6934,8 +6822,6 @@ func (parameters *RestoreParameters) AssignProperties_From_RestoreParameters(sou
 	if source.DatabasesToRestore != nil {
 		databasesToRestoreList := make([]DatabaseRestoreResource, len(source.DatabasesToRestore))
 		for databasesToRestoreIndex, databasesToRestoreItem := range source.DatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			databasesToRestoreItem := databasesToRestoreItem
 			var databasesToRestore DatabaseRestoreResource
 			err := databasesToRestore.AssignProperties_From_DatabaseRestoreResource(&databasesToRestoreItem)
 			if err != nil {
@@ -6952,8 +6838,6 @@ func (parameters *RestoreParameters) AssignProperties_From_RestoreParameters(sou
 	if source.GremlinDatabasesToRestore != nil {
 		gremlinDatabasesToRestoreList := make([]GremlinDatabaseRestoreResource, len(source.GremlinDatabasesToRestore))
 		for gremlinDatabasesToRestoreIndex, gremlinDatabasesToRestoreItem := range source.GremlinDatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			gremlinDatabasesToRestoreItem := gremlinDatabasesToRestoreItem
 			var gremlinDatabasesToRestore GremlinDatabaseRestoreResource
 			err := gremlinDatabasesToRestore.AssignProperties_From_GremlinDatabaseRestoreResource(&gremlinDatabasesToRestoreItem)
 			if err != nil {
@@ -7005,8 +6889,6 @@ func (parameters *RestoreParameters) AssignProperties_To_RestoreParameters(desti
 	if parameters.DatabasesToRestore != nil {
 		databasesToRestoreList := make([]storage.DatabaseRestoreResource, len(parameters.DatabasesToRestore))
 		for databasesToRestoreIndex, databasesToRestoreItem := range parameters.DatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			databasesToRestoreItem := databasesToRestoreItem
 			var databasesToRestore storage.DatabaseRestoreResource
 			err := databasesToRestoreItem.AssignProperties_To_DatabaseRestoreResource(&databasesToRestore)
 			if err != nil {
@@ -7023,8 +6905,6 @@ func (parameters *RestoreParameters) AssignProperties_To_RestoreParameters(desti
 	if parameters.GremlinDatabasesToRestore != nil {
 		gremlinDatabasesToRestoreList := make([]storage.GremlinDatabaseRestoreResource, len(parameters.GremlinDatabasesToRestore))
 		for gremlinDatabasesToRestoreIndex, gremlinDatabasesToRestoreItem := range parameters.GremlinDatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			gremlinDatabasesToRestoreItem := gremlinDatabasesToRestoreItem
 			var gremlinDatabasesToRestore storage.GremlinDatabaseRestoreResource
 			err := gremlinDatabasesToRestoreItem.AssignProperties_To_GremlinDatabaseRestoreResource(&gremlinDatabasesToRestore)
 			if err != nil {
@@ -7080,8 +6960,6 @@ func (parameters *RestoreParameters) Initialize_From_RestoreParameters_STATUS(so
 	if source.DatabasesToRestore != nil {
 		databasesToRestoreList := make([]DatabaseRestoreResource, len(source.DatabasesToRestore))
 		for databasesToRestoreIndex, databasesToRestoreItem := range source.DatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			databasesToRestoreItem := databasesToRestoreItem
 			var databasesToRestore DatabaseRestoreResource
 			err := databasesToRestore.Initialize_From_DatabaseRestoreResource_STATUS(&databasesToRestoreItem)
 			if err != nil {
@@ -7098,8 +6976,6 @@ func (parameters *RestoreParameters) Initialize_From_RestoreParameters_STATUS(so
 	if source.GremlinDatabasesToRestore != nil {
 		gremlinDatabasesToRestoreList := make([]GremlinDatabaseRestoreResource, len(source.GremlinDatabasesToRestore))
 		for gremlinDatabasesToRestoreIndex, gremlinDatabasesToRestoreItem := range source.GremlinDatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			gremlinDatabasesToRestoreItem := gremlinDatabasesToRestoreItem
 			var gremlinDatabasesToRestore GremlinDatabaseRestoreResource
 			err := gremlinDatabasesToRestore.Initialize_From_GremlinDatabaseRestoreResource_STATUS(&gremlinDatabasesToRestoreItem)
 			if err != nil {
@@ -7243,8 +7119,6 @@ func (parameters *RestoreParameters_STATUS) AssignProperties_From_RestoreParamet
 	if source.DatabasesToRestore != nil {
 		databasesToRestoreList := make([]DatabaseRestoreResource_STATUS, len(source.DatabasesToRestore))
 		for databasesToRestoreIndex, databasesToRestoreItem := range source.DatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			databasesToRestoreItem := databasesToRestoreItem
 			var databasesToRestore DatabaseRestoreResource_STATUS
 			err := databasesToRestore.AssignProperties_From_DatabaseRestoreResource_STATUS(&databasesToRestoreItem)
 			if err != nil {
@@ -7261,8 +7135,6 @@ func (parameters *RestoreParameters_STATUS) AssignProperties_From_RestoreParamet
 	if source.GremlinDatabasesToRestore != nil {
 		gremlinDatabasesToRestoreList := make([]GremlinDatabaseRestoreResource_STATUS, len(source.GremlinDatabasesToRestore))
 		for gremlinDatabasesToRestoreIndex, gremlinDatabasesToRestoreItem := range source.GremlinDatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			gremlinDatabasesToRestoreItem := gremlinDatabasesToRestoreItem
 			var gremlinDatabasesToRestore GremlinDatabaseRestoreResource_STATUS
 			err := gremlinDatabasesToRestore.AssignProperties_From_GremlinDatabaseRestoreResource_STATUS(&gremlinDatabasesToRestoreItem)
 			if err != nil {
@@ -7314,8 +7186,6 @@ func (parameters *RestoreParameters_STATUS) AssignProperties_To_RestoreParameter
 	if parameters.DatabasesToRestore != nil {
 		databasesToRestoreList := make([]storage.DatabaseRestoreResource_STATUS, len(parameters.DatabasesToRestore))
 		for databasesToRestoreIndex, databasesToRestoreItem := range parameters.DatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			databasesToRestoreItem := databasesToRestoreItem
 			var databasesToRestore storage.DatabaseRestoreResource_STATUS
 			err := databasesToRestoreItem.AssignProperties_To_DatabaseRestoreResource_STATUS(&databasesToRestore)
 			if err != nil {
@@ -7332,8 +7202,6 @@ func (parameters *RestoreParameters_STATUS) AssignProperties_To_RestoreParameter
 	if parameters.GremlinDatabasesToRestore != nil {
 		gremlinDatabasesToRestoreList := make([]storage.GremlinDatabaseRestoreResource_STATUS, len(parameters.GremlinDatabasesToRestore))
 		for gremlinDatabasesToRestoreIndex, gremlinDatabasesToRestoreItem := range parameters.GremlinDatabasesToRestore {
-			// Shadow the loop variable to avoid aliasing
-			gremlinDatabasesToRestoreItem := gremlinDatabasesToRestoreItem
 			var gremlinDatabasesToRestore storage.GremlinDatabaseRestoreResource_STATUS
 			err := gremlinDatabasesToRestoreItem.AssignProperties_To_GremlinDatabaseRestoreResource_STATUS(&gremlinDatabasesToRestore)
 			if err != nil {
@@ -7964,7 +7832,7 @@ func (policy *ContinuousModeBackupPolicy) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "ContinuousModeProperties":
 	if policy.ContinuousModeProperties != nil {
-		continuousModeProperties_ARM, err := (*policy.ContinuousModeProperties).ConvertToARM(resolved)
+		continuousModeProperties_ARM, err := policy.ContinuousModeProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -7974,7 +7842,7 @@ func (policy *ContinuousModeBackupPolicy) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "MigrationState":
 	if policy.MigrationState != nil {
-		migrationState_ARM, err := (*policy.MigrationState).ConvertToARM(resolved)
+		migrationState_ARM, err := policy.MigrationState.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -8925,7 +8793,7 @@ func (policy *PeriodicModeBackupPolicy) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "MigrationState":
 	if policy.MigrationState != nil {
-		migrationState_ARM, err := (*policy.MigrationState).ConvertToARM(resolved)
+		migrationState_ARM, err := policy.MigrationState.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -8935,7 +8803,7 @@ func (policy *PeriodicModeBackupPolicy) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "PeriodicModeProperties":
 	if policy.PeriodicModeProperties != nil {
-		periodicModeProperties_ARM, err := (*policy.PeriodicModeProperties).ConvertToARM(resolved)
+		periodicModeProperties_ARM, err := policy.PeriodicModeProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

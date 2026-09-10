@@ -116,7 +116,12 @@ func (containerApp *ContainerApp) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (containerApp *ContainerApp) createValidations() []func(ctx context.Context, obj *v20240301.ContainerApp) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.ContainerApp) (admission.Warnings, error){containerApp.validateResourceReferences, containerApp.validateOwnerReference, containerApp.validateSecretDestinations, containerApp.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.ContainerApp) (admission.Warnings, error){
+		containerApp.validateResourceReferences,
+		containerApp.validateOwnerReference,
+		containerApp.validateSecretDestinations,
+		containerApp.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

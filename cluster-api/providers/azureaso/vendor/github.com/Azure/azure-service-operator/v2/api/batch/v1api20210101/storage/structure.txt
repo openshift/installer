@@ -86,3 +86,39 @@ BatchAccount: Resource
     ├── Tags: map[string]string
     └── Type: *string
 
+augmentConversionForAutoStorageBaseProperties: Interface
+
+augmentConversionForAutoStorageProperties_STATUS: Interface
+
+augmentConversionForBatchAccount: Interface
+
+augmentConversionForBatchAccountIdentity: Interface
+
+augmentConversionForBatchAccountIdentity_STATUS: Interface
+
+augmentConversionForBatchAccountIdentity_UserAssignedIdentities_STATUS: Interface
+
+augmentConversionForBatchAccountOperatorSpec: Interface
+
+augmentConversionForBatchAccount_STATUS: Interface
+
+augmentConversionForBatchAccount_Spec: Interface
+
+augmentConversionForEncryptionProperties: Interface
+
+augmentConversionForEncryptionProperties_STATUS: Interface
+
+augmentConversionForKeyVaultProperties: Interface
+
+augmentConversionForKeyVaultProperties_STATUS: Interface
+
+augmentConversionForKeyVaultReference: Interface
+
+augmentConversionForKeyVaultReference_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForVirtualMachineFamilyCoreQuota_STATUS: Interface
+

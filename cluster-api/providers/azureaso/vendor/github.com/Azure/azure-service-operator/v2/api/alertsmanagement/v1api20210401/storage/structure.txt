@@ -72,3 +72,25 @@ SmartDetectorAlertRule: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
 
+augmentConversionForActionGroupsInformation: Interface
+
+augmentConversionForActionGroupsInformation_STATUS: Interface
+
+augmentConversionForDetector: Interface
+
+augmentConversionForDetectorParameterDefinition_STATUS: Interface
+
+augmentConversionForDetector_STATUS: Interface
+
+augmentConversionForSmartDetectorAlertRule: Interface
+
+augmentConversionForSmartDetectorAlertRuleOperatorSpec: Interface
+
+augmentConversionForSmartDetectorAlertRule_STATUS: Interface
+
+augmentConversionForSmartDetectorAlertRule_Spec: Interface
+
+augmentConversionForThrottlingInformation: Interface
+
+augmentConversionForThrottlingInformation_STATUS: Interface
+

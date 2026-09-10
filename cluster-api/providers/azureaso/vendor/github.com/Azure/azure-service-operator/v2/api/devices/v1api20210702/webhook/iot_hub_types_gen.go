@@ -116,7 +116,12 @@ func (iotHub *IotHub) ValidateUpdate(ctx context.Context, oldResource runtime.Ob
 
 // createValidations validates the creation of the resource
 func (iotHub *IotHub) createValidations() []func(ctx context.Context, obj *v20210702.IotHub) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210702.IotHub) (admission.Warnings, error){iotHub.validateResourceReferences, iotHub.validateOwnerReference, iotHub.validateSecretDestinations, iotHub.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210702.IotHub) (admission.Warnings, error){
+		iotHub.validateResourceReferences,
+		iotHub.validateOwnerReference,
+		iotHub.validateSecretDestinations,
+		iotHub.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

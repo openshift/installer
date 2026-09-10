@@ -45,15 +45,14 @@ func (snapshot *Snapshot_Spec) GetType() string {
 type SnapshotProperties struct {
 	// CreationData: Disk source information. CreationData information cannot be changed after the disk has been created.
 	CreationData *CreationData `json:"creationData,omitempty"`
-	DiskAccessId *string       `json:"diskAccessId,omitempty"`
+
+	// DiskAccessId: ARM id of the DiskAccess resource for using private endpoints on disks.
+	DiskAccessId *string `json:"diskAccessId,omitempty"`
 
 	// DiskSizeGB: If creationData.createOption is Empty, this field is mandatory and it indicates the size of the disk to
 	// create. If this field is present for updates or creation with other options, it indicates a resize. Resizes are only
 	// allowed if the disk is not attached to a running VM, and can only increase the disk's size.
 	DiskSizeGB *int `json:"diskSizeGB,omitempty"`
-
-	// DiskState: The state of the snapshot.
-	DiskState *DiskState `json:"diskState,omitempty"`
 
 	// Encryption: Encryption property can be used to encrypt data at rest with customer managed keys or platform managed keys.
 	Encryption *Encryption `json:"encryption,omitempty"`
@@ -84,29 +83,6 @@ type SnapshotProperties struct {
 type SnapshotSku struct {
 	// Name: The sku name.
 	Name *SnapshotSku_Name `json:"name,omitempty"`
-}
-
-// This enumerates the possible state of the disk.
-// +kubebuilder:validation:Enum={"ActiveSAS","ActiveUpload","Attached","ReadyToUpload","Reserved","Unattached"}
-type DiskState string
-
-const (
-	DiskState_ActiveSAS     = DiskState("ActiveSAS")
-	DiskState_ActiveUpload  = DiskState("ActiveUpload")
-	DiskState_Attached      = DiskState("Attached")
-	DiskState_ReadyToUpload = DiskState("ReadyToUpload")
-	DiskState_Reserved      = DiskState("Reserved")
-	DiskState_Unattached    = DiskState("Unattached")
-)
-
-// Mapping from string to DiskState
-var diskState_Values = map[string]DiskState{
-	"activesas":     DiskState_ActiveSAS,
-	"activeupload":  DiskState_ActiveUpload,
-	"attached":      DiskState_Attached,
-	"readytoupload": DiskState_ReadyToUpload,
-	"reserved":      DiskState_Reserved,
-	"unattached":    DiskState_Unattached,
 }
 
 // +kubebuilder:validation:Enum={"V1","V2"}

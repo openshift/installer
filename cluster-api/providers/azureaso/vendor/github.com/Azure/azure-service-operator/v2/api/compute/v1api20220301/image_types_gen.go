@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -299,7 +300,7 @@ func (image *Image_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "ExtendedLocation":
 	if image.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*image.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := image.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -329,7 +330,7 @@ func (image *Image_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		result.Properties.HyperVGeneration = &hyperVGeneration
 	}
 	if image.SourceVirtualMachine != nil {
-		sourceVirtualMachine_ARM, err := (*image.SourceVirtualMachine).ConvertToARM(resolved)
+		sourceVirtualMachine_ARM, err := image.SourceVirtualMachine.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -337,7 +338,7 @@ func (image *Image_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		result.Properties.SourceVirtualMachine = &sourceVirtualMachine
 	}
 	if image.StorageProfile != nil {
-		storageProfile_ARM, err := (*image.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := image.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1349,8 +1350,6 @@ func (operator *ImageOperatorSpec) AssignProperties_From_ImageOperatorSpec(sourc
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1367,8 +1366,6 @@ func (operator *ImageOperatorSpec) AssignProperties_From_ImageOperatorSpec(sourc
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1394,8 +1391,6 @@ func (operator *ImageOperatorSpec) AssignProperties_To_ImageOperatorSpec(destina
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1412,8 +1407,6 @@ func (operator *ImageOperatorSpec) AssignProperties_To_ImageOperatorSpec(destina
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1474,7 +1467,7 @@ func (profile *ImageStorageProfile) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "OsDisk":
 	if profile.OsDisk != nil {
-		osDisk_ARM, err := (*profile.OsDisk).ConvertToARM(resolved)
+		osDisk_ARM, err := profile.OsDisk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1540,8 +1533,6 @@ func (profile *ImageStorageProfile) AssignProperties_From_ImageStorageProfile(so
 	if source.DataDisks != nil {
 		dataDiskList := make([]ImageDataDisk, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk ImageDataDisk
 			err := dataDisk.AssignProperties_From_ImageDataDisk(&dataDiskItem)
 			if err != nil {
@@ -1587,8 +1578,6 @@ func (profile *ImageStorageProfile) AssignProperties_To_ImageStorageProfile(dest
 	if profile.DataDisks != nil {
 		dataDiskList := make([]storage.ImageDataDisk, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk storage.ImageDataDisk
 			err := dataDiskItem.AssignProperties_To_ImageDataDisk(&dataDisk)
 			if err != nil {
@@ -1639,8 +1628,6 @@ func (profile *ImageStorageProfile) Initialize_From_ImageStorageProfile_STATUS(s
 	if source.DataDisks != nil {
 		dataDiskList := make([]ImageDataDisk, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk ImageDataDisk
 			err := dataDisk.Initialize_From_ImageDataDisk_STATUS(&dataDiskItem)
 			if err != nil {
@@ -1746,8 +1733,6 @@ func (profile *ImageStorageProfile_STATUS) AssignProperties_From_ImageStoragePro
 	if source.DataDisks != nil {
 		dataDiskList := make([]ImageDataDisk_STATUS, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk ImageDataDisk_STATUS
 			err := dataDisk.AssignProperties_From_ImageDataDisk_STATUS(&dataDiskItem)
 			if err != nil {
@@ -1793,8 +1778,6 @@ func (profile *ImageStorageProfile_STATUS) AssignProperties_To_ImageStorageProfi
 	if profile.DataDisks != nil {
 		dataDiskList := make([]storage.ImageDataDisk_STATUS, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk storage.ImageDataDisk_STATUS
 			err := dataDiskItem.AssignProperties_To_ImageDataDisk_STATUS(&dataDisk)
 			if err != nil {
@@ -2077,7 +2060,7 @@ func (disk *ImageDataDisk) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "DiskEncryptionSet":
 	if disk.DiskEncryptionSet != nil {
-		diskEncryptionSet_ARM, err := (*disk.DiskEncryptionSet).ConvertToARM(resolved)
+		diskEncryptionSet_ARM, err := disk.DiskEncryptionSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2099,7 +2082,7 @@ func (disk *ImageDataDisk) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "ManagedDisk":
 	if disk.ManagedDisk != nil {
-		managedDisk_ARM, err := (*disk.ManagedDisk).ConvertToARM(resolved)
+		managedDisk_ARM, err := disk.ManagedDisk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2109,7 +2092,7 @@ func (disk *ImageDataDisk) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Snapshot":
 	if disk.Snapshot != nil {
-		snapshot_ARM, err := (*disk.Snapshot).ConvertToARM(resolved)
+		snapshot_ARM, err := disk.Snapshot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2762,7 +2745,7 @@ func (disk *ImageOSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "DiskEncryptionSet":
 	if disk.DiskEncryptionSet != nil {
-		diskEncryptionSet_ARM, err := (*disk.DiskEncryptionSet).ConvertToARM(resolved)
+		diskEncryptionSet_ARM, err := disk.DiskEncryptionSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2778,7 +2761,7 @@ func (disk *ImageOSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "ManagedDisk":
 	if disk.ManagedDisk != nil {
-		managedDisk_ARM, err := (*disk.ManagedDisk).ConvertToARM(resolved)
+		managedDisk_ARM, err := disk.ManagedDisk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2804,7 +2787,7 @@ func (disk *ImageOSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "Snapshot":
 	if disk.Snapshot != nil {
-		snapshot_ARM, err := (*disk.Snapshot).ConvertToARM(resolved)
+		snapshot_ARM, err := disk.Snapshot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

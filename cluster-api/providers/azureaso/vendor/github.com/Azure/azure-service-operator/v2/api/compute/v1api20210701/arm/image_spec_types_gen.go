@@ -105,6 +105,7 @@ type ImageStorageProfile struct {
 }
 
 type SubResource struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 }
 

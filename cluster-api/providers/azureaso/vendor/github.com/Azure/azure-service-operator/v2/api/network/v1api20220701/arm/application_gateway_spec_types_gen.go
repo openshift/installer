@@ -466,6 +466,7 @@ var managedServiceIdentity_Type_Values = map[string]ManagedServiceIdentity_Type{
 
 // Reference to another ARM resource.
 type SubResource struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -1113,16 +1114,22 @@ var applicationGatewayLoadDistributionAlgorithmEnum_Values = map[string]Applicat
 
 // Load Distribution Target of an application gateway.
 type ApplicationGatewayLoadDistributionTarget struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Path rule of URL path map of an application gateway.
 type ApplicationGatewayPathRule struct {
-	Id *string `json:"id,omitempty"`
+	// Name: Name of the path rule that is unique within an Application Gateway.
+	Name *string `json:"name,omitempty"`
+
+	// Properties: Properties of the application gateway path rule.
+	Properties *ApplicationGatewayPathRulePropertiesFormat `json:"properties,omitempty"`
 }
 
 // The application gateway private link ip configuration.
 type ApplicationGatewayPrivateLinkIpConfiguration struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -1244,6 +1251,30 @@ const (
 var applicationGatewayClientAuthConfiguration_VerifyClientRevocation_Values = map[string]ApplicationGatewayClientAuthConfiguration_VerifyClientRevocation{
 	"none": ApplicationGatewayClientAuthConfiguration_VerifyClientRevocation_None,
 	"ocsp": ApplicationGatewayClientAuthConfiguration_VerifyClientRevocation_OCSP,
+}
+
+// Properties of path rule of an application gateway.
+type ApplicationGatewayPathRulePropertiesFormat struct {
+	// BackendAddressPool: Backend address pool resource of URL path map path rule.
+	BackendAddressPool *SubResource `json:"backendAddressPool,omitempty"`
+
+	// BackendHttpSettings: Backend http settings resource of URL path map path rule.
+	BackendHttpSettings *SubResource `json:"backendHttpSettings,omitempty"`
+
+	// FirewallPolicy: Reference to the FirewallPolicy resource.
+	FirewallPolicy *SubResource `json:"firewallPolicy,omitempty"`
+
+	// LoadDistributionPolicy: Load Distribution Policy resource of URL path map path rule.
+	LoadDistributionPolicy *SubResource `json:"loadDistributionPolicy,omitempty"`
+
+	// Paths: Path rules of URL path map.
+	Paths []string `json:"paths,omitempty"`
+
+	// RedirectConfiguration: Redirect configuration resource of URL path map path rule.
+	RedirectConfiguration *SubResource `json:"redirectConfiguration,omitempty"`
+
+	// RewriteRuleSet: Rewrite rule set resource of URL path map path rule.
+	RewriteRuleSet *SubResource `json:"rewriteRuleSet,omitempty"`
 }
 
 // Set of actions in the Rewrite Rule in Application Gateway.

@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20241101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -18,6 +19,7 @@ import (
 // +kubebuilder:rbac:groups=compute.azure.com,resources={disks/status,disks/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +28,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240302.Disk
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/disk.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}
 type Disk struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +159,7 @@ func (disk *Disk) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240302.Disk
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/disk.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}
 type DiskList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -207,7 +209,7 @@ type Disk_Spec struct {
 	Owner                 *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 	PropertyBag           genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 	PublicNetworkAccess   *string                            `json:"publicNetworkAccess,omitempty"`
-	PurchasePlan          *PurchasePlan                      `json:"purchasePlan,omitempty"`
+	PurchasePlan          *DiskPurchasePlan                  `json:"purchasePlan,omitempty"`
 	SecurityProfile       *DiskSecurityProfile               `json:"securityProfile,omitempty"`
 	Sku                   *DiskSku                           `json:"sku,omitempty"`
 	SupportedCapabilities *SupportedCapabilities             `json:"supportedCapabilities,omitempty"`
@@ -272,12 +274,13 @@ type Disk_STATUS struct {
 	PropertyUpdatesInProgress    *PropertyUpdatesInProgress_STATUS    `json:"propertyUpdatesInProgress,omitempty"`
 	ProvisioningState            *string                              `json:"provisioningState,omitempty"`
 	PublicNetworkAccess          *string                              `json:"publicNetworkAccess,omitempty"`
-	PurchasePlan                 *PurchasePlan_STATUS                 `json:"purchasePlan,omitempty"`
+	PurchasePlan                 *DiskPurchasePlan_STATUS             `json:"purchasePlan,omitempty"`
 	SecurityProfile              *DiskSecurityProfile_STATUS          `json:"securityProfile,omitempty"`
 	ShareInfo                    []ShareInfoElement_STATUS            `json:"shareInfo,omitempty"`
 	Sku                          *DiskSku_STATUS                      `json:"sku,omitempty"`
 	SupportedCapabilities        *SupportedCapabilities_STATUS        `json:"supportedCapabilities,omitempty"`
 	SupportsHibernation          *bool                                `json:"supportsHibernation,omitempty"`
+	SystemData                   *SystemData_STATUS                   `json:"systemData,omitempty"`
 	Tags                         map[string]string                    `json:"tags,omitempty"`
 	Tier                         *string                              `json:"tier,omitempty"`
 	TimeCreated                  *string                              `json:"timeCreated,omitempty"`
@@ -354,6 +357,26 @@ type DiskOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// Storage version of v1api20240302.DiskPurchasePlan
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan struct {
+	Name          *string                `json:"name,omitempty"`
+	Product       *string                `json:"product,omitempty"`
+	PromotionCode *string                `json:"promotionCode,omitempty"`
+	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	Publisher     *string                `json:"publisher,omitempty"`
+}
+
+// Storage version of v1api20240302.DiskPurchasePlan_STATUS
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan_STATUS struct {
+	Name          *string                `json:"name,omitempty"`
+	Product       *string                `json:"product,omitempty"`
+	PromotionCode *string                `json:"promotionCode,omitempty"`
+	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	Publisher     *string                `json:"publisher,omitempty"`
 }
 
 // Storage version of v1api20240302.DiskSecurityProfile
@@ -450,26 +473,6 @@ type PropertyUpdatesInProgress_STATUS struct {
 	TargetTier  *string                `json:"targetTier,omitempty"`
 }
 
-// Storage version of v1api20240302.PurchasePlan
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan struct {
-	Name          *string                `json:"name,omitempty"`
-	Product       *string                `json:"product,omitempty"`
-	PromotionCode *string                `json:"promotionCode,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Publisher     *string                `json:"publisher,omitempty"`
-}
-
-// Storage version of v1api20240302.PurchasePlan_STATUS
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan_STATUS struct {
-	Name          *string                `json:"name,omitempty"`
-	Product       *string                `json:"product,omitempty"`
-	PromotionCode *string                `json:"promotionCode,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Publisher     *string                `json:"publisher,omitempty"`
-}
-
 // Storage version of v1api20240302.ShareInfoElement_STATUS
 type ShareInfoElement_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
@@ -492,6 +495,109 @@ type SupportedCapabilities_STATUS struct {
 	Architecture        *string                `json:"architecture,omitempty"`
 	DiskControllerTypes *string                `json:"diskControllerTypes,omitempty"`
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20240302.SystemData_STATUS
+// Metadata pertaining to creation and last modification of the resource.
+type SystemData_STATUS struct {
+	CreatedAt          *string                `json:"createdAt,omitempty"`
+	CreatedBy          *string                `json:"createdBy,omitempty"`
+	CreatedByType      *string                `json:"createdByType,omitempty"`
+	LastModifiedAt     *string                `json:"lastModifiedAt,omitempty"`
+	LastModifiedBy     *string                `json:"lastModifiedBy,omitempty"`
+	LastModifiedByType *string                `json:"lastModifiedByType,omitempty"`
+	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
 }
 
 // Storage version of v1api20240302.EncryptionSettingsElement

@@ -7,8 +7,9 @@ APIVersion: Enum (1 value)
 MetricAlert: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (18 properties)
-│   ├── Actions: Object (3 properties)[]
+│   ├── Actions: Object (4 properties)[]
 │   │   ├── ActionGroupId: *string
+│   │   ├── ActionGroupReference: *genruntime.ResourceReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── WebHookProperties: map[string]string
 │   ├── AutoMitigate: *bool

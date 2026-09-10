@@ -116,7 +116,12 @@ func (function *SqlDatabaseContainerUserDefinedFunction) ValidateUpdate(ctx cont
 
 // createValidations validates the creation of the resource
 func (function *SqlDatabaseContainerUserDefinedFunction) createValidations() []func(ctx context.Context, obj *v20210515.SqlDatabaseContainerUserDefinedFunction) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210515.SqlDatabaseContainerUserDefinedFunction) (admission.Warnings, error){function.validateResourceReferences, function.validateOwnerReference, function.validateSecretDestinations, function.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210515.SqlDatabaseContainerUserDefinedFunction) (admission.Warnings, error){
+		function.validateResourceReferences,
+		function.validateOwnerReference,
+		function.validateSecretDestinations,
+		function.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

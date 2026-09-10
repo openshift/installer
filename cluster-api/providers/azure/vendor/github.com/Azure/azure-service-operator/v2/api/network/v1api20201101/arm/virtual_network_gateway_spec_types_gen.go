@@ -70,8 +70,11 @@ type VirtualNetworkGatewayPropertiesFormat struct {
 
 	// Sku: The reference to the VirtualNetworkGatewaySku resource which represents the SKU selected for Virtual network
 	// gateway.
-	Sku                            *VirtualNetworkGatewaySku `json:"sku,omitempty"`
-	VNetExtendedLocationResourceId *string                   `json:"vNetExtendedLocationResourceId,omitempty"`
+	Sku *VirtualNetworkGatewaySku `json:"sku,omitempty"`
+
+	// VNetExtendedLocationResourceId: Customer vnet resource id. VirtualNetworkGateway of type local gateway is associated
+	// with the customer vnet.
+	VNetExtendedLocationResourceId *string `json:"vNetExtendedLocationResourceId,omitempty"`
 
 	// VpnClientConfiguration: The reference to the VpnClientConfiguration resource which represents the P2S VpnClient
 	// configurations.

@@ -31,6 +31,7 @@ func (definition *RoleDefinition_Spec) GetType() string {
 
 // Role definition properties.
 type RoleDefinitionProperties struct {
+	// AssignableScopes: Role definition assignable scopes.
 	AssignableScopes []string `json:"assignableScopes,omitempty"`
 
 	// Description: The role definition description.

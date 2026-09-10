@@ -4,6 +4,9 @@
 package storage
 
 import (
+	"fmt"
+	v20240601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +15,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=natgateways,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={natgateways/status,natgateways/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.NatGateway
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/natGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/natGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/natGateways/{natGatewayName}
 type NatGateway struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +46,28 @@ func (gateway *NatGateway) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (gateway *NatGateway) SetConditions(conditions conditions.Conditions) {
 	gateway.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &NatGateway{}
+
+// ConvertFrom populates our NatGateway from the provided hub NatGateway
+func (gateway *NatGateway) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.NatGateway)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/NatGateway but received %T instead", hub)
+	}
+
+	return gateway.AssignProperties_From_NatGateway(source)
+}
+
+// ConvertTo populates the provided hub NatGateway from our NatGateway
+func (gateway *NatGateway) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.NatGateway)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/NatGateway but received %T instead", hub)
+	}
+
+	return gateway.AssignProperties_To_NatGateway(destination)
 }
 
 var _ configmaps.Exporter = &NatGateway{}
@@ -142,8 +165,75 @@ func (gateway *NatGateway) SetStatus(status genruntime.ConvertibleStatus) error 
 	return nil
 }
 
-// Hub marks that this NatGateway is the hub type for conversion
-func (gateway *NatGateway) Hub() {}
+// AssignProperties_From_NatGateway populates our NatGateway from the provided source NatGateway
+func (gateway *NatGateway) AssignProperties_From_NatGateway(source *v20250301s.NatGateway) error {
+
+	// ObjectMeta
+	gateway.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec NatGateway_Spec
+	err := spec.AssignProperties_From_NatGateway_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NatGateway_Spec() to populate field Spec")
+	}
+	gateway.Spec = spec
+
+	// Status
+	var status NatGateway_STATUS
+	err = status.AssignProperties_From_NatGateway_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NatGateway_STATUS() to populate field Status")
+	}
+	gateway.Status = status
+
+	// Invoke the augmentConversionForNatGateway interface (if implemented) to customize the conversion
+	var gatewayAsAny any = gateway
+	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForNatGateway); ok {
+		err := augmentedGateway.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGateway populates the provided destination NatGateway from our NatGateway
+func (gateway *NatGateway) AssignProperties_To_NatGateway(destination *v20250301s.NatGateway) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *gateway.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.NatGateway_Spec
+	err := gateway.Spec.AssignProperties_To_NatGateway_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NatGateway_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.NatGateway_STATUS
+	err = gateway.Status.AssignProperties_To_NatGateway_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NatGateway_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForNatGateway interface (if implemented) to customize the conversion
+	var gatewayAsAny any = gateway
+	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForNatGateway); ok {
+		err := augmentedGateway.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (gateway *NatGateway) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +247,17 @@ func (gateway *NatGateway) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.NatGateway
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/natGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/natGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/natGateways/{natGatewayName}
 type NatGatewayList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NatGateway `json:"items"`
+}
+
+type augmentConversionForNatGateway interface {
+	AssignPropertiesFrom(src *v20250301s.NatGateway) error
+	AssignPropertiesTo(dst *v20250301s.NatGateway) error
 }
 
 // Storage version of v1api20240301.NatGateway_Spec
@@ -192,20 +287,344 @@ var _ genruntime.ConvertibleSpec = &NatGateway_Spec{}
 
 // ConvertSpecFrom populates our NatGateway_Spec from the provided source
 func (gateway *NatGateway_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == gateway {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.NatGateway_Spec)
+	if ok {
+		// Populate our instance from source
+		return gateway.AssignProperties_From_NatGateway_Spec(src)
 	}
 
-	return source.ConvertSpecTo(gateway)
+	// Convert to an intermediate form
+	src = &v20250301s.NatGateway_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = gateway.AssignProperties_From_NatGateway_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our NatGateway_Spec
 func (gateway *NatGateway_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == gateway {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.NatGateway_Spec)
+	if ok {
+		// Populate destination from our instance
+		return gateway.AssignProperties_To_NatGateway_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(gateway)
+	// Convert to an intermediate form
+	dst = &v20250301s.NatGateway_Spec{}
+	err := gateway.AssignProperties_To_NatGateway_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NatGateway_Spec populates our NatGateway_Spec from the provided source NatGateway_Spec
+func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *v20250301s.NatGateway_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	gateway.AzureName = source.AzureName
+
+	// IdleTimeoutInMinutes
+	gateway.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
+
+	// Location
+	gateway.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NatGatewayOperatorSpec
+		err := operatorSpec.AssignProperties_From_NatGatewayOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewayOperatorSpec() to populate field OperatorSpec")
+		}
+		gateway.OperatorSpec = &operatorSpec
+	} else {
+		gateway.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	gateway.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		gateway.Owner = &owner
+	} else {
+		gateway.Owner = nil
+	}
+
+	// PublicIpAddresses
+	if source.PublicIpAddresses != nil {
+		publicIpAddressList := make([]SubResource, len(source.PublicIpAddresses))
+		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
+			var subResourceStash v20240601s.SubResource
+			err := subResourceStash.AssignProperties_From_SubResource(&publicIpAddressItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from PublicIpAddresses")
+			}
+			var publicIpAddress SubResource
+			err = publicIpAddress.AssignProperties_From_SubResource(&subResourceStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIpAddresses from SubResourceStash")
+			}
+			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
+		}
+		gateway.PublicIpAddresses = publicIpAddressList
+	} else {
+		gateway.PublicIpAddresses = nil
+	}
+
+	// PublicIpAddressesV6
+	if len(source.PublicIpAddressesV6) > 0 {
+		propertyBag.Add("PublicIpAddressesV6", source.PublicIpAddressesV6)
+	} else {
+		propertyBag.Remove("PublicIpAddressesV6")
+	}
+
+	// PublicIpPrefixes
+	if source.PublicIpPrefixes != nil {
+		publicIpPrefixList := make([]SubResource, len(source.PublicIpPrefixes))
+		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
+			var subResourceStash v20240601s.SubResource
+			err := subResourceStash.AssignProperties_From_SubResource(&publicIpPrefixItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from PublicIpPrefixes")
+			}
+			var publicIpPrefix SubResource
+			err = publicIpPrefix.AssignProperties_From_SubResource(&subResourceStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIpPrefixes from SubResourceStash")
+			}
+			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
+		}
+		gateway.PublicIpPrefixes = publicIpPrefixList
+	} else {
+		gateway.PublicIpPrefixes = nil
+	}
+
+	// PublicIpPrefixesV6
+	if len(source.PublicIpPrefixesV6) > 0 {
+		propertyBag.Add("PublicIpPrefixesV6", source.PublicIpPrefixesV6)
+	} else {
+		propertyBag.Remove("PublicIpPrefixesV6")
+	}
+
+	// Sku
+	if source.Sku != nil {
+		var sku NatGatewaySku
+		err := sku.AssignProperties_From_NatGatewaySku(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewaySku() to populate field Sku")
+		}
+		gateway.Sku = &sku
+	} else {
+		gateway.Sku = nil
+	}
+
+	// SourceVirtualNetwork
+	if source.SourceVirtualNetwork != nil {
+		propertyBag.Add("SourceVirtualNetwork", *source.SourceVirtualNetwork)
+	} else {
+		propertyBag.Remove("SourceVirtualNetwork")
+	}
+
+	// Tags
+	gateway.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Zones
+	gateway.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		gateway.PropertyBag = propertyBag
+	} else {
+		gateway.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGateway_Spec interface (if implemented) to customize the conversion
+	var gatewayAsAny any = gateway
+	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForNatGateway_Spec); ok {
+		err := augmentedGateway.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGateway_Spec populates the provided destination NatGateway_Spec from our NatGateway_Spec
+func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination *v20250301s.NatGateway_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(gateway.PropertyBag)
+
+	// AzureName
+	destination.AzureName = gateway.AzureName
+
+	// IdleTimeoutInMinutes
+	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(gateway.IdleTimeoutInMinutes)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(gateway.Location)
+
+	// OperatorSpec
+	if gateway.OperatorSpec != nil {
+		var operatorSpec v20250301s.NatGatewayOperatorSpec
+		err := gateway.OperatorSpec.AssignProperties_To_NatGatewayOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewayOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = gateway.OriginalVersion
+
+	// Owner
+	if gateway.Owner != nil {
+		owner := gateway.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PublicIpAddresses
+	if gateway.PublicIpAddresses != nil {
+		publicIpAddressList := make([]v20250301s.SubResource, len(gateway.PublicIpAddresses))
+		for publicIpAddressIndex, publicIpAddressItem := range gateway.PublicIpAddresses {
+			var subResourceStash v20240601s.SubResource
+			err := publicIpAddressItem.AssignProperties_To_SubResource(&subResourceStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from PublicIpAddresses")
+			}
+			var publicIpAddress v20250301s.SubResource
+			err = subResourceStash.AssignProperties_To_SubResource(&publicIpAddress)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIpAddresses from SubResourceStash")
+			}
+			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
+		}
+		destination.PublicIpAddresses = publicIpAddressList
+	} else {
+		destination.PublicIpAddresses = nil
+	}
+
+	// PublicIpAddressesV6
+	if propertyBag.Contains("PublicIpAddressesV6") {
+		var publicIpAddressesV6 []v20250301s.SubResource
+		err := propertyBag.Pull("PublicIpAddressesV6", &publicIpAddressesV6)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'PublicIpAddressesV6' from propertyBag")
+		}
+
+		destination.PublicIpAddressesV6 = publicIpAddressesV6
+	} else {
+		destination.PublicIpAddressesV6 = nil
+	}
+
+	// PublicIpPrefixes
+	if gateway.PublicIpPrefixes != nil {
+		publicIpPrefixList := make([]v20250301s.SubResource, len(gateway.PublicIpPrefixes))
+		for publicIpPrefixIndex, publicIpPrefixItem := range gateway.PublicIpPrefixes {
+			var subResourceStash v20240601s.SubResource
+			err := publicIpPrefixItem.AssignProperties_To_SubResource(&subResourceStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from PublicIpPrefixes")
+			}
+			var publicIpPrefix v20250301s.SubResource
+			err = subResourceStash.AssignProperties_To_SubResource(&publicIpPrefix)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIpPrefixes from SubResourceStash")
+			}
+			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
+		}
+		destination.PublicIpPrefixes = publicIpPrefixList
+	} else {
+		destination.PublicIpPrefixes = nil
+	}
+
+	// PublicIpPrefixesV6
+	if propertyBag.Contains("PublicIpPrefixesV6") {
+		var publicIpPrefixesV6 []v20250301s.SubResource
+		err := propertyBag.Pull("PublicIpPrefixesV6", &publicIpPrefixesV6)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'PublicIpPrefixesV6' from propertyBag")
+		}
+
+		destination.PublicIpPrefixesV6 = publicIpPrefixesV6
+	} else {
+		destination.PublicIpPrefixesV6 = nil
+	}
+
+	// Sku
+	if gateway.Sku != nil {
+		var sku v20250301s.NatGatewaySku
+		err := gateway.Sku.AssignProperties_To_NatGatewaySku(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewaySku() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// SourceVirtualNetwork
+	if propertyBag.Contains("SourceVirtualNetwork") {
+		var sourceVirtualNetwork v20250301s.SubResource
+		err := propertyBag.Pull("SourceVirtualNetwork", &sourceVirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'SourceVirtualNetwork' from propertyBag")
+		}
+
+		destination.SourceVirtualNetwork = &sourceVirtualNetwork
+	} else {
+		destination.SourceVirtualNetwork = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(gateway.Tags)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(gateway.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGateway_Spec interface (if implemented) to customize the conversion
+	var gatewayAsAny any = gateway
+	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForNatGateway_Spec); ok {
+		err := augmentedGateway.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NatGateway_STATUS
@@ -233,20 +652,386 @@ var _ genruntime.ConvertibleStatus = &NatGateway_STATUS{}
 
 // ConvertStatusFrom populates our NatGateway_STATUS from the provided source
 func (gateway *NatGateway_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == gateway {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250301s.NatGateway_STATUS)
+	if ok {
+		// Populate our instance from source
+		return gateway.AssignProperties_From_NatGateway_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(gateway)
+	// Convert to an intermediate form
+	src = &v20250301s.NatGateway_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = gateway.AssignProperties_From_NatGateway_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our NatGateway_STATUS
 func (gateway *NatGateway_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == gateway {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250301s.NatGateway_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return gateway.AssignProperties_To_NatGateway_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(gateway)
+	// Convert to an intermediate form
+	dst = &v20250301s.NatGateway_STATUS{}
+	err := gateway.AssignProperties_To_NatGateway_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NatGateway_STATUS populates our NatGateway_STATUS from the provided source NatGateway_STATUS
+func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source *v20250301s.NatGateway_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	gateway.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Etag
+	gateway.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	gateway.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IdleTimeoutInMinutes
+	gateway.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
+
+	// Location
+	gateway.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	gateway.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ProvisioningState
+	gateway.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// PublicIpAddresses
+	if source.PublicIpAddresses != nil {
+		publicIpAddressList := make([]SubResource_STATUS, len(source.PublicIpAddresses))
+		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
+			var subResourceSTATUSStash v20240601s.SubResource_STATUS
+			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&publicIpAddressItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIpAddresses")
+			}
+			var publicIpAddress SubResource_STATUS
+			err = publicIpAddress.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIpAddresses from SubResource_STATUSStash")
+			}
+			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
+		}
+		gateway.PublicIpAddresses = publicIpAddressList
+	} else {
+		gateway.PublicIpAddresses = nil
+	}
+
+	// PublicIpAddressesV6
+	if len(source.PublicIpAddressesV6) > 0 {
+		propertyBag.Add("PublicIpAddressesV6", source.PublicIpAddressesV6)
+	} else {
+		propertyBag.Remove("PublicIpAddressesV6")
+	}
+
+	// PublicIpPrefixes
+	if source.PublicIpPrefixes != nil {
+		publicIpPrefixList := make([]SubResource_STATUS, len(source.PublicIpPrefixes))
+		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
+			var subResourceSTATUSStash v20240601s.SubResource_STATUS
+			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&publicIpPrefixItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIpPrefixes")
+			}
+			var publicIpPrefix SubResource_STATUS
+			err = publicIpPrefix.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIpPrefixes from SubResource_STATUSStash")
+			}
+			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
+		}
+		gateway.PublicIpPrefixes = publicIpPrefixList
+	} else {
+		gateway.PublicIpPrefixes = nil
+	}
+
+	// PublicIpPrefixesV6
+	if len(source.PublicIpPrefixesV6) > 0 {
+		propertyBag.Add("PublicIpPrefixesV6", source.PublicIpPrefixesV6)
+	} else {
+		propertyBag.Remove("PublicIpPrefixesV6")
+	}
+
+	// ResourceGuid
+	gateway.ResourceGuid = genruntime.ClonePointerToString(source.ResourceGuid)
+
+	// Sku
+	if source.Sku != nil {
+		var sku NatGatewaySku_STATUS
+		err := sku.AssignProperties_From_NatGatewaySku_STATUS(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewaySku_STATUS() to populate field Sku")
+		}
+		gateway.Sku = &sku
+	} else {
+		gateway.Sku = nil
+	}
+
+	// SourceVirtualNetwork
+	if source.SourceVirtualNetwork != nil {
+		propertyBag.Add("SourceVirtualNetwork", *source.SourceVirtualNetwork)
+	} else {
+		propertyBag.Remove("SourceVirtualNetwork")
+	}
+
+	// Subnets
+	if source.Subnets != nil {
+		subnetList := make([]SubResource_STATUS, len(source.Subnets))
+		for subnetIndex, subnetItem := range source.Subnets {
+			var subResourceSTATUSStash v20240601s.SubResource_STATUS
+			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&subnetItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from Subnets")
+			}
+			var subnet SubResource_STATUS
+			err = subnet.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnets from SubResource_STATUSStash")
+			}
+			subnetList[subnetIndex] = subnet
+		}
+		gateway.Subnets = subnetList
+	} else {
+		gateway.Subnets = nil
+	}
+
+	// Tags
+	gateway.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	gateway.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Zones
+	gateway.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		gateway.PropertyBag = propertyBag
+	} else {
+		gateway.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGateway_STATUS interface (if implemented) to customize the conversion
+	var gatewayAsAny any = gateway
+	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForNatGateway_STATUS); ok {
+		err := augmentedGateway.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGateway_STATUS populates the provided destination NatGateway_STATUS from our NatGateway_STATUS
+func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destination *v20250301s.NatGateway_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(gateway.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(gateway.Conditions)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(gateway.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(gateway.Id)
+
+	// IdleTimeoutInMinutes
+	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(gateway.IdleTimeoutInMinutes)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(gateway.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(gateway.Name)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(gateway.ProvisioningState)
+
+	// PublicIpAddresses
+	if gateway.PublicIpAddresses != nil {
+		publicIpAddressList := make([]v20250301s.SubResource_STATUS, len(gateway.PublicIpAddresses))
+		for publicIpAddressIndex, publicIpAddressItem := range gateway.PublicIpAddresses {
+			var subResourceSTATUSStash v20240601s.SubResource_STATUS
+			err := publicIpAddressItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIpAddresses")
+			}
+			var publicIpAddress v20250301s.SubResource_STATUS
+			err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&publicIpAddress)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIpAddresses from SubResource_STATUSStash")
+			}
+			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
+		}
+		destination.PublicIpAddresses = publicIpAddressList
+	} else {
+		destination.PublicIpAddresses = nil
+	}
+
+	// PublicIpAddressesV6
+	if propertyBag.Contains("PublicIpAddressesV6") {
+		var publicIpAddressesV6 []v20250301s.SubResource_STATUS
+		err := propertyBag.Pull("PublicIpAddressesV6", &publicIpAddressesV6)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'PublicIpAddressesV6' from propertyBag")
+		}
+
+		destination.PublicIpAddressesV6 = publicIpAddressesV6
+	} else {
+		destination.PublicIpAddressesV6 = nil
+	}
+
+	// PublicIpPrefixes
+	if gateway.PublicIpPrefixes != nil {
+		publicIpPrefixList := make([]v20250301s.SubResource_STATUS, len(gateway.PublicIpPrefixes))
+		for publicIpPrefixIndex, publicIpPrefixItem := range gateway.PublicIpPrefixes {
+			var subResourceSTATUSStash v20240601s.SubResource_STATUS
+			err := publicIpPrefixItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIpPrefixes")
+			}
+			var publicIpPrefix v20250301s.SubResource_STATUS
+			err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&publicIpPrefix)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIpPrefixes from SubResource_STATUSStash")
+			}
+			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
+		}
+		destination.PublicIpPrefixes = publicIpPrefixList
+	} else {
+		destination.PublicIpPrefixes = nil
+	}
+
+	// PublicIpPrefixesV6
+	if propertyBag.Contains("PublicIpPrefixesV6") {
+		var publicIpPrefixesV6 []v20250301s.SubResource_STATUS
+		err := propertyBag.Pull("PublicIpPrefixesV6", &publicIpPrefixesV6)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'PublicIpPrefixesV6' from propertyBag")
+		}
+
+		destination.PublicIpPrefixesV6 = publicIpPrefixesV6
+	} else {
+		destination.PublicIpPrefixesV6 = nil
+	}
+
+	// ResourceGuid
+	destination.ResourceGuid = genruntime.ClonePointerToString(gateway.ResourceGuid)
+
+	// Sku
+	if gateway.Sku != nil {
+		var sku v20250301s.NatGatewaySku_STATUS
+		err := gateway.Sku.AssignProperties_To_NatGatewaySku_STATUS(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewaySku_STATUS() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// SourceVirtualNetwork
+	if propertyBag.Contains("SourceVirtualNetwork") {
+		var sourceVirtualNetwork v20250301s.SubResource_STATUS
+		err := propertyBag.Pull("SourceVirtualNetwork", &sourceVirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'SourceVirtualNetwork' from propertyBag")
+		}
+
+		destination.SourceVirtualNetwork = &sourceVirtualNetwork
+	} else {
+		destination.SourceVirtualNetwork = nil
+	}
+
+	// Subnets
+	if gateway.Subnets != nil {
+		subnetList := make([]v20250301s.SubResource_STATUS, len(gateway.Subnets))
+		for subnetIndex, subnetItem := range gateway.Subnets {
+			var subResourceSTATUSStash v20240601s.SubResource_STATUS
+			err := subnetItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from Subnets")
+			}
+			var subnet v20250301s.SubResource_STATUS
+			err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&subnet)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnets from SubResource_STATUSStash")
+			}
+			subnetList[subnetIndex] = subnet
+		}
+		destination.Subnets = subnetList
+	} else {
+		destination.Subnets = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(gateway.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(gateway.Type)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(gateway.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGateway_STATUS interface (if implemented) to customize the conversion
+	var gatewayAsAny any = gateway
+	if augmentedGateway, ok := gatewayAsAny.(augmentConversionForNatGateway_STATUS); ok {
+		err := augmentedGateway.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNatGateway_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.NatGateway_Spec) error
+	AssignPropertiesTo(dst *v20250301s.NatGateway_Spec) error
+}
+
+type augmentConversionForNatGateway_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.NatGateway_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.NatGateway_STATUS) error
 }
 
 // Storage version of v1api20240301.NatGatewayOperatorSpec
@@ -257,6 +1042,120 @@ type NatGatewayOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_NatGatewayOperatorSpec populates our NatGatewayOperatorSpec from the provided source NatGatewayOperatorSpec
+func (operator *NatGatewayOperatorSpec) AssignProperties_From_NatGatewayOperatorSpec(source *v20250301s.NatGatewayOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewayOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNatGatewayOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGatewayOperatorSpec populates the provided destination NatGatewayOperatorSpec from our NatGatewayOperatorSpec
+func (operator *NatGatewayOperatorSpec) AssignProperties_To_NatGatewayOperatorSpec(destination *v20250301s.NatGatewayOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewayOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNatGatewayOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.NatGatewaySku
 // SKU of nat gateway.
 type NatGatewaySku struct {
@@ -264,11 +1163,138 @@ type NatGatewaySku struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_NatGatewaySku populates our NatGatewaySku from the provided source NatGatewaySku
+func (gatewaySku *NatGatewaySku) AssignProperties_From_NatGatewaySku(source *v20250301s.NatGatewaySku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	gatewaySku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		gatewaySku.PropertyBag = propertyBag
+	} else {
+		gatewaySku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewaySku interface (if implemented) to customize the conversion
+	var gatewaySkuAsAny any = gatewaySku
+	if augmentedGatewaySku, ok := gatewaySkuAsAny.(augmentConversionForNatGatewaySku); ok {
+		err := augmentedGatewaySku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGatewaySku populates the provided destination NatGatewaySku from our NatGatewaySku
+func (gatewaySku *NatGatewaySku) AssignProperties_To_NatGatewaySku(destination *v20250301s.NatGatewaySku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(gatewaySku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(gatewaySku.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewaySku interface (if implemented) to customize the conversion
+	var gatewaySkuAsAny any = gatewaySku
+	if augmentedGatewaySku, ok := gatewaySkuAsAny.(augmentConversionForNatGatewaySku); ok {
+		err := augmentedGatewaySku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.NatGatewaySku_STATUS
 // SKU of nat gateway.
 type NatGatewaySku_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_NatGatewaySku_STATUS populates our NatGatewaySku_STATUS from the provided source NatGatewaySku_STATUS
+func (gatewaySku *NatGatewaySku_STATUS) AssignProperties_From_NatGatewaySku_STATUS(source *v20250301s.NatGatewaySku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	gatewaySku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		gatewaySku.PropertyBag = propertyBag
+	} else {
+		gatewaySku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewaySku_STATUS interface (if implemented) to customize the conversion
+	var gatewaySkuAsAny any = gatewaySku
+	if augmentedGatewaySku, ok := gatewaySkuAsAny.(augmentConversionForNatGatewaySku_STATUS); ok {
+		err := augmentedGatewaySku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGatewaySku_STATUS populates the provided destination NatGatewaySku_STATUS from our NatGatewaySku_STATUS
+func (gatewaySku *NatGatewaySku_STATUS) AssignProperties_To_NatGatewaySku_STATUS(destination *v20250301s.NatGatewaySku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(gatewaySku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(gatewaySku.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewaySku_STATUS interface (if implemented) to customize the conversion
+	var gatewaySkuAsAny any = gatewaySku
+	if augmentedGatewaySku, ok := gatewaySkuAsAny.(augmentConversionForNatGatewaySku_STATUS); ok {
+		err := augmentedGatewaySku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNatGatewayOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.NatGatewayOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.NatGatewayOperatorSpec) error
+}
+
+type augmentConversionForNatGatewaySku interface {
+	AssignPropertiesFrom(src *v20250301s.NatGatewaySku) error
+	AssignPropertiesTo(dst *v20250301s.NatGatewaySku) error
+}
+
+type augmentConversionForNatGatewaySku_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.NatGatewaySku_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.NatGatewaySku_STATUS) error
 }
 
 func init() {

@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +13,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources=authorizationproviders,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources={authorizationproviders/status,authorizationproviders/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220801.AuthorizationProvider
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}
 type AuthorizationProvider struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +44,42 @@ func (provider *AuthorizationProvider) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (provider *AuthorizationProvider) SetConditions(conditions conditions.Conditions) {
 	provider.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &AuthorizationProvider{}
+
+// ConvertFrom populates our AuthorizationProvider from the provided hub AuthorizationProvider
+func (provider *AuthorizationProvider) ConvertFrom(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var source storage.AuthorizationProvider
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
+	}
+
+	err = provider.AssignProperties_From_AuthorizationProvider(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to provider")
+	}
+
+	return nil
+}
+
+// ConvertTo populates the provided hub AuthorizationProvider from our AuthorizationProvider
+func (provider *AuthorizationProvider) ConvertTo(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var destination storage.AuthorizationProvider
+	err := provider.AssignProperties_To_AuthorizationProvider(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from provider")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
+	}
+
+	return nil
 }
 
 var _ configmaps.Exporter = &AuthorizationProvider{}
@@ -142,8 +177,75 @@ func (provider *AuthorizationProvider) SetStatus(status genruntime.ConvertibleSt
 	return nil
 }
 
-// Hub marks that this AuthorizationProvider is the hub type for conversion
-func (provider *AuthorizationProvider) Hub() {}
+// AssignProperties_From_AuthorizationProvider populates our AuthorizationProvider from the provided source AuthorizationProvider
+func (provider *AuthorizationProvider) AssignProperties_From_AuthorizationProvider(source *storage.AuthorizationProvider) error {
+
+	// ObjectMeta
+	provider.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec AuthorizationProvider_Spec
+	err := spec.AssignProperties_From_AuthorizationProvider_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvider_Spec() to populate field Spec")
+	}
+	provider.Spec = spec
+
+	// Status
+	var status AuthorizationProvider_STATUS
+	err = status.AssignProperties_From_AuthorizationProvider_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvider_STATUS() to populate field Status")
+	}
+	provider.Status = status
+
+	// Invoke the augmentConversionForAuthorizationProvider interface (if implemented) to customize the conversion
+	var providerAsAny any = provider
+	if augmentedProvider, ok := providerAsAny.(augmentConversionForAuthorizationProvider); ok {
+		err := augmentedProvider.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvider populates the provided destination AuthorizationProvider from our AuthorizationProvider
+func (provider *AuthorizationProvider) AssignProperties_To_AuthorizationProvider(destination *storage.AuthorizationProvider) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *provider.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.AuthorizationProvider_Spec
+	err := provider.Spec.AssignProperties_To_AuthorizationProvider_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvider_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.AuthorizationProvider_STATUS
+	err = provider.Status.AssignProperties_To_AuthorizationProvider_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvider_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForAuthorizationProvider interface (if implemented) to customize the conversion
+	var providerAsAny any = provider
+	if augmentedProvider, ok := providerAsAny.(augmentConversionForAuthorizationProvider); ok {
+		err := augmentedProvider.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (provider *AuthorizationProvider) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +259,17 @@ func (provider *AuthorizationProvider) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20220801.AuthorizationProvider
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}
 type AuthorizationProviderList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []AuthorizationProvider `json:"items"`
+}
+
+type augmentConversionForAuthorizationProvider interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvider) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvider) error
 }
 
 // Storage version of v1api20220801.AuthorizationProvider_Spec
@@ -188,20 +295,188 @@ var _ genruntime.ConvertibleSpec = &AuthorizationProvider_Spec{}
 
 // ConvertSpecFrom populates our AuthorizationProvider_Spec from the provided source
 func (provider *AuthorizationProvider_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == provider {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.AuthorizationProvider_Spec)
+	if ok {
+		// Populate our instance from source
+		return provider.AssignProperties_From_AuthorizationProvider_Spec(src)
 	}
 
-	return source.ConvertSpecTo(provider)
+	// Convert to an intermediate form
+	src = &storage.AuthorizationProvider_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = provider.AssignProperties_From_AuthorizationProvider_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our AuthorizationProvider_Spec
 func (provider *AuthorizationProvider_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == provider {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.AuthorizationProvider_Spec)
+	if ok {
+		// Populate destination from our instance
+		return provider.AssignProperties_To_AuthorizationProvider_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(provider)
+	// Convert to an intermediate form
+	dst = &storage.AuthorizationProvider_Spec{}
+	err := provider.AssignProperties_To_AuthorizationProvider_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_AuthorizationProvider_Spec populates our AuthorizationProvider_Spec from the provided source AuthorizationProvider_Spec
+func (provider *AuthorizationProvider_Spec) AssignProperties_From_AuthorizationProvider_Spec(source *storage.AuthorizationProvider_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	provider.AzureName = source.AzureName
+
+	// DisplayName
+	provider.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
+
+	// IdentityProvider
+	provider.IdentityProvider = genruntime.ClonePointerToString(source.IdentityProvider)
+
+	// Oauth2
+	if source.Oauth2 != nil {
+		var oauth2 AuthorizationProviderOAuth2Settings
+		err := oauth2.AssignProperties_From_AuthorizationProviderOAuth2Settings(source.Oauth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProviderOAuth2Settings() to populate field Oauth2")
+		}
+		provider.Oauth2 = &oauth2
+	} else {
+		provider.Oauth2 = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec AuthorizationProviderOperatorSpec
+		err := operatorSpec.AssignProperties_From_AuthorizationProviderOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProviderOperatorSpec() to populate field OperatorSpec")
+		}
+		provider.OperatorSpec = &operatorSpec
+	} else {
+		provider.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	provider.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		provider.Owner = &owner
+	} else {
+		provider.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		provider.PropertyBag = propertyBag
+	} else {
+		provider.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvider_Spec interface (if implemented) to customize the conversion
+	var providerAsAny any = provider
+	if augmentedProvider, ok := providerAsAny.(augmentConversionForAuthorizationProvider_Spec); ok {
+		err := augmentedProvider.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvider_Spec populates the provided destination AuthorizationProvider_Spec from our AuthorizationProvider_Spec
+func (provider *AuthorizationProvider_Spec) AssignProperties_To_AuthorizationProvider_Spec(destination *storage.AuthorizationProvider_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(provider.PropertyBag)
+
+	// AzureName
+	destination.AzureName = provider.AzureName
+
+	// DisplayName
+	destination.DisplayName = genruntime.ClonePointerToString(provider.DisplayName)
+
+	// IdentityProvider
+	destination.IdentityProvider = genruntime.ClonePointerToString(provider.IdentityProvider)
+
+	// Oauth2
+	if provider.Oauth2 != nil {
+		var oauth2 storage.AuthorizationProviderOAuth2Settings
+		err := provider.Oauth2.AssignProperties_To_AuthorizationProviderOAuth2Settings(&oauth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProviderOAuth2Settings() to populate field Oauth2")
+		}
+		destination.Oauth2 = &oauth2
+	} else {
+		destination.Oauth2 = nil
+	}
+
+	// OperatorSpec
+	if provider.OperatorSpec != nil {
+		var operatorSpec storage.AuthorizationProviderOperatorSpec
+		err := provider.OperatorSpec.AssignProperties_To_AuthorizationProviderOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProviderOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = provider.OriginalVersion
+
+	// Owner
+	if provider.Owner != nil {
+		owner := provider.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvider_Spec interface (if implemented) to customize the conversion
+	var providerAsAny any = provider
+	if augmentedProvider, ok := providerAsAny.(augmentConversionForAuthorizationProvider_Spec); ok {
+		err := augmentedProvider.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.AuthorizationProvider_STATUS
@@ -220,20 +495,170 @@ var _ genruntime.ConvertibleStatus = &AuthorizationProvider_STATUS{}
 
 // ConvertStatusFrom populates our AuthorizationProvider_STATUS from the provided source
 func (provider *AuthorizationProvider_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == provider {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.AuthorizationProvider_STATUS)
+	if ok {
+		// Populate our instance from source
+		return provider.AssignProperties_From_AuthorizationProvider_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(provider)
+	// Convert to an intermediate form
+	src = &storage.AuthorizationProvider_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = provider.AssignProperties_From_AuthorizationProvider_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our AuthorizationProvider_STATUS
 func (provider *AuthorizationProvider_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == provider {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.AuthorizationProvider_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return provider.AssignProperties_To_AuthorizationProvider_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(provider)
+	// Convert to an intermediate form
+	dst = &storage.AuthorizationProvider_STATUS{}
+	err := provider.AssignProperties_To_AuthorizationProvider_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_AuthorizationProvider_STATUS populates our AuthorizationProvider_STATUS from the provided source AuthorizationProvider_STATUS
+func (provider *AuthorizationProvider_STATUS) AssignProperties_From_AuthorizationProvider_STATUS(source *storage.AuthorizationProvider_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	provider.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DisplayName
+	provider.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
+
+	// Id
+	provider.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IdentityProvider
+	provider.IdentityProvider = genruntime.ClonePointerToString(source.IdentityProvider)
+
+	// Name
+	provider.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Oauth2
+	if source.Oauth2 != nil {
+		var oauth2 AuthorizationProviderOAuth2Settings_STATUS
+		err := oauth2.AssignProperties_From_AuthorizationProviderOAuth2Settings_STATUS(source.Oauth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProviderOAuth2Settings_STATUS() to populate field Oauth2")
+		}
+		provider.Oauth2 = &oauth2
+	} else {
+		provider.Oauth2 = nil
+	}
+
+	// Type
+	provider.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		provider.PropertyBag = propertyBag
+	} else {
+		provider.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvider_STATUS interface (if implemented) to customize the conversion
+	var providerAsAny any = provider
+	if augmentedProvider, ok := providerAsAny.(augmentConversionForAuthorizationProvider_STATUS); ok {
+		err := augmentedProvider.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvider_STATUS populates the provided destination AuthorizationProvider_STATUS from our AuthorizationProvider_STATUS
+func (provider *AuthorizationProvider_STATUS) AssignProperties_To_AuthorizationProvider_STATUS(destination *storage.AuthorizationProvider_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(provider.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(provider.Conditions)
+
+	// DisplayName
+	destination.DisplayName = genruntime.ClonePointerToString(provider.DisplayName)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(provider.Id)
+
+	// IdentityProvider
+	destination.IdentityProvider = genruntime.ClonePointerToString(provider.IdentityProvider)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(provider.Name)
+
+	// Oauth2
+	if provider.Oauth2 != nil {
+		var oauth2 storage.AuthorizationProviderOAuth2Settings_STATUS
+		err := provider.Oauth2.AssignProperties_To_AuthorizationProviderOAuth2Settings_STATUS(&oauth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProviderOAuth2Settings_STATUS() to populate field Oauth2")
+		}
+		destination.Oauth2 = &oauth2
+	} else {
+		destination.Oauth2 = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(provider.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvider_STATUS interface (if implemented) to customize the conversion
+	var providerAsAny any = provider
+	if augmentedProvider, ok := providerAsAny.(augmentConversionForAuthorizationProvider_STATUS); ok {
+		err := augmentedProvider.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationProvider_Spec interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvider_Spec) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvider_Spec) error
+}
+
+type augmentConversionForAuthorizationProvider_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvider_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvider_STATUS) error
 }
 
 // Storage version of v1api20220801.AuthorizationProviderOAuth2Settings
@@ -244,12 +669,172 @@ type AuthorizationProviderOAuth2Settings struct {
 	RedirectUrl *string                                `json:"redirectUrl,omitempty"`
 }
 
+// AssignProperties_From_AuthorizationProviderOAuth2Settings populates our AuthorizationProviderOAuth2Settings from the provided source AuthorizationProviderOAuth2Settings
+func (settings *AuthorizationProviderOAuth2Settings) AssignProperties_From_AuthorizationProviderOAuth2Settings(source *storage.AuthorizationProviderOAuth2Settings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// GrantTypes
+	if source.GrantTypes != nil {
+		var grantType AuthorizationProviderOAuth2GrantTypes
+		err := grantType.AssignProperties_From_AuthorizationProviderOAuth2GrantTypes(source.GrantTypes)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProviderOAuth2GrantTypes() to populate field GrantTypes")
+		}
+		settings.GrantTypes = &grantType
+	} else {
+		settings.GrantTypes = nil
+	}
+
+	// RedirectUrl
+	settings.RedirectUrl = genruntime.ClonePointerToString(source.RedirectUrl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2Settings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAuthorizationProviderOAuth2Settings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProviderOAuth2Settings populates the provided destination AuthorizationProviderOAuth2Settings from our AuthorizationProviderOAuth2Settings
+func (settings *AuthorizationProviderOAuth2Settings) AssignProperties_To_AuthorizationProviderOAuth2Settings(destination *storage.AuthorizationProviderOAuth2Settings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// GrantTypes
+	if settings.GrantTypes != nil {
+		var grantType storage.AuthorizationProviderOAuth2GrantTypes
+		err := settings.GrantTypes.AssignProperties_To_AuthorizationProviderOAuth2GrantTypes(&grantType)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProviderOAuth2GrantTypes() to populate field GrantTypes")
+		}
+		destination.GrantTypes = &grantType
+	} else {
+		destination.GrantTypes = nil
+	}
+
+	// RedirectUrl
+	destination.RedirectUrl = genruntime.ClonePointerToString(settings.RedirectUrl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2Settings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAuthorizationProviderOAuth2Settings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.AuthorizationProviderOAuth2Settings_STATUS
 // OAuth2 settings details
 type AuthorizationProviderOAuth2Settings_STATUS struct {
 	GrantTypes  *AuthorizationProviderOAuth2GrantTypes_STATUS `json:"grantTypes,omitempty"`
 	PropertyBag genruntime.PropertyBag                        `json:"$propertyBag,omitempty"`
 	RedirectUrl *string                                       `json:"redirectUrl,omitempty"`
+}
+
+// AssignProperties_From_AuthorizationProviderOAuth2Settings_STATUS populates our AuthorizationProviderOAuth2Settings_STATUS from the provided source AuthorizationProviderOAuth2Settings_STATUS
+func (settings *AuthorizationProviderOAuth2Settings_STATUS) AssignProperties_From_AuthorizationProviderOAuth2Settings_STATUS(source *storage.AuthorizationProviderOAuth2Settings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// GrantTypes
+	if source.GrantTypes != nil {
+		var grantType AuthorizationProviderOAuth2GrantTypes_STATUS
+		err := grantType.AssignProperties_From_AuthorizationProviderOAuth2GrantTypes_STATUS(source.GrantTypes)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProviderOAuth2GrantTypes_STATUS() to populate field GrantTypes")
+		}
+		settings.GrantTypes = &grantType
+	} else {
+		settings.GrantTypes = nil
+	}
+
+	// RedirectUrl
+	settings.RedirectUrl = genruntime.ClonePointerToString(source.RedirectUrl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2Settings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAuthorizationProviderOAuth2Settings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProviderOAuth2Settings_STATUS populates the provided destination AuthorizationProviderOAuth2Settings_STATUS from our AuthorizationProviderOAuth2Settings_STATUS
+func (settings *AuthorizationProviderOAuth2Settings_STATUS) AssignProperties_To_AuthorizationProviderOAuth2Settings_STATUS(destination *storage.AuthorizationProviderOAuth2Settings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// GrantTypes
+	if settings.GrantTypes != nil {
+		var grantType storage.AuthorizationProviderOAuth2GrantTypes_STATUS
+		err := settings.GrantTypes.AssignProperties_To_AuthorizationProviderOAuth2GrantTypes_STATUS(&grantType)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProviderOAuth2GrantTypes_STATUS() to populate field GrantTypes")
+		}
+		destination.GrantTypes = &grantType
+	} else {
+		destination.GrantTypes = nil
+	}
+
+	// RedirectUrl
+	destination.RedirectUrl = genruntime.ClonePointerToString(settings.RedirectUrl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2Settings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAuthorizationProviderOAuth2Settings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.AuthorizationProviderOperatorSpec
@@ -260,6 +845,135 @@ type AuthorizationProviderOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_AuthorizationProviderOperatorSpec populates our AuthorizationProviderOperatorSpec from the provided source AuthorizationProviderOperatorSpec
+func (operator *AuthorizationProviderOperatorSpec) AssignProperties_From_AuthorizationProviderOperatorSpec(source *storage.AuthorizationProviderOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProviderOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProviderOperatorSpec populates the provided destination AuthorizationProviderOperatorSpec from our AuthorizationProviderOperatorSpec
+func (operator *AuthorizationProviderOperatorSpec) AssignProperties_To_AuthorizationProviderOperatorSpec(destination *storage.AuthorizationProviderOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProviderOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationProviderOAuth2Settings interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProviderOAuth2Settings) error
+	AssignPropertiesTo(dst *storage.AuthorizationProviderOAuth2Settings) error
+}
+
+type augmentConversionForAuthorizationProviderOAuth2Settings_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProviderOAuth2Settings_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthorizationProviderOAuth2Settings_STATUS) error
+}
+
+type augmentConversionForAuthorizationProviderOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProviderOperatorSpec) error
+	AssignPropertiesTo(dst *storage.AuthorizationProviderOperatorSpec) error
+}
+
 // Storage version of v1api20220801.AuthorizationProviderOAuth2GrantTypes
 // Authorization Provider oauth2 grant types settings
 type AuthorizationProviderOAuth2GrantTypes struct {
@@ -268,12 +982,166 @@ type AuthorizationProviderOAuth2GrantTypes struct {
 	PropertyBag       genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AuthorizationProviderOAuth2GrantTypes populates our AuthorizationProviderOAuth2GrantTypes from the provided source AuthorizationProviderOAuth2GrantTypes
+func (types *AuthorizationProviderOAuth2GrantTypes) AssignProperties_From_AuthorizationProviderOAuth2GrantTypes(source *storage.AuthorizationProviderOAuth2GrantTypes) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuthorizationCode
+	if source.AuthorizationCode != nil {
+		authorizationCode := source.AuthorizationCode.Copy()
+		types.AuthorizationCode = &authorizationCode
+	} else {
+		types.AuthorizationCode = nil
+	}
+
+	// ClientCredentials
+	if source.ClientCredentials != nil {
+		clientCredential := source.ClientCredentials.Copy()
+		types.ClientCredentials = &clientCredential
+	} else {
+		types.ClientCredentials = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		types.PropertyBag = propertyBag
+	} else {
+		types.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2GrantTypes interface (if implemented) to customize the conversion
+	var typesAsAny any = types
+	if augmentedTypes, ok := typesAsAny.(augmentConversionForAuthorizationProviderOAuth2GrantTypes); ok {
+		err := augmentedTypes.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProviderOAuth2GrantTypes populates the provided destination AuthorizationProviderOAuth2GrantTypes from our AuthorizationProviderOAuth2GrantTypes
+func (types *AuthorizationProviderOAuth2GrantTypes) AssignProperties_To_AuthorizationProviderOAuth2GrantTypes(destination *storage.AuthorizationProviderOAuth2GrantTypes) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(types.PropertyBag)
+
+	// AuthorizationCode
+	if types.AuthorizationCode != nil {
+		authorizationCode := types.AuthorizationCode.Copy()
+		destination.AuthorizationCode = &authorizationCode
+	} else {
+		destination.AuthorizationCode = nil
+	}
+
+	// ClientCredentials
+	if types.ClientCredentials != nil {
+		clientCredential := types.ClientCredentials.Copy()
+		destination.ClientCredentials = &clientCredential
+	} else {
+		destination.ClientCredentials = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2GrantTypes interface (if implemented) to customize the conversion
+	var typesAsAny any = types
+	if augmentedTypes, ok := typesAsAny.(augmentConversionForAuthorizationProviderOAuth2GrantTypes); ok {
+		err := augmentedTypes.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.AuthorizationProviderOAuth2GrantTypes_STATUS
 // Authorization Provider oauth2 grant types settings
 type AuthorizationProviderOAuth2GrantTypes_STATUS struct {
 	AuthorizationCode map[string]string      `json:"authorizationCode,omitempty"`
 	ClientCredentials map[string]string      `json:"clientCredentials,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AuthorizationProviderOAuth2GrantTypes_STATUS populates our AuthorizationProviderOAuth2GrantTypes_STATUS from the provided source AuthorizationProviderOAuth2GrantTypes_STATUS
+func (types *AuthorizationProviderOAuth2GrantTypes_STATUS) AssignProperties_From_AuthorizationProviderOAuth2GrantTypes_STATUS(source *storage.AuthorizationProviderOAuth2GrantTypes_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuthorizationCode
+	types.AuthorizationCode = genruntime.CloneMapOfStringToString(source.AuthorizationCode)
+
+	// ClientCredentials
+	types.ClientCredentials = genruntime.CloneMapOfStringToString(source.ClientCredentials)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		types.PropertyBag = propertyBag
+	} else {
+		types.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2GrantTypes_STATUS interface (if implemented) to customize the conversion
+	var typesAsAny any = types
+	if augmentedTypes, ok := typesAsAny.(augmentConversionForAuthorizationProviderOAuth2GrantTypes_STATUS); ok {
+		err := augmentedTypes.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProviderOAuth2GrantTypes_STATUS populates the provided destination AuthorizationProviderOAuth2GrantTypes_STATUS from our AuthorizationProviderOAuth2GrantTypes_STATUS
+func (types *AuthorizationProviderOAuth2GrantTypes_STATUS) AssignProperties_To_AuthorizationProviderOAuth2GrantTypes_STATUS(destination *storage.AuthorizationProviderOAuth2GrantTypes_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(types.PropertyBag)
+
+	// AuthorizationCode
+	destination.AuthorizationCode = genruntime.CloneMapOfStringToString(types.AuthorizationCode)
+
+	// ClientCredentials
+	destination.ClientCredentials = genruntime.CloneMapOfStringToString(types.ClientCredentials)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProviderOAuth2GrantTypes_STATUS interface (if implemented) to customize the conversion
+	var typesAsAny any = types
+	if augmentedTypes, ok := typesAsAny.(augmentConversionForAuthorizationProviderOAuth2GrantTypes_STATUS); ok {
+		err := augmentedTypes.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationProviderOAuth2GrantTypes interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProviderOAuth2GrantTypes) error
+	AssignPropertiesTo(dst *storage.AuthorizationProviderOAuth2GrantTypes) error
+}
+
+type augmentConversionForAuthorizationProviderOAuth2GrantTypes_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProviderOAuth2GrantTypes_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthorizationProviderOAuth2GrantTypes_STATUS) error
 }
 
 func init() {

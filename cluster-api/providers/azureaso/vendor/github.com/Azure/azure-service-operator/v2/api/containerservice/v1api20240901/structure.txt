@@ -403,9 +403,11 @@ ManagedCluster: Resource
 │   │   │   └── "UserAssigned"
 │   │   └── UserAssignedIdentities: Object (1 property)[]
 │   │       └── Reference: genruntime.ResourceReference
-│   ├── IdentityProfile: map[string]Object (3 properties)
+│   ├── IdentityProfile: map[string]Object (5 properties)
 │   │   ├── ClientId: *string
+│   │   ├── ClientIdFromConfig: *genruntime.ConfigMapReference
 │   │   ├── ObjectId: *string
+│   │   ├── ObjectIdFromConfig: *genruntime.ConfigMapReference
 │   │   └── ResourceReference: *genruntime.ResourceReference
 │   ├── IngressProfile: *Object (1 property)
 │   │   └── WebAppRouting: *Object (2 properties)
@@ -510,8 +512,9 @@ ManagedCluster: Resource
 │   │   └── Enabled: *bool
 │   ├── OperatorSpec: *Object (4 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
-│   │   ├── ConfigMaps: *Object (1 property)
-│   │   │   └── OIDCIssuerProfile: *genruntime.ConfigMapDestination
+│   │   ├── ConfigMaps: *Object (2 properties)
+│   │   │   ├── OIDCIssuerProfile: *genruntime.ConfigMapDestination
+│   │   │   └── PrincipalId: *genruntime.ConfigMapDestination
 │   │   ├── SecretExpressions: *core.DestinationExpression[]
 │   │   └── Secrets: *Object (2 properties)
 │   │       ├── AdminCredentials: *genruntime.SecretDestination
@@ -522,9 +525,11 @@ ManagedCluster: Resource
 │   │   ├── Enabled: *bool
 │   │   ├── UserAssignedIdentities: Object (4 properties)[]
 │   │   │   ├── BindingSelector: *string
-│   │   │   ├── Identity: *Object (3 properties)
+│   │   │   ├── Identity: *Object (5 properties)
 │   │   │   │   ├── ClientId: *string
+│   │   │   │   ├── ClientIdFromConfig: *genruntime.ConfigMapReference
 │   │   │   │   ├── ObjectId: *string
+│   │   │   │   ├── ObjectIdFromConfig: *genruntime.ConfigMapReference
 │   │   │   │   └── ResourceReference: *genruntime.ResourceReference
 │   │   │   ├── Name: *string
 │   │   │   └── Namespace: *string

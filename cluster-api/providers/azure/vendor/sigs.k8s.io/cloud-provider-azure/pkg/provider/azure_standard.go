@@ -116,13 +116,13 @@ func (az *Cloud) getLoadBalancerProbeIDWithRG(lbName, rgName, lbRuleName string)
 
 // getNetworkResourceSubscriptionID returns the subscription id which hosts network resources
 func (az *Cloud) getNetworkResourceSubscriptionID() string {
-	if az.Config.UsesNetworkResourceInDifferentSubscription() {
+	if az.UsesNetworkResourceInDifferentSubscription() {
 		return az.NetworkResourceSubscriptionID
 	}
 	return az.SubscriptionID
 }
 
-func (az *Cloud) mapLoadBalancerNameToVMSet(lbName string, clusterName string) (vmSetName string) {
+func (az *Cloud) mapLoadBalancerNameToVMSet(lbName, clusterName string) (vmSetName string) {
 	vmSetName = trimSuffixIgnoreCase(lbName, consts.InternalLoadBalancerNameSuffix)
 	if strings.EqualFold(clusterName, vmSetName) {
 		vmSetName = az.VMSet.GetPrimaryVMSetName()
@@ -307,8 +307,8 @@ func (az *Cloud) getloadbalancerHAmodeRuleName(service *v1.Service, isIPv6 bool)
 
 func (az *Cloud) getSecurityRuleName(service *v1.Service, port v1.ServicePort, sourceAddrPrefix string, isIPv6 bool) string {
 	isDualStack := isServiceDualStack(service)
-	safePrefix := strings.Replace(sourceAddrPrefix, "/", "_", -1)
-	safePrefix = strings.Replace(safePrefix, ":", ".", -1) // Consider IPv6 address
+	safePrefix := strings.ReplaceAll(sourceAddrPrefix, "/", "_")
+	safePrefix = strings.ReplaceAll(safePrefix, ":", ".") // Consider IPv6 address
 	var name string
 	if useSharedSecurityRule(service) {
 		name = fmt.Sprintf("shared-%s-%d-%s", port.Protocol, port.Port, safePrefix)
@@ -439,11 +439,11 @@ func (as *availabilitySet) newVMASCache() (azcache.Resource, error) {
 		return localCache, nil
 	}
 
-	if as.Config.AvailabilitySetsCacheTTLInSeconds == 0 {
-		as.Config.AvailabilitySetsCacheTTLInSeconds = consts.VMASCacheTTLDefaultInSeconds
+	if as.AvailabilitySetsCacheTTLInSeconds == 0 {
+		as.AvailabilitySetsCacheTTLInSeconds = consts.VMASCacheTTLDefaultInSeconds
 	}
 
-	return azcache.NewTimedCache(time.Duration(as.Config.AvailabilitySetsCacheTTLInSeconds)*time.Second, getter, as.Cloud.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(time.Duration(as.AvailabilitySetsCacheTTLInSeconds)*time.Second, getter, as.DisableAPICallCache)
 }
 
 // RefreshCaches invalidates and renew all related caches.
@@ -580,7 +580,11 @@ func (as *availabilitySet) GetZoneByNodeName(ctx context.Context, name string) (
 		failureDomain = as.makeZone(ptr.Deref(vm.Location, ""), zoneID)
 	} else {
 		// Availability zone is not used for the node, falling back to fault domain.
-		failureDomain = strconv.Itoa(int(ptr.Deref(vm.Properties.InstanceView.PlatformFaultDomain, 0)))
+		if prop := vm.Properties; prop == nil || prop.InstanceView == nil {
+			failureDomain = "0"
+		} else {
+			failureDomain = strconv.Itoa(int(ptr.Deref(vm.Properties.InstanceView.PlatformFaultDomain, 0)))
+		}
 	}
 
 	zone := cloudprovider.Zone{
@@ -593,7 +597,7 @@ func (as *availabilitySet) GetZoneByNodeName(ctx context.Context, name string) (
 // GetPrimaryVMSetName returns the VM set name depending on the configured vmType.
 // It returns config.PrimaryScaleSetName for vmss and config.PrimaryAvailabilitySetName for standard vmType.
 func (as *availabilitySet) GetPrimaryVMSetName() string {
-	return as.Config.PrimaryAvailabilitySetName
+	return as.PrimaryAvailabilitySetName
 }
 
 // GetIPByNodeName gets machine private IP and public IP by node name.
@@ -698,7 +702,7 @@ func (as *availabilitySet) GetVMSetNames(ctx context.Context, service *v1.Servic
 	if !hasMode || as.UseStandardLoadBalancer() {
 		// no mode specified in service annotation or use single SLB mode
 		// default to PrimaryAvailabilitySetName
-		availabilitySetNames = []*string{to.Ptr(as.Config.PrimaryAvailabilitySetName)}
+		availabilitySetNames = []*string{to.Ptr(as.PrimaryAvailabilitySetName)}
 		return availabilitySetNames, nil
 	}
 
@@ -825,11 +829,7 @@ func (as *availabilitySet) getPrimaryInterfaceWithVMSet(ctx context.Context, nod
 	// - For single standard SKU load balancer, backend could belong to multiple VMAS, so we
 	//   don't check vmSet for it.
 	// - For multiple standard SKU load balancers, the behavior is similar to the basic LB.
-	needCheck := false
-	if !as.UseStandardLoadBalancer() {
-		// need to check the vmSet name when using the basic LB
-		needCheck = true
-	}
+	needCheck := !as.UseStandardLoadBalancer()
 	if vmSetName != "" && needCheck {
 		expectedAvailabilitySetID := as.getAvailabilitySetID(nodeResourceGroup, vmSetName)
 		if machine.Properties.AvailabilitySet == nil || !strings.EqualFold(*machine.Properties.AvailabilitySet.ID, expectedAvailabilitySetID) {
@@ -846,7 +846,7 @@ func (as *availabilitySet) getPrimaryInterfaceWithVMSet(ctx context.Context, nod
 
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
-	nic, rerr := as.NetworkClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
+	nic, rerr := as.ComputeClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
 	if rerr != nil {
 		return nil, "", rerr
 	}
@@ -881,7 +881,7 @@ func (as *availabilitySet) EnsureHostInPool(ctx context.Context, service *v1.Ser
 
 	var primaryIPConfig *armnetwork.InterfaceIPConfiguration
 	ipv6 := isBackendPoolIPv6(backendPoolID)
-	if !as.Cloud.ipv6DualStackEnabled && !ipv6 {
+	if !as.ipv6DualStackEnabled && !ipv6 {
 		primaryIPConfig, err = getPrimaryIPConfig(nic)
 		if err != nil {
 			return "", "", "", nil, err
@@ -1101,7 +1101,7 @@ func (as *availabilitySet) EnsureBackendPoolDeleted(ctx context.Context, service
 		nic.Properties.IPConfigurations = newIPConfigs
 		nicUpdaters = append(nicUpdaters, func() error {
 			klog.V(2).Infof("EnsureBackendPoolDeleted begins to CreateOrUpdate for NIC(%s, %s) with backendPoolIDs %q", as.ResourceGroup, ptr.Deref(nic.Name, ""), backendPoolIDs)
-			_, rerr := as.NetworkClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, as.ResourceGroup, ptr.Deref(nic.Name, ""), *nic)
+			_, rerr := as.ComputeClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, as.ResourceGroup, ptr.Deref(nic.Name, ""), *nic)
 			if rerr != nil {
 				klog.Errorf("EnsureBackendPoolDeleted CreateOrUpdate for NIC(%s, %s) failed with error %v", as.ResourceGroup, ptr.Deref(nic.Name, ""), rerr.Error())
 				return rerr
@@ -1149,7 +1149,7 @@ func (as *availabilitySet) GetNodeNameByIPConfigurationID(ctx context.Context, i
 	if nicResourceGroup == "" || nicName == "" {
 		return "", "", fmt.Errorf("invalid ip config ID %s", ipConfigurationID)
 	}
-	nic, rerr := as.NetworkClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
+	nic, rerr := as.ComputeClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
 	if rerr != nil {
 		return "", "", fmt.Errorf("GetNodeNameByIPConfigurationID(%s): failed to get interface of name %s: %w", ipConfigurationID, nicName, rerr)
 	}

@@ -66,7 +66,10 @@ type ServerProperties struct {
 
 	// PointInTimeUTC: Restore point creation time (ISO8601 format), specifying the time to restore from. It's required when
 	// 'createMode' is 'PointInTimeRestore'.
-	PointInTimeUTC         *string `json:"pointInTimeUTC,omitempty"`
+	PointInTimeUTC *string `json:"pointInTimeUTC,omitempty"`
+
+	// SourceServerResourceId: The source server resource ID to restore from. It's required when 'createMode' is
+	// 'PointInTimeRestore'.
 	SourceServerResourceId *string `json:"sourceServerResourceId,omitempty"`
 
 	// Storage: Storage properties of a server.
@@ -120,7 +123,10 @@ type MaintenanceWindow struct {
 
 // Network properties of a server
 type Network struct {
-	DelegatedSubnetResourceId   *string `json:"delegatedSubnetResourceId,omitempty"`
+	// DelegatedSubnetResourceId: delegated subnet arm resource id.
+	DelegatedSubnetResourceId *string `json:"delegatedSubnetResourceId,omitempty"`
+
+	// PrivateDnsZoneArmResourceId: private dns zone arm resource id.
 	PrivateDnsZoneArmResourceId *string `json:"privateDnsZoneArmResourceId,omitempty"`
 }
 

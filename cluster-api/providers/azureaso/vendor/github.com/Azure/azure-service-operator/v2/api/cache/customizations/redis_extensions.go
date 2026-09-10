@@ -17,7 +17,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	redis "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
+	redis "github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
@@ -50,7 +50,7 @@ func (ext *RedisExtension) ExportKubernetesSecrets(
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = typedObj
 
-	primarySecrets, hasEndpoints := secretsSpecified(typedObj)
+	primarySecrets, hasEndpoints := redisSecretsSpecified(typedObj)
 	requestedSecrets := set.Union(primarySecrets, additionalSecrets)
 	if len(requestedSecrets) == 0 && !hasEndpoints {
 		log.V(Debug).Info("No secrets retrieval to perform as operatorSpec is empty")
@@ -71,7 +71,7 @@ func (ext *RedisExtension) ExportKubernetesSecrets(
 		var redisClient *armredis.Client
 		redisClient, err = armredis.NewClient(subscription, armClient.Creds(), armClient.ClientOptions())
 		if err != nil {
-			return nil, eris.Wrapf(err, "failed to create new new RedisClient")
+			return nil, eris.Wrapf(err, "failed to create new RedisClient")
 		}
 
 		var resp armredis.ClientListKeysResponse
@@ -81,7 +81,7 @@ func (ext *RedisExtension) ExportKubernetesSecrets(
 		}
 		accessKeys = resp.AccessKeys
 	}
-	secretSlice, err := secretsToWrite(typedObj, accessKeys)
+	secretSlice, err := redisSecretsToWrite(typedObj, accessKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (ext *RedisExtension) ExportKubernetesSecrets(
 	}, nil
 }
 
-func secretsSpecified(obj *redis.Redis) (set.Set[string], bool) {
+func redisSecretsSpecified(obj *redis.Redis) (set.Set[string], bool) {
 	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
 		return nil, false
 	}
@@ -125,11 +125,12 @@ func secretsSpecified(obj *redis.Redis) (set.Set[string], bool) {
 	return result, hasEndpoints
 }
 
-func secretsToWrite(obj *redis.Redis, accessKeys armredis.AccessKeys) ([]*v1.Secret, error) {
-	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
-	if operatorSpecSecrets == nil {
+func redisSecretsToWrite(obj *redis.Redis, accessKeys armredis.AccessKeys) ([]*v1.Secret, error) {
+	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
 		return nil, nil
 	}
+
+	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 
 	collector := secrets.NewCollector(obj.Namespace)
 	collector.AddValue(operatorSpecSecrets.PrimaryKey, to.Value(accessKeys.PrimaryKey))

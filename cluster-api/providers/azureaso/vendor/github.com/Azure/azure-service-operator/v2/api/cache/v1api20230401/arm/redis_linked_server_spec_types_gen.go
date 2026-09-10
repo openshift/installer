@@ -31,6 +31,7 @@ func (server *RedisLinkedServer_Spec) GetType() string {
 
 // Create properties for a linked server
 type RedisLinkedServerCreateProperties struct {
+	// LinkedRedisCacheId: Fully qualified resourceId of the linked redis cache.
 	LinkedRedisCacheId *string `json:"linkedRedisCacheId,omitempty"`
 
 	// LinkedRedisCacheLocation: Location of the linked redis cache.

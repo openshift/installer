@@ -130,6 +130,7 @@ type EndpointProperties_DeliveryPolicy struct {
 }
 
 type EndpointProperties_WebApplicationFirewallPolicyLink struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -189,6 +190,7 @@ var queryStringCachingBehavior_Values = map[string]QueryStringCachingBehavior{
 
 // Reference to another resource.
 type ResourceReference struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -250,8 +252,13 @@ type DeepCreatedOriginProperties struct {
 
 	// PrivateLinkApprovalMessage: A custom message to be included in the approval request to connect to the Private Link.
 	PrivateLinkApprovalMessage *string `json:"privateLinkApprovalMessage,omitempty"`
-	PrivateLinkLocation        *string `json:"privateLinkLocation,omitempty"`
-	PrivateLinkResourceId      *string `json:"privateLinkResourceId,omitempty"`
+
+	// PrivateLinkLocation: The location of the Private Link resource. Required only if 'privateLinkResourceId' is populated
+	PrivateLinkLocation *string `json:"privateLinkLocation,omitempty"`
+
+	// PrivateLinkResourceId: The Resource Id of the Private Link resource. Populating this optional field indicates that this
+	// backend is 'Private'
+	PrivateLinkResourceId *string `json:"privateLinkResourceId,omitempty"`
 
 	// Weight: Weight of the origin in given origin group for load balancing. Must be between 1 and 1000
 	Weight *int `json:"weight,omitempty"`

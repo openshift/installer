@@ -210,7 +210,8 @@ FluxConfiguration: Resource
 │   │   │   ├── CaCertificate: *genruntime.SecretReference
 │   │   │   ├── ClientCertificate: *genruntime.SecretReference
 │   │   │   └── PrivateKey: *genruntime.SecretReference
-│   │   ├── Url: *string
+│   │   ├── Url: Validated<*string> (1 rule)
+│   │   │   └── Rule 0: Pattern: "^[a-zA-Z][a-zA-Z0-9+-.]*:[^\\s]*$"
 │   │   ├── UseWorkloadIdentity: *bool
 │   │   └── Verify: *Object (3 properties)
 │   │       ├── MatchOidcIdentity: Object (2 properties)[]

@@ -47,7 +47,7 @@ type AzureClusterTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureClusterTemplate{}, &AzureClusterTemplateList{})
+	objectTypes = append(objectTypes, &AzureClusterTemplate{}, &AzureClusterTemplateList{})
 }
 
 // AzureClusterTemplateResource describes the data needed to create an AzureCluster from a template.

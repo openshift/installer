@@ -116,7 +116,12 @@ func (pool *ServersElasticPool) ValidateUpdate(ctx context.Context, oldResource 
 
 // createValidations validates the creation of the resource
 func (pool *ServersElasticPool) createValidations() []func(ctx context.Context, obj *v20211101.ServersElasticPool) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersElasticPool) (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference, pool.validateSecretDestinations, pool.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersElasticPool) (admission.Warnings, error){
+		pool.validateResourceReferences,
+		pool.validateOwnerReference,
+		pool.validateSecretDestinations,
+		pool.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

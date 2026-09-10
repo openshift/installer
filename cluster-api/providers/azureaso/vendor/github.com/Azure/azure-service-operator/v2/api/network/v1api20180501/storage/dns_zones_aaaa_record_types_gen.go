@@ -19,6 +19,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={dnszonesaaaarecords/status,dnszonesaaaarecords/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -27,7 +28,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20180501.DnsZonesAAAARecord
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/AAAA/{relativeRecordSetName}
 type DnsZonesAAAARecord struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -158,7 +159,7 @@ func (record *DnsZonesAAAARecord) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20180501.DnsZonesAAAARecord
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/AAAA/{relativeRecordSetName}
 type DnsZonesAAAARecordList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -276,6 +277,13 @@ func (record *AaaaRecord) AssignProperties_From_AaaaRecord(source *storage.AaaaR
 	// Ipv6Address
 	record.Ipv6Address = genruntime.ClonePointerToString(source.Ipv6Address)
 
+	// Ipv6AddressFromConfig
+	if source.Ipv6AddressFromConfig != nil {
+		propertyBag.Add("Ipv6AddressFromConfig", *source.Ipv6AddressFromConfig)
+	} else {
+		propertyBag.Remove("Ipv6AddressFromConfig")
+	}
+
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		record.PropertyBag = propertyBag
@@ -303,6 +311,19 @@ func (record *AaaaRecord) AssignProperties_To_AaaaRecord(destination *storage.Aa
 
 	// Ipv6Address
 	destination.Ipv6Address = genruntime.ClonePointerToString(record.Ipv6Address)
+
+	// Ipv6AddressFromConfig
+	if propertyBag.Contains("Ipv6AddressFromConfig") {
+		var ipv6AddressFromConfig genruntime.ConfigMapReference
+		err := propertyBag.Pull("Ipv6AddressFromConfig", &ipv6AddressFromConfig)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Ipv6AddressFromConfig' from propertyBag")
+		}
+
+		destination.Ipv6AddressFromConfig = &ipv6AddressFromConfig
+	} else {
+		destination.Ipv6AddressFromConfig = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -402,6 +423,13 @@ func (record *ARecord) AssignProperties_From_ARecord(source *storage.ARecord) er
 	// Ipv4Address
 	record.Ipv4Address = genruntime.ClonePointerToString(source.Ipv4Address)
 
+	// Ipv4AddressFromConfig
+	if source.Ipv4AddressFromConfig != nil {
+		propertyBag.Add("Ipv4AddressFromConfig", *source.Ipv4AddressFromConfig)
+	} else {
+		propertyBag.Remove("Ipv4AddressFromConfig")
+	}
+
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		record.PropertyBag = propertyBag
@@ -429,6 +457,19 @@ func (record *ARecord) AssignProperties_To_ARecord(destination *storage.ARecord)
 
 	// Ipv4Address
 	destination.Ipv4Address = genruntime.ClonePointerToString(record.Ipv4Address)
+
+	// Ipv4AddressFromConfig
+	if propertyBag.Contains("Ipv4AddressFromConfig") {
+		var ipv4AddressFromConfig genruntime.ConfigMapReference
+		err := propertyBag.Pull("Ipv4AddressFromConfig", &ipv4AddressFromConfig)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Ipv4AddressFromConfig' from propertyBag")
+		}
+
+		destination.Ipv4AddressFromConfig = &ipv4AddressFromConfig
+	} else {
+		destination.Ipv4AddressFromConfig = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

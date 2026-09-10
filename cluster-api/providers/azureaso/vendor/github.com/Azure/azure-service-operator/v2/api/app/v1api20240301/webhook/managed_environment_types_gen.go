@@ -116,7 +116,12 @@ func (environment *ManagedEnvironment) ValidateUpdate(ctx context.Context, oldRe
 
 // createValidations validates the creation of the resource
 func (environment *ManagedEnvironment) createValidations() []func(ctx context.Context, obj *v20240301.ManagedEnvironment) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.ManagedEnvironment) (admission.Warnings, error){environment.validateResourceReferences, environment.validateOwnerReference, environment.validateSecretDestinations, environment.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.ManagedEnvironment) (admission.Warnings, error){
+		environment.validateResourceReferences,
+		environment.validateOwnerReference,
+		environment.validateSecretDestinations,
+		environment.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

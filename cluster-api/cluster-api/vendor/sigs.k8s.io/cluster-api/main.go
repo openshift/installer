@@ -28,15 +28,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/selection"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -73,13 +70,10 @@ import (
 	runtimecatalog "sigs.k8s.io/cluster-api/exp/runtime/catalog"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
 	"sigs.k8s.io/cluster-api/feature"
-	addonsv1alpha3 "sigs.k8s.io/cluster-api/internal/api/addons/v1alpha3"
-	addonsv1alpha4 "sigs.k8s.io/cluster-api/internal/api/addons/v1alpha4"
-	clusterv1alpha3 "sigs.k8s.io/cluster-api/internal/api/core/v1alpha3"
-	clusterv1alpha4 "sigs.k8s.io/cluster-api/internal/api/core/v1alpha4"
 	"sigs.k8s.io/cluster-api/internal/contract"
 	internalruntimeclient "sigs.k8s.io/cluster-api/internal/runtime/client"
 	runtimeregistry "sigs.k8s.io/cluster-api/internal/runtime/registry"
+	"sigs.k8s.io/cluster-api/internal/setup"
 	"sigs.k8s.io/cluster-api/util/apiwarnings"
 	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/version"
@@ -140,13 +134,9 @@ func init() {
 	_ = apiextensionsv1.AddToScheme(scheme)
 	_ = storagev1.AddToScheme(scheme)
 
-	_ = clusterv1alpha3.AddToScheme(scheme)
-	_ = clusterv1alpha4.AddToScheme(scheme)
 	_ = clusterv1beta1.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 
-	_ = addonsv1alpha3.AddToScheme(scheme)
-	_ = addonsv1alpha4.AddToScheme(scheme)
 	_ = addonsv1beta1.AddToScheme(scheme)
 	_ = addonsv1.AddToScheme(scheme)
 
@@ -197,13 +187,13 @@ func InitFlags(fs *pflag.FlagSet) {
 		"Grace period after which remote conditions (e.g. `NodeHealthy`) are set to `Unknown`, "+
 			"the grace period starts from the last successful health probe to the workload cluster")
 
-	fs.IntVar(&clusterTopologyConcurrency, "clustertopology-concurrency", 10,
+	fs.IntVar(&clusterTopologyConcurrency, "clustertopology-concurrency", 50,
 		"Number of clusters to process simultaneously")
 
 	fs.IntVar(&clusterClassConcurrency, "clusterclass-concurrency", 10,
 		"Number of ClusterClasses to process simultaneously")
 
-	fs.IntVar(&clusterConcurrency, "cluster-concurrency", 10,
+	fs.IntVar(&clusterConcurrency, "cluster-concurrency", 50,
 		"Number of clusters to process simultaneously")
 
 	fs.IntVar(&clusterCacheConcurrency, "clustercache-concurrency", 100,
@@ -212,22 +202,22 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&extensionConfigConcurrency, "extensionconfig-concurrency", 10,
 		"Number of extension configs to process simultaneously")
 
-	fs.IntVar(&machineConcurrency, "machine-concurrency", 10,
+	fs.IntVar(&machineConcurrency, "machine-concurrency", 100,
 		"Number of machines to process simultaneously")
 
-	fs.IntVar(&machineSetConcurrency, "machineset-concurrency", 10,
+	fs.IntVar(&machineSetConcurrency, "machineset-concurrency", 50,
 		"Number of machine sets to process simultaneously")
 
-	fs.IntVar(&machineDeploymentConcurrency, "machinedeployment-concurrency", 10,
+	fs.IntVar(&machineDeploymentConcurrency, "machinedeployment-concurrency", 50,
 		"Number of machine deployments to process simultaneously")
 
-	fs.IntVar(&machinePoolConcurrency, "machinepool-concurrency", 10,
+	fs.IntVar(&machinePoolConcurrency, "machinepool-concurrency", 50,
 		"Number of machine pools to process simultaneously")
 
 	fs.IntVar(&clusterResourceSetConcurrency, "clusterresourceset-concurrency", 10,
 		"Number of cluster resource sets to process simultaneously")
 
-	fs.IntVar(&machineHealthCheckConcurrency, "machinehealthcheck-concurrency", 10,
+	fs.IntVar(&machineHealthCheckConcurrency, "machinehealthcheck-concurrency", 50,
 		"Number of machine health checks to process simultaneously")
 
 	fs.StringSliceVar(&machineSetPreflightChecks, "machineset-preflight-checks", []string{
@@ -243,10 +233,10 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&syncPeriod, "sync-period", 10*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
-	fs.Float32Var(&restConfigQPS, "kube-api-qps", 20,
+	fs.Float32Var(&restConfigQPS, "kube-api-qps", 100,
 		"Maximum queries per second from the controller client to the Kubernetes API server.")
 
-	fs.IntVar(&restConfigBurst, "kube-api-burst", 30,
+	fs.IntVar(&restConfigBurst, "kube-api-burst", 200,
 		"Maximum number of queries that should be allowed in one burst from the controller client to the Kubernetes API server.")
 
 	fs.Float32Var(&clusterCacheClientQPS, "clustercache-client-qps", 20,
@@ -314,6 +304,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	pflag.CommandLine.VisitAll(func(flag *pflag.Flag) {
+		klog.V(1).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
+	})
+
 	// klog.Background will automatically use the right logger.
 	ctrl.SetLogger(klog.Background())
 
@@ -355,23 +349,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	var watchNamespaces map[string]cache.Config
-	if watchNamespace != "" {
-		watchNamespaces = map[string]cache.Config{
-			watchNamespace: {},
-		}
-	}
-
 	if enableContentionProfiling {
 		goruntime.SetBlockProfileRate(1)
 	}
 
-	req, _ := labels.NewRequirement(clusterv1.ClusterNameLabel, selection.Exists, nil)
-	clusterSecretCacheSelector := labels.NewSelector().Add(*req)
-
 	ctrlOptions := ctrl.Options{
 		Controller: config.Controller{
 			UsePriorityQueue: ptr.To[bool](feature.Gates.Enabled(feature.PriorityQueue)),
+			// Give the manager more time to sync the caches during startup. This is required
+			// in high scale environments when they are more objects in the system (default is 3m).
+			CacheSyncTimeout: 5 * time.Minute,
 		},
 		Scheme:                     scheme,
 		LeaderElection:             enableLeaderElection,
@@ -383,28 +370,8 @@ func main() {
 		HealthProbeBindAddress:     healthAddr,
 		PprofBindAddress:           profilerAddress,
 		Metrics:                    *metricsOptions,
-		Cache: cache.Options{
-			DefaultNamespaces: watchNamespaces,
-			SyncPeriod:        &syncPeriod,
-			ByObject: map[client.Object]cache.ByObject{
-				// Note: Only Secrets with the cluster name label are cached.
-				// The default client of the manager won't use the cache for secrets at all (see Client.Cache.DisableFor).
-				// The cached secrets will only be used by the secretCachingClient we create below.
-				&corev1.Secret{}: {
-					Label: clusterSecretCacheSelector,
-				},
-			},
-		},
-		Client: client.Options{
-			Cache: &client.CacheOptions{
-				DisableFor: []client.Object{
-					&corev1.ConfigMap{},
-					&corev1.Secret{},
-				},
-				// Use the cache for all Unstructured get/list calls.
-				Unstructured: true,
-			},
-		},
+		Cache:                      setup.ManagerCacheOptions(watchNamespace, syncPeriod),
+		Client:                     setup.ManagerClientOptions(),
 		WebhookServer: webhook.NewServer(
 			webhook.Options{
 				Port:     webhookPort,
@@ -427,7 +394,7 @@ func main() {
 
 	setupChecks(mgr)
 	setupIndexes(ctx, mgr)
-	clusterCache := setupReconcilers(ctx, mgr, watchNamespaces, &syncPeriod)
+	clusterCache := setupReconcilers(ctx, mgr, watchNamespace, &syncPeriod)
 	setupWebhooks(ctx, mgr, clusterCache)
 
 	setupLog.Info("Starting manager", "version", version.Get().String())
@@ -456,41 +423,17 @@ func setupIndexes(ctx context.Context, mgr ctrl.Manager) {
 	}
 }
 
-func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map[string]cache.Config, syncPeriod *time.Duration) clustercache.ClusterCache {
-	secretCachingClient, err := client.New(mgr.GetConfig(), client.Options{
-		HTTPClient: mgr.GetHTTPClient(),
-		Cache: &client.CacheOptions{
-			Reader: mgr.GetCache(),
-		},
-	})
+func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespace string, syncPeriod *time.Duration) clustercache.ClusterCache {
+	secretCachingClient, err := setup.CreateSecretCachingClient(mgr)
 	if err != nil {
 		setupLog.Error(err, "Unable to create secret caching client")
 		os.Exit(1)
 	}
 
 	clusterCache, err := clustercache.SetupWithManager(ctx, mgr, clustercache.Options{
-		SecretClient: secretCachingClient,
-		Cache: clustercache.CacheOptions{
-			Indexes: []clustercache.CacheOptionsIndex{clustercache.NodeProviderIDIndex},
-		},
-		Client: clustercache.ClientOptions{
-			QPS:       clusterCacheClientQPS,
-			Burst:     clusterCacheClientBurst,
-			UserAgent: remote.DefaultClusterAPIUserAgent(controllerName),
-			Cache: clustercache.ClientCacheOptions{
-				DisableFor: []client.Object{
-					// Don't cache ConfigMaps & Secrets.
-					&corev1.ConfigMap{},
-					&corev1.Secret{},
-					// Don't cache Pods & DaemonSets (we get/list them e.g. during drain).
-					&corev1.Pod{},
-					&appsv1.DaemonSet{},
-					// Don't cache PersistentVolumes and VolumeAttachments (we get/list them e.g. during wait for volumes to detach)
-					&storagev1.VolumeAttachment{},
-					&corev1.PersistentVolume{},
-				},
-			},
-		},
+		SecretClient:     secretCachingClient,
+		Cache:            setup.ClusterCacheCacheOptions(),
+		Client:           setup.ClusterCacheClientOptions(controllerName, clusterCacheClientQPS, clusterCacheClientBurst),
 		WatchFilterValue: watchFilterValue,
 	}, concurrency(clusterCacheConcurrency))
 	if err != nil {
@@ -563,6 +506,12 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, watchNamespaces map
 
 	// Setup a separate cache without label selector for secrets, to be used
 	// when we need to watch for secrets that are not specific to a single cluster (e.g. ClusterResourceSet or ExtensionConfig controllers).
+	var watchNamespaces map[string]cache.Config
+	if watchNamespace != "" {
+		watchNamespaces = map[string]cache.Config{
+			watchNamespace: {},
+		}
+	}
 	partialSecretCache, err := cache.New(mgr.GetConfig(), cache.Options{
 		Scheme:            mgr.GetScheme(),
 		Mapper:            mgr.GetRESTMapper(),
@@ -778,8 +727,6 @@ func setupWebhooks(ctx context.Context, mgr ctrl.Manager, clusterCacheReader web
 	apiVersionGetter := func(gk schema.GroupKind) (string, error) {
 		return contract.GetAPIVersion(ctx, mgr.GetClient(), gk)
 	}
-	clusterv1alpha3.SetAPIVersionGetter(apiVersionGetter)
-	clusterv1alpha4.SetAPIVersionGetter(apiVersionGetter)
 	clusterv1beta1.SetAPIVersionGetter(apiVersionGetter)
 
 	// NOTE: ClusterClass and managed topologies are behind ClusterTopology feature gate flag; the webhook

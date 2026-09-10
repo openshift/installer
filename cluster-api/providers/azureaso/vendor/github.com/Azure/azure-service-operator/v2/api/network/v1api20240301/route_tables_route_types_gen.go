@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/routeTable.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/routeTable.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/routeTables/{routeTableName}/routes/{routeName}
 type RouteTablesRoute struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &RouteTablesRoute{}
 
 // ConvertFrom populates our RouteTablesRoute from the provided hub RouteTablesRoute
 func (route *RouteTablesRoute) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.RouteTablesRoute)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/RouteTablesRoute but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.RouteTablesRoute
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return route.AssignProperties_From_RouteTablesRoute(source)
+	err = route.AssignProperties_From_RouteTablesRoute(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to route")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub RouteTablesRoute from our RouteTablesRoute
 func (route *RouteTablesRoute) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.RouteTablesRoute)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/RouteTablesRoute but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.RouteTablesRoute
+	err := route.AssignProperties_To_RouteTablesRoute(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from route")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return route.AssignProperties_To_RouteTablesRoute(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &RouteTablesRoute{}
@@ -86,17 +101,6 @@ func (route *RouteTablesRoute) SecretDestinationExpressions() []*core.Destinatio
 		return nil
 	}
 	return route.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &RouteTablesRoute{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (route *RouteTablesRoute) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*RouteTablesRoute_STATUS); ok {
-		return route.Spec.Initialize_From_RouteTablesRoute_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type RouteTablesRoute_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &RouteTablesRoute{}
@@ -237,7 +241,7 @@ func (route *RouteTablesRoute) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/routeTable.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/routeTable.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/routeTables/{routeTableName}/routes/{routeName}
 type RouteTablesRouteList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -508,27 +512,6 @@ func (route *RouteTablesRoute_Spec) AssignProperties_To_RouteTablesRoute_Spec(de
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_RouteTablesRoute_STATUS populates our RouteTablesRoute_Spec from the provided source RouteTablesRoute_STATUS
-func (route *RouteTablesRoute_Spec) Initialize_From_RouteTablesRoute_STATUS(source *RouteTablesRoute_STATUS) error {
-
-	// AddressPrefix
-	route.AddressPrefix = genruntime.ClonePointerToString(source.AddressPrefix)
-
-	// NextHopIpAddress
-	route.NextHopIpAddress = genruntime.ClonePointerToString(source.NextHopIpAddress)
-
-	// NextHopType
-	if source.NextHopType != nil {
-		nextHopType := genruntime.ToEnum(string(*source.NextHopType), routeNextHopType_Values)
-		route.NextHopType = &nextHopType
-	} else {
-		route.NextHopType = nil
 	}
 
 	// No error
@@ -891,8 +874,6 @@ func (operator *RouteTablesRouteOperatorSpec) AssignProperties_From_RouteTablesR
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -909,8 +890,6 @@ func (operator *RouteTablesRouteOperatorSpec) AssignProperties_From_RouteTablesR
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -936,8 +915,6 @@ func (operator *RouteTablesRouteOperatorSpec) AssignProperties_To_RouteTablesRou
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -954,8 +931,6 @@ func (operator *RouteTablesRouteOperatorSpec) AssignProperties_To_RouteTablesRou
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

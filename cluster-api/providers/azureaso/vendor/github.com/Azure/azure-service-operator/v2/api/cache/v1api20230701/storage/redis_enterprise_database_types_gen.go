@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20250401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=cache.azure.com,resources=redisenterprisedatabases,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.azure.com,resources={redisenterprisedatabases/status,redisenterprisedatabases/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cache}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230701.RedisEnterpriseDatabase
 // Generator information:
-// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/stable/2023-07-01/redisenterprise.json
+// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/RedisEnterprise/stable/2023-07-01/redisenterprise.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redisEnterprise/{clusterName}/databases/{databaseName}
 type RedisEnterpriseDatabase struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (database *RedisEnterpriseDatabase) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (database *RedisEnterpriseDatabase) SetConditions(conditions conditions.Conditions) {
 	database.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &RedisEnterpriseDatabase{}
+
+// ConvertFrom populates our RedisEnterpriseDatabase from the provided hub RedisEnterpriseDatabase
+func (database *RedisEnterpriseDatabase) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.RedisEnterpriseDatabase)
+	if !ok {
+		return fmt.Errorf("expected cache/v1api20250401/storage/RedisEnterpriseDatabase but received %T instead", hub)
+	}
+
+	return database.AssignProperties_From_RedisEnterpriseDatabase(source)
+}
+
+// ConvertTo populates the provided hub RedisEnterpriseDatabase from our RedisEnterpriseDatabase
+func (database *RedisEnterpriseDatabase) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.RedisEnterpriseDatabase)
+	if !ok {
+		return fmt.Errorf("expected cache/v1api20250401/storage/RedisEnterpriseDatabase but received %T instead", hub)
+	}
+
+	return database.AssignProperties_To_RedisEnterpriseDatabase(destination)
 }
 
 var _ configmaps.Exporter = &RedisEnterpriseDatabase{}
@@ -142,8 +164,75 @@ func (database *RedisEnterpriseDatabase) SetStatus(status genruntime.Convertible
 	return nil
 }
 
-// Hub marks that this RedisEnterpriseDatabase is the hub type for conversion
-func (database *RedisEnterpriseDatabase) Hub() {}
+// AssignProperties_From_RedisEnterpriseDatabase populates our RedisEnterpriseDatabase from the provided source RedisEnterpriseDatabase
+func (database *RedisEnterpriseDatabase) AssignProperties_From_RedisEnterpriseDatabase(source *storage.RedisEnterpriseDatabase) error {
+
+	// ObjectMeta
+	database.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec RedisEnterpriseDatabase_Spec
+	err := spec.AssignProperties_From_RedisEnterpriseDatabase_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabase_Spec() to populate field Spec")
+	}
+	database.Spec = spec
+
+	// Status
+	var status RedisEnterpriseDatabase_STATUS
+	err = status.AssignProperties_From_RedisEnterpriseDatabase_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabase_STATUS() to populate field Status")
+	}
+	database.Status = status
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForRedisEnterpriseDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterpriseDatabase populates the provided destination RedisEnterpriseDatabase from our RedisEnterpriseDatabase
+func (database *RedisEnterpriseDatabase) AssignProperties_To_RedisEnterpriseDatabase(destination *storage.RedisEnterpriseDatabase) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *database.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.RedisEnterpriseDatabase_Spec
+	err := database.Spec.AssignProperties_To_RedisEnterpriseDatabase_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabase_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.RedisEnterpriseDatabase_STATUS
+	err = database.Status.AssignProperties_To_RedisEnterpriseDatabase_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabase_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForRedisEnterpriseDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (database *RedisEnterpriseDatabase) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (database *RedisEnterpriseDatabase) OriginalGVK() *schema.GroupVersionKind 
 // +kubebuilder:object:root=true
 // Storage version of v1api20230701.RedisEnterpriseDatabase
 // Generator information:
-// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/stable/2023-07-01/redisenterprise.json
+// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/RedisEnterprise/stable/2023-07-01/redisenterprise.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redisEnterprise/{clusterName}/databases/{databaseName}
 type RedisEnterpriseDatabaseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []RedisEnterpriseDatabase `json:"items"`
+}
+
+type augmentConversionForRedisEnterpriseDatabase interface {
+	AssignPropertiesFrom(src *storage.RedisEnterpriseDatabase) error
+	AssignPropertiesTo(dst *storage.RedisEnterpriseDatabase) error
 }
 
 // Storage version of v1api20230701.RedisEnterpriseDatabase_Spec
@@ -192,20 +286,296 @@ var _ genruntime.ConvertibleSpec = &RedisEnterpriseDatabase_Spec{}
 
 // ConvertSpecFrom populates our RedisEnterpriseDatabase_Spec from the provided source
 func (database *RedisEnterpriseDatabase_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.RedisEnterpriseDatabase_Spec)
+	if ok {
+		// Populate our instance from source
+		return database.AssignProperties_From_RedisEnterpriseDatabase_Spec(src)
 	}
 
-	return source.ConvertSpecTo(database)
+	// Convert to an intermediate form
+	src = &storage.RedisEnterpriseDatabase_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = database.AssignProperties_From_RedisEnterpriseDatabase_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our RedisEnterpriseDatabase_Spec
 func (database *RedisEnterpriseDatabase_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.RedisEnterpriseDatabase_Spec)
+	if ok {
+		// Populate destination from our instance
+		return database.AssignProperties_To_RedisEnterpriseDatabase_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(database)
+	// Convert to an intermediate form
+	dst = &storage.RedisEnterpriseDatabase_Spec{}
+	err := database.AssignProperties_To_RedisEnterpriseDatabase_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_RedisEnterpriseDatabase_Spec populates our RedisEnterpriseDatabase_Spec from the provided source RedisEnterpriseDatabase_Spec
+func (database *RedisEnterpriseDatabase_Spec) AssignProperties_From_RedisEnterpriseDatabase_Spec(source *storage.RedisEnterpriseDatabase_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessKeysAuthentication
+	if source.AccessKeysAuthentication != nil {
+		propertyBag.Add("AccessKeysAuthentication", *source.AccessKeysAuthentication)
+	} else {
+		propertyBag.Remove("AccessKeysAuthentication")
+	}
+
+	// AzureName
+	database.AzureName = source.AzureName
+
+	// ClientProtocol
+	database.ClientProtocol = genruntime.ClonePointerToString(source.ClientProtocol)
+
+	// ClusteringPolicy
+	database.ClusteringPolicy = genruntime.ClonePointerToString(source.ClusteringPolicy)
+
+	// DeferUpgrade
+	if source.DeferUpgrade != nil {
+		propertyBag.Add("DeferUpgrade", *source.DeferUpgrade)
+	} else {
+		propertyBag.Remove("DeferUpgrade")
+	}
+
+	// EvictionPolicy
+	database.EvictionPolicy = genruntime.ClonePointerToString(source.EvictionPolicy)
+
+	// GeoReplication
+	if source.GeoReplication != nil {
+		var geoReplication DatabaseProperties_GeoReplication
+		err := geoReplication.AssignProperties_From_DatabaseProperties_GeoReplication(source.GeoReplication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseProperties_GeoReplication() to populate field GeoReplication")
+		}
+		database.GeoReplication = &geoReplication
+	} else {
+		database.GeoReplication = nil
+	}
+
+	// Modules
+	if source.Modules != nil {
+		moduleList := make([]Module, len(source.Modules))
+		for moduleIndex, moduleItem := range source.Modules {
+			var module Module
+			err := module.AssignProperties_From_Module(&moduleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_Module() to populate field Modules")
+			}
+			moduleList[moduleIndex] = module
+		}
+		database.Modules = moduleList
+	} else {
+		database.Modules = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec RedisEnterpriseDatabaseOperatorSpec
+		err := operatorSpec.AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		database.OperatorSpec = &operatorSpec
+	} else {
+		database.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	database.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		database.Owner = &owner
+	} else {
+		database.Owner = nil
+	}
+
+	// Persistence
+	if source.Persistence != nil {
+		var persistence Persistence
+		err := persistence.AssignProperties_From_Persistence(source.Persistence)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Persistence() to populate field Persistence")
+		}
+		database.Persistence = &persistence
+	} else {
+		database.Persistence = nil
+	}
+
+	// Port
+	database.Port = genruntime.ClonePointerToInt(source.Port)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabase_Spec interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForRedisEnterpriseDatabase_Spec); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterpriseDatabase_Spec populates the provided destination RedisEnterpriseDatabase_Spec from our RedisEnterpriseDatabase_Spec
+func (database *RedisEnterpriseDatabase_Spec) AssignProperties_To_RedisEnterpriseDatabase_Spec(destination *storage.RedisEnterpriseDatabase_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// AccessKeysAuthentication
+	if propertyBag.Contains("AccessKeysAuthentication") {
+		var accessKeysAuthentication string
+		err := propertyBag.Pull("AccessKeysAuthentication", &accessKeysAuthentication)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AccessKeysAuthentication' from propertyBag")
+		}
+
+		destination.AccessKeysAuthentication = &accessKeysAuthentication
+	} else {
+		destination.AccessKeysAuthentication = nil
+	}
+
+	// AzureName
+	destination.AzureName = database.AzureName
+
+	// ClientProtocol
+	destination.ClientProtocol = genruntime.ClonePointerToString(database.ClientProtocol)
+
+	// ClusteringPolicy
+	destination.ClusteringPolicy = genruntime.ClonePointerToString(database.ClusteringPolicy)
+
+	// DeferUpgrade
+	if propertyBag.Contains("DeferUpgrade") {
+		var deferUpgrade string
+		err := propertyBag.Pull("DeferUpgrade", &deferUpgrade)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'DeferUpgrade' from propertyBag")
+		}
+
+		destination.DeferUpgrade = &deferUpgrade
+	} else {
+		destination.DeferUpgrade = nil
+	}
+
+	// EvictionPolicy
+	destination.EvictionPolicy = genruntime.ClonePointerToString(database.EvictionPolicy)
+
+	// GeoReplication
+	if database.GeoReplication != nil {
+		var geoReplication storage.DatabaseProperties_GeoReplication
+		err := database.GeoReplication.AssignProperties_To_DatabaseProperties_GeoReplication(&geoReplication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseProperties_GeoReplication() to populate field GeoReplication")
+		}
+		destination.GeoReplication = &geoReplication
+	} else {
+		destination.GeoReplication = nil
+	}
+
+	// Modules
+	if database.Modules != nil {
+		moduleList := make([]storage.Module, len(database.Modules))
+		for moduleIndex, moduleItem := range database.Modules {
+			var module storage.Module
+			err := moduleItem.AssignProperties_To_Module(&module)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_Module() to populate field Modules")
+			}
+			moduleList[moduleIndex] = module
+		}
+		destination.Modules = moduleList
+	} else {
+		destination.Modules = nil
+	}
+
+	// OperatorSpec
+	if database.OperatorSpec != nil {
+		var operatorSpec storage.RedisEnterpriseDatabaseOperatorSpec
+		err := database.OperatorSpec.AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = database.OriginalVersion
+
+	// Owner
+	if database.Owner != nil {
+		owner := database.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Persistence
+	if database.Persistence != nil {
+		var persistence storage.Persistence
+		err := database.Persistence.AssignProperties_To_Persistence(&persistence)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Persistence() to populate field Persistence")
+		}
+		destination.Persistence = &persistence
+	} else {
+		destination.Persistence = nil
+	}
+
+	// Port
+	destination.Port = genruntime.ClonePointerToInt(database.Port)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabase_Spec interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForRedisEnterpriseDatabase_Spec); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230701.RedisEnterpriseDatabase_STATUS
@@ -230,20 +600,330 @@ var _ genruntime.ConvertibleStatus = &RedisEnterpriseDatabase_STATUS{}
 
 // ConvertStatusFrom populates our RedisEnterpriseDatabase_STATUS from the provided source
 func (database *RedisEnterpriseDatabase_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.RedisEnterpriseDatabase_STATUS)
+	if ok {
+		// Populate our instance from source
+		return database.AssignProperties_From_RedisEnterpriseDatabase_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(database)
+	// Convert to an intermediate form
+	src = &storage.RedisEnterpriseDatabase_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = database.AssignProperties_From_RedisEnterpriseDatabase_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our RedisEnterpriseDatabase_STATUS
 func (database *RedisEnterpriseDatabase_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.RedisEnterpriseDatabase_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return database.AssignProperties_To_RedisEnterpriseDatabase_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(database)
+	// Convert to an intermediate form
+	dst = &storage.RedisEnterpriseDatabase_STATUS{}
+	err := database.AssignProperties_To_RedisEnterpriseDatabase_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_RedisEnterpriseDatabase_STATUS populates our RedisEnterpriseDatabase_STATUS from the provided source RedisEnterpriseDatabase_STATUS
+func (database *RedisEnterpriseDatabase_STATUS) AssignProperties_From_RedisEnterpriseDatabase_STATUS(source *storage.RedisEnterpriseDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessKeysAuthentication
+	if source.AccessKeysAuthentication != nil {
+		propertyBag.Add("AccessKeysAuthentication", *source.AccessKeysAuthentication)
+	} else {
+		propertyBag.Remove("AccessKeysAuthentication")
+	}
+
+	// ClientProtocol
+	database.ClientProtocol = genruntime.ClonePointerToString(source.ClientProtocol)
+
+	// ClusteringPolicy
+	database.ClusteringPolicy = genruntime.ClonePointerToString(source.ClusteringPolicy)
+
+	// Conditions
+	database.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DeferUpgrade
+	if source.DeferUpgrade != nil {
+		propertyBag.Add("DeferUpgrade", *source.DeferUpgrade)
+	} else {
+		propertyBag.Remove("DeferUpgrade")
+	}
+
+	// EvictionPolicy
+	database.EvictionPolicy = genruntime.ClonePointerToString(source.EvictionPolicy)
+
+	// GeoReplication
+	if source.GeoReplication != nil {
+		var geoReplication DatabaseProperties_GeoReplication_STATUS
+		err := geoReplication.AssignProperties_From_DatabaseProperties_GeoReplication_STATUS(source.GeoReplication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseProperties_GeoReplication_STATUS() to populate field GeoReplication")
+		}
+		database.GeoReplication = &geoReplication
+	} else {
+		database.GeoReplication = nil
+	}
+
+	// Id
+	database.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Modules
+	if source.Modules != nil {
+		moduleList := make([]Module_STATUS, len(source.Modules))
+		for moduleIndex, moduleItem := range source.Modules {
+			var module Module_STATUS
+			err := module.AssignProperties_From_Module_STATUS(&moduleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_Module_STATUS() to populate field Modules")
+			}
+			moduleList[moduleIndex] = module
+		}
+		database.Modules = moduleList
+	} else {
+		database.Modules = nil
+	}
+
+	// Name
+	database.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Persistence
+	if source.Persistence != nil {
+		var persistence Persistence_STATUS
+		err := persistence.AssignProperties_From_Persistence_STATUS(source.Persistence)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Persistence_STATUS() to populate field Persistence")
+		}
+		database.Persistence = &persistence
+	} else {
+		database.Persistence = nil
+	}
+
+	// Port
+	database.Port = genruntime.ClonePointerToInt(source.Port)
+
+	// ProvisioningState
+	database.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RedisVersion
+	if source.RedisVersion != nil {
+		propertyBag.Add("RedisVersion", *source.RedisVersion)
+	} else {
+		propertyBag.Remove("RedisVersion")
+	}
+
+	// ResourceState
+	database.ResourceState = genruntime.ClonePointerToString(source.ResourceState)
+
+	// SystemData
+	if source.SystemData != nil {
+		propertyBag.Add("SystemData", *source.SystemData)
+	} else {
+		propertyBag.Remove("SystemData")
+	}
+
+	// Type
+	database.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForRedisEnterpriseDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterpriseDatabase_STATUS populates the provided destination RedisEnterpriseDatabase_STATUS from our RedisEnterpriseDatabase_STATUS
+func (database *RedisEnterpriseDatabase_STATUS) AssignProperties_To_RedisEnterpriseDatabase_STATUS(destination *storage.RedisEnterpriseDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// AccessKeysAuthentication
+	if propertyBag.Contains("AccessKeysAuthentication") {
+		var accessKeysAuthentication string
+		err := propertyBag.Pull("AccessKeysAuthentication", &accessKeysAuthentication)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AccessKeysAuthentication' from propertyBag")
+		}
+
+		destination.AccessKeysAuthentication = &accessKeysAuthentication
+	} else {
+		destination.AccessKeysAuthentication = nil
+	}
+
+	// ClientProtocol
+	destination.ClientProtocol = genruntime.ClonePointerToString(database.ClientProtocol)
+
+	// ClusteringPolicy
+	destination.ClusteringPolicy = genruntime.ClonePointerToString(database.ClusteringPolicy)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(database.Conditions)
+
+	// DeferUpgrade
+	if propertyBag.Contains("DeferUpgrade") {
+		var deferUpgrade string
+		err := propertyBag.Pull("DeferUpgrade", &deferUpgrade)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'DeferUpgrade' from propertyBag")
+		}
+
+		destination.DeferUpgrade = &deferUpgrade
+	} else {
+		destination.DeferUpgrade = nil
+	}
+
+	// EvictionPolicy
+	destination.EvictionPolicy = genruntime.ClonePointerToString(database.EvictionPolicy)
+
+	// GeoReplication
+	if database.GeoReplication != nil {
+		var geoReplication storage.DatabaseProperties_GeoReplication_STATUS
+		err := database.GeoReplication.AssignProperties_To_DatabaseProperties_GeoReplication_STATUS(&geoReplication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseProperties_GeoReplication_STATUS() to populate field GeoReplication")
+		}
+		destination.GeoReplication = &geoReplication
+	} else {
+		destination.GeoReplication = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(database.Id)
+
+	// Modules
+	if database.Modules != nil {
+		moduleList := make([]storage.Module_STATUS, len(database.Modules))
+		for moduleIndex, moduleItem := range database.Modules {
+			var module storage.Module_STATUS
+			err := moduleItem.AssignProperties_To_Module_STATUS(&module)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_Module_STATUS() to populate field Modules")
+			}
+			moduleList[moduleIndex] = module
+		}
+		destination.Modules = moduleList
+	} else {
+		destination.Modules = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(database.Name)
+
+	// Persistence
+	if database.Persistence != nil {
+		var persistence storage.Persistence_STATUS
+		err := database.Persistence.AssignProperties_To_Persistence_STATUS(&persistence)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Persistence_STATUS() to populate field Persistence")
+		}
+		destination.Persistence = &persistence
+	} else {
+		destination.Persistence = nil
+	}
+
+	// Port
+	destination.Port = genruntime.ClonePointerToInt(database.Port)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(database.ProvisioningState)
+
+	// RedisVersion
+	if propertyBag.Contains("RedisVersion") {
+		var redisVersion string
+		err := propertyBag.Pull("RedisVersion", &redisVersion)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'RedisVersion' from propertyBag")
+		}
+
+		destination.RedisVersion = &redisVersion
+	} else {
+		destination.RedisVersion = nil
+	}
+
+	// ResourceState
+	destination.ResourceState = genruntime.ClonePointerToString(database.ResourceState)
+
+	// SystemData
+	if propertyBag.Contains("SystemData") {
+		var systemDatum storage.SystemData_STATUS
+		err := propertyBag.Pull("SystemData", &systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'SystemData' from propertyBag")
+		}
+
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(database.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForRedisEnterpriseDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForRedisEnterpriseDatabase_Spec interface {
+	AssignPropertiesFrom(src *storage.RedisEnterpriseDatabase_Spec) error
+	AssignPropertiesTo(dst *storage.RedisEnterpriseDatabase_Spec) error
+}
+
+type augmentConversionForRedisEnterpriseDatabase_STATUS interface {
+	AssignPropertiesFrom(src *storage.RedisEnterpriseDatabase_STATUS) error
+	AssignPropertiesTo(dst *storage.RedisEnterpriseDatabase_STATUS) error
 }
 
 // Storage version of v1api20230701.DatabaseProperties_GeoReplication
@@ -253,11 +933,187 @@ type DatabaseProperties_GeoReplication struct {
 	PropertyBag     genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_DatabaseProperties_GeoReplication populates our DatabaseProperties_GeoReplication from the provided source DatabaseProperties_GeoReplication
+func (replication *DatabaseProperties_GeoReplication) AssignProperties_From_DatabaseProperties_GeoReplication(source *storage.DatabaseProperties_GeoReplication) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// GroupNickname
+	replication.GroupNickname = genruntime.ClonePointerToString(source.GroupNickname)
+
+	// LinkedDatabases
+	if source.LinkedDatabases != nil {
+		linkedDatabaseList := make([]LinkedDatabase, len(source.LinkedDatabases))
+		for linkedDatabaseIndex, linkedDatabaseItem := range source.LinkedDatabases {
+			var linkedDatabase LinkedDatabase
+			err := linkedDatabase.AssignProperties_From_LinkedDatabase(&linkedDatabaseItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_LinkedDatabase() to populate field LinkedDatabases")
+			}
+			linkedDatabaseList[linkedDatabaseIndex] = linkedDatabase
+		}
+		replication.LinkedDatabases = linkedDatabaseList
+	} else {
+		replication.LinkedDatabases = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		replication.PropertyBag = propertyBag
+	} else {
+		replication.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseProperties_GeoReplication interface (if implemented) to customize the conversion
+	var replicationAsAny any = replication
+	if augmentedReplication, ok := replicationAsAny.(augmentConversionForDatabaseProperties_GeoReplication); ok {
+		err := augmentedReplication.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DatabaseProperties_GeoReplication populates the provided destination DatabaseProperties_GeoReplication from our DatabaseProperties_GeoReplication
+func (replication *DatabaseProperties_GeoReplication) AssignProperties_To_DatabaseProperties_GeoReplication(destination *storage.DatabaseProperties_GeoReplication) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(replication.PropertyBag)
+
+	// GroupNickname
+	destination.GroupNickname = genruntime.ClonePointerToString(replication.GroupNickname)
+
+	// LinkedDatabases
+	if replication.LinkedDatabases != nil {
+		linkedDatabaseList := make([]storage.LinkedDatabase, len(replication.LinkedDatabases))
+		for linkedDatabaseIndex, linkedDatabaseItem := range replication.LinkedDatabases {
+			var linkedDatabase storage.LinkedDatabase
+			err := linkedDatabaseItem.AssignProperties_To_LinkedDatabase(&linkedDatabase)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_LinkedDatabase() to populate field LinkedDatabases")
+			}
+			linkedDatabaseList[linkedDatabaseIndex] = linkedDatabase
+		}
+		destination.LinkedDatabases = linkedDatabaseList
+	} else {
+		destination.LinkedDatabases = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseProperties_GeoReplication interface (if implemented) to customize the conversion
+	var replicationAsAny any = replication
+	if augmentedReplication, ok := replicationAsAny.(augmentConversionForDatabaseProperties_GeoReplication); ok {
+		err := augmentedReplication.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.DatabaseProperties_GeoReplication_STATUS
 type DatabaseProperties_GeoReplication_STATUS struct {
 	GroupNickname   *string                 `json:"groupNickname,omitempty"`
 	LinkedDatabases []LinkedDatabase_STATUS `json:"linkedDatabases,omitempty"`
 	PropertyBag     genruntime.PropertyBag  `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_DatabaseProperties_GeoReplication_STATUS populates our DatabaseProperties_GeoReplication_STATUS from the provided source DatabaseProperties_GeoReplication_STATUS
+func (replication *DatabaseProperties_GeoReplication_STATUS) AssignProperties_From_DatabaseProperties_GeoReplication_STATUS(source *storage.DatabaseProperties_GeoReplication_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// GroupNickname
+	replication.GroupNickname = genruntime.ClonePointerToString(source.GroupNickname)
+
+	// LinkedDatabases
+	if source.LinkedDatabases != nil {
+		linkedDatabaseList := make([]LinkedDatabase_STATUS, len(source.LinkedDatabases))
+		for linkedDatabaseIndex, linkedDatabaseItem := range source.LinkedDatabases {
+			var linkedDatabase LinkedDatabase_STATUS
+			err := linkedDatabase.AssignProperties_From_LinkedDatabase_STATUS(&linkedDatabaseItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_LinkedDatabase_STATUS() to populate field LinkedDatabases")
+			}
+			linkedDatabaseList[linkedDatabaseIndex] = linkedDatabase
+		}
+		replication.LinkedDatabases = linkedDatabaseList
+	} else {
+		replication.LinkedDatabases = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		replication.PropertyBag = propertyBag
+	} else {
+		replication.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseProperties_GeoReplication_STATUS interface (if implemented) to customize the conversion
+	var replicationAsAny any = replication
+	if augmentedReplication, ok := replicationAsAny.(augmentConversionForDatabaseProperties_GeoReplication_STATUS); ok {
+		err := augmentedReplication.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DatabaseProperties_GeoReplication_STATUS populates the provided destination DatabaseProperties_GeoReplication_STATUS from our DatabaseProperties_GeoReplication_STATUS
+func (replication *DatabaseProperties_GeoReplication_STATUS) AssignProperties_To_DatabaseProperties_GeoReplication_STATUS(destination *storage.DatabaseProperties_GeoReplication_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(replication.PropertyBag)
+
+	// GroupNickname
+	destination.GroupNickname = genruntime.ClonePointerToString(replication.GroupNickname)
+
+	// LinkedDatabases
+	if replication.LinkedDatabases != nil {
+		linkedDatabaseList := make([]storage.LinkedDatabase_STATUS, len(replication.LinkedDatabases))
+		for linkedDatabaseIndex, linkedDatabaseItem := range replication.LinkedDatabases {
+			var linkedDatabase storage.LinkedDatabase_STATUS
+			err := linkedDatabaseItem.AssignProperties_To_LinkedDatabase_STATUS(&linkedDatabase)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_LinkedDatabase_STATUS() to populate field LinkedDatabases")
+			}
+			linkedDatabaseList[linkedDatabaseIndex] = linkedDatabase
+		}
+		destination.LinkedDatabases = linkedDatabaseList
+	} else {
+		destination.LinkedDatabases = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseProperties_GeoReplication_STATUS interface (if implemented) to customize the conversion
+	var replicationAsAny any = replication
+	if augmentedReplication, ok := replicationAsAny.(augmentConversionForDatabaseProperties_GeoReplication_STATUS); ok {
+		err := augmentedReplication.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230701.Module
@@ -268,6 +1124,68 @@ type Module struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Module populates our Module from the provided source Module
+func (module *Module) AssignProperties_From_Module(source *storage.Module) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Args
+	module.Args = genruntime.ClonePointerToString(source.Args)
+
+	// Name
+	module.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		module.PropertyBag = propertyBag
+	} else {
+		module.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForModule interface (if implemented) to customize the conversion
+	var moduleAsAny any = module
+	if augmentedModule, ok := moduleAsAny.(augmentConversionForModule); ok {
+		err := augmentedModule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Module populates the provided destination Module from our Module
+func (module *Module) AssignProperties_To_Module(destination *storage.Module) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(module.PropertyBag)
+
+	// Args
+	destination.Args = genruntime.ClonePointerToString(module.Args)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(module.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForModule interface (if implemented) to customize the conversion
+	var moduleAsAny any = module
+	if augmentedModule, ok := moduleAsAny.(augmentConversionForModule); ok {
+		err := augmentedModule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.Module_STATUS
 // Specifies configuration of a redis module
 type Module_STATUS struct {
@@ -275,6 +1193,74 @@ type Module_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Version     *string                `json:"version,omitempty"`
+}
+
+// AssignProperties_From_Module_STATUS populates our Module_STATUS from the provided source Module_STATUS
+func (module *Module_STATUS) AssignProperties_From_Module_STATUS(source *storage.Module_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Args
+	module.Args = genruntime.ClonePointerToString(source.Args)
+
+	// Name
+	module.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Version
+	module.Version = genruntime.ClonePointerToString(source.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		module.PropertyBag = propertyBag
+	} else {
+		module.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForModule_STATUS interface (if implemented) to customize the conversion
+	var moduleAsAny any = module
+	if augmentedModule, ok := moduleAsAny.(augmentConversionForModule_STATUS); ok {
+		err := augmentedModule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Module_STATUS populates the provided destination Module_STATUS from our Module_STATUS
+func (module *Module_STATUS) AssignProperties_To_Module_STATUS(destination *storage.Module_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(module.PropertyBag)
+
+	// Args
+	destination.Args = genruntime.ClonePointerToString(module.Args)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(module.Name)
+
+	// Version
+	destination.Version = genruntime.ClonePointerToString(module.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForModule_STATUS interface (if implemented) to customize the conversion
+	var moduleAsAny any = module
+	if augmentedModule, ok := moduleAsAny.(augmentConversionForModule_STATUS); ok {
+		err := augmentedModule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230701.Persistence
@@ -287,6 +1273,100 @@ type Persistence struct {
 	RdbFrequency *string                `json:"rdbFrequency,omitempty"`
 }
 
+// AssignProperties_From_Persistence populates our Persistence from the provided source Persistence
+func (persistence *Persistence) AssignProperties_From_Persistence(source *storage.Persistence) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AofEnabled
+	if source.AofEnabled != nil {
+		aofEnabled := *source.AofEnabled
+		persistence.AofEnabled = &aofEnabled
+	} else {
+		persistence.AofEnabled = nil
+	}
+
+	// AofFrequency
+	persistence.AofFrequency = genruntime.ClonePointerToString(source.AofFrequency)
+
+	// RdbEnabled
+	if source.RdbEnabled != nil {
+		rdbEnabled := *source.RdbEnabled
+		persistence.RdbEnabled = &rdbEnabled
+	} else {
+		persistence.RdbEnabled = nil
+	}
+
+	// RdbFrequency
+	persistence.RdbFrequency = genruntime.ClonePointerToString(source.RdbFrequency)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		persistence.PropertyBag = propertyBag
+	} else {
+		persistence.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPersistence interface (if implemented) to customize the conversion
+	var persistenceAsAny any = persistence
+	if augmentedPersistence, ok := persistenceAsAny.(augmentConversionForPersistence); ok {
+		err := augmentedPersistence.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Persistence populates the provided destination Persistence from our Persistence
+func (persistence *Persistence) AssignProperties_To_Persistence(destination *storage.Persistence) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(persistence.PropertyBag)
+
+	// AofEnabled
+	if persistence.AofEnabled != nil {
+		aofEnabled := *persistence.AofEnabled
+		destination.AofEnabled = &aofEnabled
+	} else {
+		destination.AofEnabled = nil
+	}
+
+	// AofFrequency
+	destination.AofFrequency = genruntime.ClonePointerToString(persistence.AofFrequency)
+
+	// RdbEnabled
+	if persistence.RdbEnabled != nil {
+		rdbEnabled := *persistence.RdbEnabled
+		destination.RdbEnabled = &rdbEnabled
+	} else {
+		destination.RdbEnabled = nil
+	}
+
+	// RdbFrequency
+	destination.RdbFrequency = genruntime.ClonePointerToString(persistence.RdbFrequency)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPersistence interface (if implemented) to customize the conversion
+	var persistenceAsAny any = persistence
+	if augmentedPersistence, ok := persistenceAsAny.(augmentConversionForPersistence); ok {
+		err := augmentedPersistence.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.Persistence_STATUS
 // Persistence-related configuration for the RedisEnterprise database
 type Persistence_STATUS struct {
@@ -297,12 +1377,280 @@ type Persistence_STATUS struct {
 	RdbFrequency *string                `json:"rdbFrequency,omitempty"`
 }
 
+// AssignProperties_From_Persistence_STATUS populates our Persistence_STATUS from the provided source Persistence_STATUS
+func (persistence *Persistence_STATUS) AssignProperties_From_Persistence_STATUS(source *storage.Persistence_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AofEnabled
+	if source.AofEnabled != nil {
+		aofEnabled := *source.AofEnabled
+		persistence.AofEnabled = &aofEnabled
+	} else {
+		persistence.AofEnabled = nil
+	}
+
+	// AofFrequency
+	persistence.AofFrequency = genruntime.ClonePointerToString(source.AofFrequency)
+
+	// RdbEnabled
+	if source.RdbEnabled != nil {
+		rdbEnabled := *source.RdbEnabled
+		persistence.RdbEnabled = &rdbEnabled
+	} else {
+		persistence.RdbEnabled = nil
+	}
+
+	// RdbFrequency
+	persistence.RdbFrequency = genruntime.ClonePointerToString(source.RdbFrequency)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		persistence.PropertyBag = propertyBag
+	} else {
+		persistence.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPersistence_STATUS interface (if implemented) to customize the conversion
+	var persistenceAsAny any = persistence
+	if augmentedPersistence, ok := persistenceAsAny.(augmentConversionForPersistence_STATUS); ok {
+		err := augmentedPersistence.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Persistence_STATUS populates the provided destination Persistence_STATUS from our Persistence_STATUS
+func (persistence *Persistence_STATUS) AssignProperties_To_Persistence_STATUS(destination *storage.Persistence_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(persistence.PropertyBag)
+
+	// AofEnabled
+	if persistence.AofEnabled != nil {
+		aofEnabled := *persistence.AofEnabled
+		destination.AofEnabled = &aofEnabled
+	} else {
+		destination.AofEnabled = nil
+	}
+
+	// AofFrequency
+	destination.AofFrequency = genruntime.ClonePointerToString(persistence.AofFrequency)
+
+	// RdbEnabled
+	if persistence.RdbEnabled != nil {
+		rdbEnabled := *persistence.RdbEnabled
+		destination.RdbEnabled = &rdbEnabled
+	} else {
+		destination.RdbEnabled = nil
+	}
+
+	// RdbFrequency
+	destination.RdbFrequency = genruntime.ClonePointerToString(persistence.RdbFrequency)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPersistence_STATUS interface (if implemented) to customize the conversion
+	var persistenceAsAny any = persistence
+	if augmentedPersistence, ok := persistenceAsAny.(augmentConversionForPersistence_STATUS); ok {
+		err := augmentedPersistence.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.RedisEnterpriseDatabaseOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type RedisEnterpriseDatabaseOperatorSpec struct {
-	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
-	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
-	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression           `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag                  `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression           `json:"secretExpressions,omitempty"`
+	Secrets              *RedisEnterpriseDatabaseOperatorSecrets `json:"secrets,omitempty"`
+}
+
+// AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec populates our RedisEnterpriseDatabaseOperatorSpec from the provided source RedisEnterpriseDatabaseOperatorSpec
+func (operator *RedisEnterpriseDatabaseOperatorSpec) AssignProperties_From_RedisEnterpriseDatabaseOperatorSpec(source *storage.RedisEnterpriseDatabaseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Secrets
+	if source.Secrets != nil {
+		var secret RedisEnterpriseDatabaseOperatorSecrets
+		err := secret.AssignProperties_From_RedisEnterpriseDatabaseOperatorSecrets(source.Secrets)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseDatabaseOperatorSecrets() to populate field Secrets")
+		}
+		operator.Secrets = &secret
+	} else {
+		operator.Secrets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabaseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRedisEnterpriseDatabaseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec populates the provided destination RedisEnterpriseDatabaseOperatorSpec from our RedisEnterpriseDatabaseOperatorSpec
+func (operator *RedisEnterpriseDatabaseOperatorSpec) AssignProperties_To_RedisEnterpriseDatabaseOperatorSpec(destination *storage.RedisEnterpriseDatabaseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Secrets
+	if operator.Secrets != nil {
+		var secret storage.RedisEnterpriseDatabaseOperatorSecrets
+		err := operator.Secrets.AssignProperties_To_RedisEnterpriseDatabaseOperatorSecrets(&secret)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseDatabaseOperatorSecrets() to populate field Secrets")
+		}
+		destination.Secrets = &secret
+	} else {
+		destination.Secrets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabaseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRedisEnterpriseDatabaseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDatabaseProperties_GeoReplication interface {
+	AssignPropertiesFrom(src *storage.DatabaseProperties_GeoReplication) error
+	AssignPropertiesTo(dst *storage.DatabaseProperties_GeoReplication) error
+}
+
+type augmentConversionForDatabaseProperties_GeoReplication_STATUS interface {
+	AssignPropertiesFrom(src *storage.DatabaseProperties_GeoReplication_STATUS) error
+	AssignPropertiesTo(dst *storage.DatabaseProperties_GeoReplication_STATUS) error
+}
+
+type augmentConversionForModule interface {
+	AssignPropertiesFrom(src *storage.Module) error
+	AssignPropertiesTo(dst *storage.Module) error
+}
+
+type augmentConversionForModule_STATUS interface {
+	AssignPropertiesFrom(src *storage.Module_STATUS) error
+	AssignPropertiesTo(dst *storage.Module_STATUS) error
+}
+
+type augmentConversionForPersistence interface {
+	AssignPropertiesFrom(src *storage.Persistence) error
+	AssignPropertiesTo(dst *storage.Persistence) error
+}
+
+type augmentConversionForPersistence_STATUS interface {
+	AssignPropertiesFrom(src *storage.Persistence_STATUS) error
+	AssignPropertiesTo(dst *storage.Persistence_STATUS) error
+}
+
+type augmentConversionForRedisEnterpriseDatabaseOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.RedisEnterpriseDatabaseOperatorSpec) error
+	AssignPropertiesTo(dst *storage.RedisEnterpriseDatabaseOperatorSpec) error
 }
 
 // Storage version of v1api20230701.LinkedDatabase
@@ -314,12 +1662,244 @@ type LinkedDatabase struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_LinkedDatabase populates our LinkedDatabase from the provided source LinkedDatabase
+func (database *LinkedDatabase) AssignProperties_From_LinkedDatabase(source *storage.LinkedDatabase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		database.Reference = &reference
+	} else {
+		database.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLinkedDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForLinkedDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LinkedDatabase populates the provided destination LinkedDatabase from our LinkedDatabase
+func (database *LinkedDatabase) AssignProperties_To_LinkedDatabase(destination *storage.LinkedDatabase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// Reference
+	if database.Reference != nil {
+		reference := database.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLinkedDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForLinkedDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.LinkedDatabase_STATUS
 // Specifies details of a linked database resource.
 type LinkedDatabase_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	State       *string                `json:"state,omitempty"`
+}
+
+// AssignProperties_From_LinkedDatabase_STATUS populates our LinkedDatabase_STATUS from the provided source LinkedDatabase_STATUS
+func (database *LinkedDatabase_STATUS) AssignProperties_From_LinkedDatabase_STATUS(source *storage.LinkedDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	database.Id = genruntime.ClonePointerToString(source.Id)
+
+	// State
+	database.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLinkedDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForLinkedDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LinkedDatabase_STATUS populates the provided destination LinkedDatabase_STATUS from our LinkedDatabase_STATUS
+func (database *LinkedDatabase_STATUS) AssignProperties_To_LinkedDatabase_STATUS(destination *storage.LinkedDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(database.Id)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(database.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLinkedDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForLinkedDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20230701.RedisEnterpriseDatabaseOperatorSecrets
+type RedisEnterpriseDatabaseOperatorSecrets struct {
+	PrimaryKey   *genruntime.SecretDestination `json:"primaryKey,omitempty"`
+	PropertyBag  genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecondaryKey *genruntime.SecretDestination `json:"secondaryKey,omitempty"`
+}
+
+// AssignProperties_From_RedisEnterpriseDatabaseOperatorSecrets populates our RedisEnterpriseDatabaseOperatorSecrets from the provided source RedisEnterpriseDatabaseOperatorSecrets
+func (secrets *RedisEnterpriseDatabaseOperatorSecrets) AssignProperties_From_RedisEnterpriseDatabaseOperatorSecrets(source *storage.RedisEnterpriseDatabaseOperatorSecrets) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PrimaryKey
+	if source.PrimaryKey != nil {
+		primaryKey := source.PrimaryKey.Copy()
+		secrets.PrimaryKey = &primaryKey
+	} else {
+		secrets.PrimaryKey = nil
+	}
+
+	// SecondaryKey
+	if source.SecondaryKey != nil {
+		secondaryKey := source.SecondaryKey.Copy()
+		secrets.SecondaryKey = &secondaryKey
+	} else {
+		secrets.SecondaryKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		secrets.PropertyBag = propertyBag
+	} else {
+		secrets.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabaseOperatorSecrets interface (if implemented) to customize the conversion
+	var secretsAsAny any = secrets
+	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForRedisEnterpriseDatabaseOperatorSecrets); ok {
+		err := augmentedSecrets.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterpriseDatabaseOperatorSecrets populates the provided destination RedisEnterpriseDatabaseOperatorSecrets from our RedisEnterpriseDatabaseOperatorSecrets
+func (secrets *RedisEnterpriseDatabaseOperatorSecrets) AssignProperties_To_RedisEnterpriseDatabaseOperatorSecrets(destination *storage.RedisEnterpriseDatabaseOperatorSecrets) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(secrets.PropertyBag)
+
+	// PrimaryKey
+	if secrets.PrimaryKey != nil {
+		primaryKey := secrets.PrimaryKey.Copy()
+		destination.PrimaryKey = &primaryKey
+	} else {
+		destination.PrimaryKey = nil
+	}
+
+	// SecondaryKey
+	if secrets.SecondaryKey != nil {
+		secondaryKey := secrets.SecondaryKey.Copy()
+		destination.SecondaryKey = &secondaryKey
+	} else {
+		destination.SecondaryKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseDatabaseOperatorSecrets interface (if implemented) to customize the conversion
+	var secretsAsAny any = secrets
+	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForRedisEnterpriseDatabaseOperatorSecrets); ok {
+		err := augmentedSecrets.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForLinkedDatabase interface {
+	AssignPropertiesFrom(src *storage.LinkedDatabase) error
+	AssignPropertiesTo(dst *storage.LinkedDatabase) error
+}
+
+type augmentConversionForLinkedDatabase_STATUS interface {
+	AssignPropertiesFrom(src *storage.LinkedDatabase_STATUS) error
+	AssignPropertiesTo(dst *storage.LinkedDatabase_STATUS) error
+}
+
+type augmentConversionForRedisEnterpriseDatabaseOperatorSecrets interface {
+	AssignPropertiesFrom(src *storage.RedisEnterpriseDatabaseOperatorSecrets) error
+	AssignPropertiesTo(dst *storage.RedisEnterpriseDatabaseOperatorSecrets) error
 }
 
 func init() {

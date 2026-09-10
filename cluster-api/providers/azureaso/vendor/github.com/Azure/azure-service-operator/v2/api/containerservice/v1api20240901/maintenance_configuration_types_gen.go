@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &MaintenanceConfiguration{}
 
 // ConvertFrom populates our MaintenanceConfiguration from the provided hub MaintenanceConfiguration
 func (configuration *MaintenanceConfiguration) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.MaintenanceConfiguration)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20240901/storage/MaintenanceConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.MaintenanceConfiguration
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return configuration.AssignProperties_From_MaintenanceConfiguration(source)
+	err = configuration.AssignProperties_From_MaintenanceConfiguration(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to configuration")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub MaintenanceConfiguration from our MaintenanceConfiguration
 func (configuration *MaintenanceConfiguration) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.MaintenanceConfiguration)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20240901/storage/MaintenanceConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.MaintenanceConfiguration
+	err := configuration.AssignProperties_To_MaintenanceConfiguration(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from configuration")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return configuration.AssignProperties_To_MaintenanceConfiguration(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &MaintenanceConfiguration{}
@@ -86,17 +101,6 @@ func (configuration *MaintenanceConfiguration) SecretDestinationExpressions() []
 		return nil
 	}
 	return configuration.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &MaintenanceConfiguration{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (configuration *MaintenanceConfiguration) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*MaintenanceConfiguration_STATUS); ok {
-		return configuration.Spec.Initialize_From_MaintenanceConfiguration_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type MaintenanceConfiguration_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &MaintenanceConfiguration{}
@@ -295,7 +299,7 @@ func (configuration *MaintenanceConfiguration_Spec) ConvertToARM(resolved genrun
 		result.Properties = &arm.MaintenanceConfigurationProperties{}
 	}
 	if configuration.MaintenanceWindow != nil {
-		maintenanceWindow_ARM, err := (*configuration.MaintenanceWindow).ConvertToARM(resolved)
+		maintenanceWindow_ARM, err := configuration.MaintenanceWindow.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -458,8 +462,6 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_Mainte
 	if source.NotAllowedTime != nil {
 		notAllowedTimeList := make([]TimeSpan, len(source.NotAllowedTime))
 		for notAllowedTimeIndex, notAllowedTimeItem := range source.NotAllowedTime {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedTimeItem := notAllowedTimeItem
 			var notAllowedTime TimeSpan
 			err := notAllowedTime.AssignProperties_From_TimeSpan(&notAllowedTimeItem)
 			if err != nil {
@@ -496,8 +498,6 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_Mainte
 	if source.TimeInWeek != nil {
 		timeInWeekList := make([]TimeInWeek, len(source.TimeInWeek))
 		for timeInWeekIndex, timeInWeekItem := range source.TimeInWeek {
-			// Shadow the loop variable to avoid aliasing
-			timeInWeekItem := timeInWeekItem
 			var timeInWeek TimeInWeek
 			err := timeInWeek.AssignProperties_From_TimeInWeek(&timeInWeekItem)
 			if err != nil {
@@ -538,8 +538,6 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 	if configuration.NotAllowedTime != nil {
 		notAllowedTimeList := make([]storage.TimeSpan, len(configuration.NotAllowedTime))
 		for notAllowedTimeIndex, notAllowedTimeItem := range configuration.NotAllowedTime {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedTimeItem := notAllowedTimeItem
 			var notAllowedTime storage.TimeSpan
 			err := notAllowedTimeItem.AssignProperties_To_TimeSpan(&notAllowedTime)
 			if err != nil {
@@ -579,8 +577,6 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 	if configuration.TimeInWeek != nil {
 		timeInWeekList := make([]storage.TimeInWeek, len(configuration.TimeInWeek))
 		for timeInWeekIndex, timeInWeekItem := range configuration.TimeInWeek {
-			// Shadow the loop variable to avoid aliasing
-			timeInWeekItem := timeInWeekItem
 			var timeInWeek storage.TimeInWeek
 			err := timeInWeekItem.AssignProperties_To_TimeInWeek(&timeInWeek)
 			if err != nil {
@@ -598,61 +594,6 @@ func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_Maintena
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_MaintenanceConfiguration_STATUS populates our MaintenanceConfiguration_Spec from the provided source MaintenanceConfiguration_STATUS
-func (configuration *MaintenanceConfiguration_Spec) Initialize_From_MaintenanceConfiguration_STATUS(source *MaintenanceConfiguration_STATUS) error {
-
-	// MaintenanceWindow
-	if source.MaintenanceWindow != nil {
-		var maintenanceWindow MaintenanceWindow
-		err := maintenanceWindow.Initialize_From_MaintenanceWindow_STATUS(source.MaintenanceWindow)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
-		}
-		configuration.MaintenanceWindow = &maintenanceWindow
-	} else {
-		configuration.MaintenanceWindow = nil
-	}
-
-	// NotAllowedTime
-	if source.NotAllowedTime != nil {
-		notAllowedTimeList := make([]TimeSpan, len(source.NotAllowedTime))
-		for notAllowedTimeIndex, notAllowedTimeItem := range source.NotAllowedTime {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedTimeItem := notAllowedTimeItem
-			var notAllowedTime TimeSpan
-			err := notAllowedTime.Initialize_From_TimeSpan_STATUS(&notAllowedTimeItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_TimeSpan_STATUS() to populate field NotAllowedTime")
-			}
-			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
-		}
-		configuration.NotAllowedTime = notAllowedTimeList
-	} else {
-		configuration.NotAllowedTime = nil
-	}
-
-	// TimeInWeek
-	if source.TimeInWeek != nil {
-		timeInWeekList := make([]TimeInWeek, len(source.TimeInWeek))
-		for timeInWeekIndex, timeInWeekItem := range source.TimeInWeek {
-			// Shadow the loop variable to avoid aliasing
-			timeInWeekItem := timeInWeekItem
-			var timeInWeek TimeInWeek
-			err := timeInWeek.Initialize_From_TimeInWeek_STATUS(&timeInWeekItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_TimeInWeek_STATUS() to populate field TimeInWeek")
-			}
-			timeInWeekList[timeInWeekIndex] = timeInWeek
-		}
-		configuration.TimeInWeek = timeInWeekList
-	} else {
-		configuration.TimeInWeek = nil
 	}
 
 	// No error
@@ -863,8 +804,6 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_Main
 	if source.NotAllowedTime != nil {
 		notAllowedTimeList := make([]TimeSpan_STATUS, len(source.NotAllowedTime))
 		for notAllowedTimeIndex, notAllowedTimeItem := range source.NotAllowedTime {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedTimeItem := notAllowedTimeItem
 			var notAllowedTime TimeSpan_STATUS
 			err := notAllowedTime.AssignProperties_From_TimeSpan_STATUS(&notAllowedTimeItem)
 			if err != nil {
@@ -893,8 +832,6 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_Main
 	if source.TimeInWeek != nil {
 		timeInWeekList := make([]TimeInWeek_STATUS, len(source.TimeInWeek))
 		for timeInWeekIndex, timeInWeekItem := range source.TimeInWeek {
-			// Shadow the loop variable to avoid aliasing
-			timeInWeekItem := timeInWeekItem
 			var timeInWeek TimeInWeek_STATUS
 			err := timeInWeek.AssignProperties_From_TimeInWeek_STATUS(&timeInWeekItem)
 			if err != nil {
@@ -944,8 +881,6 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_Mainte
 	if configuration.NotAllowedTime != nil {
 		notAllowedTimeList := make([]storage.TimeSpan_STATUS, len(configuration.NotAllowedTime))
 		for notAllowedTimeIndex, notAllowedTimeItem := range configuration.NotAllowedTime {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedTimeItem := notAllowedTimeItem
 			var notAllowedTime storage.TimeSpan_STATUS
 			err := notAllowedTimeItem.AssignProperties_To_TimeSpan_STATUS(&notAllowedTime)
 			if err != nil {
@@ -974,8 +909,6 @@ func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_Mainte
 	if configuration.TimeInWeek != nil {
 		timeInWeekList := make([]storage.TimeInWeek_STATUS, len(configuration.TimeInWeek))
 		for timeInWeekIndex, timeInWeekItem := range configuration.TimeInWeek {
-			// Shadow the loop variable to avoid aliasing
-			timeInWeekItem := timeInWeekItem
 			var timeInWeek storage.TimeInWeek_STATUS
 			err := timeInWeekItem.AssignProperties_To_TimeInWeek_STATUS(&timeInWeek)
 			if err != nil {
@@ -1018,8 +951,6 @@ func (operator *MaintenanceConfigurationOperatorSpec) AssignProperties_From_Main
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1036,8 +967,6 @@ func (operator *MaintenanceConfigurationOperatorSpec) AssignProperties_From_Main
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1063,8 +992,6 @@ func (operator *MaintenanceConfigurationOperatorSpec) AssignProperties_To_Mainte
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1081,8 +1008,6 @@ func (operator *MaintenanceConfigurationOperatorSpec) AssignProperties_To_Mainte
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1165,7 +1090,7 @@ func (window *MaintenanceWindow) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Schedule":
 	if window.Schedule != nil {
-		schedule_ARM, err := (*window.Schedule).ConvertToARM(resolved)
+		schedule_ARM, err := window.Schedule.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1264,8 +1189,6 @@ func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source 
 	if source.NotAllowedDates != nil {
 		notAllowedDateList := make([]DateSpan, len(source.NotAllowedDates))
 		for notAllowedDateIndex, notAllowedDateItem := range source.NotAllowedDates {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedDateItem := notAllowedDateItem
 			var notAllowedDate DateSpan
 			err := notAllowedDate.AssignProperties_From_DateSpan(&notAllowedDateItem)
 			if err != nil {
@@ -1315,8 +1238,6 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 	if window.NotAllowedDates != nil {
 		notAllowedDateList := make([]storage.DateSpan, len(window.NotAllowedDates))
 		for notAllowedDateIndex, notAllowedDateItem := range window.NotAllowedDates {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedDateItem := notAllowedDateItem
 			var notAllowedDate storage.DateSpan
 			err := notAllowedDateItem.AssignProperties_To_DateSpan(&notAllowedDate)
 			if err != nil {
@@ -1356,55 +1277,6 @@ func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destinati
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_MaintenanceWindow_STATUS populates our MaintenanceWindow from the provided source MaintenanceWindow_STATUS
-func (window *MaintenanceWindow) Initialize_From_MaintenanceWindow_STATUS(source *MaintenanceWindow_STATUS) error {
-
-	// DurationHours
-	window.DurationHours = genruntime.ClonePointerToInt(source.DurationHours)
-
-	// NotAllowedDates
-	if source.NotAllowedDates != nil {
-		notAllowedDateList := make([]DateSpan, len(source.NotAllowedDates))
-		for notAllowedDateIndex, notAllowedDateItem := range source.NotAllowedDates {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedDateItem := notAllowedDateItem
-			var notAllowedDate DateSpan
-			err := notAllowedDate.Initialize_From_DateSpan_STATUS(&notAllowedDateItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_DateSpan_STATUS() to populate field NotAllowedDates")
-			}
-			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
-		}
-		window.NotAllowedDates = notAllowedDateList
-	} else {
-		window.NotAllowedDates = nil
-	}
-
-	// Schedule
-	if source.Schedule != nil {
-		var schedule Schedule
-		err := schedule.Initialize_From_Schedule_STATUS(source.Schedule)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Schedule_STATUS() to populate field Schedule")
-		}
-		window.Schedule = &schedule
-	} else {
-		window.Schedule = nil
-	}
-
-	// StartDate
-	window.StartDate = genruntime.ClonePointerToString(source.StartDate)
-
-	// StartTime
-	window.StartTime = genruntime.ClonePointerToString(source.StartTime)
-
-	// UtcOffset
-	window.UtcOffset = genruntime.ClonePointerToString(source.UtcOffset)
 
 	// No error
 	return nil
@@ -1509,8 +1381,6 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_From_MaintenanceWindow_
 	if source.NotAllowedDates != nil {
 		notAllowedDateList := make([]DateSpan_STATUS, len(source.NotAllowedDates))
 		for notAllowedDateIndex, notAllowedDateItem := range source.NotAllowedDates {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedDateItem := notAllowedDateItem
 			var notAllowedDate DateSpan_STATUS
 			err := notAllowedDate.AssignProperties_From_DateSpan_STATUS(&notAllowedDateItem)
 			if err != nil {
@@ -1560,8 +1430,6 @@ func (window *MaintenanceWindow_STATUS) AssignProperties_To_MaintenanceWindow_ST
 	if window.NotAllowedDates != nil {
 		notAllowedDateList := make([]storage.DateSpan_STATUS, len(window.NotAllowedDates))
 		for notAllowedDateIndex, notAllowedDateItem := range window.NotAllowedDates {
-			// Shadow the loop variable to avoid aliasing
-			notAllowedDateItem := notAllowedDateItem
 			var notAllowedDate storage.DateSpan_STATUS
 			err := notAllowedDateItem.AssignProperties_To_DateSpan_STATUS(&notAllowedDate)
 			if err != nil {
@@ -1846,8 +1714,6 @@ func (week *TimeInWeek) AssignProperties_From_TimeInWeek(source *storage.TimeInW
 	if source.HourSlots != nil {
 		hourSlotList := make([]HourInDay, len(source.HourSlots))
 		for hourSlotIndex, hourSlotItem := range source.HourSlots {
-			// Shadow the loop variable to avoid aliasing
-			hourSlotItem := hourSlotItem
 			hourSlotList[hourSlotIndex] = HourInDay(hourSlotItem)
 		}
 		week.HourSlots = hourSlotList
@@ -1876,8 +1742,6 @@ func (week *TimeInWeek) AssignProperties_To_TimeInWeek(destination *storage.Time
 	if week.HourSlots != nil {
 		hourSlotList := make([]int, len(week.HourSlots))
 		for hourSlotIndex, hourSlotItem := range week.HourSlots {
-			// Shadow the loop variable to avoid aliasing
-			hourSlotItem := hourSlotItem
 			hourSlotList[hourSlotIndex] = int(hourSlotItem)
 		}
 		destination.HourSlots = hourSlotList
@@ -1890,34 +1754,6 @@ func (week *TimeInWeek) AssignProperties_To_TimeInWeek(destination *storage.Time
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_TimeInWeek_STATUS populates our TimeInWeek from the provided source TimeInWeek_STATUS
-func (week *TimeInWeek) Initialize_From_TimeInWeek_STATUS(source *TimeInWeek_STATUS) error {
-
-	// Day
-	if source.Day != nil {
-		day := genruntime.ToEnum(string(*source.Day), weekDay_Values)
-		week.Day = &day
-	} else {
-		week.Day = nil
-	}
-
-	// HourSlots
-	if source.HourSlots != nil {
-		hourSlotList := make([]HourInDay, len(source.HourSlots))
-		for hourSlotIndex, hourSlotItem := range source.HourSlots {
-			// Shadow the loop variable to avoid aliasing
-			hourSlotItem := hourSlotItem
-			hourSlotList[hourSlotIndex] = HourInDay(hourSlotItem)
-		}
-		week.HourSlots = hourSlotList
-	} else {
-		week.HourSlots = nil
 	}
 
 	// No error
@@ -1982,8 +1818,6 @@ func (week *TimeInWeek_STATUS) AssignProperties_From_TimeInWeek_STATUS(source *s
 	if source.HourSlots != nil {
 		hourSlotList := make([]int, len(source.HourSlots))
 		for hourSlotIndex, hourSlotItem := range source.HourSlots {
-			// Shadow the loop variable to avoid aliasing
-			hourSlotItem := hourSlotItem
 			hourSlotList[hourSlotIndex] = hourSlotItem
 		}
 		week.HourSlots = hourSlotList
@@ -2012,8 +1846,6 @@ func (week *TimeInWeek_STATUS) AssignProperties_To_TimeInWeek_STATUS(destination
 	if week.HourSlots != nil {
 		hourSlotList := make([]int, len(week.HourSlots))
 		for hourSlotIndex, hourSlotItem := range week.HourSlots {
-			// Shadow the loop variable to avoid aliasing
-			hourSlotItem := hourSlotItem
 			hourSlotList[hourSlotIndex] = hourSlotItem
 		}
 		destination.HourSlots = hourSlotList
@@ -2122,19 +1954,6 @@ func (span *TimeSpan) AssignProperties_To_TimeSpan(destination *storage.TimeSpan
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_TimeSpan_STATUS populates our TimeSpan from the provided source TimeSpan_STATUS
-func (span *TimeSpan) Initialize_From_TimeSpan_STATUS(source *TimeSpan_STATUS) error {
-
-	// End
-	span.End = genruntime.ClonePointerToString(source.End)
-
-	// Start
-	span.Start = genruntime.ClonePointerToString(source.Start)
 
 	// No error
 	return nil
@@ -2311,19 +2130,6 @@ func (span *DateSpan) AssignProperties_To_DateSpan(destination *storage.DateSpan
 	return nil
 }
 
-// Initialize_From_DateSpan_STATUS populates our DateSpan from the provided source DateSpan_STATUS
-func (span *DateSpan) Initialize_From_DateSpan_STATUS(source *DateSpan_STATUS) error {
-
-	// End
-	span.End = genruntime.ClonePointerToString(source.End)
-
-	// Start
-	span.Start = genruntime.ClonePointerToString(source.Start)
-
-	// No error
-	return nil
-}
-
 // For example, between '2022-12-23' and '2023-01-05'.
 type DateSpan_STATUS struct {
 	// End: The end date of the date span.
@@ -2429,7 +2235,7 @@ func (schedule *Schedule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "AbsoluteMonthly":
 	if schedule.AbsoluteMonthly != nil {
-		absoluteMonthly_ARM, err := (*schedule.AbsoluteMonthly).ConvertToARM(resolved)
+		absoluteMonthly_ARM, err := schedule.AbsoluteMonthly.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2439,7 +2245,7 @@ func (schedule *Schedule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "Daily":
 	if schedule.Daily != nil {
-		daily_ARM, err := (*schedule.Daily).ConvertToARM(resolved)
+		daily_ARM, err := schedule.Daily.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2449,7 +2255,7 @@ func (schedule *Schedule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "RelativeMonthly":
 	if schedule.RelativeMonthly != nil {
-		relativeMonthly_ARM, err := (*schedule.RelativeMonthly).ConvertToARM(resolved)
+		relativeMonthly_ARM, err := schedule.RelativeMonthly.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2459,7 +2265,7 @@ func (schedule *Schedule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "Weekly":
 	if schedule.Weekly != nil {
-		weekly_ARM, err := (*schedule.Weekly).ConvertToARM(resolved)
+		weekly_ARM, err := schedule.Weekly.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2642,61 +2448,6 @@ func (schedule *Schedule) AssignProperties_To_Schedule(destination *storage.Sche
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Schedule_STATUS populates our Schedule from the provided source Schedule_STATUS
-func (schedule *Schedule) Initialize_From_Schedule_STATUS(source *Schedule_STATUS) error {
-
-	// AbsoluteMonthly
-	if source.AbsoluteMonthly != nil {
-		var absoluteMonthly AbsoluteMonthlySchedule
-		err := absoluteMonthly.Initialize_From_AbsoluteMonthlySchedule_STATUS(source.AbsoluteMonthly)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
-		}
-		schedule.AbsoluteMonthly = &absoluteMonthly
-	} else {
-		schedule.AbsoluteMonthly = nil
-	}
-
-	// Daily
-	if source.Daily != nil {
-		var daily DailySchedule
-		err := daily.Initialize_From_DailySchedule_STATUS(source.Daily)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DailySchedule_STATUS() to populate field Daily")
-		}
-		schedule.Daily = &daily
-	} else {
-		schedule.Daily = nil
-	}
-
-	// RelativeMonthly
-	if source.RelativeMonthly != nil {
-		var relativeMonthly RelativeMonthlySchedule
-		err := relativeMonthly.Initialize_From_RelativeMonthlySchedule_STATUS(source.RelativeMonthly)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
-		}
-		schedule.RelativeMonthly = &relativeMonthly
-	} else {
-		schedule.RelativeMonthly = nil
-	}
-
-	// Weekly
-	if source.Weekly != nil {
-		var weekly WeeklySchedule
-		err := weekly.Initialize_From_WeeklySchedule_STATUS(source.Weekly)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WeeklySchedule_STATUS() to populate field Weekly")
-		}
-		schedule.Weekly = &weekly
-	} else {
-		schedule.Weekly = nil
 	}
 
 	// No error
@@ -3084,19 +2835,6 @@ func (schedule *AbsoluteMonthlySchedule) AssignProperties_To_AbsoluteMonthlySche
 	return nil
 }
 
-// Initialize_From_AbsoluteMonthlySchedule_STATUS populates our AbsoluteMonthlySchedule from the provided source AbsoluteMonthlySchedule_STATUS
-func (schedule *AbsoluteMonthlySchedule) Initialize_From_AbsoluteMonthlySchedule_STATUS(source *AbsoluteMonthlySchedule_STATUS) error {
-
-	// DayOfMonth
-	schedule.DayOfMonth = genruntime.ClonePointerToInt(source.DayOfMonth)
-
-	// IntervalMonths
-	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
-
-	// No error
-	return nil
-}
-
 // For schedules like: 'recur every month on the 15th' or 'recur every 3 months on the 20th'.
 type AbsoluteMonthlySchedule_STATUS struct {
 	// DayOfMonth: The date of the month.
@@ -3243,16 +2981,6 @@ func (schedule *DailySchedule) AssignProperties_To_DailySchedule(destination *st
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DailySchedule_STATUS populates our DailySchedule from the provided source DailySchedule_STATUS
-func (schedule *DailySchedule) Initialize_From_DailySchedule_STATUS(source *DailySchedule_STATUS) error {
-
-	// IntervalDays
-	schedule.IntervalDays = genruntime.ClonePointerToInt(source.IntervalDays)
 
 	// No error
 	return nil
@@ -3462,32 +3190,6 @@ func (schedule *RelativeMonthlySchedule) AssignProperties_To_RelativeMonthlySche
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_RelativeMonthlySchedule_STATUS populates our RelativeMonthlySchedule from the provided source RelativeMonthlySchedule_STATUS
-func (schedule *RelativeMonthlySchedule) Initialize_From_RelativeMonthlySchedule_STATUS(source *RelativeMonthlySchedule_STATUS) error {
-
-	// DayOfWeek
-	if source.DayOfWeek != nil {
-		dayOfWeek := genruntime.ToEnum(string(*source.DayOfWeek), weekDay_Values)
-		schedule.DayOfWeek = &dayOfWeek
-	} else {
-		schedule.DayOfWeek = nil
-	}
-
-	// IntervalMonths
-	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
-
-	// WeekIndex
-	if source.WeekIndex != nil {
-		weekIndex := genruntime.ToEnum(string(*source.WeekIndex), relativeMonthlySchedule_WeekIndex_Values)
-		schedule.WeekIndex = &weekIndex
-	} else {
-		schedule.WeekIndex = nil
 	}
 
 	// No error
@@ -3718,24 +3420,6 @@ func (schedule *WeeklySchedule) AssignProperties_To_WeeklySchedule(destination *
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_WeeklySchedule_STATUS populates our WeeklySchedule from the provided source WeeklySchedule_STATUS
-func (schedule *WeeklySchedule) Initialize_From_WeeklySchedule_STATUS(source *WeeklySchedule_STATUS) error {
-
-	// DayOfWeek
-	if source.DayOfWeek != nil {
-		dayOfWeek := genruntime.ToEnum(string(*source.DayOfWeek), weekDay_Values)
-		schedule.DayOfWeek = &dayOfWeek
-	} else {
-		schedule.DayOfWeek = nil
-	}
-
-	// IntervalWeeks
-	schedule.IntervalWeeks = genruntime.ClonePointerToInt(source.IntervalWeeks)
 
 	// No error
 	return nil

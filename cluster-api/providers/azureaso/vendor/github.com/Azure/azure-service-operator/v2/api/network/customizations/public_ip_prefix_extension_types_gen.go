@@ -8,6 +8,8 @@ import (
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	v20240301 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
+	v20250301 "github.com/Azure/azure-service-operator/v2/api/network/v20250301"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *PublicIPPrefixExtension) GetExtendedResources() []genruntime.Ku
 		&v20220701.PublicIPPrefix{},
 		&v20220701s.PublicIPPrefix{},
 		&v20240301.PublicIPPrefix{},
-		&v20240301s.PublicIPPrefix{}}
+		&v20240301s.PublicIPPrefix{},
+		&v20250301.PublicIPPrefix{},
+		&v20250301s.PublicIPPrefix{}}
 }

@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimnamedvalues.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimnamedvalues.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/namedValues/{namedValueId}
 type NamedValue struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &NamedValue{}
 
 // ConvertFrom populates our NamedValue from the provided hub NamedValue
 func (value *NamedValue) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NamedValue)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/NamedValue but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NamedValue
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return value.AssignProperties_From_NamedValue(source)
+	err = value.AssignProperties_From_NamedValue(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to value")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NamedValue from our NamedValue
 func (value *NamedValue) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NamedValue)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/NamedValue but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NamedValue
+	err := value.AssignProperties_To_NamedValue(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from value")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return value.AssignProperties_To_NamedValue(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &NamedValue{}
@@ -86,17 +101,6 @@ func (value *NamedValue) SecretDestinationExpressions() []*core.DestinationExpre
 		return nil
 	}
 	return value.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &NamedValue{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (value *NamedValue) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*NamedValue_STATUS); ok {
-		return value.Spec.Initialize_From_NamedValue_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type NamedValue_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &NamedValue{}
@@ -238,7 +242,7 @@ func (value *NamedValue) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimnamedvalues.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimnamedvalues.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/namedValues/{namedValueId}
 type NamedValueList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -311,7 +315,7 @@ func (value *NamedValue_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		result.Properties.DisplayName = &displayName
 	}
 	if value.KeyVault != nil {
-		keyVault_ARM, err := (*value.KeyVault).ConvertToARM(resolved)
+		keyVault_ARM, err := value.KeyVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -583,42 +587,6 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NamedValue_STATUS populates our NamedValue_Spec from the provided source NamedValue_STATUS
-func (value *NamedValue_Spec) Initialize_From_NamedValue_STATUS(source *NamedValue_STATUS) error {
-
-	// DisplayName
-	value.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
-
-	// KeyVault
-	if source.KeyVault != nil {
-		var keyVault KeyVaultContractCreateProperties
-		err := keyVault.Initialize_From_KeyVaultContractProperties_STATUS(source.KeyVault)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
-		}
-		value.KeyVault = &keyVault
-	} else {
-		value.KeyVault = nil
-	}
-
-	// Secret
-	if source.Secret != nil {
-		secret := *source.Secret
-		value.Secret = &secret
-	} else {
-		value.Secret = nil
-	}
-
-	// Tags
-	value.Tags = genruntime.CloneSliceOfString(source.Tags)
-
-	// Value
-	value.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -1032,19 +1000,6 @@ func (properties *KeyVaultContractCreateProperties) AssignProperties_To_KeyVault
 	return nil
 }
 
-// Initialize_From_KeyVaultContractProperties_STATUS populates our KeyVaultContractCreateProperties from the provided source KeyVaultContractProperties_STATUS
-func (properties *KeyVaultContractCreateProperties) Initialize_From_KeyVaultContractProperties_STATUS(source *KeyVaultContractProperties_STATUS) error {
-
-	// IdentityClientId
-	properties.IdentityClientId = genruntime.ClonePointerToString(source.IdentityClientId)
-
-	// SecretIdentifier
-	properties.SecretIdentifier = genruntime.ClonePointerToString(source.SecretIdentifier)
-
-	// No error
-	return nil
-}
-
 // KeyVault contract details.
 type KeyVaultContractProperties_STATUS struct {
 	// IdentityClientId: Null for SystemAssignedIdentity or Client Id for UserAssignedIdentity , which will be used to access
@@ -1175,8 +1130,6 @@ func (operator *NamedValueOperatorSpec) AssignProperties_From_NamedValueOperator
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1193,8 +1146,6 @@ func (operator *NamedValueOperatorSpec) AssignProperties_From_NamedValueOperator
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1220,8 +1171,6 @@ func (operator *NamedValueOperatorSpec) AssignProperties_To_NamedValueOperatorSp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1238,8 +1187,6 @@ func (operator *NamedValueOperatorSpec) AssignProperties_To_NamedValueOperatorSp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

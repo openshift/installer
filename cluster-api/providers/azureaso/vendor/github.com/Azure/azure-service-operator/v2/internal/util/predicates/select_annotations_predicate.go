@@ -36,6 +36,21 @@ type selectAnnotationChangedPredicate struct {
 
 var _ predicate.Predicate = selectAnnotationChangedPredicate{}
 
+// Create implements CreateEvent filter - we don't care about create events for annotation changes.
+func (p selectAnnotationChangedPredicate) Create(e event.CreateEvent) bool {
+	return false
+}
+
+// Delete implements DeleteEvent filter - we don't care about delete events for annotation changes.
+func (p selectAnnotationChangedPredicate) Delete(e event.DeleteEvent) bool {
+	return false
+}
+
+// Generic implements GenericEvent filter - we don't care about generic events for annotation changes.
+func (p selectAnnotationChangedPredicate) Generic(e event.GenericEvent) bool {
+	return false
+}
+
 // Update implements UpdateEvent filter for annotation changes.
 func (p selectAnnotationChangedPredicate) Update(e event.UpdateEvent) bool {
 	if e.ObjectOld == nil {

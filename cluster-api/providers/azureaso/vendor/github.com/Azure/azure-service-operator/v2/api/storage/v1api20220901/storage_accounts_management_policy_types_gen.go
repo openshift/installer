@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -282,7 +283,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) ConvertToARM(resolved genrun
 		result.Properties = &arm.ManagementPolicyProperties{}
 	}
 	if policy.Policy != nil {
-		policy_ARM, err := (*policy.Policy).ConvertToARM(resolved)
+		policy_ARM, err := policy.Policy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -747,8 +748,6 @@ func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySche
 	if source.Rules != nil {
 		ruleList := make([]ManagementPolicyRule, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ManagementPolicyRule
 			err := rule.AssignProperties_From_ManagementPolicyRule(&ruleItem)
 			if err != nil {
@@ -774,8 +773,6 @@ func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema
 	if schema.Rules != nil {
 		ruleList := make([]storage.ManagementPolicyRule, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ManagementPolicyRule
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule(&rule)
 			if err != nil {
@@ -842,8 +839,6 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPol
 	if source.Rules != nil {
 		ruleList := make([]ManagementPolicyRule_STATUS, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ManagementPolicyRule_STATUS
 			err := rule.AssignProperties_From_ManagementPolicyRule_STATUS(&ruleItem)
 			if err != nil {
@@ -869,8 +864,6 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolic
 	if schema.Rules != nil {
 		ruleList := make([]storage.ManagementPolicyRule_STATUS, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ManagementPolicyRule_STATUS
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule_STATUS(&rule)
 			if err != nil {
@@ -910,8 +903,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_Fr
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -928,8 +919,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_Fr
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -955,8 +944,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -973,8 +960,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1028,7 +1013,7 @@ func (rule *ManagementPolicyRule) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "Definition":
 	if rule.Definition != nil {
-		definition_ARM, err := (*rule.Definition).ConvertToARM(resolved)
+		definition_ARM, err := rule.Definition.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1363,7 +1348,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 
 	// Set property "Actions":
 	if definition.Actions != nil {
-		actions_ARM, err := (*definition.Actions).ConvertToARM(resolved)
+		actions_ARM, err := definition.Actions.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1373,7 +1358,7 @@ func (definition *ManagementPolicyDefinition) ConvertToARM(resolved genruntime.C
 
 	// Set property "Filters":
 	if definition.Filters != nil {
-		filters_ARM, err := (*definition.Filters).ConvertToARM(resolved)
+		filters_ARM, err := definition.Filters.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1654,7 +1639,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "BaseBlob":
 	if action.BaseBlob != nil {
-		baseBlob_ARM, err := (*action.BaseBlob).ConvertToARM(resolved)
+		baseBlob_ARM, err := action.BaseBlob.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1664,7 +1649,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Snapshot":
 	if action.Snapshot != nil {
-		snapshot_ARM, err := (*action.Snapshot).ConvertToARM(resolved)
+		snapshot_ARM, err := action.Snapshot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1674,7 +1659,7 @@ func (action *ManagementPolicyAction) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Version":
 	if action.Version != nil {
-		version_ARM, err := (*action.Version).ConvertToARM(resolved)
+		version_ARM, err := action.Version.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2074,8 +2059,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilt
 	if source.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]TagFilter, len(source.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch TagFilter
 			err := blobIndexMatch.AssignProperties_From_TagFilter(&blobIndexMatchItem)
 			if err != nil {
@@ -2107,8 +2090,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter
 	if filter.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]storage.TagFilter, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch storage.TagFilter
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter(&blobIndexMatch)
 			if err != nil {
@@ -2197,8 +2178,6 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPol
 	if source.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]TagFilter_STATUS, len(source.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch TagFilter_STATUS
 			err := blobIndexMatch.AssignProperties_From_TagFilter_STATUS(&blobIndexMatchItem)
 			if err != nil {
@@ -2230,8 +2209,6 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_To_ManagementPolic
 	if filter.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]storage.TagFilter_STATUS, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch storage.TagFilter_STATUS
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter_STATUS(&blobIndexMatch)
 			if err != nil {
@@ -2295,7 +2272,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Delete":
 	if blob.Delete != nil {
-		delete_ARM, err := (*blob.Delete).ConvertToARM(resolved)
+		delete_ARM, err := blob.Delete.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2311,7 +2288,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToArchive":
 	if blob.TierToArchive != nil {
-		tierToArchive_ARM, err := (*blob.TierToArchive).ConvertToARM(resolved)
+		tierToArchive_ARM, err := blob.TierToArchive.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2321,7 +2298,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCold":
 	if blob.TierToCold != nil {
-		tierToCold_ARM, err := (*blob.TierToCold).ConvertToARM(resolved)
+		tierToCold_ARM, err := blob.TierToCold.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2331,7 +2308,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCool":
 	if blob.TierToCool != nil {
-		tierToCool_ARM, err := (*blob.TierToCool).ConvertToARM(resolved)
+		tierToCool_ARM, err := blob.TierToCool.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2341,7 +2318,7 @@ func (blob *ManagementPolicyBaseBlob) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToHot":
 	if blob.TierToHot != nil {
-		tierToHot_ARM, err := (*blob.TierToHot).ConvertToARM(resolved)
+		tierToHot_ARM, err := blob.TierToHot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2878,7 +2855,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Delete":
 	if shot.Delete != nil {
-		delete_ARM, err := (*shot.Delete).ConvertToARM(resolved)
+		delete_ARM, err := shot.Delete.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2888,7 +2865,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToArchive":
 	if shot.TierToArchive != nil {
-		tierToArchive_ARM, err := (*shot.TierToArchive).ConvertToARM(resolved)
+		tierToArchive_ARM, err := shot.TierToArchive.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2898,7 +2875,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCold":
 	if shot.TierToCold != nil {
-		tierToCold_ARM, err := (*shot.TierToCold).ConvertToARM(resolved)
+		tierToCold_ARM, err := shot.TierToCold.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2908,7 +2885,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToCool":
 	if shot.TierToCool != nil {
-		tierToCool_ARM, err := (*shot.TierToCool).ConvertToARM(resolved)
+		tierToCool_ARM, err := shot.TierToCool.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2918,7 +2895,7 @@ func (shot *ManagementPolicySnapShot) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "TierToHot":
 	if shot.TierToHot != nil {
-		tierToHot_ARM, err := (*shot.TierToHot).ConvertToARM(resolved)
+		tierToHot_ARM, err := shot.TierToHot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3407,7 +3384,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "Delete":
 	if version.Delete != nil {
-		delete_ARM, err := (*version.Delete).ConvertToARM(resolved)
+		delete_ARM, err := version.Delete.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3417,7 +3394,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToArchive":
 	if version.TierToArchive != nil {
-		tierToArchive_ARM, err := (*version.TierToArchive).ConvertToARM(resolved)
+		tierToArchive_ARM, err := version.TierToArchive.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3427,7 +3404,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToCold":
 	if version.TierToCold != nil {
-		tierToCold_ARM, err := (*version.TierToCold).ConvertToARM(resolved)
+		tierToCold_ARM, err := version.TierToCold.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3437,7 +3414,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToCool":
 	if version.TierToCool != nil {
-		tierToCool_ARM, err := (*version.TierToCool).ConvertToARM(resolved)
+		tierToCool_ARM, err := version.TierToCool.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3447,7 +3424,7 @@ func (version *ManagementPolicyVersion) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "TierToHot":
 	if version.TierToHot != nil {
-		tierToHot_ARM, err := (*version.TierToHot).ConvertToARM(resolved)
+		tierToHot_ARM, err := version.TierToHot.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

@@ -1,0 +1,333 @@
+/*
+Copyright The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package webhooks
+
+import (
+	"context"
+	"fmt"
+	"reflect"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/blang/semver"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
+	apiinternalexp "sigs.k8s.io/cluster-api-provider-azure/internal/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/internal/webhooks"
+	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
+)
+
+// SetupWebhookWithManager sets up and registers the webhook with the manager.
+func (mw *AzureMachinePoolWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	mw.Client = mgr.GetClient()
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1exp.AzureMachinePool{}).
+		WithDefaulter(mw).
+		WithValidator(mw).
+		Complete()
+}
+
+// +kubebuilder:webhook:path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-azuremachinepool,mutating=true,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,verbs=create;update,versions=v1beta1,name=default.azuremachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-azuremachinepool,mutating=false,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,versions=v1beta1,name=validation.azuremachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+
+// AzureMachinePoolWebhook implements a validating and defaulting webhook for AzureMachinePool.
+type AzureMachinePoolWebhook struct {
+	Client client.Client
+}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
+func (mw *AzureMachinePoolWebhook) Default(_ context.Context, amp *infrav1exp.AzureMachinePool) error {
+	return apiinternalexp.SetDefaults(amp, mw.Client)
+}
+
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
+func (mw *AzureMachinePoolWebhook) ValidateCreate(_ context.Context, amp *infrav1exp.AzureMachinePool) (admission.Warnings, error) {
+	return nil, ValidateAzureMachinePool(nil, amp, mw.Client)
+}
+
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
+func (mw *AzureMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, amp *infrav1exp.AzureMachinePool) (admission.Warnings, error) {
+	return nil, ValidateAzureMachinePool(oldObj, amp, mw.Client)
+}
+
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
+func (mw *AzureMachinePoolWebhook) ValidateDelete(_ context.Context, _ *infrav1exp.AzureMachinePool) (admission.Warnings, error) {
+	return nil, nil
+}
+
+// ValidateAzureMachinePool runs the Azure Machine Pool validators and returns an aggregate error.
+func ValidateAzureMachinePool(old runtime.Object, amp *infrav1exp.AzureMachinePool, c client.Client) error {
+	validators := []func() error{
+		func() error { return validateImage(amp) },
+		func() error { return validateTerminateNotificationTimeout(amp) },
+		func() error { return validateSSHKey(amp) },
+		func() error { return validateUserAssignedIdentity(amp) },
+		func() error { return validateDiagnostics(amp) },
+		validateOrchestrationMode(amp, c),
+		validateStrategy(amp),
+		validateSystemAssignedIdentity(amp, old),
+		func() error { return validateSystemAssignedIdentityRole(amp) },
+		func() error { return validateNetwork(amp) },
+		func() error { return validateOSDisk(amp) },
+		validateDisableVMBootstrapExtension(amp, old),
+	}
+
+	var errs []error
+	for _, validator := range validators {
+		if err := validator(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return kerrors.NewAggregate(errs)
+}
+
+func validateNetwork(amp *infrav1exp.AzureMachinePool) error {
+	if (amp.Spec.Template.NetworkInterfaces != nil) && len(amp.Spec.Template.NetworkInterfaces) > 0 && amp.Spec.Template.SubnetName != "" { //nolint:staticcheck
+		return errors.New("cannot set both NetworkInterfaces and machine SubnetName")
+	}
+	return nil
+}
+
+func validateOSDisk(amp *infrav1exp.AzureMachinePool) error {
+	if errs := webhooks.ValidateOSDisk(amp.Spec.Template.OSDisk, field.NewPath("osDisk")); len(errs) > 0 {
+		return errs.ToAggregate()
+	}
+	return nil
+}
+
+func validateImage(amp *infrav1exp.AzureMachinePool) error {
+	if amp.Spec.Template.Image != nil {
+		image := amp.Spec.Template.Image
+		if errs := webhooks.ValidateImage(image, field.NewPath("image")); len(errs) > 0 {
+			return errs.ToAggregate()
+		}
+	}
+	return nil
+}
+
+func validateTerminateNotificationTimeout(amp *infrav1exp.AzureMachinePool) error {
+	if amp.Spec.Template.TerminateNotificationTimeout == nil {
+		return nil
+	}
+	if *amp.Spec.Template.TerminateNotificationTimeout < 5 {
+		return errors.New("minimum timeout 5 is allowed for TerminateNotificationTimeout")
+	}
+
+	if *amp.Spec.Template.TerminateNotificationTimeout > 15 {
+		return errors.New("maximum timeout 15 is allowed for TerminateNotificationTimeout")
+	}
+
+	return nil
+}
+
+func validateSSHKey(amp *infrav1exp.AzureMachinePool) error {
+	if amp.Spec.Template.SSHPublicKey != "" {
+		sshKey := amp.Spec.Template.SSHPublicKey
+		if errs := webhooks.ValidateSSHKey(sshKey, field.NewPath("sshKey")); len(errs) > 0 {
+			return kerrors.NewAggregate(errs.ToAggregate().Errors())
+		}
+	}
+
+	return nil
+}
+
+func validateUserAssignedIdentity(amp *infrav1exp.AzureMachinePool) error {
+	fldPath := field.NewPath("userAssignedIdentities")
+	if errs := webhooks.ValidateUserAssignedIdentity(amp.Spec.Identity, amp.Spec.UserAssignedIdentities, fldPath); len(errs) > 0 {
+		return kerrors.NewAggregate(errs.ToAggregate().Errors())
+	}
+
+	return nil
+}
+
+func validateStrategy(amp *infrav1exp.AzureMachinePool) func() error {
+	return func() error {
+		if amp.Spec.Strategy.Type == infrav1exp.RollingUpdateAzureMachinePoolDeploymentStrategyType && amp.Spec.Strategy.RollingUpdate != nil {
+			rollingUpdateStrategy := amp.Spec.Strategy.RollingUpdate
+			maxSurge := rollingUpdateStrategy.MaxSurge
+			maxUnavailable := rollingUpdateStrategy.MaxUnavailable
+			if maxSurge.Type == intstr.Int && maxSurge.IntVal == 0 &&
+				maxUnavailable.Type == intstr.Int && maxUnavailable.IntVal == 0 {
+				return errors.New("rolling update strategy MaxUnavailable must not be 0 if MaxSurge is 0")
+			}
+		}
+
+		return nil
+	}
+}
+
+func validateSystemAssignedIdentity(amp *infrav1exp.AzureMachinePool, old runtime.Object) func() error {
+	return func() error {
+		var oldRole string
+		if old != nil {
+			oldMachinePool, ok := old.(*infrav1exp.AzureMachinePool)
+			if !ok {
+				return fmt.Errorf("unexpected type for old azure machine pool object. Expected: %q, Got: %q",
+					"AzureMachinePool", reflect.TypeOf(old))
+			}
+			if amp.Spec.SystemAssignedIdentityRole != nil {
+				oldRole = oldMachinePool.Spec.SystemAssignedIdentityRole.Name
+			}
+		}
+
+		roleAssignmentName := ""
+		if amp.Spec.SystemAssignedIdentityRole != nil {
+			roleAssignmentName = amp.Spec.SystemAssignedIdentityRole.Name
+		}
+
+		fldPath := field.NewPath("roleAssignmentName")
+		if errs := webhooks.ValidateSystemAssignedIdentity(amp.Spec.Identity, oldRole, roleAssignmentName, fldPath); len(errs) > 0 {
+			return kerrors.NewAggregate(errs.ToAggregate().Errors())
+		}
+
+		return nil
+	}
+}
+
+func validateSystemAssignedIdentityRole(amp *infrav1exp.AzureMachinePool) error {
+	var allErrs field.ErrorList
+	if amp.Spec.RoleAssignmentName != "" && amp.Spec.SystemAssignedIdentityRole != nil && amp.Spec.SystemAssignedIdentityRole.Name != "" { //nolint:staticcheck
+		allErrs = append(allErrs, field.Invalid(field.NewPath("systemAssignedIdentityRole"), amp.Spec.SystemAssignedIdentityRole.Name, "cannot set both roleAssignmentName and systemAssignedIdentityRole.name"))
+	}
+	if amp.Spec.Identity == infrav1.VMIdentitySystemAssigned {
+		if amp.Spec.SystemAssignedIdentityRole.DefinitionID == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("systemAssignedIdentityRole", "definitionID"), amp.Spec.SystemAssignedIdentityRole.DefinitionID, "the roleDefinitionID field cannot be empty"))
+		}
+		if amp.Spec.SystemAssignedIdentityRole.Scope == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("systemAssignedIdentityRole", "scope"), amp.Spec.SystemAssignedIdentityRole.Scope, "the scope field cannot be empty"))
+		}
+	}
+	if amp.Spec.Identity != infrav1.VMIdentitySystemAssigned && amp.Spec.SystemAssignedIdentityRole != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("systemAssignedIdentityRole"), amp.Spec.SystemAssignedIdentityRole, "systemAssignedIdentityRole can only be set when identity is set to 'SystemAssigned'"))
+	}
+
+	if len(allErrs) > 0 {
+		return kerrors.NewAggregate(allErrs.ToAggregate().Errors())
+	}
+
+	return nil
+}
+
+func validateDiagnostics(amp *infrav1exp.AzureMachinePool) error {
+	var allErrs field.ErrorList
+	fieldPath := field.NewPath("diagnostics")
+
+	diagnostics := amp.Spec.Template.Diagnostics
+
+	if diagnostics != nil && diagnostics.Boot != nil {
+		switch diagnostics.Boot.StorageAccountType {
+		case infrav1.UserManagedDiagnosticsStorage:
+			if diagnostics.Boot.UserManaged == nil {
+				allErrs = append(allErrs, field.Required(fieldPath.Child("UserManaged"),
+					fmt.Sprintf("userManaged must be specified when storageAccountType is '%s'", infrav1.UserManagedDiagnosticsStorage)))
+			} else if diagnostics.Boot.UserManaged.StorageAccountURI == "" {
+				allErrs = append(allErrs, field.Required(fieldPath.Child("StorageAccountURI"),
+					fmt.Sprintf("StorageAccountURI cannot be empty when storageAccountType is '%s'", infrav1.UserManagedDiagnosticsStorage)))
+			}
+		case infrav1.ManagedDiagnosticsStorage:
+			if diagnostics.Boot.UserManaged != nil &&
+				diagnostics.Boot.UserManaged.StorageAccountURI != "" {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("StorageAccountURI"), diagnostics.Boot.UserManaged.StorageAccountURI,
+					fmt.Sprintf("StorageAccountURI cannot be set when storageAccountType is '%s'",
+						infrav1.ManagedDiagnosticsStorage)))
+			}
+		case infrav1.DisabledDiagnosticsStorage:
+			if diagnostics.Boot.UserManaged != nil &&
+				diagnostics.Boot.UserManaged.StorageAccountURI != "" {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("StorageAccountURI"), diagnostics.Boot.UserManaged.StorageAccountURI,
+					fmt.Sprintf("StorageAccountURI cannot be set when storageAccountType is '%s'",
+						infrav1.ManagedDiagnosticsStorage)))
+			}
+		}
+	}
+
+	if len(allErrs) > 0 {
+		return kerrors.NewAggregate(allErrs.ToAggregate().Errors())
+	}
+
+	return nil
+}
+
+func validateOrchestrationMode(amp *infrav1exp.AzureMachinePool, c client.Client) func() error {
+	return func() error {
+		// Only Flexible orchestration mode requires validation.
+		if amp.Spec.OrchestrationMode == infrav1.OrchestrationModeType(armcompute.OrchestrationModeFlexible) {
+			parent, err := azureutil.FindParentMachinePoolWithRetryV1Beta1(amp.Name, c, 5)
+			if err != nil {
+				return errors.Wrap(err, "failed to find parent MachinePool")
+			}
+			// Kubernetes must be >= 1.26.0 for cloud-provider-azure Helm chart support.
+			if parent.Spec.Template.Spec.Version == "" {
+				return errors.New("could not find Kubernetes version in MachinePool")
+			}
+			k8sVersion, err := semver.ParseTolerant(parent.Spec.Template.Spec.Version)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse Kubernetes version")
+			}
+			if k8sVersion.LT(semver.MustParse("1.26.0")) {
+				return fmt.Errorf("specified Kubernetes version %s must be >= 1.26.0 for Flexible orchestration mode", k8sVersion)
+			}
+		}
+
+		return nil
+	}
+}
+
+// validateDisableVMBootstrapExtension enforces immutability of
+// spec.template.disableVMBootstrapExtension once it has been explicitly set,
+// while still permitting the nil -> set transition so users can opt back in to
+// the bootstrap extension on AzureMachinePools created before the runtime
+// default flipped from false to true.
+func validateDisableVMBootstrapExtension(amp *infrav1exp.AzureMachinePool, old runtime.Object) func() error {
+	return func() error {
+		if old == nil {
+			return nil
+		}
+
+		oldAMP, ok := old.(*infrav1exp.AzureMachinePool)
+		if !ok {
+			return fmt.Errorf("unexpected type for old azure machine pool object. Expected: %q, Got: %q",
+				"AzureMachinePool", reflect.TypeOf(old))
+		}
+
+		oldVal := oldAMP.Spec.Template.DisableVMBootstrapExtension
+		newVal := amp.Spec.Template.DisableVMBootstrapExtension
+
+		// nil -> anything is allowed (upgrade opt-in/opt-out).
+		if oldVal == nil {
+			return nil
+		}
+
+		// Once explicitly set, the field is immutable.
+		if newVal == nil {
+			return errors.New("spec.template.disableVMBootstrapExtension is immutable, unable to unset once explicitly set")
+		}
+		if *oldVal != *newVal {
+			return errors.New("spec.template.disableVMBootstrapExtension is immutable")
+		}
+
+		return nil
+	}
+}

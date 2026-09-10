@@ -1,5 +1,17 @@
 # Release History
 
+## 1.4.0 (2026-06-24)
+### Features Added
+
+- New value `EventTypeValuesBilling` added to enum type `EventTypeValues`
+- New enum type `EventSubTypeValues` with values `EventSubTypeValuesForeignExchangeRateChange`, `EventSubTypeValuesMeterIDChanges`, `EventSubTypeValuesOverbilling`, `EventSubTypeValuesPriceChanges`, `EventSubTypeValuesRetirement`, `EventSubTypeValuesTaxChanges`, `EventSubTypeValuesUnauthorizedPartyAbuse`, `EventSubTypeValuesUnderbilling`
+- New function `*EventClient.FetchBilllingCommunicationDetailsBySubscriptionIDAndTrackingID(ctx context.Context, eventTrackingID string, options *EventClientFetchBilllingCommunicationDetailsBySubscriptionIDAndTrackingIDOptions) (EventClientFetchBilllingCommunicationDetailsBySubscriptionIDAndTrackingIDResponse, error)`
+- New field `BillingID`, `CurrencyType`, `EventSubType`, `EventTags`, `IsEventSensitive`, `NewRate`, `OldRate` in struct `EventProperties`
+- New field `ImpactedServiceGUID` in struct `Impact`
+- New field `PreviousID`, `Priority`, `ServiceGUID` in struct `MetadataSupportedValueDetail`
+- New field `EventTags` in struct `Update`
+
+
 ## 1.3.0 (2023-11-30)
 ### Features Added
 

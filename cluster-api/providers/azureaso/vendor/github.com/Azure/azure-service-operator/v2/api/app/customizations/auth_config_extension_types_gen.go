@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20240301 "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301"
-	storage "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/storage"
+	v20240301s "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/storage"
+	v20250101 "github.com/Azure/azure-service-operator/v2/api/app/v1api20250101"
+	v20250101s "github.com/Azure/azure-service-operator/v2/api/app/v1api20250101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type AuthConfigExtension struct {
 func (extension *AuthConfigExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20240301.AuthConfig{},
-		&storage.AuthConfig{}}
+		&v20240301s.AuthConfig{},
+		&v20250101.AuthConfig{},
+		&v20250101s.AuthConfig{}}
 }

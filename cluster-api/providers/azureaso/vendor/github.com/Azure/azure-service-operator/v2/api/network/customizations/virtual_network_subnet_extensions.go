@@ -9,14 +9,18 @@ import (
 	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
+	network "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )
 
-var _ extensions.PostReconciliationChecker = &PrivateEndpointExtension{}
+var (
+	_ extensions.PostReconciliationChecker = &VirtualNetworksSubnetExtension{}
+	_ extensions.ErrorClassifier           = &VirtualNetworksSubnetExtension{}
+)
 
 func (extension *VirtualNetworksSubnetExtension) PostReconcileCheck(
 	_ context.Context,
@@ -49,4 +53,37 @@ func (extension *VirtualNetworksSubnetExtension) PostReconcileCheck(
 	}
 
 	return extensions.PostReconcileCheckResultSuccess(), nil
+}
+
+func (extension *VirtualNetworksSubnetExtension) ClassifyError(
+	cloudError *genericarmclient.CloudError,
+	apiVersion string,
+	log logr.Logger,
+	next extensions.ErrorClassifierFunc,
+) (core.CloudErrorDetails, error) {
+	details, err := next(cloudError)
+	if err != nil {
+		return core.CloudErrorDetails{}, err
+	}
+
+	if isRetryableSubnetError(cloudError) {
+		details.Classification = core.ErrorRetryable
+	}
+
+	return details, nil
+}
+
+func isRetryableSubnetError(err *genericarmclient.CloudError) bool {
+	if err == nil {
+		return false
+	}
+
+	// NetcfgSubnetRangeOutsideVnet occurs when a subnet's IP range is outside the VNet's allowed ranges.
+	// This can happen during simultaneous VNet and Subnet changes when the subnet is reconciled before the VNet.
+	// This should be retryable as the VNet may be updated soon to include the required range.
+	if err.Code() == "NetcfgSubnetRangeOutsideVnet" {
+		return true
+	}
+
+	return false
 }

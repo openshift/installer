@@ -45,14 +45,15 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
 	asometrics "github.com/Azure/azure-service-operator/v2/internal/metrics"
 	armreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm"
+	entrareconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/entra"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/generic"
+	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/migration/crd"
 	asocel "github.com/Azure/azure-service-operator/v2/internal/util/cel"
 	"github.com/Azure/azure-service-operator/v2/internal/util/interval"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/internal/util/lockedrand"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	common "github.com/Azure/azure-service-operator/v2/pkg/common/config"
-	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 )
 
@@ -81,22 +82,28 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 		os.Exit(1)
 	}
 
-	var cacheFunc cache.NewCacheFunc
+	cacheOpts := cache.Options{
+		// This will make sure that if we try to read an object that is not cached, we will fail rather than start a new informer
+		ReaderFailOnMissingInformer: true,
+	}
 	if cfg.TargetNamespaces != nil && cfg.OperatorMode.IncludesWatchers() {
-		cacheFunc = func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
-			opts.DefaultNamespaces = make(map[string]cache.Config, len(cfg.TargetNamespaces))
-			for _, ns := range cfg.TargetNamespaces {
-				opts.DefaultNamespaces[ns] = cache.Config{}
-			}
-
-			return cache.New(config, opts)
+		cacheOpts.DefaultNamespaces = make(map[string]cache.Config, len(cfg.TargetNamespaces))
+		for _, ns := range cfg.TargetNamespaces {
+			cacheOpts.DefaultNamespaces[ns] = cache.Config{}
 		}
 	}
 
 	k8sConfig := ctrl.GetConfigOrDie()
 	ctrlOptions := ctrl.Options{
-		Scheme:           scheme,
-		NewCache:         cacheFunc,
+		Scheme: scheme,
+		Cache:  cacheOpts,
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&apiextensions.CustomResourceDefinition{},
+				},
+			},
+		},
 		LeaderElection:   flgs.EnableLeaderElection,
 		LeaderElectionID: "controllers-leader-election-azinfra-generated",
 		// Manually set lease duration (to default) so that we can use it for our leader elector too.
@@ -191,7 +198,7 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 
 	if cfg.OperatorMode.IncludesWatchers() {
 		//nolint:contextcheck
-		err = initializeWatchers(readyResources, cfg, mgr, clients)
+		err = initializeWatchers(readyResources, cfg, mgr, clients, flgs)
 		if err != nil {
 			setupLog.Error(err, "failed to initialize watchers")
 			os.Exit(1)
@@ -207,7 +214,7 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs *Fla
 			os.Exit(1)
 		}
 
-		if errs := generic.RegisterWebhooks(mgr, objs); errs != nil {
+		if err = generic.RegisterWebhooks(mgr, objs); err != nil {
 			setupLog.Error(err, "failed to register webhook for gvks")
 			os.Exit(1)
 		}
@@ -350,28 +357,78 @@ func getDefaultAzureTokenCredential(cfg config.Values, setupLog logr.Logger) (az
 		return credential, nil
 	}
 
-	credential, err := azidentity.NewDefaultAzureCredential(
-		&azidentity.DefaultAzureCredentialOptions{
+	return newChainedCredential(cfg, setupLog)
+}
+
+// newChainedCredential creates a ChainedTokenCredential with EnvironmentCredential and ManagedIdentityCredential.
+func newChainedCredential(cfg config.Values, setupLog logr.Logger) (azcore.TokenCredential, error) {
+	creds := make([]azcore.TokenCredential, 0, 2)
+
+	// EnvironmentCredential reads AZURE_ADDITIONALLY_ALLOWED_TENANTS from the environment
+	envCred, err := azidentity.NewEnvironmentCredential(
+		&azidentity.EnvironmentCredentialOptions{
 			ClientOptions: azcore.ClientOptions{
 				Cloud: cfg.Cloud(),
 			},
-			AdditionallyAllowedTenants: cfg.AdditionalTenants,
 		})
 	if err != nil {
-		return nil, eris.Wrapf(err, "unable to get default azure credential")
+		setupLog.Error(err, "EnvironmentCredential not available")
+	} else {
+		creds = append(creds, envCred)
 	}
 
-	return credential, err
+	miCredOptions := &azidentity.ManagedIdentityCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cfg.Cloud(),
+		},
+	}
+	// If ClientID is set, use it for user-assigned managed identity
+	if cfg.ClientID != "" {
+		miCredOptions.ID = azidentity.ClientID(cfg.ClientID)
+	}
+	miCred, err := azidentity.NewManagedIdentityCredential(miCredOptions)
+	if err != nil {
+		setupLog.Error(err, "ManagedIdentityCredential not available")
+	} else {
+		creds = append(creds, miCred)
+	}
+
+	// We only return an error if there are no possible credentials to use.
+	// If only some credentials failed we suppress errors as it may be expected that
+	// not all credentials will work in a given environment.
+	if len(creds) == 0 {
+		return nil, eris.New("unable to create any credential: neither EnvironmentCredential nor ManagedIdentityCredential could be initialized")
+	}
+
+	chainedCred, err := azidentity.NewChainedTokenCredential(creds, nil)
+	if err != nil {
+		return nil, eris.Wrapf(err, "unable to create chained credential")
+	}
+
+	return chainedCred, nil
 }
 
 type clients struct {
-	positiveConditions   *conditions.PositiveConditionBuilder
-	armConnectionFactory armreconciler.ARMConnectionFactory
-	credentialProvider   identity.CredentialProvider
-	kubeClient           kubeclient.Client
-	expressionEvaluator  asocel.ExpressionEvaluator
-	log                  logr.Logger
-	options              generic.Options
+	positiveConditions     *conditions.PositiveConditionBuilder
+	armConnectionFactory   armreconciler.ARMConnectionFactory
+	entraConnectionFactory entrareconciler.EntraConnectionFactory
+	credentialProvider     identity.CredentialProvider
+	kubeClient             kubeclient.Client
+	expressionEvaluator    asocel.ExpressionEvaluator
+	log                    logr.Logger
+	options                generic.Options
+}
+
+func (c *clients) KubeClient() kubeclient.Client {
+	return c.kubeClient
+}
+
+func (c *clients) ARMConnectionFactory() armreconciler.ARMConnectionFactory {
+	return c.armConnectionFactory
+}
+
+func (c *clients) EntraConnectionFactory() entrareconciler.EntraConnectionFactory {
+	return c.entraConnectionFactory
 }
 
 func initializeClients(cfg config.Values, mgr ctrl.Manager) (*clients, error) {
@@ -391,21 +448,21 @@ func initializeClients(cfg config.Values, mgr ctrl.Manager) (*clients, error) {
 		credential,
 		kubeClient,
 		&identity.CredentialProviderOptions{
-			Cloud: to.Ptr(cfg.Cloud()),
+			Cloud:                   to.Ptr(cfg.Cloud()),
+			AllowMultiEnvManagement: cfg.AllowMultiEnvManagement,
 		})
 
 	armClientCache := armreconciler.NewARMClientCache(
 		credentialProvider,
-		kubeClient,
 		cfg.Cloud(),
 		nil,
 		armMetrics)
 
 	genericarmclient.AddToUserAgent(cfg.UserAgentSuffix)
 
-	var connectionFactory armreconciler.ARMConnectionFactory = func(ctx context.Context, obj genruntime.ARMMetaObject) (armreconciler.Connection, error) {
-		return armClientCache.GetConnection(ctx, obj)
-	}
+	entraClientCache := entrareconciler.NewEntraClientCache(
+		credentialProvider,
+		nil)
 
 	positiveConditions := conditions.NewPositiveConditionBuilder(clock.New())
 
@@ -419,27 +476,39 @@ func initializeClients(cfg config.Values, mgr ctrl.Manager) (*clients, error) {
 	// Register the evaluator for use by webhooks
 	asocel.RegisterEvaluator(expressionEvaluator)
 
-	options := makeControllerOptions(log, cfg)
+	options := makeControllerOptions(cfg)
 
 	return &clients{
-		positiveConditions:   positiveConditions,
-		armConnectionFactory: connectionFactory,
-		credentialProvider:   credentialProvider,
-		kubeClient:           kubeClient,
-		expressionEvaluator:  expressionEvaluator,
-		log:                  log,
-		options:              options,
+		positiveConditions:     positiveConditions,
+		armConnectionFactory:   armClientCache.GetConnection,
+		entraConnectionFactory: entraClientCache.GetConnection,
+		credentialProvider:     credentialProvider,
+		kubeClient:             kubeClient,
+		expressionEvaluator:    expressionEvaluator,
+		log:                    log,
+		options:                options,
 	}, nil
 }
 
-func initializeWatchers(readyResources map[string]apiextensions.CustomResourceDefinition, cfg config.Values, mgr ctrl.Manager, clients *clients) error {
+func initializeWatchers(
+	readyResources map[string]apiextensions.CustomResourceDefinition,
+	cfg config.Values,
+	mgr ctrl.Manager,
+	clients *clients,
+	flgs *Flags,
+) error {
 	clients.log.V(Status).Info("Configuration details", "config", cfg.String())
+
+	clientsProvider := &controllers.ClientsProvider{
+		KubeClient:             clients.kubeClient,
+		ARMConnectionFactory:   clients.armConnectionFactory,
+		EntraConnectionFactory: clients.entraConnectionFactory,
+	}
 
 	objs, err := controllers.GetKnownStorageTypes(
 		mgr,
-		clients.armConnectionFactory,
+		clientsProvider,
 		clients.credentialProvider,
-		clients.kubeClient,
 		clients.positiveConditions,
 		clients.expressionEvaluator,
 		clients.options)
@@ -464,10 +533,23 @@ func initializeWatchers(readyResources map[string]apiextensions.CustomResourceDe
 		return eris.Wrap(err, "failed to register gvks")
 	}
 
+	// Register other controllers
+	if flgs.CRDManagementMode == "auto" {
+		deprecatedVersions := crdmanagement.GetAllDeprecatedStorageVersions(readyResources)
+		for crdName, versions := range deprecatedVersions {
+			clients.log.V(Status).Info("Will migrate storedVersions", "crdName", crdName, "versions", versions)
+		}
+		// Register the CRD migration reconciler
+		err = crd.NewReconciler(clients.kubeClient, mgr.GetCache(), deprecatedVersions, crd.Options{}).SetupWithManager(mgr)
+		if err != nil {
+			return eris.Wrap(err, "failed to register CRD migration reconciler")
+		}
+	}
+
 	return nil
 }
 
-func makeControllerOptions(log logr.Logger, cfg config.Values) generic.Options {
+func makeControllerOptions(cfg config.Values) generic.Options {
 	var additionalRateLimiters []workqueue.TypedRateLimiter[reconcile.Request]
 	if cfg.RateLimit.Mode == config.RateLimitModeBucket {
 		additionalRateLimiters = append(
@@ -477,9 +559,9 @@ func makeControllerOptions(log logr.Logger, cfg config.Values) generic.Options {
 			})
 	}
 
-	// If sync period isn't set, set verySlow delay at 24h, otherwise set it
-	// to the sync period.
-	verySlowDelay := 24 * time.Hour
+	// If sync period isn't set, set verySlow delay at DefaultSyncInterval (1h), otherwise set it
+	// to the sync period
+	verySlowDelay := config.DefaultSyncInterval
 	if cfg.SyncPeriod != nil {
 		verySlowDelay = *cfg.SyncPeriod
 	}
@@ -488,14 +570,6 @@ func makeControllerOptions(log logr.Logger, cfg config.Values) generic.Options {
 		Config: cfg,
 		Options: controller.Options{
 			MaxConcurrentReconciles: cfg.MaxConcurrentReconciles,
-			LogConstructor: func(req *reconcile.Request) logr.Logger {
-				// refer to https://github.com/kubernetes-sigs/controller-runtime/pull/1827/files
-				if req == nil {
-					return log
-				}
-				// TODO: do we need GVK here too?
-				return log.WithValues("namespace", req.Namespace, "name", req.Name)
-			},
 			// These rate limits are used for happy-path backoffs (for example polling async operation IDs for PUT/DELETE)
 			RateLimiter: generic.NewRateLimiter(1*time.Second, 1*time.Minute, additionalRateLimiters...),
 		},
@@ -521,7 +595,12 @@ func newCRDManager(
 ) (*crdmanagement.Manager, error) {
 	crdScheme := runtime.NewScheme()
 	_ = apiextensions.AddToScheme(crdScheme)
-	crdClient, err := client.New(k8sConfig, client.Options{Scheme: crdScheme})
+	crdClient, err := client.New(
+		k8sConfig,
+		client.Options{
+			Scheme: crdScheme,
+			// nil cache means we don't use the cache (reading direct from API server)
+		})
 	if err != nil {
 		return nil, eris.Wrap(err, "unable to create CRD client")
 	}

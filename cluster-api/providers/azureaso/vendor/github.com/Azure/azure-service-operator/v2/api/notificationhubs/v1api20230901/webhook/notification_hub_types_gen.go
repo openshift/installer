@@ -116,7 +116,12 @@ func (notificationHub *NotificationHub) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (notificationHub *NotificationHub) createValidations() []func(ctx context.Context, obj *v20230901.NotificationHub) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230901.NotificationHub) (admission.Warnings, error){notificationHub.validateResourceReferences, notificationHub.validateOwnerReference, notificationHub.validateSecretDestinations, notificationHub.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230901.NotificationHub) (admission.Warnings, error){
+		notificationHub.validateResourceReferences,
+		notificationHub.validateOwnerReference,
+		notificationHub.validateSecretDestinations,
+		notificationHub.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

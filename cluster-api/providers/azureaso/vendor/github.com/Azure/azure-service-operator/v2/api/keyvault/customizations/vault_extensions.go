@@ -33,7 +33,6 @@ import (
 
 var _ extensions.ARMResourceModifier = &VaultExtension{}
 
-//nolint:staticcheck // Underscores for enum values is our convention in ASO
 const (
 	CreateMode_Default         = "default"
 	CreateMode_Recover         = "recover"
@@ -275,7 +274,7 @@ func (*VaultExtension) getOwner(
 	var id *arm.ResourceID
 
 	// No need to wait for resources that don't have an owner
-	switch owner.Result { // nolint: exhaustive
+	switch owner.Result {
 	case resolver.OwnerFoundKubernetes:
 		rg, ok := owner.Owner.(*resources.ResourceGroup)
 		if !ok {

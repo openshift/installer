@@ -4,8 +4,10 @@
 package customizations
 
 import (
-	v20230301 "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301"
-	storage "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301/storage"
+	alertsmanagement_v1api20230301 "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301"
+	alertsmanagement_v1api20230301s "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301/storage"
+	alertsmanagement_v20230301 "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301"
+	alertsmanagement_v20230301s "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -15,6 +17,8 @@ type PrometheusRuleGroupExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *PrometheusRuleGroupExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20230301.PrometheusRuleGroup{},
-		&storage.PrometheusRuleGroup{}}
+		&alertsmanagement_v1api20230301.PrometheusRuleGroup{},
+		&alertsmanagement_v1api20230301s.PrometheusRuleGroup{},
+		&alertsmanagement_v20230301.PrometheusRuleGroup{},
+		&alertsmanagement_v20230301s.PrometheusRuleGroup{}}
 }

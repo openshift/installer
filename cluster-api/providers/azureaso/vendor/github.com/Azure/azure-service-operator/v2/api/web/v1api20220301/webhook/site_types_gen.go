@@ -116,7 +116,12 @@ func (site *Site) ValidateUpdate(ctx context.Context, oldResource runtime.Object
 
 // createValidations validates the creation of the resource
 func (site *Site) createValidations() []func(ctx context.Context, obj *v20220301.Site) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220301.Site) (admission.Warnings, error){site.validateResourceReferences, site.validateOwnerReference, site.validateSecretDestinations, site.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220301.Site) (admission.Warnings, error){
+		site.validateResourceReferences,
+		site.validateOwnerReference,
+		site.validateSecretDestinations,
+		site.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

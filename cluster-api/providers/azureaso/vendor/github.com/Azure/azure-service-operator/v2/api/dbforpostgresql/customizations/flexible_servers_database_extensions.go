@@ -11,41 +11,36 @@ import (
 
 	"github.com/go-logr/logr"
 
-	api "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801"
-	hub "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage"
+	api "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801"
+	hub "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )
 
-var _ extensions.PreReconciliationChecker = &FlexibleServersDatabaseExtension{}
+var _ extensions.PreReconciliationOwnerChecker = &FlexibleServersDatabaseExtension{}
 
-func (extension *FlexibleServersDatabaseExtension) PreReconcileCheck(
-	_ context.Context,
-	_ genruntime.MetaObject,
+func (extension *FlexibleServersDatabaseExtension) PreReconcileOwnerCheck(
+	ctx context.Context,
 	owner genruntime.MetaObject,
-	_ *resolver.Resolver,
-	_ *genericarmclient.GenericClient,
-	_ logr.Logger,
-	_ extensions.PreReconcileCheckFunc,
+	resourceResolver *resolver.Resolver,
+	armClient *genericarmclient.GenericClient,
+	log logr.Logger,
+	next extensions.PreReconcileOwnerCheckFunc,
 ) (extensions.PreReconcileCheckResult, error) {
 	// Check to see if our owning server is ready for the database to be reconciled
-	if owner == nil {
-		// TODO: query from ARM instead?
-		return extensions.ProceedWithReconcile(), nil
-	}
 	if server, ok := owner.(*hub.FlexibleServer); ok {
 		serverState := server.Status.State
 		if serverState != nil && flexibleServerStateBlocksReconciliation(*serverState) {
 			return extensions.BlockReconcile(
 				fmt.Sprintf(
-					"Owning FlexibleServer is in provisioning state %q",
+					"Owning FlexibleServer is in state %q",
 					*serverState)), nil
 		}
 	}
 
-	return extensions.ProceedWithReconcile(), nil
+	return next(ctx, owner, resourceResolver, armClient, log)
 }
 
 var _ extensions.Importer = &FlexibleServersDatabaseExtension{}

@@ -79,7 +79,7 @@ func (s *VMSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the virtual machine.
-func (s *VMSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s *VMSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armcompute.VirtualMachine); !ok {
 			return nil, errors.Errorf("%T is not an armcompute.VirtualMachine", existing)
@@ -344,6 +344,14 @@ func (s *VMSpec) generateSecurityProfile(storageProfile *armcompute.StorageProfi
 		securityProfile.UefiSettings = &armcompute.UefiSettings{
 			SecureBootEnabled: s.SecurityProfile.UefiSettings.SecureBootEnabled,
 			VTpmEnabled:       s.SecurityProfile.UefiSettings.VTpmEnabled,
+		}
+
+		if s.SecurityProfile.EncryptionAtHost != nil {
+			if !s.SKU.HasCapability(resourceskus.EncryptionAtHost) && *s.SecurityProfile.EncryptionAtHost {
+				return nil, azure.WithTerminalError(errors.Errorf("encryption at host is not supported for VM type %s", s.Size))
+			}
+
+			securityProfile.EncryptionAtHost = s.SecurityProfile.EncryptionAtHost
 		}
 
 		return securityProfile, nil
