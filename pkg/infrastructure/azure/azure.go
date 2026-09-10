@@ -589,8 +589,10 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	return nil
 }
 
-// PostProvision provisions an external Load Balancer (when appropriate), and adds configuration
-// for the MCS to the CAPI-provisioned internal LB.
+// PostProvision creates SSH inbound NAT rules for diagnostic access and
+// associates control plane VMs with load balancer backend pools.
+// This method is called via defer so it runs even when machine provisioning
+// fails, ensuring SSH access to the bootstrap node for log gathering.
 func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	ssn, err := in.InstallConfig.Azure.Session()
 	if err != nil {
@@ -599,6 +601,13 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 	subscriptionID := ssn.Credentials.SubscriptionID
 
 	if in.InstallConfig.Config.PublicAPI() {
+		// Create SSH inbound NAT rules first. These are needed for
+		// diagnostic log gathering even when control-plane provisioning
+		// fails, and only require the bootstrap NIC to exist.
+		if sshErr := p.createSSHNATRules(ctx, in.InfraID, subscriptionID, in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled()); sshErr != nil {
+			logrus.Warnf("failed to create SSH NAT rules (SSH to bootstrap may be unavailable): %v", sshErr)
+		}
+
 		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, p.computeClientOptions)
 		if err != nil {
 			return fmt.Errorf("error creating vm client: %w", err)
@@ -620,86 +629,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 
 		if err = associateVMToBackendPool(ctx, *vmInput); err != nil {
 			return fmt.Errorf("failed to associate control plane VMs with external load balancer: %w", err)
-		}
-
-		sshRuleName := fmt.Sprintf("%s_ssh_in", in.InfraID)
-
-		loadBalancerName := in.InfraID
-		frontendIPConfigName := "public-lb-ip-v4"
-		frontendIPConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
-			subscriptionID,
-			p.ResourceGroupName,
-			loadBalancerName,
-			frontendIPConfigName,
-		)
-
-		// Create an inbound nat rule that forwards port 22 on the
-		// public load balancer to the bootstrap host. This takes 2
-		// stages to accomplish. First, the nat rule needs to be added
-		// to the frontend IP configuration on the public load
-		// balancer. Second, the nat rule needs to be addded to the
-		// bootstrap interface with the association to the rule on the
-		// public load balancer.
-		inboundNatRule, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
-			resourceGroupName:    p.ResourceGroupName,
-			loadBalancerName:     loadBalancerName,
-			frontendIPConfigID:   frontendIPConfigID,
-			inboundNatRuleName:   sshRuleName,
-			inboundNatRulePort:   22,
-			networkClientFactory: p.NetworkClientFactory,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create inbound nat rule: %w", err)
-		}
-		_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
-			resourceGroupName:    p.ResourceGroupName,
-			loadBalancerName:     loadBalancerName,
-			bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", in.InfraID),
-			frontendIPConfigID:   frontendIPConfigID,
-			inboundNatRuleID:     *inboundNatRule.ID,
-			inboundNatRuleName:   sshRuleName,
-			inboundNatRulePort:   22,
-			networkClientFactory: p.NetworkClientFactory,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to associate inbound nat rule to interface: %w", err)
-		}
-
-		// For dual-stack, create IPv6 inbound rule for SSH access to bootstrap.
-		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
-			frontendIPv6ConfigName := "public-lb-ip-v6"
-			sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", in.InfraID)
-			frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
-				subscriptionID,
-				p.ResourceGroupName,
-				loadBalancerName,
-				frontendIPv6ConfigName,
-			)
-
-			inboundNatRuleV6, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
-				resourceGroupName:    p.ResourceGroupName,
-				loadBalancerName:     loadBalancerName,
-				frontendIPConfigID:   frontendIPv6ConfigID,
-				inboundNatRuleName:   sshRuleNameV6,
-				inboundNatRulePort:   22,
-				networkClientFactory: p.NetworkClientFactory,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to create IPv6 SSH inbound nat rule: %w", err)
-			}
-			_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
-				resourceGroupName:    p.ResourceGroupName,
-				loadBalancerName:     loadBalancerName,
-				bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", in.InfraID),
-				frontendIPConfigID:   frontendIPv6ConfigID,
-				inboundNatRuleID:     *inboundNatRuleV6.ID,
-				inboundNatRuleName:   sshRuleNameV6,
-				inboundNatRulePort:   22,
-				networkClientFactory: p.NetworkClientFactory,
-			})
-			if err != nil {
-				return fmt.Errorf("failed to associate IPv6 SSH inbound nat rule to interface: %w", err)
-			}
 		}
 	}
 
@@ -737,6 +666,84 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 			return fmt.Errorf("failed to update bootstrap nic with IPv6 backend pools: %w", err)
 		}
 		logrus.Debugf("associated bootstrap NIC with IPv6 backend pools")
+	}
+
+	return nil
+}
+
+// createSSHNATRules creates an inbound NAT rule that forwards port 22 on the
+// public load balancer to the bootstrap host, and associates it with the
+// bootstrap NIC. For dual-stack clusters, an IPv6 rule is also created.
+func (p *Provider) createSSHNATRules(ctx context.Context, infraID, subscriptionID string, isDualStack bool) error {
+	sshRuleName := fmt.Sprintf("%s_ssh_in", infraID)
+	loadBalancerName := infraID
+	frontendIPConfigName := "public-lb-ip-v4"
+	frontendIPConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
+		subscriptionID,
+		p.ResourceGroupName,
+		loadBalancerName,
+		frontendIPConfigName,
+	)
+
+	inboundNatRule, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
+		resourceGroupName:    p.ResourceGroupName,
+		loadBalancerName:     loadBalancerName,
+		frontendIPConfigID:   frontendIPConfigID,
+		inboundNatRuleName:   sshRuleName,
+		inboundNatRulePort:   22,
+		networkClientFactory: p.NetworkClientFactory,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create inbound nat rule: %w", err)
+	}
+	_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
+		resourceGroupName:    p.ResourceGroupName,
+		loadBalancerName:     loadBalancerName,
+		bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", infraID),
+		frontendIPConfigID:   frontendIPConfigID,
+		inboundNatRuleID:     *inboundNatRule.ID,
+		inboundNatRuleName:   sshRuleName,
+		inboundNatRulePort:   22,
+		networkClientFactory: p.NetworkClientFactory,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to associate inbound nat rule to interface: %w", err)
+	}
+
+	if isDualStack {
+		frontendIPv6ConfigName := "public-lb-ip-v6"
+		sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", infraID)
+		frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
+			subscriptionID,
+			p.ResourceGroupName,
+			loadBalancerName,
+			frontendIPv6ConfigName,
+		)
+
+		inboundNatRuleV6, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
+			resourceGroupName:    p.ResourceGroupName,
+			loadBalancerName:     loadBalancerName,
+			frontendIPConfigID:   frontendIPv6ConfigID,
+			inboundNatRuleName:   sshRuleNameV6,
+			inboundNatRulePort:   22,
+			networkClientFactory: p.NetworkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create IPv6 SSH inbound nat rule: %w", err)
+		}
+		_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
+			resourceGroupName:    p.ResourceGroupName,
+			loadBalancerName:     loadBalancerName,
+			bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", infraID),
+			frontendIPConfigID:   frontendIPv6ConfigID,
+			inboundNatRuleID:     *inboundNatRuleV6.ID,
+			inboundNatRuleName:   sshRuleNameV6,
+			inboundNatRulePort:   22,
+			networkClientFactory: p.NetworkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to associate IPv6 SSH inbound nat rule to interface: %w", err)
+		}
 	}
 
 	return nil
