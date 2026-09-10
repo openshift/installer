@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -532,10 +531,32 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	return createBlockBlob(ctx, in)
 }
 
+func blockBlobClientOptions(clientOpts *arm.ClientOptions, allowSharedKeyAccess bool) *blockblob.ClientOptions {
+	options := &blockblob.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: clientOpts.Cloud,
+		},
+	}
+	if !allowSharedKeyAccess {
+		options.Retry.StatusCodes = []int{
+			http.StatusRequestTimeout,
+			http.StatusTooManyRequests,
+			http.StatusInternalServerError,
+			http.StatusBadGateway,
+			http.StatusServiceUnavailable,
+			http.StatusGatewayTimeout,
+			// Include 403 to retry the observed storage authorization-propagation error.
+			http.StatusForbidden,
+		}
+	}
+	return options
+}
+
 func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
 	logrus.Debugf("Getting block blob client")
 	var blockBlobClient *blockblob.Client
 	var err error
+	clientOptions := blockBlobClientOptions(in.ClientOpts, in.AllowSharedKeyAccess)
 	if in.AllowSharedKeyAccess {
 		if len(in.StorageAccountKeys) == 0 || in.StorageAccountKeys[0].Value == nil {
 			return "", fmt.Errorf("missing storage account key for shared-key block blob upload")
@@ -547,11 +568,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		blockBlobClient, err = blockblob.NewClientWithSharedKeyCredential(
 			in.BlobURL,
 			sharedKeyCredential,
-			&blockblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
+			clientOptions,
 		)
 		if err != nil {
 			return "", fmt.Errorf("failed to get block blob client: %w", err)
@@ -560,11 +577,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		blockBlobClient, err = blockblob.NewClient(
 			in.BlobURL,
 			in.TokenCredential,
-			&blockblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
+			clientOptions,
 		)
 		if err != nil {
 			return "", fmt.Errorf("failed to get block blob client: %w", err)
@@ -574,12 +587,8 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	logrus.Debugf("Creating block blob")
 
 	accessTier := blob.AccessTierHot
-	err = uploadBlockBlobWithRetry(ctx, blockBlobClient, in.BootstrapIgnData, &blockblob.UploadOptions{
+	_, err = blockBlobClient.Upload(ctx, streaming.NopCloser(bytes.NewReader(in.BootstrapIgnData)), &blockblob.UploadOptions{
 		Tier: &accessTier,
-	}, !in.AllowSharedKeyAccess, wait.Backoff{
-		Duration: retryTime,
-		Factor:   2,
-		Steps:    retryCount,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to create block blob: %w", err)
@@ -593,55 +602,6 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	}
 
 	return "", nil
-}
-
-type blockBlobUploader interface {
-	Upload(context.Context, io.ReadSeekCloser, *blockblob.UploadOptions) (blockblob.UploadResponse, error)
-}
-
-func uploadBlockBlobWithRetry(ctx context.Context, client blockBlobUploader, data []byte, options *blockblob.UploadOptions, tokenCredential bool, backoff wait.Backoff) error {
-	var lastErr error
-	attempts := 0
-	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
-		attempts++
-		_, lastErr = client.Upload(ctx, streaming.NopCloser(bytes.NewReader(data)), options)
-		if lastErr == nil {
-			return true, nil
-		}
-
-		responseErr := authorizationPropagationResponseError(lastErr)
-		if !tokenCredential || responseErr == nil {
-			return false, lastErr
-		}
-		if attempts < backoff.Steps {
-			logrus.Infof("Block blob upload failed with %s while authorization propagates, retrying in %s", responseErr.ErrorCode, backoff.Duration)
-		}
-		return false, nil
-	})
-	if err == nil {
-		return nil
-	}
-	if lastErr != nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
-		return fmt.Errorf("block blob upload retry stopped: %w (last upload error: %w)", err, lastErr)
-	}
-	if wait.Interrupted(err) && lastErr != nil {
-		return lastErr
-	}
-	return err
-}
-
-func authorizationPropagationResponseError(err error) *azcore.ResponseError {
-	var responseErr *azcore.ResponseError
-	if !errors.As(err, &responseErr) || responseErr.StatusCode != http.StatusForbidden {
-		return nil
-	}
-
-	switch responseErr.ErrorCode {
-	case "AuthorizationPermissionMismatch", "AuthorizationFailure":
-		return responseErr
-	default:
-		return nil
-	}
 }
 
 func createBlockBlobOnStack(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
