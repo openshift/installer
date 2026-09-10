@@ -2,6 +2,16 @@ module openshift/installer/cluster-api/providers/azure
 
 go 1.26.0
 
+// Pinned to a post-v1.26.0 snapshot (commit cd32dffe9f12) rather than a tag.
+// It carries two changes absent from both v1.26.0 and v1.26.1: NAT gateway zone
+// support, and the managed-disk encryptionAtHost SKU capability check from
+// upstream PR #6531. Snapshot checksums are recorded in go.sum.
+//
+// Drop the pin for CAPZ v1.27.0, the first tag containing cd32dffe9f12. That
+// bump needs CAPI v1.14.0, so it must land with the repo-wide CAPI bump from
+// v1.13.4 across all cluster-api/providers/* modules -- upgrading this module
+// alone would put the Azure provider on a different CAPI version than the local
+// control plane and the other providers.
 require sigs.k8s.io/cluster-api-provider-azure v1.26.1-0.20260811154716-cd32dffe9f12
 
 require (
