@@ -378,3 +378,5 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 // Temporary vendoring of upstream providers while they work to update to capi v1.11, which contains breaking changes
 // See: https://issues.redhat.com/browse/CORS-4262
 replace github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
+
+replace github.com/openshift/api => github.com/patrickdillon/api v0.0.0-20260910192936-8b082569b16a
