@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_findImagePrefix(t *testing.T) {
+func TestFindImagePrefix(t *testing.T) {
 	tests := []struct {
 		name           string
 		imgSource      string

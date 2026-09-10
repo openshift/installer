@@ -68,7 +68,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	if p.PreloadedOSImageName != "" {
 		err = validatePreloadedImage(ctx, nc, p, ic.OSImageStream)
 		if err != nil {
-			errList = append(errList, field.Invalid(parentPath.Child("preloadedOSImageName"), p.PreloadedOSImageName, fmt.Sprintf("could not validate preloaded rhcos image: %v", err)))
+			errList = append(errList, field.Invalid(parentPath.Child("preloadedOSImageName"), p.PreloadedOSImageName, fmt.Sprintf("could not validate preloaded CoreOS image: %v", err)))
 		}
 	}
 
@@ -114,6 +114,9 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	return errList.ToAggregate()
 }
 
+// validatePreloadedImage validates that the preloaded OS image in Nutanix has a compatible
+// CoreOS version relative to the version bundled with the installer. It supports both
+// RHCOS and SCOS image name prefixes in the image source URI.
 func validatePreloadedImage(ctx context.Context, nc *nutanixclientv3.Client, p *nutanixtypes.Platform, osImageStream types.OSImageStream) error {
 	// retrieve the CoreOS release version
 	coreOSStream, err := rhcos.FetchCoreOSBuild(ctx, osImageStream)
@@ -151,7 +154,7 @@ func validatePreloadedImage(ctx context.Context, nc *nutanixclientv3.Client, p *
 	// Support both RHCOS (rhcos-) and SCOS (scos-) image name prefixes in the source URI
 	prefix, si := findImagePrefix(imgSource)
 	if si < 0 {
-		return fmt.Errorf("could not obtain rhcos image version from source_uri of preloaded object %s %s", p.PreloadedOSImageName, imgSource)
+		return fmt.Errorf("could not obtain CoreOS image version from source_uri of preloaded object %s %s", p.PreloadedOSImageName, imgSource)
 	}
 	verStr := strings.Split(imgSource[si+len(prefix):], ".")[0]
 	imgVerNum, err := strconv.Atoi(verStr)
