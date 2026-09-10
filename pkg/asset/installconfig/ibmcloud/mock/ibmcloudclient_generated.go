@@ -679,6 +679,21 @@ func (mr *MockAPIMockRecorder) GetVSIProfiles(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSIProfiles", reflect.TypeOf((*MockAPI)(nil).GetVSIProfiles), ctx)
 }
 
+// GetResourceInstance mocks base method.
+func (m *MockAPI) GetResourceInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceInstance", ctx, crnstr)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResourceInstance indicates an expected call of GetResourceInstance.
+func (mr *MockAPIMockRecorder) GetResourceInstance(ctx, crnstr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceInstance", reflect.TypeOf((*MockAPI)(nil).GetResourceInstance), ctx, crnstr)
+}
+
 // ListCOSBuckets mocks base method.
 func (m *MockAPI) ListCOSBuckets(ctx context.Context, cosInstanceID, region string) (*s3.ListBucketsOutput, error) {
 	m.ctrl.T.Helper()

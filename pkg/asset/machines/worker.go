@@ -217,7 +217,7 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 		logrus.Warnf("could not UpdateSessionStoreToAuthFile in defaultPowerVSMachinePoolPlatform")
 	}
 
-	client, err = powervsconfig.NewClient()
+	client, err = powervsconfig.NewClientWithEndpoints(ic.Platform.PowerVS.ServiceEndpoints)
 	if err != nil {
 		fallback = true
 		logrus.Warnf("could not get client in defaultPowerVSMachinePoolPlatform")

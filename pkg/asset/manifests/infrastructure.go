@@ -342,8 +342,17 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			return errors.New("unknown publishing strategy")
 		}
 		for _, service := range installConfig.Config.Platform.PowerVS.ServiceEndpoints {
+			// TransitGateway is a CAPI-only endpoint — not a valid configv1.PowerVSServiceEndpoint name.
+			// POWER is a case-incorrect alias for Power — normalise it.
+			name := service.Name
+			if name == "POWER" {
+				name = "Power"
+			}
+			if name == "TransitGateway" {
+				continue
+			}
 			config.Spec.PlatformSpec.PowerVS.ServiceEndpoints = append(config.Spec.PlatformSpec.PowerVS.ServiceEndpoints, configv1.PowerVSServiceEndpoint{
-				Name: service.Name,
+				Name: name,
 				URL:  service.URL,
 			})
 		}

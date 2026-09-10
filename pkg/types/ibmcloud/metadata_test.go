@@ -20,6 +20,8 @@ var (
 	resourceControllerURL = "test-rc-url.com"
 	resourceManagerURL    = "test-rm-url.com"
 	vpcURL                = "test-vpc-url.com"
+	transitGatewayURL     = "test-tg-url.com"
+	powerVSURL            = "test-pvs-url.com"
 )
 
 func TestGetRegionAndEndpointsFlag(t *testing.T) {
@@ -93,8 +95,16 @@ func TestGetRegionAndEndpointsFlag(t *testing.T) {
 					Name: configv1.IBMCloudServiceVPC,
 					URL:  vpcURL,
 				},
+				{
+					Name: "TransitGateway",
+					URL:  transitGatewayURL,
+				},
+				{
+					Name: "PowerVS",
+					URL:  powerVSURL,
+				},
 			},
-			expectedResult: fmt.Sprintf("%s:%s=%s,%s=%s,%s=%s,%s=%s,%s=%s", regionUSSouth, "cos", cosURL, "globaltagging", globalTaggingURL, "rc", resourceControllerURL, "rm", resourceManagerURL, "vpc", vpcURL),
+			expectedResult: fmt.Sprintf("%s:%s=%s,%s=%s,%s=%s,%s=%s,%s=%s,%s=%s,%s=%s", regionUSSouth, "cos", cosURL, "globaltagging", globalTaggingURL, "rc", resourceControllerURL, "rm", resourceManagerURL, "vpc", vpcURL, "transitgateway", transitGatewayURL, "powervs", powerVSURL),
 		},
 	}
 

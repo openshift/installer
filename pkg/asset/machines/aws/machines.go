@@ -264,10 +264,10 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		SecurityGroups:    securityGroups,
 	}
 
-	visibility := "private"
+	visibility := subnetScopePrivate
 	if in.publicSubnet {
 		config.PublicIP = pointer.Bool(in.publicSubnet)
-		visibility = "public"
+		visibility = subnetScopePublic
 	}
 
 	subnetFilters := []machineapi.Filter{
