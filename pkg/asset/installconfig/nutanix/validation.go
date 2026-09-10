@@ -68,7 +68,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	if p.PreloadedOSImageName != "" {
 		err = validatePreloadedImage(ctx, nc, p, ic.OSImageStream)
 		if err != nil {
-			errList = append(errList, field.Invalid(parentPath.Child("preloadedOSImageName"), p.PreloadedOSImageName, fmt.Sprintf("fail to validate the preloaded rhcos image: %v", err)))
+			errList = append(errList, field.Invalid(parentPath.Child("preloadedOSImageName"), p.PreloadedOSImageName, fmt.Sprintf("could not validate preloaded CoreOS image: %v", err)))
 		}
 	}
 
@@ -114,60 +114,76 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	return errList.ToAggregate()
 }
 
+// validatePreloadedImage validates that the preloaded OS image in Nutanix has a compatible
+// CoreOS version relative to the version bundled with the installer. It supports both
+// RHCOS and SCOS image name prefixes in the image source URI.
 func validatePreloadedImage(ctx context.Context, nc *nutanixclientv3.Client, p *nutanixtypes.Platform, osImageStream types.OSImageStream) error {
-	// retrieve the rhcos release version
-	rhcosStream, err := rhcos.FetchCoreOSBuild(ctx, osImageStream)
+	// retrieve the CoreOS release version
+	coreOSStream, err := rhcos.FetchCoreOSBuild(ctx, osImageStream)
 	if err != nil {
 		return err
 	}
 
-	arch, ok := rhcosStream.Architectures["x86_64"]
+	arch, ok := coreOSStream.Architectures["x86_64"]
 	if !ok {
-		return fmt.Errorf("unable to find the x86_64 rhcos architecture")
+		return fmt.Errorf("unable to find the x86_64 CoreOS architecture")
 	}
 	artifacts, ok := arch.Artifacts["nutanix"]
 	if !ok {
-		return fmt.Errorf("unable to find the x86_64 nutanix rhcos artifacts")
+		return fmt.Errorf("unable to find the x86_64 nutanix CoreOS artifacts")
 	}
-	rhcosReleaseVersion := artifacts.Release
+	coreOSReleaseVersion := artifacts.Release
 
-	// retrieve the rhcos version number from rhcosReleaseVersion
-	rhcosVerNum, err := strconv.Atoi(strings.Split(rhcosReleaseVersion, ".")[0])
+	// retrieve the CoreOS version number from coreOSReleaseVersion
+	coreOSVerNum, err := strconv.Atoi(strings.Split(coreOSReleaseVersion, ".")[0])
 	if err != nil {
-		return fmt.Errorf("failed to get the rhcos image version number from the version string %s: %w", rhcosReleaseVersion, err)
+		return fmt.Errorf("failed to get the CoreOS image version number from the version string %s: %w", coreOSReleaseVersion, err)
 	}
 
-	// retrieve the rhcos version number from the preloaded image object
+	// retrieve the CoreOS version number from the preloaded image object
 	imgUUID, err := nutanixtypes.FindImageUUIDByName(ctx, nc, p.PreloadedOSImageName)
 	if err != nil {
 		return err
 	}
 	imgResp, err := nc.V3.GetImage(ctx, *imgUUID)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve the rhcos image with uuid %s: %w", *imgUUID, err)
+		return fmt.Errorf("failed to retrieve the CoreOS image with uuid %s: %w", *imgUUID, err)
 	}
 	imgSource := *imgResp.Status.Resources.SourceURI
 
-	si := strings.LastIndex(imgSource, "/rhcos-")
+	// Support both RHCOS (rhcos-) and SCOS (scos-) image name prefixes in the source URI
+	prefix, si := findImagePrefix(imgSource)
 	if si < 0 {
-		return fmt.Errorf("failed to get the rhcos image version from the preloaded image %s object's source_uri %s", p.PreloadedOSImageName, imgSource)
+		return fmt.Errorf("could not obtain CoreOS image version from source_uri of preloaded object %s %s", p.PreloadedOSImageName, imgSource)
 	}
-	verStr := strings.Split(imgSource[si+7:], ".")[0]
+	verStr := strings.Split(imgSource[si+len(prefix):], ".")[0]
 	imgVerNum, err := strconv.Atoi(verStr)
 	if err != nil {
-		return fmt.Errorf("failed to get the rhcos image version number from the version string %s: %w", verStr, err)
+		return fmt.Errorf("failed to get the CoreOS image version number from the version string %s: %w", verStr, err)
 	}
 
-	// verify that the image version numbers are compactible
-	versionDiff := rhcosVerNum - imgVerNum
+	// verify that the image version numbers are compatible
+	versionDiff := coreOSVerNum - imgVerNum
 	switch {
 	case versionDiff < 0:
-		return fmt.Errorf("the preloaded image's rhcos version: %v is too many revisions ahead the installer bundled rhcos version: %v", imgVerNum, rhcosVerNum)
+		return fmt.Errorf("the preloaded image's CoreOS version: %v is too many revisions ahead the installer bundled CoreOS version: %v", imgVerNum, coreOSVerNum)
 	case versionDiff >= 2:
-		return fmt.Errorf("the preloaded image's rhcos version: %v is too many revisions behind the installer bundled rhcos version: %v", imgVerNum, rhcosVerNum)
+		return fmt.Errorf("the preloaded image's CoreOS version: %v is too many revisions behind the installer bundled CoreOS version: %v", imgVerNum, coreOSVerNum)
 	case versionDiff == 1:
-		logrus.Warnf("the preloaded image's rhcos version: %v is behind the installer bundled rhcos version: %v, installation may fail", imgVerNum, rhcosVerNum)
+		logrus.Warnf("the preloaded image's CoreOS version: %v is behind the installer bundled CoreOS version: %v, installation may fail", imgVerNum, coreOSVerNum)
 	}
 
 	return nil
+}
+
+// findImagePrefix searches the source URI for known CoreOS image name prefixes.
+// It returns the matched prefix string and its index in the source URI.
+// Returns ("", -1) if no known prefix is found.
+func findImagePrefix(imgSource string) (string, int) {
+	for _, prefix := range []string{"/rhcos-", "/scos-"} {
+		if si := strings.LastIndex(imgSource, prefix); si >= 0 {
+			return prefix, si
+		}
+	}
+	return "", -1
 }
