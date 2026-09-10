@@ -20,6 +20,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // Name returns the human-friendly name of the asset.
@@ -37,7 +39,10 @@ var _ asset.Asset = (*IngressOperatorSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the the cert/key pair.
 func (a *IngressOperatorSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{
+		&installconfig.InstallConfig{},
+		&tls.SignerKeyParams{},
+	}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
@@ -45,27 +50,38 @@ func (a *IngressOperatorSignerCertKey) Generate(ctx context.Context, dependencie
 	signerName := fmt.Sprintf("%s@%d", "ingress-operator", time.Now().Unix())
 
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	pkiCfg := &tls.SignerKeyParams{}
+	dependencies.Get(installConfig, pkiCfg)
 
-	cfg := &tls.CertCfg{
-		Subject:   pkix.Name{CommonName: signerName},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  tls.ValidityOneYear(installConfig) * 2,
-		IsCA:      true,
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &tls.CertCfg{
+			Subject:   pkix.Name{CommonName: signerName},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  tls.ValidityOneYear(installConfig) * 2,
+			IsCA:      true,
+		}
+		key, crt, err := generateSelfSignedCertificate(cfg)
+		if err != nil {
+			return err
+		}
+		a.KeyRaw, err = tls.PrivateKeyToPem(key)
+		if err != nil {
+			return fmt.Errorf("failed to encode private key to PEM: %w", err)
+		}
+		a.CertRaw = tls.CertToPem(crt)
+		return nil
 	}
 
-	key, crt, err := generateSelfSignedCertificate(cfg)
+	keyGen, err := resolveSignerKeyGen(pkiCfg, "installer.ingress-operator-signer")
 	if err != nil {
 		return err
 	}
-
-	a.KeyRaw, err = tls.PrivateKeyToPem(key)
-	if err != nil {
-		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	cfg := &tls.CertCfg{
+		Subject:  pkix.Name{CommonName: signerName},
+		Validity: tls.ValidityOneYear(installConfig) * 2,
+		IsCA:     true,
 	}
-	a.CertRaw = tls.CertToPem(crt)
-
-	return nil
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "ingress-operator-signer", keyGen)
 }
 
 // IngressOperatorCABundle is the asset the generates the ingress-operator-signer-ca-bundle,
@@ -174,4 +190,15 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 
 	hash := sha1.Sum(publicKeyBytes) //nolint: gosec
 	return hash[:], nil
+}
+
+// resolveSignerKeyGen resolves the KeyPairGenerator for a signer certificate
+// from the SignerKeyParams's profile.
+func resolveSignerKeyGen(pkiCfg *tls.SignerKeyParams, certName string) (libcrypto.KeyPairGenerator, error) {
+	provider := libpki.NewStaticPKIProfileProvider(&pkiCfg.Profile)
+	resolved, err := libpki.ResolveCertificateConfig(provider, libpki.CertificateTypeSigner, certName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve PKI config for signer certificate %q: %w", certName, err)
+	}
+	return resolved.Key, nil
 }

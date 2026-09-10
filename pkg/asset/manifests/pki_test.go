@@ -7,107 +7,142 @@ import (
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 
-	configv1 "github.com/openshift/api/config/v1"
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/asset/tls"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 func TestPKIConfigurationGenerate(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		name                string
-		installConfig       *types.InstallConfig
+		signerKeyParams     *tls.SignerKeyParams
 		expectEmpty         bool
 		expectMode          configv1alpha1.PKICertificateManagementMode
 		expectSignerAlgo    configv1alpha1.KeyAlgorithm
 		expectSignerRSA     int32
 		expectSignerCurve   configv1alpha1.ECDSACurve
 		expectDefaultsAlgo  configv1alpha1.KeyAlgorithm
-		expectDefaultsRSA   int32
 		expectDefaultsCurve configv1alpha1.ECDSACurve
 	}{
 		{
 			name: "feature gate disabled - no manifest generated",
-			installConfig: &types.InstallConfig{
-				FeatureSet: configv1.Default,
+			signerKeyParams: &tls.SignerKeyParams{
+				ConfigurablePKIEnabled: false,
 			},
 			expectEmpty: true,
 		},
 		{
-			name: "feature gate enabled, pki nil - mode Default",
-			installConfig: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
+			name: "feature gate enabled, no user profile - mode Default",
+			signerKeyParams: &tls.SignerKeyParams{
+				Profile:                libpki.DefaultPKIProfile(),
+				ConfigurablePKIEnabled: true,
+				UserProvidedProfile:    false,
 			},
 			expectEmpty: false,
 			expectMode:  configv1alpha1.PKICertificateManagementModeDefault,
 		},
 		{
+			name: "feature gate enabled, user profile equals default - mode Custom",
+			signerKeyParams: &tls.SignerKeyParams{
+				Profile:                libpki.DefaultPKIProfile(),
+				ConfigurablePKIEnabled: true,
+				UserProvidedProfile:    true,
+			},
+			expectEmpty:         false,
+			expectMode:          configv1alpha1.PKICertificateManagementModeCustom,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmECDSA,
+			expectSignerCurve:   configv1alpha1.ECDSACurveP384,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
+		},
+		{
 			name: "feature gate enabled, pki RSA-4096",
-			installConfig: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				PKI: &types.PKIConfig{
-					SignerCertificates: types.CertificateConfig{
-						Key: types.KeyConfig{
-							Algorithm: types.KeyAlgorithmRSA,
-							RSA:       &types.RSAKeyConfig{KeySize: 4096},
+			signerKeyParams: &tls.SignerKeyParams{
+				Profile: configv1alpha1.PKIProfile{
+					Defaults: configv1alpha1.DefaultCertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
+							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP256},
+						},
+					},
+					SignerCertificates: configv1alpha1.CertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmRSA,
+							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 4096},
 						},
 					},
 				},
+				ConfigurablePKIEnabled: true,
+				UserProvidedProfile:    true,
 			},
-			expectEmpty:        false,
-			expectMode:         configv1alpha1.PKICertificateManagementModeCustom,
-			expectSignerAlgo:   configv1alpha1.KeyAlgorithmRSA,
-			expectSignerRSA:    4096,
-			expectDefaultsAlgo: configv1alpha1.KeyAlgorithmRSA,
-			expectDefaultsRSA:  4096,
+			expectEmpty:         false,
+			expectMode:          configv1alpha1.PKICertificateManagementModeCustom,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmRSA,
+			expectSignerRSA:     4096,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
 		{
 			name: "feature gate enabled, pki ECDSA P-384",
-			installConfig: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				PKI: &types.PKIConfig{
-					SignerCertificates: types.CertificateConfig{
-						Key: types.KeyConfig{
-							Algorithm: types.KeyAlgorithmECDSA,
-							ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
+			signerKeyParams: &tls.SignerKeyParams{
+				Profile: configv1alpha1.PKIProfile{
+					Defaults: configv1alpha1.DefaultCertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
+							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP256},
+						},
+					},
+					SignerCertificates: configv1alpha1.CertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
+							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
 						},
 					},
 				},
+				ConfigurablePKIEnabled: true,
+				UserProvidedProfile:    true,
 			},
-			expectEmpty:        false,
-			expectMode:         configv1alpha1.PKICertificateManagementModeCustom,
-			expectSignerAlgo:   configv1alpha1.KeyAlgorithmECDSA,
-			expectSignerCurve:  configv1alpha1.ECDSACurveP384,
-			expectDefaultsAlgo: configv1alpha1.KeyAlgorithmRSA,
-			expectDefaultsRSA:  4096,
+			expectEmpty:         false,
+			expectMode:          configv1alpha1.PKICertificateManagementModeCustom,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmECDSA,
+			expectSignerCurve:   configv1alpha1.ECDSACurveP384,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
 		{
 			name: "feature gate enabled, pki RSA-2048 explicit",
-			installConfig: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				PKI: &types.PKIConfig{
-					SignerCertificates: types.CertificateConfig{
-						Key: types.KeyConfig{
-							Algorithm: types.KeyAlgorithmRSA,
-							RSA:       &types.RSAKeyConfig{KeySize: 2048},
+			signerKeyParams: &tls.SignerKeyParams{
+				Profile: configv1alpha1.PKIProfile{
+					Defaults: configv1alpha1.DefaultCertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
+							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP256},
+						},
+					},
+					SignerCertificates: configv1alpha1.CertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmRSA,
+							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 2048},
 						},
 					},
 				},
+				ConfigurablePKIEnabled: true,
+				UserProvidedProfile:    true,
 			},
-			expectEmpty:        false,
-			expectMode:         configv1alpha1.PKICertificateManagementModeCustom,
-			expectSignerAlgo:   configv1alpha1.KeyAlgorithmRSA,
-			expectSignerRSA:    2048,
-			expectDefaultsAlgo: configv1alpha1.KeyAlgorithmRSA,
-			expectDefaultsRSA:  4096,
+			expectEmpty:         false,
+			expectMode:          configv1alpha1.PKICertificateManagementModeCustom,
+			expectSignerAlgo:    configv1alpha1.KeyAlgorithmRSA,
+			expectSignerRSA:     2048,
+			expectDefaultsAlgo:  configv1alpha1.KeyAlgorithmECDSA,
+			expectDefaultsCurve: configv1alpha1.ECDSACurveP256,
 		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			parents := asset.Parents{}
-			parents.Add(installconfig.MakeAsset(tc.installConfig))
+			parents.Add(tc.signerKeyParams)
 
 			pkiAsset := &PKIConfiguration{}
 			err := pkiAsset.Generate(context.Background(), parents)
@@ -143,14 +178,10 @@ func TestPKIConfigurationGenerate(t *testing.T) {
 
 			profile := pkiCR.Spec.CertificateManagement.Custom.PKIProfile
 
-			// Verify defaults
+			// Verify defaults. The user cannot configure the defaults section, so
+			// it is always the ECDSA library-go default when the CR is emitted.
 			assert.Equal(t, tc.expectDefaultsAlgo, profile.Defaults.Key.Algorithm)
-			if tc.expectDefaultsAlgo == configv1alpha1.KeyAlgorithmRSA {
-				assert.Equal(t, tc.expectDefaultsRSA, profile.Defaults.Key.RSA.KeySize)
-			}
-			if tc.expectDefaultsAlgo == configv1alpha1.KeyAlgorithmECDSA {
-				assert.Equal(t, tc.expectDefaultsCurve, profile.Defaults.Key.ECDSA.Curve)
-			}
+			assert.Equal(t, tc.expectDefaultsCurve, profile.Defaults.Key.ECDSA.Curve)
 
 			// Verify signerCertificates
 			assert.Equal(t, tc.expectSignerAlgo, profile.SignerCertificates.Key.Algorithm)
