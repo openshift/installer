@@ -21,6 +21,20 @@ const (
 	VsphereScsiByPath = "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:%d:0"
 )
 
+// DiskName returns the platform disk ID for the given disk setup entry.
+func DiskName(diskSetup types.Disk) (string, error) {
+	switch diskSetup.Type {
+	case types.Etcd:
+		return diskSetup.Etcd.PlatformDiskID, nil
+	case types.Swap:
+		return diskSetup.Swap.PlatformDiskID, nil
+	case types.UserDefined:
+		return diskSetup.UserDefined.PlatformDiskID, nil
+	default:
+		return "", errors.Errorf("disk setup type %s is not supported", diskSetup.Type)
+	}
+}
+
 // NodeDiskSetup determines the path per disk type, and per platform and role, runs ForDiskSetup.
 func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, diskSetup types.Disk, dataDisk any) (*v1.MachineConfig, error) {
 	var path string
