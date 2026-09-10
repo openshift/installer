@@ -91,7 +91,6 @@ type bootstrapTemplateData struct {
 	BootstrapInPlace      *types.BootstrapInPlace
 	UseIPv6ForNodeIP      bool
 	UseDualForNodeIP      bool
-	IsSCOS                bool
 	IsOKD                 bool
 	BootstrapNodeIP       string
 	APIServerURL          string
@@ -416,7 +415,6 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      ipv6Primary,
 		UseDualForNodeIP:      hasIPv4 && hasIPv6,
-		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 		BootstrapNodeIP:       bootstrapNodeIP,
 		APIServerURL:          apiURL,
