@@ -181,7 +181,7 @@ func TestClusterAPIMachineSets(t *testing.T) {
 			},
 		},
 		{
-			name: "default IAM profile uses cluster ID",
+			name: "default worker IAM profile uses the worker pool role",
 			input: func() *MachineSetInput {
 				in := defaultMachineSetInput()
 				in.Pool.Platform.AWS.Zones = []string{"us-east-1a"}
@@ -196,6 +196,26 @@ func TestClusterAPIMachineSets(t *testing.T) {
 				got := templates[0].Spec.Template.Spec.IAMInstanceProfile
 				if got != "test-cluster-worker-profile" {
 					t.Errorf("IAM profile = %q, want %q", got, "test-cluster-worker-profile")
+				}
+			},
+		},
+		{
+			name: "default edge IAM profile uses the edge pool role",
+			input: func() *MachineSetInput {
+				in := defaultMachineSetInput()
+				in.Role = types.MachinePoolEdgeRoleName
+				in.Pool.Platform.AWS.Zones = []string{"us-east-1a"}
+				in.Pool.Replicas = ptr.To(int64(1))
+				return in
+			}(),
+			validate: func(t *testing.T, templates []capa.AWSMachineTemplate, _ []capi.MachineSet) {
+				t.Helper()
+				if len(templates) != 1 {
+					t.Fatalf("expected 1 template, got %d", len(templates))
+				}
+				got := templates[0].Spec.Template.Spec.IAMInstanceProfile
+				if got != "test-cluster-edge-profile" {
+					t.Errorf("IAM profile = %q, want %q", got, "test-cluster-edge-profile")
 				}
 			},
 		},
@@ -307,6 +327,7 @@ func defaultMachineSetInput() *MachineSetInput {
 		InstallConfigPlatformAWS: &awstypes.Platform{
 			Region: "us-east-1",
 		},
+		Role: types.MachinePoolComputeRoleName,
 		Pool: &types.MachinePool{
 			Name:     types.MachinePoolComputeRoleName,
 			Replicas: ptr.To(int64(3)),
