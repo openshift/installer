@@ -20,6 +20,9 @@ var (
 
 	// RxDiskEncryptionSetName is a regular expression that validates a disk encryption set name
 	RxDiskEncryptionSetName = regexp.MustCompile(`^[-a-zA-Z0-9_]{1,80}$`)
+
+	// RxCapacityReservationGroupName is a regular expression that validates a capacity reservation group name.
+	RxCapacityReservationGroupName = regexp.MustCompile(`^[-a-zA-Z0-9_.]{1,80}$`)
 )
 
 // ValidateDiskEncryption checks that the specified disk encryption configuration is valid.

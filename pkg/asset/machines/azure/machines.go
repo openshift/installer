@@ -259,6 +259,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		dataDisks = append(dataDisks, dataDisk)
 	}
 
+	capacityReservationGroupID := ""
+	if mpool.CapacityReservationGroup != nil {
+		capacityReservationGroupID = mpool.CapacityReservationGroup.ToID()
+	}
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -278,18 +283,19 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				SecurityProfile:    diskSecurityProfile,
 			},
 		},
-		SecurityProfile:       securityProfile,
-		UltraSSDCapability:    ultraSSDCapability,
-		Zone:                  az,
-		Subnet:                subnet,
-		ManagedIdentity:       managedIdentity,
-		Vnet:                  virtualNetwork,
-		ResourceGroup:         rg,
-		NetworkResourceGroup:  networkResourceGroup,
-		PublicLoadBalancer:    publicLB,
-		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
-		Tags:                  platform.UserTags,
-		DataDisks:             dataDisks,
+		SecurityProfile:            securityProfile,
+		UltraSSDCapability:         ultraSSDCapability,
+		Zone:                       az,
+		Subnet:                     subnet,
+		ManagedIdentity:            managedIdentity,
+		Vnet:                       virtualNetwork,
+		ResourceGroup:              rg,
+		NetworkResourceGroup:       networkResourceGroup,
+		PublicLoadBalancer:         publicLB,
+		AcceleratedNetworking:      getVMNetworkingType(mpool.VMNetworkingType),
+		Tags:                       platform.UserTags,
+		DataDisks:                  dataDisks,
+		CapacityReservationGroupID: capacityReservationGroupID,
 	}
 	var bootDiagnostics *machineapi.AzureDiagnostics
 	if platform.DefaultMachinePlatform != nil {
