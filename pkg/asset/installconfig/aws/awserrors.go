@@ -12,6 +12,7 @@ import (
 const (
 	AccessDeniedException   = "AccessDeniedException"
 	NoSuchResourceException = "NoSuchResourceException"
+	InvalidInstanceType     = "InvalidInstanceType"
 )
 
 // IsUnauthorized checks if the error is due to lacking permissions.
@@ -25,6 +26,19 @@ func IsUnauthorized(err error) bool {
 		// https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetServiceQuota.html
 		// https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetAWSDefaultServiceQuota.html
 		return apiErr.ErrorCode() == AccessDeniedException || apiErr.ErrorCode() == NoSuchResourceException
+	}
+	return false
+}
+
+// IsInvalidInstanceType returns true if the error is an AWS InvalidInstanceType error,
+// indicating the requested instance type does not exist in the region.
+func IsInvalidInstanceType(err error) bool {
+	if err == nil {
+		return false
+	}
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		return apiErr.ErrorCode() == InvalidInstanceType
 	}
 	return false
 }
