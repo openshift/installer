@@ -1319,7 +1319,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20260817165856-9fda5179a7f7
+# github.com/openshift/api v0.0.0-20260817165856-9fda5179a7f7 => github.com/vr4manta/api v0.0.0-20260804142043-4f1fc2ae3902
 ## explicit; go 1.25.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1361,7 +1361,7 @@ github.com/openshift/assisted-service/client/versions
 ## explicit; go 1.21
 github.com/openshift/assisted-service/models
 github.com/openshift/assisted-service/models/validations
-# github.com/openshift/client-go v0.0.0-20260317180604-743f664b82d1
+# github.com/openshift/client-go v0.0.0-20260720094807-fbc45213df28
 ## explicit; go 1.25.0
 github.com/openshift/client-go/config/applyconfigurations
 github.com/openshift/client-go/config/applyconfigurations/config/v1
@@ -1459,8 +1459,9 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20251107090138-0de9712313a5
-## explicit; go 1.24.0
+# github.com/openshift/library-go v0.0.0-20260909144031-8fc95c63c590
+## explicit; go 1.25.0
+github.com/openshift/library-go/pkg/cloudprovider/vsphere
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
 github.com/openshift/library-go/pkg/config/leaderelection
@@ -2692,9 +2693,6 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/watchlist
 k8s.io/client-go/util/workqueue
-# k8s.io/cloud-provider-vsphere v1.32.2 => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
-## explicit; go 1.22.0
-k8s.io/cloud-provider-vsphere/pkg/common/config
 # k8s.io/cluster-bootstrap v0.35.4
 ## explicit; go 1.25.0
 k8s.io/cluster-bootstrap/token/api
@@ -3003,3 +3001,4 @@ sigs.k8s.io/yaml/kyaml
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 # github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
+# github.com/openshift/api => github.com/vr4manta/api v0.0.0-20260804142043-4f1fc2ae3902
