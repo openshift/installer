@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023, 2024, 2025.
+ * (C) Copyright IBM Corp. 2022, 2023, 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.102.0-615ec964-20250307-203034
+ * IBM OpenAPI SDK Code Generator Version: 3.96.1-5136e54a-20241108-203028
  */
 
 // Package vpcv1 : Operations and models for the VpcV1 service
@@ -38,7 +38,7 @@ import (
 // VpcV1 : The IBM Cloud Virtual Private Cloud (VPC) API can be used to programmatically provision and manage virtual
 // server instances, along with subnets, volumes, load balancers, and more.
 //
-// API Version: 2025-03-08
+// API Version: 2024-12-18
 type VpcV1 struct {
 	Service *core.BaseService
 
@@ -47,7 +47,7 @@ type VpcV1 struct {
 	Generation *int64
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-11-19`
-	// and `2025-03-08`.
+	// and `2024-12-18`.
 	Version *string
 }
 
@@ -68,7 +68,7 @@ type VpcV1Options struct {
 	Generation *int64
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-11-19`
-	// and `2025-03-08`.
+	// and `2024-12-18`.
 	Version *string
 }
 
@@ -133,9 +133,8 @@ func NewVpcV1(options *VpcV1Options) (service *VpcV1, err error) {
 	}
 
 	if options.Version == nil {
-		options.Version = core.StringPtr("2025-03-04")
+		options.Version = core.StringPtr("2024-12-17")
 	}
-
 	service = &VpcV1{
 		Service:    baseService,
 		Generation: options.Generation,
@@ -16667,14 +16666,14 @@ func (vpc *VpcV1) CreateSnapshotWithContext(ctx context.Context, createSnapshotO
 
 // DeleteSnapshot : Delete a snapshot
 // This request deletes a snapshot. This operation cannot be reversed.
-func (vpc *VpcV1) DeleteSnapshot(deleteSnapshotOptions *DeleteSnapshotOptions) (result *Snapshot, response *core.DetailedResponse, err error) {
-	result, response, err = vpc.DeleteSnapshotWithContext(context.Background(), deleteSnapshotOptions)
+func (vpc *VpcV1) DeleteSnapshot(deleteSnapshotOptions *DeleteSnapshotOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.DeleteSnapshotWithContext(context.Background(), deleteSnapshotOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
 // DeleteSnapshotWithContext is an alternate form of the DeleteSnapshot method which supports a Context parameter
-func (vpc *VpcV1) DeleteSnapshotWithContext(ctx context.Context, deleteSnapshotOptions *DeleteSnapshotOptions) (result *Snapshot, response *core.DetailedResponse, err error) {
+func (vpc *VpcV1) DeleteSnapshotWithContext(ctx context.Context, deleteSnapshotOptions *DeleteSnapshotOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteSnapshotOptions, "deleteSnapshotOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
@@ -16707,7 +16706,6 @@ func (vpc *VpcV1) DeleteSnapshotWithContext(ctx context.Context, deleteSnapshotO
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
-	builder.AddHeader("Accept", "application/json")
 	if deleteSnapshotOptions.IfMatch != nil {
 		builder.AddHeader("If-Match", fmt.Sprint(*deleteSnapshotOptions.IfMatch))
 	}
@@ -16721,20 +16719,11 @@ func (vpc *VpcV1) DeleteSnapshotWithContext(ctx context.Context, deleteSnapshotO
 		return
 	}
 
-	var rawResponse map[string]json.RawMessage
-	response, err = vpc.Service.Request(request, &rawResponse)
+	response, err = vpc.Service.Request(request, nil)
 	if err != nil {
 		core.EnrichHTTPProblem(err, "delete_snapshot", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshot)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
 	}
 
 	return
@@ -30929,9 +30918,6 @@ func (vpc *VpcV1) CreateLoadBalancerPoolWithContext(ctx context.Context, createL
 	if createLoadBalancerPoolOptions.Protocol != nil {
 		body["protocol"] = createLoadBalancerPoolOptions.Protocol
 	}
-	if createLoadBalancerPoolOptions.FailsafePolicy != nil {
-		body["failsafe_policy"] = createLoadBalancerPoolOptions.FailsafePolicy
-	}
 	if createLoadBalancerPoolOptions.Members != nil {
 		body["members"] = createLoadBalancerPoolOptions.Members
 	}
@@ -30977,7 +30963,7 @@ func (vpc *VpcV1) CreateLoadBalancerPoolWithContext(ctx context.Context, createL
 
 // DeleteLoadBalancerPool : Delete a load balancer pool
 // This request deletes a load balancer pool. This operation cannot be reversed. The pool must not currently be the
-// default pool for any listener in the load balancer, nor be the target pool in the failsafe policy for any other pool.
+// default pool for any listener in the load balancer.
 func (vpc *VpcV1) DeleteLoadBalancerPool(deleteLoadBalancerPoolOptions *DeleteLoadBalancerPoolOptions) (response *core.DetailedResponse, err error) {
 	response, err = vpc.DeleteLoadBalancerPoolWithContext(context.Background(), deleteLoadBalancerPoolOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -32360,9 +32346,9 @@ func (vpc *VpcV1) UpdateEndpointGatewayWithContext(ctx context.Context, updateEn
 
 // ListFlowLogCollectors : List flow log collectors
 // This request lists flow log collectors in the region. A [flow log
-// collector](https://cloud.ibm.com/docs/vpc?topic=vpc-flow-logs) summarizes TCP and UDP data sent over the instance
-// network interfaces and instance network attachments contained within its target. The collected flow logs are written
-// to a cloud object storage bucket, where they can be [viewed](https://cloud.ibm.com/docs/vpc?topic=vpc-fl-analyze).
+// collector](https://cloud.ibm.com/docs/vpc?topic=vpc-flow-logs) summarizes data sent over the instance network
+// interfaces and instance network attachments contained within its target. The collected flow logs are written to a
+// cloud object storage bucket, where they can be [viewed](https://cloud.ibm.com/docs/vpc?topic=vpc-fl-analyze).
 func (vpc *VpcV1) ListFlowLogCollectors(listFlowLogCollectorsOptions *ListFlowLogCollectorsOptions) (result *FlowLogCollectorCollection, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.ListFlowLogCollectorsWithContext(context.Background(), listFlowLogCollectorsOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -34060,7 +34046,7 @@ func (vpc *VpcV1) UnpublishPrivatePathServiceGatewayWithContext(ctx context.Cont
 	return
 }
 func getServiceComponentInfo() *core.ProblemComponent {
-	return core.NewProblemComponent(DefaultServiceName, "2025-03-04")
+	return core.NewProblemComponent(DefaultServiceName, "2024-12-17")
 }
 
 // AccountIdentity : Identifies an account by a unique property.
@@ -38279,7 +38265,6 @@ type BareMetalServerNetworkInterface struct {
 	// corresponding network attachment.
 	PortSpeed *int64 `json:"port_speed" validate:"required"`
 
-	// The primary IP address of this bare metal server network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -45149,8 +45134,7 @@ type CreateLoadBalancerListenerOptions struct {
 	// The load balancer identifier.
 	LoadBalancerID *string `json:"load_balancer_id" validate:"required,ne="`
 
-	// The listener protocol. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-	// combination.
+	// The listener protocol. Each listener in the load balancer must have a unique `port` and `protocol` combination.
 	//
 	// Load balancers in the `network` family support `tcp` and `udp` (if `udp_supported` is `true`). Load balancers in the
 	// `application` family support `tcp`, `http` and
@@ -45178,8 +45162,6 @@ type CreateLoadBalancerListenerOptions struct {
 	// The concurrent connection limit for the listener. If reached, incoming connections may be queued or rejected.
 	//
 	// Supported for load balancers in the `application` family.
-	//
-	// If unspecified, the limit will be `15000` for load balancers in the `application` family.
 	ConnectionLimit *int64 `json:"connection_limit,omitempty"`
 
 	// The default pool for this listener. If `https_redirect` is specified, the
@@ -45205,25 +45187,23 @@ type CreateLoadBalancerListenerOptions struct {
 	// The idle connection timeout of the listener in seconds.
 	//
 	// Supported for load balancers in the `application` family.
-	//
-	// If unspecified, the timeout will be `50` for load balancers in the `application` family.
 	IdleConnectionTimeout *int64 `json:"idle_connection_timeout,omitempty"`
 
 	// The policy prototype objects for this listener. The load balancer must be in the
 	// `application` family.
 	Policies []LoadBalancerListenerPolicyPrototype `json:"policies,omitempty"`
 
-	// The listener port number. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-	// combination.
+	// The listener port number, or the inclusive lower bound of the port range. Each listener in the load balancer must
+	// have a unique `port` and `protocol` combination.
 	//
-	// If `port_min` is also specified, `port` must have the same value as `port_min`.
+	// Not supported for load balancers operating with route mode enabled.
 	Port *int64 `json:"port,omitempty"`
 
 	// The inclusive upper bound of the range of ports used by this listener. Must not be less than `port_min`.
 	//
 	// Only load balancers with route mode enabled, or network load balancers with
 	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, `65535` must be specified.
+	// mode is enabled, the value `65535` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -45231,14 +45211,9 @@ type CreateLoadBalancerListenerOptions struct {
 
 	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`.
 	//
-	// If specified, `port_max` must also be specified, and must not be smaller. If unspecified, `port_max` must also be
-	// unspecified.
-	//
-	// If `port` is also specified, `port_min` must have the same value as `port`.
-	//
 	// Only load balancers with route mode enabled, or network load balancers with
 	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, `1` must be specified.
+	// mode is enabled, the value `1` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -45249,8 +45224,7 @@ type CreateLoadBalancerListenerOptions struct {
 }
 
 // Constants associated with the CreateLoadBalancerListenerOptions.Protocol property.
-// The listener protocol. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-// combination.
+// The listener protocol. Each listener in the load balancer must have a unique `port` and `protocol` combination.
 //
 // Load balancers in the `network` family support `tcp` and `udp` (if `udp_supported` is `true`). Load balancers in the
 // `application` family support `tcp`, `http` and
@@ -45385,7 +45359,7 @@ type CreateLoadBalancerListenerPolicyOptions struct {
 	// - If `action` is `forward`, use `LoadBalancerPoolIdentity` to specify a pool in this
 	//   load balancer to forward to.
 	// - If `action` is `https_redirect`, use
-	//   `LoadBalancerListenerPolicyHTTPSRedirectPrototype` to specify a listener in this
+	//   `LoadBalancerListenerPolicyHTTPSRedirectPrototype` to specify a listener on this
 	//   load balancer to redirect to.
 	// - If `action` is `redirect`, use `LoadBalancerListenerPolicyRedirectURLPrototype`to
 	//   specify a URL to redirect to.
@@ -45482,13 +45456,8 @@ type CreateLoadBalancerListenerPolicyRuleOptions struct {
 	// The condition for the rule.
 	Condition *string `json:"condition" validate:"required"`
 
-	// The content the rule applies to:
-	// - `body`: The UTF-8 form-encoded HTTP request body
-	// - `header`: The HTTP header
-	// - `hostname`: The fully-qualified domain name of the server specified in the Host
-	//   HTTP request header
-	// - `path`: The path of the HTTP request
-	// - `query`: The query of the HTTP request URL.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type" validate:"required"`
 
 	// The value to be matched for the rule condition.
@@ -45516,13 +45485,8 @@ const (
 )
 
 // Constants associated with the CreateLoadBalancerListenerPolicyRuleOptions.Type property.
-// The content the rule applies to:
-//   - `body`: The UTF-8 form-encoded HTTP request body
-//   - `header`: The HTTP header
-//   - `hostname`: The fully-qualified domain name of the server specified in the Host
-//     HTTP request header
-//   - `path`: The path of the HTTP request
-//   - `query`: The query of the HTTP request URL.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	CreateLoadBalancerListenerPolicyRuleOptionsTypeBodyConst     = "body"
 	CreateLoadBalancerListenerPolicyRuleOptionsTypeHeaderConst   = "header"
@@ -45636,7 +45600,7 @@ type CreateLoadBalancerOptions struct {
 	Name *string `json:"name,omitempty"`
 
 	// The pools of this load balancer.
-	Pools []LoadBalancerPoolPrototypeLoadBalancerContext `json:"pools,omitempty"`
+	Pools []LoadBalancerPoolPrototype `json:"pools,omitempty"`
 
 	// The profile to use for this load balancer.
 	//
@@ -45712,7 +45676,7 @@ func (_options *CreateLoadBalancerOptions) SetName(name string) *CreateLoadBalan
 }
 
 // SetPools : Allow user to set Pools
-func (_options *CreateLoadBalancerOptions) SetPools(pools []LoadBalancerPoolPrototypeLoadBalancerContext) *CreateLoadBalancerOptions {
+func (_options *CreateLoadBalancerOptions) SetPools(pools []LoadBalancerPoolPrototype) *CreateLoadBalancerOptions {
 	_options.Pools = pools
 	return _options
 }
@@ -45771,10 +45735,7 @@ type CreateLoadBalancerPoolMemberOptions struct {
 
 	// The weight of the server member.
 	//
-	// If specified, the pool algorithm must be `weighted_round_robin` and the load balancer must be in the `application`
-	// family.
-	//
-	// If unspecified, the weight will be `50` for load balancers in the `application` family.
+	// If specified, the pool algorithm must be `weighted_round_robin`.
 	Weight *int64 `json:"weight,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -45837,17 +45798,12 @@ type CreateLoadBalancerPoolOptions struct {
 	Algorithm *string `json:"algorithm" validate:"required"`
 
 	// The health monitor of this pool.
-	HealthMonitor LoadBalancerPoolHealthMonitorPrototypeIntf `json:"health_monitor" validate:"required"`
+	HealthMonitor *LoadBalancerPoolHealthMonitorPrototype `json:"health_monitor" validate:"required"`
 
 	// The protocol used for this load balancer pool. Load balancers in the `network` family support `tcp` and `udp` (if
 	// `udp_supported` is `true`). Load balancers in the
 	// `application` family support `tcp`, `http`, and `https`.
 	Protocol *string `json:"protocol" validate:"required"`
-
-	// The failsafe policy to use for this pool.
-	//
-	// If unspecified, the default failsafe policy action from the profile will be used.
-	FailsafePolicy *LoadBalancerPoolFailsafePolicyPrototype `json:"failsafe_policy,omitempty"`
 
 	// The members for this load balancer pool. For load balancers in the `network` family, the same `port` and `target`
 	// tuple cannot be shared by a pool member of any other load balancer in the same VPC.
@@ -45866,10 +45822,9 @@ type CreateLoadBalancerPoolOptions struct {
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
 	// The session persistence of this pool. If specified, the load balancer must have
-	// `source_ip_session_persistence_supported` set to `true` in its profile.
-	//
-	// If unspecified, session persistence will be disabled, and traffic will be distributed
-	// across members of the pool.
+	// `source_ip_session_persistence_supported` set to `true` in its profile. If
+	// unspecified, session persistence will be disabled, and traffic will be distributed
+	// across backend server members of the pool.
 	SessionPersistence *LoadBalancerPoolSessionPersistencePrototype `json:"session_persistence,omitempty"`
 
 	// Allows users to set headers on API requests.
@@ -45910,7 +45865,7 @@ const (
 )
 
 // NewCreateLoadBalancerPoolOptions : Instantiate CreateLoadBalancerPoolOptions
-func (*VpcV1) NewCreateLoadBalancerPoolOptions(loadBalancerID string, algorithm string, healthMonitor LoadBalancerPoolHealthMonitorPrototypeIntf, protocol string) *CreateLoadBalancerPoolOptions {
+func (*VpcV1) NewCreateLoadBalancerPoolOptions(loadBalancerID string, algorithm string, healthMonitor *LoadBalancerPoolHealthMonitorPrototype, protocol string) *CreateLoadBalancerPoolOptions {
 	return &CreateLoadBalancerPoolOptions{
 		LoadBalancerID: core.StringPtr(loadBalancerID),
 		Algorithm:      core.StringPtr(algorithm),
@@ -45932,7 +45887,7 @@ func (_options *CreateLoadBalancerPoolOptions) SetAlgorithm(algorithm string) *C
 }
 
 // SetHealthMonitor : Allow user to set HealthMonitor
-func (_options *CreateLoadBalancerPoolOptions) SetHealthMonitor(healthMonitor LoadBalancerPoolHealthMonitorPrototypeIntf) *CreateLoadBalancerPoolOptions {
+func (_options *CreateLoadBalancerPoolOptions) SetHealthMonitor(healthMonitor *LoadBalancerPoolHealthMonitorPrototype) *CreateLoadBalancerPoolOptions {
 	_options.HealthMonitor = healthMonitor
 	return _options
 }
@@ -45940,12 +45895,6 @@ func (_options *CreateLoadBalancerPoolOptions) SetHealthMonitor(healthMonitor Lo
 // SetProtocol : Allow user to set Protocol
 func (_options *CreateLoadBalancerPoolOptions) SetProtocol(protocol string) *CreateLoadBalancerPoolOptions {
 	_options.Protocol = core.StringPtr(protocol)
-	return _options
-}
-
-// SetFailsafePolicy : Allow user to set FailsafePolicy
-func (_options *CreateLoadBalancerPoolOptions) SetFailsafePolicy(failsafePolicy *LoadBalancerPoolFailsafePolicyPrototype) *CreateLoadBalancerPoolOptions {
-	_options.FailsafePolicy = failsafePolicy
 	return _options
 }
 
@@ -49886,14 +49835,6 @@ type DedicatedHostProfileVcpuManufacturer struct {
 // The type for this profile field.
 const (
 	DedicatedHostProfileVcpuManufacturerTypeFixedConst = "fixed"
-)
-
-// Constants associated with the DedicatedHostProfileVcpuManufacturer.Value property.
-// The VCPU manufacturer for a dedicated host with this profile.
-const (
-	DedicatedHostProfileVcpuManufacturerValueAmdConst   = "amd"
-	DedicatedHostProfileVcpuManufacturerValueIBMConst   = "ibm"
-	DedicatedHostProfileVcpuManufacturerValueIntelConst = "intel"
 )
 
 // UnmarshalDedicatedHostProfileVcpuManufacturer unmarshals an instance of DedicatedHostProfileVcpuManufacturer from the specified map of raw messages.
@@ -54404,7 +54345,6 @@ type FloatingIPTarget struct {
 	// The name for this instance network interface.
 	Name *string `json:"name,omitempty"`
 
-	// The primary IP address of this instance network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip,omitempty"`
 
 	// The resource type.
@@ -59620,7 +59560,7 @@ type Image struct {
 	ObsolescenceAt *strfmt.DateTime `json:"obsolescence_at,omitempty"`
 
 	// The operating system included in this image.
-	OperatingSystem *OperatingSystem `json:"operating_system" validate:"required"`
+	OperatingSystem *OperatingSystem `json:"operating_system,omitempty"`
 
 	// The resource group for this image.
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
@@ -62329,9 +62269,6 @@ type InstanceGpu struct {
 	Count *int64 `json:"count" validate:"required"`
 
 	// The GPU manufacturer.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Manufacturer *string `json:"manufacturer" validate:"required"`
 
 	// The overall amount of GPU memory in GiB (gibibytes).
@@ -62340,15 +62277,6 @@ type InstanceGpu struct {
 	// The GPU model.
 	Model *string `json:"model" validate:"required"`
 }
-
-// Constants associated with the InstanceGpu.Manufacturer property.
-// The GPU manufacturer.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	InstanceGpuManufacturerNvidiaConst = "nvidia"
-)
 
 // UnmarshalInstanceGpu unmarshals an instance of InstanceGpu from the specified map of raw messages.
 func UnmarshalInstanceGpu(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -66541,15 +66469,6 @@ const (
 	InstanceProfileGpuManufacturerTypeEnumConst = "enum"
 )
 
-// Constants associated with the InstanceProfileGpuManufacturer.Values property.
-// The GPU manufacturer.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	InstanceProfileGpuManufacturerValuesNvidiaConst = "nvidia"
-)
-
 // UnmarshalInstanceProfileGpuManufacturer unmarshals an instance of InstanceProfileGpuManufacturer from the specified map of raw messages.
 func UnmarshalInstanceProfileGpuManufacturer(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceProfileGpuManufacturer)
@@ -67298,6 +67217,9 @@ func UnmarshalInstanceProfileVcpu(m map[string]json.RawMessage, result interface
 
 // InstanceProfileVcpuArchitecture : InstanceProfileVcpuArchitecture struct
 type InstanceProfileVcpuArchitecture struct {
+	// The default VCPU architecture for an instance with this profile.
+	Default *string `json:"default,omitempty"`
+
 	// The type for this profile field.
 	Type *string `json:"type" validate:"required"`
 
@@ -67314,6 +67236,11 @@ const (
 // UnmarshalInstanceProfileVcpuArchitecture unmarshals an instance of InstanceProfileVcpuArchitecture from the specified map of raw messages.
 func UnmarshalInstanceProfileVcpuArchitecture(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceProfileVcpuArchitecture)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
@@ -67330,6 +67257,9 @@ func UnmarshalInstanceProfileVcpuArchitecture(m map[string]json.RawMessage, resu
 
 // InstanceProfileVcpuManufacturer : InstanceProfileVcpuManufacturer struct
 type InstanceProfileVcpuManufacturer struct {
+	// The default VCPU manufacturer for an instance with this profile.
+	Default *string `json:"default,omitempty"`
+
 	// The type for this profile field.
 	Type *string `json:"type" validate:"required"`
 
@@ -67343,17 +67273,14 @@ const (
 	InstanceProfileVcpuManufacturerTypeFixedConst = "fixed"
 )
 
-// Constants associated with the InstanceProfileVcpuManufacturer.Value property.
-// The VCPU manufacturer for an instance with this profile.
-const (
-	InstanceProfileVcpuManufacturerValueAmdConst   = "amd"
-	InstanceProfileVcpuManufacturerValueIBMConst   = "ibm"
-	InstanceProfileVcpuManufacturerValueIntelConst = "intel"
-)
-
 // UnmarshalInstanceProfileVcpuManufacturer unmarshals an instance of InstanceProfileVcpuManufacturer from the specified map of raw messages.
 func UnmarshalInstanceProfileVcpuManufacturer(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceProfileVcpuManufacturer)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
@@ -68785,22 +68712,8 @@ type InstanceVcpu struct {
 	Count *int64 `json:"count" validate:"required"`
 
 	// The VCPU manufacturer.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Manufacturer *string `json:"manufacturer" validate:"required"`
 }
-
-// Constants associated with the InstanceVcpu.Manufacturer property.
-// The VCPU manufacturer.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	InstanceVcpuManufacturerAmdConst   = "amd"
-	InstanceVcpuManufacturerIBMConst   = "ibm"
-	InstanceVcpuManufacturerIntelConst = "intel"
-)
 
 // UnmarshalInstanceVcpu unmarshals an instance of InstanceVcpu from the specified map of raw messages.
 func UnmarshalInstanceVcpu(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -73254,7 +73167,7 @@ type ListSnapshotsOptions struct {
 	// specified name.
 	CopiesName *string `json:"copies[].name,omitempty"`
 
-	// Filters the collection to snapshots with an item in the `copies` property with a `crn` property matching the
+	// Filters the collection to snapshots with an item in the `copies` property with an `id` property matching the
 	// specified CRN.
 	CopiesCRN *string `json:"copies[].crn,omitempty"`
 
@@ -74738,9 +74651,6 @@ type LoadBalancer struct {
 	// Not supported by private path load balancers.
 	Dns *LoadBalancerDns `json:"dns,omitempty"`
 
-	// The supported `failsafe_policy.action` values for this load balancer's pools.
-	FailsafePolicyActions []string `json:"failsafe_policy_actions" validate:"required"`
-
 	// Fully qualified domain name assigned to this load balancer.
 	Hostname *string `json:"hostname" validate:"required"`
 
@@ -74863,22 +74773,6 @@ const (
 	LoadBalancerAvailabilitySubnetConst = "subnet"
 )
 
-// Constants associated with the LoadBalancer.FailsafePolicyActions property.
-// A load balancer failsafe policy action:
-// - `bypass`: Bypasses the members and sends requests directly to their destination IPs.
-// - `drop`: Drops requests.
-// - `fail`: Fails requests with an HTTP `503` status code.
-// - `forward`: Forwards requests to the `target` pool.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	LoadBalancerFailsafePolicyActionsBypassConst  = "bypass"
-	LoadBalancerFailsafePolicyActionsDropConst    = "drop"
-	LoadBalancerFailsafePolicyActionsFailConst    = "fail"
-	LoadBalancerFailsafePolicyActionsForwardConst = "forward"
-)
-
 // Constants associated with the LoadBalancer.OperatingStatus property.
 // The operating status of this load balancer.
 //
@@ -74945,11 +74839,6 @@ func UnmarshalLoadBalancer(m map[string]json.RawMessage, result interface{}) (er
 	err = core.UnmarshalModel(m, "dns", &obj.Dns, UnmarshalLoadBalancerDns)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "dns-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "failsafe_policy_actions", &obj.FailsafePolicyActions)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "failsafe_policy_actions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hostname", &obj.Hostname)
@@ -75379,9 +75268,13 @@ type LoadBalancerListener struct {
 	Port *int64 `json:"port" validate:"required"`
 
 	// The inclusive upper bound of the range of ports used by this listener.
+	//
+	// At present, only load balancers in the `network` family support more than one port per listener.
 	PortMax *int64 `json:"port_max" validate:"required"`
 
 	// The inclusive lower bound of the range of ports used by this listener.
+	//
+	// At present, only load balancers in the `network` family support more than one port per listener.
 	PortMin *int64 `json:"port_min" validate:"required"`
 
 	// The listener protocol.
@@ -75619,10 +75512,7 @@ type LoadBalancerListenerHTTPSRedirectPatch struct {
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code,omitempty"`
 
-	// The target listener.
-	//
-	// The target listener must be in this load balancer, and must not be the same as the
-	// listener in the URL.
+	// Identifies a load balancer listener by a unique property.
 	Listener LoadBalancerListenerIdentityIntf `json:"listener,omitempty"`
 
 	// The redirect relative target URI.
@@ -75672,10 +75562,7 @@ type LoadBalancerListenerHTTPSRedirectPrototype struct {
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code" validate:"required"`
 
-	// The target listener.
-	//
-	// The target listener must be in this load balancer, and must not be the same as the
-	// listener in the URL.
+	// Identifies a load balancer listener by a unique property.
 	Listener LoadBalancerListenerIdentityIntf `json:"listener" validate:"required"`
 
 	// The redirect relative target URI.
@@ -75812,40 +75699,33 @@ type LoadBalancerListenerPatch struct {
 	// Supported for load balancers in the `application` family.
 	IdleConnectionTimeout *int64 `json:"idle_connection_timeout,omitempty"`
 
-	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`. Updating
-	// `port` updates `port_min` to the same value.
+	// The listener port number, or the inclusive lower bound of the port range. Each listener in the load balancer must
+	// have a unique `port` and `protocol` combination.
 	//
-	// Only load balancers with route mode enabled, or network load balancers with
-	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, the value must be `1`.
-	//
-	// Each listener in the load balancer must have a non-overlapping port range and
-	// `protocol` combination.
+	// Not supported for load balancers operating with route mode enabled.
 	Port *int64 `json:"port,omitempty"`
 
 	// The inclusive upper bound of the range of ports used by this listener. Must not be less than `port_min`.
 	//
 	// Only load balancers with route mode enabled, or network load balancers with
 	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, `65535` must be specified.
+	// mode is enabled, the value `65535` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
 	PortMax *int64 `json:"port_max,omitempty"`
 
-	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`. Updating
-	// `port_min` updates `port` to the same value.
+	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`.
 	//
 	// Only load balancers with route mode enabled, or network load balancers with
 	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, the value must be `1`.
+	// mode is enabled, the value `1` must be specified.
 	//
-	// Each listener in the load balancer must have a non-overlapping port range and
-	// `protocol` combination.
+	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
+	// same protocol.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The listener protocol. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-	// combination.
+	// The listener protocol. Each listener in the load balancer must have a unique `port` and `protocol` combination.
 	//
 	// Load balancers in the `network` family support `tcp` and `udp` (if `udp_supported` is `true`). Load balancers in the
 	// `application` family support `tcp`, `http` and
@@ -75860,8 +75740,7 @@ type LoadBalancerListenerPatch struct {
 }
 
 // Constants associated with the LoadBalancerListenerPatch.Protocol property.
-// The listener protocol. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-// combination.
+// The listener protocol. Each listener in the load balancer must have a unique `port` and `protocol` combination.
 //
 // Load balancers in the `network` family support `tcp` and `udp` (if `udp_supported` is `true`). Load balancers in the
 // `application` family support `tcp`, `http` and
@@ -75977,8 +75856,8 @@ func (loadBalancerListenerPatch *LoadBalancerListenerPatch) AsPatch() (_patch ma
 type LoadBalancerListenerPolicy struct {
 	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
-	// - `https_redirect`: Requests will be redirected to the specified `target` listener.
-	//   The listener must have a `protocol` of `http`, and the target listener must have a
+	// - `https_redirect`: Requests will be redirected to the specified target listener. The
+	//   listener must have a `protocol` of `http`, and the target listener must have a
 	//   `protocol` of `https`
 	// - `redirect`: Requests will be redirected to the specified `target.url`
 	// - `reject`: Requests will be rejected with a `403` status code
@@ -76023,8 +75902,8 @@ type LoadBalancerListenerPolicy struct {
 // Constants associated with the LoadBalancerListenerPolicy.Action property.
 // The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
-//   - `https_redirect`: Requests will be redirected to the specified `target` listener.
-//     The listener must have a `protocol` of `http`, and the target listener must have a
+//   - `https_redirect`: Requests will be redirected to the specified target listener. The
+//     listener must have a `protocol` of `http`, and the target listener must have a
 //     `protocol` of `https`
 //   - `redirect`: Requests will be redirected to the specified `target.url`
 //   - `reject`: Requests will be rejected with a `403` status code
@@ -76130,11 +76009,9 @@ type LoadBalancerListenerPolicyPatch struct {
 	// indicates higher priority.
 	Priority *int64 `json:"priority,omitempty"`
 
-	// - If `action` is `forward`, specify a `LoadBalancerPoolIdentity` for a pool in this load
-	//   balancer.
+	// - If `action` is `forward`, specify a `LoadBalancerPoolIdentity`.
 	// - If `action` is `https_redirect`, specify a
-	//   `LoadBalancerListenerPolicyHTTPSRedirectPatch` for a listener in this load balancer
-	//   with a `protocol` of `https`.
+	// `LoadBalancerListenerPolicyHTTPSRedirectPatch`.
 	// - If `action` is `redirect`, specify a `LoadBalancerListenerPolicyRedirectURLPatch`.
 	Target LoadBalancerListenerPolicyTargetPatchIntf `json:"target,omitempty"`
 }
@@ -76202,7 +76079,7 @@ type LoadBalancerListenerPolicyPrototype struct {
 	// - If `action` is `forward`, use `LoadBalancerPoolIdentity` to specify a pool in this
 	//   load balancer to forward to.
 	// - If `action` is `https_redirect`, use
-	//   `LoadBalancerListenerPolicyHTTPSRedirectPrototype` to specify a listener in this
+	//   `LoadBalancerListenerPolicyHTTPSRedirectPrototype` to specify a listener on this
 	//   load balancer to redirect to.
 	// - If `action` is `redirect`, use `LoadBalancerListenerPolicyRedirectURLPrototype`to
 	//   specify a URL to redirect to.
@@ -76467,13 +76344,8 @@ type LoadBalancerListenerPolicyRulePatch struct {
 	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The content the rule applies to:
-	// - `body`: The UTF-8 form-encoded HTTP request body
-	// - `header`: The HTTP header
-	// - `hostname`: The fully-qualified domain name of the server specified in the Host
-	//   HTTP request header
-	// - `path`: The path of the HTTP request
-	// - `query`: The query of the HTTP request URL.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type,omitempty"`
 
 	// The value to be matched for the rule condition.
@@ -76491,13 +76363,8 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRulePatch.Type property.
-// The content the rule applies to:
-//   - `body`: The UTF-8 form-encoded HTTP request body
-//   - `header`: The HTTP header
-//   - `hostname`: The fully-qualified domain name of the server specified in the Host
-//     HTTP request header
-//   - `path`: The path of the HTTP request
-//   - `query`: The query of the HTTP request URL.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	LoadBalancerListenerPolicyRulePatchTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRulePatchTypeHeaderConst   = "header"
@@ -76564,13 +76431,8 @@ type LoadBalancerListenerPolicyRulePrototype struct {
 	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The content the rule applies to:
-	// - `body`: The UTF-8 form-encoded HTTP request body
-	// - `header`: The HTTP header
-	// - `hostname`: The fully-qualified domain name of the server specified in the Host
-	//   HTTP request header
-	// - `path`: The path of the HTTP request
-	// - `query`: The query of the HTTP request URL.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type" validate:"required"`
 
 	// The value to be matched for the rule condition.
@@ -76588,13 +76450,8 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRulePrototype.Type property.
-// The content the rule applies to:
-//   - `body`: The UTF-8 form-encoded HTTP request body
-//   - `header`: The HTTP header
-//   - `hostname`: The fully-qualified domain name of the server specified in the Host
-//     HTTP request header
-//   - `path`: The path of the HTTP request
-//   - `query`: The query of the HTTP request URL.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	LoadBalancerListenerPolicyRulePrototypeTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRulePrototypeTypeHeaderConst   = "header"
@@ -76784,14 +76641,10 @@ func UnmarshalLoadBalancerListenerPolicyTarget(m map[string]json.RawMessage, res
 	return
 }
 
-// LoadBalancerListenerPolicyTargetPatch : - If `action` is `forward`, specify a `LoadBalancerPoolIdentity` for a pool in this load
-//
-//		balancer.
-//	  - If `action` is `https_redirect`, specify a
-//	    `LoadBalancerListenerPolicyHTTPSRedirectPatch` for a listener in this load balancer
-//	    with a `protocol` of `https`.
-//	  - If `action` is `redirect`, specify a `LoadBalancerListenerPolicyRedirectURLPatch`.
-//
+// LoadBalancerListenerPolicyTargetPatch : - If `action` is `forward`, specify a `LoadBalancerPoolIdentity`.
+// - If `action` is `https_redirect`, specify a
+// `LoadBalancerListenerPolicyHTTPSRedirectPatch`.
+// - If `action` is `redirect`, specify a `LoadBalancerListenerPolicyRedirectURLPatch`.
 // Models which "extend" this model:
 // - LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentity
 // - LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerPolicyHTTPSRedirectPatch
@@ -76806,10 +76659,7 @@ type LoadBalancerListenerPolicyTargetPatch struct {
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code,omitempty"`
 
-	// The target listener.
-	//
-	// The target listener must be in this load balancer, and must not be the same as the
-	// listener in the URL.
+	// Identifies a load balancer listener by a unique property.
 	Listener LoadBalancerListenerIdentityIntf `json:"listener,omitempty"`
 
 	// The redirect relative target URI.
@@ -76910,7 +76760,7 @@ func (loadBalancerListenerPolicyTargetPatch *LoadBalancerListenerPolicyTargetPat
 //
 //		load balancer to forward to.
 //	  - If `action` is `https_redirect`, use
-//	    `LoadBalancerListenerPolicyHTTPSRedirectPrototype` to specify a listener in this
+//	    `LoadBalancerListenerPolicyHTTPSRedirectPrototype` to specify a listener on this
 //	    load balancer to redirect to.
 //	  - If `action` is `redirect`, use `LoadBalancerListenerPolicyRedirectURLPrototype`to
 //	    specify a URL to redirect to.
@@ -76929,10 +76779,7 @@ type LoadBalancerListenerPolicyTargetPrototype struct {
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code,omitempty"`
 
-	// The target listener.
-	//
-	// The target listener must be in this load balancer, and must not be the same as the
-	// listener in the URL.
+	// Identifies a load balancer listener by a unique property.
 	Listener LoadBalancerListenerIdentityIntf `json:"listener,omitempty"`
 
 	// The redirect relative target URI.
@@ -77020,8 +76867,6 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 	// The concurrent connection limit for the listener. If reached, incoming connections may be queued or rejected.
 	//
 	// Supported for load balancers in the `application` family.
-	//
-	// If unspecified, the limit will be `15000` for load balancers in the `application` family.
 	ConnectionLimit *int64 `json:"connection_limit,omitempty"`
 
 	// The default pool for this listener.  If `https_redirect` is specified,
@@ -77046,21 +76891,19 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 	// The idle connection timeout of the listener in seconds.
 	//
 	// Supported for load balancers in the `application` family.
-	//
-	// If unspecified, the timeout will be `50` for load balancers in the `application` family.
 	IdleConnectionTimeout *int64 `json:"idle_connection_timeout,omitempty"`
 
-	// The listener port number. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-	// combination.
+	// The listener port number, or the inclusive lower bound of the port range. Each listener in the load balancer must
+	// have a unique `port` and `protocol` combination.
 	//
-	// If `port_min` is also specified, `port` must have the same value as `port_min`.
+	// Not supported for load balancers operating with route mode enabled.
 	Port *int64 `json:"port,omitempty"`
 
 	// The inclusive upper bound of the range of ports used by this listener. Must not be less than `port_min`.
 	//
 	// Only load balancers with route mode enabled, or network load balancers with
 	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, `65535` must be specified.
+	// mode is enabled, the value `65535` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -77068,21 +76911,15 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 
 	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`.
 	//
-	// If specified, `port_max` must also be specified, and must not be smaller. If unspecified, `port_max` must also be
-	// unspecified.
-	//
-	// If `port` is also specified, `port_min` must have the same value as `port`.
-	//
 	// Only load balancers with route mode enabled, or network load balancers with
 	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
-	// mode is enabled, `1` must be specified.
+	// mode is enabled, the value `1` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The listener protocol. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-	// combination.
+	// The listener protocol. Each listener in the load balancer must have a unique `port` and `protocol` combination.
 	//
 	// Load balancers in the `network` family support `tcp` and `udp` (if `udp_supported` is `true`). Load balancers in the
 	// `application` family support `tcp`, `http` and
@@ -77097,8 +76934,7 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 }
 
 // Constants associated with the LoadBalancerListenerPrototypeLoadBalancerContext.Protocol property.
-// The listener protocol. Each listener in the load balancer must have a non-overlapping port range and `protocol`
-// combination.
+// The listener protocol. Each listener in the load balancer must have a unique `port` and `protocol` combination.
 //
 // Load balancers in the `network` family support `tcp` and `udp` (if `udp_supported` is `true`). Load balancers in the
 // `application` family support `tcp`, `http` and
@@ -77438,10 +77274,8 @@ type LoadBalancerPool struct {
 	// The date and time that this pool was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	FailsafePolicy *LoadBalancerPoolFailsafePolicy `json:"failsafe_policy" validate:"required"`
-
 	// The health monitor of this pool.
-	HealthMonitor LoadBalancerPoolHealthMonitorIntf `json:"health_monitor" validate:"required"`
+	HealthMonitor *LoadBalancerPoolHealthMonitor `json:"health_monitor" validate:"required"`
 
 	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
@@ -77549,11 +77383,6 @@ func UnmarshalLoadBalancerPool(m map[string]json.RawMessage, result interface{})
 		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "failsafe_policy", &obj.FailsafePolicy, UnmarshalLoadBalancerPoolFailsafePolicy)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "failsafe_policy-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalModel(m, "health_monitor", &obj.HealthMonitor, UnmarshalLoadBalancerPoolHealthMonitor)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "health_monitor-error", common.GetComponentInfo())
@@ -77626,263 +77455,7 @@ func UnmarshalLoadBalancerPoolCollection(m map[string]json.RawMessage, result in
 	return
 }
 
-// LoadBalancerPoolFailsafePolicy : LoadBalancerPoolFailsafePolicy struct
-type LoadBalancerPoolFailsafePolicy struct {
-	// A load balancer failsafe policy action:
-	// - `bypass`: Bypasses the members and sends requests directly to their destination IPs.
-	// - `drop`: Drops requests.
-	// - `fail`: Fails requests with an HTTP `503` status code.
-	// - `forward`: Forwards requests to the `target` pool.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	Action *string `json:"action" validate:"required"`
-
-	// The healthy member count at which the failsafe policy action will be triggered. At present, this is always `0`, but
-	// may be modifiable in the future.
-	HealthyMemberThresholdCount *int64 `json:"healthy_member_threshold_count" validate:"required"`
-
-	// If `action` is `forward`, the target pool to forward to.
-	//
-	// If `action` is not `forward`, this property will be absent.
-	//
-	// The targets supported by this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	Target *LoadBalancerPoolReference `json:"target,omitempty"`
-}
-
-// Constants associated with the LoadBalancerPoolFailsafePolicy.Action property.
-// A load balancer failsafe policy action:
-// - `bypass`: Bypasses the members and sends requests directly to their destination IPs.
-// - `drop`: Drops requests.
-// - `fail`: Fails requests with an HTTP `503` status code.
-// - `forward`: Forwards requests to the `target` pool.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	LoadBalancerPoolFailsafePolicyActionBypassConst  = "bypass"
-	LoadBalancerPoolFailsafePolicyActionDropConst    = "drop"
-	LoadBalancerPoolFailsafePolicyActionFailConst    = "fail"
-	LoadBalancerPoolFailsafePolicyActionForwardConst = "forward"
-)
-
-// UnmarshalLoadBalancerPoolFailsafePolicy unmarshals an instance of LoadBalancerPoolFailsafePolicy from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolFailsafePolicy(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolFailsafePolicy)
-	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "healthy_member_threshold_count", &obj.HealthyMemberThresholdCount)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "healthy_member_threshold_count-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalLoadBalancerPoolReference)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerPoolFailsafePolicyPatch : The failsafe policy for this load balancer pool.
-type LoadBalancerPoolFailsafePolicyPatch struct {
-	// A load balancer failsafe policy action:
-	// - `bypass`: Bypasses the members and sends requests directly to their destination IPs. If specified, this load
-	// balancer must have `route_mode` enabled.
-	// - `drop`: Drops requests. If specified, the pool protocol must be `tcp`.
-	// - `fail`: Fails requests with an HTTP `503` status code. If specified, the pool protocol must be `http` or `https`.
-	// - `forward`: Forwards requests to the `target` pool. If specified, the pool protocol must be `http` or `https`.
-	//
-	// The specified value must be listed in the `failsafe_policy_actions` for this pool's load balancer.
-	Action *string `json:"action,omitempty"`
-
-	// The failsafe target pool to forward to.
-	//
-	// The specified pool must:
-	// - Belong to this load balancer
-	// - Have the same `protocol` as this pool, or have a compatible protocol.
-	//   At present, the compatible protocols are `http` and `https`.
-	// - Not have a `failsafe_policy.action` of `forward` or `bypass`.
-	//
-	// If specified, `action` must be `forward`.
-	//
-	// Specify `null` to remove an existing failsafe target pool.
-	Target LoadBalancerPoolFailsafePolicyTargetPatchIntf `json:"target,omitempty"`
-}
-
-// Constants associated with the LoadBalancerPoolFailsafePolicyPatch.Action property.
-// A load balancer failsafe policy action:
-// - `bypass`: Bypasses the members and sends requests directly to their destination IPs. If specified, this load
-// balancer must have `route_mode` enabled.
-// - `drop`: Drops requests. If specified, the pool protocol must be `tcp`.
-// - `fail`: Fails requests with an HTTP `503` status code. If specified, the pool protocol must be `http` or `https`.
-// - `forward`: Forwards requests to the `target` pool. If specified, the pool protocol must be `http` or `https`.
-//
-// The specified value must be listed in the `failsafe_policy_actions` for this pool's load balancer.
-const (
-	LoadBalancerPoolFailsafePolicyPatchActionBypassConst  = "bypass"
-	LoadBalancerPoolFailsafePolicyPatchActionDropConst    = "drop"
-	LoadBalancerPoolFailsafePolicyPatchActionFailConst    = "fail"
-	LoadBalancerPoolFailsafePolicyPatchActionForwardConst = "forward"
-)
-
-// UnmarshalLoadBalancerPoolFailsafePolicyPatch unmarshals an instance of LoadBalancerPoolFailsafePolicyPatch from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolFailsafePolicyPatch(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolFailsafePolicyPatch)
-	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalLoadBalancerPoolFailsafePolicyTargetPatch)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// asPatch returns a generic map representation of the LoadBalancerPoolFailsafePolicyPatch
-func (loadBalancerPoolFailsafePolicyPatch *LoadBalancerPoolFailsafePolicyPatch) asPatch() (_patch map[string]interface{}) {
-	_patch = map[string]interface{}{}
-	if !core.IsNil(loadBalancerPoolFailsafePolicyPatch.Action) {
-		_patch["action"] = loadBalancerPoolFailsafePolicyPatch.Action
-	}
-	if !core.IsNil(loadBalancerPoolFailsafePolicyPatch.Target) {
-		_patch["target"] = loadBalancerPoolFailsafePolicyPatch.Target.asPatch()
-	}
-
-	return
-}
-
-// LoadBalancerPoolFailsafePolicyPrototype : LoadBalancerPoolFailsafePolicyPrototype struct
-type LoadBalancerPoolFailsafePolicyPrototype struct {
-	// A load balancer failsafe policy action:
-	// - `bypass`: Bypasses the members and sends requests directly to their destination IPs. If specified, this load
-	// balancer must have `route_mode` enabled.
-	// - `drop`: Drops requests. If specified, the pool protocol must be `tcp`.
-	// - `fail`: Fails requests with an HTTP `503` status code. If specified, the pool protocol must be `http` or `https`.
-	// - `forward`: Forwards requests to the `target` pool. If specified, the pool protocol must be `http` or `https`.
-	//
-	// The specified value must be listed in the `failsafe_policy_actions` for this pool's load balancer.
-	Action *string `json:"action,omitempty"`
-
-	// The failsafe target pool to forward to.
-	//
-	// The specified pool must:
-	// - Belong to this load balancer
-	// - Have the same `protocol` as this pool, or have a compatible protocol.
-	//   At present, the compatible protocols are `http` and `https`.
-	// - Have a `failsafe_policy.action` of `fail` or `drop`
-	//
-	// If specified, `action` must be `forward`.
-	Target LoadBalancerPoolIdentityIntf `json:"target,omitempty"`
-}
-
-// Constants associated with the LoadBalancerPoolFailsafePolicyPrototype.Action property.
-// A load balancer failsafe policy action:
-// - `bypass`: Bypasses the members and sends requests directly to their destination IPs. If specified, this load
-// balancer must have `route_mode` enabled.
-// - `drop`: Drops requests. If specified, the pool protocol must be `tcp`.
-// - `fail`: Fails requests with an HTTP `503` status code. If specified, the pool protocol must be `http` or `https`.
-// - `forward`: Forwards requests to the `target` pool. If specified, the pool protocol must be `http` or `https`.
-//
-// The specified value must be listed in the `failsafe_policy_actions` for this pool's load balancer.
-const (
-	LoadBalancerPoolFailsafePolicyPrototypeActionBypassConst  = "bypass"
-	LoadBalancerPoolFailsafePolicyPrototypeActionDropConst    = "drop"
-	LoadBalancerPoolFailsafePolicyPrototypeActionFailConst    = "fail"
-	LoadBalancerPoolFailsafePolicyPrototypeActionForwardConst = "forward"
-)
-
-// UnmarshalLoadBalancerPoolFailsafePolicyPrototype unmarshals an instance of LoadBalancerPoolFailsafePolicyPrototype from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolFailsafePolicyPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolFailsafePolicyPrototype)
-	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalLoadBalancerPoolIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerPoolFailsafePolicyTargetPatch : The failsafe target pool to forward to.
-//
-// The specified pool must:
-//   - Belong to this load balancer
-//   - Have the same `protocol` as this pool, or have a compatible protocol.
-//     At present, the compatible protocols are `http` and `https`.
-//   - Not have a `failsafe_policy.action` of `forward` or `bypass`.
-//
-// If specified, `action` must be `forward`.
-//
-// Specify `null` to remove an existing failsafe target pool.
-// Models which "extend" this model:
-// - LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID
-// - LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref
-type LoadBalancerPoolFailsafePolicyTargetPatch struct {
-	// The unique identifier for this load balancer pool.
-	ID *string `json:"id,omitempty"`
-
-	// The URL for this load balancer pool.
-	Href *string `json:"href,omitempty"`
-}
-
-func (*LoadBalancerPoolFailsafePolicyTargetPatch) isaLoadBalancerPoolFailsafePolicyTargetPatch() bool {
-	return true
-}
-
-type LoadBalancerPoolFailsafePolicyTargetPatchIntf interface {
-	isaLoadBalancerPoolFailsafePolicyTargetPatch() bool
-	asPatch() map[string]interface{}
-}
-
-// UnmarshalLoadBalancerPoolFailsafePolicyTargetPatch unmarshals an instance of LoadBalancerPoolFailsafePolicyTargetPatch from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolFailsafePolicyTargetPatch(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolFailsafePolicyTargetPatch)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// asPatch returns a generic map representation of the LoadBalancerPoolFailsafePolicyTargetPatch
-func (loadBalancerPoolFailsafePolicyTargetPatch *LoadBalancerPoolFailsafePolicyTargetPatch) asPatch() (_patch map[string]interface{}) {
-	_patch = map[string]interface{}{}
-	if !core.IsNil(loadBalancerPoolFailsafePolicyTargetPatch.ID) {
-		_patch["id"] = loadBalancerPoolFailsafePolicyTargetPatch.ID
-	}
-	if !core.IsNil(loadBalancerPoolFailsafePolicyTargetPatch.Href) {
-		_patch["href"] = loadBalancerPoolFailsafePolicyTargetPatch.Href
-	}
-
-	return
-}
-
 // LoadBalancerPoolHealthMonitor : LoadBalancerPoolHealthMonitor struct
-// Models which "extend" this model:
-// - LoadBalancerPoolHealthMonitorTypeTCP
-// - LoadBalancerPoolHealthMonitorTypeHttphttps
 type LoadBalancerPoolHealthMonitor struct {
 	// The seconds to wait between health checks.
 	Delay *int64 `json:"delay" validate:"required"`
@@ -77898,7 +77471,7 @@ type LoadBalancerPoolHealthMonitor struct {
 	// The seconds to wait for a response to a health check.
 	Timeout *int64 `json:"timeout" validate:"required"`
 
-	// The protocol type used for health checks.
+	// The protocol type to use for health checks.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -77906,11 +77479,13 @@ type LoadBalancerPoolHealthMonitor struct {
 
 	// The health check URL path, in the format of an [origin-form request
 	// target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
+	//
+	// If `type` is `tcp`, this property will be absent.
 	URLPath *string `json:"url_path,omitempty"`
 }
 
 // Constants associated with the LoadBalancerPoolHealthMonitor.Type property.
-// The protocol type used for health checks.
+// The protocol type to use for health checks.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -77919,14 +77494,6 @@ const (
 	LoadBalancerPoolHealthMonitorTypeHTTPSConst = "https"
 	LoadBalancerPoolHealthMonitorTypeTCPConst   = "tcp"
 )
-
-func (*LoadBalancerPoolHealthMonitor) isaLoadBalancerPoolHealthMonitor() bool {
-	return true
-}
-
-type LoadBalancerPoolHealthMonitorIntf interface {
-	isaLoadBalancerPoolHealthMonitor() bool
-}
 
 // UnmarshalLoadBalancerPoolHealthMonitor unmarshals an instance of LoadBalancerPoolHealthMonitor from the specified map of raw messages.
 func UnmarshalLoadBalancerPoolHealthMonitor(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -77989,8 +77556,6 @@ type LoadBalancerPoolHealthMonitorPatch struct {
 	// The health check URL path.  If specified, `type` must be `http` or `https`.
 	//
 	// Must be in the format of an [origin-form request target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
-	//
-	// Specify `null` to remove a url_path.
 	URLPath *string `json:"url_path,omitempty"`
 }
 
@@ -78080,9 +77645,6 @@ func (loadBalancerPoolHealthMonitorPatch *LoadBalancerPoolHealthMonitorPatch) as
 }
 
 // LoadBalancerPoolHealthMonitorPrototype : LoadBalancerPoolHealthMonitorPrototype struct
-// Models which "extend" this model:
-// - LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype
-// - LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype
 type LoadBalancerPoolHealthMonitorPrototype struct {
 	// The seconds to wait between health checks.  Must be greater than `timeout`.
 	Delay *int64 `json:"delay" validate:"required"`
@@ -78101,7 +77663,7 @@ type LoadBalancerPoolHealthMonitorPrototype struct {
 	// The protocol type to use for health checks.
 	Type *string `json:"type" validate:"required"`
 
-	// The health check URL path to use.
+	// The health check URL path.  If specified, `type` must be `http` or `https`.
 	//
 	// Must be in the format of an [origin-form request target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
 	URLPath *string `json:"url_path,omitempty"`
@@ -78115,12 +77677,19 @@ const (
 	LoadBalancerPoolHealthMonitorPrototypeTypeTCPConst   = "tcp"
 )
 
-func (*LoadBalancerPoolHealthMonitorPrototype) isaLoadBalancerPoolHealthMonitorPrototype() bool {
-	return true
-}
-
-type LoadBalancerPoolHealthMonitorPrototypeIntf interface {
-	isaLoadBalancerPoolHealthMonitorPrototype() bool
+// NewLoadBalancerPoolHealthMonitorPrototype : Instantiate LoadBalancerPoolHealthMonitorPrototype (Generic Model Constructor)
+func (*VpcV1) NewLoadBalancerPoolHealthMonitorPrototype(delay int64, maxRetries int64, timeout int64, typeVar string) (_model *LoadBalancerPoolHealthMonitorPrototype, err error) {
+	_model = &LoadBalancerPoolHealthMonitorPrototype{
+		Delay:      core.Int64Ptr(delay),
+		MaxRetries: core.Int64Ptr(maxRetries),
+		Timeout:    core.Int64Ptr(timeout),
+		Type:       core.StringPtr(typeVar),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
 }
 
 // UnmarshalLoadBalancerPoolHealthMonitorPrototype unmarshals an instance of LoadBalancerPoolHealthMonitorPrototype from the specified map of raw messages.
@@ -78449,10 +78018,7 @@ type LoadBalancerPoolMemberPrototype struct {
 
 	// The weight of the server member.
 	//
-	// If specified, the pool algorithm must be `weighted_round_robin` and the load balancer must be in the `application`
-	// family.
-	//
-	// If unspecified, the weight will be `50` for load balancers in the `application` family.
+	// If specified, the pool algorithm must be `weighted_round_robin`.
 	Weight *int64 `json:"weight,omitempty"`
 }
 
@@ -78683,9 +78249,6 @@ type LoadBalancerPoolPatch struct {
 	// `availability` with value `subnet` in the profile.
 	Algorithm *string `json:"algorithm,omitempty"`
 
-	// The failsafe policy for this load balancer pool.
-	FailsafePolicy *LoadBalancerPoolFailsafePolicyPatch `json:"failsafe_policy,omitempty"`
-
 	// The health monitor of this pool.
 	HealthMonitor *LoadBalancerPoolHealthMonitorPatch `json:"health_monitor,omitempty"`
 
@@ -78698,9 +78261,8 @@ type LoadBalancerPoolPatch struct {
 	// `application` family support `tcp`, `http` and
 	// `https`.
 	//
-	// If this pool is associated with a load balancer listener or a load balancer failsafe target pool, the specified
-	// protocol must match or be compatible with each other's protocol. At present, the compatible protocols are `http` and
-	// `https`.
+	// If this pool is associated with a load balancer listener, the specified protocol must match, or be compatible with
+	// the listener's protocol. At present, the compatible protocols are `http` and `https`.
 	Protocol *string `json:"protocol,omitempty"`
 
 	// The PROXY protocol setting for this pool:
@@ -78731,9 +78293,8 @@ const (
 // `application` family support `tcp`, `http` and
 // `https`.
 //
-// If this pool is associated with a load balancer listener or a load balancer failsafe target pool, the specified
-// protocol must match or be compatible with each other's protocol. At present, the compatible protocols are `http` and
-// `https`.
+// If this pool is associated with a load balancer listener, the specified protocol must match, or be compatible with
+// the listener's protocol. At present, the compatible protocols are `http` and `https`.
 const (
 	LoadBalancerPoolPatchProtocolHTTPConst  = "http"
 	LoadBalancerPoolPatchProtocolHTTPSConst = "https"
@@ -78760,11 +78321,6 @@ func UnmarshalLoadBalancerPoolPatch(m map[string]json.RawMessage, result interfa
 	err = core.UnmarshalPrimitive(m, "algorithm", &obj.Algorithm)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "algorithm-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "failsafe_policy", &obj.FailsafePolicy, UnmarshalLoadBalancerPoolFailsafePolicyPatch)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "failsafe_policy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "health_monitor", &obj.HealthMonitor, UnmarshalLoadBalancerPoolHealthMonitorPatch)
@@ -78802,9 +78358,6 @@ func (loadBalancerPoolPatch *LoadBalancerPoolPatch) AsPatch() (_patch map[string
 	if !core.IsNil(loadBalancerPoolPatch.Algorithm) {
 		_patch["algorithm"] = loadBalancerPoolPatch.Algorithm
 	}
-	if !core.IsNil(loadBalancerPoolPatch.FailsafePolicy) {
-		_patch["failsafe_policy"] = loadBalancerPoolPatch.FailsafePolicy.asPatch()
-	}
 	if !core.IsNil(loadBalancerPoolPatch.HealthMonitor) {
 		_patch["health_monitor"] = loadBalancerPoolPatch.HealthMonitor.asPatch()
 	}
@@ -78824,14 +78377,14 @@ func (loadBalancerPoolPatch *LoadBalancerPoolPatch) AsPatch() (_patch map[string
 	return
 }
 
-// LoadBalancerPoolPrototypeLoadBalancerContext : LoadBalancerPoolPrototypeLoadBalancerContext struct
-type LoadBalancerPoolPrototypeLoadBalancerContext struct {
+// LoadBalancerPoolPrototype : LoadBalancerPoolPrototype struct
+type LoadBalancerPoolPrototype struct {
 	// The load balancing algorithm. The `least_connections` algorithm is only supported for load balancers that have
 	// `availability` with value `subnet` in the profile.
 	Algorithm *string `json:"algorithm" validate:"required"`
 
 	// The health monitor of this pool.
-	HealthMonitor LoadBalancerPoolHealthMonitorPrototypeIntf `json:"health_monitor" validate:"required"`
+	HealthMonitor *LoadBalancerPoolHealthMonitorPrototype `json:"health_monitor" validate:"required"`
 
 	// The members for this load balancer pool. For load balancers in the `network` family, the same `port` and `target`
 	// tuple cannot be shared by a pool member of any other load balancer in the same VPC.
@@ -78855,34 +78408,33 @@ type LoadBalancerPoolPrototypeLoadBalancerContext struct {
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
 	// The session persistence of this pool. If specified, the load balancer must have
-	// `source_ip_session_persistence_supported` set to `true` in its profile.
-	//
-	// If unspecified, session persistence will be disabled, and traffic will be distributed
-	// across members of the pool.
+	// `source_ip_session_persistence_supported` set to `true` in its profile. If
+	// unspecified, session persistence will be disabled, and traffic will be distributed
+	// across backend server members of the pool.
 	SessionPersistence *LoadBalancerPoolSessionPersistencePrototype `json:"session_persistence,omitempty"`
 }
 
-// Constants associated with the LoadBalancerPoolPrototypeLoadBalancerContext.Algorithm property.
+// Constants associated with the LoadBalancerPoolPrototype.Algorithm property.
 // The load balancing algorithm. The `least_connections` algorithm is only supported for load balancers that have
 // `availability` with value `subnet` in the profile.
 const (
-	LoadBalancerPoolPrototypeLoadBalancerContextAlgorithmLeastConnectionsConst   = "least_connections"
-	LoadBalancerPoolPrototypeLoadBalancerContextAlgorithmRoundRobinConst         = "round_robin"
-	LoadBalancerPoolPrototypeLoadBalancerContextAlgorithmWeightedRoundRobinConst = "weighted_round_robin"
+	LoadBalancerPoolPrototypeAlgorithmLeastConnectionsConst   = "least_connections"
+	LoadBalancerPoolPrototypeAlgorithmRoundRobinConst         = "round_robin"
+	LoadBalancerPoolPrototypeAlgorithmWeightedRoundRobinConst = "weighted_round_robin"
 )
 
-// Constants associated with the LoadBalancerPoolPrototypeLoadBalancerContext.Protocol property.
+// Constants associated with the LoadBalancerPoolPrototype.Protocol property.
 // The protocol used for this load balancer pool. Load balancers in the `network` family support `tcp` and `udp` (if
 // `udp_supported` is `true`). Load balancers in the
 // `application` family support `tcp`, `http`, and `https`.
 const (
-	LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPConst  = "http"
-	LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPSConst = "https"
-	LoadBalancerPoolPrototypeLoadBalancerContextProtocolTCPConst   = "tcp"
-	LoadBalancerPoolPrototypeLoadBalancerContextProtocolUDPConst   = "udp"
+	LoadBalancerPoolPrototypeProtocolHTTPConst  = "http"
+	LoadBalancerPoolPrototypeProtocolHTTPSConst = "https"
+	LoadBalancerPoolPrototypeProtocolTCPConst   = "tcp"
+	LoadBalancerPoolPrototypeProtocolUDPConst   = "udp"
 )
 
-// Constants associated with the LoadBalancerPoolPrototypeLoadBalancerContext.ProxyProtocol property.
+// Constants associated with the LoadBalancerPoolPrototype.ProxyProtocol property.
 // The PROXY protocol setting for this pool:
 // - `v1`: Enabled with version 1 (human-readable header format)
 // - `v2`: Enabled with version 2 (binary header format)
@@ -78890,14 +78442,14 @@ const (
 //
 // For load balancers in the `network` family, this property must be `disabled`.
 const (
-	LoadBalancerPoolPrototypeLoadBalancerContextProxyProtocolDisabledConst = "disabled"
-	LoadBalancerPoolPrototypeLoadBalancerContextProxyProtocolV1Const       = "v1"
-	LoadBalancerPoolPrototypeLoadBalancerContextProxyProtocolV2Const       = "v2"
+	LoadBalancerPoolPrototypeProxyProtocolDisabledConst = "disabled"
+	LoadBalancerPoolPrototypeProxyProtocolV1Const       = "v1"
+	LoadBalancerPoolPrototypeProxyProtocolV2Const       = "v2"
 )
 
-// NewLoadBalancerPoolPrototypeLoadBalancerContext : Instantiate LoadBalancerPoolPrototypeLoadBalancerContext (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolPrototypeLoadBalancerContext(algorithm string, healthMonitor LoadBalancerPoolHealthMonitorPrototypeIntf, protocol string) (_model *LoadBalancerPoolPrototypeLoadBalancerContext, err error) {
-	_model = &LoadBalancerPoolPrototypeLoadBalancerContext{
+// NewLoadBalancerPoolPrototype : Instantiate LoadBalancerPoolPrototype (Generic Model Constructor)
+func (*VpcV1) NewLoadBalancerPoolPrototype(algorithm string, healthMonitor *LoadBalancerPoolHealthMonitorPrototype, protocol string) (_model *LoadBalancerPoolPrototype, err error) {
+	_model = &LoadBalancerPoolPrototype{
 		Algorithm:     core.StringPtr(algorithm),
 		HealthMonitor: healthMonitor,
 		Protocol:      core.StringPtr(protocol),
@@ -78909,9 +78461,9 @@ func (*VpcV1) NewLoadBalancerPoolPrototypeLoadBalancerContext(algorithm string, 
 	return
 }
 
-// UnmarshalLoadBalancerPoolPrototypeLoadBalancerContext unmarshals an instance of LoadBalancerPoolPrototypeLoadBalancerContext from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolPrototypeLoadBalancerContext(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolPrototypeLoadBalancerContext)
+// UnmarshalLoadBalancerPoolPrototype unmarshals an instance of LoadBalancerPoolPrototype from the specified map of raw messages.
+func UnmarshalLoadBalancerPoolPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerPoolPrototype)
 	err = core.UnmarshalPrimitive(m, "algorithm", &obj.Algorithm)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "algorithm-error", common.GetComponentInfo())
@@ -79149,8 +78701,6 @@ type LoadBalancerProfile struct {
 
 	Availability LoadBalancerProfileAvailabilityIntf `json:"availability" validate:"required"`
 
-	FailsafePolicyActions LoadBalancerProfileFailsafePolicyActionsIntf `json:"failsafe_policy_actions" validate:"required"`
-
 	// The product family this load balancer profile belongs to.
 	//
 	// The enumerated values for this property may
@@ -79198,11 +78748,6 @@ func UnmarshalLoadBalancerProfile(m map[string]json.RawMessage, result interface
 	err = core.UnmarshalModel(m, "availability", &obj.Availability, UnmarshalLoadBalancerProfileAvailability)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "availability-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "failsafe_policy_actions", &obj.FailsafePolicyActions, UnmarshalLoadBalancerProfileFailsafePolicyActions)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "failsafe_policy_actions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "family", &obj.Family)
@@ -79426,82 +78971,6 @@ func (resp *LoadBalancerProfileCollection) GetNextStart() (*string, error) {
 		return nil, nil
 	}
 	return start, nil
-}
-
-// LoadBalancerProfileFailsafePolicyActions : LoadBalancerProfileFailsafePolicyActions struct
-// Models which "extend" this model:
-// - LoadBalancerProfileFailsafePolicyActionsEnum
-// - LoadBalancerProfileFailsafePolicyActionsDependent
-type LoadBalancerProfileFailsafePolicyActions struct {
-	// The default failsafe policy action for this profile.
-	Default *string `json:"default,omitempty"`
-
-	// The type for this profile field.
-	Type *string `json:"type,omitempty"`
-
-	// The supported failsafe policy actions.
-	Values []string `json:"values,omitempty"`
-}
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActions.Default property.
-// The default failsafe policy action for this profile.
-const (
-	LoadBalancerProfileFailsafePolicyActionsDefaultBypassConst  = "bypass"
-	LoadBalancerProfileFailsafePolicyActionsDefaultDropConst    = "drop"
-	LoadBalancerProfileFailsafePolicyActionsDefaultFailConst    = "fail"
-	LoadBalancerProfileFailsafePolicyActionsDefaultForwardConst = "forward"
-)
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActions.Type property.
-// The type for this profile field.
-const (
-	LoadBalancerProfileFailsafePolicyActionsTypeEnumConst = "enum"
-)
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActions.Values property.
-// A load balancer failsafe policy action:
-// - `bypass`: Bypasses the members and sends requests directly to their destination IPs.
-// - `drop`: Drops requests.
-// - `fail`: Fails requests with an HTTP `503` status code.
-// - `forward`: Forwards requests to the `target` pool.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	LoadBalancerProfileFailsafePolicyActionsValuesBypassConst  = "bypass"
-	LoadBalancerProfileFailsafePolicyActionsValuesDropConst    = "drop"
-	LoadBalancerProfileFailsafePolicyActionsValuesFailConst    = "fail"
-	LoadBalancerProfileFailsafePolicyActionsValuesForwardConst = "forward"
-)
-
-func (*LoadBalancerProfileFailsafePolicyActions) isaLoadBalancerProfileFailsafePolicyActions() bool {
-	return true
-}
-
-type LoadBalancerProfileFailsafePolicyActionsIntf interface {
-	isaLoadBalancerProfileFailsafePolicyActions() bool
-}
-
-// UnmarshalLoadBalancerProfileFailsafePolicyActions unmarshals an instance of LoadBalancerProfileFailsafePolicyActions from the specified map of raw messages.
-func UnmarshalLoadBalancerProfileFailsafePolicyActions(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerProfileFailsafePolicyActions)
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
 }
 
 // LoadBalancerProfileIdentity : Identifies a load balancer profile by a unique property.
@@ -80298,9 +79767,9 @@ func UnmarshalNetworkACLReference(m map[string]json.RawMessage, result interface
 
 // NetworkACLRule : NetworkACLRule struct
 // Models which "extend" this model:
-// - NetworkACLRuleNetworkACLRuleProtocolAll
-// - NetworkACLRuleNetworkACLRuleProtocolIcmp
 // - NetworkACLRuleNetworkACLRuleProtocolTcpudp
+// - NetworkACLRuleNetworkACLRuleProtocolIcmp
+// - NetworkACLRuleNetworkACLRuleProtocolAll
 type NetworkACLRule struct {
 	// The action to perform for a packet matching the rule.
 	Action *string `json:"action" validate:"required"`
@@ -80329,14 +79798,23 @@ type NetworkACLRule struct {
 	// The name for this network ACL rule. The name is unique across all rules for the network ACL.
 	Name *string `json:"name" validate:"required"`
 
-	// The name of the network protocol.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
+
+	// The inclusive upper bound of TCP/UDP destination port range.
+	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP destination port range.
+	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
+
+	// The inclusive upper bound of TCP/UDP source port range.
+	SourcePortMax *int64 `json:"source_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP source port range.
+	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 
 	// The ICMP traffic code to match.
 	//
@@ -80347,18 +79825,6 @@ type NetworkACLRule struct {
 	//
 	// If absent, all types are matched.
 	Type *int64 `json:"type,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP source port range.
-	SourcePortMax *int64 `json:"source_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP source port range.
-	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 }
 
 // Constants associated with the NetworkACLRule.Action property.
@@ -80382,10 +79848,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRule.Protocol property.
-// The name of the network protocol.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// The network protocol.
 const (
 	NetworkACLRuleProtocolAllConst  = "all"
 	NetworkACLRuleProtocolIcmpConst = "icmp"
@@ -80436,8 +79899,11 @@ func UnmarshalNetworkACLRule(m map[string]json.RawMessage, result interface{}) (
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
 	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+		// Fallback to base NetworkACLRule for unknown protocols
+		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleGeneric)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleGeneric-error", common.GetComponentInfo())
+		}
 	}
 	return
 }
@@ -80602,9 +80068,9 @@ func (resp *NetworkACLRuleCollection) GetNextStart() (*string, error) {
 
 // NetworkACLRuleItem : NetworkACLRuleItem struct
 // Models which "extend" this model:
-// - NetworkACLRuleItemNetworkACLRuleProtocolAll
-// - NetworkACLRuleItemNetworkACLRuleProtocolIcmp
 // - NetworkACLRuleItemNetworkACLRuleProtocolTcpudp
+// - NetworkACLRuleItemNetworkACLRuleProtocolIcmp
+// - NetworkACLRuleItemNetworkACLRuleProtocolAll
 type NetworkACLRuleItem struct {
 	// The action to perform for a packet matching the rule.
 	Action *string `json:"action" validate:"required"`
@@ -80634,14 +80100,23 @@ type NetworkACLRuleItem struct {
 	// The name for this network ACL rule. The name is unique across all rules for the network ACL.
 	Name *string `json:"name" validate:"required"`
 
-	// The name of the network protocol.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
+
+	// The inclusive upper bound of TCP/UDP destination port range.
+	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP destination port range.
+	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
+
+	// The inclusive upper bound of TCP/UDP source port range.
+	SourcePortMax *int64 `json:"source_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP source port range.
+	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 
 	// The ICMP traffic code to match.
 	//
@@ -80652,18 +80127,6 @@ type NetworkACLRuleItem struct {
 	//
 	// If absent, all types are matched.
 	Type *int64 `json:"type,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP source port range.
-	SourcePortMax *int64 `json:"source_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP source port range.
-	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 }
 
 // Constants associated with the NetworkACLRuleItem.Action property.
@@ -80687,10 +80150,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItem.Protocol property.
-// The name of the network protocol.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// The network protocol.
 const (
 	NetworkACLRuleItemProtocolAllConst  = "all"
 	NetworkACLRuleItemProtocolIcmpConst = "icmp"
@@ -80741,9 +80201,154 @@ func UnmarshalNetworkACLRuleItem(m map[string]json.RawMessage, result interface{
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
 	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+		// Fallback to base NetworkACLRuleItem for unknown protocols
+		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemGeneric)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemGeneric-error", common.GetComponentInfo())
+		}
 	}
+	return
+}
+
+// UnmarshalNetworkACLRuleItemGeneric unmarshals the base NetworkACLRuleItem fields for unknown protocol types
+func UnmarshalNetworkACLRuleItemGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NetworkACLRuleItem)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "before", &obj.Before, UnmarshalNetworkACLRuleReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "before-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "destination", &obj.Destination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "destination-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
+		return
+	}
+
+	// Attempt to unmarshal optional protocol-specific fields - ignore errors as these may not be present
+	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	_ = core.UnmarshalPrimitive(m, "destination_port_max", &obj.DestinationPortMax)
+	_ = core.UnmarshalPrimitive(m, "destination_port_min", &obj.DestinationPortMin)
+	_ = core.UnmarshalPrimitive(m, "source_port_max", &obj.SourcePortMax)
+	_ = core.UnmarshalPrimitive(m, "source_port_min", &obj.SourcePortMin)
+
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UnmarshalNetworkACLRuleGeneric unmarshals the base NetworkACLRuleItem fields for unknown protocol types
+func UnmarshalNetworkACLRuleGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NetworkACLRule)
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "before", &obj.Before, UnmarshalNetworkACLRuleReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "before-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "destination", &obj.Destination)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "destination-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
+		return
+	}
+
+	// Attempt to unmarshal optional protocol-specific fields - ignore errors as these may not be present
+	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	_ = core.UnmarshalPrimitive(m, "destination_port_max", &obj.DestinationPortMax)
+	_ = core.UnmarshalPrimitive(m, "destination_port_min", &obj.DestinationPortMin)
+	_ = core.UnmarshalPrimitive(m, "source_port_max", &obj.SourcePortMax)
+	_ = core.UnmarshalPrimitive(m, "source_port_min", &obj.SourcePortMin)
+
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -80765,14 +80370,10 @@ type NetworkACLRulePatch struct {
 	// The destination IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all destination addresses.
 	Destination *string `json:"destination,omitempty"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	//
-	// Must be larger than or equal to `destination_port_min`.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	//
-	// Must be smaller than or equal to `destination_port_max`.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
 	// The direction of traffic to match.
@@ -80784,14 +80385,10 @@ type NetworkACLRulePatch struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source,omitempty"`
 
-	// The inclusive upper bound of the TCP or UDP source port range.
-	//
-	// Must be larger than or equal to `source_port_min`.
+	// The inclusive upper bound of TCP/UDP source port range.
 	SourcePortMax *int64 `json:"source_port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP source port range.
-	//
-	// Must be smaller than or equal to `source_port_max`.
+	// The inclusive lower bound of TCP/UDP source port range.
 	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 
 	// The ICMP traffic type to match.
@@ -80926,9 +80523,9 @@ func (networkACLRulePatch *NetworkACLRulePatch) AsPatch() (_patch map[string]int
 
 // NetworkACLRulePrototype : NetworkACLRulePrototype struct
 // Models which "extend" this model:
-// - NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype
-// - NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype
 // - NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype
+// - NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype
+// - NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype
 type NetworkACLRulePrototype struct {
 	// The action to perform for a packet matching the rule.
 	Action *string `json:"action" validate:"required"`
@@ -80951,11 +80548,23 @@ type NetworkACLRulePrototype struct {
 	// the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
+
+	// The inclusive upper bound of TCP/UDP destination port range.
+	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP destination port range.
+	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
+
+	// The inclusive upper bound of TCP/UDP source port range.
+	SourcePortMax *int64 `json:"source_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP source port range.
+	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 
 	// The ICMP traffic code to match.
 	//
@@ -80966,30 +80575,6 @@ type NetworkACLRulePrototype struct {
 	//
 	// If unspecified, all types are matched.
 	Type *int64 `json:"type,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_min` must also be specified, and must not be larger. If unspecified,
-	// `destination_port_min` must also be unspecified, allowing traffic for all destination ports.
-	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_max` must also be specified, and must not be smaller. If unspecified,
-	// `destination_port_max` must also be unspecified, allowing traffic for all destination ports.
-	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_min` must also be specified, and must not be larger. If unspecified, `source_port_min`
-	// must also be unspecified, allowing traffic for all source ports.
-	SourcePortMax *int64 `json:"source_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_max` must also be specified, and must not be smaller. If unspecified, `source_port_max`
-	// must also be unspecified, allowing traffic for all source ports.
-	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 }
 
 // Constants associated with the NetworkACLRulePrototype.Action property.
@@ -81013,7 +80598,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeProtocolAllConst  = "all"
 	NetworkACLRulePrototypeProtocolIcmpConst = "icmp"
@@ -81072,9 +80657,9 @@ func UnmarshalNetworkACLRulePrototype(m map[string]json.RawMessage, result inter
 
 // NetworkACLRulePrototypeNetworkACLContext : NetworkACLRulePrototypeNetworkACLContext struct
 // Models which "extend" this model:
-// - NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype
-// - NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype
 // - NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype
+// - NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype
+// - NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype
 type NetworkACLRulePrototypeNetworkACLContext struct {
 	// The action to perform for a packet matching the rule.
 	Action *string `json:"action" validate:"required"`
@@ -81092,11 +80677,23 @@ type NetworkACLRulePrototypeNetworkACLContext struct {
 	// the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
+
+	// The inclusive upper bound of TCP/UDP destination port range.
+	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP destination port range.
+	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
+
+	// The inclusive upper bound of TCP/UDP source port range.
+	SourcePortMax *int64 `json:"source_port_max,omitempty"`
+
+	// The inclusive lower bound of TCP/UDP source port range.
+	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 
 	// The ICMP traffic code to match.
 	//
@@ -81107,30 +80704,6 @@ type NetworkACLRulePrototypeNetworkACLContext struct {
 	//
 	// If unspecified, all types are matched.
 	Type *int64 `json:"type,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_min` must also be specified, and must not be larger. If unspecified,
-	// `destination_port_min` must also be unspecified, allowing traffic for all destination ports.
-	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_max` must also be specified, and must not be smaller. If unspecified,
-	// `destination_port_max` must also be unspecified, allowing traffic for all destination ports.
-	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_min` must also be specified, and must not be larger. If unspecified, `source_port_min`
-	// must also be unspecified, allowing traffic for all source ports.
-	SourcePortMax *int64 `json:"source_port_max,omitempty"`
-
-	// The inclusive lower bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_max` must also be specified, and must not be smaller. If unspecified, `source_port_max`
-	// must also be unspecified, allowing traffic for all source ports.
-	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 }
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContext.Action property.
@@ -81154,7 +80727,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContext.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextProtocolAllConst  = "all"
 	NetworkACLRulePrototypeNetworkACLContextProtocolIcmpConst = "icmp"
@@ -81310,7 +80883,6 @@ type NetworkInterface struct {
 	// corresponding network attachment.
 	PortSpeed *int64 `json:"port_speed" validate:"required"`
 
-	// The primary IP address of this instance network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -81318,10 +80890,10 @@ type NetworkInterface struct {
 
 	// The security groups targeting this instance network interface.
 	//
-	// If this instance has network attachments, this network interface is a [read-only
-	// representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its corresponding network
-	// attachment and its attached virtual network interface, and the security groups are associated with the attached
-	// virtual network interface.
+	// If this instance has network attachments, this network interface is a
+	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
+	// corresponding network attachment and its attached virtual network interface, and the security groups are associated
+	// with the attached virtual network interface.
 	SecurityGroups []SecurityGroupReference `json:"security_groups" validate:"required"`
 
 	// The status of the instance network interface.
@@ -81470,7 +81042,6 @@ type NetworkInterfaceBareMetalServerContextReference struct {
 	// The name for this bare metal server network interface.
 	Name *string `json:"name" validate:"required"`
 
-	// The primary IP address of this bare metal server network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -81618,7 +81189,6 @@ type NetworkInterfaceInstanceContextReference struct {
 	// The name for this instance network interface.
 	Name *string `json:"name" validate:"required"`
 
-	// The primary IP address of this instance network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -87739,7 +87309,7 @@ type SecurityGroupRule struct {
 	// to all local IP addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
 
-	// The name of the network protocol to allow.
+	// The protocol to allow.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -87756,10 +87326,10 @@ type SecurityGroupRule struct {
 	// The ICMP traffic type to allow. If absent, all types are allowed.
 	Type *int64 `json:"type,omitempty"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	PortMax *int64 `json:"port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	PortMin *int64 `json:"port_min,omitempty"`
 }
 
@@ -87781,7 +87351,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRule.Protocol property.
-// The name of the network protocol to allow.
+// The protocol to allow.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -87835,9 +87405,58 @@ func UnmarshalSecurityGroupRule(m map[string]json.RawMessage, result interface{}
 			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleSecurityGroupRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
 	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+		// Fallback to base SecurityGroupRule for unknown protocols
+		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleGeneric)
 	}
+	return
+}
+
+// UnmarshalSecurityGroupRuleGeneric unmarshals the base SecurityGroupRule fields for unknown protocol types
+func UnmarshalSecurityGroupRuleGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SecurityGroupRule)
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalSecurityGroupRuleLocal)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+
+	// Attempt to unmarshal optional fields - ignore errors as these may not be present
+	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	_ = core.UnmarshalPrimitive(m, "port_max", &obj.PortMax)
+	_ = core.UnmarshalPrimitive(m, "port_min", &obj.PortMin)
+
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -87966,7 +87585,7 @@ func (securityGroupRuleLocalPatch *SecurityGroupRuleLocalPatch) asPatch() (_patc
 }
 
 // SecurityGroupRuleLocalPrototype : The local IP address or range of local IP addresses to which this rule will allow inbound traffic (or from which, for
-// outbound traffic).
+// outbound traffic)
 //
 // If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic to all local IP addresses (or from all
 // local IP addresses, for outbound rules).
@@ -88173,13 +87792,13 @@ type SecurityGroupRulePrototype struct {
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
-	// traffic (or from which, for outbound traffic).
+	// traffic (or from which, for outbound traffic)
 	//
 	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic to all local IP
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The name of the network protocol to allow.
+	// The protocol to allow.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -88200,13 +87819,13 @@ type SecurityGroupRulePrototype struct {
 	// If unspecified, all types are allowed.
 	Type *int64 `json:"type,omitempty"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	//
 	// If specified, `port_min` must also be specified, and must not be larger. If unspecified,
 	// `port_min` must also be unspecified, allowing traffic on all destination ports.
 	PortMax *int64 `json:"port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
+	// The inclusive lower bound of TCP/UDP destination port range
 	//
 	// If specified, `port_max` must also be specified, and must not be smaller. If unspecified, `port_max` must also be
 	// unspecified, allowing traffic on all destination ports.
@@ -88231,7 +87850,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRulePrototype.Protocol property.
-// The name of the network protocol to allow.
+// The protocol to allow.
 const (
 	SecurityGroupRulePrototypeProtocolAllConst  = "all"
 	SecurityGroupRulePrototypeProtocolIcmpConst = "icmp"
@@ -88622,39 +88241,39 @@ func (resp *SecurityGroupTargetCollection) GetNextStart() (*string, error) {
 // The resources supported by this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 // Models which "extend" this model:
-// - SecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext
-// - SecurityGroupTargetReferenceEndpointGatewayReference
-// - SecurityGroupTargetReferenceLoadBalancerReference
 // - SecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext
-// - SecurityGroupTargetReferenceVirtualNetworkInterfaceReference
+// - SecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext
+// - SecurityGroupTargetReferenceLoadBalancerReference
+// - SecurityGroupTargetReferenceEndpointGatewayReference
 // - SecurityGroupTargetReferenceVPNServerReference
+// - SecurityGroupTargetReferenceVirtualNetworkInterfaceReference
 type SecurityGroupTargetReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
 	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The URL for this bare metal server network interface.
+	// The URL for this instance network interface.
 	//
-	// If this bare metal server has network attachments, this network interface is a
+	// If this instance has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
 	// corresponding network attachment.
 	Href *string `json:"href,omitempty"`
 
-	// The unique identifier for this bare metal server network interface.
+	// The unique identifier for this instance network interface.
 	//
-	// If this bare metal server has network attachments, this network interface is a
+	// If this instance has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
 	// corresponding network attachment and its attached virtual network interface, and the identifier is that of the
 	// corresponding network attachment.
 	ID *string `json:"id,omitempty"`
 
-	// The name for this bare metal server network interface.
+	// The name for this instance network interface.
 	Name *string `json:"name,omitempty"`
 
 	// The resource type.
 	ResourceType *string `json:"resource_type,omitempty"`
 
-	// The CRN for this endpoint gateway.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn,omitempty"`
 
 	// The primary IP for this virtual network interface.
@@ -92104,15 +91723,6 @@ type Snapshot struct {
 	// [deleted](https://cloud.ibm.com/apidocs/vpc#deleted-resources)).
 	SourceVolume *VolumeReference `json:"source_volume" validate:"required"`
 
-	// The [storage
-	// generation](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=api#using-api-iops-profiles):
-	// - `1`: The first storage generation
-	// - `2`: The second storage generation
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	StorageGeneration *int64 `json:"storage_generation" validate:"required"`
-
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this snapshot.
 	UserTags []string `json:"user_tags" validate:"required"`
 }
@@ -92132,7 +91742,6 @@ const (
 	SnapshotLifecycleStatePendingConst   = "pending"
 	SnapshotLifecycleStateStableConst    = "stable"
 	SnapshotLifecycleStateSuspendedConst = "suspended"
-	SnapshotLifecycleStateUnusableConst  = "unusable"
 	SnapshotLifecycleStateUpdatingConst  = "updating"
 	SnapshotLifecycleStateWaitingConst   = "waiting"
 )
@@ -92274,11 +91883,6 @@ func UnmarshalSnapshot(m map[string]json.RawMessage, result interface{}) (err er
 	err = core.UnmarshalModel(m, "source_volume", &obj.SourceVolume, UnmarshalVolumeReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "source_volume-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "storage_generation", &obj.StorageGeneration)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "storage_generation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
@@ -97314,22 +96918,8 @@ type Vcpu struct {
 	Count *int64 `json:"count" validate:"required"`
 
 	// The VCPU manufacturer.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Manufacturer *string `json:"manufacturer" validate:"required"`
 }
-
-// Constants associated with the Vcpu.Manufacturer property.
-// The VCPU manufacturer.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	VcpuManufacturerAmdConst   = "amd"
-	VcpuManufacturerIBMConst   = "ibm"
-	VcpuManufacturerIntelConst = "intel"
-)
 
 // UnmarshalVcpu unmarshals an instance of Vcpu from the specified map of raw messages.
 func UnmarshalVcpu(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -103196,15 +102786,6 @@ type Volume struct {
 	// The reasons for the current status (if any).
 	StatusReasons []VolumeStatusReason `json:"status_reasons" validate:"required"`
 
-	// The [storage
-	// generation](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=api#using-api-iops-profiles):
-	// - `1`: The first storage generation
-	// - `2`: The second storage generation
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	StorageGeneration *int64 `json:"storage_generation" validate:"required"`
-
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
 	UserTags []string `json:"user_tags" validate:"required"`
 
@@ -103421,11 +103002,6 @@ func UnmarshalVolume(m map[string]json.RawMessage, result interface{}) (err erro
 	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalVolumeStatusReason)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "storage_generation", &obj.StorageGeneration)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "storage_generation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
@@ -103857,8 +103433,8 @@ type VolumeAttachmentPrototypeVolume struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for
-	// this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to
+	// use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile,omitempty"`
 
 	// The resource group to use for this volume. If unspecified, the instance's resource
@@ -103880,9 +103456,6 @@ type VolumeAttachmentPrototypeVolume struct {
 	// The snapshot to use as a source for the volume's data.
 	//
 	// The specified snapshot may be in a different account, subject to IAM policies.
-	//
-	// To create a volume from a `source_snapshot`, the volume profile and the
-	// source snapshot must have the same `storage_generation` value.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot,omitempty"`
 }
 
@@ -104313,8 +103886,8 @@ type VolumePatch struct {
 	// The name for this volume. The name must not be used by another volume in the region.
 	Name *string `json:"name,omitempty"`
 
-	// The profile to use for this volume. The requested profile must have the same
-	// `family` and `storage_generation` values as the current profile. Additionally:
+	// The profile to use for this volume. The requested profile must be in the same
+	// `family` as the current profile.  Additionally:
 	// - If the volume is a boot volume then the value specified for `capacity` property
 	// must not be less than the `boot_capacity.min` and must not exceed the
 	// `boot_capacity.max` of the specified volume profile.
@@ -104404,9 +103977,6 @@ type VolumeProfile struct {
 
 	// The globally unique name for this volume profile.
 	Name *string `json:"name" validate:"required"`
-
-	// The storage generation value of volumes of this profile.
-	StorageGeneration *VolumeProfileStorageGenerationFixed `json:"storage_generation" validate:"required"`
 }
 
 // Constants associated with the VolumeProfile.Family property.
@@ -104461,11 +104031,6 @@ func UnmarshalVolumeProfile(m map[string]json.RawMessage, result interface{}) (e
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "storage_generation", &obj.StorageGeneration, UnmarshalVolumeProfileStorageGenerationFixed)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "storage_generation-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -104956,38 +104521,6 @@ func UnmarshalVolumeProfileReference(m map[string]json.RawMessage, result interf
 	return
 }
 
-// VolumeProfileStorageGenerationFixed : The storage generation value of volumes of this profile.
-type VolumeProfileStorageGenerationFixed struct {
-	// The type for this profile field.
-	Type *string `json:"type" validate:"required"`
-
-	// The value for this profile field.
-	Value *int64 `json:"value" validate:"required"`
-}
-
-// Constants associated with the VolumeProfileStorageGenerationFixed.Type property.
-// The type for this profile field.
-const (
-	VolumeProfileStorageGenerationFixedTypeFixedConst = "fixed"
-)
-
-// UnmarshalVolumeProfileStorageGenerationFixed unmarshals an instance of VolumeProfileStorageGenerationFixed from the specified map of raw messages.
-func UnmarshalVolumeProfileStorageGenerationFixed(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VolumeProfileStorageGenerationFixed)
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // VolumePrototype : VolumePrototype struct
 // Models which "extend" this model:
 // - VolumePrototypeVolumeByCapacity
@@ -105001,8 +104534,8 @@ type VolumePrototype struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for
-	// this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to
+	// use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use. If unspecified, the account's [default resource
@@ -105027,9 +104560,6 @@ type VolumePrototype struct {
 	// The snapshot to use as a source for the volume's data.
 	//
 	// The specified snapshot may be in a different account, subject to IAM policies.
-	//
-	// To create a volume from a `source_snapshot`, the volume profile and the
-	// source snapshot must have the same `storage_generation` value.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot,omitempty"`
 }
 
@@ -105115,8 +104645,8 @@ type VolumePrototypeInstanceByImageContext struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for
-	// this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to
+	// use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use for this volume. If unspecified, the instance's resource
@@ -105200,8 +104730,8 @@ type VolumePrototypeInstanceBySourceSnapshotContext struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for
-	// this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to
+	// use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use for this volume. If unspecified, the instance's resource
@@ -105211,9 +104741,6 @@ type VolumePrototypeInstanceBySourceSnapshotContext struct {
 	// The snapshot to use as a source for the volume's data.
 	//
 	// The specified snapshot may be in a different account, subject to IAM policies.
-	//
-	// To create a volume from a `source_snapshot`, the volume profile and the
-	// source snapshot must have the same `storage_generation` value.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot" validate:"required"`
 
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
@@ -107954,7 +107481,6 @@ type BareMetalServerNetworkInterfaceByHiperSocket struct {
 	// corresponding network attachment.
 	PortSpeed *int64 `json:"port_speed" validate:"required"`
 
-	// The primary IP address of this bare metal server network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -108202,7 +107728,6 @@ type BareMetalServerNetworkInterfaceByPci struct {
 	// corresponding network attachment.
 	PortSpeed *int64 `json:"port_speed" validate:"required"`
 
-	// The primary IP address of this bare metal server network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -108469,7 +107994,6 @@ type BareMetalServerNetworkInterfaceByVlan struct {
 	// corresponding network attachment.
 	PortSpeed *int64 `json:"port_speed" validate:"required"`
 
-	// The primary IP address of this bare metal server network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -113256,7 +112780,6 @@ type FloatingIPTargetBareMetalServerNetworkInterfaceReference struct {
 	// The name for this bare metal server network interface.
 	Name *string `json:"name" validate:"required"`
 
-	// The primary IP address of this bare metal server network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -113335,7 +112858,6 @@ type FloatingIPTargetNetworkInterfaceReference struct {
 	// The name for this instance network interface.
 	Name *string `json:"name" validate:"required"`
 
-	// The primary IP address of this instance network interface.
 	PrimaryIP *ReservedIPReference `json:"primary_ip" validate:"required"`
 
 	// The resource type.
@@ -122206,10 +121728,7 @@ type LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerPolicyHTTPSRedirec
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code,omitempty"`
 
-	// The target listener.
-	//
-	// The target listener must be in this load balancer, and must not be the same as the
-	// listener in the URL.
+	// Identifies a load balancer listener by a unique property.
 	Listener LoadBalancerListenerIdentityIntf `json:"listener,omitempty"`
 
 	// The redirect relative target URI.
@@ -122380,10 +121899,7 @@ type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyHTTPSRed
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code" validate:"required"`
 
-	// The target listener.
-	//
-	// The target listener must be in this load balancer, and must not be the same as the
-	// listener in the URL.
+	// Identifies a load balancer listener by a unique property.
 	Listener LoadBalancerListenerIdentityIntf `json:"listener" validate:"required"`
 
 	// The redirect relative target URI.
@@ -122659,399 +122175,6 @@ func UnmarshalLoadBalancerListenerPolicyTargetLoadBalancerPoolReference(m map[st
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref : LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref struct
-// This model "extends" LoadBalancerPoolFailsafePolicyTargetPatch
-type LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref struct {
-	// The URL for this load balancer pool.
-	Href *string `json:"href" validate:"required"`
-}
-
-// NewLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref : Instantiate LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref(href string) (_model *LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref, err error) {
-	_model = &LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref{
-		Href: core.StringPtr(href),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref) isaLoadBalancerPoolFailsafePolicyTargetPatch() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref unmarshals an instance of LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// asPatch returns a generic map representation of the LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref
-func (loadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref *LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref) asPatch() (_patch map[string]interface{}) {
-	_patch = map[string]interface{}{}
-	if !core.IsNil(loadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref.Href) {
-		_patch["href"] = loadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByHref.Href
-	}
-
-	return
-}
-
-// LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID : LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID struct
-// This model "extends" LoadBalancerPoolFailsafePolicyTargetPatch
-type LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID struct {
-	// The unique identifier for this load balancer pool.
-	ID *string `json:"id" validate:"required"`
-}
-
-// NewLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID : Instantiate LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID(id string) (_model *LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID, err error) {
-	_model = &LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID{
-		ID: core.StringPtr(id),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID) isaLoadBalancerPoolFailsafePolicyTargetPatch() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID unmarshals an instance of LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// asPatch returns a generic map representation of the LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID
-func (loadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID *LoadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID) asPatch() (_patch map[string]interface{}) {
-	_patch = map[string]interface{}{}
-	if !core.IsNil(loadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID.ID) {
-		_patch["id"] = loadBalancerPoolFailsafePolicyTargetPatchLoadBalancerPoolIdentityByID.ID
-	}
-
-	return
-}
-
-// LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype : LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype struct
-// This model "extends" LoadBalancerPoolHealthMonitorPrototype
-type LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype struct {
-	// The seconds to wait between health checks.  Must be greater than `timeout`.
-	Delay *int64 `json:"delay" validate:"required"`
-
-	// The health check max retries.
-	MaxRetries *int64 `json:"max_retries" validate:"required"`
-
-	// The health check port.
-	//
-	// If specified, this overrides the pool member port values.
-	Port *int64 `json:"port,omitempty"`
-
-	// The seconds to wait for a response to a health check.  Must be less than `delay`.
-	Timeout *int64 `json:"timeout" validate:"required"`
-
-	// The protocol type to use for health checks.
-	Type *string `json:"type" validate:"required"`
-
-	// The health check URL path to use.
-	//
-	// Must be in the format of an [origin-form request target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
-	URLPath *string `json:"url_path,omitempty"`
-}
-
-// Constants associated with the LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype.Type property.
-// The protocol type to use for health checks.
-const (
-	LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototypeTypeHTTPConst  = "http"
-	LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototypeTypeHTTPSConst = "https"
-)
-
-// NewLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype : Instantiate LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype(delay int64, maxRetries int64, timeout int64, typeVar string) (_model *LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype, err error) {
-	_model = &LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype{
-		Delay:      core.Int64Ptr(delay),
-		MaxRetries: core.Int64Ptr(maxRetries),
-		Timeout:    core.Int64Ptr(timeout),
-		Type:       core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype) isaLoadBalancerPoolHealthMonitorPrototype() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype unmarshals an instance of LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeHttphttpsPrototype)
-	err = core.UnmarshalPrimitive(m, "delay", &obj.Delay)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "delay-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "max_retries", &obj.MaxRetries)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "max_retries-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "timeout", &obj.Timeout)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "timeout-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "url_path", &obj.URLPath)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url_path-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype : LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype struct
-// This model "extends" LoadBalancerPoolHealthMonitorPrototype
-type LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype struct {
-	// The seconds to wait between health checks.  Must be greater than `timeout`.
-	Delay *int64 `json:"delay" validate:"required"`
-
-	// The health check max retries.
-	MaxRetries *int64 `json:"max_retries" validate:"required"`
-
-	// The health check port.
-	//
-	// If specified, this overrides the pool member port values.
-	Port *int64 `json:"port,omitempty"`
-
-	// The seconds to wait for a response to a health check.  Must be less than `delay`.
-	Timeout *int64 `json:"timeout" validate:"required"`
-
-	// The protocol type to use for health checks.
-	Type *string `json:"type" validate:"required"`
-}
-
-// Constants associated with the LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype.Type property.
-// The protocol type to use for health checks.
-const (
-	LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototypeTypeTCPConst = "tcp"
-)
-
-// NewLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype : Instantiate LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype (Generic Model Constructor)
-func (*VpcV1) NewLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype(delay int64, maxRetries int64, timeout int64, typeVar string) (_model *LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype, err error) {
-	_model = &LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype{
-		Delay:      core.Int64Ptr(delay),
-		MaxRetries: core.Int64Ptr(maxRetries),
-		Timeout:    core.Int64Ptr(timeout),
-		Type:       core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype) isaLoadBalancerPoolHealthMonitorPrototype() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype unmarshals an instance of LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolHealthMonitorPrototypeLoadBalancerPoolHealthMonitorTypeTCPPrototype)
-	err = core.UnmarshalPrimitive(m, "delay", &obj.Delay)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "delay-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "max_retries", &obj.MaxRetries)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "max_retries-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "timeout", &obj.Timeout)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "timeout-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerPoolHealthMonitorTypeHttphttps : LoadBalancerPoolHealthMonitorTypeHttphttps struct
-// This model "extends" LoadBalancerPoolHealthMonitor
-type LoadBalancerPoolHealthMonitorTypeHttphttps struct {
-	// The seconds to wait between health checks.
-	Delay *int64 `json:"delay" validate:"required"`
-
-	// The health check max retries.
-	MaxRetries *int64 `json:"max_retries" validate:"required"`
-
-	// The health check port.
-	//
-	// If present, this overrides the pool member port values.
-	Port *int64 `json:"port,omitempty"`
-
-	// The seconds to wait for a response to a health check.
-	Timeout *int64 `json:"timeout" validate:"required"`
-
-	// The protocol type used for health checks.
-	Type *string `json:"type" validate:"required"`
-
-	// The health check URL path, in the format of an [origin-form request
-	// target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
-	URLPath *string `json:"url_path" validate:"required"`
-}
-
-// Constants associated with the LoadBalancerPoolHealthMonitorTypeHttphttps.Type property.
-// The protocol type used for health checks.
-const (
-	LoadBalancerPoolHealthMonitorTypeHttphttpsTypeHTTPConst  = "http"
-	LoadBalancerPoolHealthMonitorTypeHttphttpsTypeHTTPSConst = "https"
-)
-
-func (*LoadBalancerPoolHealthMonitorTypeHttphttps) isaLoadBalancerPoolHealthMonitor() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerPoolHealthMonitorTypeHttphttps unmarshals an instance of LoadBalancerPoolHealthMonitorTypeHttphttps from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolHealthMonitorTypeHttphttps(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolHealthMonitorTypeHttphttps)
-	err = core.UnmarshalPrimitive(m, "delay", &obj.Delay)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "delay-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "max_retries", &obj.MaxRetries)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "max_retries-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "timeout", &obj.Timeout)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "timeout-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "url_path", &obj.URLPath)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url_path-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerPoolHealthMonitorTypeTCP : LoadBalancerPoolHealthMonitorTypeTCP struct
-// This model "extends" LoadBalancerPoolHealthMonitor
-type LoadBalancerPoolHealthMonitorTypeTCP struct {
-	// The seconds to wait between health checks.
-	Delay *int64 `json:"delay" validate:"required"`
-
-	// The health check max retries.
-	MaxRetries *int64 `json:"max_retries" validate:"required"`
-
-	// The health check port.
-	//
-	// If present, this overrides the pool member port values.
-	Port *int64 `json:"port,omitempty"`
-
-	// The seconds to wait for a response to a health check.
-	Timeout *int64 `json:"timeout" validate:"required"`
-
-	// The protocol type used for health checks.
-	Type *string `json:"type" validate:"required"`
-}
-
-// Constants associated with the LoadBalancerPoolHealthMonitorTypeTCP.Type property.
-// The protocol type used for health checks.
-const (
-	LoadBalancerPoolHealthMonitorTypeTCPTypeTCPConst = "tcp"
-)
-
-func (*LoadBalancerPoolHealthMonitorTypeTCP) isaLoadBalancerPoolHealthMonitor() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerPoolHealthMonitorTypeTCP unmarshals an instance of LoadBalancerPoolHealthMonitorTypeTCP from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolHealthMonitorTypeTCP(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolHealthMonitorTypeTCP)
-	err = core.UnmarshalPrimitive(m, "delay", &obj.Delay)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "delay-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "max_retries", &obj.MaxRetries)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "max_retries-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "timeout", &obj.Timeout)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "timeout-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -123425,105 +122548,6 @@ func UnmarshalLoadBalancerProfileAvailabilityFixed(m map[string]json.RawMessage,
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerProfileFailsafePolicyActionsDependent : The failsafe policy action configuration for a load balancer with this profile depends on its configuration.
-// This model "extends" LoadBalancerProfileFailsafePolicyActions
-type LoadBalancerProfileFailsafePolicyActionsDependent struct {
-	// The type for this profile field.
-	Type *string `json:"type" validate:"required"`
-}
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActionsDependent.Type property.
-// The type for this profile field.
-const (
-	LoadBalancerProfileFailsafePolicyActionsDependentTypeDependentConst = "dependent"
-)
-
-func (*LoadBalancerProfileFailsafePolicyActionsDependent) isaLoadBalancerProfileFailsafePolicyActions() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerProfileFailsafePolicyActionsDependent unmarshals an instance of LoadBalancerProfileFailsafePolicyActionsDependent from the specified map of raw messages.
-func UnmarshalLoadBalancerProfileFailsafePolicyActionsDependent(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerProfileFailsafePolicyActionsDependent)
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerProfileFailsafePolicyActionsEnum : The failsafe policy action configuration for a load balancer with this profile.
-// This model "extends" LoadBalancerProfileFailsafePolicyActions
-type LoadBalancerProfileFailsafePolicyActionsEnum struct {
-	// The default failsafe policy action for this profile.
-	Default *string `json:"default" validate:"required"`
-
-	// The type for this profile field.
-	Type *string `json:"type" validate:"required"`
-
-	// The supported failsafe policy actions.
-	Values []string `json:"values" validate:"required"`
-}
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActionsEnum.Default property.
-// The default failsafe policy action for this profile.
-const (
-	LoadBalancerProfileFailsafePolicyActionsEnumDefaultBypassConst  = "bypass"
-	LoadBalancerProfileFailsafePolicyActionsEnumDefaultDropConst    = "drop"
-	LoadBalancerProfileFailsafePolicyActionsEnumDefaultFailConst    = "fail"
-	LoadBalancerProfileFailsafePolicyActionsEnumDefaultForwardConst = "forward"
-)
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActionsEnum.Type property.
-// The type for this profile field.
-const (
-	LoadBalancerProfileFailsafePolicyActionsEnumTypeEnumConst = "enum"
-)
-
-// Constants associated with the LoadBalancerProfileFailsafePolicyActionsEnum.Values property.
-// A load balancer failsafe policy action:
-// - `bypass`: Bypasses the members and sends requests directly to their destination IPs.
-// - `drop`: Drops requests.
-// - `fail`: Fails requests with an HTTP `503` status code.
-// - `forward`: Forwards requests to the `target` pool.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-const (
-	LoadBalancerProfileFailsafePolicyActionsEnumValuesBypassConst  = "bypass"
-	LoadBalancerProfileFailsafePolicyActionsEnumValuesDropConst    = "drop"
-	LoadBalancerProfileFailsafePolicyActionsEnumValuesFailConst    = "fail"
-	LoadBalancerProfileFailsafePolicyActionsEnumValuesForwardConst = "forward"
-)
-
-func (*LoadBalancerProfileFailsafePolicyActionsEnum) isaLoadBalancerProfileFailsafePolicyActions() bool {
-	return true
-}
-
-// UnmarshalLoadBalancerProfileFailsafePolicyActionsEnum unmarshals an instance of LoadBalancerProfileFailsafePolicyActionsEnum from the specified map of raw messages.
-func UnmarshalLoadBalancerProfileFailsafePolicyActionsEnum(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerProfileFailsafePolicyActionsEnum)
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -124345,7 +123369,7 @@ func UnmarshalNetworkACLRuleBeforePrototypeNetworkACLRuleIdentityByID(m map[stri
 	return
 }
 
-// NetworkACLRuleItemNetworkACLRuleProtocolAll : A rule for all ICMP, TCP and UDP traffic.
+// NetworkACLRuleItemNetworkACLRuleProtocolAll : NetworkACLRuleItemNetworkACLRuleProtocolAll struct
 // This model "extends" NetworkACLRuleItem
 type NetworkACLRuleItemNetworkACLRuleProtocolAll struct {
 	// The action to perform for a packet matching the rule.
@@ -124379,7 +123403,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolAll struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -124404,7 +123428,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolAll.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolAllProtocolAllConst = "all"
 )
@@ -124475,7 +123499,7 @@ func UnmarshalNetworkACLRuleItemNetworkACLRuleProtocolAll(m map[string]json.RawM
 	return
 }
 
-// NetworkACLRuleItemNetworkACLRuleProtocolIcmp : A rule for ICMP traffic.
+// NetworkACLRuleItemNetworkACLRuleProtocolIcmp : NetworkACLRuleItemNetworkACLRuleProtocolIcmp struct
 // This model "extends" NetworkACLRuleItem
 type NetworkACLRuleItemNetworkACLRuleProtocolIcmp struct {
 	// The action to perform for a packet matching the rule.
@@ -124514,7 +123538,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolIcmp struct {
 	// If absent, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -124544,7 +123568,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolIcmp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -124659,19 +123683,19 @@ type NetworkACLRuleItemNetworkACLRuleProtocolTcpudp struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	DestinationPortMax *int64 `json:"destination_port_max" validate:"required"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP source port range.
+	// The inclusive upper bound of TCP/UDP source port range.
 	SourcePortMax *int64 `json:"source_port_max" validate:"required"`
 
-	// The inclusive lower bound of the TCP or UDP source port range.
+	// The inclusive lower bound of TCP/UDP source port range.
 	SourcePortMin *int64 `json:"source_port_min" validate:"required"`
 }
 
@@ -124696,7 +123720,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolTcpudp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	NetworkACLRuleItemNetworkACLRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -124788,7 +123812,7 @@ func UnmarshalNetworkACLRuleItemNetworkACLRuleProtocolTcpudp(m map[string]json.R
 	return
 }
 
-// NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype : A rule for all ICMP, TCP and UDP traffic.
+// NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype : NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype struct
 // This model "extends" NetworkACLRulePrototypeNetworkACLContext
 type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype struct {
 	// The action to perform for a packet matching the rule.
@@ -124810,7 +123834,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -124835,7 +123859,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototypeProtocolAllConst = "all"
 )
@@ -124902,7 +123926,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllP
 	return
 }
 
-// NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype : A rule for ICMP traffic.
+// NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype : NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype struct
 // This model "extends" NetworkACLRulePrototypeNetworkACLContext
 type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype struct {
 	// The action to perform for a packet matching the rule.
@@ -124929,7 +123953,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype
 	// If specified, `type` must also be specified.  If unspecified, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -124959,7 +123983,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototypeProtocolIcmpConst = "icmp"
 )
@@ -125036,7 +124060,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmp
 	return
 }
 
-// NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype : A rule for TCP or UDP traffic.
+// NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype : NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype struct
 // This model "extends" NetworkACLRulePrototypeNetworkACLContext
 type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype struct {
 	// The action to perform for a packet matching the rule.
@@ -125058,31 +124082,19 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototy
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_min` must also be specified, and must not be larger. If unspecified,
-	// `destination_port_min` must also be unspecified, allowing traffic for all destination ports.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_max` must also be specified, and must not be smaller. If unspecified,
-	// `destination_port_max` must also be unspecified, allowing traffic for all destination ports.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_min` must also be specified, and must not be larger. If unspecified, `source_port_min`
-	// must also be unspecified, allowing traffic for all source ports.
+	// The inclusive upper bound of TCP/UDP source port range.
 	SourcePortMax *int64 `json:"source_port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_max` must also be specified, and must not be smaller. If unspecified, `source_port_max`
-	// must also be unspecified, allowing traffic for all source ports.
+	// The inclusive lower bound of TCP/UDP source port range.
 	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 }
 
@@ -125107,7 +124119,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototypeProtocolTCPConst = "tcp"
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototypeProtocolUDPConst = "udp"
@@ -125195,7 +124207,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpu
 	return
 }
 
-// NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype : A rule for all ICMP, TCP and UDP traffic.
+// NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype : NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype struct
 // This model "extends" NetworkACLRulePrototype
 type NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype struct {
 	// The action to perform for a packet matching the rule.
@@ -125219,7 +124231,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -125244,7 +124256,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototypeProtocolAllConst = "all"
 )
@@ -125316,7 +124328,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype(m map[st
 	return
 }
 
-// NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype : A rule for ICMP traffic.
+// NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype : NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype struct
 // This model "extends" NetworkACLRulePrototype
 type NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype struct {
 	// The action to perform for a packet matching the rule.
@@ -125345,7 +124357,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype struct {
 	// If specified, `type` must also be specified.  If unspecified, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -125375,7 +124387,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototypeProtocolIcmpConst = "icmp"
 )
@@ -125457,7 +124469,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype(m map[s
 	return
 }
 
-// NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype : A rule for TCP or UDP traffic.
+// NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype : NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype struct
 // This model "extends" NetworkACLRulePrototype
 type NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype struct {
 	// The action to perform for a packet matching the rule.
@@ -125481,31 +124493,19 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_min` must also be specified, and must not be larger. If unspecified,
-	// `destination_port_min` must also be unspecified, allowing traffic for all destination ports.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	DestinationPortMax *int64 `json:"destination_port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
-	//
-	// If specified, `destination_port_max` must also be specified, and must not be smaller. If unspecified,
-	// `destination_port_max` must also be unspecified, allowing traffic for all destination ports.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_min` must also be specified, and must not be larger. If unspecified, `source_port_min`
-	// must also be unspecified, allowing traffic for all source ports.
+	// The inclusive upper bound of TCP/UDP source port range.
 	SourcePortMax *int64 `json:"source_port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP source port range.
-	//
-	// If specified, `source_port_max` must also be specified, and must not be smaller. If unspecified, `source_port_max`
-	// must also be unspecified, allowing traffic for all source ports.
+	// The inclusive lower bound of TCP/UDP source port range.
 	SourcePortMin *int64 `json:"source_port_min,omitempty"`
 }
 
@@ -125530,7 +124530,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototypeProtocolTCPConst = "tcp"
 	NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototypeProtocolUDPConst = "udp"
@@ -125623,7 +124623,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype(m map
 	return
 }
 
-// NetworkACLRuleNetworkACLRuleProtocolAll : A rule for all ICMP, TCP and UDP traffic.
+// NetworkACLRuleNetworkACLRuleProtocolAll : NetworkACLRuleNetworkACLRuleProtocolAll struct
 // This model "extends" NetworkACLRule
 type NetworkACLRuleNetworkACLRuleProtocolAll struct {
 	// The action to perform for a packet matching the rule.
@@ -125656,7 +124656,7 @@ type NetworkACLRuleNetworkACLRuleProtocolAll struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -125681,7 +124681,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolAll.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolAllProtocolAllConst = "all"
 )
@@ -125752,7 +124752,7 @@ func UnmarshalNetworkACLRuleNetworkACLRuleProtocolAll(m map[string]json.RawMessa
 	return
 }
 
-// NetworkACLRuleNetworkACLRuleProtocolIcmp : A rule for ICMP traffic.
+// NetworkACLRuleNetworkACLRuleProtocolIcmp : NetworkACLRuleNetworkACLRuleProtocolIcmp struct
 // This model "extends" NetworkACLRule
 type NetworkACLRuleNetworkACLRuleProtocolIcmp struct {
 	// The action to perform for a packet matching the rule.
@@ -125790,7 +124790,7 @@ type NetworkACLRuleNetworkACLRuleProtocolIcmp struct {
 	// If absent, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -125820,7 +124820,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolIcmp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -125934,19 +124934,19 @@ type NetworkACLRuleNetworkACLRuleProtocolTcpudp struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	DestinationPortMax *int64 `json:"destination_port_max" validate:"required"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP source port range.
+	// The inclusive upper bound of TCP/UDP source port range.
 	SourcePortMax *int64 `json:"source_port_max" validate:"required"`
 
-	// The inclusive lower bound of the TCP or UDP source port range.
+	// The inclusive lower bound of TCP/UDP source port range.
 	SourcePortMin *int64 `json:"source_port_min" validate:"required"`
 }
 
@@ -125971,7 +124971,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolTcpudp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	NetworkACLRuleNetworkACLRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -128279,7 +127279,7 @@ func UnmarshalSecurityGroupRuleLocalIP(m map[string]json.RawMessage, result inte
 	return
 }
 
-// SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll : A rule allowing all ICMP, TCP and UDP traffic.
+// SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll : A rule allowing traffic for all supported protocols.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
 	// The direction of traffic to allow.
@@ -128292,12 +127292,23 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
 	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
+	// The local IP address or range of local IP addresses to which this rule will allow inbound
+	// traffic (or from which, for outbound traffic)
+	//
+	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic to all local IP
+	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	Remote SecurityGroupRuleRemotePrototypeIntf `json:"remote,omitempty"`
-
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
+
+	// The remote IP addresses or security groups from which this rule will allow traffic (or to
+	// which, for outbound rules). Can be specified as an IP address, a CIDR block, or a
+	// security group within the VPC.
+	//
+	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic from any source
+	// (or to any destination, for outbound rules).
+	Remote SecurityGroupRuleRemotePrototypeIntf `json:"remote,omitempty"`
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.Direction property.
@@ -128318,7 +127329,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllProtocolAllConst = "all"
 )
@@ -128358,14 +127369,14 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolAll(m map[strin
 		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemotePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemotePrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -128375,6 +127386,11 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolAll(m map[strin
 // SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp : A rule specifying the ICMP traffic to allow.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
+	// The ICMP traffic code to allow.
+	//
+	// If specified, `type` must also be specified.  If unspecified, all codes are allowed.
+	Code *int64 `json:"code,omitempty"`
+
 	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
@@ -128385,17 +127401,23 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
+	// The local IP address or range of local IP addresses to which this rule will allow inbound
+	// traffic (or from which, for outbound traffic)
+	//
+	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic to all local IP
+	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	Remote SecurityGroupRuleRemotePrototypeIntf `json:"remote,omitempty"`
-
-	// The ICMP traffic code to allow.
-	//
-	// If specified, `type` must also be specified.  If unspecified, all codes are allowed.
-	Code *int64 `json:"code,omitempty"`
-
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
+
+	// The remote IP addresses or security groups from which this rule will allow traffic (or to
+	// which, for outbound rules). Can be specified as an IP address, a CIDR block, or a
+	// security group within the VPC.
+	//
+	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic from any source
+	// (or to any destination, for outbound rules).
+	Remote SecurityGroupRuleRemotePrototypeIntf `json:"remote,omitempty"`
 
 	// The ICMP traffic type to allow.
 	//
@@ -128421,7 +127443,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -128446,6 +127468,11 @@ func (*SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp) isaSecurityGroup
 // UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp unmarshals an instance of SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp from the specified map of raw messages.
 func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
@@ -128461,19 +127488,14 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(m map[stri
 		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemotePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemotePrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
@@ -128486,6 +127508,9 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(m map[stri
 }
 
 // SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp : A rule specifying the TCP or UDP traffic to allow.
+//
+// Either both `port_min` and `port_max` will be present, or neither. When neither is present, all destination ports are
+// allowed for the protocol. When both have the same value, that single destination port is allowed.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
 	// The direction of traffic to allow.
@@ -128498,24 +127523,35 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
 	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
+	// The local IP address or range of local IP addresses to which this rule will allow inbound
+	// traffic (or from which, for outbound traffic)
+	//
+	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic to all local IP
+	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	Remote SecurityGroupRuleRemotePrototypeIntf `json:"remote,omitempty"`
-
-	// The inclusive upper bound of the TCP or UDP destination port range.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	//
 	// If specified, `port_min` must also be specified, and must not be larger. If unspecified,
 	// `port_min` must also be unspecified, allowing traffic on all destination ports.
 	PortMax *int64 `json:"port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
+	// The inclusive lower bound of TCP/UDP destination port range
 	//
 	// If specified, `port_max` must also be specified, and must not be smaller. If unspecified, `port_max` must also be
 	// unspecified, allowing traffic on all destination ports.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
+
+	// The remote IP addresses or security groups from which this rule will allow traffic (or to
+	// which, for outbound rules). Can be specified as an IP address, a CIDR block, or a
+	// security group within the VPC.
+	//
+	// If unspecified, a CIDR block of `0.0.0.0/0` will be used to allow traffic from any source
+	// (or to any destination, for outbound rules).
+	Remote SecurityGroupRuleRemotePrototypeIntf `json:"remote,omitempty"`
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.Direction property.
@@ -128536,7 +127572,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -128577,11 +127613,6 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp(m map[st
 		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemotePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "port_max", &obj.PortMax)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "port_max-error", common.GetComponentInfo())
@@ -128595,6 +127626,11 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp(m map[st
 	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemotePrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -129001,7 +128037,7 @@ func UnmarshalSecurityGroupRuleRemoteSecurityGroupReference(m map[string]json.Ra
 	return
 }
 
-// SecurityGroupRuleSecurityGroupRuleProtocolAll : A rule allowing all ICMP, TCP and UDP traffic.
+// SecurityGroupRuleSecurityGroupRuleProtocolAll : A rule allowing traffic for all supported protocols.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolAll struct {
 	// The direction of traffic to allow.
@@ -129024,7 +128060,7 @@ type SecurityGroupRuleSecurityGroupRuleProtocolAll struct {
 
 	Remote SecurityGroupRuleRemoteIntf `json:"remote" validate:"required"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -129046,7 +128082,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllProtocolAllConst = "all"
 )
@@ -129123,7 +128159,7 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 	// The ICMP traffic code to allow. If absent, all codes are allowed.
 	Code *int64 `json:"code,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to allow. If absent, all types are allowed.
@@ -129148,7 +128184,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -129235,13 +128271,13 @@ type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
 
 	Remote SecurityGroupRuleRemoteIntf `json:"remote" validate:"required"`
 
-	// The inclusive upper bound of the TCP or UDP destination port range.
+	// The inclusive upper bound of TCP/UDP destination port range.
 	PortMax *int64 `json:"port_max,omitempty"`
 
-	// The inclusive lower bound of the TCP or UDP destination port range.
+	// The inclusive lower bound of TCP/UDP destination port range.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The name of the network protocol.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -129263,7 +128299,7 @@ const (
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.Protocol property.
-// The name of the network protocol.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -136034,8 +135070,8 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for
-	// this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to
+	// use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use for this volume. If unspecified, the instance's resource
@@ -136057,9 +135093,6 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext struct {
 	// The snapshot to use as a source for the volume's data.
 	//
 	// The specified snapshot may be in a different account, subject to IAM policies.
-	//
-	// To create a volume from a `source_snapshot`, the volume profile and the
-	// source snapshot must have the same `storage_generation` value.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot,omitempty"`
 }
 
@@ -136917,7 +135950,7 @@ type VolumePrototypeVolumeByCapacity struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
@@ -137014,7 +136047,7 @@ type VolumePrototypeVolumeBySourceSnapshot struct {
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
@@ -137039,9 +136072,6 @@ type VolumePrototypeVolumeBySourceSnapshot struct {
 	// The snapshot to use as a source for the volume's data.
 	//
 	// The specified snapshot may be in a different account, subject to IAM policies.
-	//
-	// To create a volume from a `source_snapshot`, the volume profile and the
-	// source snapshot must have the same `storage_generation` value.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot" validate:"required"`
 }
 
@@ -147417,7 +146447,7 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use for this volume. If unspecified, the instance's resource group will be used.
@@ -147510,7 +146540,7 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) for this volume.
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles) to use for this volume.
 	Profile VolumeProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use for this volume. If unspecified, the instance's resource group will be used.
@@ -147533,9 +146563,6 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// The snapshot to use as a source for the volume's data.
 	//
 	// The specified snapshot may be in a different account, subject to IAM policies.
-	//
-	// To create a volume from a `source_snapshot`, the volume profile and the
-	// source snapshot must have the same `storage_generation` value.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot" validate:"required"`
 }
 
