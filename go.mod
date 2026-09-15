@@ -84,12 +84,12 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.0
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20251120220512-cb382c9eaf42
+	github.com/openshift/api v0.0.0-20260304172252-b0658d22beea
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
-	github.com/openshift/client-go v0.0.0-20251015124057-db0dee36e235
+	github.com/openshift/client-go v0.0.0-20251205093018-96a6cbc1420c
 	github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
@@ -131,7 +131,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.34.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
-	k8s.io/cloud-provider-vsphere v1.31.0
 	k8s.io/code-generator v0.34.1
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.130.1
@@ -390,3 +389,7 @@ replace (
 )
 
 replace golang.org/x/net => github.com/openshift-sustaining/net v0.50.0-sec.4
+
+replace github.com/openshift/api => github.com/vr4manta/api v0.0.0-20260911155742-70bf3908e3bb
+
+replace github.com/openshift/library-go => github.com/vr4manta/library-go v0.0.0-20260910194651-916192a04267
