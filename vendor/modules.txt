@@ -1296,7 +1296,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc
+# github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc => github.com/vr4manta/api v0.0.0-20260916152911-72e968e24b19
 ## explicit; go 1.24.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1426,8 +1426,9 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20250114132252-af5b21ebad2f
+# github.com/openshift/library-go v0.0.0-20250114132252-af5b21ebad2f => github.com/vr4manta/library-go v0.0.0-20260916153209-023134a36f2b
 ## explicit; go 1.22.0
+github.com/openshift/library-go/pkg/cloudprovider/vsphere
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
 github.com/openshift/library-go/pkg/config/leaderelection
@@ -2542,9 +2543,6 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/watchlist
 k8s.io/client-go/util/workqueue
-# k8s.io/cloud-provider-vsphere v1.31.0 => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
-## explicit; go 1.22.0
-k8s.io/cloud-provider-vsphere/pkg/common/config
 # k8s.io/cluster-bootstrap v0.32.3
 ## explicit; go 1.23.0
 k8s.io/cluster-bootstrap/token/api
@@ -2840,3 +2838,5 @@ sigs.k8s.io/yaml/goyaml.v3
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 # k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 # sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
+# github.com/openshift/api => github.com/vr4manta/api v0.0.0-20260916152911-72e968e24b19
+# github.com/openshift/library-go => github.com/vr4manta/library-go v0.0.0-20260916153209-023134a36f2b
