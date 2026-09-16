@@ -729,7 +729,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	const maxRetries = 3
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		logrus.Infof("Running process: %s with args %v (attempt %d/%d)", ct.Name, ct.Args, attempt, maxRetries)
+		logrus.Infof("Running process: %s (attempt %d/%d)", ct.Name, attempt, maxRetries)
 		if err := pr.Start(ctx, c.logWriter, c.logWriter); err == nil {
 			ct.state = pr
 			return nil // Success
