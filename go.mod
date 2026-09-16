@@ -132,7 +132,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.32.3
 	k8s.io/apimachinery v0.33.2
 	k8s.io/client-go v0.32.3
-	k8s.io/cloud-provider-vsphere v1.31.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
@@ -371,3 +370,13 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 
 replace sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
+
+// SPLAT-2867: vSphere multi vCenter Day 2. Points at SPLAT-2867-installer-pin branches, which carry
+// just the api#3038 / library-go#2469 commits rebased onto the commits already pinned above, instead
+// of their current release-4.20 tips, to avoid an unrelated MachineOSBuild/MachineOSConfig type
+// promotion (and the k8s.io/client-go v0.33 bump that comes with it) that would otherwise conflict
+// with the apimachinery pin above.
+replace (
+	github.com/openshift/api => github.com/vr4manta/api v0.0.0-20260916152911-72e968e24b19
+	github.com/openshift/library-go => github.com/vr4manta/library-go v0.0.0-20260916153209-023134a36f2b
+)

@@ -793,8 +793,6 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc h1:kAiInOGnd0+nsDcwl5YVceHfbT8Xk7tJq1vlYDVBonA=
-github.com/openshift/api v0.0.0-20250806102053-6a7223edb2fc/go.mod h1:SPLf21TYPipzCO67BURkCfK6dcIIxx0oNRVWaOyRcXM=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6 h1:U6ve+dnHlHhAELoxX+rdFOHVhoaYl0l9qtxwYtsO6C0=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6/go.mod h1:o2H5VwQhUD8P6XsK6dRmKpCCJqVvv12KJQZBXmcCXCU=
 github.com/openshift/assisted-service v1.0.10-0.20230830164851-6573b5d7021d h1:CKw2Y4EdaFsMoqAdr2Tq0nlYTaaXmCRdP0gOu7pN64U=
@@ -813,8 +811,6 @@ github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071 h1:l0++HnGVKBc
 github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071/go.mod h1:gL0laCCiIaNTNw1ZsMQZXBVu2NeQFpNWm9bLtYO9+ZU=
 github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187 h1:v2D/+SWsOPsl4Syz1SVjo7m3L0ethuRGR++ubsb89oA=
 github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187/go.mod h1:eyA6FG71366St6Q1TW+jXdQbald0rUwtEPhAREMlyhA=
-github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928 h1:gX0HAKR0f40xmMWlUSn8DBMCjip8Iuzg5XToWAv6Uzw=
-github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928/go.mod h1:eVEtCena8tmeeYDKwZlA2w+xBKzBHbQZ4CNHV8KL4ho=
 github.com/openshift/cluster-api-actuator-pkg/testutils v0.0.0-20240626103413-ddea9c7c0aca h1:HFFzJznFQVudyVSpMa+hZwXZpc0ZvFCIpiMNFdf21g8=
 github.com/openshift/cluster-api-actuator-pkg/testutils v0.0.0-20240626103413-ddea9c7c0aca/go.mod h1:osVq9/R6qKHBQxDP4cYTvkgXVBKOMs1SOfPLFfn0m7A=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e h1:FWzYb0sH16yVOyySUwY5yXtZFW/U2bPoK38SEGjC5D8=
@@ -829,8 +825,6 @@ github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87
 github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87/go.mod h1:DB/Mf2oTeiAmVVX1gN+NEqweonAPY0TKUwADizj8+ZA=
 github.com/openshift/hive/apis v0.0.0-20231220215202-ad99b9e52d27 h1:9C86viyQl7HE9yg7Gctgx803Oq6DbrCUAberyMVcWDE=
 github.com/openshift/hive/apis v0.0.0-20231220215202-ad99b9e52d27/go.mod h1:RRH8lt09SAiPECNdsbh7Gun0lkcRWi1nYKq6tDp5WxQ=
-github.com/openshift/library-go v0.0.0-20250114132252-af5b21ebad2f h1:inJ2wNKevyuR+7VfBecMJ+HjEsVwbTtw0x3SoZZ24uI=
-github.com/openshift/library-go v0.0.0-20250114132252-af5b21ebad2f/go.mod h1:Dsex3pPrZ+krgVFZIv21DGzeFvcC0muMvaQe9E/q0uI=
 github.com/openshift/machine-api-operator v0.2.1-0.20240930121047-57b7917e6140 h1:VKn644y4Ra94L8YZ3JT8ZuOZMEspZt8yoIjHeaRM3pA=
 github.com/openshift/machine-api-operator v0.2.1-0.20240930121047-57b7917e6140/go.mod h1:JEUa45hXYbC6tDpLjJCRuLXIKs7pdcawDkodqfZuQEE=
 github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241021180644-0eca0846914a h1:2/DQryD6yCabqVtYLELnsrzX8SLUuGJEABvHrd4x5/U=
@@ -952,6 +946,10 @@ github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/vmware/govmomi v0.47.1 h1:6a2iNaqSS2/AFfvI8UMe0l787/TBKkK0KK9jCqCyYCE=
 github.com/vmware/govmomi v0.47.1/go.mod h1:bYwUHpGpisE4AOlDl5eph90T+cjJMIcKx/kaa5v5rQM=
+github.com/vr4manta/api v0.0.0-20260916152911-72e968e24b19 h1:k3mMZNw2kYvQUnJh9Su+Nbnp9QDHVl9E6jV9T6Jgj+c=
+github.com/vr4manta/api v0.0.0-20260916152911-72e968e24b19/go.mod h1:SPLf21TYPipzCO67BURkCfK6dcIIxx0oNRVWaOyRcXM=
+github.com/vr4manta/library-go v0.0.0-20260916153209-023134a36f2b h1:6A4/5ID0EWgB9xjNVPbOabgMdHceHbwZbF5mNz0ZdSM=
+github.com/vr4manta/library-go v0.0.0-20260916153209-023134a36f2b/go.mod h1:whu0njQg/sjge+VyAOnkpWUTb3hGmnMkLUSD9CyhgKU=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
