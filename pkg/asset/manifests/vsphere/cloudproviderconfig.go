@@ -9,8 +9,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	cloudconfig "github.com/openshift/installer/pkg/cloudprovider/vsphere"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
-	cloudconfig "github.com/openshift/library-go/pkg/cloudprovider/vsphere"
 )
 
 const (
