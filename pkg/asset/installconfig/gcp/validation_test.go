@@ -1562,6 +1562,15 @@ func TestValidateMarketplaceImages(t *testing.T) {
 		mismatchedArch = "mismatched-arch"
 		osImage        = &gcp.OSImage{}
 
+		// A sovereign cloud is identified by both a domain-scoped project ID
+		// and a sovereign region, so both must be set for the test cases below.
+		sovereignProjectID = "eu0:sovereign-project"
+		sovereignRegion    = "u-northeast1"
+		setSovereignCloud  = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.ProjectID = sovereignProjectID
+			ic.Platform.GCP.Region = sovereignRegion
+		}
+
 		validDefaultMachineImage = func(ic *types.InstallConfig) {
 			ic.Platform.GCP.DefaultMachinePlatform.OSImage = osImage
 			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Name = validImage
@@ -1622,6 +1631,44 @@ func TestValidateMarketplaceImages(t *testing.T) {
 			ic.ControlPlane.Platform.GCP.OSImage = osImage
 			ic.ControlPlane.Platform.GCP.OSImage.Name = "missing-arch"
 			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
+		}
+
+		// Sovereign cloud test helpers
+		sovereignCloudWithDefaultImageNoProject = func(ic *types.InstallConfig) {
+			setSovereignCloud(ic)
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: "",
+			}
+		}
+		sovereignCloudWithDefaultImageWithProject = func(ic *types.InstallConfig) {
+			setSovereignCloud(ic)
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: projectID,
+			}
+		}
+		sovereignCloudWithControlPlaneImageNoProject = func(ic *types.InstallConfig) {
+			setSovereignCloud(ic)
+			ic.ControlPlane.Platform.GCP.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: "",
+			}
+		}
+		sovereignCloudWithComputeImageNoProject = func(ic *types.InstallConfig) {
+			setSovereignCloud(ic)
+			ic.Compute[0].Platform.GCP.OSImage = &gcp.OSImage{
+				Name:    validImage,
+				Project: "",
+			}
+		}
+		sovereignCloudNoDefaultImage = func(ic *types.InstallConfig) {
+			setSovereignCloud(ic)
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = nil
+		}
+		sovereignCloudNilDefaultMachinePlatform = func(ic *types.InstallConfig) {
+			setSovereignCloud(ic)
+			ic.Platform.GCP.DefaultMachinePlatform = nil
 		}
 
 		marketplaceImageAPIResult = &compute.Image{
@@ -1709,6 +1756,39 @@ func TestValidateMarketplaceImages(t *testing.T) {
 			edits:           editFunctions{unspecifiedImageArchitecture},
 			expectedError:   false,
 			expectedWarnMsg: "Boot image architecture is unspecified and might not be compatible with amd64 controlPlane nodes",
+		},
+		{
+			name:          "Sovereign cloud without osImage",
+			edits:         editFunctions{sovereignCloudNoDefaultImage},
+			expectedError: false,
+		},
+		{
+			name:           "Sovereign cloud with osImage but no project in defaultMachinePlatform",
+			edits:          editFunctions{sovereignCloudWithDefaultImageNoProject},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage.project: Required value: must specify image project for sovereign cloud\]$`,
+		},
+		{
+			name:          "Sovereign cloud with osImage and project in defaultMachinePlatform",
+			edits:         editFunctions{sovereignCloudWithDefaultImageWithProject},
+			expectedError: false,
+		},
+		{
+			name:           "Sovereign cloud with osImage but no project in controlPlane",
+			edits:          editFunctions{sovereignCloudWithControlPlaneImageNoProject, sovereignCloudNoDefaultImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage.project: Required value: must specify image project for sovereign cloud\]$`,
+		},
+		{
+			name:           "Sovereign cloud with osImage but no project in compute",
+			edits:          editFunctions{sovereignCloudWithComputeImageNoProject, sovereignCloudNoDefaultImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage.project: Required value: must specify image project for sovereign cloud\]$`,
+		},
+		{
+			name:          "Sovereign cloud with nil DefaultMachinePlatform",
+			edits:         editFunctions{sovereignCloudNilDefaultMachinePlatform},
+			expectedError: false,
 		},
 	}
 
