@@ -7,6 +7,7 @@ package p_cloud_virtual_serial_number
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 
@@ -22,10 +23,16 @@ type PcloudPvminstancesVirtualserialnumberPutReader struct {
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *PcloudPvminstancesVirtualserialnumberPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *PcloudPvminstancesVirtualserialnumberPutReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
 	switch response.Code() {
 	case 200:
 		result := NewPcloudPvminstancesVirtualserialnumberPutOK()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return result, nil
+	case 202:
+		result := NewPcloudPvminstancesVirtualserialnumberPutAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -134,7 +141,77 @@ func (o *PcloudPvminstancesVirtualserialnumberPutOK) readResponse(response runti
 	o.Payload = new(models.VirtualSerialNumber)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesVirtualserialnumberPutAccepted creates a PcloudPvminstancesVirtualserialnumberPutAccepted with default headers values
+func NewPcloudPvminstancesVirtualserialnumberPutAccepted() *PcloudPvminstancesVirtualserialnumberPutAccepted {
+	return &PcloudPvminstancesVirtualserialnumberPutAccepted{}
+}
+
+/*
+PcloudPvminstancesVirtualserialnumberPutAccepted describes a response with status code 202, with default header values.
+
+Accepted
+*/
+type PcloudPvminstancesVirtualserialnumberPutAccepted struct {
+	Payload *models.VirtualSerialNumber
+}
+
+// IsSuccess returns true when this pcloud pvminstances virtualserialnumber put accepted response has a 2xx status code
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud pvminstances virtualserialnumber put accepted response has a 3xx status code
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances virtualserialnumber put accepted response has a 4xx status code
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances virtualserialnumber put accepted response has a 5xx status code
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances virtualserialnumber put accepted response a status code equal to that given
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the pcloud pvminstances virtualserialnumber put accepted response
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) Code() int {
+	return 202
+}
+
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) Error() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/virtual-serial-number][%d] pcloudPvminstancesVirtualserialnumberPutAccepted %s", 202, payload)
+}
+
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) String() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/virtual-serial-number][%d] pcloudPvminstancesVirtualserialnumberPutAccepted %s", 202, payload)
+}
+
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) GetPayload() *models.VirtualSerialNumber {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesVirtualserialnumberPutAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.VirtualSerialNumber)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -204,7 +281,7 @@ func (o *PcloudPvminstancesVirtualserialnumberPutBadRequest) readResponse(respon
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -274,7 +351,7 @@ func (o *PcloudPvminstancesVirtualserialnumberPutUnauthorized) readResponse(resp
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -344,7 +421,7 @@ func (o *PcloudPvminstancesVirtualserialnumberPutForbidden) readResponse(respons
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -414,7 +491,7 @@ func (o *PcloudPvminstancesVirtualserialnumberPutNotFound) readResponse(response
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -484,7 +561,7 @@ func (o *PcloudPvminstancesVirtualserialnumberPutUnprocessableEntity) readRespon
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -554,7 +631,7 @@ func (o *PcloudPvminstancesVirtualserialnumberPutInternalServerError) readRespon
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 

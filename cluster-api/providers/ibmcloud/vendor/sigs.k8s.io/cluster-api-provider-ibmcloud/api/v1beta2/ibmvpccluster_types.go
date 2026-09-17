@@ -19,7 +19,7 @@ package v1beta2
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -49,7 +49,7 @@ type IBMVPCClusterSpec struct {
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint capiv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// ControlPlaneLoadBalancer is optional configuration for customizing control plane behavior.
 	// Use this for legacy support, use Network.LoadBalancers for the extended VPC support.
@@ -127,6 +127,11 @@ type AdditionalListenerSpec struct {
 	// Will default to TCP protocol if not specified.
 	// +optional
 	Protocol *VPCLoadBalancerListenerProtocol `json:"protocol,omitempty"`
+
+	// The selector is used to find IBMPowerVSMachines with matching labels.
+	// If the label matches, the machine is then added to the load balancer listener configuration.
+	// +kubebuilder:validation:Optional
+	Selector metav1.LabelSelector `json:"selector,omitempty"`
 }
 
 // VPCLoadBalancerBackendPoolSpec defines the desired configuration of a VPC Load Balancer Backend Pool.
@@ -314,7 +319,22 @@ type IBMVPCClusterStatus struct {
 
 	// Conditions defines current service state of the load balancer.
 	// +optional
-	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// V1beta2 groups all the fields that will be added or modified in IBMVPCCluster's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *IBMVPCClusterV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// IBMVPCClusterV1Beta2Status groups all the fields that will be added or modified in IBMVPCClusterStatus with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type IBMVPCClusterV1Beta2Status struct {
+	// Conditions represents the observations of a IBMVPCCluster's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // VPCNetworkStatus provides details on the status of VPC network resources for extended VPC Infrastructure support.
@@ -385,16 +405,32 @@ type IBMVPCClusterList struct {
 	Items           []IBMVPCCluster `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&IBMVPCCluster{}, &IBMVPCClusterList{})
-}
-
 // GetConditions returns the observations of the operational state of the IBMVPCCluster resource.
-func (r *IBMVPCCluster) GetConditions() capiv1beta1.Conditions {
+func (r *IBMVPCCluster) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the IBMVPCCluster to the predescribed clusterv1.Conditions.
-func (r *IBMVPCCluster) SetConditions(conditions capiv1beta1.Conditions) {
+// SetConditions sets the underlying service state of the IBMVPCCluster to the predescribed clusterv1beta1.Conditions.
+func (r *IBMVPCCluster) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for IBMVPCCluster object.
+func (r *IBMVPCCluster) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for IBMVPCCluster object.
+func (r *IBMVPCCluster) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &IBMVPCClusterV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
+}
+
+func init() {
+	objectTypes = append(objectTypes, &IBMVPCCluster{}, &IBMVPCClusterList{})
 }

@@ -78,6 +78,14 @@ type IBMVPCMachineSpec struct {
 	// SSHKeys is the SSH pub keys that will be used to access VM.
 	// ID will take higher precedence over Name if both specified.
 	SSHKeys []*IBMVPCResourceReference `json:"sshKeys,omitempty"`
+
+	// additionalVolumes is the list of additional volumes attached to the instance
+	// There is a hard limit of 12 volume attachments per instance:
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-attaching-block-storage&interface=api#vol-attach-limits
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MaxItems=12
+	// +kubebuilder:validation:XValidation:rule="oldSelf.all(x, x in self)",message="Values may only be added"
+	AdditionalVolumes []*VPCVolume `json:"additionalVolumes,omitempty"`
 }
 
 // IBMVPCResourceReference is a reference to a specific VPC resource by ID or Name
@@ -95,7 +103,7 @@ type IBMVPCResourceReference struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// VPCVolume defines the volume information for the instance.
+// VPCVolume defines the volume information.
 type VPCVolume struct {
 	// DeleteVolumeOnInstanceDelete If set to true, when deleting the instance the volume will also be deleted.
 	// Default is set as true
@@ -108,14 +116,15 @@ type VPCVolume struct {
 	// +optional
 	Name string `json:"name,omitempty"`
 
-	// SizeGiB is the size of the virtual server's boot disk in GiB.
+	// SizeGiB is the size of the virtual server's disk in GiB.
 	// Default to the size of the image's `minimum_provisioned_size`.
 	// +optional
 	SizeGiB int64 `json:"sizeGiB,omitempty"`
 
-	// Profile is the volume profile for the bootdisk, refer https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles
+	// Profile is the volume profile for the disk, refer https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles
 	// for more information.
 	// Default to general-purpose
+	// NOTE: If a profile other than custom is specified, the Iops and SizeGiB fields will be ignored
 	// +kubebuilder:validation:Enum="general-purpose";"5iops-tier";"10iops-tier";"custom"
 	// +kubebuilder:default=general-purpose
 	// +optional
@@ -190,6 +199,9 @@ type IBMVPCMachineV1Beta2Status struct {
 	// +listMapKey=type
 	// +kubebuilder:validation:MaxItems=32
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// AdditionalVolumeIDs is a list of Volume IDs as per IBMCloud
+	// +optional
+	AdditionalVolumeIDs []string `json:"additionalVolumeIDs,omitempty"`
 }
 
 // +kubebuilder:object:root=true

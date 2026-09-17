@@ -7,6 +7,9 @@ package models
 
 import (
 	"context"
+	"encoding/json"
+	stderrors "errors"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -19,28 +22,136 @@ import (
 // swagger:model NetworkPeer
 type NetworkPeer struct {
 
-	// Description of the network peer
+	// time stamp for create network peer
 	// Required: true
-	Description *string `json:"description"`
+	CreationDate *string `json:"creationDate"`
 
-	// ID of the network peer
+	// ASN number at customer network side
+	// Example: 64512
+	// Required: true
+	CustomerASN *int64 `json:"customerASN"`
+
+	// IP address used for configuring customer network interface with network subnet mask. customerCidr and ibmCidr must have matching network and subnet mask values.
+	// Example: 192.168.91.2/30
+	// Required: true
+	CustomerCidr *string `json:"customerCidr"`
+
+	// default action for export route filter
+	// * allow: allow
+	// * deny: deny
+	//
+	// Example: allow
+	// Required: true
+	// Enum: ["allow","deny"]
+	DefaultExportRouteFilter *string `json:"defaultExportRouteFilter"`
+
+	// default action for import route filter
+	// * allow: allow
+	// * deny: deny
+	//
+	// Example: allow
+	// Required: true
+	// Enum: ["allow","deny"]
+	DefaultImportRouteFilter *string `json:"defaultImportRouteFilter"`
+
+	// error description
+	// Required: true
+	Error *string `json:"error"`
+
+	// List of export route filters
+	// Required: true
+	ExportRouteFilters []*RouteFilter `json:"exportRouteFilters"`
+
+	// ASN number at IBM PowerVS side
+	// Example: 64512
+	// Required: true
+	IbmASN *int64 `json:"ibmASN"`
+
+	// IP address used for configuring IBM network interface with network subnet mask. customerCidr and ibmCidr must have matching network and subnet mask values.
+	// Example: 192.168.91.1/30
+	// Required: true
+	IbmCidr *string `json:"ibmCidr"`
+
+	// network peer id
+	// Example: 031ab7da-bca6-493f-ac55-1a2a26f19160
 	// Required: true
 	ID *string `json:"id"`
 
-	// Name of the network peer
+	// List of import route filters
+	// Required: true
+	ImportRouteFilters []*RouteFilter `json:"importRouteFilters"`
+
+	// user defined name
+	// Example: newPeerNetwork
 	// Required: true
 	Name *string `json:"name"`
 
-	// type
+	// peer interface id. use API '/v1/network-peers/interfaces' to get a list of valid peer interface id
+	// Example: 031ab7da-bca6-493f-ac55-1a2a26f19160
 	// Required: true
-	Type *NetworkPeerType `json:"type"`
+	PeerInterfaceID *string `json:"peerInterfaceID"`
+
+	// status of the network peer
+	// Example: active
+	// Required: true
+	// Enum: ["active","configuring","removing","error","updating"]
+	State *string `json:"state"`
+
+	// type of the peer network
+	// * dcnetwork_bgp: broader gateway protocol is used to share routes between two autonomous network
+	//
+	// Example: dcnetwork_bgp
+	// Required: true
+	// Enum: ["dcnetwork_bgp"]
+	Type *string `json:"type"`
+
+	// time stamp for update network peer
+	// Required: true
+	UpdatedDate *string `json:"updatedDate"`
+
+	// A vlan configured at the customer network.
+	// Example: 2000
+	// Required: true
+	Vlan *int64 `json:"vlan"`
 }
 
 // Validate validates this network peer
 func (m *NetworkPeer) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateDescription(formats); err != nil {
+	if err := m.validateCreationDate(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCustomerASN(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCustomerCidr(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDefaultExportRouteFilter(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDefaultImportRouteFilter(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateError(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateExportRouteFilters(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateIbmASN(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateIbmCidr(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -48,11 +159,31 @@ func (m *NetworkPeer) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateImportRouteFilters(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
 	}
 
+	if err := m.validatePeerInterfaceID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateState(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUpdatedDate(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateVlan(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -62,9 +193,171 @@ func (m *NetworkPeer) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *NetworkPeer) validateDescription(formats strfmt.Registry) error {
+func (m *NetworkPeer) validateCreationDate(formats strfmt.Registry) error {
 
-	if err := validate.Required("description", "body", m.Description); err != nil {
+	if err := validate.Required("creationDate", "body", m.CreationDate); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateCustomerASN(formats strfmt.Registry) error {
+
+	if err := validate.Required("customerASN", "body", m.CustomerASN); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateCustomerCidr(formats strfmt.Registry) error {
+
+	if err := validate.Required("customerCidr", "body", m.CustomerCidr); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var networkPeerTypeDefaultExportRouteFilterPropEnum []any
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["allow","deny"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkPeerTypeDefaultExportRouteFilterPropEnum = append(networkPeerTypeDefaultExportRouteFilterPropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkPeerDefaultExportRouteFilterAllow captures enum value "allow"
+	NetworkPeerDefaultExportRouteFilterAllow string = "allow"
+
+	// NetworkPeerDefaultExportRouteFilterDeny captures enum value "deny"
+	NetworkPeerDefaultExportRouteFilterDeny string = "deny"
+)
+
+// prop value enum
+func (m *NetworkPeer) validateDefaultExportRouteFilterEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkPeerTypeDefaultExportRouteFilterPropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkPeer) validateDefaultExportRouteFilter(formats strfmt.Registry) error {
+
+	if err := validate.Required("defaultExportRouteFilter", "body", m.DefaultExportRouteFilter); err != nil {
+		return err
+	}
+
+	// value enum
+	if err := m.validateDefaultExportRouteFilterEnum("defaultExportRouteFilter", "body", *m.DefaultExportRouteFilter); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var networkPeerTypeDefaultImportRouteFilterPropEnum []any
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["allow","deny"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkPeerTypeDefaultImportRouteFilterPropEnum = append(networkPeerTypeDefaultImportRouteFilterPropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkPeerDefaultImportRouteFilterAllow captures enum value "allow"
+	NetworkPeerDefaultImportRouteFilterAllow string = "allow"
+
+	// NetworkPeerDefaultImportRouteFilterDeny captures enum value "deny"
+	NetworkPeerDefaultImportRouteFilterDeny string = "deny"
+)
+
+// prop value enum
+func (m *NetworkPeer) validateDefaultImportRouteFilterEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkPeerTypeDefaultImportRouteFilterPropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkPeer) validateDefaultImportRouteFilter(formats strfmt.Registry) error {
+
+	if err := validate.Required("defaultImportRouteFilter", "body", m.DefaultImportRouteFilter); err != nil {
+		return err
+	}
+
+	// value enum
+	if err := m.validateDefaultImportRouteFilterEnum("defaultImportRouteFilter", "body", *m.DefaultImportRouteFilter); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateError(formats strfmt.Registry) error {
+
+	if err := validate.Required("error", "body", m.Error); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateExportRouteFilters(formats strfmt.Registry) error {
+
+	if err := validate.Required("exportRouteFilters", "body", m.ExportRouteFilters); err != nil {
+		return err
+	}
+
+	for i := 0; i < len(m.ExportRouteFilters); i++ {
+		if swag.IsZero(m.ExportRouteFilters[i]) { // not required
+			continue
+		}
+
+		if m.ExportRouteFilters[i] != nil {
+			if err := m.ExportRouteFilters[i].Validate(formats); err != nil {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
+					return ve.ValidateName("exportRouteFilters" + "." + strconv.Itoa(i))
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
+					return ce.ValidateName("exportRouteFilters" + "." + strconv.Itoa(i))
+				}
+
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateIbmASN(formats strfmt.Registry) error {
+
+	if err := validate.Required("ibmASN", "body", m.IbmASN); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateIbmCidr(formats strfmt.Registry) error {
+
+	if err := validate.Required("ibmCidr", "body", m.IbmCidr); err != nil {
 		return err
 	}
 
@@ -80,6 +373,37 @@ func (m *NetworkPeer) validateID(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *NetworkPeer) validateImportRouteFilters(formats strfmt.Registry) error {
+
+	if err := validate.Required("importRouteFilters", "body", m.ImportRouteFilters); err != nil {
+		return err
+	}
+
+	for i := 0; i < len(m.ImportRouteFilters); i++ {
+		if swag.IsZero(m.ImportRouteFilters[i]) { // not required
+			continue
+		}
+
+		if m.ImportRouteFilters[i] != nil {
+			if err := m.ImportRouteFilters[i].Validate(formats); err != nil {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
+					return ve.ValidateName("importRouteFilters" + "." + strconv.Itoa(i))
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
+					return ce.ValidateName("importRouteFilters" + "." + strconv.Itoa(i))
+				}
+
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *NetworkPeer) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
@@ -89,25 +413,120 @@ func (m *NetworkPeer) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *NetworkPeer) validatePeerInterfaceID(formats strfmt.Registry) error {
+
+	if err := validate.Required("peerInterfaceID", "body", m.PeerInterfaceID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var networkPeerTypeStatePropEnum []any
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["active","configuring","removing","error","updating"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkPeerTypeStatePropEnum = append(networkPeerTypeStatePropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkPeerStateActive captures enum value "active"
+	NetworkPeerStateActive string = "active"
+
+	// NetworkPeerStateConfiguring captures enum value "configuring"
+	NetworkPeerStateConfiguring string = "configuring"
+
+	// NetworkPeerStateRemoving captures enum value "removing"
+	NetworkPeerStateRemoving string = "removing"
+
+	// NetworkPeerStateError captures enum value "error"
+	NetworkPeerStateError string = "error"
+
+	// NetworkPeerStateUpdating captures enum value "updating"
+	NetworkPeerStateUpdating string = "updating"
+)
+
+// prop value enum
+func (m *NetworkPeer) validateStateEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkPeerTypeStatePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkPeer) validateState(formats strfmt.Registry) error {
+
+	if err := validate.Required("state", "body", m.State); err != nil {
+		return err
+	}
+
+	// value enum
+	if err := m.validateStateEnum("state", "body", *m.State); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var networkPeerTypeTypePropEnum []any
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["dcnetwork_bgp"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkPeerTypeTypePropEnum = append(networkPeerTypeTypePropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkPeerTypeDcnetworkBgp captures enum value "dcnetwork_bgp"
+	NetworkPeerTypeDcnetworkBgp string = "dcnetwork_bgp"
+)
+
+// prop value enum
+func (m *NetworkPeer) validateTypeEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkPeerTypeTypePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *NetworkPeer) validateType(formats strfmt.Registry) error {
 
 	if err := validate.Required("type", "body", m.Type); err != nil {
 		return err
 	}
 
-	if err := validate.Required("type", "body", m.Type); err != nil {
+	// value enum
+	if err := m.validateTypeEnum("type", "body", *m.Type); err != nil {
 		return err
 	}
 
-	if m.Type != nil {
-		if err := m.Type.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("type")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("type")
-			}
-			return err
-		}
+	return nil
+}
+
+func (m *NetworkPeer) validateUpdatedDate(formats strfmt.Registry) error {
+
+	if err := validate.Required("updatedDate", "body", m.UpdatedDate); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) validateVlan(formats strfmt.Registry) error {
+
+	if err := validate.Required("vlan", "body", m.Vlan); err != nil {
+		return err
 	}
 
 	return nil
@@ -117,7 +536,11 @@ func (m *NetworkPeer) validateType(formats strfmt.Registry) error {
 func (m *NetworkPeer) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateType(ctx, formats); err != nil {
+	if err := m.contextValidateExportRouteFilters(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateImportRouteFilters(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -127,18 +550,59 @@ func (m *NetworkPeer) ContextValidate(ctx context.Context, formats strfmt.Regist
 	return nil
 }
 
-func (m *NetworkPeer) contextValidateType(ctx context.Context, formats strfmt.Registry) error {
+func (m *NetworkPeer) contextValidateExportRouteFilters(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Type != nil {
+	for i := 0; i < len(m.ExportRouteFilters); i++ {
 
-		if err := m.Type.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("type")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("type")
+		if m.ExportRouteFilters[i] != nil {
+
+			if swag.IsZero(m.ExportRouteFilters[i]) { // not required
+				return nil
 			}
-			return err
+
+			if err := m.ExportRouteFilters[i].ContextValidate(ctx, formats); err != nil {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
+					return ve.ValidateName("exportRouteFilters" + "." + strconv.Itoa(i))
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
+					return ce.ValidateName("exportRouteFilters" + "." + strconv.Itoa(i))
+				}
+
+				return err
+			}
 		}
+
+	}
+
+	return nil
+}
+
+func (m *NetworkPeer) contextValidateImportRouteFilters(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.ImportRouteFilters); i++ {
+
+		if m.ImportRouteFilters[i] != nil {
+
+			if swag.IsZero(m.ImportRouteFilters[i]) { // not required
+				return nil
+			}
+
+			if err := m.ImportRouteFilters[i].ContextValidate(ctx, formats); err != nil {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
+					return ve.ValidateName("importRouteFilters" + "." + strconv.Itoa(i))
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
+					return ce.ValidateName("importRouteFilters" + "." + strconv.Itoa(i))
+				}
+
+				return err
+			}
+		}
+
 	}
 
 	return nil

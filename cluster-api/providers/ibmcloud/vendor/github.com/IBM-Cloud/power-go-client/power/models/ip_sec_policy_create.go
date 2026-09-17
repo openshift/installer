@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -92,18 +93,22 @@ func (m *IPSecPolicyCreate) validateAuthentication(formats strfmt.Registry) erro
 	}
 
 	if err := m.Authentication.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("authentication")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("authentication")
 		}
+
 		return err
 	}
 
 	return nil
 }
 
-var ipSecPolicyCreateTypeDhGroupPropEnum []interface{}
+var ipSecPolicyCreateTypeDhGroupPropEnum []any
 
 func init() {
 	var res []int64
@@ -137,7 +142,7 @@ func (m *IPSecPolicyCreate) validateDhGroup(formats strfmt.Registry) error {
 	return nil
 }
 
-var ipSecPolicyCreateTypeEncryptionPropEnum []interface{}
+var ipSecPolicyCreateTypeEncryptionPropEnum []any
 
 func init() {
 	var res []string
@@ -207,11 +212,15 @@ func (m *IPSecPolicyCreate) validateKeyLifetime(formats strfmt.Registry) error {
 
 	if m.KeyLifetime != nil {
 		if err := m.KeyLifetime.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("keyLifetime")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("keyLifetime")
 			}
+
 			return err
 		}
 	}
@@ -270,11 +279,15 @@ func (m *IPSecPolicyCreate) contextValidateAuthentication(ctx context.Context, f
 	}
 
 	if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("authentication")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("authentication")
 		}
+
 		return err
 	}
 
@@ -286,11 +299,15 @@ func (m *IPSecPolicyCreate) contextValidateKeyLifetime(ctx context.Context, form
 	if m.KeyLifetime != nil {
 
 		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("keyLifetime")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("keyLifetime")
 			}
+
 			return err
 		}
 	}

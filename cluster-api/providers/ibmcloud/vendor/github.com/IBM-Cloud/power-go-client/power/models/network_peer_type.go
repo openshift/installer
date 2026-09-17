@@ -41,7 +41,7 @@ const (
 )
 
 // for schema
-var networkPeerTypeEnum []interface{}
+var networkPeerTypeEnum []any
 
 func init() {
 	var res []NetworkPeerType

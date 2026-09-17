@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.87.0-91c7c775-20240320-213027
+ * IBM OpenAPI SDK Code Generator Version: 3.105.0-3c13b041-20250605-193116
  */
 
 // Package globaltaggingv1 : Operations and models for the GlobalTaggingV1 service
@@ -39,9 +39,9 @@ import (
 // create tags in two formats: `key:value` or `label`. The tagging API supports three types of tag: `user` `service`,
 // and `access` tags. `service` tags cannot be attached to IMS resources. `service` tags must be in the form
 // `service_prefix:tag_label` where `service_prefix` identifies the Service owning the tag. `access` tags cannot be
-// attached to IMS and Cloud Foundry resources. They must be in the form `key:value`. You can replace all resource's
-// tags using the `replace` query parameter in the attach operation. You can update the `value` of a resource's tag in
-// the format `key:value`, using the `update` query parameter in the attach operation.
+// attached to IMS resources. They must be in the form `key:value`. You can replace all resource's tags using the
+// `replace` query parameter in the attach operation. You can update the `value` of a resource's tag in the format
+// `key:value`, using the `update` query parameter in the attach operation.
 //
 // API Version: 1.2.0
 type GlobalTaggingV1 struct {
@@ -589,14 +589,17 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 	}
 
 	body := make(map[string]interface{})
-	if attachTagOptions.Resources != nil {
-		body["resources"] = attachTagOptions.Resources
-	}
 	if attachTagOptions.TagName != nil {
 		body["tag_name"] = attachTagOptions.TagName
 	}
 	if attachTagOptions.TagNames != nil {
 		body["tag_names"] = attachTagOptions.TagNames
+	}
+	if attachTagOptions.Resources != nil {
+		body["resources"] = attachTagOptions.Resources
+	}
+	if attachTagOptions.Query != nil {
+		body["query"] = attachTagOptions.Query
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -684,14 +687,17 @@ func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, 
 	}
 
 	body := make(map[string]interface{})
-	if detachTagOptions.Resources != nil {
-		body["resources"] = detachTagOptions.Resources
-	}
 	if detachTagOptions.TagName != nil {
 		body["tag_name"] = detachTagOptions.TagName
 	}
 	if detachTagOptions.TagNames != nil {
 		body["tag_names"] = detachTagOptions.TagNames
+	}
+	if detachTagOptions.Resources != nil {
+		body["resources"] = detachTagOptions.Resources
+	}
+	if detachTagOptions.Query != nil {
+		body["query"] = detachTagOptions.Query
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -729,14 +735,17 @@ func getServiceComponentInfo() *core.ProblemComponent {
 
 // AttachTagOptions : The AttachTag options.
 type AttachTagOptions struct {
-	// List of resources on which the tag or tags are attached.
-	Resources []Resource `json:"resources" validate:"required"`
-
 	// The name of the tag to attach.
 	TagName *string `json:"tag_name,omitempty"`
 
 	// An array of tag names to attach.
 	TagNames []string `json:"tag_names,omitempty"`
+
+	// List of resources on which the tagging operation operates on.
+	Resources []Resource `json:"resources,omitempty"`
+
+	// A valid Global Search string.
+	Query *QueryString `json:"query,omitempty"`
 
 	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
 	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
@@ -772,7 +781,7 @@ type AttachTagOptions struct {
 	// usual. The update query parameter is available for user and access management tags, but not for service tags.
 	Update *bool `json:"update,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -780,22 +789,14 @@ type AttachTagOptions struct {
 // The type of the tag. Supported values are `user`, `service` and `access`. `service` and `access` are not supported
 // for IMS resources.
 const (
-	AttachTagOptionsTagTypeAccessConst = "access"
+	AttachTagOptionsTagTypeAccessConst  = "access"
 	AttachTagOptionsTagTypeServiceConst = "service"
-	AttachTagOptionsTagTypeUserConst = "user"
+	AttachTagOptionsTagTypeUserConst    = "user"
 )
 
 // NewAttachTagOptions : Instantiate AttachTagOptions
-func (*GlobalTaggingV1) NewAttachTagOptions(resources []Resource) *AttachTagOptions {
-	return &AttachTagOptions{
-		Resources: resources,
-	}
-}
-
-// SetResources : Allow user to set Resources
-func (_options *AttachTagOptions) SetResources(resources []Resource) *AttachTagOptions {
-	_options.Resources = resources
-	return _options
+func (*GlobalTaggingV1) NewAttachTagOptions() *AttachTagOptions {
+	return &AttachTagOptions{}
 }
 
 // SetTagName : Allow user to set TagName
@@ -807,6 +808,18 @@ func (_options *AttachTagOptions) SetTagName(tagName string) *AttachTagOptions {
 // SetTagNames : Allow user to set TagNames
 func (_options *AttachTagOptions) SetTagNames(tagNames []string) *AttachTagOptions {
 	_options.TagNames = tagNames
+	return _options
+}
+
+// SetResources : Allow user to set Resources
+func (_options *AttachTagOptions) SetResources(resources []Resource) *AttachTagOptions {
+	_options.Resources = resources
+	return _options
+}
+
+// SetQuery : Allow user to set Query
+func (_options *AttachTagOptions) SetQuery(query *QueryString) *AttachTagOptions {
+	_options.Query = query
 	return _options
 }
 
@@ -878,7 +891,7 @@ type CreateTagOptions struct {
 	// The type of the tags you want to create. The only allowed value is `access`.
 	TagType *string `json:"tag_type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1003,7 +1016,7 @@ type DeleteTagAllOptions struct {
 	// for IMS resources (`providers` parameter set to `ims`).
 	TagType *string `json:"tag_type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1011,16 +1024,16 @@ type DeleteTagAllOptions struct {
 // Select a provider. Supported values are `ghost` and `ims`.
 const (
 	DeleteTagAllOptionsProvidersGhostConst = "ghost"
-	DeleteTagAllOptionsProvidersImsConst = "ims"
+	DeleteTagAllOptionsProvidersImsConst   = "ims"
 )
 
 // Constants associated with the DeleteTagAllOptions.TagType property.
 // The type of the tag. Supported values are `user`, `service` and `access`. `service` and `access` are not supported
 // for IMS resources (`providers` parameter set to `ims`).
 const (
-	DeleteTagAllOptionsTagTypeAccessConst = "access"
+	DeleteTagAllOptionsTagTypeAccessConst  = "access"
 	DeleteTagAllOptionsTagTypeServiceConst = "service"
-	DeleteTagAllOptionsTagTypeUserConst = "user"
+	DeleteTagAllOptionsTagTypeUserConst    = "user"
 )
 
 // NewDeleteTagAllOptions : Instantiate DeleteTagAllOptions
@@ -1096,23 +1109,23 @@ type DeleteTagOptions struct {
 	// for IMS resources (`providers` parameter set to `ims`).
 	TagType *string `json:"tag_type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the DeleteTagOptions.Providers property.
 const (
 	DeleteTagOptionsProvidersGhostConst = "ghost"
-	DeleteTagOptionsProvidersImsConst = "ims"
+	DeleteTagOptionsProvidersImsConst   = "ims"
 )
 
 // Constants associated with the DeleteTagOptions.TagType property.
 // The type of the tag. Supported values are `user`, `service` and `access`. `service` and `access` are not supported
 // for IMS resources (`providers` parameter set to `ims`).
 const (
-	DeleteTagOptionsTagTypeAccessConst = "access"
+	DeleteTagOptionsTagTypeAccessConst  = "access"
 	DeleteTagOptionsTagTypeServiceConst = "service"
-	DeleteTagOptionsTagTypeUserConst = "user"
+	DeleteTagOptionsTagTypeUserConst    = "user"
 )
 
 // NewDeleteTagOptions : Instantiate DeleteTagOptions
@@ -1183,6 +1196,7 @@ func UnmarshalDeleteTagResults(m map[string]json.RawMessage, result interface{})
 }
 
 // DeleteTagResultsItem : Result of a delete_tag request.
+// This type supports additional properties of type interface{}.
 type DeleteTagResultsItem struct {
 	// The provider of the tag.
 	Provider *string `json:"provider,omitempty"`
@@ -1190,7 +1204,7 @@ type DeleteTagResultsItem struct {
 	// It is `true` if the operation exits with an error (for example, the tag does not exist).
 	IsError *bool `json:"is_error,omitempty"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type interface{}.
 	additionalProperties map[string]interface{}
 }
 
@@ -1198,10 +1212,10 @@ type DeleteTagResultsItem struct {
 // The provider of the tag.
 const (
 	DeleteTagResultsItemProviderGhostConst = "ghost"
-	DeleteTagResultsItemProviderImsConst = "ims"
+	DeleteTagResultsItemProviderImsConst   = "ims"
 )
 
-// SetProperty allows the user to set an arbitrary property on an instance of DeleteTagResultsItem
+// SetProperty allows the user to set an arbitrary property on an instance of DeleteTagResultsItem.
 func (o *DeleteTagResultsItem) SetProperty(key string, value interface{}) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]interface{})
@@ -1209,7 +1223,7 @@ func (o *DeleteTagResultsItem) SetProperty(key string, value interface{}) {
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of DeleteTagResultsItem
+// SetProperties allows the user to set a map of arbitrary properties on an instance of DeleteTagResultsItem.
 func (o *DeleteTagResultsItem) SetProperties(m map[string]interface{}) {
 	o.additionalProperties = make(map[string]interface{})
 	for k, v := range m {
@@ -1217,12 +1231,12 @@ func (o *DeleteTagResultsItem) SetProperties(m map[string]interface{}) {
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of DeleteTagResultsItem
+// GetProperty allows the user to retrieve an arbitrary property from an instance of DeleteTagResultsItem.
 func (o *DeleteTagResultsItem) GetProperty(key string) interface{} {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of DeleteTagResultsItem
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of DeleteTagResultsItem.
 func (o *DeleteTagResultsItem) GetProperties() map[string]interface{} {
 	return o.additionalProperties
 }
@@ -1338,14 +1352,17 @@ func UnmarshalDeleteTagsResultItem(m map[string]json.RawMessage, result interfac
 
 // DetachTagOptions : The DetachTag options.
 type DetachTagOptions struct {
-	// List of resources on which the tag or tags are detached.
-	Resources []Resource `json:"resources" validate:"required"`
-
 	// The name of the tag to detach.
 	TagName *string `json:"tag_name,omitempty"`
 
 	// An array of tag names to detach.
 	TagNames []string `json:"tag_names,omitempty"`
+
+	// List of resources on which the tagging operation operates on.
+	Resources []Resource `json:"resources,omitempty"`
+
+	// A valid Global Search string.
+	Query *QueryString `json:"query,omitempty"`
 
 	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
 	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
@@ -1370,7 +1387,7 @@ type DetachTagOptions struct {
 	// for IMS resources.
 	TagType *string `json:"tag_type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -1378,22 +1395,14 @@ type DetachTagOptions struct {
 // The type of the tag. Supported values are `user`, `service` and `access`. `service` and `access` are not supported
 // for IMS resources.
 const (
-	DetachTagOptionsTagTypeAccessConst = "access"
+	DetachTagOptionsTagTypeAccessConst  = "access"
 	DetachTagOptionsTagTypeServiceConst = "service"
-	DetachTagOptionsTagTypeUserConst = "user"
+	DetachTagOptionsTagTypeUserConst    = "user"
 )
 
 // NewDetachTagOptions : Instantiate DetachTagOptions
-func (*GlobalTaggingV1) NewDetachTagOptions(resources []Resource) *DetachTagOptions {
-	return &DetachTagOptions{
-		Resources: resources,
-	}
-}
-
-// SetResources : Allow user to set Resources
-func (_options *DetachTagOptions) SetResources(resources []Resource) *DetachTagOptions {
-	_options.Resources = resources
-	return _options
+func (*GlobalTaggingV1) NewDetachTagOptions() *DetachTagOptions {
+	return &DetachTagOptions{}
 }
 
 // SetTagName : Allow user to set TagName
@@ -1405,6 +1414,18 @@ func (_options *DetachTagOptions) SetTagName(tagName string) *DetachTagOptions {
 // SetTagNames : Allow user to set TagNames
 func (_options *DetachTagOptions) SetTagNames(tagNames []string) *DetachTagOptions {
 	_options.TagNames = tagNames
+	return _options
+}
+
+// SetResources : Allow user to set Resources
+func (_options *DetachTagOptions) SetResources(resources []Resource) *DetachTagOptions {
+	_options.Resources = resources
+	return _options
+}
+
+// SetQuery : Allow user to set Query
+func (_options *DetachTagOptions) SetQuery(query *QueryString) *DetachTagOptions {
+	_options.Query = query
 	return _options
 }
 
@@ -1494,28 +1515,28 @@ type ListTagsOptions struct {
 	// returns all tags.
 	AttachedOnly *bool `json:"attached_only,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListTagsOptions.TagType property.
 // The type of the tag you want to list. Supported values are `user`, `service` and `access`.
 const (
-	ListTagsOptionsTagTypeAccessConst = "access"
+	ListTagsOptionsTagTypeAccessConst  = "access"
 	ListTagsOptionsTagTypeServiceConst = "service"
-	ListTagsOptionsTagTypeUserConst = "user"
+	ListTagsOptionsTagTypeUserConst    = "user"
 )
 
 // Constants associated with the ListTagsOptions.Providers property.
 const (
 	ListTagsOptionsProvidersGhostConst = "ghost"
-	ListTagsOptionsProvidersImsConst = "ims"
+	ListTagsOptionsProvidersImsConst   = "ims"
 )
 
 // Constants associated with the ListTagsOptions.OrderByName property.
 // Order the output by tag name.
 const (
-	ListTagsOptionsOrderByNameAscConst = "asc"
+	ListTagsOptionsOrderByNameAscConst  = "asc"
 	ListTagsOptionsOrderByNameDescConst = "desc"
 )
 
@@ -1602,12 +1623,45 @@ func (options *ListTagsOptions) SetHeaders(param map[string]string) *ListTagsOpt
 	return options
 }
 
+// QueryString : A valid Global Search string.
+type QueryString struct {
+	// The Lucene-formatted query string.
+	QueryString *string `json:"query_string" validate:"required"`
+}
+
+// NewQueryString : Instantiate QueryString (Generic Model Constructor)
+func (*GlobalTaggingV1) NewQueryString(queryString string) (_model *QueryString, err error) {
+	_model = &QueryString{
+		QueryString: core.StringPtr(queryString),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalQueryString unmarshals an instance of QueryString from the specified map of raw messages.
+func UnmarshalQueryString(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(QueryString)
+	err = core.UnmarshalPrimitive(m, "query_string", &obj.QueryString)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "query_string-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // Resource : A resource that might have tags that are attached.
 type Resource struct {
 	// The CRN or IMS ID of the resource.
 	ResourceID *string `json:"resource_id" validate:"required"`
 
-	// The IMS resource type of the resource.
+	// The IMS resource type of the resource. It can be one of SoftLayer_Virtual_DedicatedHost, SoftLayer_Hardware,
+	// SoftLayer_Hardware_Server, SoftLayer_Network_Application_Delivery_Controller, SoftLayer_Network_Vlan,
+	// SoftLayer_Network_Vlan_Firewall, SoftLayer_Network_Component_Firewall, SoftLayer_Network_Firewall_Module_Context,
+	// SoftLayer_Virtual_Guest.
 	ResourceType *string `json:"resource_type,omitempty"`
 }
 

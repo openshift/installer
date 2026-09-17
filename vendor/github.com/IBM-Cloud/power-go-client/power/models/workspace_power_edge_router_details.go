@@ -57,7 +57,7 @@ func (m *WorkspacePowerEdgeRouterDetails) Validate(formats strfmt.Registry) erro
 	return nil
 }
 
-var workspacePowerEdgeRouterDetailsTypeMigrationStatusPropEnum []interface{}
+var workspacePowerEdgeRouterDetailsTypeMigrationStatusPropEnum []any
 
 func init() {
 	var res []string
@@ -105,7 +105,7 @@ func (m *WorkspacePowerEdgeRouterDetails) validateMigrationStatus(formats strfmt
 	return nil
 }
 
-var workspacePowerEdgeRouterDetailsTypeStatePropEnum []interface{}
+var workspacePowerEdgeRouterDetailsTypeStatePropEnum []any
 
 func init() {
 	var res []string
@@ -166,7 +166,7 @@ func (m *WorkspacePowerEdgeRouterDetails) validateState(formats strfmt.Registry)
 	return nil
 }
 
-var workspacePowerEdgeRouterDetailsTypeTypePropEnum []interface{}
+var workspacePowerEdgeRouterDetailsTypeTypePropEnum []any
 
 func init() {
 	var res []string

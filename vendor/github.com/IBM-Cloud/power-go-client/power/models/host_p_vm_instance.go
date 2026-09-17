@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -95,11 +96,15 @@ func (m *HostPVMInstance) validateOwner(formats strfmt.Registry) error {
 
 	if m.Owner != nil {
 		if err := m.Owner.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("owner")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("owner")
 			}
+
 			return err
 		}
 	}
@@ -162,11 +167,15 @@ func (m *HostPVMInstance) contextValidateOwner(ctx context.Context, formats strf
 	if m.Owner != nil {
 
 		if err := m.Owner.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("owner")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("owner")
 			}
+
 			return err
 		}
 	}

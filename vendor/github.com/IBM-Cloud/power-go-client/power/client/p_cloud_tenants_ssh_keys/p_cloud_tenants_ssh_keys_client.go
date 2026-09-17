@@ -73,7 +73,7 @@ type ClientService interface {
 PcloudTenantsSshkeysDelete deletes a tenant s SSH key
 */
 func (a *Client) PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysDeleteParams()
 	}
@@ -93,17 +93,22 @@ func (a *Client) PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeletePa
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudTenantsSshkeysDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -112,7 +117,7 @@ func (a *Client) PcloudTenantsSshkeysDelete(params *PcloudTenantsSshkeysDeletePa
 PcloudTenantsSshkeysGet gets a tenant s SSH key by name
 */
 func (a *Client) PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysGetParams()
 	}
@@ -132,17 +137,22 @@ func (a *Client) PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudTenantsSshkeysGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -151,7 +161,7 @@ func (a *Client) PcloudTenantsSshkeysGet(params *PcloudTenantsSshkeysGetParams, 
 PcloudTenantsSshkeysGetall lists a tenant s SSH keys
 */
 func (a *Client) PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysGetallParams()
 	}
@@ -171,17 +181,22 @@ func (a *Client) PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallPa
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudTenantsSshkeysGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -190,7 +205,7 @@ func (a *Client) PcloudTenantsSshkeysGetall(params *PcloudTenantsSshkeysGetallPa
 PcloudTenantsSshkeysPost adds a new SSH key to the tenant
 */
 func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysPostOK, *PcloudTenantsSshkeysPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysPostParams()
 	}
@@ -210,18 +225,22 @@ func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// several success responses have to be checked
 	switch value := result.(type) {
 	case *PcloudTenantsSshkeysPostOK:
 		return value, nil, nil
 	case *PcloudTenantsSshkeysPostCreated:
 		return nil, value, nil
 	}
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for p_cloud_tenants_ssh_keys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -230,7 +249,7 @@ func (a *Client) PcloudTenantsSshkeysPost(params *PcloudTenantsSshkeysPostParams
 PcloudTenantsSshkeysPut updates an SSH key
 */
 func (a *Client) PcloudTenantsSshkeysPut(params *PcloudTenantsSshkeysPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsSshkeysPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudTenantsSshkeysPutParams()
 	}
@@ -250,17 +269,22 @@ func (a *Client) PcloudTenantsSshkeysPut(params *PcloudTenantsSshkeysPutParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudTenantsSshkeysPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.tenants.sshkeys.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

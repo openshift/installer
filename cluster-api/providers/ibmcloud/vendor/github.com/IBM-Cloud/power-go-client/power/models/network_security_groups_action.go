@@ -40,7 +40,7 @@ func (m *NetworkSecurityGroupsAction) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var networkSecurityGroupsActionTypeActionPropEnum []interface{}
+var networkSecurityGroupsActionTypeActionPropEnum []any
 
 func init() {
 	var res []string

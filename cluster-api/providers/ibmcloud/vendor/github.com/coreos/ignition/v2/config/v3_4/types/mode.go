@@ -24,3 +24,13 @@ func validateMode(m *int) error {
 	}
 	return nil
 }
+
+func validateModeSpecialBits(m *int) error {
+	if m != nil {
+		mode := uint32(*m)
+		if mode&07000 != 0 {
+			return errors.ErrModeSpecialBits
+		}
+	}
+	return nil
+}

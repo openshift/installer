@@ -50,7 +50,7 @@ func (m *PVMInstanceMultiCreate) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var pVmInstanceMultiCreateTypeAffinityPolicyPropEnum []interface{}
+var pVmInstanceMultiCreateTypeAffinityPolicyPropEnum []any
 
 func init() {
 	var res []string
@@ -95,7 +95,7 @@ func (m *PVMInstanceMultiCreate) validateAffinityPolicy(formats strfmt.Registry)
 	return nil
 }
 
-var pVmInstanceMultiCreateTypeNumericalPropEnum []interface{}
+var pVmInstanceMultiCreateTypeNumericalPropEnum []any
 
 func init() {
 	var res []string

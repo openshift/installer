@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.105.1-067d600b-20250616-154447
+ * IBM OpenAPI SDK Code Generator Version: 3.107.1-41b0fbd0-20250825-080732
  */
 
 // Package vpcv1 : Operations and models for the VpcV1 service
@@ -38,7 +38,7 @@ import (
 // VpcV1 : The IBM Cloud Virtual Private Cloud (VPC) API can be used to programmatically provision and manage virtual
 // server instances, along with subnets, volumes, load balancers, and more.
 //
-// API Version: 2025-09-01
+// API Version: 2025-11-17
 type VpcV1 struct {
 	Service *core.BaseService
 
@@ -46,8 +46,8 @@ type VpcV1 struct {
 	// `2`.
 	Generation *int64
 
-	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2025-08-26`
-	// and `2025-09-01`.
+	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2025-09-16`
+	// and `2025-11-17`.
 	Version *string
 }
 
@@ -67,8 +67,8 @@ type VpcV1Options struct {
 	// `2`.
 	Generation *int64
 
-	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2025-08-26`
-	// and `2025-09-01`.
+	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2025-09-16`
+	// and `2025-11-17`.
 	Version *string
 }
 
@@ -133,7 +133,7 @@ func NewVpcV1(options *VpcV1Options) (service *VpcV1, err error) {
 	}
 
 	if options.Version == nil {
-		options.Version = core.StringPtr("2025-08-26")
+		options.Version = core.StringPtr("2025-11-17")
 	}
 
 	service = &VpcV1{
@@ -159,6 +159,7 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"eu-de":    "https://eu-de.iaas.cloud.ibm.com/v1",    // Germany (Frankfurt)
 		"eu-es":    "https://eu-es.iaas.cloud.ibm.com/v1",    // Spain (Madrid)
 		"eu-gb":    "https://eu-gb.iaas.cloud.ibm.com/v1",    // United Kingdom (London)
+		"in-che":   "https://in-che.iaas.cloud.ibm.com/v1",   // India (Chennai)
 		"jp-osa":   "https://jp-osa.iaas.cloud.ibm.com/v1",   // Japan (Osaka)
 		"jp-tok":   "https://jp-tok.iaas.cloud.ibm.com/v1",   // Japan (Tokyo)
 		"us-east":  "https://us-east.iaas.cloud.ibm.com/v1",  // US East (Washington DC)
@@ -6692,6 +6693,9 @@ func (vpc *VpcV1) ListEndpointGatewaysWithContext(ctx context.Context, listEndpo
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listEndpointGatewaysOptions.AllowResourceBinding != nil {
+		builder.AddQuery("allow_resource_binding", fmt.Sprint(*listEndpointGatewaysOptions.AllowResourceBinding))
+	}
 	if listEndpointGatewaysOptions.Name != nil {
 		builder.AddQuery("name", fmt.Sprint(*listEndpointGatewaysOptions.Name))
 	}
@@ -6800,6 +6804,9 @@ func (vpc *VpcV1) CreateEndpointGatewayWithContext(ctx context.Context, createEn
 	}
 	if createEndpointGatewayOptions.AllowDnsResolutionBinding != nil {
 		body["allow_dns_resolution_binding"] = createEndpointGatewayOptions.AllowDnsResolutionBinding
+	}
+	if createEndpointGatewayOptions.AllowResourceBinding != nil {
+		body["allow_resource_binding"] = createEndpointGatewayOptions.AllowResourceBinding
 	}
 	if createEndpointGatewayOptions.Ips != nil {
 		body["ips"] = createEndpointGatewayOptions.Ips
@@ -7138,11 +7145,411 @@ func (vpc *VpcV1) AddEndpointGatewayIPWithContext(ctx context.Context, addEndpoi
 	return
 }
 
+// ListEndpointGatewayResourceBindings : List resource bindings for an endpoint gateway
+// This request lists resource bindings for an endpoint gateway. A resource binding is an association between the
+// endpoint gateway and a resource in the endpoint gateway's `target` service. The resource binding provides a fully
+// qualified domain name for the
+// `service_endpoint` to access the resource from the endpoint gateway's VPC.
+//
+// The resource bindings will be sorted by their `created_at` property values, with newest resource bindings first.
+// Resource bindings with identical `created_at` property values will in turn be sorted by ascending `name` property
+// values.
+func (vpc *VpcV1) ListEndpointGatewayResourceBindings(listEndpointGatewayResourceBindingsOptions *ListEndpointGatewayResourceBindingsOptions) (result *EndpointGatewayResourceBindingCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListEndpointGatewayResourceBindingsWithContext(context.Background(), listEndpointGatewayResourceBindingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListEndpointGatewayResourceBindingsWithContext is an alternate form of the ListEndpointGatewayResourceBindings method which supports a Context parameter
+func (vpc *VpcV1) ListEndpointGatewayResourceBindingsWithContext(ctx context.Context, listEndpointGatewayResourceBindingsOptions *ListEndpointGatewayResourceBindingsOptions) (result *EndpointGatewayResourceBindingCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listEndpointGatewayResourceBindingsOptions, "listEndpointGatewayResourceBindingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listEndpointGatewayResourceBindingsOptions, "listEndpointGatewayResourceBindingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"endpoint_gateway_id": *listEndpointGatewayResourceBindingsOptions.EndpointGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/endpoint_gateways/{endpoint_gateway_id}/resource_bindings`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListEndpointGatewayResourceBindings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listEndpointGatewayResourceBindingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listEndpointGatewayResourceBindingsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listEndpointGatewayResourceBindingsOptions.Start))
+	}
+	if listEndpointGatewayResourceBindingsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listEndpointGatewayResourceBindingsOptions.Limit))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_endpoint_gateway_resource_bindings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEndpointGatewayResourceBindingCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateEndpointGatewayResourceBinding : Create a resource binding for an endpoint gateway
+// This request creates a new resource binding for an endpoint gateway from an endpoint gateway resource binding
+// prototype object. The prototype object is structured in the same way as a retrieved endpoint gateway resource
+// binding, and contains the information necessary to create the new resource binding.
+//
+// For this request to succeed, resource binding must be enabled for this endpoint gateway's
+// `target` service and this endpoint gateway resource binding must not conflict with another resource binding in the
+// [DNS sharing](/docs/vpc?topic=vpc-vpe-dns-sharing) connected topology.
+func (vpc *VpcV1) CreateEndpointGatewayResourceBinding(createEndpointGatewayResourceBindingOptions *CreateEndpointGatewayResourceBindingOptions) (result *EndpointGatewayResourceBinding, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.CreateEndpointGatewayResourceBindingWithContext(context.Background(), createEndpointGatewayResourceBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateEndpointGatewayResourceBindingWithContext is an alternate form of the CreateEndpointGatewayResourceBinding method which supports a Context parameter
+func (vpc *VpcV1) CreateEndpointGatewayResourceBindingWithContext(ctx context.Context, createEndpointGatewayResourceBindingOptions *CreateEndpointGatewayResourceBindingOptions) (result *EndpointGatewayResourceBinding, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createEndpointGatewayResourceBindingOptions, "createEndpointGatewayResourceBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createEndpointGatewayResourceBindingOptions, "createEndpointGatewayResourceBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"endpoint_gateway_id": *createEndpointGatewayResourceBindingOptions.EndpointGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/endpoint_gateways/{endpoint_gateway_id}/resource_bindings`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "CreateEndpointGatewayResourceBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createEndpointGatewayResourceBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if createEndpointGatewayResourceBindingOptions.Target != nil {
+		body["target"] = createEndpointGatewayResourceBindingOptions.Target
+	}
+	if createEndpointGatewayResourceBindingOptions.Name != nil {
+		body["name"] = createEndpointGatewayResourceBindingOptions.Name
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_endpoint_gateway_resource_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEndpointGatewayResourceBinding)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteEndpointGatewayResourceBinding : Delete a resource binding from an endpoint gateway
+// This request deletes the specified resource binding from the specified endpoint gateway. This operation cannot be
+// reversed.
+func (vpc *VpcV1) DeleteEndpointGatewayResourceBinding(deleteEndpointGatewayResourceBindingOptions *DeleteEndpointGatewayResourceBindingOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.DeleteEndpointGatewayResourceBindingWithContext(context.Background(), deleteEndpointGatewayResourceBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteEndpointGatewayResourceBindingWithContext is an alternate form of the DeleteEndpointGatewayResourceBinding method which supports a Context parameter
+func (vpc *VpcV1) DeleteEndpointGatewayResourceBindingWithContext(ctx context.Context, deleteEndpointGatewayResourceBindingOptions *DeleteEndpointGatewayResourceBindingOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteEndpointGatewayResourceBindingOptions, "deleteEndpointGatewayResourceBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteEndpointGatewayResourceBindingOptions, "deleteEndpointGatewayResourceBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"endpoint_gateway_id": *deleteEndpointGatewayResourceBindingOptions.EndpointGatewayID,
+		"id":                  *deleteEndpointGatewayResourceBindingOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/endpoint_gateways/{endpoint_gateway_id}/resource_bindings/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "DeleteEndpointGatewayResourceBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteEndpointGatewayResourceBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_endpoint_gateway_resource_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetEndpointGatewayResourceBinding : Retrieve an endpoint gateway resource binding
+// This request retrieves a single endpoint gateway resource binding specified by the identifier in the URL.
+func (vpc *VpcV1) GetEndpointGatewayResourceBinding(getEndpointGatewayResourceBindingOptions *GetEndpointGatewayResourceBindingOptions) (result *EndpointGatewayResourceBinding, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.GetEndpointGatewayResourceBindingWithContext(context.Background(), getEndpointGatewayResourceBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetEndpointGatewayResourceBindingWithContext is an alternate form of the GetEndpointGatewayResourceBinding method which supports a Context parameter
+func (vpc *VpcV1) GetEndpointGatewayResourceBindingWithContext(ctx context.Context, getEndpointGatewayResourceBindingOptions *GetEndpointGatewayResourceBindingOptions) (result *EndpointGatewayResourceBinding, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getEndpointGatewayResourceBindingOptions, "getEndpointGatewayResourceBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getEndpointGatewayResourceBindingOptions, "getEndpointGatewayResourceBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"endpoint_gateway_id": *getEndpointGatewayResourceBindingOptions.EndpointGatewayID,
+		"id":                  *getEndpointGatewayResourceBindingOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/endpoint_gateways/{endpoint_gateway_id}/resource_bindings/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "GetEndpointGatewayResourceBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getEndpointGatewayResourceBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_endpoint_gateway_resource_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEndpointGatewayResourceBinding)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateEndpointGatewayResourceBinding : Update an endpoint gateway resource binding
+// This request updates an endpoint gateway resource binding with the information in a provided endpoint gateway
+// resource binding patch. The endpoint gateway resource binding patch object is structured in the same way as a
+// retrieved endpoint gateway resource binding and contains only the information to be updated.
+func (vpc *VpcV1) UpdateEndpointGatewayResourceBinding(updateEndpointGatewayResourceBindingOptions *UpdateEndpointGatewayResourceBindingOptions) (result *EndpointGatewayResourceBinding, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.UpdateEndpointGatewayResourceBindingWithContext(context.Background(), updateEndpointGatewayResourceBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateEndpointGatewayResourceBindingWithContext is an alternate form of the UpdateEndpointGatewayResourceBinding method which supports a Context parameter
+func (vpc *VpcV1) UpdateEndpointGatewayResourceBindingWithContext(ctx context.Context, updateEndpointGatewayResourceBindingOptions *UpdateEndpointGatewayResourceBindingOptions) (result *EndpointGatewayResourceBinding, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateEndpointGatewayResourceBindingOptions, "updateEndpointGatewayResourceBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateEndpointGatewayResourceBindingOptions, "updateEndpointGatewayResourceBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"endpoint_gateway_id": *updateEndpointGatewayResourceBindingOptions.EndpointGatewayID,
+		"id":                  *updateEndpointGatewayResourceBindingOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/endpoint_gateways/{endpoint_gateway_id}/resource_bindings/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "UpdateEndpointGatewayResourceBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateEndpointGatewayResourceBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	_, err = builder.SetBodyContentJSON(updateEndpointGatewayResourceBindingOptions.EndpointGatewayResourceBindingPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_endpoint_gateway_resource_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEndpointGatewayResourceBinding)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // DeleteEndpointGateway : Delete an endpoint gateway
 // This request deletes an endpoint gateway. This operation cannot be reversed.
 //
 // Reserved IPs that were bound to the endpoint gateway will be released if their
 // `auto_delete` property is set to true.
+//
+// If the VPC this endpoint gateway resides in has `dns.enable_hub` set to `true`, then no other VPC in the [DNS
+// sharing](/docs/vpc?topic=vpc-vpe-dns-sharing) topology must contain an endpoint gateway with the same `target`
+// service as this endpoint gateway.
 func (vpc *VpcV1) DeleteEndpointGateway(deleteEndpointGatewayOptions *DeleteEndpointGatewayOptions) (response *core.DetailedResponse, err error) {
 	response, err = vpc.DeleteEndpointGatewayWithContext(context.Background(), deleteEndpointGatewayOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -12134,6 +12541,12 @@ func (vpc *VpcV1) ListInstancesWithContext(ctx context.Context, listInstancesOpt
 	}
 	if listInstancesOptions.DedicatedHostName != nil {
 		builder.AddQuery("dedicated_host.name", fmt.Sprint(*listInstancesOptions.DedicatedHostName))
+	}
+	if listInstancesOptions.InstanceGroupMembershipInstanceGroupID != nil {
+		builder.AddQuery("instance_group_membership.instance_group.id", fmt.Sprint(*listInstancesOptions.InstanceGroupMembershipInstanceGroupID))
+	}
+	if listInstancesOptions.InstanceGroupMembershipInstanceGroupCRN != nil {
+		builder.AddQuery("instance_group_membership.instance_group.crn", fmt.Sprint(*listInstancesOptions.InstanceGroupMembershipInstanceGroupCRN))
 	}
 	if listInstancesOptions.PlacementGroupID != nil {
 		builder.AddQuery("placement_group.id", fmt.Sprint(*listInstancesOptions.PlacementGroupID))
@@ -24122,7 +24535,8 @@ func (vpc *VpcV1) ListShareSnapshotsWithContext(ctx context.Context, listShareSn
 // in the same way as a retrieved share snapshot, and contains the information necessary to create the new share
 // snapshot.
 //
-// The share must have an `access_control_mode` of `security_group` and a `replication_role` of `source` or `none`.
+// The share must have an `access_control_mode` of `security_group`, and a
+// `replication_role` of `source` or `none`.
 //
 // The snapshot will inherit its `resource_group` and encryption settings from the share.
 //
@@ -27377,6 +27791,9 @@ func (vpc *VpcV1) DeleteVirtualNetworkInterfacesWithContext(ctx context.Context,
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	if deleteVirtualNetworkInterfacesOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*deleteVirtualNetworkInterfacesOptions.IfMatch))
+	}
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
@@ -27524,6 +27941,9 @@ func (vpc *VpcV1) UpdateVirtualNetworkInterfaceWithContext(ctx context.Context, 
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	if updateVirtualNetworkInterfaceOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateVirtualNetworkInterfaceOptions.IfMatch))
+	}
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
@@ -29905,7 +30325,20 @@ func (vpc *VpcV1) ListVPCDnsResolutionBindingsWithContext(ctx context.Context, l
 //   - The VPC specified by the identifier in the URL must have `dns.enable_hub` set to
 //     `false`
 //   - The updated DNS sharing connected topology must not contain more than one endpoint
-//     gateway with `allow_dns_resolution_binding` set to `true` targeting the same service.
+//     gateway with `allow_dns_resolution_binding` set to `true` and
+//     `allow_resource_binding` set to `false` targeting the same service.
+//
+// Additionally, if the VPC specified by the identifier in the URL has endpoint gateways that have
+// `allow_dns_resolution_binding` set to `true`, then those endpoint gateways will participate in [DNS
+// sharing](/docs/vpc?topic=vpc-vpe-dns-sharing) with all VPCs in the connected topology. If this VPC contains an
+// endpoint gateway targeting a service that has resource binding enabled, then for this request to succeed:
+//   - The VPC in the topology with `dns.enable_hub` set to `true` must have an endpoint
+//     gateway with the same `target` as the endpoint gateway in this VPC, and with
+//     `allow_dns_resolution_binding` set to `true` and `allow_resource_binding` set to
+//     `false`.
+//   - No other VPC in the topology can have an endpoint gateway with a resource binding
+//     using the same `service_endpoint` as a resource binding for the endpoint gateway in
+//     this VPC.
 //
 // See [About DNS sharing for VPE gateways](/docs/vpc?topic=vpc-vpe-dns-sharing) for more information.
 func (vpc *VpcV1) CreateVPCDnsResolutionBinding(createVPCDnsResolutionBindingOptions *CreateVPCDnsResolutionBindingOptions) (result *VpcdnsResolutionBinding, response *core.DetailedResponse, err error) {
@@ -32746,6 +33179,276 @@ func (vpc *VpcV1) UpdateVPNGatewayWithContext(ctx context.Context, updateVPNGate
 	return
 }
 
+// ListVPNGatewayAdvertisedCIDRs : List advertised CIDRs for a VPN gateway
+// This request lists advertised CIDRs for a VPN gateway.
+//
+// This request is only supported for route mode VPN gateways.
+func (vpc *VpcV1) ListVPNGatewayAdvertisedCIDRs(listVPNGatewayAdvertisedCIDRsOptions *ListVPNGatewayAdvertisedCIDRsOptions) (result *VPNGatewayAdvertisedCIDRCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListVPNGatewayAdvertisedCIDRsWithContext(context.Background(), listVPNGatewayAdvertisedCIDRsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListVPNGatewayAdvertisedCIDRsWithContext is an alternate form of the ListVPNGatewayAdvertisedCIDRs method which supports a Context parameter
+func (vpc *VpcV1) ListVPNGatewayAdvertisedCIDRsWithContext(ctx context.Context, listVPNGatewayAdvertisedCIDRsOptions *ListVPNGatewayAdvertisedCIDRsOptions) (result *VPNGatewayAdvertisedCIDRCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listVPNGatewayAdvertisedCIDRsOptions, "listVPNGatewayAdvertisedCIDRsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listVPNGatewayAdvertisedCIDRsOptions, "listVPNGatewayAdvertisedCIDRsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"vpn_gateway_id": *listVPNGatewayAdvertisedCIDRsOptions.VPNGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/vpn_gateways/{vpn_gateway_id}/advertised_cidrs`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListVPNGatewayAdvertisedCIDRs")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listVPNGatewayAdvertisedCIDRsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_vpn_gateway_advertised_cidrs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVPNGatewayAdvertisedCIDRCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// RemoveVPNGatewayAdvertisedCIDR : Remove an advertised CIDR from a VPN gateway
+// This request removes a CIDR from a VPN gateway advertised CIDRs.
+//
+// This request is only supported for route mode VPN gateways.
+func (vpc *VpcV1) RemoveVPNGatewayAdvertisedCIDR(removeVPNGatewayAdvertisedCIDROptions *RemoveVPNGatewayAdvertisedCIDROptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.RemoveVPNGatewayAdvertisedCIDRWithContext(context.Background(), removeVPNGatewayAdvertisedCIDROptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// RemoveVPNGatewayAdvertisedCIDRWithContext is an alternate form of the RemoveVPNGatewayAdvertisedCIDR method which supports a Context parameter
+func (vpc *VpcV1) RemoveVPNGatewayAdvertisedCIDRWithContext(ctx context.Context, removeVPNGatewayAdvertisedCIDROptions *RemoveVPNGatewayAdvertisedCIDROptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(removeVPNGatewayAdvertisedCIDROptions, "removeVPNGatewayAdvertisedCIDROptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(removeVPNGatewayAdvertisedCIDROptions, "removeVPNGatewayAdvertisedCIDROptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"vpn_gateway_id": *removeVPNGatewayAdvertisedCIDROptions.VPNGatewayID,
+		"cidr":           *removeVPNGatewayAdvertisedCIDROptions.CIDR,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/vpn_gateways/{vpn_gateway_id}/advertised_cidrs/{cidr}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "RemoveVPNGatewayAdvertisedCIDR")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range removeVPNGatewayAdvertisedCIDROptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "remove_vpn_gateway_advertised_cidr", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// CheckVPNGatewayAdvertisedCIDR : Check if the specified advertised CIDR exists on a VPN gateway
+// This request succeeds if an advertised CIDR exists on the specified VPN gateway, and fails otherwise.
+//
+// This request is only supported for route mode VPN gateways.
+func (vpc *VpcV1) CheckVPNGatewayAdvertisedCIDR(checkVPNGatewayAdvertisedCIDROptions *CheckVPNGatewayAdvertisedCIDROptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.CheckVPNGatewayAdvertisedCIDRWithContext(context.Background(), checkVPNGatewayAdvertisedCIDROptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CheckVPNGatewayAdvertisedCIDRWithContext is an alternate form of the CheckVPNGatewayAdvertisedCIDR method which supports a Context parameter
+func (vpc *VpcV1) CheckVPNGatewayAdvertisedCIDRWithContext(ctx context.Context, checkVPNGatewayAdvertisedCIDROptions *CheckVPNGatewayAdvertisedCIDROptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(checkVPNGatewayAdvertisedCIDROptions, "checkVPNGatewayAdvertisedCIDROptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(checkVPNGatewayAdvertisedCIDROptions, "checkVPNGatewayAdvertisedCIDROptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"vpn_gateway_id": *checkVPNGatewayAdvertisedCIDROptions.VPNGatewayID,
+		"cidr":           *checkVPNGatewayAdvertisedCIDROptions.CIDR,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/vpn_gateways/{vpn_gateway_id}/advertised_cidrs/{cidr}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "CheckVPNGatewayAdvertisedCIDR")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range checkVPNGatewayAdvertisedCIDROptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "check_vpn_gateway_advertised_cidr", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// AddVPNGatewayAdvertisedCIDR : Set an advertised CIDR on a VPN gateway
+// This request adds the specified CIDR to the specified VPN gateway advertised CIDRs. This request succeeds if the
+// specified CIDR already exists. A request body is not required, and if provided, is ignored.
+//
+// This request is only supported for route mode VPN gateways.
+func (vpc *VpcV1) AddVPNGatewayAdvertisedCIDR(addVPNGatewayAdvertisedCIDROptions *AddVPNGatewayAdvertisedCIDROptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.AddVPNGatewayAdvertisedCIDRWithContext(context.Background(), addVPNGatewayAdvertisedCIDROptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// AddVPNGatewayAdvertisedCIDRWithContext is an alternate form of the AddVPNGatewayAdvertisedCIDR method which supports a Context parameter
+func (vpc *VpcV1) AddVPNGatewayAdvertisedCIDRWithContext(ctx context.Context, addVPNGatewayAdvertisedCIDROptions *AddVPNGatewayAdvertisedCIDROptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(addVPNGatewayAdvertisedCIDROptions, "addVPNGatewayAdvertisedCIDROptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(addVPNGatewayAdvertisedCIDROptions, "addVPNGatewayAdvertisedCIDROptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"vpn_gateway_id": *addVPNGatewayAdvertisedCIDROptions.VPNGatewayID,
+		"cidr":           *addVPNGatewayAdvertisedCIDROptions.CIDR,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/vpn_gateways/{vpn_gateway_id}/advertised_cidrs/{cidr}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "AddVPNGatewayAdvertisedCIDR")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range addVPNGatewayAdvertisedCIDROptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "add_vpn_gateway_advertised_cidr", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
 // ListVPNGatewayConnections : List connections of a VPN gateway
 // This request lists connections of a VPN gateway.
 func (vpc *VpcV1) ListVPNGatewayConnections(listVPNGatewayConnectionsOptions *ListVPNGatewayConnectionsOptions) (result *VPNGatewayConnectionCollection, response *core.DetailedResponse, err error) {
@@ -32950,6 +33653,9 @@ func (vpc *VpcV1) DeleteVPNGatewayConnectionWithContext(ctx context.Context, del
 	for headerName, headerValue := range deleteVPNGatewayConnectionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
+	if deleteVPNGatewayConnectionOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*deleteVPNGatewayConnectionOptions.IfMatch))
+	}
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
@@ -33088,6 +33794,9 @@ func (vpc *VpcV1) UpdateVPNGatewayConnectionWithContext(ctx context.Context, upd
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	if updateVPNGatewayConnectionOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateVPNGatewayConnectionOptions.IfMatch))
+	}
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
@@ -33666,6 +34375,160 @@ func (vpc *VpcV1) AddVPNGatewayConnectionsPeerCIDRWithContext(ctx context.Contex
 		core.EnrichHTTPProblem(err, "add_vpn_gateway_connections_peer_cidr", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
+	}
+
+	return
+}
+
+// ListVPNGatewayServiceConnections : List VPN gateway service connections
+// This request lists service connections on a VPN gateway. The VPN gateway service connections will be sorted by
+// ascending `created_at` property values. A VPN gateway service connection connects services such as transit gateway to
+// a VPN gateway. This facilitates the propagation of routes learned from VPN gateway peer connections to the connected
+// service (for example, a transit gateway).
+func (vpc *VpcV1) ListVPNGatewayServiceConnections(listVPNGatewayServiceConnectionsOptions *ListVPNGatewayServiceConnectionsOptions) (result *VPNGatewayServiceConnectionCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListVPNGatewayServiceConnectionsWithContext(context.Background(), listVPNGatewayServiceConnectionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListVPNGatewayServiceConnectionsWithContext is an alternate form of the ListVPNGatewayServiceConnections method which supports a Context parameter
+func (vpc *VpcV1) ListVPNGatewayServiceConnectionsWithContext(ctx context.Context, listVPNGatewayServiceConnectionsOptions *ListVPNGatewayServiceConnectionsOptions) (result *VPNGatewayServiceConnectionCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listVPNGatewayServiceConnectionsOptions, "listVPNGatewayServiceConnectionsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listVPNGatewayServiceConnectionsOptions, "listVPNGatewayServiceConnectionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"vpn_gateway_id": *listVPNGatewayServiceConnectionsOptions.VPNGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/vpn_gateways/{vpn_gateway_id}/service_connections`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListVPNGatewayServiceConnections")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listVPNGatewayServiceConnectionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listVPNGatewayServiceConnectionsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listVPNGatewayServiceConnectionsOptions.Start))
+	}
+	if listVPNGatewayServiceConnectionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listVPNGatewayServiceConnectionsOptions.Limit))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_vpn_gateway_service_connections", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVPNGatewayServiceConnectionCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetVPNGatewayServiceConnection : Retrieve a VPN gateway service connection
+// This request retrieves VPN gateway service connection specified by the identifier in the URL.
+func (vpc *VpcV1) GetVPNGatewayServiceConnection(getVPNGatewayServiceConnectionOptions *GetVPNGatewayServiceConnectionOptions) (result *VPNGatewayServiceConnection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.GetVPNGatewayServiceConnectionWithContext(context.Background(), getVPNGatewayServiceConnectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetVPNGatewayServiceConnectionWithContext is an alternate form of the GetVPNGatewayServiceConnection method which supports a Context parameter
+func (vpc *VpcV1) GetVPNGatewayServiceConnectionWithContext(ctx context.Context, getVPNGatewayServiceConnectionOptions *GetVPNGatewayServiceConnectionOptions) (result *VPNGatewayServiceConnection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getVPNGatewayServiceConnectionOptions, "getVPNGatewayServiceConnectionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getVPNGatewayServiceConnectionOptions, "getVPNGatewayServiceConnectionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"vpn_gateway_id": *getVPNGatewayServiceConnectionOptions.VPNGatewayID,
+		"id":             *getVPNGatewayServiceConnectionOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/vpn_gateways/{vpn_gateway_id}/service_connections/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "GetVPNGatewayServiceConnection")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getVPNGatewayServiceConnectionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_vpn_gateway_service_connection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVPNGatewayServiceConnection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
 	}
 
 	return
@@ -34821,7 +35684,7 @@ func (vpc *VpcV1) UpdateVPNServerRouteWithContext(ctx context.Context, updateVPN
 	return
 }
 func getServiceComponentInfo() *core.ProblemComponent {
-	return core.NewProblemComponent(DefaultServiceName, "2025-08-26")
+	return core.NewProblemComponent(DefaultServiceName, "2025-11-17")
 }
 
 // AccountIdentity : Identifies an account by a unique property.
@@ -35118,6 +35981,44 @@ func (_options *AddVirtualNetworkInterfaceIPOptions) SetID(id string) *AddVirtua
 
 // SetHeaders : Allow user to set Headers
 func (options *AddVirtualNetworkInterfaceIPOptions) SetHeaders(param map[string]string) *AddVirtualNetworkInterfaceIPOptions {
+	options.Headers = param
+	return options
+}
+
+// AddVPNGatewayAdvertisedCIDROptions : The AddVPNGatewayAdvertisedCIDR options.
+type AddVPNGatewayAdvertisedCIDROptions struct {
+	// The VPN gateway identifier.
+	VPNGatewayID *string `json:"vpn_gateway_id" validate:"required,ne="`
+
+	// The IP address range in CIDR block notation.
+	CIDR *string `json:"cidr" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewAddVPNGatewayAdvertisedCIDROptions : Instantiate AddVPNGatewayAdvertisedCIDROptions
+func (*VpcV1) NewAddVPNGatewayAdvertisedCIDROptions(vpnGatewayID string, cidr string) *AddVPNGatewayAdvertisedCIDROptions {
+	return &AddVPNGatewayAdvertisedCIDROptions{
+		VPNGatewayID: core.StringPtr(vpnGatewayID),
+		CIDR:         core.StringPtr(cidr),
+	}
+}
+
+// SetVPNGatewayID : Allow user to set VPNGatewayID
+func (_options *AddVPNGatewayAdvertisedCIDROptions) SetVPNGatewayID(vpnGatewayID string) *AddVPNGatewayAdvertisedCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
+}
+
+// SetCIDR : Allow user to set CIDR
+func (_options *AddVPNGatewayAdvertisedCIDROptions) SetCIDR(cidr string) *AddVPNGatewayAdvertisedCIDROptions {
+	_options.CIDR = core.StringPtr(cidr)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *AddVPNGatewayAdvertisedCIDROptions) SetHeaders(param map[string]string) *AddVPNGatewayAdvertisedCIDROptions {
 	options.Headers = param
 	return options
 }
@@ -41256,7 +42157,7 @@ func UnmarshalBareMetalServerProfileReservationTerms(m map[string]json.RawMessag
 // BareMetalServerProfileSupportedTrustedPlatformModuleModes : The supported trusted platform module modes for this bare metal server profile.
 type BareMetalServerProfileSupportedTrustedPlatformModuleModes struct {
 	// The default trusted platform module for a bare metal server with this profile.
-	Default *string `json:"default,omitempty"`
+	Default *string `json:"default" validate:"required"`
 
 	// The type for this profile field.
 	Type *string `json:"type" validate:"required"`
@@ -42058,6 +42959,44 @@ func UnmarshalCertificateInstanceReference(m map[string]json.RawMessage, result 
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// CheckVPNGatewayAdvertisedCIDROptions : The CheckVPNGatewayAdvertisedCIDR options.
+type CheckVPNGatewayAdvertisedCIDROptions struct {
+	// The VPN gateway identifier.
+	VPNGatewayID *string `json:"vpn_gateway_id" validate:"required,ne="`
+
+	// The IP address range in CIDR block notation.
+	CIDR *string `json:"cidr" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCheckVPNGatewayAdvertisedCIDROptions : Instantiate CheckVPNGatewayAdvertisedCIDROptions
+func (*VpcV1) NewCheckVPNGatewayAdvertisedCIDROptions(vpnGatewayID string, cidr string) *CheckVPNGatewayAdvertisedCIDROptions {
+	return &CheckVPNGatewayAdvertisedCIDROptions{
+		VPNGatewayID: core.StringPtr(vpnGatewayID),
+		CIDR:         core.StringPtr(cidr),
+	}
+}
+
+// SetVPNGatewayID : Allow user to set VPNGatewayID
+func (_options *CheckVPNGatewayAdvertisedCIDROptions) SetVPNGatewayID(vpnGatewayID string) *CheckVPNGatewayAdvertisedCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
+}
+
+// SetCIDR : Allow user to set CIDR
+func (_options *CheckVPNGatewayAdvertisedCIDROptions) SetCIDR(cidr string) *CheckVPNGatewayAdvertisedCIDROptions {
+	_options.CIDR = core.StringPtr(cidr)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CheckVPNGatewayAdvertisedCIDROptions) SetHeaders(param map[string]string) *CheckVPNGatewayAdvertisedCIDROptions {
+	options.Headers = param
+	return options
 }
 
 // CheckVPNGatewayConnectionsLocalCIDROptions : The CheckVPNGatewayConnectionsLocalCIDR options.
@@ -45003,6 +45942,13 @@ type CreateEndpointGatewayOptions struct {
 	// - Has the same `target` as this endpoint gateway
 	// - Has `service_endpoints` that overlap with the `service_endpoints` for this endpoint
 	//   gateway.
+	//
+	// If `allow_dns_resolution_binding` is `true`, and `allow_resource_binding` is `true`,
+	// then:
+	// - The VPC in the topology with `dns.enable_hub` set to `true` must have an endpoint
+	//   gateway with the same `target` as this endpoint gateway.
+	// - No other VPC in the topology can have an endpoint gateway with a resource binding
+	//   using the same `service_endpoint` as a resource binding for this endpoint gateway.
 	Target EndpointGatewayTargetPrototypeIntf `json:"target" validate:"required"`
 
 	// The VPC this endpoint gateway will reside in.
@@ -45011,16 +45957,27 @@ type CreateEndpointGatewayOptions struct {
 	// Indicates whether to allow DNS resolution for this endpoint gateway when the VPC this endpoint gateway resides in
 	// has a DNS resolution binding to a VPC with `dns.enable_hub` set to `true`.
 	//
-	// If `true`, then there must not be another endpoint gateway with
+	// If `true`, and `allow_resource_binding` is `false`, then there must not be another endpoint gateway with
 	// `allow_dns_resolution_binding` set to `true` in the [DNS sharing](/docs/vpc?topic=vpc-vpe-dns-sharing) connected
 	// topology that:
 	// - Has the same `target` as this endpoint gateway
 	// - Has `service_endpoints` that overlap with the `service_endpoints` for this endpoint
 	//   gateway.
 	//
+	// If `true`, and `allow_resource_binding` is `true`, then:
+	// - The VPC in the topology with `dns.enable_hub` set to `true` must have an endpoint
+	//   gateway with the same `target` as this endpoint gateway.
+	// - No other VPC in the topology can have an endpoint gateway with a resource binding
+	//   using the same `service_endpoint` as a resource binding for this endpoint gateway.
+	//
 	// Must be `true` if the VPC this endpoint gateway resides in has `dns.enable_hub` set to
 	// `true`.
 	AllowDnsResolutionBinding *bool `json:"allow_dns_resolution_binding,omitempty"`
+
+	// Indicates whether resource binding is allowed for this endpoint gateway when the VPC this endpoint gateway resides
+	// in has a DNS resolution binding to a VPC with `dns.enable_hub` set to `true`. Resource binding must be enabled for
+	// the `target` service.
+	AllowResourceBinding *bool `json:"allow_resource_binding,omitempty"`
 
 	// The reserved IPs to bind to this endpoint gateway. At most one reserved IP per zone is allowed.
 	Ips []EndpointGatewayReservedIPIntf `json:"ips,omitempty"`
@@ -45066,6 +46023,12 @@ func (_options *CreateEndpointGatewayOptions) SetAllowDnsResolutionBinding(allow
 	return _options
 }
 
+// SetAllowResourceBinding : Allow user to set AllowResourceBinding
+func (_options *CreateEndpointGatewayOptions) SetAllowResourceBinding(allowResourceBinding bool) *CreateEndpointGatewayOptions {
+	_options.AllowResourceBinding = core.BoolPtr(allowResourceBinding)
+	return _options
+}
+
 // SetIps : Allow user to set Ips
 func (_options *CreateEndpointGatewayOptions) SetIps(ips []EndpointGatewayReservedIPIntf) *CreateEndpointGatewayOptions {
 	_options.Ips = ips
@@ -45092,6 +46055,54 @@ func (_options *CreateEndpointGatewayOptions) SetSecurityGroups(securityGroups [
 
 // SetHeaders : Allow user to set Headers
 func (options *CreateEndpointGatewayOptions) SetHeaders(param map[string]string) *CreateEndpointGatewayOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateEndpointGatewayResourceBindingOptions : The CreateEndpointGatewayResourceBinding options.
+type CreateEndpointGatewayResourceBindingOptions struct {
+	// The endpoint gateway identifier.
+	EndpointGatewayID *string `json:"endpoint_gateway_id" validate:"required,ne="`
+
+	// The target to use for this resource binding.
+	Target EndpointGatewayResourceBindingTargetPrototypeIntf `json:"target" validate:"required"`
+
+	// The name for this resource binding. The name must not be used by another resource binding for the endpoint gateway.
+	// If unspecified, the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateEndpointGatewayResourceBindingOptions : Instantiate CreateEndpointGatewayResourceBindingOptions
+func (*VpcV1) NewCreateEndpointGatewayResourceBindingOptions(endpointGatewayID string, target EndpointGatewayResourceBindingTargetPrototypeIntf) *CreateEndpointGatewayResourceBindingOptions {
+	return &CreateEndpointGatewayResourceBindingOptions{
+		EndpointGatewayID: core.StringPtr(endpointGatewayID),
+		Target:            target,
+	}
+}
+
+// SetEndpointGatewayID : Allow user to set EndpointGatewayID
+func (_options *CreateEndpointGatewayResourceBindingOptions) SetEndpointGatewayID(endpointGatewayID string) *CreateEndpointGatewayResourceBindingOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
+}
+
+// SetTarget : Allow user to set Target
+func (_options *CreateEndpointGatewayResourceBindingOptions) SetTarget(target EndpointGatewayResourceBindingTargetPrototypeIntf) *CreateEndpointGatewayResourceBindingOptions {
+	_options.Target = target
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateEndpointGatewayResourceBindingOptions) SetName(name string) *CreateEndpointGatewayResourceBindingOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateEndpointGatewayResourceBindingOptions) SetHeaders(param map[string]string) *CreateEndpointGatewayResourceBindingOptions {
 	options.Headers = param
 	return options
 }
@@ -45830,10 +46841,11 @@ type CreateInstanceNetworkInterfaceOptions struct {
 	Name *string `json:"name,omitempty"`
 
 	// The primary IP address to bind to the instance network interface. This can be
-	// specified using an existing reserved IP, or a prototype object for a new reserved IP.
+	// specified using an existing reserved IP, or a prototype object for a new reserved
+	// IP.
 	//
-	// If an existing reserved IP or a prototype object with an address is specified, it must
-	// be available on the instance network interface's subnet. Otherwise, an
+	// If an existing reserved IP or a prototype object with an address is specified, it
+	// must be available on the instance network interface's subnet. Otherwise, an
 	// available address on the subnet will be automatically selected and reserved.
 	PrimaryIP NetworkInterfaceIPPrototypeIntf `json:"primary_ip,omitempty"`
 
@@ -49689,7 +50701,7 @@ type DedicatedHostDisk struct {
 	InterfaceType *string `json:"interface_type" validate:"required"`
 
 	// The lifecycle state of this dedicated host disk.
-	LifecycleState *string `json:"lifecycle_state,omitempty"`
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
 
 	// The name for this dedicated host disk. The name is unique across all disks on the dedicated host.
 	Name *string `json:"name" validate:"required"`
@@ -52089,6 +53101,44 @@ func (options *DeleteEndpointGatewayOptions) SetHeaders(param map[string]string)
 	return options
 }
 
+// DeleteEndpointGatewayResourceBindingOptions : The DeleteEndpointGatewayResourceBinding options.
+type DeleteEndpointGatewayResourceBindingOptions struct {
+	// The endpoint gateway identifier.
+	EndpointGatewayID *string `json:"endpoint_gateway_id" validate:"required,ne="`
+
+	// The resource binding identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteEndpointGatewayResourceBindingOptions : Instantiate DeleteEndpointGatewayResourceBindingOptions
+func (*VpcV1) NewDeleteEndpointGatewayResourceBindingOptions(endpointGatewayID string, id string) *DeleteEndpointGatewayResourceBindingOptions {
+	return &DeleteEndpointGatewayResourceBindingOptions{
+		EndpointGatewayID: core.StringPtr(endpointGatewayID),
+		ID:                core.StringPtr(id),
+	}
+}
+
+// SetEndpointGatewayID : Allow user to set EndpointGatewayID
+func (_options *DeleteEndpointGatewayResourceBindingOptions) SetEndpointGatewayID(endpointGatewayID string) *DeleteEndpointGatewayResourceBindingOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteEndpointGatewayResourceBindingOptions) SetID(id string) *DeleteEndpointGatewayResourceBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteEndpointGatewayResourceBindingOptions) SetHeaders(param map[string]string) *DeleteEndpointGatewayResourceBindingOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteFloatingIPOptions : The DeleteFloatingIP options.
 type DeleteFloatingIPOptions struct {
 	// The floating IP identifier.
@@ -53764,6 +54814,9 @@ type DeleteVirtualNetworkInterfacesOptions struct {
 	// The virtual network interface identifier.
 	ID *string `json:"id" validate:"required,ne="`
 
+	// If present, the request will fail if the specified ETag value does not match the resource's current ETag value.
+	IfMatch *string `json:"If-Match,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -53778,6 +54831,12 @@ func (*VpcV1) NewDeleteVirtualNetworkInterfacesOptions(id string) *DeleteVirtual
 // SetID : Allow user to set ID
 func (_options *DeleteVirtualNetworkInterfacesOptions) SetID(id string) *DeleteVirtualNetworkInterfacesOptions {
 	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *DeleteVirtualNetworkInterfacesOptions) SetIfMatch(ifMatch string) *DeleteVirtualNetworkInterfacesOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
 	return _options
 }
 
@@ -54078,6 +55137,9 @@ type DeleteVPNGatewayConnectionOptions struct {
 	// The VPN gateway connection identifier.
 	ID *string `json:"id" validate:"required,ne="`
 
+	// If present, the request will fail if the specified ETag value does not match the resource's current ETag value.
+	IfMatch *string `json:"If-Match,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -54099,6 +55161,12 @@ func (_options *DeleteVPNGatewayConnectionOptions) SetVPNGatewayID(vpnGatewayID 
 // SetID : Allow user to set ID
 func (_options *DeleteVPNGatewayConnectionOptions) SetID(id string) *DeleteVPNGatewayConnectionOptions {
 	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *DeleteVPNGatewayConnectionOptions) SetIfMatch(ifMatch string) *DeleteVPNGatewayConnectionOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
 	return _options
 }
 
@@ -54458,6 +55526,9 @@ type EndpointGateway struct {
 	// has a DNS resolution binding to a VPC with `dns.enable_hub` set to `true`.
 	AllowDnsResolutionBinding *bool `json:"allow_dns_resolution_binding" validate:"required"`
 
+	// Indicates whether resource binding is allowed for this endpoint gateway.
+	AllowResourceBinding *bool `json:"allow_resource_binding" validate:"required"`
+
 	// The date and time that the endpoint gateway was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
@@ -54553,6 +55624,11 @@ func UnmarshalEndpointGateway(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalPrimitive(m, "allow_dns_resolution_binding", &obj.AllowDnsResolutionBinding)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "allow_dns_resolution_binding-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allow_resource_binding", &obj.AllowResourceBinding)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_resource_binding-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
@@ -54775,16 +55851,27 @@ type EndpointGatewayPatch struct {
 	// Indicates whether to allow DNS resolution for this endpoint gateway when the VPC this endpoint gateway resides in
 	// has a DNS resolution binding to a VPC with `dns.enable_hub` set to `true`.
 	//
-	// If `true`, then there must not be another endpoint gateway with
+	// If `true`, and `allow_resource_binding` is `false`, then there must not be another endpoint gateway with
 	// `allow_dns_resolution_binding` set to `true` in the [DNS sharing](/docs/vpc?topic=vpc-vpe-dns-sharing) connected
 	// topology that:
 	// - Has the same `target` as this endpoint gateway
 	// - Has `service_endpoints` that overlap with the `service_endpoints` for this endpoint
 	//   gateway.
 	//
+	// If `true`, and `allow_resource_binding` is `true`, then:
+	// - The VPC in the topology with `dns.enable_hub` set to `true` must have an endpoint
+	//   gateway with the same `target` as this endpoint gateway.
+	// - No other VPC in the topology can have an endpoint gateway with a resource binding
+	//   using the same `service_endpoint` as a resource binding for this endpoint gateway.
+	//
 	// Must be `true` if the VPC this endpoint gateway resides in has `dns.enable_hub` set to
 	// `true`.
 	AllowDnsResolutionBinding *bool `json:"allow_dns_resolution_binding,omitempty"`
+
+	// Indicates whether resource binding is allowed for this endpoint gateway when the VPC this endpoint gateway resides
+	// in has a DNS resolution binding to a VPC with `dns.enable_hub` set to `true`. Resource binding must be enabled for
+	// the `target` service.
+	AllowResourceBinding *bool `json:"allow_resource_binding,omitempty"`
 
 	// The name for this endpoint gateway. The name must not be used by another endpoint gateway in the VPC.
 	Name *string `json:"name,omitempty"`
@@ -54796,6 +55883,11 @@ func UnmarshalEndpointGatewayPatch(m map[string]json.RawMessage, result interfac
 	err = core.UnmarshalPrimitive(m, "allow_dns_resolution_binding", &obj.AllowDnsResolutionBinding)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "allow_dns_resolution_binding-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allow_resource_binding", &obj.AllowResourceBinding)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_resource_binding-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
@@ -54812,6 +55904,9 @@ func (endpointGatewayPatch *EndpointGatewayPatch) AsPatch() (_patch map[string]i
 	_patch = map[string]interface{}{}
 	if !core.IsNil(endpointGatewayPatch.AllowDnsResolutionBinding) {
 		_patch["allow_dns_resolution_binding"] = endpointGatewayPatch.AllowDnsResolutionBinding
+	}
+	if !core.IsNil(endpointGatewayPatch.AllowResourceBinding) {
+		_patch["allow_resource_binding"] = endpointGatewayPatch.AllowResourceBinding
 	}
 	if !core.IsNil(endpointGatewayPatch.Name) {
 		_patch["name"] = endpointGatewayPatch.Name
@@ -54990,6 +56085,329 @@ func UnmarshalEndpointGatewayReservedIP(m map[string]json.RawMessage, result int
 	return
 }
 
+// EndpointGatewayResourceBinding : EndpointGatewayResourceBinding struct
+type EndpointGatewayResourceBinding struct {
+	// The date and time that the resource binding was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The URL for this endpoint gateway resource binding.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this endpoint gateway resource binding.
+	ID *string `json:"id" validate:"required"`
+
+	// The reasons for the current `lifecycle_state` (if any).
+	LifecycleReasons []EndpointGatewayResourceBindingLifecycleReason `json:"lifecycle_reasons" validate:"required"`
+
+	// The lifecycle state of the resource binding.
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
+
+	// The name for this resource binding. The name is unique across all resource bindings for the endpoint gateway.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
+	// The fully qualified domain name of the service endpoint for the resource targeted by this resource binding.
+	ServiceEndpoint *string `json:"service_endpoint" validate:"required"`
+
+	// The target for this endpoint gateway resource binding.
+	Target EndpointGatewayResourceBindingTargetIntf `json:"target" validate:"required"`
+
+	// The type of resource binding:
+	// - `weak`: The binding is not dependent on the existence of the target resource.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the EndpointGatewayResourceBinding.LifecycleState property.
+// The lifecycle state of the resource binding.
+const (
+	EndpointGatewayResourceBindingLifecycleStateDeletingConst  = "deleting"
+	EndpointGatewayResourceBindingLifecycleStateFailedConst    = "failed"
+	EndpointGatewayResourceBindingLifecycleStatePendingConst   = "pending"
+	EndpointGatewayResourceBindingLifecycleStateStableConst    = "stable"
+	EndpointGatewayResourceBindingLifecycleStateSuspendedConst = "suspended"
+	EndpointGatewayResourceBindingLifecycleStateUpdatingConst  = "updating"
+	EndpointGatewayResourceBindingLifecycleStateWaitingConst   = "waiting"
+)
+
+// Constants associated with the EndpointGatewayResourceBinding.ResourceType property.
+// The resource type.
+const (
+	EndpointGatewayResourceBindingResourceTypeEndpointGatewayResourceBindingConst = "endpoint_gateway_resource_binding"
+)
+
+// Constants associated with the EndpointGatewayResourceBinding.Type property.
+// The type of resource binding:
+// - `weak`: The binding is not dependent on the existence of the target resource.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	EndpointGatewayResourceBindingTypeWeakConst = "weak"
+)
+
+// UnmarshalEndpointGatewayResourceBinding unmarshals an instance of EndpointGatewayResourceBinding from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBinding(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBinding)
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "lifecycle_reasons", &obj.LifecycleReasons, UnmarshalEndpointGatewayResourceBindingLifecycleReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lifecycle_state", &obj.LifecycleState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_endpoint", &obj.ServiceEndpoint)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_endpoint-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalEndpointGatewayResourceBindingTarget)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EndpointGatewayResourceBindingCollection : EndpointGatewayResourceBindingCollection struct
+type EndpointGatewayResourceBindingCollection struct {
+	// A link to the first page of resources.
+	First *PageLink `json:"first" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *PageLink `json:"next,omitempty"`
+
+	// A page of resource bindings for the endpoint gateway.
+	ResourceBindings []EndpointGatewayResourceBinding `json:"resource_bindings" validate:"required"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalEndpointGatewayResourceBindingCollection unmarshals an instance of EndpointGatewayResourceBindingCollection from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingCollection)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_bindings", &obj.ResourceBindings, UnmarshalEndpointGatewayResourceBinding)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_bindings-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *EndpointGatewayResourceBindingCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
+// EndpointGatewayResourceBindingLifecycleReason : EndpointGatewayResourceBindingLifecycleReason struct
+type EndpointGatewayResourceBindingLifecycleReason struct {
+	// A reason code for this lifecycle state:
+	// - `internal_error`: internal error (contact IBM support)
+	// - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
+	//   support)
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Code *string `json:"code" validate:"required"`
+
+	// An explanation of the reason for this lifecycle state.
+	Message *string `json:"message" validate:"required"`
+
+	// A link to documentation about the reason for this lifecycle state.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the EndpointGatewayResourceBindingLifecycleReason.Code property.
+// A reason code for this lifecycle state:
+//   - `internal_error`: internal error (contact IBM support)
+//   - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
+//     support)
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	EndpointGatewayResourceBindingLifecycleReasonCodeInternalErrorConst               = "internal_error"
+	EndpointGatewayResourceBindingLifecycleReasonCodeResourceSuspendedByProviderConst = "resource_suspended_by_provider"
+)
+
+// UnmarshalEndpointGatewayResourceBindingLifecycleReason unmarshals an instance of EndpointGatewayResourceBindingLifecycleReason from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingLifecycleReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingLifecycleReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EndpointGatewayResourceBindingPatch : EndpointGatewayResourceBindingPatch struct
+type EndpointGatewayResourceBindingPatch struct {
+	// The name for this resource binding. The name must not be used by another resource binding for the endpoint gateway.
+	Name *string `json:"name,omitempty"`
+}
+
+// UnmarshalEndpointGatewayResourceBindingPatch unmarshals an instance of EndpointGatewayResourceBindingPatch from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingPatch)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the EndpointGatewayResourceBindingPatch
+func (endpointGatewayResourceBindingPatch *EndpointGatewayResourceBindingPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(endpointGatewayResourceBindingPatch.Name) {
+		_patch["name"] = endpointGatewayResourceBindingPatch.Name
+	}
+
+	return
+}
+
+// EndpointGatewayResourceBindingTarget : The target for this endpoint gateway resource binding.
+// Models which "extend" this model:
+// - EndpointGatewayResourceBindingTargetCRN
+type EndpointGatewayResourceBindingTarget struct {
+	CRN *string `json:"crn,omitempty"`
+}
+
+func (*EndpointGatewayResourceBindingTarget) isaEndpointGatewayResourceBindingTarget() bool {
+	return true
+}
+
+type EndpointGatewayResourceBindingTargetIntf interface {
+	isaEndpointGatewayResourceBindingTarget() bool
+}
+
+// UnmarshalEndpointGatewayResourceBindingTarget unmarshals an instance of EndpointGatewayResourceBindingTarget from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingTarget(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingTarget)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EndpointGatewayResourceBindingTargetPrototype : The target to use for this resource binding.
+// Models which "extend" this model:
+// - EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN
+type EndpointGatewayResourceBindingTargetPrototype struct {
+	CRN *string `json:"crn,omitempty"`
+}
+
+func (*EndpointGatewayResourceBindingTargetPrototype) isaEndpointGatewayResourceBindingTargetPrototype() bool {
+	return true
+}
+
+type EndpointGatewayResourceBindingTargetPrototypeIntf interface {
+	isaEndpointGatewayResourceBindingTargetPrototype() bool
+}
+
+// UnmarshalEndpointGatewayResourceBindingTargetPrototype unmarshals an instance of EndpointGatewayResourceBindingTargetPrototype from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingTargetPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingTargetPrototype)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // EndpointGatewayTarget : The target for this endpoint gateway.
 // Models which "extend" this model:
 // - EndpointGatewayTargetPrivatePathServiceGatewayReference
@@ -55090,6 +56508,12 @@ func UnmarshalEndpointGatewayTarget(m map[string]json.RawMessage, result interfa
 //   - Has the same `target` as this endpoint gateway
 //   - Has `service_endpoints` that overlap with the `service_endpoints` for this endpoint
 //     gateway.
+//
+// If `allow_dns_resolution_binding` is `true`, and `allow_resource_binding` is `true`, then:
+//   - The VPC in the topology with `dns.enable_hub` set to `true` must have an endpoint
+//     gateway with the same `target` as this endpoint gateway.
+//   - No other VPC in the topology can have an endpoint gateway with a resource binding
+//     using the same `service_endpoint` as a resource binding for this endpoint gateway.
 //
 // Models which "extend" this model:
 // - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype
@@ -57085,6 +58509,44 @@ func (_options *GetEndpointGatewayOptions) SetID(id string) *GetEndpointGatewayO
 
 // SetHeaders : Allow user to set Headers
 func (options *GetEndpointGatewayOptions) SetHeaders(param map[string]string) *GetEndpointGatewayOptions {
+	options.Headers = param
+	return options
+}
+
+// GetEndpointGatewayResourceBindingOptions : The GetEndpointGatewayResourceBinding options.
+type GetEndpointGatewayResourceBindingOptions struct {
+	// The endpoint gateway identifier.
+	EndpointGatewayID *string `json:"endpoint_gateway_id" validate:"required,ne="`
+
+	// The resource binding identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetEndpointGatewayResourceBindingOptions : Instantiate GetEndpointGatewayResourceBindingOptions
+func (*VpcV1) NewGetEndpointGatewayResourceBindingOptions(endpointGatewayID string, id string) *GetEndpointGatewayResourceBindingOptions {
+	return &GetEndpointGatewayResourceBindingOptions{
+		EndpointGatewayID: core.StringPtr(endpointGatewayID),
+		ID:                core.StringPtr(id),
+	}
+}
+
+// SetEndpointGatewayID : Allow user to set EndpointGatewayID
+func (_options *GetEndpointGatewayResourceBindingOptions) SetEndpointGatewayID(endpointGatewayID string) *GetEndpointGatewayResourceBindingOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetEndpointGatewayResourceBindingOptions) SetID(id string) *GetEndpointGatewayResourceBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetEndpointGatewayResourceBindingOptions) SetHeaders(param map[string]string) *GetEndpointGatewayResourceBindingOptions {
 	options.Headers = param
 	return options
 }
@@ -59663,6 +61125,44 @@ func (_options *GetVPNGatewayOptions) SetID(id string) *GetVPNGatewayOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetVPNGatewayOptions) SetHeaders(param map[string]string) *GetVPNGatewayOptions {
+	options.Headers = param
+	return options
+}
+
+// GetVPNGatewayServiceConnectionOptions : The GetVPNGatewayServiceConnection options.
+type GetVPNGatewayServiceConnectionOptions struct {
+	// The VPN gateway identifier.
+	VPNGatewayID *string `json:"vpn_gateway_id" validate:"required,ne="`
+
+	// The VPN gateway service connection identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetVPNGatewayServiceConnectionOptions : Instantiate GetVPNGatewayServiceConnectionOptions
+func (*VpcV1) NewGetVPNGatewayServiceConnectionOptions(vpnGatewayID string, id string) *GetVPNGatewayServiceConnectionOptions {
+	return &GetVPNGatewayServiceConnectionOptions{
+		VPNGatewayID: core.StringPtr(vpnGatewayID),
+		ID:           core.StringPtr(id),
+	}
+}
+
+// SetVPNGatewayID : Allow user to set VPNGatewayID
+func (_options *GetVPNGatewayServiceConnectionOptions) SetVPNGatewayID(vpnGatewayID string) *GetVPNGatewayServiceConnectionOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetVPNGatewayServiceConnectionOptions) SetID(id string) *GetVPNGatewayServiceConnectionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetVPNGatewayServiceConnectionOptions) SetHeaders(param map[string]string) *GetVPNGatewayServiceConnectionOptions {
 	options.Headers = param
 	return options
 }
@@ -62421,6 +63921,9 @@ type Instance struct {
 	// The image the virtual server instance was provisioned from.
 	Image *ImageReference `json:"image,omitempty"`
 
+	// The instance group membership for this virtual server instance.
+	InstanceGroupMembership *InstanceGroupMembershipReferenceInstanceContext `json:"instance_group_membership,omitempty"`
+
 	// The reasons for the current `lifecycle_state` (if any).
 	LifecycleReasons []InstanceLifecycleReason `json:"lifecycle_reasons" validate:"required"`
 
@@ -62512,6 +64015,9 @@ type Instance struct {
 	// The volume attachments for this virtual server instance, including the boot volume attachment.
 	VolumeAttachments []VolumeAttachmentReferenceInstanceContext `json:"volume_attachments" validate:"required"`
 
+	// The volume bandwidth QoS mode for this virtual server instance.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode" validate:"required"`
+
 	// The VPC this virtual server instance resides in.
 	VPC *VPCReference `json:"vpc" validate:"required"`
 
@@ -62574,6 +64080,13 @@ const (
 	InstanceStatusStartingConst   = "starting"
 	InstanceStatusStoppedConst    = "stopped"
 	InstanceStatusStoppingConst   = "stopping"
+)
+
+// Constants associated with the Instance.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode for this virtual server instance.
+const (
+	InstanceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // UnmarshalInstance unmarshals an instance of Instance from the specified map of raw messages.
@@ -62667,6 +64180,11 @@ func UnmarshalInstance(m map[string]json.RawMessage, result interface{}) (err er
 	err = core.UnmarshalModel(m, "image", &obj.Image, UnmarshalImageReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "image-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "instance_group_membership", &obj.InstanceGroupMembership, UnmarshalInstanceGroupMembershipReferenceInstanceContext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_group_membership-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "lifecycle_reasons", &obj.LifecycleReasons, UnmarshalInstanceLifecycleReason)
@@ -62782,6 +64300,11 @@ func UnmarshalInstance(m map[string]json.RawMessage, result interface{}) (err er
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentReferenceInstanceContext)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCReference)
@@ -64812,16 +66335,16 @@ type InstanceGroupManagerActionPrototype struct {
 	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The date and time the scheduled action will run.
-	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
+	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
+	// period.
+	CronSpec *string `json:"cron_spec,omitempty"`
 
 	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group,omitempty"`
 
 	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager,omitempty"`
 
-	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
-	// period.
-	CronSpec *string `json:"cron_spec,omitempty"`
+	// The date and time the scheduled action will run.
+	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
 }
 
 func (*InstanceGroupManagerActionPrototype) isaInstanceGroupManagerActionPrototype() bool {
@@ -64840,9 +66363,9 @@ func UnmarshalInstanceGroupManagerActionPrototype(m map[string]json.RawMessage, 
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
+	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalInstanceGroupManagerScheduledActionGroupPrototype)
@@ -64855,9 +66378,9 @@ func UnmarshalInstanceGroupManagerActionPrototype(m map[string]json.RawMessage, 
 		err = core.SDKErrorf(err, "", "manager-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
+	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -66002,6 +67525,57 @@ func (instanceGroupMembershipPatch *InstanceGroupMembershipPatch) AsPatch() (_pa
 	return
 }
 
+// InstanceGroupMembershipReferenceInstanceContext : InstanceGroupMembershipReferenceInstanceContext struct
+type InstanceGroupMembershipReferenceInstanceContext struct {
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this instance group membership.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this instance group membership.
+	ID *string `json:"id" validate:"required"`
+
+	// The instance group associated with this membership.
+	InstanceGroup *InstanceGroupReference `json:"instance_group" validate:"required"`
+
+	// The name for this instance group membership. The name is unique across all memberships for the instance group.
+	Name *string `json:"name" validate:"required"`
+}
+
+// UnmarshalInstanceGroupMembershipReferenceInstanceContext unmarshals an instance of InstanceGroupMembershipReferenceInstanceContext from the specified map of raw messages.
+func UnmarshalInstanceGroupMembershipReferenceInstanceContext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceGroupMembershipReferenceInstanceContext)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "instance_group", &obj.InstanceGroup, UnmarshalInstanceGroupReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_group-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // InstanceGroupPatch : To add or update load balancer specification for an instance group the `membership_count` must first be set to 0.
 type InstanceGroupPatch struct {
 	// The port to use for new load balancer pool members created by this instance group.
@@ -67063,6 +68637,7 @@ type InstancePatch struct {
 	// - Have the same `vcpu.architecture`.
 	// - Support the number of network attachments or network interfaces the instance
 	//   currently has.
+	// - Have the `volume_bandwidth_qos_mode` listed in its `volume_bandwidth_qos_modes`.
 	Profile InstancePatchProfileIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPatch `json:"reservation_affinity,omitempty"`
@@ -67071,6 +68646,13 @@ type InstancePatch struct {
 	// this value will result in a corresponding decrease to
 	// `total_network_bandwidth`.
 	TotalVolumeBandwidth *int64 `json:"total_volume_bandwidth,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// For this property to be changed, the virtual server instance `status` must be
+	// `stopping` or `stopped`.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 }
 
 // Constants associated with the InstancePatch.ConfidentialComputeMode property.
@@ -67082,6 +68664,17 @@ const (
 	InstancePatchConfidentialComputeModeDisabledConst = "disabled"
 	InstancePatchConfidentialComputeModeSgxConst      = "sgx"
 	InstancePatchConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePatch.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// For this property to be changed, the virtual server instance `status` must be
+// `stopping` or `stopped`.
+const (
+	InstancePatchVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePatchVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // UnmarshalInstancePatch unmarshals an instance of InstancePatch from the specified map of raw messages.
@@ -67132,6 +68725,11 @@ func UnmarshalInstancePatch(m map[string]json.RawMessage, result interface{}) (e
 		err = core.SDKErrorf(err, "", "total_volume_bandwidth-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -67166,6 +68764,9 @@ func (instancePatch *InstancePatch) AsPatch() (_patch map[string]interface{}, er
 	if !core.IsNil(instancePatch.TotalVolumeBandwidth) {
 		_patch["total_volume_bandwidth"] = instancePatch.TotalVolumeBandwidth
 	}
+	if !core.IsNil(instancePatch.VolumeBandwidthQosMode) {
+		_patch["volume_bandwidth_qos_mode"] = instancePatch.VolumeBandwidthQosMode
+	}
 
 	return
 }
@@ -67181,6 +68782,7 @@ func (instancePatch *InstancePatch) AsPatch() (_patch map[string]interface{}, er
 //   - Have the same `vcpu.architecture`.
 //   - Support the number of network attachments or network interfaces the instance
 //     currently has.
+//   - Have the `volume_bandwidth_qos_mode` listed in its `volume_bandwidth_qos_modes`.
 //
 // Models which "extend" this model:
 // - InstancePatchProfileInstanceProfileIdentityByName
@@ -67493,6 +69095,8 @@ type InstanceProfile struct {
 	VcpuCount InstanceProfileVcpuIntf `json:"vcpu_count" validate:"required"`
 
 	VcpuManufacturer InstanceProfileVcpuManufacturerIntf `json:"vcpu_manufacturer" validate:"required"`
+
+	VolumeBandwidthQosModes InstanceProfileVolumeBandwidthQoSModesIntf `json:"volume_bandwidth_qos_modes" validate:"required"`
 }
 
 // Constants associated with the InstanceProfile.ResourceType property.
@@ -67649,6 +69253,11 @@ func UnmarshalInstanceProfile(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalModel(m, "vcpu_manufacturer", &obj.VcpuManufacturer, UnmarshalInstanceProfileVcpuManufacturer)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vcpu_manufacturer-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "volume_bandwidth_qos_modes", &obj.VolumeBandwidthQosModes, UnmarshalInstanceProfileVolumeBandwidthQoSModes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_modes-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -67816,7 +69425,7 @@ func UnmarshalInstanceProfileClusterNetworkAttachmentCount(m map[string]json.Raw
 
 // InstanceProfileCollection : InstanceProfileCollection struct
 type InstanceProfileCollection struct {
-	// A page of virtual server instance profiles.
+	// The virtual server instance profiles.
 	Profiles []InstanceProfile `json:"profiles" validate:"required"`
 }
 
@@ -69131,6 +70740,76 @@ func UnmarshalInstanceProfileVolumeBandwidth(m map[string]json.RawMessage, resul
 	return
 }
 
+// InstanceProfileVolumeBandwidthQoSModes : InstanceProfileVolumeBandwidthQoSModes struct
+// Models which "extend" this model:
+// - InstanceProfileVolumeBandwidthQoSModesEnum
+// - InstanceProfileVolumeBandwidthQoSModesDependent
+type InstanceProfileVolumeBandwidthQoSModes struct {
+	// The default volume bandwidth QoS mode for this profile.
+	Default *string `json:"default,omitempty"`
+
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The permitted volume bandwidth QoS modes for an instance using this profile.
+	Values []string `json:"values,omitempty"`
+}
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModes.Default property.
+// The default volume bandwidth QoS mode for this profile.
+const (
+	InstanceProfileVolumeBandwidthQoSModesDefaultPooledConst   = "pooled"
+	InstanceProfileVolumeBandwidthQoSModesDefaultWeightedConst = "weighted"
+)
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModes.Type property.
+// The type for this profile field.
+const (
+	InstanceProfileVolumeBandwidthQoSModesTypeEnumConst = "enum"
+)
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModes.Values property.
+// A volume bandwidth QoS mode:
+// - `pooled`: All volumes attached to an instance will pool and share bandwidth.
+// - `weighted`: Each volume attached to an instance will have its own bandwidth, weighted according to its IOPS.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	InstanceProfileVolumeBandwidthQoSModesValuesPooledConst   = "pooled"
+	InstanceProfileVolumeBandwidthQoSModesValuesWeightedConst = "weighted"
+)
+
+func (*InstanceProfileVolumeBandwidthQoSModes) isaInstanceProfileVolumeBandwidthQoSModes() bool {
+	return true
+}
+
+type InstanceProfileVolumeBandwidthQoSModesIntf interface {
+	isaInstanceProfileVolumeBandwidthQoSModes() bool
+}
+
+// UnmarshalInstanceProfileVolumeBandwidthQoSModes unmarshals an instance of InstanceProfileVolumeBandwidthQoSModes from the specified map of raw messages.
+func UnmarshalInstanceProfileVolumeBandwidthQoSModes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceProfileVolumeBandwidthQoSModes)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // InstancePrototype : InstancePrototype struct
 // Models which "extend" this model:
 // - InstancePrototypeInstanceByImage
@@ -69196,12 +70875,11 @@ type InstancePrototype struct {
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this
 	// virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change
-	// in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change
+	// in the future without changing the API version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
-	// The reservation affinity settings for this virtual server instance. If specified,
-	// `vcpu.tenancy` must be `dedicated`, and `vcpu.percentage` must be `100`.
+	// The reservation affinity settings for this virtual server instance.
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
 
 	// The resource group to use. If unspecified, the account's [default resource
@@ -69219,6 +70897,12 @@ type InstancePrototype struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -69268,6 +70952,16 @@ const (
 	InstancePrototypeConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototype.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstancePrototype) isaInstancePrototype() bool {
@@ -69354,6 +71048,11 @@ func UnmarshalInstancePrototype(m map[string]json.RawMessage, result interface{}
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -69579,8 +71278,7 @@ func (instanceReservationAffinityPatch *InstanceReservationAffinityPatch) asPatc
 	return
 }
 
-// InstanceReservationAffinityPrototype : The reservation affinity settings for this virtual server instance. If specified,
-// `vcpu.tenancy` must be `dedicated`, and `vcpu.percentage` must be `100`.
+// InstanceReservationAffinityPrototype : The reservation affinity settings for this virtual server instance.
 type InstanceReservationAffinityPrototype struct {
 	// The reservation affinity policy to use for this virtual server instance:
 	// - `disabled`: Reservations will not be used
@@ -69768,12 +71466,11 @@ type InstanceTemplate struct {
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this
 	// virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change
-	// in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change
+	// in the future without changing the API version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
-	// The reservation affinity settings for this virtual server instance. If specified,
-	// `vcpu.tenancy` must be `dedicated`, and `vcpu.percentage` must be `100`.
+	// The reservation affinity settings for this virtual server instance.
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
 
 	// The resource group for this instance template.
@@ -69790,6 +71487,12 @@ type InstanceTemplate struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -69838,6 +71541,16 @@ const (
 	InstanceTemplateConfidentialComputeModeTdxConst      = "tdx"
 )
 
+// Constants associated with the InstanceTemplate.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateVolumeBandwidthQosModeWeightedConst = "weighted"
+)
+
 func (*InstanceTemplate) isaInstanceTemplate() bool {
 	return true
 }
@@ -69848,149 +71561,177 @@ type InstanceTemplateIntf interface {
 
 // UnmarshalInstanceTemplate unmarshals an instance of InstanceTemplate from the specified map of raw messages.
 func UnmarshalInstanceTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceTemplate)
-	err = core.UnmarshalModel(m, "availability_policy", &obj.AvailabilityPolicy, UnmarshalInstanceAvailabilityPolicyPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "availability_policy-error", common.GetComponentInfo())
+	// Check for source_snapshot presence to determine object type
+	var isSourceSnapshot bool
+	if bootVolumeRaw, exists := m["boot_volume_attachment"]; exists && len(bootVolumeRaw) > 0 && string(bootVolumeRaw) != "null" {
+		var bootVolumeMap map[string]json.RawMessage
+		if err = json.Unmarshal(bootVolumeRaw, &bootVolumeMap); err == nil {
+			if volumeRaw, volumeExists := bootVolumeMap["volume"]; volumeExists && len(volumeRaw) > 0 && string(volumeRaw) != "null" {
+				var volumeMap map[string]json.RawMessage
+				if err = json.Unmarshal(volumeRaw, &volumeMap); err == nil {
+					if _, snapshotExists := volumeMap["source_snapshot"]; snapshotExists {
+						isSourceSnapshot = true
+					}
+				}
+			}
+		}
+	}
+	if isSourceSnapshot {
+		err = core.UnmarshalModel(m, "", result, UnmarshalInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext-error", common.GetComponentInfo())
+		}
+		return
+	} else {
+		obj := new(InstanceTemplate)
+		err = core.UnmarshalModel(m, "availability_policy", &obj.AvailabilityPolicy, UnmarshalInstanceAvailabilityPolicyPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "availability_policy-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "cluster_network_attachments", &obj.ClusterNetworkAttachments, UnmarshalInstanceClusterNetworkAttachmentPrototypeInstanceContext)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "cluster_network_attachments-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "confidential_compute_mode", &obj.ConfidentialComputeMode)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "confidential_compute_mode-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "default_trusted_profile", &obj.DefaultTrustedProfile, UnmarshalInstanceDefaultTrustedProfilePrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "default_trusted_profile-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "enable_secure_boot", &obj.EnableSecureBoot)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "enable_secure_boot-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "keys", &obj.Keys, UnmarshalKeyIdentity)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "keys-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "metadata_service", &obj.MetadataService, UnmarshalInstanceMetadataServicePrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "metadata_service-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "placement_target", &obj.PlacementTarget, UnmarshalInstancePlacementTargetPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "placement_target-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalInstanceProfileIdentity)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalInstanceReservationAffinityPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "total_volume_bandwidth", &obj.TotalVolumeBandwidth)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "total_volume_bandwidth-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "user_data", &obj.UserData)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "user_data-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "boot_volume_attachment", &obj.BootVolumeAttachment, UnmarshalVolumeAttachmentPrototypeInstanceByImageContext)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "boot_volume_attachment-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "image", &obj.Image, UnmarshalImageIdentity)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "image-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "zone", &obj.Zone, UnmarshalZoneIdentity)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "zone-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "network_attachments", &obj.NetworkAttachments, UnmarshalInstanceNetworkAttachmentPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "network_attachments-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "primary_network_attachment", &obj.PrimaryNetworkAttachment, UnmarshalInstanceNetworkAttachmentPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "primary_network_attachment-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "network_interfaces", &obj.NetworkInterfaces, UnmarshalNetworkInterfacePrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "network_interfaces-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "primary_network_interface", &obj.PrimaryNetworkInterface, UnmarshalNetworkInterfacePrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "primary_network_interface-error", common.GetComponentInfo())
+			return
+		}
+		err = core.UnmarshalModel(m, "catalog_offering", &obj.CatalogOffering, UnmarshalInstanceCatalogOfferingPrototype)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "catalog_offering-error", common.GetComponentInfo())
+			return
+		}
+		reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 		return
 	}
-	err = core.UnmarshalModel(m, "cluster_network_attachments", &obj.ClusterNetworkAttachments, UnmarshalInstanceClusterNetworkAttachmentPrototypeInstanceContext)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "cluster_network_attachments-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "confidential_compute_mode", &obj.ConfidentialComputeMode)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "confidential_compute_mode-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "default_trusted_profile", &obj.DefaultTrustedProfile, UnmarshalInstanceDefaultTrustedProfilePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "default_trusted_profile-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enable_secure_boot", &obj.EnableSecureBoot)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "enable_secure_boot-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "keys", &obj.Keys, UnmarshalKeyIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "keys-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "metadata_service", &obj.MetadataService, UnmarshalInstanceMetadataServicePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "metadata_service-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "placement_target", &obj.PlacementTarget, UnmarshalInstancePlacementTargetPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "placement_target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalInstanceProfileIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalInstanceReservationAffinityPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "total_volume_bandwidth", &obj.TotalVolumeBandwidth)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "total_volume_bandwidth-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "user_data", &obj.UserData)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "user_data-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "boot_volume_attachment", &obj.BootVolumeAttachment, UnmarshalVolumeAttachmentPrototypeInstanceByImageContext)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "boot_volume_attachment-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "image", &obj.Image, UnmarshalImageIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "image-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "zone", &obj.Zone, UnmarshalZoneIdentity)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "zone-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "network_attachments", &obj.NetworkAttachments, UnmarshalInstanceNetworkAttachmentPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "network_attachments-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "primary_network_attachment", &obj.PrimaryNetworkAttachment, UnmarshalInstanceNetworkAttachmentPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "primary_network_attachment-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "network_interfaces", &obj.NetworkInterfaces, UnmarshalNetworkInterfacePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "network_interfaces-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "primary_network_interface", &obj.PrimaryNetworkInterface, UnmarshalNetworkInterfacePrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "primary_network_interface-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "catalog_offering", &obj.CatalogOffering, UnmarshalInstanceCatalogOfferingPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "catalog_offering-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
 }
 
 // InstanceTemplateCollection : InstanceTemplateCollection struct
@@ -70197,12 +71938,11 @@ type InstanceTemplatePrototype struct {
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this
 	// virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change
-	// in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change
+	// in the future without changing the API version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
-	// The reservation affinity settings for this virtual server instance. If specified,
-	// `vcpu.tenancy` must be `dedicated`, and `vcpu.percentage` must be `100`.
+	// The reservation affinity settings for this virtual server instance.
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
 
 	// The resource group to use. If unspecified, the account's [default resource
@@ -70220,6 +71960,12 @@ type InstanceTemplatePrototype struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -70271,6 +72017,16 @@ const (
 	InstanceTemplatePrototypeConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototype.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplatePrototype) isaInstanceTemplatePrototype() bool {
@@ -70357,6 +72113,11 @@ func UnmarshalInstanceTemplatePrototype(m map[string]json.RawMessage, result int
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -70475,7 +72236,8 @@ type InstanceVcpu struct {
 	// The number of VCPUs assigned.
 	Count *int64 `json:"count" validate:"required"`
 
-	// The VCPU manufacturer.
+	// The VCPU manufacturer for this instance. It may be `unassigned` when instance `status` is `failed`, `pending`, or
+	// `stopped`.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -70493,14 +72255,16 @@ const (
 )
 
 // Constants associated with the InstanceVcpu.Manufacturer property.
-// The VCPU manufacturer.
+// The VCPU manufacturer for this instance. It may be `unassigned` when instance `status` is `failed`, `pending`, or
+// `stopped`.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
-	InstanceVcpuManufacturerAmdConst   = "amd"
-	InstanceVcpuManufacturerIBMConst   = "ibm"
-	InstanceVcpuManufacturerIntelConst = "intel"
+	InstanceVcpuManufacturerAmdConst        = "amd"
+	InstanceVcpuManufacturerIBMConst        = "ibm"
+	InstanceVcpuManufacturerIntelConst      = "intel"
+	InstanceVcpuManufacturerUnassignedConst = "unassigned"
 )
 
 // UnmarshalInstanceVcpu unmarshals an instance of InstanceVcpu from the specified map of raw messages.
@@ -72088,8 +73852,57 @@ func (options *ListEndpointGatewayIpsOptions) SetHeaders(param map[string]string
 	return options
 }
 
+// ListEndpointGatewayResourceBindingsOptions : The ListEndpointGatewayResourceBindings options.
+type ListEndpointGatewayResourceBindingsOptions struct {
+	// The endpoint gateway identifier.
+	EndpointGatewayID *string `json:"endpoint_gateway_id" validate:"required,ne="`
+
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The number of resources to return on a page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListEndpointGatewayResourceBindingsOptions : Instantiate ListEndpointGatewayResourceBindingsOptions
+func (*VpcV1) NewListEndpointGatewayResourceBindingsOptions(endpointGatewayID string) *ListEndpointGatewayResourceBindingsOptions {
+	return &ListEndpointGatewayResourceBindingsOptions{
+		EndpointGatewayID: core.StringPtr(endpointGatewayID),
+	}
+}
+
+// SetEndpointGatewayID : Allow user to set EndpointGatewayID
+func (_options *ListEndpointGatewayResourceBindingsOptions) SetEndpointGatewayID(endpointGatewayID string) *ListEndpointGatewayResourceBindingsOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListEndpointGatewayResourceBindingsOptions) SetStart(start string) *ListEndpointGatewayResourceBindingsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListEndpointGatewayResourceBindingsOptions) SetLimit(limit int64) *ListEndpointGatewayResourceBindingsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListEndpointGatewayResourceBindingsOptions) SetHeaders(param map[string]string) *ListEndpointGatewayResourceBindingsOptions {
+	options.Headers = param
+	return options
+}
+
 // ListEndpointGatewaysOptions : The ListEndpointGateways options.
 type ListEndpointGatewaysOptions struct {
+	// Filters the collection to endpoint gateways with an `allow_resource_binding` property matching the specified value.
+	AllowResourceBinding *bool `json:"allow_resource_binding,omitempty"`
+
 	// Filters the collection to resources with a `name` property matching the exact specified name.
 	Name *string `json:"name,omitempty"`
 
@@ -72137,6 +73950,12 @@ const (
 // NewListEndpointGatewaysOptions : Instantiate ListEndpointGatewaysOptions
 func (*VpcV1) NewListEndpointGatewaysOptions() *ListEndpointGatewaysOptions {
 	return &ListEndpointGatewaysOptions{}
+}
+
+// SetAllowResourceBinding : Allow user to set AllowResourceBinding
+func (_options *ListEndpointGatewaysOptions) SetAllowResourceBinding(allowResourceBinding bool) *ListEndpointGatewaysOptions {
+	_options.AllowResourceBinding = core.BoolPtr(allowResourceBinding)
+	return _options
 }
 
 // SetName : Allow user to set Name
@@ -73284,6 +75103,14 @@ type ListInstancesOptions struct {
 	// Filters the collection to resources with a `dedicated_host.name` property matching the exact specified name.
 	DedicatedHostName *string `json:"dedicated_host.name,omitempty"`
 
+	// Filters the collection to instances with an `instance_group_membership.instance_group.id` property matching the
+	// specified instance group identifier.
+	InstanceGroupMembershipInstanceGroupID *string `json:"instance_group_membership.instance_group.id,omitempty"`
+
+	// Filters the collection to instances with an `instance_group_membership.instance_group.crn` property matching the
+	// specified instance group CRN.
+	InstanceGroupMembershipInstanceGroupCRN *string `json:"instance_group_membership.instance_group.crn,omitempty"`
+
 	// Filters the collection to resources with a `placement_target.id` property matching the specified placement group
 	// identifier.
 	PlacementGroupID *string `json:"placement_group.id,omitempty"`
@@ -73391,6 +75218,18 @@ func (_options *ListInstancesOptions) SetDedicatedHostCRN(dedicatedHostCRN strin
 // SetDedicatedHostName : Allow user to set DedicatedHostName
 func (_options *ListInstancesOptions) SetDedicatedHostName(dedicatedHostName string) *ListInstancesOptions {
 	_options.DedicatedHostName = core.StringPtr(dedicatedHostName)
+	return _options
+}
+
+// SetInstanceGroupMembershipInstanceGroupID : Allow user to set InstanceGroupMembershipInstanceGroupID
+func (_options *ListInstancesOptions) SetInstanceGroupMembershipInstanceGroupID(instanceGroupMembershipInstanceGroupID string) *ListInstancesOptions {
+	_options.InstanceGroupMembershipInstanceGroupID = core.StringPtr(instanceGroupMembershipInstanceGroupID)
+	return _options
+}
+
+// SetInstanceGroupMembershipInstanceGroupCRN : Allow user to set InstanceGroupMembershipInstanceGroupCRN
+func (_options *ListInstancesOptions) SetInstanceGroupMembershipInstanceGroupCRN(instanceGroupMembershipInstanceGroupCRN string) *ListInstancesOptions {
+	_options.InstanceGroupMembershipInstanceGroupCRN = core.StringPtr(instanceGroupMembershipInstanceGroupCRN)
 	return _options
 }
 
@@ -76232,6 +78071,34 @@ func (options *ListVpcsOptions) SetHeaders(param map[string]string) *ListVpcsOpt
 	return options
 }
 
+// ListVPNGatewayAdvertisedCIDRsOptions : The ListVPNGatewayAdvertisedCIDRs options.
+type ListVPNGatewayAdvertisedCIDRsOptions struct {
+	// The VPN gateway identifier.
+	VPNGatewayID *string `json:"vpn_gateway_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListVPNGatewayAdvertisedCIDRsOptions : Instantiate ListVPNGatewayAdvertisedCIDRsOptions
+func (*VpcV1) NewListVPNGatewayAdvertisedCIDRsOptions(vpnGatewayID string) *ListVPNGatewayAdvertisedCIDRsOptions {
+	return &ListVPNGatewayAdvertisedCIDRsOptions{
+		VPNGatewayID: core.StringPtr(vpnGatewayID),
+	}
+}
+
+// SetVPNGatewayID : Allow user to set VPNGatewayID
+func (_options *ListVPNGatewayAdvertisedCIDRsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayAdvertisedCIDRsOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListVPNGatewayAdvertisedCIDRsOptions) SetHeaders(param map[string]string) *ListVPNGatewayAdvertisedCIDRsOptions {
+	options.Headers = param
+	return options
+}
+
 // ListVPNGatewayConnectionsLocalCIDRsOptions : The ListVPNGatewayConnectionsLocalCIDRs options.
 type ListVPNGatewayConnectionsLocalCIDRsOptions struct {
 	// The VPN gateway identifier.
@@ -76366,6 +78233,52 @@ func (_options *ListVPNGatewayConnectionsPeerCIDRsOptions) SetID(id string) *Lis
 
 // SetHeaders : Allow user to set Headers
 func (options *ListVPNGatewayConnectionsPeerCIDRsOptions) SetHeaders(param map[string]string) *ListVPNGatewayConnectionsPeerCIDRsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListVPNGatewayServiceConnectionsOptions : The ListVPNGatewayServiceConnections options.
+type ListVPNGatewayServiceConnectionsOptions struct {
+	// The VPN gateway identifier.
+	VPNGatewayID *string `json:"vpn_gateway_id" validate:"required,ne="`
+
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The number of resources to return on a page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListVPNGatewayServiceConnectionsOptions : Instantiate ListVPNGatewayServiceConnectionsOptions
+func (*VpcV1) NewListVPNGatewayServiceConnectionsOptions(vpnGatewayID string) *ListVPNGatewayServiceConnectionsOptions {
+	return &ListVPNGatewayServiceConnectionsOptions{
+		VPNGatewayID: core.StringPtr(vpnGatewayID),
+	}
+}
+
+// SetVPNGatewayID : Allow user to set VPNGatewayID
+func (_options *ListVPNGatewayServiceConnectionsOptions) SetVPNGatewayID(vpnGatewayID string) *ListVPNGatewayServiceConnectionsOptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListVPNGatewayServiceConnectionsOptions) SetStart(start string) *ListVPNGatewayServiceConnectionsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListVPNGatewayServiceConnectionsOptions) SetLimit(limit int64) *ListVPNGatewayServiceConnectionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListVPNGatewayServiceConnectionsOptions) SetHeaders(param map[string]string) *ListVPNGatewayServiceConnectionsOptions {
 	options.Headers = param
 	return options
 }
@@ -80563,7 +82476,8 @@ func UnmarshalLoadBalancerPoolMemberReference(m map[string]json.RawMessage, resu
 // LoadBalancerPoolMemberTarget : The pool member target.
 // Models which "extend" this model:
 // - LoadBalancerPoolMemberTargetInstanceReference
-// - LoadBalancerPoolMemberTargetIP
+// - LoadBalancerPoolMemberTargetByReservedIP
+// - LoadBalancerPoolMemberTargetIPNotReservedIP
 // - LoadBalancerPoolMemberTargetLoadBalancerReference
 type LoadBalancerPoolMemberTarget struct {
 	// The CRN for this virtual server instance.
@@ -80584,6 +82498,8 @@ type LoadBalancerPoolMemberTarget struct {
 
 	// The IP address.
 	//
+	// If the address has not yet been selected, the value will be `0.0.0.0`.
+	//
 	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
 	// the future.
 	Address *string `json:"address,omitempty"`
@@ -80595,7 +82511,7 @@ type LoadBalancerPoolMemberTarget struct {
 // Constants associated with the LoadBalancerPoolMemberTarget.ResourceType property.
 // The resource type.
 const (
-	LoadBalancerPoolMemberTargetResourceTypeLoadBalancerConst = "load_balancer"
+	LoadBalancerPoolMemberTargetResourceTypeSubnetReservedIPConst = "subnet_reserved_ip"
 )
 
 func (*LoadBalancerPoolMemberTarget) isaLoadBalancerPoolMemberTarget() bool {
@@ -80656,6 +82572,7 @@ func UnmarshalLoadBalancerPoolMemberTarget(m map[string]json.RawMessage, result 
 // any other load balancer in the same VPC.
 // Models which "extend" this model:
 // - LoadBalancerPoolMemberTargetPrototypeInstanceIdentity
+// - LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity
 // - LoadBalancerPoolMemberTargetPrototypeIP
 // - LoadBalancerPoolMemberTargetPrototypeLoadBalancerIdentity
 type LoadBalancerPoolMemberTargetPrototype struct {
@@ -81256,6 +83173,8 @@ type LoadBalancerProfile struct {
 	// The load balancer profiles that load balancers with this profile can target.
 	TargetableLoadBalancerProfiles []LoadBalancerProfileReference `json:"targetable_load_balancer_profiles" validate:"required"`
 
+	TargetableResourceTypes *LoadBalancerProfileTargetableResourceTypes `json:"targetable_resource_types" validate:"required"`
+
 	UDPSupported LoadBalancerProfileUDPSupportedIntf `json:"udp_supported" validate:"required"`
 }
 
@@ -81330,6 +83249,11 @@ func UnmarshalLoadBalancerProfile(m map[string]json.RawMessage, result interface
 	err = core.UnmarshalModel(m, "targetable_load_balancer_profiles", &obj.TargetableLoadBalancerProfiles, UnmarshalLoadBalancerProfileReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "targetable_load_balancer_profiles-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "targetable_resource_types", &obj.TargetableResourceTypes, UnmarshalLoadBalancerProfileTargetableResourceTypes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "targetable_resource_types-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "udp_supported", &obj.UDPSupported, UnmarshalLoadBalancerProfileUDPSupported)
@@ -81873,6 +83797,53 @@ func UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupported(m map[strin
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileTargetableResourceTypes : LoadBalancerProfileTargetableResourceTypes struct
+type LoadBalancerProfileTargetableResourceTypes struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The resource types that pool members of load balancers with this profile can target.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerProfileTargetableResourceTypes.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileTargetableResourceTypesTypeEnumConst = "enum"
+)
+
+// Constants associated with the LoadBalancerProfileTargetableResourceTypes.Values property.
+// The [resource types](https://cloud.ibm.com/docs/vpc?topic=vpc-nlb-vs-elb&interface=ui#lb-comparison-chart) that can
+// be targeted by the load balancer pool member:
+//   - 'instance': Traffic is forwarded to the primary IP address for the instance's
+//     'primary_network_interface' or 'primary_network_attachment'.
+//   - 'subnet_reserved_ip': Traffic is forwarded to the reserved IP address.
+//   - `load_balancer`: Traffic is forwarded to the load balancer.
+//   - `ip`: Traffic is forwarded to the IP address.
+const (
+	LoadBalancerProfileTargetableResourceTypesValuesIPConst               = "ip"
+	LoadBalancerProfileTargetableResourceTypesValuesInstanceConst         = "instance"
+	LoadBalancerProfileTargetableResourceTypesValuesLoadBalancerConst     = "load_balancer"
+	LoadBalancerProfileTargetableResourceTypesValuesSubnetReservedIPConst = "subnet_reserved_ip"
+)
+
+// UnmarshalLoadBalancerProfileTargetableResourceTypes unmarshals an instance of LoadBalancerProfileTargetableResourceTypes from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileTargetableResourceTypes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileTargetableResourceTypes)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -82502,29 +84473,29 @@ func UnmarshalNetworkACLRule(m map[string]json.RawMessage, result interface{}) (
 		err = core.SDKErrorf(err, "required discriminator property 'protocol' not found in JSON object", "missing-discriminator", common.GetComponentInfo())
 		return
 	}
-
-	switch discValue {
-	case "all":
+	if discValue == "all" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleNetworkACLRuleProtocolAll)
 		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolAll-error", common.GetComponentInfo())
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleNetworkACLRuleProtocolAll-error", common.GetComponentInfo())
 		}
-	case "icmp":
+	} else if discValue == "icmp" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleNetworkACLRuleProtocolIcmp)
 		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolIcmp-error", common.GetComponentInfo())
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleNetworkACLRuleProtocolIcmp-error", common.GetComponentInfo())
 		}
-	case "tcp", "udp":
+	} else if discValue == "tcp" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleNetworkACLRuleProtocolTcpudp)
 		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
-	default:
-		// Fallback to base NetworkACLRuleItem for unknown protocols
-		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleGeneric)
+	} else if discValue == "udp" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleNetworkACLRuleProtocolTcpudp)
 		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemGeneric-error", common.GetComponentInfo())
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
+	} else {
+		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
+		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
 	}
 	return
 }
@@ -82807,172 +84778,30 @@ func UnmarshalNetworkACLRuleItem(m map[string]json.RawMessage, result interface{
 		err = core.SDKErrorf(err, "required discriminator property 'protocol' not found in JSON object", "missing-discriminator", common.GetComponentInfo())
 		return
 	}
-
-	switch discValue {
-	case "all":
+	if discValue == "all" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemNetworkACLRuleProtocolAll)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolAll-error", common.GetComponentInfo())
 		}
-	case "icmp":
+	} else if discValue == "icmp" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemNetworkACLRuleProtocolIcmp)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolIcmp-error", common.GetComponentInfo())
 		}
-	case "tcp", "udp":
+	} else if discValue == "tcp" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemNetworkACLRuleProtocolTcpudp)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
-	default:
-		// Fallback to base NetworkACLRuleItem for unknown protocols
-		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemGeneric)
+	} else if discValue == "udp" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalNetworkACLRuleItemNetworkACLRuleProtocolTcpudp)
 		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemGeneric-error", common.GetComponentInfo())
+			err = core.SDKErrorf(err, "", "unmarshal-NetworkACLRuleItemNetworkACLRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
+	} else {
+		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
+		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
 	}
-	return
-}
-
-// UnmarshalNetworkACLRuleItemGeneric unmarshals the base NetworkACLRuleItem fields for unknown protocol types
-func UnmarshalNetworkACLRuleItemGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkACLRuleItem)
-	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "before", &obj.Before, UnmarshalNetworkACLRuleReference)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "before-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "destination", &obj.Destination)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "destination-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
-		return
-	}
-
-	// Attempt to unmarshal optional protocol-specific fields - ignore errors as these may not be present
-	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
-	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	_ = core.UnmarshalPrimitive(m, "destination_port_max", &obj.DestinationPortMax)
-	_ = core.UnmarshalPrimitive(m, "destination_port_min", &obj.DestinationPortMin)
-	_ = core.UnmarshalPrimitive(m, "source_port_max", &obj.SourcePortMax)
-	_ = core.UnmarshalPrimitive(m, "source_port_min", &obj.SourcePortMin)
-
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// UnmarshalNetworkACLRuleGeneric unmarshals the base NetworkACLRuleItem fields for unknown protocol types
-func UnmarshalNetworkACLRuleGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkACLRule)
-	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "before", &obj.Before, UnmarshalNetworkACLRuleReference)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "before-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "destination", &obj.Destination)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "destination-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
-		return
-	}
-
-	// Attempt to unmarshal optional protocol-specific fields - ignore errors as these may not be present
-	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
-	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	_ = core.UnmarshalPrimitive(m, "destination_port_max", &obj.DestinationPortMax)
-	_ = core.UnmarshalPrimitive(m, "destination_port_min", &obj.DestinationPortMin)
-	_ = core.UnmarshalPrimitive(m, "source_port_max", &obj.SourcePortMax)
-	_ = core.UnmarshalPrimitive(m, "source_port_min", &obj.SourcePortMin)
-
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -84032,10 +85861,11 @@ type NetworkInterfacePrototype struct {
 	Name *string `json:"name,omitempty"`
 
 	// The primary IP address to bind to the instance network interface. This can be
-	// specified using an existing reserved IP, or a prototype object for a new reserved IP.
+	// specified using an existing reserved IP, or a prototype object for a new reserved
+	// IP.
 	//
-	// If an existing reserved IP or a prototype object with an address is specified, it must
-	// be available on the instance network interface's subnet. Otherwise, an
+	// If an existing reserved IP or a prototype object with an address is specified, it
+	// must be available on the instance network interface's subnet. Otherwise, an
 	// available address on the subnet will be automatically selected and reserved.
 	PrimaryIP NetworkInterfaceIPPrototypeIntf `json:"primary_ip,omitempty"`
 
@@ -86637,6 +88467,44 @@ func (_options *RemoveVirtualNetworkInterfaceIPOptions) SetID(id string) *Remove
 
 // SetHeaders : Allow user to set Headers
 func (options *RemoveVirtualNetworkInterfaceIPOptions) SetHeaders(param map[string]string) *RemoveVirtualNetworkInterfaceIPOptions {
+	options.Headers = param
+	return options
+}
+
+// RemoveVPNGatewayAdvertisedCIDROptions : The RemoveVPNGatewayAdvertisedCIDR options.
+type RemoveVPNGatewayAdvertisedCIDROptions struct {
+	// The VPN gateway identifier.
+	VPNGatewayID *string `json:"vpn_gateway_id" validate:"required,ne="`
+
+	// The IP address range in CIDR block notation.
+	CIDR *string `json:"cidr" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewRemoveVPNGatewayAdvertisedCIDROptions : Instantiate RemoveVPNGatewayAdvertisedCIDROptions
+func (*VpcV1) NewRemoveVPNGatewayAdvertisedCIDROptions(vpnGatewayID string, cidr string) *RemoveVPNGatewayAdvertisedCIDROptions {
+	return &RemoveVPNGatewayAdvertisedCIDROptions{
+		VPNGatewayID: core.StringPtr(vpnGatewayID),
+		CIDR:         core.StringPtr(cidr),
+	}
+}
+
+// SetVPNGatewayID : Allow user to set VPNGatewayID
+func (_options *RemoveVPNGatewayAdvertisedCIDROptions) SetVPNGatewayID(vpnGatewayID string) *RemoveVPNGatewayAdvertisedCIDROptions {
+	_options.VPNGatewayID = core.StringPtr(vpnGatewayID)
+	return _options
+}
+
+// SetCIDR : Allow user to set CIDR
+func (_options *RemoveVPNGatewayAdvertisedCIDROptions) SetCIDR(cidr string) *RemoveVPNGatewayAdvertisedCIDROptions {
+	_options.CIDR = core.StringPtr(cidr)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *RemoveVPNGatewayAdvertisedCIDROptions) SetHeaders(param map[string]string) *RemoveVPNGatewayAdvertisedCIDROptions {
 	options.Headers = param
 	return options
 }
@@ -90534,79 +92402,30 @@ func UnmarshalSecurityGroupRule(m map[string]json.RawMessage, result interface{}
 		err = core.SDKErrorf(err, "required discriminator property 'protocol' not found in JSON object", "missing-discriminator", common.GetComponentInfo())
 		return
 	}
-
-	switch discValue {
-	case "all":
+	if discValue == "all" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolAll)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleSecurityGroupRuleProtocolAll-error", common.GetComponentInfo())
 		}
-	case "icmp":
+	} else if discValue == "icmp" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolIcmp)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleSecurityGroupRuleProtocolIcmp-error", common.GetComponentInfo())
 		}
-	case "tcp", "udp":
+	} else if discValue == "tcp" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleSecurityGroupRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
-	default:
-		// Fallback to base SecurityGroupRule for unknown protocols
-		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleGeneric)
+	} else if discValue == "udp" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleGeneric-error", common.GetComponentInfo())
+			err = core.SDKErrorf(err, "", "unmarshal-SecurityGroupRuleSecurityGroupRuleProtocolTcpudp-error", common.GetComponentInfo())
 		}
+	} else {
+		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'protocol': %s", discValue)
+		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
 	}
-	return
-}
-
-// UnmarshalSecurityGroupRuleGeneric unmarshals the base SecurityGroupRule fields for unknown protocol types
-func UnmarshalSecurityGroupRuleGeneric(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SecurityGroupRule)
-	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ip_version", &obj.IPVersion)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "ip_version-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalSecurityGroupRuleLocal)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSecurityGroupRuleRemote)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
-		return
-	}
-
-	// Attempt to unmarshal optional fields - ignore errors as these may not be present
-	_ = core.UnmarshalPrimitive(m, "code", &obj.Code)
-	_ = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	_ = core.UnmarshalPrimitive(m, "port_max", &obj.PortMax)
-	_ = core.UnmarshalPrimitive(m, "port_min", &obj.PortMin)
-
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -91556,13 +93375,36 @@ type Share struct {
 	// with access to this file share's data and its snapshots.
 	AccessorBindings []ShareAccessorBindingReference `json:"accessor_bindings" validate:"required"`
 
+	// The access protocols to allow for this share:
+	// - `nfs4`: NFSv4 is used to access this share via its associated share mount target.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	AllowedAccessProtocols []string `json:"allowed_access_protocols" validate:"required"`
+
 	// The transit encryption modes allowed for this share:
 	// - `none`: Not encrypted in transit.
-	// - `user_managed`: Encrypted in transit using an instance identity certificate.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate.
+	// - `stunnel`: Encrypted in transit using a connection via the installed stunnel
+	//   client.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes" validate:"required"`
+
+	// The data availability mode of the share:
+	//   - `zonal`: The share's data will be available provided the `zone` of the share is
+	//     available.  Additionally, disasters affecting the zone may lead to data loss.
+	//   - `regional`:  The share's data will be available provided at least one zone in the
+	//     region is available.  Additionally, disasters affecting the entire region may lead
+	//     to data loss.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	AvailabilityMode *string `json:"availability_mode" validate:"required"`
+
+	// The maximum bandwidth (in megabits per second) for the share.
+	Bandwidth *int64 `json:"bandwidth" validate:"required"`
 
 	// The date and time that the file share is created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
@@ -91587,10 +93429,9 @@ type Share struct {
 	// The owner assigned to the file share at creation.
 	InitialOwner *ShareInitialOwner `json:"initial_owner" validate:"required"`
 
-	// The maximum input/output operations per second (IOPS) for the file share. In addition, each client accessing the
-	// share will be restricted to 48,000 IOPS.
+	// The maximum input/output operations per second (IOPS) for the file share.
 	//
-	// The maximum IOPS for a share may increase in the future.
+	// The maximum IOPS for a share as defined by the share's profile may increase in the future.
 	Iops *int64 `json:"iops" validate:"required"`
 
 	// The latest job associated with this file share.
@@ -91690,11 +93531,22 @@ type Share struct {
 	// future.
 	SourceSnapshot ShareSourceSnapshotIntf `json:"source_snapshot,omitempty"`
 
+	// The [storage
+	// generation](https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles&interface=api#using-api-iops-profiles):
+	// - `1`: The first storage generation
+	// - `2`: The second storage generation
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	StorageGeneration *int64 `json:"storage_generation" validate:"required"`
+
 	// The tags for this resource.
 	UserTags []string `json:"user_tags" validate:"required"`
 
 	// The zone this file share resides in.
-	Zone *ZoneReference `json:"zone" validate:"required"`
+	//
+	// This property will be absent for shares with an `availability_mode` of `regional`.
+	Zone *ZoneReference `json:"zone,omitempty"`
 }
 
 // Constants associated with the Share.AccessControlMode property.
@@ -91724,10 +93576,31 @@ const (
 	ShareAccessorBindingRoleOriginConst   = "origin"
 )
 
+// Constants associated with the Share.AllowedAccessProtocols property.
+const (
+	ShareAllowedAccessProtocolsNfs4Const = "nfs4"
+)
+
 // Constants associated with the Share.AllowedTransitEncryptionModes property.
 const (
-	ShareAllowedTransitEncryptionModesNoneConst        = "none"
-	ShareAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	ShareAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	ShareAllowedTransitEncryptionModesNoneConst    = "none"
+	ShareAllowedTransitEncryptionModesStunnelConst = "stunnel"
+)
+
+// Constants associated with the Share.AvailabilityMode property.
+// The data availability mode of the share:
+//   - `zonal`: The share's data will be available provided the `zone` of the share is
+//     available.  Additionally, disasters affecting the zone may lead to data loss.
+//   - `regional`:  The share's data will be available provided at least one zone in the
+//     region is available.  Additionally, disasters affecting the entire region may lead
+//     to data loss.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	ShareAvailabilityModeRegionalConst = "regional"
+	ShareAvailabilityModeZonalConst    = "zonal"
 )
 
 // Constants associated with the Share.Encryption property.
@@ -91809,9 +93682,24 @@ func UnmarshalShare(m map[string]json.RawMessage, result interface{}) (err error
 		err = core.SDKErrorf(err, "", "accessor_bindings-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "allowed_access_protocols", &obj.AllowedAccessProtocols)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_access_protocols-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "allowed_transit_encryption_modes", &obj.AllowedTransitEncryptionModes)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "allowed_transit_encryption_modes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "availability_mode", &obj.AvailabilityMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "availability_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bandwidth", &obj.Bandwidth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bandwidth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
@@ -91952,6 +93840,11 @@ func UnmarshalShare(m map[string]json.RawMessage, result interface{}) (err error
 	err = core.UnmarshalModel(m, "source_snapshot", &obj.SourceSnapshot, UnmarshalShareSourceSnapshot)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "source_snapshot-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "storage_generation", &obj.StorageGeneration)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "storage_generation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
@@ -92614,6 +94507,13 @@ type ShareMountTarget struct {
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AccessControlMode *string `json:"access_control_mode" validate:"required"`
 
+	// The protocol used to access the share for this share mount target:
+	// - `nfs4`: NFSv4 will be used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	AccessProtocol *string `json:"access_protocol" validate:"required"`
+
 	// The date and time that the share mount target was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
@@ -92657,8 +94557,10 @@ type ShareMountTarget struct {
 	Subnet *SubnetReference `json:"subnet,omitempty"`
 
 	// The transit encryption mode for this share mount target:
-	// - `none`: Not encrypted in transit
-	// - `user_managed`: Encrypted in transit using an instance identity certificate
+	// - `none`: Not encrypted in transit.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate.
+	// - `stunnel`: Encrypted in transit using a connection via the installed stunnel
+	//   client.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -92692,6 +94594,16 @@ const (
 	ShareMountTargetAccessControlModeVPCConst           = "vpc"
 )
 
+// Constants associated with the ShareMountTarget.AccessProtocol property.
+// The protocol used to access the share for this share mount target:
+// - `nfs4`: NFSv4 will be used.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	ShareMountTargetAccessProtocolNfs4Const = "nfs4"
+)
+
 // Constants associated with the ShareMountTarget.LifecycleState property.
 // The lifecycle state of the mount target.
 const (
@@ -92712,14 +94624,17 @@ const (
 
 // Constants associated with the ShareMountTarget.TransitEncryption property.
 // The transit encryption mode for this share mount target:
-// - `none`: Not encrypted in transit
-// - `user_managed`: Encrypted in transit using an instance identity certificate
+//   - `none`: Not encrypted in transit.
+//   - `ipsec`: Encrypted in transit using an instance identity certificate.
+//   - `stunnel`: Encrypted in transit using a connection via the installed stunnel
+//     client.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
-	ShareMountTargetTransitEncryptionNoneConst        = "none"
-	ShareMountTargetTransitEncryptionUserManagedConst = "user_managed"
+	ShareMountTargetTransitEncryptionIpsecConst   = "ipsec"
+	ShareMountTargetTransitEncryptionNoneConst    = "none"
+	ShareMountTargetTransitEncryptionStunnelConst = "stunnel"
 )
 
 // UnmarshalShareMountTarget unmarshals an instance of ShareMountTarget from the specified map of raw messages.
@@ -92728,6 +94643,11 @@ func UnmarshalShareMountTarget(m map[string]json.RawMessage, result interface{})
 	err = core.UnmarshalPrimitive(m, "access_control_mode", &obj.AccessControlMode)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "access_control_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "access_protocol", &obj.AccessProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_protocol-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
@@ -92893,18 +94813,26 @@ func (shareMountTargetPatch *ShareMountTargetPatch) AsPatch() (_patch map[string
 // - ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup
 // - ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC
 type ShareMountTargetPrototype struct {
+	// The protocol to use to access the share for this share mount target:
+	// - `nfs4`: NFSv4 will be used.
+	//
+	// The specified value must be listed in the share's `allowed_access_protocols`.
+	AccessProtocol *string `json:"access_protocol" validate:"required"`
+
 	// The name for this share mount target. The name must not be used by another mount target for the file share. If
 	// unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
 	// The transit encryption mode to use for this share mount target:
 	// - `none`: Not encrypted in transit.
-	// - `user_managed`: Encrypted in transit using an instance identity certificate.  The
-	//                   `access_control_mode` for the share must be `security_group`.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate. The
+	//   `access_control_mode` for the share must be `security_group`.
+	// - `stunnel`: Encrypted in transit using an stunnel connection. The
+	//   `access_control_mode` for the share must be `security_group`.
 	//
 	// The specified value must be listed in the share's
 	// `allowed_transit_encryption_modes`.
-	TransitEncryption *string `json:"transit_encryption,omitempty"`
+	TransitEncryption *string `json:"transit_encryption" validate:"required"`
 
 	VirtualNetworkInterface ShareMountTargetVirtualNetworkInterfacePrototypeIntf `json:"virtual_network_interface,omitempty"`
 
@@ -92912,17 +94840,29 @@ type ShareMountTargetPrototype struct {
 	VPC VPCIdentityIntf `json:"vpc,omitempty"`
 }
 
+// Constants associated with the ShareMountTargetPrototype.AccessProtocol property.
+// The protocol to use to access the share for this share mount target:
+// - `nfs4`: NFSv4 will be used.
+//
+// The specified value must be listed in the share's `allowed_access_protocols`.
+const (
+	ShareMountTargetPrototypeAccessProtocolNfs4Const = "nfs4"
+)
+
 // Constants associated with the ShareMountTargetPrototype.TransitEncryption property.
 // The transit encryption mode to use for this share mount target:
 //   - `none`: Not encrypted in transit.
-//   - `user_managed`: Encrypted in transit using an instance identity certificate.  The
+//   - `ipsec`: Encrypted in transit using an instance identity certificate. The
+//     `access_control_mode` for the share must be `security_group`.
+//   - `stunnel`: Encrypted in transit using an stunnel connection. The
 //     `access_control_mode` for the share must be `security_group`.
 //
 // The specified value must be listed in the share's
 // `allowed_transit_encryption_modes`.
 const (
-	ShareMountTargetPrototypeTransitEncryptionNoneConst        = "none"
-	ShareMountTargetPrototypeTransitEncryptionUserManagedConst = "user_managed"
+	ShareMountTargetPrototypeTransitEncryptionIpsecConst   = "ipsec"
+	ShareMountTargetPrototypeTransitEncryptionNoneConst    = "none"
+	ShareMountTargetPrototypeTransitEncryptionStunnelConst = "stunnel"
 )
 
 func (*ShareMountTargetPrototype) isaShareMountTargetPrototype() bool {
@@ -92936,6 +94876,11 @@ type ShareMountTargetPrototypeIntf interface {
 // UnmarshalShareMountTargetPrototype unmarshals an instance of ShareMountTargetPrototype from the specified map of raw messages.
 func UnmarshalShareMountTargetPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ShareMountTargetPrototype)
+	err = core.UnmarshalPrimitive(m, "access_protocol", &obj.AccessProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_protocol-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -93213,12 +95158,27 @@ type SharePatch struct {
 	// `replication_role` must be `none` and `accessor_binding_role` must not be `accessor`.
 	AccessControlMode *string `json:"access_control_mode,omitempty"`
 
+	// The access protocols to allow for this share (replacing any existing access protocols).
+	//
+	// If the share has existing mount targets, the set of allowed access protocols must contain all `access_protocol`
+	// modes specified by existing mount targets.
+	//
+	// For this property to be updated, the `accessor_binding_role` must be `none`.
+	AllowedAccessProtocols []string `json:"allowed_access_protocols,omitempty"`
+
 	// The transit encryption modes to allow for this share
 	// (replacing the existing allowed transit encryption modes). The specified transit encryption modes must contain all
 	// transit_encryption modes specified by existing mount targets.
 	//
 	// For this property to be updated, the `accessor_binding_role` must be `none`.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
+
+	// The maximum bandwidth (in megabits per second) for the share.
+	//
+	// For this property to be changed, the share `accessor_binding_role` must not be
+	// `accessor`, the share profile must not have a `bandwidth.type` of `dependent` or
+	// `fixed`, and the specified value must be within the `bandwidth` range of the share's profile.
+	Bandwidth *int64 `json:"bandwidth,omitempty"`
 
 	// The maximum input/output operations per second (IOPS) for the file share.
 	//
@@ -93270,10 +95230,16 @@ const (
 	SharePatchAccessControlModeVPCConst           = "vpc"
 )
 
+// Constants associated with the SharePatch.AllowedAccessProtocols property.
+const (
+	SharePatchAllowedAccessProtocolsNfs4Const = "nfs4"
+)
+
 // Constants associated with the SharePatch.AllowedTransitEncryptionModes property.
 const (
-	SharePatchAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePatchAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePatchAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePatchAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePatchAllowedTransitEncryptionModesStunnelConst = "stunnel"
 )
 
 // UnmarshalSharePatch unmarshals an instance of SharePatch from the specified map of raw messages.
@@ -93284,9 +95250,19 @@ func UnmarshalSharePatch(m map[string]json.RawMessage, result interface{}) (err 
 		err = core.SDKErrorf(err, "", "access_control_mode-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "allowed_access_protocols", &obj.AllowedAccessProtocols)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_access_protocols-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "allowed_transit_encryption_modes", &obj.AllowedTransitEncryptionModes)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "allowed_transit_encryption_modes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bandwidth", &obj.Bandwidth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bandwidth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iops", &obj.Iops)
@@ -93329,8 +95305,14 @@ func (sharePatch *SharePatch) AsPatch() (_patch map[string]interface{}, err erro
 	if !core.IsNil(sharePatch.AccessControlMode) {
 		_patch["access_control_mode"] = sharePatch.AccessControlMode
 	}
+	if !core.IsNil(sharePatch.AllowedAccessProtocols) {
+		_patch["allowed_access_protocols"] = sharePatch.AllowedAccessProtocols
+	}
 	if !core.IsNil(sharePatch.AllowedTransitEncryptionModes) {
 		_patch["allowed_transit_encryption_modes"] = sharePatch.AllowedTransitEncryptionModes
+	}
+	if !core.IsNil(sharePatch.Bandwidth) {
+		_patch["bandwidth"] = sharePatch.Bandwidth
 	}
 	if !core.IsNil(sharePatch.Iops) {
 		_patch["iops"] = sharePatch.Iops
@@ -93356,6 +95338,18 @@ func (sharePatch *SharePatch) AsPatch() (_patch map[string]interface{}, err erro
 
 // ShareProfile : ShareProfile struct
 type ShareProfile struct {
+	// The possible allowed access protocols for a share with this profile.
+	AllowedAccessProtocols ShareProfileAllowedAccessProtocolsIntf `json:"allowed_access_protocols" validate:"required"`
+
+	// The possible allowed transit encryption modes for a share with this profile.
+	AllowedTransitEncryptionModes ShareProfileAllowedTransitEncryptionModesIntf `json:"allowed_transit_encryption_modes" validate:"required"`
+
+	// The data availability mode of a share with this profile.
+	AvailabilityModes ShareProfileAvailabilityModesIntf `json:"availability_modes" validate:"required"`
+
+	// The permitted bandwidth (in megabits per second) for a share with this profile.
+	Bandwidth ShareProfileBandwidthIntf `json:"bandwidth" validate:"required"`
+
 	// The permitted capacity range (in gigabytes) for a share with this profile.
 	Capacity ShareProfileCapacityIntf `json:"capacity" validate:"required"`
 
@@ -93376,6 +95370,9 @@ type ShareProfile struct {
 
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
+
+	// The storage generation for a share with this profile.
+	StorageGeneration ShareProfileStorageGenerationIntf `json:"storage_generation" validate:"required"`
 }
 
 // Constants associated with the ShareProfile.Family property.
@@ -93396,6 +95393,26 @@ const (
 // UnmarshalShareProfile unmarshals an instance of ShareProfile from the specified map of raw messages.
 func UnmarshalShareProfile(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ShareProfile)
+	err = core.UnmarshalModel(m, "allowed_access_protocols", &obj.AllowedAccessProtocols, UnmarshalShareProfileAllowedAccessProtocols)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_access_protocols-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "allowed_transit_encryption_modes", &obj.AllowedTransitEncryptionModes, UnmarshalShareProfileAllowedTransitEncryptionModes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_transit_encryption_modes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "availability_modes", &obj.AvailabilityModes, UnmarshalShareProfileAvailabilityModes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "availability_modes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "bandwidth", &obj.Bandwidth, UnmarshalShareProfileBandwidth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bandwidth-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "capacity", &obj.Capacity, UnmarshalShareProfileCapacity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "capacity-error", common.GetComponentInfo())
@@ -93424,6 +95441,318 @@ func UnmarshalShareProfile(m map[string]json.RawMessage, result interface{}) (er
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "storage_generation", &obj.StorageGeneration, UnmarshalShareProfileStorageGeneration)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "storage_generation-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAllowedAccessProtocols : ShareProfileAllowedAccessProtocols struct
+// Models which "extend" this model:
+// - ShareProfileAllowedAccessProtocolsSubset
+type ShareProfileAllowedAccessProtocols struct {
+	// The default allowed access protocol modes for shares with this profile.
+	Default []string `json:"default,omitempty"`
+
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The possible allowed access protocols for shares with this profile:
+	// - `nfs4`: NFSv4 will be used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Values []string `json:"values,omitempty"`
+}
+
+// Constants associated with the ShareProfileAllowedAccessProtocols.Default property.
+const (
+	ShareProfileAllowedAccessProtocolsDefaultNfs4Const = "nfs4"
+)
+
+// Constants associated with the ShareProfileAllowedAccessProtocols.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAllowedAccessProtocolsTypeSubsetConst = "subset"
+)
+
+// Constants associated with the ShareProfileAllowedAccessProtocols.Values property.
+const (
+	ShareProfileAllowedAccessProtocolsValuesNfs4Const = "nfs4"
+)
+
+func (*ShareProfileAllowedAccessProtocols) isaShareProfileAllowedAccessProtocols() bool {
+	return true
+}
+
+type ShareProfileAllowedAccessProtocolsIntf interface {
+	isaShareProfileAllowedAccessProtocols() bool
+}
+
+// UnmarshalShareProfileAllowedAccessProtocols unmarshals an instance of ShareProfileAllowedAccessProtocols from the specified map of raw messages.
+func UnmarshalShareProfileAllowedAccessProtocols(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAllowedAccessProtocols)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAllowedTransitEncryptionModes : ShareProfileAllowedTransitEncryptionModes struct
+// Models which "extend" this model:
+// - ShareProfileAllowedTransitEncryptionModesSubset
+type ShareProfileAllowedTransitEncryptionModes struct {
+	// The default allowed transit encryption modes for shares with this profile.
+	Default []string `json:"default,omitempty"`
+
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The allowed [transit encryption
+	// modes](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-vpc-about&interface=ui#fs-eit) for a share with this
+	// profile:
+	// - `none`: Not encrypted in transit.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate.
+	// - `stunnel`: Encrypted in transit using a connection via an stunnel connection.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Values []string `json:"values,omitempty"`
+}
+
+// Constants associated with the ShareProfileAllowedTransitEncryptionModes.Default property.
+const (
+	ShareProfileAllowedTransitEncryptionModesDefaultIpsecConst   = "ipsec"
+	ShareProfileAllowedTransitEncryptionModesDefaultNoneConst    = "none"
+	ShareProfileAllowedTransitEncryptionModesDefaultStunnelConst = "stunnel"
+)
+
+// Constants associated with the ShareProfileAllowedTransitEncryptionModes.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAllowedTransitEncryptionModesTypeSubsetConst = "subset"
+)
+
+// Constants associated with the ShareProfileAllowedTransitEncryptionModes.Values property.
+const (
+	ShareProfileAllowedTransitEncryptionModesValuesIpsecConst   = "ipsec"
+	ShareProfileAllowedTransitEncryptionModesValuesNoneConst    = "none"
+	ShareProfileAllowedTransitEncryptionModesValuesStunnelConst = "stunnel"
+)
+
+func (*ShareProfileAllowedTransitEncryptionModes) isaShareProfileAllowedTransitEncryptionModes() bool {
+	return true
+}
+
+type ShareProfileAllowedTransitEncryptionModesIntf interface {
+	isaShareProfileAllowedTransitEncryptionModes() bool
+}
+
+// UnmarshalShareProfileAllowedTransitEncryptionModes unmarshals an instance of ShareProfileAllowedTransitEncryptionModes from the specified map of raw messages.
+func UnmarshalShareProfileAllowedTransitEncryptionModes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAllowedTransitEncryptionModes)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAvailabilityModes : ShareProfileAvailabilityModes struct
+// Models which "extend" this model:
+// - ShareProfileAvailabilityModesEnum
+// - ShareProfileAvailabilityModesFixed
+type ShareProfileAvailabilityModes struct {
+	// The default data availability mode for this profile.
+	Default *string `json:"default,omitempty"`
+
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The data availability mode of the share:
+	// - `zonal`: The data availability of this share is limited only to a single zone of a
+	//   given region as provided by the `zone` of the share.
+	// - `regional`: The data availability of this share covers all zones in the region where
+	//   the share is created.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Values []string `json:"values,omitempty"`
+
+	// The value for this profile field.
+	Value *string `json:"value,omitempty"`
+}
+
+// Constants associated with the ShareProfileAvailabilityModes.Default property.
+// The default data availability mode for this profile.
+const (
+	ShareProfileAvailabilityModesDefaultRegionalConst = "regional"
+	ShareProfileAvailabilityModesDefaultZonalConst    = "zonal"
+)
+
+// Constants associated with the ShareProfileAvailabilityModes.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAvailabilityModesTypeEnumConst = "enum"
+)
+
+// Constants associated with the ShareProfileAvailabilityModes.Values property.
+const (
+	ShareProfileAvailabilityModesValuesRegionalConst = "regional"
+	ShareProfileAvailabilityModesValuesZonalConst    = "zonal"
+)
+
+// Constants associated with the ShareProfileAvailabilityModes.Value property.
+// The value for this profile field.
+const (
+	ShareProfileAvailabilityModesValueRegionalConst = "regional"
+	ShareProfileAvailabilityModesValueZonalConst    = "zonal"
+)
+
+func (*ShareProfileAvailabilityModes) isaShareProfileAvailabilityModes() bool {
+	return true
+}
+
+type ShareProfileAvailabilityModesIntf interface {
+	isaShareProfileAvailabilityModes() bool
+}
+
+// UnmarshalShareProfileAvailabilityModes unmarshals an instance of ShareProfileAvailabilityModes from the specified map of raw messages.
+func UnmarshalShareProfileAvailabilityModes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAvailabilityModes)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileBandwidth : ShareProfileBandwidth struct
+// Models which "extend" this model:
+// - ShareProfileBandwidthRange
+// - ShareProfileBandwidthDependent
+// - ShareProfileBandwidthFixed
+// - ShareProfileBandwidthEnum
+// - ShareProfileBandwidthDependentRange
+type ShareProfileBandwidth struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default,omitempty"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max,omitempty"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min,omitempty"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step,omitempty"`
+
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	Value *int64 `json:"value,omitempty"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values,omitempty"`
+}
+
+// Constants associated with the ShareProfileBandwidth.Type property.
+// The type for this profile field.
+const (
+	ShareProfileBandwidthTypeRangeConst = "range"
+)
+
+func (*ShareProfileBandwidth) isaShareProfileBandwidth() bool {
+	return true
+}
+
+type ShareProfileBandwidthIntf interface {
+	isaShareProfileBandwidth() bool
+}
+
+// UnmarshalShareProfileBandwidth unmarshals an instance of ShareProfileBandwidth from the specified map of raw messages.
+func UnmarshalShareProfileBandwidth(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileBandwidth)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -93758,6 +96087,48 @@ func UnmarshalShareProfileReference(m map[string]json.RawMessage, result interfa
 	return
 }
 
+// ShareProfileStorageGeneration : ShareProfileStorageGeneration struct
+// Models which "extend" this model:
+// - ShareProfileStorageGenerationFixed
+type ShareProfileStorageGeneration struct {
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value,omitempty"`
+}
+
+// Constants associated with the ShareProfileStorageGeneration.Type property.
+// The type for this profile field.
+const (
+	ShareProfileStorageGenerationTypeFixedConst = "fixed"
+)
+
+func (*ShareProfileStorageGeneration) isaShareProfileStorageGeneration() bool {
+	return true
+}
+
+type ShareProfileStorageGenerationIntf interface {
+	isaShareProfileStorageGeneration() bool
+}
+
+// UnmarshalShareProfileStorageGeneration unmarshals an instance of ShareProfileStorageGeneration from the specified map of raw messages.
+func UnmarshalShareProfileStorageGeneration(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileStorageGeneration)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // SharePrototype : SharePrototype struct
 // Models which "extend" this model:
 // - SharePrototypeShareBySize
@@ -93766,9 +96137,10 @@ func UnmarshalShareProfileReference(m map[string]json.RawMessage, result interfa
 // - SharePrototypeShareBySourceSnapshot
 type SharePrototype struct {
 	// The transit encryption modes to allow for this share. If unspecified:
-	// - If share mount targets are specified, and those share mount targets all specify a
-	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
-	// - Otherwise, all `transit_encryption` modes will be allowed.
+	// - If share mount targets are specified, then only transit encryption modes
+	//   specified by those share mount target will be allowed.
+	// - Otherwise, the default allowed transit encryption modes from the profile will be
+	//   used.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
 
 	// The mount targets for the file share. Each mount target must be in a unique VPC.
@@ -93781,6 +96153,9 @@ type SharePrototype struct {
 	// Configuration for a replica file share to create and associate with this file share. If
 	// unspecified, a replica may be subsequently added by creating a new file share with a
 	// `source_share` referencing this file share.
+	//
+	// Replica file shares can only be created for shares with an `availability_mode` of
+	// `zonal`.
 	ReplicaShare *SharePrototypeShareContext `json:"replica_share,omitempty"`
 
 	// The tags for this resource.
@@ -93794,6 +96169,22 @@ type SharePrototype struct {
 	// - `vpc`: All clients in the VPC for a mount target have access to the mount target.
 	//   Mount targets for this share require a VPC.
 	AccessControlMode *string `json:"access_control_mode,omitempty"`
+
+	// The access protocols to allow for this share. If unspecified:
+	// - If share mount targets are specified, only the access protocols specified by those
+	//   share mount target will be allowed.
+	// - Otherwise, the default access protocols from the profile will be used.
+	AllowedAccessProtocols []string `json:"allowed_access_protocols,omitempty"`
+
+	// The maximum bandwidth (in megabits per second) for the file share.
+	//
+	// If the share profile has a `bandwidth.type` of `dependent` or `fixed`, this property is system-managed and must not
+	// be specified. Otherwise, the specified value must be within the `bandwidth` range of the share's profile.
+	//
+	// Provided the property is user-managed, if it is unspecified, its value will be set based on the specified [`size`
+	// and
+	// `iops`](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=api).
+	Bandwidth *int64 `json:"bandwidth,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the share.
 	//
@@ -93829,6 +96220,9 @@ type SharePrototype struct {
 
 	// The zone this file share will reside in. For a replica share in the same region as
 	// the source share, this must be a different zone from the source share.
+	//
+	// This property must be specified if the share profile `availability_mode` is `zonal`,
+	// and must not be specified otherwise.
 	Zone ZoneIdentityIntf `json:"zone,omitempty"`
 
 	// The cron specification for the file share replication schedule.
@@ -93839,9 +96233,12 @@ type SharePrototype struct {
 	// [increase](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ReplicationCronSpec *string `json:"replication_cron_spec,omitempty"`
 
-	// The source file share for this replica file share. The specified file share must not
-	// already have a replica, and must not be a replica. If source file share is specified
-	// by CRN, it may be in an [associated partner
+	// The source file share for this replica file share. The specified file share must:
+	// - Not already have a replica.
+	// - Not be a replica.
+	// - Have a `storage_generation` of `1`.
+	//
+	// If source file share is specified by CRN, it may be in an [associated partner
 	// region](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-replication).
 	SourceShare ShareIdentityIntf `json:"source_share,omitempty"`
 
@@ -93862,8 +96259,9 @@ type SharePrototype struct {
 
 // Constants associated with the SharePrototype.AllowedTransitEncryptionModes property.
 const (
-	SharePrototypeAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePrototypeAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePrototypeAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePrototypeAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePrototypeAllowedTransitEncryptionModesStunnelConst = "stunnel"
 )
 
 // Constants associated with the SharePrototype.AccessControlMode property.
@@ -93877,6 +96275,11 @@ const (
 const (
 	SharePrototypeAccessControlModeSecurityGroupConst = "security_group"
 	SharePrototypeAccessControlModeVPCConst           = "vpc"
+)
+
+// Constants associated with the SharePrototype.AllowedAccessProtocols property.
+const (
+	SharePrototypeAllowedAccessProtocolsNfs4Const = "nfs4"
 )
 
 func (*SharePrototype) isaSharePrototype() bool {
@@ -93918,6 +96321,16 @@ func UnmarshalSharePrototype(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "access_control_mode", &obj.AccessControlMode)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "access_control_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_access_protocols", &obj.AllowedAccessProtocols)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_access_protocols-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bandwidth", &obj.Bandwidth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bandwidth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "encryption_key", &obj.EncryptionKey, UnmarshalEncryptionKeyIdentity)
@@ -93982,11 +96395,15 @@ func UnmarshalSharePrototype(m map[string]json.RawMessage, result interface{}) (
 // SharePrototypeShareContext : Configuration for a replica file share to create and associate with this file share. If unspecified, a replica may be
 // subsequently added by creating a new file share with a
 // `source_share` referencing this file share.
+//
+// Replica file shares can only be created for shares with an `availability_mode` of
+// `zonal`.
 type SharePrototypeShareContext struct {
 	// The transit encryption modes to allow for this share. If unspecified:
-	// - If share mount targets are specified, and those share mount targets all specify a
-	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
-	// - Otherwise, all `transit_encryption` modes will be allowed.
+	// - If share mount targets are specified, then only transit encryption modes
+	//   specified by those share mount target will be allowed.
+	// - Otherwise, the default allowed transit encryption modes from the profile will be
+	//   used.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
 
 	// The maximum input/output operations per second (IOPS) for the file share.
@@ -94006,7 +96423,9 @@ type SharePrototypeShareContext struct {
 	Name *string `json:"name,omitempty"`
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles) to use
-	// for this file share. The profile must support the share's specified IOPS and size.
+	// for this file share. The profile must:
+	// - support the share's specified IOPS and size, and
+	// - have the same `storage_generation` as the share.
 	Profile ShareProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The cron specification for the file share replication schedule.
@@ -94023,21 +96442,21 @@ type SharePrototypeShareContext struct {
 
 	// The zone this replica file share will reside in. For a replica share in the same
 	// region as the source share, this must be a different zone from the source share.
-	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
+	Zone ZoneIdentityIntf `json:"zone,omitempty"`
 }
 
 // Constants associated with the SharePrototypeShareContext.AllowedTransitEncryptionModes property.
 const (
-	SharePrototypeShareContextAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePrototypeShareContextAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePrototypeShareContextAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePrototypeShareContextAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePrototypeShareContextAllowedTransitEncryptionModesStunnelConst = "stunnel"
 )
 
 // NewSharePrototypeShareContext : Instantiate SharePrototypeShareContext (Generic Model Constructor)
-func (*VpcV1) NewSharePrototypeShareContext(profile ShareProfileIdentityIntf, replicationCronSpec string, zone ZoneIdentityIntf) (_model *SharePrototypeShareContext, err error) {
+func (*VpcV1) NewSharePrototypeShareContext(profile ShareProfileIdentityIntf, replicationCronSpec string) (_model *SharePrototypeShareContext, err error) {
 	_model = &SharePrototypeShareContext{
 		Profile:             profile,
 		ReplicationCronSpec: core.StringPtr(replicationCronSpec),
-		Zone:                zone,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -94321,8 +96740,9 @@ type ShareSnapshot struct {
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this share snapshot.
 	UserTags []string `json:"user_tags" validate:"required"`
 
-	// The zone this share snapshot resides in.
-	Zone *ZoneReference `json:"zone" validate:"required"`
+	// The zone this share snapshot resides in. For shares with `availability_mode` of
+	// `regional`, this property will be absent.
+	Zone *ZoneReference `json:"zone,omitempty"`
 }
 
 // Constants associated with the ShareSnapshot.LifecycleState property.
@@ -97870,6 +100290,54 @@ func (options *UpdateEndpointGatewayOptions) SetHeaders(param map[string]string)
 	return options
 }
 
+// UpdateEndpointGatewayResourceBindingOptions : The UpdateEndpointGatewayResourceBinding options.
+type UpdateEndpointGatewayResourceBindingOptions struct {
+	// The endpoint gateway identifier.
+	EndpointGatewayID *string `json:"endpoint_gateway_id" validate:"required,ne="`
+
+	// The resource binding identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The endpoint gateway resource binding patch.
+	EndpointGatewayResourceBindingPatch map[string]interface{} `json:"EndpointGatewayResourceBinding_patch" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateEndpointGatewayResourceBindingOptions : Instantiate UpdateEndpointGatewayResourceBindingOptions
+func (*VpcV1) NewUpdateEndpointGatewayResourceBindingOptions(endpointGatewayID string, id string, endpointGatewayResourceBindingPatch map[string]interface{}) *UpdateEndpointGatewayResourceBindingOptions {
+	return &UpdateEndpointGatewayResourceBindingOptions{
+		EndpointGatewayID:                   core.StringPtr(endpointGatewayID),
+		ID:                                  core.StringPtr(id),
+		EndpointGatewayResourceBindingPatch: endpointGatewayResourceBindingPatch,
+	}
+}
+
+// SetEndpointGatewayID : Allow user to set EndpointGatewayID
+func (_options *UpdateEndpointGatewayResourceBindingOptions) SetEndpointGatewayID(endpointGatewayID string) *UpdateEndpointGatewayResourceBindingOptions {
+	_options.EndpointGatewayID = core.StringPtr(endpointGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateEndpointGatewayResourceBindingOptions) SetID(id string) *UpdateEndpointGatewayResourceBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetEndpointGatewayResourceBindingPatch : Allow user to set EndpointGatewayResourceBindingPatch
+func (_options *UpdateEndpointGatewayResourceBindingOptions) SetEndpointGatewayResourceBindingPatch(endpointGatewayResourceBindingPatch map[string]interface{}) *UpdateEndpointGatewayResourceBindingOptions {
+	_options.EndpointGatewayResourceBindingPatch = endpointGatewayResourceBindingPatch
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateEndpointGatewayResourceBindingOptions) SetHeaders(param map[string]string) *UpdateEndpointGatewayResourceBindingOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdateFirmwareForBareMetalServerOptions : The UpdateFirmwareForBareMetalServer options.
 type UpdateFirmwareForBareMetalServerOptions struct {
 	// The bare metal server identifier.
@@ -99841,6 +102309,10 @@ type UpdateVirtualNetworkInterfaceOptions struct {
 	// The virtual network interface patch.
 	VirtualNetworkInterfacePatch map[string]interface{} `json:"VirtualNetworkInterface_patch" validate:"required"`
 
+	// If present, the request will fail if the specified ETag value does not match the resource's current ETag value.
+	// Required if the request body includes an array.
+	IfMatch *string `json:"If-Match,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -99862,6 +102334,12 @@ func (_options *UpdateVirtualNetworkInterfaceOptions) SetID(id string) *UpdateVi
 // SetVirtualNetworkInterfacePatch : Allow user to set VirtualNetworkInterfacePatch
 func (_options *UpdateVirtualNetworkInterfaceOptions) SetVirtualNetworkInterfacePatch(virtualNetworkInterfacePatch map[string]interface{}) *UpdateVirtualNetworkInterfaceOptions {
 	_options.VirtualNetworkInterfacePatch = virtualNetworkInterfacePatch
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateVirtualNetworkInterfaceOptions) SetIfMatch(ifMatch string) *UpdateVirtualNetworkInterfaceOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
 	return _options
 }
 
@@ -100238,6 +102716,10 @@ type UpdateVPNGatewayConnectionOptions struct {
 	// The VPN gateway connection patch.
 	VPNGatewayConnectionPatch map[string]interface{} `json:"VPNGatewayConnection_patch" validate:"required"`
 
+	// If present, the request will fail if the specified ETag value does not match the resource's current ETag value.
+	// Required if the request body includes an array.
+	IfMatch *string `json:"If-Match,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -100266,6 +102748,12 @@ func (_options *UpdateVPNGatewayConnectionOptions) SetID(id string) *UpdateVPNGa
 // SetVPNGatewayConnectionPatch : Allow user to set VPNGatewayConnectionPatch
 func (_options *UpdateVPNGatewayConnectionOptions) SetVPNGatewayConnectionPatch(vpnGatewayConnectionPatch map[string]interface{}) *UpdateVPNGatewayConnectionOptions {
 	_options.VPNGatewayConnectionPatch = vpnGatewayConnectionPatch
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateVPNGatewayConnectionOptions) SetIfMatch(ifMatch string) *UpdateVPNGatewayConnectionOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
 	return _options
 }
 
@@ -100487,7 +102975,7 @@ type VPC struct {
 	//
 	// The maximum number of items for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	CseSourceIps []VpccseSourceIP `json:"cse_source_ips,omitempty"`
+	CseSourceIps []VpccseSourceIP `json:"cse_source_ips" validate:"required"`
 
 	// The default network ACL to use for subnets created in this VPC.
 	DefaultNetworkACL *NetworkACLReference `json:"default_network_acl" validate:"required"`
@@ -101954,6 +104442,13 @@ type VPNGateway struct {
 
 	// The mode for this VPN gateway.
 	Mode *string `json:"mode,omitempty"`
+
+	// The static CIDRs advertised through any enabled routing protocol (for example, BGP). The routing protocol will
+	// advertise routes with these CIDRs as route destinations.
+	AdvertisedCIDRs []string `json:"advertised_cidrs,omitempty"`
+
+	// The local autonomous system number (ASN) for this VPN gateway and its connections.
+	LocalAsn *int64 `json:"local_asn,omitempty"`
 }
 
 // Constants associated with the VPNGateway.HealthState property.
@@ -102084,6 +104579,35 @@ func UnmarshalVPNGateway(m map[string]json.RawMessage, result interface{}) (err 
 	err = core.UnmarshalPrimitive(m, "mode", &obj.Mode)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "advertised_cidrs", &obj.AdvertisedCIDRs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "advertised_cidrs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "local_asn", &obj.LocalAsn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local_asn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayAdvertisedCIDRCollection : VPNGatewayAdvertisedCIDRCollection struct
+type VPNGatewayAdvertisedCIDRCollection struct {
+	// The static CIDRs advertised through any enabled routing protocol (for example, BGP). The routing protocol will
+	// advertise routes with these CIDRs as route destinations.
+	AdvertisedCIDRs []string `json:"advertised_cidrs" validate:"required"`
+}
+
+// UnmarshalVPNGatewayAdvertisedCIDRCollection unmarshals an instance of VPNGatewayAdvertisedCIDRCollection from the specified map of raw messages.
+func UnmarshalVPNGatewayAdvertisedCIDRCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayAdvertisedCIDRCollection)
+	err = core.UnmarshalPrimitive(m, "advertised_cidrs", &obj.AdvertisedCIDRs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "advertised_cidrs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -102555,6 +105079,269 @@ func UnmarshalVPNGatewayConnectionDpdPrototype(m map[string]json.RawMessage, res
 	return
 }
 
+// VPNGatewayConnectionDynamicRouteModeLocal : VPNGatewayConnectionDynamicRouteModeLocal struct
+type VPNGatewayConnectionDynamicRouteModeLocal struct {
+	// The local IKE identities.
+	//
+	// A VPN gateway in dynamic route mode consists of two members in active-active mode. The first identity applies to the
+	// first member, and the second identity applies to the second member.
+	IkeIdentities []VPNGatewayConnectionIkeIdentityIntf `json:"ike_identities" validate:"required"`
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModeLocal unmarshals an instance of VPNGatewayConnectionDynamicRouteModeLocal from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModeLocal(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModeLocal)
+	err = core.UnmarshalModel(m, "ike_identities", &obj.IkeIdentities, UnmarshalVPNGatewayConnectionIkeIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identities-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModeLocalPrototype : VPNGatewayConnectionDynamicRouteModeLocalPrototype struct
+type VPNGatewayConnectionDynamicRouteModeLocalPrototype struct {
+	// The local IKE identities to use.
+	//
+	// A VPN gateway in dynamic route mode consists of two members in active-active mode. The first specified identity will
+	// be applied to the first member, and the second specified identity will be applied to the second member.
+	//
+	// If unspecified, then `type` will be `ipv4_address` and `value` will be the public IP address of the member's VPN
+	// connection tunnel.
+	IkeIdentities []VPNGatewayConnectionIkeIdentityPrototypeIntf `json:"ike_identities,omitempty"`
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModeLocalPrototype unmarshals an instance of VPNGatewayConnectionDynamicRouteModeLocalPrototype from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModeLocalPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModeLocalPrototype)
+	err = core.UnmarshalModel(m, "ike_identities", &obj.IkeIdentities, UnmarshalVPNGatewayConnectionIkeIdentityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identities-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModePeer : VPNGatewayConnectionDynamicRouteModePeer struct
+// Models which "extend" this model:
+// - VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress
+// - VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn
+type VPNGatewayConnectionDynamicRouteModePeer struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection.
+	Asn *int64 `json:"asn" validate:"required"`
+
+	// The peer IKE identity.
+	IkeIdentity VPNGatewayConnectionIkeIdentityIntf `json:"ike_identity" validate:"required"`
+
+	// Indicates whether `peer.address` or `peer.fqdn` is used.
+	Type *string `json:"type" validate:"required"`
+
+	// The IP address of the peer VPN gateway for this connection.
+	Address *string `json:"address,omitempty"`
+
+	// The FQDN of the peer VPN gateway for this connection.
+	Fqdn *string `json:"fqdn,omitempty"`
+}
+
+// Constants associated with the VPNGatewayConnectionDynamicRouteModePeer.Type property.
+// Indicates whether `peer.address` or `peer.fqdn` is used.
+const (
+	VPNGatewayConnectionDynamicRouteModePeerTypeAddressConst = "address"
+	VPNGatewayConnectionDynamicRouteModePeerTypeFqdnConst    = "fqdn"
+)
+
+func (*VPNGatewayConnectionDynamicRouteModePeer) isaVPNGatewayConnectionDynamicRouteModePeer() bool {
+	return true
+}
+
+type VPNGatewayConnectionDynamicRouteModePeerIntf interface {
+	isaVPNGatewayConnectionDynamicRouteModePeer() bool
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModePeer unmarshals an instance of VPNGatewayConnectionDynamicRouteModePeer from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModePeer(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModePeer)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_identity", &obj.IkeIdentity, UnmarshalVPNGatewayConnectionIkeIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fqdn", &obj.Fqdn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModePeerPrototype : VPNGatewayConnectionDynamicRouteModePeerPrototype struct
+// Models which "extend" this model:
+// - VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress
+// - VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn
+type VPNGatewayConnectionDynamicRouteModePeerPrototype struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn" validate:"required"`
+
+	// The peer IKE identity to use.
+	//
+	// If unspecified:
+	// - If `peer.address` is specified, the `type` will be `ipv4_address`, and
+	// the `value` will be `peer.address`.
+	// - If `peer.fqdn` is specified, the `type` will be `fqdn`, and the `value`
+	// will be `peer.fqdn`.
+	IkeIdentity VPNGatewayConnectionIkeIdentityPrototypeIntf `json:"ike_identity,omitempty"`
+
+	// The IP address of the peer VPN gateway for this connection.
+	Address *string `json:"address,omitempty"`
+
+	// The FQDN of the peer VPN gateway for this connection.
+	Fqdn *string `json:"fqdn,omitempty"`
+}
+
+func (*VPNGatewayConnectionDynamicRouteModePeerPrototype) isaVPNGatewayConnectionDynamicRouteModePeerPrototype() bool {
+	return true
+}
+
+type VPNGatewayConnectionDynamicRouteModePeerPrototypeIntf interface {
+	isaVPNGatewayConnectionDynamicRouteModePeerPrototype() bool
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototype unmarshals an instance of VPNGatewayConnectionDynamicRouteModePeerPrototype from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModePeerPrototype)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_identity", &obj.IkeIdentity, UnmarshalVPNGatewayConnectionIkeIdentityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fqdn", &obj.Fqdn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModeTunnel : VPNGatewayConnectionDynamicRouteModeTunnel struct
+type VPNGatewayConnectionDynamicRouteModeTunnel struct {
+	// The IP address of the neighbor on the virtual tunnel interface.
+	// This serves as the destination address for BGP peering sessions on the peer gateway
+	// within the tunnel.
+	NeighborIP *IP `json:"neighbor_ip" validate:"required"`
+
+	// BGP routing protocol state as defined in
+	// [RFC 4721](https://www.rfc-editor.org/rfc/rfc4271#section-8.2.2).
+	ProtocolState *string `json:"protocol_state" validate:"required"`
+
+	// The IP address of the VPN gateway member in which the tunnel resides.
+	PublicIP *IP `json:"public_ip" validate:"required"`
+
+	// The status of the VPN Tunnel.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Status *string `json:"status" validate:"required"`
+
+	// The reasons for the current status (if any).
+	StatusReasons []VPNGatewayConnectionTunnelStatusReason `json:"status_reasons" validate:"required"`
+
+	// The IP address assigned to the VPN gateway's virtual tunnel interface.
+	// This serves as the source address for BGP peering sessions initiated from the VPN
+	// gateway towards the peer gateway within the tunnel.
+	TunnelInterfaceIP *IP `json:"tunnel_interface_ip" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayConnectionDynamicRouteModeTunnel.ProtocolState property.
+// BGP routing protocol state as defined in
+// [RFC 4721](https://www.rfc-editor.org/rfc/rfc4271#section-8.2.2).
+const (
+	VPNGatewayConnectionDynamicRouteModeTunnelProtocolStateActiveConst      = "active"
+	VPNGatewayConnectionDynamicRouteModeTunnelProtocolStateConnectConst     = "connect"
+	VPNGatewayConnectionDynamicRouteModeTunnelProtocolStateEstablishedConst = "established"
+	VPNGatewayConnectionDynamicRouteModeTunnelProtocolStateIdleConst        = "idle"
+	VPNGatewayConnectionDynamicRouteModeTunnelProtocolStateOpenConfirmConst = "open_confirm"
+	VPNGatewayConnectionDynamicRouteModeTunnelProtocolStateOpenSentConst    = "open_sent"
+)
+
+// Constants associated with the VPNGatewayConnectionDynamicRouteModeTunnel.Status property.
+// The status of the VPN Tunnel.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	VPNGatewayConnectionDynamicRouteModeTunnelStatusDownConst = "down"
+	VPNGatewayConnectionDynamicRouteModeTunnelStatusUpConst   = "up"
+)
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModeTunnel unmarshals an instance of VPNGatewayConnectionDynamicRouteModeTunnel from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModeTunnel(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModeTunnel)
+	err = core.UnmarshalModel(m, "neighbor_ip", &obj.NeighborIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "neighbor_ip-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "protocol_state", &obj.ProtocolState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "protocol_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "public_ip", &obj.PublicIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "public_ip-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalVPNGatewayConnectionTunnelStatusReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnel_interface_ip", &obj.TunnelInterfaceIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnel_interface_ip-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // VPNGatewayConnectionIkeIdentity : VPNGatewayConnectionIkeIdentity struct
 // Models which "extend" this model:
 // - VPNGatewayConnectionIkeIdentityVPNGatewayConnectionIkeIdentityFqdn
@@ -102878,6 +105665,16 @@ type VPNGatewayConnectionPatch struct {
 
 	// The pre-shared key.
 	Psk *string `json:"psk,omitempty"`
+
+	// The routing protocol for this VPN gateway connection. For this property to be specified, `mode` must be `route`.
+	//
+	// - `none`: No routing protocol will be used.
+	// - `bgp`: The BGP routing protocol will be used.
+	RoutingProtocol *string `json:"routing_protocol,omitempty"`
+
+	// The VPN tunnel configuration to use for this VPN gateway connection
+	// (in dynamic route mode).
+	Tunnels []VPNGatewayConnectionTunnel `json:"tunnels,omitempty"`
 }
 
 // Constants associated with the VPNGatewayConnectionPatch.EstablishMode property.
@@ -102891,6 +105688,16 @@ type VPNGatewayConnectionPatch struct {
 const (
 	VPNGatewayConnectionPatchEstablishModeBidirectionalConst = "bidirectional"
 	VPNGatewayConnectionPatchEstablishModePeerOnlyConst      = "peer_only"
+)
+
+// Constants associated with the VPNGatewayConnectionPatch.RoutingProtocol property.
+// The routing protocol for this VPN gateway connection. For this property to be specified, `mode` must be `route`.
+//
+// - `none`: No routing protocol will be used.
+// - `bgp`: The BGP routing protocol will be used.
+const (
+	VPNGatewayConnectionPatchRoutingProtocolBgpConst  = "bgp"
+	VPNGatewayConnectionPatchRoutingProtocolNoneConst = "none"
 )
 
 // UnmarshalVPNGatewayConnectionPatch unmarshals an instance of VPNGatewayConnectionPatch from the specified map of raw messages.
@@ -102941,6 +105748,16 @@ func UnmarshalVPNGatewayConnectionPatch(m map[string]json.RawMessage, result int
 		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "routing_protocol", &obj.RoutingProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "routing_protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnels", &obj.Tunnels, UnmarshalVPNGatewayConnectionTunnel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnels-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -102975,6 +105792,16 @@ func (vpnGatewayConnectionPatch *VPNGatewayConnectionPatch) AsPatch() (_patch ma
 	if !core.IsNil(vpnGatewayConnectionPatch.Psk) {
 		_patch["psk"] = vpnGatewayConnectionPatch.Psk
 	}
+	if !core.IsNil(vpnGatewayConnectionPatch.RoutingProtocol) {
+		_patch["routing_protocol"] = vpnGatewayConnectionPatch.RoutingProtocol
+	}
+	if !core.IsNil(vpnGatewayConnectionPatch.Tunnels) {
+		var tunnelsPatches []map[string]interface{}
+		for _, tunnels := range vpnGatewayConnectionPatch.Tunnels {
+			tunnelsPatches = append(tunnelsPatches, tunnels.asPatch())
+		}
+		_patch["tunnels"] = tunnelsPatches
+	}
 
 	return
 }
@@ -102983,12 +105810,19 @@ func (vpnGatewayConnectionPatch *VPNGatewayConnectionPatch) AsPatch() (_patch ma
 // Models which "extend" this model:
 // - VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatch
 // - VPNGatewayConnectionPeerPatchVPNGatewayConnectionStaticRouteModePeerPatch
+// - VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch
 type VPNGatewayConnectionPeerPatch struct {
 	// The IP address of the peer VPN gateway for this connection.
 	Address *string `json:"address,omitempty"`
 
 	// The FQDN of the peer VPN gateway for this connection.
 	Fqdn *string `json:"fqdn,omitempty"`
+
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn,omitempty"`
 }
 
 func (*VPNGatewayConnectionPeerPatch) isaVPNGatewayConnectionPeerPatch() bool {
@@ -103013,6 +105847,11 @@ func UnmarshalVPNGatewayConnectionPeerPatch(m map[string]json.RawMessage, result
 		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -103025,6 +105864,9 @@ func (vpnGatewayConnectionPeerPatch *VPNGatewayConnectionPeerPatch) asPatch() (_
 	}
 	if !core.IsNil(vpnGatewayConnectionPeerPatch.Fqdn) {
 		_patch["fqdn"] = vpnGatewayConnectionPeerPatch.Fqdn
+	}
+	if !core.IsNil(vpnGatewayConnectionPeerPatch.Asn) {
+		_patch["asn"] = vpnGatewayConnectionPeerPatch.Asn
 	}
 
 	return
@@ -103232,6 +106074,7 @@ func UnmarshalVPNGatewayConnectionPolicyModePeerPrototype(m map[string]json.RawM
 // VPNGatewayConnectionPrototype : VPNGatewayConnectionPrototype struct
 // Models which "extend" this model:
 // - VPNGatewayConnectionPrototypeVPNGatewayConnectionStaticRouteModePrototype
+// - VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype
 // - VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype
 type VPNGatewayConnectionPrototype struct {
 	// If set to false, the VPN gateway connection is shut down.
@@ -103277,6 +106120,10 @@ type VPNGatewayConnectionPrototype struct {
 
 	// The routing protocol for this VPN gateway connection.
 	RoutingProtocol *string `json:"routing_protocol,omitempty"`
+
+	// The VPN tunnel configuration to use for this VPN gateway connection
+	// (in dynamic route mode).
+	Tunnels []VPNGatewayConnectionTunnelPrototype `json:"tunnels,omitempty"`
 }
 
 // Constants associated with the VPNGatewayConnectionPrototype.EstablishMode property.
@@ -103362,6 +106209,11 @@ func UnmarshalVPNGatewayConnectionPrototype(m map[string]json.RawMessage, result
 	err = core.UnmarshalPrimitive(m, "routing_protocol", &obj.RoutingProtocol)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "routing_protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnels", &obj.Tunnels, UnmarshalVPNGatewayConnectionTunnelPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnels-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -103674,6 +106526,92 @@ func UnmarshalVPNGatewayConnectionStatusReason(m map[string]json.RawMessage, res
 	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionTunnel : VPNGatewayConnectionTunnel struct
+type VPNGatewayConnectionTunnel struct {
+	// The IP address of the neighbor on the virtual tunnel interface.
+	// This serves as the destination address for BGP peering sessions on the peer gateway
+	// within the tunnel.
+	NeighborIP *IP `json:"neighbor_ip,omitempty"`
+
+	// The IP address assigned to the VPN gateway's virtual tunnel interface.
+	// This serves as the source address for BGP peering sessions initiated from the VPN
+	// gateway towards the peer gateway within the tunnel.
+	TunnelInterfaceIP *IP `json:"tunnel_interface_ip,omitempty"`
+}
+
+// UnmarshalVPNGatewayConnectionTunnel unmarshals an instance of VPNGatewayConnectionTunnel from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionTunnel(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionTunnel)
+	err = core.UnmarshalModel(m, "neighbor_ip", &obj.NeighborIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "neighbor_ip-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnel_interface_ip", &obj.TunnelInterfaceIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnel_interface_ip-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the VPNGatewayConnectionTunnel
+func (vpnGatewayConnectionTunnel *VPNGatewayConnectionTunnel) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(vpnGatewayConnectionTunnel.NeighborIP) {
+		_patch["neighbor_ip"] = vpnGatewayConnectionTunnel.NeighborIP.asPatch()
+	}
+	if !core.IsNil(vpnGatewayConnectionTunnel.TunnelInterfaceIP) {
+		_patch["tunnel_interface_ip"] = vpnGatewayConnectionTunnel.TunnelInterfaceIP.asPatch()
+	}
+
+	return
+}
+
+// VPNGatewayConnectionTunnelPrototype : VPNGatewayConnectionTunnelPrototype struct
+type VPNGatewayConnectionTunnelPrototype struct {
+	// The IP address of the neighbor on the virtual tunnel interface.
+	// This serves as the destination address for BGP peering sessions on the peer gateway
+	// within the tunnel.
+	NeighborIP *IP `json:"neighbor_ip" validate:"required"`
+
+	// The IP address assigned to the VPN gateway's virtual tunnel interface.
+	// This serves as the source address for BGP peering sessions initiated from the VPN
+	// gateway towards the peer gateway within the tunnel.
+	TunnelInterfaceIP *IP `json:"tunnel_interface_ip" validate:"required"`
+}
+
+// NewVPNGatewayConnectionTunnelPrototype : Instantiate VPNGatewayConnectionTunnelPrototype (Generic Model Constructor)
+func (*VpcV1) NewVPNGatewayConnectionTunnelPrototype(neighborIP *IP, tunnelInterfaceIP *IP) (_model *VPNGatewayConnectionTunnelPrototype, err error) {
+	_model = &VPNGatewayConnectionTunnelPrototype{
+		NeighborIP:        neighborIP,
+		TunnelInterfaceIP: tunnelInterfaceIP,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalVPNGatewayConnectionTunnelPrototype unmarshals an instance of VPNGatewayConnectionTunnelPrototype from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionTunnelPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionTunnelPrototype)
+	err = core.UnmarshalModel(m, "neighbor_ip", &obj.NeighborIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "neighbor_ip-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnel_interface_ip", &obj.TunnelInterfaceIP, UnmarshalIP)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnel_interface_ip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -104091,6 +107029,12 @@ func UnmarshalVPNGatewayMemberLifecycleReason(m map[string]json.RawMessage, resu
 
 // VPNGatewayPatch : VPNGatewayPatch struct
 type VPNGatewayPatch struct {
+	// The local autonomous system number (ASN) for this VPN gateway and its connections. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	LocalAsn *int64 `json:"local_asn,omitempty"`
+
 	// The name for this VPN gateway. The name must not be used by another VPN gateway in the VPC.
 	Name *string `json:"name,omitempty"`
 }
@@ -104098,6 +107042,11 @@ type VPNGatewayPatch struct {
 // UnmarshalVPNGatewayPatch unmarshals an instance of VPNGatewayPatch from the specified map of raw messages.
 func UnmarshalVPNGatewayPatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(VPNGatewayPatch)
+	err = core.UnmarshalPrimitive(m, "local_asn", &obj.LocalAsn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local_asn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -104110,6 +107059,9 @@ func UnmarshalVPNGatewayPatch(m map[string]json.RawMessage, result interface{}) 
 // AsPatch returns a generic map representation of the VPNGatewayPatch
 func (vpnGatewayPatch *VPNGatewayPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	_patch = map[string]interface{}{}
+	if !core.IsNil(vpnGatewayPatch.LocalAsn) {
+		_patch["local_asn"] = vpnGatewayPatch.LocalAsn
+	}
 	if !core.IsNil(vpnGatewayPatch.Name) {
 		_patch["name"] = vpnGatewayPatch.Name
 	}
@@ -104132,6 +107084,16 @@ type VPNGatewayPrototype struct {
 
 	// Identifies a subnet by a unique property.
 	Subnet SubnetIdentityIntf `json:"subnet" validate:"required"`
+
+	// The static CIDRs advertised through any enabled routing protocol (for example, BGP). The routing protocol will
+	// advertise routes with these CIDRs as route destinations.
+	AdvertisedCIDRs []string `json:"advertised_cidrs,omitempty"`
+
+	// The local autonomous system number (ASN) for this VPN gateway and its connections. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	LocalAsn *int64 `json:"local_asn,omitempty"`
 
 	// The mode for this VPN gateway.
 	Mode *string `json:"mode,omitempty"`
@@ -104169,9 +107131,324 @@ func UnmarshalVPNGatewayPrototype(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "advertised_cidrs", &obj.AdvertisedCIDRs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "advertised_cidrs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "local_asn", &obj.LocalAsn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local_asn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "mode", &obj.Mode)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "mode-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayServiceConnection : VPNGatewayServiceConnection struct
+type VPNGatewayServiceConnection struct {
+	// The date and time that this VPN gateway service connection was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	Creator VPNGatewayServiceConnectionCreatorIntf `json:"creator" validate:"required"`
+
+	// The unique identifier for this VPN gateway service connection.
+	ID *string `json:"id" validate:"required"`
+
+	// The reasons for the current `lifecycle_state` (if any).
+	LifecycleReasons []VPNGatewayServiceConnectionLifecycleReason `json:"lifecycle_reasons" validate:"required"`
+
+	// The lifecycle state of the VPN gateway service connection.
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
+
+	// The status of this VPN gateway service connection:
+	// - `degraded`: operating with compromised performance.
+	// - `down`: not operational.
+	// - `up`: operating normally.
+	Status *string `json:"status" validate:"required"`
+
+	// The reasons for the current VPN gateway service connection status (if any).
+	StatusReasons []VPNGatewayServiceConnectionStatusReason `json:"status_reasons" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayServiceConnection.LifecycleState property.
+// The lifecycle state of the VPN gateway service connection.
+const (
+	VPNGatewayServiceConnectionLifecycleStateDeletingConst  = "deleting"
+	VPNGatewayServiceConnectionLifecycleStateFailedConst    = "failed"
+	VPNGatewayServiceConnectionLifecycleStatePendingConst   = "pending"
+	VPNGatewayServiceConnectionLifecycleStateStableConst    = "stable"
+	VPNGatewayServiceConnectionLifecycleStateSuspendedConst = "suspended"
+	VPNGatewayServiceConnectionLifecycleStateUpdatingConst  = "updating"
+	VPNGatewayServiceConnectionLifecycleStateWaitingConst   = "waiting"
+)
+
+// Constants associated with the VPNGatewayServiceConnection.Status property.
+// The status of this VPN gateway service connection:
+// - `degraded`: operating with compromised performance.
+// - `down`: not operational.
+// - `up`: operating normally.
+const (
+	VPNGatewayServiceConnectionStatusDegradedConst = "degraded"
+	VPNGatewayServiceConnectionStatusDownConst     = "down"
+	VPNGatewayServiceConnectionStatusUpConst       = "up"
+)
+
+// UnmarshalVPNGatewayServiceConnection unmarshals an instance of VPNGatewayServiceConnection from the specified map of raw messages.
+func UnmarshalVPNGatewayServiceConnection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayServiceConnection)
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "creator", &obj.Creator, UnmarshalVPNGatewayServiceConnectionCreator)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "creator-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "lifecycle_reasons", &obj.LifecycleReasons, UnmarshalVPNGatewayServiceConnectionLifecycleReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lifecycle_state", &obj.LifecycleState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalVPNGatewayServiceConnectionStatusReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayServiceConnectionCollection : VPNGatewayServiceConnectionCollection struct
+type VPNGatewayServiceConnectionCollection struct {
+	// A link to the first page of resources.
+	First *PageLink `json:"first" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *PageLink `json:"next,omitempty"`
+
+	// A page of service connections for the VPN gateway.
+	ServiceConnections []VPNGatewayServiceConnection `json:"service_connections" validate:"required"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalVPNGatewayServiceConnectionCollection unmarshals an instance of VPNGatewayServiceConnectionCollection from the specified map of raw messages.
+func UnmarshalVPNGatewayServiceConnectionCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayServiceConnectionCollection)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "service_connections", &obj.ServiceConnections, UnmarshalVPNGatewayServiceConnection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_connections-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VPNGatewayServiceConnectionCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
+// VPNGatewayServiceConnectionCreator : VPNGatewayServiceConnectionCreator struct
+// Models which "extend" this model:
+// - VPNGatewayServiceConnectionCreatorTransitGatewayReference
+type VPNGatewayServiceConnectionCreator struct {
+	// The CRN for this transit gateway.
+	CRN *string `json:"crn,omitempty"`
+
+	// The unique identifier for this transit gateway.
+	ID *string `json:"id,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type,omitempty"`
+}
+
+// Constants associated with the VPNGatewayServiceConnectionCreator.ResourceType property.
+// The resource type.
+const (
+	VPNGatewayServiceConnectionCreatorResourceTypeTransitGatewayConst = "transit_gateway"
+)
+
+func (*VPNGatewayServiceConnectionCreator) isaVPNGatewayServiceConnectionCreator() bool {
+	return true
+}
+
+type VPNGatewayServiceConnectionCreatorIntf interface {
+	isaVPNGatewayServiceConnectionCreator() bool
+}
+
+// UnmarshalVPNGatewayServiceConnectionCreator unmarshals an instance of VPNGatewayServiceConnectionCreator from the specified map of raw messages.
+func UnmarshalVPNGatewayServiceConnectionCreator(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayServiceConnectionCreator)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayServiceConnectionLifecycleReason : VPNGatewayServiceConnectionLifecycleReason struct
+type VPNGatewayServiceConnectionLifecycleReason struct {
+	// A reason code for this lifecycle state:
+	// - `internal_error`: internal error (contact IBM support)
+	// - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
+	//   support)
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Code *string `json:"code" validate:"required"`
+
+	// An explanation of the reason for this lifecycle state.
+	Message *string `json:"message" validate:"required"`
+
+	// A link to documentation about the reason for this lifecycle state.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the VPNGatewayServiceConnectionLifecycleReason.Code property.
+// A reason code for this lifecycle state:
+//   - `internal_error`: internal error (contact IBM support)
+//   - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
+//     support)
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	VPNGatewayServiceConnectionLifecycleReasonCodeInternalErrorConst               = "internal_error"
+	VPNGatewayServiceConnectionLifecycleReasonCodeResourceSuspendedByProviderConst = "resource_suspended_by_provider"
+)
+
+// UnmarshalVPNGatewayServiceConnectionLifecycleReason unmarshals an instance of VPNGatewayServiceConnectionLifecycleReason from the specified map of raw messages.
+func UnmarshalVPNGatewayServiceConnectionLifecycleReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayServiceConnectionLifecycleReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayServiceConnectionStatusReason : VPNGatewayServiceConnectionStatusReason struct
+type VPNGatewayServiceConnectionStatusReason struct {
+	// The reasons for the current VPN gateway service connection status (if any).
+	// - `internal_error`
+	// - `peer_not_responding`.
+	Code *string `json:"code" validate:"required"`
+
+	// An explanation of the reason for this VPN gateway service connection's status.
+	Message *string `json:"message" validate:"required"`
+
+	// A link to documentation about this status reason.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the VPNGatewayServiceConnectionStatusReason.Code property.
+// The reasons for the current VPN gateway service connection status (if any).
+// - `internal_error`
+// - `peer_not_responding`.
+const (
+	VPNGatewayServiceConnectionStatusReasonCodeInternalErrorConst     = "internal_error"
+	VPNGatewayServiceConnectionStatusReasonCodePeerNotRespondingConst = "peer_not_responding"
+)
+
+// UnmarshalVPNGatewayServiceConnectionStatusReason unmarshals an instance of VPNGatewayServiceConnectionStatusReason from the specified map of raw messages.
+func UnmarshalVPNGatewayServiceConnectionStatusReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayServiceConnectionStatusReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -116021,6 +119298,62 @@ func UnmarshalEndpointGatewayReservedIPReservedIPPrototypeTargetContext(m map[st
 	return
 }
 
+// EndpointGatewayResourceBindingTargetCRN : The CRN for the resource targeted by this resource binding.
+// This model "extends" EndpointGatewayResourceBindingTarget
+type EndpointGatewayResourceBindingTargetCRN struct {
+	CRN *string `json:"crn" validate:"required"`
+}
+
+func (*EndpointGatewayResourceBindingTargetCRN) isaEndpointGatewayResourceBindingTarget() bool {
+	return true
+}
+
+// UnmarshalEndpointGatewayResourceBindingTargetCRN unmarshals an instance of EndpointGatewayResourceBindingTargetCRN from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingTargetCRN(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingTargetCRN)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN : The resource to bind to the endpoint gateway.
+// This model "extends" EndpointGatewayResourceBindingTargetPrototype
+type EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN struct {
+	CRN *string `json:"crn" validate:"required"`
+}
+
+// NewEndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN : Instantiate EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN (Generic Model Constructor)
+func (*VpcV1) NewEndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN(crn string) (_model *EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN, err error) {
+	_model = &EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN{
+		CRN: core.StringPtr(crn),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN) isaEndpointGatewayResourceBindingTargetPrototype() bool {
+	return true
+}
+
+// UnmarshalEndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN unmarshals an instance of EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN from the specified map of raw messages.
+func UnmarshalEndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayResourceBindingTargetPrototypeEndpointGatewayResourceBindingTargetByCRN)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype : EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype struct
 // This model "extends" EndpointGatewayTargetPrototype
 type EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype struct {
@@ -118434,24 +121767,26 @@ func UnmarshalInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceIn
 
 // InstanceGroupManagerActionPrototypeScheduledActionPrototype : InstanceGroupManagerActionPrototypeScheduledActionPrototype struct
 // Models which "extend" this model:
-// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt
-// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec
+// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup
+// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager
+// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup
+// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager
 // This model "extends" InstanceGroupManagerActionPrototype
 type InstanceGroupManagerActionPrototypeScheduledActionPrototype struct {
 	// The name for this instance group manager action. The name must not be used by another action for the instance group
 	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The date and time the scheduled action will run.
-	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
+	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
+	// period.
+	CronSpec *string `json:"cron_spec,omitempty"`
 
 	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group,omitempty"`
 
 	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager,omitempty"`
 
-	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
-	// period.
-	CronSpec *string `json:"cron_spec,omitempty"`
+	// The date and time the scheduled action will run.
+	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
 }
 
 func (*InstanceGroupManagerActionPrototypeScheduledActionPrototype) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
@@ -118475,9 +121810,9 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototype(m map[
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
+	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalInstanceGroupManagerScheduledActionGroupPrototype)
@@ -118490,9 +121825,9 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototype(m map[
 		err = core.SDKErrorf(err, "", "manager-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
+	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -122019,6 +125354,99 @@ func UnmarshalInstanceProfileVolumeBandwidthFixed(m map[string]json.RawMessage, 
 	return
 }
 
+// InstanceProfileVolumeBandwidthQoSModesDependent : The volume bandwidth QoS modes for an instance with this profile depends on its configuration.
+// This model "extends" InstanceProfileVolumeBandwidthQoSModes
+type InstanceProfileVolumeBandwidthQoSModesDependent struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModesDependent.Type property.
+// The type for this profile field.
+const (
+	InstanceProfileVolumeBandwidthQoSModesDependentTypeDependentConst = "dependent"
+)
+
+func (*InstanceProfileVolumeBandwidthQoSModesDependent) isaInstanceProfileVolumeBandwidthQoSModes() bool {
+	return true
+}
+
+// UnmarshalInstanceProfileVolumeBandwidthQoSModesDependent unmarshals an instance of InstanceProfileVolumeBandwidthQoSModesDependent from the specified map of raw messages.
+func UnmarshalInstanceProfileVolumeBandwidthQoSModesDependent(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceProfileVolumeBandwidthQoSModesDependent)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// InstanceProfileVolumeBandwidthQoSModesEnum : InstanceProfileVolumeBandwidthQoSModesEnum struct
+// This model "extends" InstanceProfileVolumeBandwidthQoSModes
+type InstanceProfileVolumeBandwidthQoSModesEnum struct {
+	// The default volume bandwidth QoS mode for this profile.
+	Default *string `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The permitted volume bandwidth QoS modes for an instance using this profile.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModesEnum.Default property.
+// The default volume bandwidth QoS mode for this profile.
+const (
+	InstanceProfileVolumeBandwidthQoSModesEnumDefaultPooledConst   = "pooled"
+	InstanceProfileVolumeBandwidthQoSModesEnumDefaultWeightedConst = "weighted"
+)
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModesEnum.Type property.
+// The type for this profile field.
+const (
+	InstanceProfileVolumeBandwidthQoSModesEnumTypeEnumConst = "enum"
+)
+
+// Constants associated with the InstanceProfileVolumeBandwidthQoSModesEnum.Values property.
+// A volume bandwidth QoS mode:
+// - `pooled`: All volumes attached to an instance will pool and share bandwidth.
+// - `weighted`: Each volume attached to an instance will have its own bandwidth, weighted according to its IOPS.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	InstanceProfileVolumeBandwidthQoSModesEnumValuesPooledConst   = "pooled"
+	InstanceProfileVolumeBandwidthQoSModesEnumValuesWeightedConst = "weighted"
+)
+
+func (*InstanceProfileVolumeBandwidthQoSModesEnum) isaInstanceProfileVolumeBandwidthQoSModes() bool {
+	return true
+}
+
+// UnmarshalInstanceProfileVolumeBandwidthQoSModesEnum unmarshals an instance of InstanceProfileVolumeBandwidthQoSModesEnum from the specified map of raw messages.
+func UnmarshalInstanceProfileVolumeBandwidthQoSModesEnum(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceProfileVolumeBandwidthQoSModesEnum)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // InstanceProfileVolumeBandwidthRange : The permitted storage bandwidth range (in megabits per second) shared across the storage volumes of an instance with
 // this profile.
 // This model "extends" InstanceProfileVolumeBandwidth
@@ -122137,7 +125565,8 @@ type InstancePrototypeInstanceByCatalogOffering struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -122155,6 +125584,12 @@ type InstancePrototypeInstanceByCatalogOffering struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -122198,6 +125633,16 @@ const (
 	InstancePrototypeInstanceByCatalogOfferingConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByCatalogOfferingConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByCatalogOfferingConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByCatalogOffering.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByCatalogOfferingVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByCatalogOfferingVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstancePrototypeInstanceByCatalogOffering) isaInstancePrototypeInstanceByCatalogOffering() bool {
@@ -122289,6 +125734,11 @@ func UnmarshalInstancePrototypeInstanceByCatalogOffering(m map[string]json.RawMe
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -122393,7 +125843,8 @@ type InstancePrototypeInstanceByImage struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -122411,6 +125862,12 @@ type InstancePrototypeInstanceByImage struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -122448,6 +125905,16 @@ const (
 	InstancePrototypeInstanceByImageConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByImageConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByImageConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByImage.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByImageVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByImageVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstancePrototypeInstanceByImage) isaInstancePrototypeInstanceByImage() bool {
@@ -122539,6 +126006,11 @@ func UnmarshalInstancePrototypeInstanceByImage(m map[string]json.RawMessage, res
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -122641,7 +126113,8 @@ type InstancePrototypeInstanceBySourceSnapshot struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -122659,6 +126132,12 @@ type InstancePrototypeInstanceBySourceSnapshot struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -122693,6 +126172,16 @@ const (
 	InstancePrototypeInstanceBySourceSnapshotConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceBySourceSnapshotConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceBySourceSnapshotConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceBySourceSnapshot.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceBySourceSnapshotVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceBySourceSnapshotVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstancePrototypeInstanceBySourceSnapshot) isaInstancePrototypeInstanceBySourceSnapshot() bool {
@@ -122784,6 +126273,11 @@ func UnmarshalInstancePrototypeInstanceBySourceSnapshot(m map[string]json.RawMes
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -122884,7 +126378,8 @@ type InstancePrototypeInstanceBySourceTemplate struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -122902,6 +126397,12 @@ type InstancePrototypeInstanceBySourceTemplate struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -122953,6 +126454,16 @@ const (
 	InstancePrototypeInstanceBySourceTemplateConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceBySourceTemplateConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceBySourceTemplateConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceBySourceTemplate.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceBySourceTemplateVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceBySourceTemplateVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceBySourceTemplate : Instantiate InstancePrototypeInstanceBySourceTemplate (Generic Model Constructor)
@@ -123047,6 +126558,11 @@ func UnmarshalInstancePrototypeInstanceBySourceTemplate(m map[string]json.RawMes
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -123159,7 +126675,8 @@ type InstancePrototypeInstanceByVolume struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -123177,6 +126694,12 @@ type InstancePrototypeInstanceByVolume struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -123211,6 +126734,16 @@ const (
 	InstancePrototypeInstanceByVolumeConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByVolumeConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByVolumeConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByVolume.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByVolumeVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByVolumeVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstancePrototypeInstanceByVolume) isaInstancePrototypeInstanceByVolume() bool {
@@ -123302,6 +126835,11 @@ func UnmarshalInstancePrototypeInstanceByVolume(m map[string]json.RawMessage, re
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -123532,7 +127070,8 @@ type InstanceTemplatePrototypeInstanceTemplateByCatalogOffering struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -123550,6 +127089,12 @@ type InstanceTemplatePrototypeInstanceTemplateByCatalogOffering struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -123593,6 +127138,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateByCatalogOffering.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplatePrototypeInstanceTemplateByCatalogOffering) isaInstanceTemplatePrototypeInstanceTemplateByCatalogOffering() bool {
@@ -123684,6 +127239,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateByCatalogOffering(m map[s
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -123786,7 +127346,8 @@ type InstanceTemplatePrototypeInstanceTemplateByImage struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -123804,6 +127365,12 @@ type InstanceTemplatePrototypeInstanceTemplateByImage struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -123841,6 +127408,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateByImageConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateByImageConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateByImageConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateByImage.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateByImageVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateByImageVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplatePrototypeInstanceTemplateByImage) isaInstanceTemplatePrototypeInstanceTemplateByImage() bool {
@@ -123932,6 +127509,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateByImage(m map[string]json
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -124032,7 +127614,8 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceSnapshot struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -124050,6 +127633,12 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceSnapshot struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -124084,6 +127673,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateBySourceSnapshot.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplatePrototypeInstanceTemplateBySourceSnapshot) isaInstanceTemplatePrototypeInstanceTemplateBySourceSnapshot() bool {
@@ -124175,6 +127774,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateBySourceSnapshot(m map[st
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -124273,7 +127877,8 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceTemplate struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -124291,6 +127896,12 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceTemplate struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -124342,6 +127953,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateBySourceTemplateConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateBySourceTemplateConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateBySourceTemplateConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateBySourceTemplate.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateBySourceTemplateVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateBySourceTemplateVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateBySourceTemplate : Instantiate InstanceTemplatePrototypeInstanceTemplateBySourceTemplate (Generic Model Constructor)
@@ -124436,6 +128057,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateBySourceTemplate(m map[st
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -124557,7 +128183,8 @@ type InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -124576,6 +128203,12 @@ type InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -124619,6 +128252,16 @@ const (
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext) isaInstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext() bool {
@@ -124732,6 +128375,11 @@ func UnmarshalInstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext(m
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -124841,7 +128489,8 @@ type InstanceTemplateInstanceByImageInstanceTemplateContext struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -124860,6 +128509,12 @@ type InstanceTemplateInstanceByImageInstanceTemplateContext struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -124897,6 +128552,16 @@ const (
 	InstanceTemplateInstanceByImageInstanceTemplateContextConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceByImageInstanceTemplateContextConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceByImageInstanceTemplateContextConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceByImageInstanceTemplateContext.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceByImageInstanceTemplateContextVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceByImageInstanceTemplateContextVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceByImageInstanceTemplateContext) isaInstanceTemplateInstanceByImageInstanceTemplateContext() bool {
@@ -125010,6 +128675,11 @@ func UnmarshalInstanceTemplateInstanceByImageInstanceTemplateContext(m map[strin
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -125119,7 +128789,8 @@ type InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext struct {
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -125138,6 +128809,12 @@ type InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext struct {
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -125172,6 +128849,16 @@ const (
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext) isaInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext() bool {
@@ -125283,6 +128970,11 @@ func UnmarshalInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext(m 
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -126905,6 +130597,81 @@ func (loadBalancerPoolIdentityLoadBalancerPoolIdentityByID *LoadBalancerPoolIden
 	return
 }
 
+// LoadBalancerPoolMemberTargetByReservedIP : LoadBalancerPoolMemberTargetByReservedIP struct
+// This model "extends" LoadBalancerPoolMemberTarget
+type LoadBalancerPoolMemberTargetByReservedIP struct {
+	// The IP address.
+	//
+	// If the address has not yet been selected, the value will be `0.0.0.0`.
+	//
+	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
+	// the future.
+	Address *string `json:"address" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this reserved IP.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this reserved IP.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this reserved IP. The name is unique across all reserved IPs in a subnet.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerPoolMemberTargetByReservedIP.ResourceType property.
+// The resource type.
+const (
+	LoadBalancerPoolMemberTargetByReservedIPResourceTypeSubnetReservedIPConst = "subnet_reserved_ip"
+)
+
+func (*LoadBalancerPoolMemberTargetByReservedIP) isaLoadBalancerPoolMemberTarget() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerPoolMemberTargetByReservedIP unmarshals an instance of LoadBalancerPoolMemberTargetByReservedIP from the specified map of raw messages.
+func UnmarshalLoadBalancerPoolMemberTargetByReservedIP(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerPoolMemberTargetByReservedIP)
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // LoadBalancerPoolMemberTargetPrototypeIP : LoadBalancerPoolMemberTargetPrototypeIP struct
 // This model "extends" LoadBalancerPoolMemberTargetPrototype
 type LoadBalancerPoolMemberTargetPrototypeIP struct {
@@ -127089,9 +130856,65 @@ func (loadBalancerPoolMemberTargetPrototypeLoadBalancerIdentity *LoadBalancerPoo
 	return
 }
 
-// LoadBalancerPoolMemberTargetIP : LoadBalancerPoolMemberTargetIP struct
+// LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity : Identifies a reserved IP by a unique property.
+// Models which "extend" this model:
+// - LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID
+// - LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref
+// This model "extends" LoadBalancerPoolMemberTargetPrototype
+type LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity struct {
+	// The unique identifier for this reserved IP.
+	ID *string `json:"id,omitempty"`
+
+	// The URL for this reserved IP.
+	Href *string `json:"href,omitempty"`
+}
+
+func (*LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity) isaLoadBalancerPoolMemberTargetPrototypeReservedIPIdentity() bool {
+	return true
+}
+
+type LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityIntf interface {
+	LoadBalancerPoolMemberTargetPrototypeIntf
+	isaLoadBalancerPoolMemberTargetPrototypeReservedIPIdentity() bool
+}
+
+func (*LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity) isaLoadBalancerPoolMemberTargetPrototype() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerPoolMemberTargetPrototypeReservedIPIdentity unmarshals an instance of LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity from the specified map of raw messages.
+func UnmarshalLoadBalancerPoolMemberTargetPrototypeReservedIPIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity
+func (loadBalancerPoolMemberTargetPrototypeReservedIPIdentity *LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(loadBalancerPoolMemberTargetPrototypeReservedIPIdentity.ID) {
+		_patch["id"] = loadBalancerPoolMemberTargetPrototypeReservedIPIdentity.ID
+	}
+	if !core.IsNil(loadBalancerPoolMemberTargetPrototypeReservedIPIdentity.Href) {
+		_patch["href"] = loadBalancerPoolMemberTargetPrototypeReservedIPIdentity.Href
+	}
+
+	return
+}
+
+// LoadBalancerPoolMemberTargetIPNotReservedIP : LoadBalancerPoolMemberTargetIPNotReservedIP struct
 // This model "extends" LoadBalancerPoolMemberTarget
-type LoadBalancerPoolMemberTargetIP struct {
+type LoadBalancerPoolMemberTargetIPNotReservedIP struct {
 	// The IP address.
 	//
 	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
@@ -127099,13 +130922,13 @@ type LoadBalancerPoolMemberTargetIP struct {
 	Address *string `json:"address" validate:"required"`
 }
 
-func (*LoadBalancerPoolMemberTargetIP) isaLoadBalancerPoolMemberTarget() bool {
+func (*LoadBalancerPoolMemberTargetIPNotReservedIP) isaLoadBalancerPoolMemberTarget() bool {
 	return true
 }
 
-// UnmarshalLoadBalancerPoolMemberTargetIP unmarshals an instance of LoadBalancerPoolMemberTargetIP from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolMemberTargetIP(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolMemberTargetIP)
+// UnmarshalLoadBalancerPoolMemberTargetIPNotReservedIP unmarshals an instance of LoadBalancerPoolMemberTargetIPNotReservedIP from the specified map of raw messages.
+func UnmarshalLoadBalancerPoolMemberTargetIPNotReservedIP(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerPoolMemberTargetIPNotReservedIP)
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
@@ -133895,38 +137718,60 @@ func UnmarshalShareIdentityByID(m map[string]json.RawMessage, result interface{}
 // Required if the share's `access_control_mode` is `security_group`.
 // This model "extends" ShareMountTargetPrototype
 type ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup struct {
+	// The protocol to use to access the share for this share mount target:
+	// - `nfs4`: NFSv4 will be used.
+	//
+	// The specified value must be listed in the share's `allowed_access_protocols`.
+	AccessProtocol *string `json:"access_protocol" validate:"required"`
+
 	// The name for this share mount target. The name must not be used by another mount target for the file share. If
 	// unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
 	// The transit encryption mode to use for this share mount target:
 	// - `none`: Not encrypted in transit.
-	// - `user_managed`: Encrypted in transit using an instance identity certificate.  The
-	//                   `access_control_mode` for the share must be `security_group`.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate. The
+	//   `access_control_mode` for the share must be `security_group`.
+	// - `stunnel`: Encrypted in transit using an stunnel connection. The
+	//   `access_control_mode` for the share must be `security_group`.
 	//
 	// The specified value must be listed in the share's
 	// `allowed_transit_encryption_modes`.
-	TransitEncryption *string `json:"transit_encryption,omitempty"`
+	TransitEncryption *string `json:"transit_encryption" validate:"required"`
 
 	VirtualNetworkInterface ShareMountTargetVirtualNetworkInterfacePrototypeIntf `json:"virtual_network_interface" validate:"required"`
 }
 
+// Constants associated with the ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup.AccessProtocol property.
+// The protocol to use to access the share for this share mount target:
+// - `nfs4`: NFSv4 will be used.
+//
+// The specified value must be listed in the share's `allowed_access_protocols`.
+const (
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroupAccessProtocolNfs4Const = "nfs4"
+)
+
 // Constants associated with the ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup.TransitEncryption property.
 // The transit encryption mode to use for this share mount target:
 //   - `none`: Not encrypted in transit.
-//   - `user_managed`: Encrypted in transit using an instance identity certificate.  The
+//   - `ipsec`: Encrypted in transit using an instance identity certificate. The
+//     `access_control_mode` for the share must be `security_group`.
+//   - `stunnel`: Encrypted in transit using an stunnel connection. The
 //     `access_control_mode` for the share must be `security_group`.
 //
 // The specified value must be listed in the share's
 // `allowed_transit_encryption_modes`.
 const (
-	ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroupTransitEncryptionNoneConst        = "none"
-	ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroupTransitEncryptionUserManagedConst = "user_managed"
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroupTransitEncryptionIpsecConst   = "ipsec"
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroupTransitEncryptionNoneConst    = "none"
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroupTransitEncryptionStunnelConst = "stunnel"
 )
 
 // NewShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup : Instantiate ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup (Generic Model Constructor)
-func (*VpcV1) NewShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup(virtualNetworkInterface ShareMountTargetVirtualNetworkInterfacePrototypeIntf) (_model *ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup, err error) {
+func (*VpcV1) NewShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup(accessProtocol string, transitEncryption string, virtualNetworkInterface ShareMountTargetVirtualNetworkInterfacePrototypeIntf) (_model *ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup, err error) {
 	_model = &ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup{
+		AccessProtocol:          core.StringPtr(accessProtocol),
+		TransitEncryption:       core.StringPtr(transitEncryption),
 		VirtualNetworkInterface: virtualNetworkInterface,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -133943,6 +137788,11 @@ func (*ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup
 // UnmarshalShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup unmarshals an instance of ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup from the specified map of raw messages.
 func UnmarshalShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ShareMountTargetPrototypeShareMountTargetByAccessControlModeSecurityGroup)
+	err = core.UnmarshalPrimitive(m, "access_protocol", &obj.AccessProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_protocol-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -133968,40 +137818,62 @@ func UnmarshalShareMountTargetPrototypeShareMountTargetByAccessControlModeSecuri
 // Required if the share's `access_control_mode` is `vpc`.
 // This model "extends" ShareMountTargetPrototype
 type ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC struct {
+	// The protocol to use to access the share for this share mount target:
+	// - `nfs4`: NFSv4 will be used.
+	//
+	// The specified value must be listed in the share's `allowed_access_protocols`.
+	AccessProtocol *string `json:"access_protocol" validate:"required"`
+
 	// The name for this share mount target. The name must not be used by another mount target for the file share. If
 	// unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
 	// The transit encryption mode to use for this share mount target:
 	// - `none`: Not encrypted in transit.
-	// - `user_managed`: Encrypted in transit using an instance identity certificate.  The
-	//                   `access_control_mode` for the share must be `security_group`.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate. The
+	//   `access_control_mode` for the share must be `security_group`.
+	// - `stunnel`: Encrypted in transit using an stunnel connection. The
+	//   `access_control_mode` for the share must be `security_group`.
 	//
 	// The specified value must be listed in the share's
 	// `allowed_transit_encryption_modes`.
-	TransitEncryption *string `json:"transit_encryption,omitempty"`
+	TransitEncryption *string `json:"transit_encryption" validate:"required"`
 
 	// Identifies a VPC by a unique property.
 	VPC VPCIdentityIntf `json:"vpc" validate:"required"`
 }
 
+// Constants associated with the ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC.AccessProtocol property.
+// The protocol to use to access the share for this share mount target:
+// - `nfs4`: NFSv4 will be used.
+//
+// The specified value must be listed in the share's `allowed_access_protocols`.
+const (
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPCAccessProtocolNfs4Const = "nfs4"
+)
+
 // Constants associated with the ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC.TransitEncryption property.
 // The transit encryption mode to use for this share mount target:
 //   - `none`: Not encrypted in transit.
-//   - `user_managed`: Encrypted in transit using an instance identity certificate.  The
+//   - `ipsec`: Encrypted in transit using an instance identity certificate. The
+//     `access_control_mode` for the share must be `security_group`.
+//   - `stunnel`: Encrypted in transit using an stunnel connection. The
 //     `access_control_mode` for the share must be `security_group`.
 //
 // The specified value must be listed in the share's
 // `allowed_transit_encryption_modes`.
 const (
-	ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPCTransitEncryptionNoneConst        = "none"
-	ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPCTransitEncryptionUserManagedConst = "user_managed"
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPCTransitEncryptionIpsecConst   = "ipsec"
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPCTransitEncryptionNoneConst    = "none"
+	ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPCTransitEncryptionStunnelConst = "stunnel"
 )
 
 // NewShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC : Instantiate ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC (Generic Model Constructor)
-func (*VpcV1) NewShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC(vpc VPCIdentityIntf) (_model *ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC, err error) {
+func (*VpcV1) NewShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC(accessProtocol string, transitEncryption string, vpc VPCIdentityIntf) (_model *ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC, err error) {
 	_model = &ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC{
-		VPC: vpc,
+		AccessProtocol:    core.StringPtr(accessProtocol),
+		TransitEncryption: core.StringPtr(transitEncryption),
+		VPC:               vpc,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -134017,6 +137889,11 @@ func (*ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC) isaShare
 // UnmarshalShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC unmarshals an instance of ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC from the specified map of raw messages.
 func UnmarshalShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ShareMountTargetPrototypeShareMountTargetByAccessControlModeVPC)
+	err = core.UnmarshalPrimitive(m, "access_protocol", &obj.AccessProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_protocol-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -134236,6 +138113,473 @@ func UnmarshalShareMountTargetVirtualNetworkInterfacePrototypeVirtualNetworkInte
 	err = core.UnmarshalModel(m, "subnet", &obj.Subnet, UnmarshalSubnetIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAllowedAccessProtocolsSubset : ShareProfileAllowedAccessProtocolsSubset struct
+// This model "extends" ShareProfileAllowedAccessProtocols
+type ShareProfileAllowedAccessProtocolsSubset struct {
+	// The default allowed access protocol modes for shares with this profile.
+	Default []string `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The possible allowed access protocols for shares with this profile:
+	// - `nfs4`: NFSv4 will be used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the ShareProfileAllowedAccessProtocolsSubset.Default property.
+const (
+	ShareProfileAllowedAccessProtocolsSubsetDefaultNfs4Const = "nfs4"
+)
+
+// Constants associated with the ShareProfileAllowedAccessProtocolsSubset.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAllowedAccessProtocolsSubsetTypeSubsetConst = "subset"
+)
+
+// Constants associated with the ShareProfileAllowedAccessProtocolsSubset.Values property.
+const (
+	ShareProfileAllowedAccessProtocolsSubsetValuesNfs4Const = "nfs4"
+)
+
+func (*ShareProfileAllowedAccessProtocolsSubset) isaShareProfileAllowedAccessProtocols() bool {
+	return true
+}
+
+// UnmarshalShareProfileAllowedAccessProtocolsSubset unmarshals an instance of ShareProfileAllowedAccessProtocolsSubset from the specified map of raw messages.
+func UnmarshalShareProfileAllowedAccessProtocolsSubset(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAllowedAccessProtocolsSubset)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAllowedTransitEncryptionModesSubset : ShareProfileAllowedTransitEncryptionModesSubset struct
+// This model "extends" ShareProfileAllowedTransitEncryptionModes
+type ShareProfileAllowedTransitEncryptionModesSubset struct {
+	// The default allowed transit encryption modes for shares with this profile.
+	Default []string `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The allowed [transit encryption
+	// modes](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-vpc-about&interface=ui#fs-eit) for a share with this
+	// profile:
+	// - `none`: Not encrypted in transit.
+	// - `ipsec`: Encrypted in transit using an instance identity certificate.
+	// - `stunnel`: Encrypted in transit using a connection via an stunnel connection.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the ShareProfileAllowedTransitEncryptionModesSubset.Default property.
+const (
+	ShareProfileAllowedTransitEncryptionModesSubsetDefaultIpsecConst   = "ipsec"
+	ShareProfileAllowedTransitEncryptionModesSubsetDefaultNoneConst    = "none"
+	ShareProfileAllowedTransitEncryptionModesSubsetDefaultStunnelConst = "stunnel"
+)
+
+// Constants associated with the ShareProfileAllowedTransitEncryptionModesSubset.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAllowedTransitEncryptionModesSubsetTypeSubsetConst = "subset"
+)
+
+// Constants associated with the ShareProfileAllowedTransitEncryptionModesSubset.Values property.
+const (
+	ShareProfileAllowedTransitEncryptionModesSubsetValuesIpsecConst   = "ipsec"
+	ShareProfileAllowedTransitEncryptionModesSubsetValuesNoneConst    = "none"
+	ShareProfileAllowedTransitEncryptionModesSubsetValuesStunnelConst = "stunnel"
+)
+
+func (*ShareProfileAllowedTransitEncryptionModesSubset) isaShareProfileAllowedTransitEncryptionModes() bool {
+	return true
+}
+
+// UnmarshalShareProfileAllowedTransitEncryptionModesSubset unmarshals an instance of ShareProfileAllowedTransitEncryptionModesSubset from the specified map of raw messages.
+func UnmarshalShareProfileAllowedTransitEncryptionModesSubset(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAllowedTransitEncryptionModesSubset)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAvailabilityModesEnum : The permitted data availability modes for a share with this profile.
+// This model "extends" ShareProfileAvailabilityModes
+type ShareProfileAvailabilityModesEnum struct {
+	// The default data availability mode for this profile.
+	Default *string `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The data availability mode of the share:
+	// - `zonal`: The data availability of this share is limited only to a single zone of a
+	//   given region as provided by the `zone` of the share.
+	// - `regional`: The data availability of this share covers all zones in the region where
+	//   the share is created.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the ShareProfileAvailabilityModesEnum.Default property.
+// The default data availability mode for this profile.
+const (
+	ShareProfileAvailabilityModesEnumDefaultRegionalConst = "regional"
+	ShareProfileAvailabilityModesEnumDefaultZonalConst    = "zonal"
+)
+
+// Constants associated with the ShareProfileAvailabilityModesEnum.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAvailabilityModesEnumTypeEnumConst = "enum"
+)
+
+// Constants associated with the ShareProfileAvailabilityModesEnum.Values property.
+const (
+	ShareProfileAvailabilityModesEnumValuesRegionalConst = "regional"
+	ShareProfileAvailabilityModesEnumValuesZonalConst    = "zonal"
+)
+
+func (*ShareProfileAvailabilityModesEnum) isaShareProfileAvailabilityModes() bool {
+	return true
+}
+
+// UnmarshalShareProfileAvailabilityModesEnum unmarshals an instance of ShareProfileAvailabilityModesEnum from the specified map of raw messages.
+func UnmarshalShareProfileAvailabilityModesEnum(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAvailabilityModesEnum)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileAvailabilityModesFixed : The data availability mode for a share with this profile is fixed.
+// This model "extends" ShareProfileAvailabilityModes
+type ShareProfileAvailabilityModesFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *string `json:"value" validate:"required"`
+}
+
+// Constants associated with the ShareProfileAvailabilityModesFixed.Type property.
+// The type for this profile field.
+const (
+	ShareProfileAvailabilityModesFixedTypeFixedConst = "fixed"
+)
+
+// Constants associated with the ShareProfileAvailabilityModesFixed.Value property.
+// The value for this profile field.
+const (
+	ShareProfileAvailabilityModesFixedValueRegionalConst = "regional"
+	ShareProfileAvailabilityModesFixedValueZonalConst    = "zonal"
+)
+
+func (*ShareProfileAvailabilityModesFixed) isaShareProfileAvailabilityModes() bool {
+	return true
+}
+
+// UnmarshalShareProfileAvailabilityModesFixed unmarshals an instance of ShareProfileAvailabilityModesFixed from the specified map of raw messages.
+func UnmarshalShareProfileAvailabilityModesFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileAvailabilityModesFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileBandwidthDependent : The permitted bandwidth for a share with this profile depends on its configuration.
+// This model "extends" ShareProfileBandwidth
+type ShareProfileBandwidthDependent struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the ShareProfileBandwidthDependent.Type property.
+// The type for this profile field.
+const (
+	ShareProfileBandwidthDependentTypeDependentConst = "dependent"
+)
+
+func (*ShareProfileBandwidthDependent) isaShareProfileBandwidth() bool {
+	return true
+}
+
+// UnmarshalShareProfileBandwidthDependent unmarshals an instance of ShareProfileBandwidthDependent from the specified map of raw messages.
+func UnmarshalShareProfileBandwidthDependent(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileBandwidthDependent)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileBandwidthDependentRange : The permitted bandwidth range of a share with this profile depends on its configuration.
+// This model "extends" ShareProfileBandwidth
+type ShareProfileBandwidthDependentRange struct {
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the ShareProfileBandwidthDependentRange.Type property.
+// The type for this profile field.
+const (
+	ShareProfileBandwidthDependentRangeTypeDependentRangeConst = "dependent_range"
+)
+
+func (*ShareProfileBandwidthDependentRange) isaShareProfileBandwidth() bool {
+	return true
+}
+
+// UnmarshalShareProfileBandwidthDependentRange unmarshals an instance of ShareProfileBandwidthDependentRange from the specified map of raw messages.
+func UnmarshalShareProfileBandwidthDependentRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileBandwidthDependentRange)
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileBandwidthEnum : The permitted bandwidth values of a share with this profile.
+// This model "extends" ShareProfileBandwidth
+type ShareProfileBandwidthEnum struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values" validate:"required"`
+}
+
+// Constants associated with the ShareProfileBandwidthEnum.Type property.
+// The type for this profile field.
+const (
+	ShareProfileBandwidthEnumTypeEnumConst = "enum"
+)
+
+func (*ShareProfileBandwidthEnum) isaShareProfileBandwidth() bool {
+	return true
+}
+
+// UnmarshalShareProfileBandwidthEnum unmarshals an instance of ShareProfileBandwidthEnum from the specified map of raw messages.
+func UnmarshalShareProfileBandwidthEnum(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileBandwidthEnum)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileBandwidthFixed : The permitted bandwidth of a share with this profile is fixed.
+// This model "extends" ShareProfileBandwidth
+type ShareProfileBandwidthFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value" validate:"required"`
+}
+
+// Constants associated with the ShareProfileBandwidthFixed.Type property.
+// The type for this profile field.
+const (
+	ShareProfileBandwidthFixedTypeFixedConst = "fixed"
+)
+
+func (*ShareProfileBandwidthFixed) isaShareProfileBandwidth() bool {
+	return true
+}
+
+// UnmarshalShareProfileBandwidthFixed unmarshals an instance of ShareProfileBandwidthFixed from the specified map of raw messages.
+func UnmarshalShareProfileBandwidthFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileBandwidthFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareProfileBandwidthRange : The permitted bandwidth range (in megabits per second) of a share with this profile.
+// This model "extends" ShareProfileBandwidth
+type ShareProfileBandwidthRange struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	Value *int64 `json:"value,omitempty"`
+}
+
+// Constants associated with the ShareProfileBandwidthRange.Type property.
+// The type for this profile field.
+const (
+	ShareProfileBandwidthRangeTypeRangeConst = "range"
+)
+
+func (*ShareProfileBandwidthRange) isaShareProfileBandwidth() bool {
+	return true
+}
+
+// UnmarshalShareProfileBandwidthRange unmarshals an instance of ShareProfileBandwidthRange from the specified map of raw messages.
+func UnmarshalShareProfileBandwidthRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileBandwidthRange)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -134745,15 +139089,56 @@ func (shareProfileIdentityByName *ShareProfileIdentityByName) asPatch() (_patch 
 	return
 }
 
+// ShareProfileStorageGenerationFixed : The storage generation value of a share with this profile is fixed.
+// This model "extends" ShareProfileStorageGeneration
+type ShareProfileStorageGenerationFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value" validate:"required"`
+}
+
+// Constants associated with the ShareProfileStorageGenerationFixed.Type property.
+// The type for this profile field.
+const (
+	ShareProfileStorageGenerationFixedTypeFixedConst = "fixed"
+)
+
+func (*ShareProfileStorageGenerationFixed) isaShareProfileStorageGeneration() bool {
+	return true
+}
+
+// UnmarshalShareProfileStorageGenerationFixed unmarshals an instance of ShareProfileStorageGenerationFixed from the specified map of raw messages.
+func UnmarshalShareProfileStorageGenerationFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareProfileStorageGenerationFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // SharePrototypeShareByOriginShare : Create an accessor file share for an existing file share. The values for
-// `access_control_mode`, `encryption_key`, `initial_owner`, `iops`, `profile`, `size`, and
-// `zone` will be inherited from `origin_share`.
+// `access_control_mode`, `allowed_access_protocols`, `bandwidth`, `encryption_key`,
+// `initial_owner`, `iops`, `profile`, `size`, and `zone` will be inherited from
+// `origin_share`.
+//
+// Accessor file shares can only be created for shares with a `storage_generation` of `1`.
 // This model "extends" SharePrototype
 type SharePrototypeShareByOriginShare struct {
 	// The transit encryption modes to allow for this share. If unspecified:
-	// - If share mount targets are specified, and those share mount targets all specify a
-	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
-	// - Otherwise, all `transit_encryption` modes will be allowed.
+	// - If share mount targets are specified, then only transit encryption modes
+	//   specified by those share mount target will be allowed.
+	// - Otherwise, the default allowed transit encryption modes from the profile will be
+	//   used.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
 
 	// The mount targets for the file share. Each mount target must be in a unique VPC.
@@ -134782,8 +139167,9 @@ type SharePrototypeShareByOriginShare struct {
 
 // Constants associated with the SharePrototypeShareByOriginShare.AllowedTransitEncryptionModes property.
 const (
-	SharePrototypeShareByOriginShareAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePrototypeShareByOriginShareAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePrototypeShareByOriginShareAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePrototypeShareByOriginShareAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePrototypeShareByOriginShareAllowedTransitEncryptionModesStunnelConst = "stunnel"
 )
 
 // NewSharePrototypeShareByOriginShare : Instantiate SharePrototypeShareByOriginShare (Generic Model Constructor)
@@ -134848,9 +139234,10 @@ func UnmarshalSharePrototypeShareByOriginShare(m map[string]json.RawMessage, res
 // This model "extends" SharePrototype
 type SharePrototypeShareBySize struct {
 	// The transit encryption modes to allow for this share. If unspecified:
-	// - If share mount targets are specified, and those share mount targets all specify a
-	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
-	// - Otherwise, all `transit_encryption` modes will be allowed.
+	// - If share mount targets are specified, then only transit encryption modes
+	//   specified by those share mount target will be allowed.
+	// - Otherwise, the default allowed transit encryption modes from the profile will be
+	//   used.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
 
 	// The mount targets for the file share. Each mount target must be in a unique VPC.
@@ -134873,6 +139260,22 @@ type SharePrototypeShareBySize struct {
 	// - `vpc`: All clients in the VPC for a mount target have access to the mount target.
 	//   Mount targets for this share require a VPC.
 	AccessControlMode *string `json:"access_control_mode,omitempty"`
+
+	// The access protocols to allow for this share. If unspecified:
+	// - If share mount targets are specified, only the access protocols specified by those
+	//   share mount target will be allowed.
+	// - Otherwise, the default access protocols from the profile will be used.
+	AllowedAccessProtocols []string `json:"allowed_access_protocols,omitempty"`
+
+	// The maximum bandwidth (in megabits per second) for the file share.
+	//
+	// If the share profile has a `bandwidth.type` of `dependent` or `fixed`, this property is system-managed and must not
+	// be specified. Otherwise, the specified value must be within the `bandwidth` range of the share's profile.
+	//
+	// Provided the property is user-managed, if it is unspecified, its value will be set based on the specified [`size`
+	// and
+	// `iops`](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=api).
+	Bandwidth *int64 `json:"bandwidth,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the share.
 	//
@@ -134908,13 +139311,17 @@ type SharePrototypeShareBySize struct {
 
 	// The zone this file share will reside in. For a replica share in the same region as
 	// the source share, this must be a different zone from the source share.
-	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
+	//
+	// This property must be specified if the share profile `availability_mode` is `zonal`,
+	// and must not be specified otherwise.
+	Zone ZoneIdentityIntf `json:"zone,omitempty"`
 }
 
 // Constants associated with the SharePrototypeShareBySize.AllowedTransitEncryptionModes property.
 const (
-	SharePrototypeShareBySizeAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePrototypeShareBySizeAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePrototypeShareBySizeAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePrototypeShareBySizeAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePrototypeShareBySizeAllowedTransitEncryptionModesStunnelConst = "stunnel"
 )
 
 // Constants associated with the SharePrototypeShareBySize.AccessControlMode property.
@@ -134930,12 +139337,16 @@ const (
 	SharePrototypeShareBySizeAccessControlModeVPCConst           = "vpc"
 )
 
+// Constants associated with the SharePrototypeShareBySize.AllowedAccessProtocols property.
+const (
+	SharePrototypeShareBySizeAllowedAccessProtocolsNfs4Const = "nfs4"
+)
+
 // NewSharePrototypeShareBySize : Instantiate SharePrototypeShareBySize (Generic Model Constructor)
-func (*VpcV1) NewSharePrototypeShareBySize(profile ShareProfileIdentityIntf, size int64, zone ZoneIdentityIntf) (_model *SharePrototypeShareBySize, err error) {
+func (*VpcV1) NewSharePrototypeShareBySize(profile ShareProfileIdentityIntf, size int64) (_model *SharePrototypeShareBySize, err error) {
 	_model = &SharePrototypeShareBySize{
 		Profile: profile,
 		Size:    core.Int64Ptr(size),
-		Zone:    zone,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -134981,6 +139392,16 @@ func UnmarshalSharePrototypeShareBySize(m map[string]json.RawMessage, result int
 		err = core.SDKErrorf(err, "", "access_control_mode-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "allowed_access_protocols", &obj.AllowedAccessProtocols)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_access_protocols-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bandwidth", &obj.Bandwidth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bandwidth-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "encryption_key", &obj.EncryptionKey, UnmarshalEncryptionKeyIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "encryption_key-error", common.GetComponentInfo())
@@ -135021,13 +139442,18 @@ func UnmarshalSharePrototypeShareBySize(m map[string]json.RawMessage, result int
 }
 
 // SharePrototypeShareBySourceShare : Create a replica file share for an existing file share. The values for
-// `access_control_mode`, `encryption_key`, `initial_owner`, and `size` will be inherited from `source_share`.
+// `access_control_mode`, `allowed_access_protocols`, `bandwidth`, `encryption_key`,
+// `initial_owner`, and `size` will be inherited from the `source_share`.
+//
+// Replica file shares can only be created if the source share has a `storage_generation` of
+// `1`.
 // This model "extends" SharePrototype
 type SharePrototypeShareBySourceShare struct {
 	// The transit encryption modes to allow for this share. If unspecified:
-	// - If share mount targets are specified, and those share mount targets all specify a
-	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
-	// - Otherwise, all `transit_encryption` modes will be allowed.
+	// - If share mount targets are specified, then only transit encryption modes
+	//   specified by those share mount target will be allowed.
+	// - Otherwise, the default allowed transit encryption modes from the profile will be
+	//   used.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
 
 	// The mount targets for the file share. Each mount target must be in a unique VPC.
@@ -135057,7 +139483,9 @@ type SharePrototypeShareBySourceShare struct {
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles) to use
-	// for this file share. The profile must support the share's specified IOPS and size.
+	// for this file share. The profile must:
+	// - support the share's specified IOPS and size, and
+	// - have the same `storage_generation` as the source share.
 	Profile ShareProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The cron specification for the file share replication schedule.
@@ -135072,30 +139500,36 @@ type SharePrototypeShareBySourceShare struct {
 	// the source share will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
-	// The source file share for this replica file share. The specified file share must not
-	// already have a replica, and must not be a replica. If source file share is specified
-	// by CRN, it may be in an [associated partner
+	// The source file share for this replica file share. The specified file share must:
+	// - Not already have a replica.
+	// - Not be a replica.
+	// - Have a `storage_generation` of `1`.
+	//
+	// If source file share is specified by CRN, it may be in an [associated partner
 	// region](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-replication).
 	SourceShare ShareIdentityIntf `json:"source_share" validate:"required"`
 
 	// The zone this file share will reside in. For a replica share in the same region as
 	// the source share, this must be a different zone from the source share.
-	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
+	//
+	// This property must be specified if the share profile `availability_mode` is `zonal`,
+	// and must not be specified otherwise.
+	Zone ZoneIdentityIntf `json:"zone,omitempty"`
 }
 
 // Constants associated with the SharePrototypeShareBySourceShare.AllowedTransitEncryptionModes property.
 const (
-	SharePrototypeShareBySourceShareAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePrototypeShareBySourceShareAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePrototypeShareBySourceShareAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePrototypeShareBySourceShareAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePrototypeShareBySourceShareAllowedTransitEncryptionModesStunnelConst = "stunnel"
 )
 
 // NewSharePrototypeShareBySourceShare : Instantiate SharePrototypeShareBySourceShare (Generic Model Constructor)
-func (*VpcV1) NewSharePrototypeShareBySourceShare(profile ShareProfileIdentityIntf, replicationCronSpec string, sourceShare ShareIdentityIntf, zone ZoneIdentityIntf) (_model *SharePrototypeShareBySourceShare, err error) {
+func (*VpcV1) NewSharePrototypeShareBySourceShare(profile ShareProfileIdentityIntf, replicationCronSpec string, sourceShare ShareIdentityIntf) (_model *SharePrototypeShareBySourceShare, err error) {
 	_model = &SharePrototypeShareBySourceShare{
 		Profile:             profile,
 		ReplicationCronSpec: core.StringPtr(replicationCronSpec),
 		SourceShare:         sourceShare,
-		Zone:                zone,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -135175,14 +139609,15 @@ func UnmarshalSharePrototypeShareBySourceShare(m map[string]json.RawMessage, res
 	return
 }
 
-// SharePrototypeShareBySourceSnapshot : Create a file share from a source snapshot. The initial value for `access_control_mode`, and the zone the file share
-// resides in will be inherited from `source_snapshot`.
+// SharePrototypeShareBySourceSnapshot : Create a file share from a source snapshot. The initial value for `access_control_mode`,
+// `initial_owner` and `zone` will be inherited from `source_snapshot`.
 // This model "extends" SharePrototype
 type SharePrototypeShareBySourceSnapshot struct {
 	// The transit encryption modes to allow for this share. If unspecified:
-	// - If share mount targets are specified, and those share mount targets all specify a
-	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
-	// - Otherwise, all `transit_encryption` modes will be allowed.
+	// - If share mount targets are specified, then only transit encryption modes
+	//   specified by those share mount target will be allowed.
+	// - Otherwise, the default allowed transit encryption modes from the profile will be
+	//   used.
 	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
 
 	// The mount targets for the file share. Each mount target must be in a unique VPC.
@@ -135197,15 +139632,37 @@ type SharePrototypeShareBySourceSnapshot struct {
 	// The tags for this resource.
 	UserTags []string `json:"user_tags,omitempty"`
 
+	// The access protocols to allow for this share. If unspecified:
+	// - If share mount targets are specified, only the access protocols specified by those
+	//   share mount target will be allowed.
+	// - Otherwise, the default access protocols from the profile will be used.
+	AllowedAccessProtocols []string `json:"allowed_access_protocols,omitempty"`
+
+	// The maximum bandwidth (in megabits per second) for the file share.
+	//
+	// If the share profile has a `bandwidth.type` of `dependent` or `fixed`, this property is system-managed and must not
+	// be specified. Otherwise, the specified value must be within the `bandwidth` range of the share's profile.
+	//
+	// Provided the property is user-managed, if it is unspecified, its value will be set based on the specified [`size`
+	// and
+	// `iops`](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles&interface=api).
+	Bandwidth *int64 `json:"bandwidth,omitempty"`
+
 	// The root key to use to wrap the data encryption key for the share.
 	//
 	// The specified key may be in a different account, subject to IAM policies.
 	//
-	// If unspecified, the source snapshot's `encryption_key` will be used.
+	// If unspecified, the source share's `encryption_key` will be used.
+	//
+	// For snapshots of shares with `storage_generation` of `2`, an encryption key may only
+	// be specified if the source share's `encryption` is `user_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
 	// The owner assigned to the file share at creation. Subsequent changes to the owner
 	// must be performed by a client that has mounted the file share.
+	//
+	// `initial_owner` for a share created from a source snapshot can only be specified for
+	// snapshots of shares with `storage_generation` of `1`.
 	InitialOwner *ShareInitialOwner `json:"initial_owner,omitempty"`
 
 	// The maximum input/output operations per second (IOPS) for the file share.
@@ -135216,7 +139673,9 @@ type SharePrototypeShareBySourceSnapshot struct {
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles) to use
-	// for this file share. The profile must support the share's specified IOPS and size.
+	// for this file share. The profile must:
+	// - support the share's specified IOPS and size, and
+	// - have the same `storage_generation` as the source snapshot.
 	Profile ShareProfileIdentityIntf `json:"profile" validate:"required"`
 
 	// The resource group to use. If unspecified, the account's [default resource
@@ -135239,8 +139698,14 @@ type SharePrototypeShareBySourceSnapshot struct {
 
 // Constants associated with the SharePrototypeShareBySourceSnapshot.AllowedTransitEncryptionModes property.
 const (
-	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesNoneConst        = "none"
-	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesIpsecConst   = "ipsec"
+	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesNoneConst    = "none"
+	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesStunnelConst = "stunnel"
+)
+
+// Constants associated with the SharePrototypeShareBySourceSnapshot.AllowedAccessProtocols property.
+const (
+	SharePrototypeShareBySourceSnapshotAllowedAccessProtocolsNfs4Const = "nfs4"
 )
 
 // NewSharePrototypeShareBySourceSnapshot : Instantiate SharePrototypeShareBySourceSnapshot (Generic Model Constructor)
@@ -135286,6 +139751,16 @@ func UnmarshalSharePrototypeShareBySourceSnapshot(m map[string]json.RawMessage, 
 	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "user_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_access_protocols", &obj.AllowedAccessProtocols)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_access_protocols-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bandwidth", &obj.Bandwidth)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bandwidth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "encryption_key", &obj.EncryptionKey, UnmarshalEncryptionKeyIdentity)
@@ -136928,6 +141403,232 @@ func (vpcIdentityByID *VPCIdentityByID) asPatch() (_patch map[string]interface{}
 	return
 }
 
+// VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress : VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress struct
+// This model "extends" VPNGatewayConnectionDynamicRouteModePeerPrototype
+type VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn" validate:"required"`
+
+	// The peer IKE identity to use.
+	//
+	// If unspecified:
+	// - If `peer.address` is specified, the `type` will be `ipv4_address`, and the `value` will be `peer.address`.
+	// - If `peer.fqdn` is specified, the `type` will be `fqdn`, and the `value` will be `peer.fqdn`.
+	IkeIdentity VPNGatewayConnectionIkeIdentityPrototypeIntf `json:"ike_identity,omitempty"`
+
+	// The IP address of the peer VPN gateway for this connection.
+	Address *string `json:"address" validate:"required"`
+}
+
+// NewVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress : Instantiate VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress (Generic Model Constructor)
+func (*VpcV1) NewVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress(asn int64, address string) (_model *VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress, err error) {
+	_model = &VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress{
+		Asn:     core.Int64Ptr(asn),
+		Address: core.StringPtr(address),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress) isaVPNGatewayConnectionDynamicRouteModePeerPrototype() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress unmarshals an instance of VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByAddress)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_identity", &obj.IkeIdentity, UnmarshalVPNGatewayConnectionIkeIdentityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn : VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn struct
+// This model "extends" VPNGatewayConnectionDynamicRouteModePeerPrototype
+type VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn" validate:"required"`
+
+	// The peer IKE identity to use.
+	//
+	// If unspecified:
+	// - If `peer.address` is specified, the `type` will be `ipv4_address`, and the `value` will be `peer.address`.
+	// - If `peer.fqdn` is specified, the `type` will be `fqdn`, and the `value` will be `peer.fqdn`.
+	IkeIdentity VPNGatewayConnectionIkeIdentityPrototypeIntf `json:"ike_identity,omitempty"`
+
+	// The FQDN of the peer VPN gateway for this connection.
+	Fqdn *string `json:"fqdn" validate:"required"`
+}
+
+// NewVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn : Instantiate VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn (Generic Model Constructor)
+func (*VpcV1) NewVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn(asn int64, fqdn string) (_model *VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn, err error) {
+	_model = &VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn{
+		Asn:  core.Int64Ptr(asn),
+		Fqdn: core.StringPtr(fqdn),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn) isaVPNGatewayConnectionDynamicRouteModePeerPrototype() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn unmarshals an instance of VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModePeerPrototypeVPNGatewayConnectionPeerByFqdn)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_identity", &obj.IkeIdentity, UnmarshalVPNGatewayConnectionIkeIdentityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fqdn", &obj.Fqdn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress : VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress struct
+// This model "extends" VPNGatewayConnectionDynamicRouteModePeer
+type VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection.
+	Asn *int64 `json:"asn" validate:"required"`
+
+	// The peer IKE identity.
+	IkeIdentity VPNGatewayConnectionIkeIdentityIntf `json:"ike_identity" validate:"required"`
+
+	// Indicates whether `peer.address` or `peer.fqdn` is used.
+	Type *string `json:"type" validate:"required"`
+
+	// The IP address of the peer VPN gateway for this connection.
+	Address *string `json:"address" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress.Type property.
+// Indicates whether `peer.address` or `peer.fqdn` is used.
+const (
+	VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddressTypeAddressConst = "address"
+	VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddressTypeFqdnConst    = "fqdn"
+)
+
+func (*VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress) isaVPNGatewayConnectionDynamicRouteModePeer() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress unmarshals an instance of VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByAddress)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_identity", &obj.IkeIdentity, UnmarshalVPNGatewayConnectionIkeIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn : VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn struct
+// This model "extends" VPNGatewayConnectionDynamicRouteModePeer
+type VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection.
+	Asn *int64 `json:"asn" validate:"required"`
+
+	// The peer IKE identity.
+	IkeIdentity VPNGatewayConnectionIkeIdentityIntf `json:"ike_identity" validate:"required"`
+
+	// Indicates whether `peer.address` or `peer.fqdn` is used.
+	Type *string `json:"type" validate:"required"`
+
+	// The FQDN of the peer VPN gateway for this connection.
+	Fqdn *string `json:"fqdn" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn.Type property.
+// Indicates whether `peer.address` or `peer.fqdn` is used.
+const (
+	VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdnTypeAddressConst = "address"
+	VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdnTypeFqdnConst    = "fqdn"
+)
+
+func (*VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn) isaVPNGatewayConnectionDynamicRouteModePeer() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn unmarshals an instance of VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionDynamicRouteModePeerVPNGatewayConnectionPeerByFqdn)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_identity", &obj.IkeIdentity, UnmarshalVPNGatewayConnectionIkeIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fqdn", &obj.Fqdn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // VPNGatewayConnectionIkeIdentityPrototypeVPNGatewayConnectionIkeIdentityFqdn : VPNGatewayConnectionIkeIdentityPrototypeVPNGatewayConnectionIkeIdentityFqdn struct
 // This model "extends" VPNGatewayConnectionIkeIdentityPrototype
 type VPNGatewayConnectionIkeIdentityPrototypeVPNGatewayConnectionIkeIdentityFqdn struct {
@@ -137644,6 +142345,77 @@ func UnmarshalVPNGatewayConnectionIPsecPolicyPrototypeIPsecPolicyIdentityByID(m 
 	return
 }
 
+// VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch : The peer VPN gateway for this connection. If `peer.type` is `ipv4_address`, only `peer.address` may be specified. If
+// `peer.type` is fqdn, only `peer.fqdn` may be specified.
+// Models which "extend" this model:
+// - VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch
+// - VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch
+// This model "extends" VPNGatewayConnectionPeerPatch
+type VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn,omitempty"`
+
+	// The IP address of the peer VPN gateway for this connection.
+	Address *string `json:"address,omitempty"`
+
+	// The FQDN of the peer VPN gateway for this connection.
+	Fqdn *string `json:"fqdn,omitempty"`
+}
+
+func (*VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch) isaVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch() bool {
+	return true
+}
+
+type VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchIntf interface {
+	VPNGatewayConnectionPeerPatchIntf
+	isaVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch() bool
+}
+
+func (*VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch) isaVPNGatewayConnectionPeerPatch() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch unmarshals an instance of VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fqdn", &obj.Fqdn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch
+func (vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch *VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch.Asn) {
+		_patch["asn"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch.Asn
+	}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch.Address) {
+		_patch["address"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch.Address
+	}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch.Fqdn) {
+		_patch["fqdn"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch.Fqdn
+	}
+
+	return
+}
+
 // VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatch : The peer VPN gateway for this connection. If `peer.type` is `ipv4_address`, only `peer.address` may be specified. If
 // `peer.type` is fqdn, only `peer.fqdn` may be specified.
 // Models which "extend" this model:
@@ -138185,6 +142957,158 @@ func UnmarshalVPNGatewayConnectionPolicyModePeerVPNGatewayConnectionPeerByFqdn(m
 	return
 }
 
+// VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype : VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype struct
+// This model "extends" VPNGatewayConnectionPrototype
+type VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype struct {
+	// If set to false, the VPN gateway connection is shut down.
+	AdminStateUp *bool `json:"admin_state_up,omitempty"`
+
+	DeadPeerDetection *VPNGatewayConnectionDpdPrototype `json:"dead_peer_detection,omitempty"`
+
+	// The establish mode of the VPN gateway connection:
+	// - `bidirectional`: Either side of the VPN gateway can initiate IKE protocol
+	//    negotiations or rekeying processes.
+	// - `peer_only`: Only the peer can initiate IKE protocol negotiations for this VPN gateway
+	//    connection. Additionally, the peer is responsible for initiating the rekeying process
+	//    after the connection is established. If rekeying does not occur, the VPN gateway
+	//    connection will be brought down after its lifetime expires.
+	EstablishMode *string `json:"establish_mode,omitempty"`
+
+	IkePolicy VPNGatewayConnectionIkePolicyPrototypeIntf `json:"ike_policy,omitempty"`
+
+	IpsecPolicy VPNGatewayConnectionIPsecPolicyPrototypeIntf `json:"ipsec_policy,omitempty"`
+
+	// The name for this VPN gateway connection. The name must not be used by another connection for the VPN gateway. If
+	// unspecified, the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// The pre-shared key.
+	Psk *string `json:"psk" validate:"required"`
+
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
+	Local *VPNGatewayConnectionDynamicRouteModeLocalPrototype `json:"local,omitempty"`
+
+	Peer VPNGatewayConnectionDynamicRouteModePeerPrototypeIntf `json:"peer" validate:"required"`
+
+	// The routing protocol for this VPN gateway connection.
+	RoutingProtocol *string `json:"routing_protocol" validate:"required"`
+
+	// The VPN tunnel configuration to use for this VPN gateway connection
+	// (in dynamic route mode).
+	Tunnels []VPNGatewayConnectionTunnelPrototype `json:"tunnels" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype.EstablishMode property.
+// The establish mode of the VPN gateway connection:
+//   - `bidirectional`: Either side of the VPN gateway can initiate IKE protocol
+//     negotiations or rekeying processes.
+//   - `peer_only`: Only the peer can initiate IKE protocol negotiations for this VPN gateway
+//     connection. Additionally, the peer is responsible for initiating the rekeying process
+//     after the connection is established. If rekeying does not occur, the VPN gateway
+//     connection will be brought down after its lifetime expires.
+const (
+	VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototypeEstablishModeBidirectionalConst = "bidirectional"
+	VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototypeEstablishModePeerOnlyConst      = "peer_only"
+)
+
+// Constants associated with the VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype.RoutingProtocol property.
+// The routing protocol for this VPN gateway connection.
+const (
+	VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototypeRoutingProtocolBgpConst = "bgp"
+)
+
+// NewVPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype : Instantiate VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype (Generic Model Constructor)
+func (*VpcV1) NewVPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype(psk string, peer VPNGatewayConnectionDynamicRouteModePeerPrototypeIntf, routingProtocol string, tunnels []VPNGatewayConnectionTunnelPrototype) (_model *VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype, err error) {
+	_model = &VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype{
+		Psk:             core.StringPtr(psk),
+		Peer:            peer,
+		RoutingProtocol: core.StringPtr(routingProtocol),
+		Tunnels:         tunnels,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype) isaVPNGatewayConnectionPrototype() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype unmarshals an instance of VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionPrototypeVPNGatewayConnectionDynamicRouteModePrototype)
+	err = core.UnmarshalPrimitive(m, "admin_state_up", &obj.AdminStateUp)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "admin_state_up-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "dead_peer_detection", &obj.DeadPeerDetection, UnmarshalVPNGatewayConnectionDpdPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "dead_peer_detection-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "establish_mode", &obj.EstablishMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "establish_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_policy", &obj.IkePolicy, UnmarshalVPNGatewayConnectionIkePolicyPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ipsec_policy", &obj.IpsecPolicy, UnmarshalVPNGatewayConnectionIPsecPolicyPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ipsec_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "psk", &obj.Psk)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionDynamicRouteModeLocalPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "peer", &obj.Peer, UnmarshalVPNGatewayConnectionDynamicRouteModePeerPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "peer-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "routing_protocol", &obj.RoutingProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "routing_protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnels", &obj.Tunnels, UnmarshalVPNGatewayConnectionTunnelPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnels-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype : VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype struct
 // This model "extends" VPNGatewayConnectionPrototype
 type VPNGatewayConnectionPrototypeVPNGatewayConnectionPolicyModePrototype struct {
@@ -138445,6 +143369,7 @@ func UnmarshalVPNGatewayConnectionPrototypeVPNGatewayConnectionStaticRouteModePr
 // VPNGatewayConnectionRouteMode : VPNGatewayConnectionRouteMode struct
 // Models which "extend" this model:
 // - VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode
+// - VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode
 // This model "extends" VPNGatewayConnection
 type VPNGatewayConnectionRouteMode struct {
 	// If set to false, the VPN gateway connection is shut down.
@@ -138599,7 +143524,12 @@ func UnmarshalVPNGatewayConnectionRouteMode(m map[string]json.RawMessage, result
 		err = core.SDKErrorf(err, "required discriminator property 'routing_protocol' not found in JSON object", "missing-discriminator", common.GetComponentInfo())
 		return
 	}
-	if discValue == "none" {
+	if discValue == "bgp" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalVPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode-error", common.GetComponentInfo())
+		}
+	} else if discValue == "none" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalVPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode-error", common.GetComponentInfo())
@@ -139060,6 +143990,16 @@ type VPNGatewayPrototypeVPNGatewayRouteModePrototype struct {
 
 	Subnet SubnetIdentityIntf `json:"subnet" validate:"required"`
 
+	// The static CIDRs advertised through any enabled routing protocol (for example, BGP). The routing protocol will
+	// advertise routes with these CIDRs as route destinations.
+	AdvertisedCIDRs []string `json:"advertised_cidrs,omitempty"`
+
+	// The local autonomous system number (ASN) for this VPN gateway and its connections. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	LocalAsn *int64 `json:"local_asn,omitempty"`
+
 	// The mode for this VPN gateway.
 	Mode *string `json:"mode,omitempty"`
 }
@@ -139102,6 +144042,16 @@ func UnmarshalVPNGatewayPrototypeVPNGatewayRouteModePrototype(m map[string]json.
 	err = core.UnmarshalModel(m, "subnet", &obj.Subnet, UnmarshalSubnetIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "advertised_cidrs", &obj.AdvertisedCIDRs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "advertised_cidrs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "local_asn", &obj.LocalAsn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local_asn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mode", &obj.Mode)
@@ -139165,6 +144115,13 @@ type VPNGatewayRouteMode struct {
 
 	// The VPC this VPN gateway resides in.
 	VPC *VPCReference `json:"vpc" validate:"required"`
+
+	// The static CIDRs advertised through any enabled routing protocol (for example, BGP). The routing protocol will
+	// advertise routes with these CIDRs as route destinations.
+	AdvertisedCIDRs []string `json:"advertised_cidrs" validate:"required"`
+
+	// The local autonomous system number (ASN) for this VPN gateway and its connections.
+	LocalAsn *int64 `json:"local_asn" validate:"required"`
 
 	// The mode for this VPN gateway.
 	Mode *string `json:"mode" validate:"required"`
@@ -139291,9 +144248,64 @@ func UnmarshalVPNGatewayRouteMode(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "advertised_cidrs", &obj.AdvertisedCIDRs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "advertised_cidrs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "local_asn", &obj.LocalAsn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local_asn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "mode", &obj.Mode)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "mode-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VPNGatewayServiceConnectionCreatorTransitGatewayReference : VPNGatewayServiceConnectionCreatorTransitGatewayReference struct
+// This model "extends" VPNGatewayServiceConnectionCreator
+type VPNGatewayServiceConnectionCreatorTransitGatewayReference struct {
+	// The CRN for this transit gateway.
+	CRN *string `json:"crn" validate:"required"`
+
+	// The unique identifier for this transit gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayServiceConnectionCreatorTransitGatewayReference.ResourceType property.
+// The resource type.
+const (
+	VPNGatewayServiceConnectionCreatorTransitGatewayReferenceResourceTypeTransitGatewayConst = "transit_gateway"
+)
+
+func (*VPNGatewayServiceConnectionCreatorTransitGatewayReference) isaVPNGatewayServiceConnectionCreator() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayServiceConnectionCreatorTransitGatewayReference unmarshals an instance of VPNGatewayServiceConnectionCreatorTransitGatewayReference from the specified map of raw messages.
+func UnmarshalVPNGatewayServiceConnectionCreatorTransitGatewayReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayServiceConnectionCreatorTransitGatewayReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -143157,45 +148169,44 @@ func UnmarshalInstanceClusterNetworkAttachmentPrototypeClusterNetworkInterfaceCl
 	return
 }
 
-// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec struct
-// Models which "extend" this model:
-// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup
-// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager
+// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup struct
 // This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototype
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec struct {
+type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup struct {
 	// The name for this instance group manager action. The name must not be used by another action for the instance group
 	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
 	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
 	// period.
-	CronSpec *string `json:"cron_spec,omitempty"`
+	CronSpec *string `json:"cron_spec" validate:"required"`
 
-	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group,omitempty"`
-
-	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager,omitempty"`
+	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group" validate:"required"`
 }
 
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec) isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec() bool {
+// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup (Generic Model Constructor)
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup(cronSpec string, group *InstanceGroupManagerScheduledActionGroupPrototype) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup{
+		CronSpec: core.StringPtr(cronSpec),
+		Group:    group,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
 	return true
 }
 
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecIntf interface {
-	InstanceGroupManagerActionPrototypeScheduledActionPrototypeIntf
-	isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec() bool
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup) isaInstanceGroupManagerActionPrototype() bool {
 	return true
 }
 
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec) isaInstanceGroupManagerActionPrototype() bool {
-	return true
-}
-
-// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec)
+// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup from the specified map of raw messages.
+func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithGroup)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -143211,6 +148222,58 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronS
 		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager struct
+// This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototype
+type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager struct {
+	// The name for this instance group manager action. The name must not be used by another action for the instance group
+	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
+	// period.
+	CronSpec *string `json:"cron_spec" validate:"required"`
+
+	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager" validate:"required"`
+}
+
+// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager (Generic Model Constructor)
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager(cronSpec string, manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager{
+		CronSpec: core.StringPtr(cronSpec),
+		Manager:  manager,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
+	return true
+}
+
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager) isaInstanceGroupManagerActionPrototype() bool {
+	return true
+}
+
+// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager from the specified map of raw messages.
+func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecWithManager)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "manager", &obj.Manager, UnmarshalInstanceGroupManagerScheduledActionManagerPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "manager-error", common.GetComponentInfo())
@@ -143220,52 +148283,46 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronS
 	return
 }
 
-// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt struct
-// Models which "extend" this model:
-// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup
-// - InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager
+// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup struct
 // This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototype
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt struct {
+type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup struct {
 	// The name for this instance group manager action. The name must not be used by another action for the instance group
 	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
+	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group" validate:"required"`
+
 	// The date and time the scheduled action will run.
-	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
-
-	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group,omitempty"`
-
-	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager,omitempty"`
+	RunAt *strfmt.DateTime `json:"run_at" validate:"required"`
 }
 
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt) isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt() bool {
+// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup (Generic Model Constructor)
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup(group *InstanceGroupManagerScheduledActionGroupPrototype, runAt *strfmt.DateTime) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup{
+		Group: group,
+		RunAt: runAt,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
 	return true
 }
 
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtIntf interface {
-	InstanceGroupManagerActionPrototypeScheduledActionPrototypeIntf
-	isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt() bool
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup) isaInstanceGroupManagerActionPrototype() bool {
 	return true
 }
 
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt) isaInstanceGroupManagerActionPrototype() bool {
-	return true
-}
-
-// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt)
+// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup from the specified map of raw messages.
+func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithGroup)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalInstanceGroupManagerScheduledActionGroupPrototype)
@@ -143273,9 +148330,65 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt
 		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager struct
+// This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototype
+type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager struct {
+	// The name for this instance group manager action. The name must not be used by another action for the instance group
+	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager" validate:"required"`
+
+	// The date and time the scheduled action will run.
+	RunAt *strfmt.DateTime `json:"run_at" validate:"required"`
+}
+
+// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager (Generic Model Constructor)
+func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf, runAt *strfmt.DateTime) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager, err error) {
+	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager{
+		Manager: manager,
+		RunAt:   runAt,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
+	return true
+}
+
+func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager) isaInstanceGroupManagerActionPrototype() bool {
+	return true
+}
+
+// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager from the specified map of raw messages.
+func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtWithManager)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "manager", &obj.Manager, UnmarshalInstanceGroupManagerScheduledActionManagerPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "manager-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -144553,7 +149666,8 @@ type InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstance
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -144571,6 +149685,12 @@ type InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstance
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -144601,6 +149721,16 @@ const (
 	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachment : Instantiate InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkAttachment (Generic Model Constructor)
@@ -144703,6 +149833,11 @@ func UnmarshalInstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferin
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -144790,7 +149925,8 @@ type InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstance
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -144808,6 +149944,12 @@ type InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstance
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -144838,6 +149980,16 @@ const (
 	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterface : Instantiate InstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferingInstanceByNetworkInterface (Generic Model Constructor)
@@ -144940,6 +150092,11 @@ func UnmarshalInstancePrototypeInstanceByCatalogOfferingInstanceByCatalogOfferin
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -145027,7 +150184,8 @@ type InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachment 
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -145045,6 +150203,12 @@ type InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachment 
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -145076,6 +150240,16 @@ const (
 	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachment : Instantiate InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAttachment (Generic Model Constructor)
@@ -145178,6 +150352,11 @@ func UnmarshalInstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkAt
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -145265,7 +150444,8 @@ type InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterface s
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -145283,6 +150463,12 @@ type InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterface s
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -145314,6 +150500,16 @@ const (
 	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterface : Instantiate InstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkInterface (Generic Model Constructor)
@@ -145416,6 +150612,11 @@ func UnmarshalInstancePrototypeInstanceByImageInstanceByImageInstanceByNetworkIn
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -145503,7 +150704,8 @@ type InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceBy
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -145521,6 +150723,12 @@ type InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceBy
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -145549,6 +150757,16 @@ const (
 	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachment : Instantiate InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkAttachment (Generic Model Constructor)
@@ -145651,6 +150869,11 @@ func UnmarshalInstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotI
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -145733,7 +150956,8 @@ type InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceBy
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -145751,6 +150975,12 @@ type InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceBy
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -145779,6 +151009,16 @@ const (
 	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterface : Instantiate InstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotInstanceByNetworkInterface (Generic Model Constructor)
@@ -145881,6 +151121,11 @@ func UnmarshalInstancePrototypeInstanceBySourceSnapshotInstanceBySourceSnapshotI
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -145963,7 +151208,8 @@ type InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmen
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -145981,6 +151227,12 @@ type InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmen
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -146009,6 +151261,16 @@ const (
 	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachment : Instantiate InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkAttachment (Generic Model Constructor)
@@ -146111,6 +151373,11 @@ func UnmarshalInstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetwork
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -146193,7 +151460,8 @@ type InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterface
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -146211,6 +151479,12 @@ type InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterface
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -146239,6 +151513,16 @@ const (
 	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterface : Instantiate InstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetworkInterface (Generic Model Constructor)
@@ -146341,6 +151625,11 @@ func UnmarshalInstancePrototypeInstanceByVolumeInstanceByVolumeInstanceByNetwork
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -146421,7 +151710,8 @@ type InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateB
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -146439,6 +151729,12 @@ type InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateB
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -146469,6 +151765,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachment : Instantiate InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkAttachment (Generic Model Constructor)
@@ -146571,6 +151877,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstance
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -146656,7 +151967,8 @@ type InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateB
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -146674,6 +151986,12 @@ type InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateB
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -146704,6 +152022,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterface : Instantiate InstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstanceTemplateByCatalogOfferingInstanceByNetworkInterface (Generic Model Constructor)
@@ -146806,6 +152134,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateByCatalogOfferingInstance
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -146891,7 +152224,8 @@ type InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInst
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -146909,6 +152243,12 @@ type InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInst
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -146940,6 +152280,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachment : Instantiate InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkAttachment (Generic Model Constructor)
@@ -147042,6 +152392,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateBy
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -147127,7 +152482,8 @@ type InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInst
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -147145,6 +152501,12 @@ type InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInst
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -147176,6 +152538,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterface : Instantiate InstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateByImageInstanceByNetworkInterface (Generic Model Constructor)
@@ -147278,6 +152650,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateByImageInstanceTemplateBy
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -147363,7 +152740,8 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBy
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -147381,6 +152759,12 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBy
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -147409,6 +152793,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachment : Instantiate InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkAttachment (Generic Model Constructor)
@@ -147511,6 +152905,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceT
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -147591,7 +152990,8 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBy
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -147609,6 +153009,12 @@ type InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBy
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -147637,6 +153043,16 @@ const (
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 // NewInstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterface : Instantiate InstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceTemplateBySourceSnapshotInstanceByNetworkInterface (Generic Model Constructor)
@@ -147739,6 +153155,11 @@ func UnmarshalInstanceTemplatePrototypeInstanceTemplateBySourceSnapshotInstanceT
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -147830,7 +153251,8 @@ type InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByC
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -147849,6 +153271,12 @@ type InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByC
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -147879,6 +153307,16 @@ const (
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkAttachment) isaInstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext() bool {
@@ -147987,6 +153425,11 @@ func UnmarshalInstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextIn
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -148083,7 +153526,8 @@ type InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByC
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -148102,6 +153546,12 @@ type InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByC
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -148132,6 +153582,16 @@ const (
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextInstanceByCatalogOfferingInstanceTemplateContextInstanceByNetworkInterface) isaInstanceTemplateInstanceByCatalogOfferingInstanceTemplateContext() bool {
@@ -148240,6 +153700,11 @@ func UnmarshalInstanceTemplateInstanceByCatalogOfferingInstanceTemplateContextIn
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -148336,7 +153801,8 @@ type InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstan
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -148355,6 +153821,12 @@ type InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstan
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -148386,6 +153858,16 @@ const (
 	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkAttachment) isaInstanceTemplateInstanceByImageInstanceTemplateContext() bool {
@@ -148494,6 +153976,11 @@ func UnmarshalInstanceTemplateInstanceByImageInstanceTemplateContextInstanceByIm
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -148590,7 +154077,8 @@ type InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstan
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -148609,6 +154097,12 @@ type InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstan
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -148640,6 +154134,16 @@ const (
 	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceByImageInstanceTemplateContextInstanceByImageInstanceTemplateContextInstanceByNetworkInterface) isaInstanceTemplateInstanceByImageInstanceTemplateContext() bool {
@@ -148748,6 +154252,11 @@ func UnmarshalInstanceTemplateInstanceByImageInstanceTemplateContextInstanceByIm
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -148844,7 +154353,8 @@ type InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySo
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -148863,6 +154373,12 @@ type InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySo
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -148894,6 +154410,16 @@ const (
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachmentConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachment.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachmentVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachmentVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkAttachment) isaInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext() bool {
@@ -149002,6 +154528,11 @@ func UnmarshalInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextIns
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
@@ -149098,7 +154629,8 @@ type InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySo
 
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this virtual server instance.
 	//
-	// If unspecified, `bx2-2x8` will be used, but this default value is expected to change in the future.
+	// If unspecified, `bxf-2x8` will be used, but this default value may change in the future without changing the API
+	// version.
 	Profile InstanceProfileIdentityIntf `json:"profile,omitempty"`
 
 	ReservationAffinity *InstanceReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
@@ -149117,6 +154649,12 @@ type InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySo
 
 	// The additional volume attachments to create for the virtual server instance.
 	VolumeAttachments []VolumeAttachmentPrototype `json:"volume_attachments,omitempty"`
+
+	// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+	// instance profile's `volume_bandwidth_qos_modes`.
+	//
+	// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+	VolumeBandwidthQosMode *string `json:"volume_bandwidth_qos_mode,omitempty"`
 
 	// The VPC this virtual server instance will reside in.
 	//
@@ -149151,6 +154689,16 @@ const (
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeDisabledConst = "disabled"
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeSgxConst      = "sgx"
 	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterfaceConfidentialComputeModeTdxConst      = "tdx"
+)
+
+// Constants associated with the InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterface.VolumeBandwidthQosMode property.
+// The volume bandwidth QoS mode to use for this virtual server instance. The specified value must be listed in the
+// instance profile's `volume_bandwidth_qos_modes`.
+//
+// If unspecified, the default volume bandwidth QoS mode from the profile will be used.
+const (
+	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterfaceVolumeBandwidthQosModePooledConst   = "pooled"
+	InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterfaceVolumeBandwidthQosModeWeightedConst = "weighted"
 )
 
 func (*InstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextInstanceBySourceSnapshotInstanceTemplateContextInstanceByNetworkInterface) isaInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContext() bool {
@@ -149257,6 +154805,11 @@ func UnmarshalInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextIns
 	err = core.UnmarshalModel(m, "volume_attachments", &obj.VolumeAttachments, UnmarshalVolumeAttachmentPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "volume_attachments-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "volume_bandwidth_qos_mode", &obj.VolumeBandwidthQosMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "volume_bandwidth_qos_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCIdentity)
@@ -149939,6 +155492,104 @@ func (loadBalancerPoolMemberTargetPrototypeLoadBalancerIdentityLoadBalancerIdent
 	_patch = map[string]interface{}{}
 	if !core.IsNil(loadBalancerPoolMemberTargetPrototypeLoadBalancerIdentityLoadBalancerIdentityByID.ID) {
 		_patch["id"] = loadBalancerPoolMemberTargetPrototypeLoadBalancerIdentityLoadBalancerIdentityByID.ID
+	}
+
+	return
+}
+
+// LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref : LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref struct
+// This model "extends" LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity
+type LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref struct {
+	// The URL for this reserved IP.
+	Href *string `json:"href" validate:"required"`
+}
+
+// NewLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref : Instantiate LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref (Generic Model Constructor)
+func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref(href string) (_model *LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref, err error) {
+	_model = &LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref{
+		Href: core.StringPtr(href),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref) isaLoadBalancerPoolMemberTargetPrototypeReservedIPIdentity() bool {
+	return true
+}
+
+func (*LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref) isaLoadBalancerPoolMemberTargetPrototype() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref unmarshals an instance of LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref from the specified map of raw messages.
+func UnmarshalLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref
+func (loadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref *LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(loadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref.Href) {
+		_patch["href"] = loadBalancerPoolMemberTargetPrototypeReservedIPIdentityByHref.Href
+	}
+
+	return
+}
+
+// LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID : LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID struct
+// This model "extends" LoadBalancerPoolMemberTargetPrototypeReservedIPIdentity
+type LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID struct {
+	// The unique identifier for this reserved IP.
+	ID *string `json:"id" validate:"required"`
+}
+
+// NewLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID : Instantiate LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID (Generic Model Constructor)
+func (*VpcV1) NewLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID(id string) (_model *LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID, err error) {
+	_model = &LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID{
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID) isaLoadBalancerPoolMemberTargetPrototypeReservedIPIdentity() bool {
+	return true
+}
+
+func (*LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID) isaLoadBalancerPoolMemberTargetPrototype() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID unmarshals an instance of LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID from the specified map of raw messages.
+func UnmarshalLoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID
+func (loadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID *LoadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(loadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID.ID) {
+		_patch["id"] = loadBalancerPoolMemberTargetPrototypeReservedIPIdentityByID.ID
 	}
 
 	return
@@ -151282,6 +156933,108 @@ func UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIden
 	return
 }
 
+// VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch : VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch struct
+// This model "extends" VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch
+type VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn,omitempty"`
+
+	// The IP address of the peer VPN gateway for this connection.
+	Address *string `json:"address,omitempty"`
+}
+
+func (*VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch) isaVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch() bool {
+	return true
+}
+
+func (*VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch) isaVPNGatewayConnectionPeerPatch() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch unmarshals an instance of VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch
+func (vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch *VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch.Asn) {
+		_patch["asn"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch.Asn
+	}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch.Address) {
+		_patch["address"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerAddressPatch.Address
+	}
+
+	return
+}
+
+// VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch : VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch struct
+// This model "extends" VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch
+type VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch struct {
+	// The peer autonomous system number (ASN) for this VPN gateway connection. The ASN values in the
+	// [restricted ASN list](
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-planning-considerations-vpn#dynamic-route-based-considerations) are
+	// reserved and unavailable.
+	Asn *int64 `json:"asn,omitempty"`
+
+	// The FQDN of the peer VPN gateway for this connection.
+	Fqdn *string `json:"fqdn,omitempty"`
+}
+
+func (*VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch) isaVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatch() bool {
+	return true
+}
+
+func (*VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch) isaVPNGatewayConnectionPeerPatch() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch unmarshals an instance of VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch)
+	err = core.UnmarshalPrimitive(m, "asn", &obj.Asn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "asn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fqdn", &obj.Fqdn)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fqdn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch
+func (vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch *VPNGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch.Asn) {
+		_patch["asn"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch.Asn
+	}
+	if !core.IsNil(vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch.Fqdn) {
+		_patch["fqdn"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionDynamicRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch.Fqdn
+	}
+
+	return
+}
+
 // VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPeerAddressPatch : VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPeerAddressPatch struct
 // This model "extends" VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatch
 type VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPeerAddressPatch struct {
@@ -151427,6 +157180,249 @@ func (vpnGatewayConnectionPeerPatchVPNGatewayConnectionStaticRouteModePeerPatchV
 		_patch["fqdn"] = vpnGatewayConnectionPeerPatchVPNGatewayConnectionStaticRouteModePeerPatchVPNGatewayConnectionStaticRouteModePeerPatchVPNGatewayConnectionPeerFqdnPatch.Fqdn
 	}
 
+	return
+}
+
+// VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode : VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode struct
+// This model "extends" VPNGatewayConnectionRouteMode
+type VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode struct {
+	// If set to false, the VPN gateway connection is shut down.
+	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
+
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
+
+	// The date and time that this VPN gateway connection was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	DeadPeerDetection *VPNGatewayConnectionDpd `json:"dead_peer_detection" validate:"required"`
+
+	// The establish mode of the VPN gateway connection:
+	// - `bidirectional`: Either side of the VPN gateway can initiate IKE protocol
+	//    negotiations or rekeying processes.
+	// - `peer_only`: Only the peer can initiate IKE protocol negotiations for this VPN gateway
+	//    connection. Additionally, the peer is responsible for initiating the rekeying process
+	//    after the connection is established. If rekeying does not occur, the VPN gateway
+	//    connection will be brought down after its lifetime expires.
+	EstablishMode *string `json:"establish_mode" validate:"required"`
+
+	// The URL for this VPN gateway connection.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this VPN gateway connection.
+	ID *string `json:"id" validate:"required"`
+
+	// The IKE policy. If absent, [auto-negotiation is
+	// used](https://cloud.ibm.com/docs/vpc?topic=vpc-using-vpn&interface=ui#ike-auto-negotiation-phase-1).
+	IkePolicy *IkePolicyReference `json:"ike_policy,omitempty"`
+
+	// The IPsec policy. If absent, [auto-negotiation is
+	// used](https://cloud.ibm.com/docs/vpc?topic=vpc-using-vpn&interface=ui#ipsec-auto-negotiation-phase-2).
+	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
+
+	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Mode *string `json:"mode" validate:"required"`
+
+	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
+	Name *string `json:"name" validate:"required"`
+
+	// The pre-shared key.
+	Psk *string `json:"psk" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
+	// The status of a VPN gateway connection.
+	Status *string `json:"status" validate:"required"`
+
+	// The reasons for the current VPN gateway connection status (if any).
+	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
+
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic" validate:"required"`
+
+	Local *VPNGatewayConnectionDynamicRouteModeLocal `json:"local" validate:"required"`
+
+	Peer VPNGatewayConnectionDynamicRouteModePeerIntf `json:"peer" validate:"required"`
+
+	// The routing protocol for this VPN gateway connection.
+	RoutingProtocol *string `json:"routing_protocol" validate:"required"`
+
+	// The VPN tunnel configuration for this VPN gateway connection (in dynamic route mode).
+	Tunnels []VPNGatewayConnectionDynamicRouteModeTunnel `json:"tunnels" validate:"required"`
+}
+
+// Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode.AuthenticationMode property.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeAuthenticationModePskConst = "psk"
+)
+
+// Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode.EstablishMode property.
+// The establish mode of the VPN gateway connection:
+//   - `bidirectional`: Either side of the VPN gateway can initiate IKE protocol
+//     negotiations or rekeying processes.
+//   - `peer_only`: Only the peer can initiate IKE protocol negotiations for this VPN gateway
+//     connection. Additionally, the peer is responsible for initiating the rekeying process
+//     after the connection is established. If rekeying does not occur, the VPN gateway
+//     connection will be brought down after its lifetime expires.
+const (
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeEstablishModeBidirectionalConst = "bidirectional"
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeEstablishModePeerOnlyConst      = "peer_only"
+)
+
+// Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode.Mode property.
+// The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeModePolicyConst = "policy"
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeModeRouteConst  = "route"
+)
+
+// Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode.ResourceType property.
+// The resource type.
+const (
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeResourceTypeVPNGatewayConnectionConst = "vpn_gateway_connection"
+)
+
+// Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode.Status property.
+// The status of a VPN gateway connection.
+const (
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeStatusDownConst = "down"
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeStatusUpConst   = "up"
+)
+
+// Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode.RoutingProtocol property.
+// The routing protocol for this VPN gateway connection.
+const (
+	VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteModeRoutingProtocolBgpConst = "bgp"
+)
+
+func (*VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode) isaVPNGatewayConnectionRouteMode() bool {
+	return true
+}
+
+func (*VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode) isaVPNGatewayConnection() bool {
+	return true
+}
+
+// UnmarshalVPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode unmarshals an instance of VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode from the specified map of raw messages.
+func UnmarshalVPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VPNGatewayConnectionRouteModeVPNGatewayConnectionDynamicRouteMode)
+	err = core.UnmarshalPrimitive(m, "admin_state_up", &obj.AdminStateUp)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "admin_state_up-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "authentication_mode", &obj.AuthenticationMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "dead_peer_detection", &obj.DeadPeerDetection, UnmarshalVPNGatewayConnectionDpd)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "dead_peer_detection-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "establish_mode", &obj.EstablishMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "establish_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ike_policy", &obj.IkePolicy, UnmarshalIkePolicyReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ike_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ipsec_policy", &obj.IpsecPolicy, UnmarshalIPsecPolicyReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ipsec_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mode", &obj.Mode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "psk", &obj.Psk)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalVPNGatewayConnectionStatusReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionDynamicRouteModeLocal)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "peer", &obj.Peer, UnmarshalVPNGatewayConnectionDynamicRouteModePeer)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "peer-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "routing_protocol", &obj.RoutingProtocol)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "routing_protocol-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "tunnels", &obj.Tunnels, UnmarshalVPNGatewayConnectionDynamicRouteModeTunnel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tunnels-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -152191,244 +158187,6 @@ func UnmarshalVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolum
 	err = core.UnmarshalModel(m, "source_snapshot", &obj.SourceSnapshot, UnmarshalSnapshotIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "source_snapshot-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup struct
-// This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup struct {
-	// The name for this instance group manager action. The name must not be used by another action for the instance group
-	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
-	Name *string `json:"name,omitempty"`
-
-	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
-	// period.
-	CronSpec *string `json:"cron_spec,omitempty"`
-
-	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group" validate:"required"`
-}
-
-// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup(group *InstanceGroupManagerScheduledActionGroupPrototype) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup, err error) {
-	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup{
-		Group: group,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup) isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup) isaInstanceGroupManagerActionPrototype() bool {
-	return true
-}
-
-// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByGroup)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalInstanceGroupManagerScheduledActionGroupPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager struct
-// This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager struct {
-	// The name for this instance group manager action. The name must not be used by another action for the instance group
-	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
-	Name *string `json:"name,omitempty"`
-
-	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
-	// period.
-	CronSpec *string `json:"cron_spec,omitempty"`
-
-	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager" validate:"required"`
-}
-
-// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager, err error) {
-	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager{
-		Manager: manager,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager) isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpec() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager) isaInstanceGroupManagerActionPrototype() bool {
-	return true
-}
-
-// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByCronSpecByManager)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "manager", &obj.Manager, UnmarshalInstanceGroupManagerScheduledActionManagerPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "manager-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup struct
-// This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup struct {
-	// The name for this instance group manager action. The name must not be used by another action for the instance group
-	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
-	Name *string `json:"name,omitempty"`
-
-	// The date and time the scheduled action will run.
-	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
-
-	Group *InstanceGroupManagerScheduledActionGroupPrototype `json:"group" validate:"required"`
-}
-
-// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup(group *InstanceGroupManagerScheduledActionGroupPrototype) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup, err error) {
-	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup{
-		Group: group,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup) isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup) isaInstanceGroupManagerActionPrototype() bool {
-	return true
-}
-
-// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByGroup)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "group", &obj.Group, UnmarshalInstanceGroupManagerScheduledActionGroupPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager : InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager struct
-// This model "extends" InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt
-type InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager struct {
-	// The name for this instance group manager action. The name must not be used by another action for the instance group
-	// manager. If unspecified, the name will be a hyphenated list of randomly-selected words.
-	Name *string `json:"name,omitempty"`
-
-	// The date and time the scheduled action will run.
-	RunAt *strfmt.DateTime `json:"run_at,omitempty"`
-
-	Manager InstanceGroupManagerScheduledActionManagerPrototypeIntf `json:"manager" validate:"required"`
-}
-
-// NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager : Instantiate InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager (Generic Model Constructor)
-func (*VpcV1) NewInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager(manager InstanceGroupManagerScheduledActionManagerPrototypeIntf) (_model *InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager, err error) {
-	_model = &InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager{
-		Manager: manager,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager) isaInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager) isaInstanceGroupManagerActionPrototypeScheduledActionPrototype() bool {
-	return true
-}
-
-func (*InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager) isaInstanceGroupManagerActionPrototype() bool {
-	return true
-}
-
-// UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager unmarshals an instance of InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAtByManager)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "run_at", &obj.RunAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "run_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "manager", &obj.Manager, UnmarshalInstanceGroupManagerScheduledActionManagerPrototype)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "manager-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -153902,6 +159660,98 @@ func (pager *EndpointGatewayIpsPager) GetNext() (page []ReservedIP, err error) {
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *EndpointGatewayIpsPager) GetAll() (allItems []ReservedIP, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// EndpointGatewayResourceBindingsPager can be used to simplify the use of the "ListEndpointGatewayResourceBindings" method.
+type EndpointGatewayResourceBindingsPager struct {
+	hasNext     bool
+	options     *ListEndpointGatewayResourceBindingsOptions
+	client      *VpcV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewEndpointGatewayResourceBindingsPager returns a new EndpointGatewayResourceBindingsPager instance.
+func (vpc *VpcV1) NewEndpointGatewayResourceBindingsPager(options *ListEndpointGatewayResourceBindingsOptions) (pager *EndpointGatewayResourceBindingsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListEndpointGatewayResourceBindingsOptions = *options
+	pager = &EndpointGatewayResourceBindingsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  vpc,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *EndpointGatewayResourceBindingsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *EndpointGatewayResourceBindingsPager) GetNextWithContext(ctx context.Context) (page []EndpointGatewayResourceBinding, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListEndpointGatewayResourceBindingsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ResourceBindings
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *EndpointGatewayResourceBindingsPager) GetAllWithContext(ctx context.Context) (allItems []EndpointGatewayResourceBinding, err error) {
+	for pager.HasNext() {
+		var nextPage []EndpointGatewayResourceBinding
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *EndpointGatewayResourceBindingsPager) GetNext() (page []EndpointGatewayResourceBinding, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *EndpointGatewayResourceBindingsPager) GetAll() (allItems []EndpointGatewayResourceBinding, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return
@@ -159054,6 +164904,98 @@ func (pager *VPNGatewayConnectionsPager) GetNext() (page []VPNGatewayConnectionI
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *VPNGatewayConnectionsPager) GetAll() (allItems []VPNGatewayConnectionIntf, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// VPNGatewayServiceConnectionsPager can be used to simplify the use of the "ListVPNGatewayServiceConnections" method.
+type VPNGatewayServiceConnectionsPager struct {
+	hasNext     bool
+	options     *ListVPNGatewayServiceConnectionsOptions
+	client      *VpcV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewVPNGatewayServiceConnectionsPager returns a new VPNGatewayServiceConnectionsPager instance.
+func (vpc *VpcV1) NewVPNGatewayServiceConnectionsPager(options *ListVPNGatewayServiceConnectionsOptions) (pager *VPNGatewayServiceConnectionsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListVPNGatewayServiceConnectionsOptions = *options
+	pager = &VPNGatewayServiceConnectionsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  vpc,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *VPNGatewayServiceConnectionsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *VPNGatewayServiceConnectionsPager) GetNextWithContext(ctx context.Context) (page []VPNGatewayServiceConnection, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListVPNGatewayServiceConnectionsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ServiceConnections
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *VPNGatewayServiceConnectionsPager) GetAllWithContext(ctx context.Context) (allItems []VPNGatewayServiceConnection, err error) {
+	for pager.HasNext() {
+		var nextPage []VPNGatewayServiceConnection
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *VPNGatewayServiceConnectionsPager) GetNext() (page []VPNGatewayServiceConnection, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *VPNGatewayServiceConnectionsPager) GetAll() (allItems []VPNGatewayServiceConnection, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return

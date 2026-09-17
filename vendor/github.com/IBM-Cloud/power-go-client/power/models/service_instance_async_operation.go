@@ -21,7 +21,7 @@ type ServiceInstanceAsyncOperation struct {
 	DashboardURL string `json:"dashboard_url,omitempty"`
 
 	// extensions
-	Extensions interface{} `json:"extensions,omitempty"`
+	Extensions any `json:"extensions,omitempty"`
 
 	// operation
 	Operation string `json:"operation,omitempty"`

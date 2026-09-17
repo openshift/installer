@@ -27,6 +27,9 @@ type VolumeGroupCreate struct {
 	// Pattern: ^[\s]*[A-Za-z0-9:_.\-][A-Za-z0-9\s:_.\-]*$
 	Name string `json:"name,omitempty"`
 
+	// Target CRN of the secondary workspace where the auxiliary data resides; optional; if specified, the auxiliary volumes for the primary volumes getting added to the new volume group will be automatically onboarded into the secondary workspace and added to the corresponding auxiliary consistency group.
+	TargetCRN string `json:"targetCRN,omitempty"`
+
 	// List of volume IDs,members of VolumeGroup
 	// Required: true
 	VolumeIDs []string `json:"volumeIDs"`

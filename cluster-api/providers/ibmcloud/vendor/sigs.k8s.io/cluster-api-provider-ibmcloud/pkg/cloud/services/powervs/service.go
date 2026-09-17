@@ -26,8 +26,8 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_images"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/accounts"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
 var _ PowerVS = &Service{}
@@ -59,7 +59,7 @@ func NewService(options ServiceOptions) (PowerVS, error) {
 		options.Authenticator = auth
 	}
 	if options.UserAccount == "" {
-		account, err := utils.GetAccount(options.Authenticator)
+		account, err := accounts.GetAccount(options.Authenticator)
 		if err != nil {
 			return nil, err
 		}

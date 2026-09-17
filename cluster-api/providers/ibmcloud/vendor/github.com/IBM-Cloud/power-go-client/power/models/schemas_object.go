@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -50,11 +51,15 @@ func (m *SchemasObject) validateServiceBinding(formats strfmt.Registry) error {
 
 	if m.ServiceBinding != nil {
 		if err := m.ServiceBinding.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("service_binding")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("service_binding")
 			}
+
 			return err
 		}
 	}
@@ -69,11 +74,15 @@ func (m *SchemasObject) validateServiceInstance(formats strfmt.Registry) error {
 
 	if m.ServiceInstance != nil {
 		if err := m.ServiceInstance.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("service_instance")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("service_instance")
 			}
+
 			return err
 		}
 	}
@@ -108,11 +117,15 @@ func (m *SchemasObject) contextValidateServiceBinding(ctx context.Context, forma
 		}
 
 		if err := m.ServiceBinding.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("service_binding")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("service_binding")
 			}
+
 			return err
 		}
 	}
@@ -129,11 +142,15 @@ func (m *SchemasObject) contextValidateServiceInstance(ctx context.Context, form
 		}
 
 		if err := m.ServiceInstance.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("service_instance")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("service_instance")
 			}
+
 			return err
 		}
 	}

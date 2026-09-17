@@ -51,7 +51,7 @@ func (m *StorageAffinity) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var storageAffinityTypeAffinityPolicyPropEnum []interface{}
+var storageAffinityTypeAffinityPolicyPropEnum []any
 
 func init() {
 	var res []string

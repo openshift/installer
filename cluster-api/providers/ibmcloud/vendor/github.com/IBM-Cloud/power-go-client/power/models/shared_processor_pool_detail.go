@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -60,11 +61,15 @@ func (m *SharedProcessorPoolDetail) validateServers(formats strfmt.Registry) err
 
 		if m.Servers[i] != nil {
 			if err := m.Servers[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("servers" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("servers" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -82,11 +87,15 @@ func (m *SharedProcessorPoolDetail) validateSharedProcessorPool(formats strfmt.R
 
 	if m.SharedProcessorPool != nil {
 		if err := m.SharedProcessorPool.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sharedProcessorPool")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sharedProcessorPool")
 			}
+
 			return err
 		}
 	}
@@ -123,11 +132,15 @@ func (m *SharedProcessorPoolDetail) contextValidateServers(ctx context.Context, 
 			}
 
 			if err := m.Servers[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("servers" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("servers" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -142,11 +155,15 @@ func (m *SharedProcessorPoolDetail) contextValidateSharedProcessorPool(ctx conte
 	if m.SharedProcessorPool != nil {
 
 		if err := m.SharedProcessorPool.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("sharedProcessorPool")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("sharedProcessorPool")
 			}
+
 			return err
 		}
 	}

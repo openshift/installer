@@ -7,6 +7,7 @@ package p_cloud_networks
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 
@@ -22,7 +23,7 @@ type PcloudNetworksDeleteReader struct {
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *PcloudNetworksDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *PcloudNetworksDeleteReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (any, error) {
 	switch response.Code() {
 	case 200:
 		result := NewPcloudNetworksDeleteOK()
@@ -50,6 +51,12 @@ func (o *PcloudNetworksDeleteReader) ReadResponse(response runtime.ClientRespons
 		return nil, result
 	case 404:
 		result := NewPcloudNetworksDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 409:
+		result := NewPcloudNetworksDeleteConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -132,7 +139,7 @@ func (o *PcloudNetworksDeleteOK) GetPayload() models.Object {
 func (o *PcloudNetworksDeleteOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	// response payload
-	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -202,7 +209,7 @@ func (o *PcloudNetworksDeleteBadRequest) readResponse(response runtime.ClientRes
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -272,7 +279,7 @@ func (o *PcloudNetworksDeleteUnauthorized) readResponse(response runtime.ClientR
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -342,7 +349,7 @@ func (o *PcloudNetworksDeleteForbidden) readResponse(response runtime.ClientResp
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -412,7 +419,77 @@ func (o *PcloudNetworksDeleteNotFound) readResponse(response runtime.ClientRespo
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksDeleteConflict creates a PcloudNetworksDeleteConflict with default headers values
+func NewPcloudNetworksDeleteConflict() *PcloudNetworksDeleteConflict {
+	return &PcloudNetworksDeleteConflict{}
+}
+
+/*
+PcloudNetworksDeleteConflict describes a response with status code 409, with default header values.
+
+Conflict
+*/
+type PcloudNetworksDeleteConflict struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud networks delete conflict response has a 2xx status code
+func (o *PcloudNetworksDeleteConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks delete conflict response has a 3xx status code
+func (o *PcloudNetworksDeleteConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks delete conflict response has a 4xx status code
+func (o *PcloudNetworksDeleteConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks delete conflict response has a 5xx status code
+func (o *PcloudNetworksDeleteConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks delete conflict response a status code equal to that given
+func (o *PcloudNetworksDeleteConflict) IsCode(code int) bool {
+	return code == 409
+}
+
+// Code gets the status code for the pcloud networks delete conflict response
+func (o *PcloudNetworksDeleteConflict) Code() int {
+	return 409
+}
+
+func (o *PcloudNetworksDeleteConflict) Error() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteConflict %s", 409, payload)
+}
+
+func (o *PcloudNetworksDeleteConflict) String() string {
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksDeleteConflict %s", 409, payload)
+}
+
+func (o *PcloudNetworksDeleteConflict) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudNetworksDeleteConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -482,7 +559,7 @@ func (o *PcloudNetworksDeleteGone) readResponse(response runtime.ClientResponse,
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 
@@ -552,7 +629,7 @@ func (o *PcloudNetworksDeleteInternalServerError) readResponse(response runtime.
 	o.Payload = new(models.Error)
 
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && !stderrors.Is(err, io.EOF) {
 		return err
 	}
 

@@ -61,7 +61,7 @@ type NetworkCreate struct {
 	// Network Peer information
 	Peer *NetworkCreatePeer `json:"peer,omitempty"`
 
-	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network) 'dhcp-vlan' (for satellite locations only)
+	// Type of Network - 'vlan' (private network), 'pub-vlan' (public network), 'dhcp-vlan'[DEPRECATED]
 	// Required: true
 	// Enum: ["vlan","pub-vlan","dhcp-vlan"]
 	Type *string `json:"type"`

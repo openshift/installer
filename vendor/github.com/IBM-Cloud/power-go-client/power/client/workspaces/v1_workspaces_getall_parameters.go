@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewV1WorkspacesGetallParams creates a new V1WorkspacesGetallParams object,
@@ -60,6 +61,13 @@ V1WorkspacesGetallParams contains all the parameters to send to the API endpoint
 	Typically these are written to a http.Request.
 */
 type V1WorkspacesGetallParams struct {
+
+	/* TgwByPassEnabled.
+
+	   Enable transit gateway bypass for the workspace list (default=false)
+	*/
+	TgwByPassEnabled *bool
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -113,6 +121,17 @@ func (o *V1WorkspacesGetallParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithTgwByPassEnabled adds the tgwByPassEnabled to the v1 workspaces getall params
+func (o *V1WorkspacesGetallParams) WithTgwByPassEnabled(tgwByPassEnabled *bool) *V1WorkspacesGetallParams {
+	o.SetTgwByPassEnabled(tgwByPassEnabled)
+	return o
+}
+
+// SetTgwByPassEnabled adds the tgwByPassEnabled to the v1 workspaces getall params
+func (o *V1WorkspacesGetallParams) SetTgwByPassEnabled(tgwByPassEnabled *bool) {
+	o.TgwByPassEnabled = tgwByPassEnabled
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *V1WorkspacesGetallParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -120,6 +139,23 @@ func (o *V1WorkspacesGetallParams) WriteToRequest(r runtime.ClientRequest, reg s
 		return err
 	}
 	var res []error
+
+	if o.TgwByPassEnabled != nil {
+
+		// query param tgwByPassEnabled
+		var qrTgwByPassEnabled bool
+
+		if o.TgwByPassEnabled != nil {
+			qrTgwByPassEnabled = *o.TgwByPassEnabled
+		}
+		qTgwByPassEnabled := swag.FormatBool(qrTgwByPassEnabled)
+		if qTgwByPassEnabled != "" {
+
+			if err := r.SetQueryParam("tgwByPassEnabled", qTgwByPassEnabled); err != nil {
+				return err
+			}
+		}
+	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)

@@ -64,7 +64,7 @@ var (
 	ErrTangThumbprintRequired    = errors.New("thumbprint is required")
 	ErrInvalidTangAdvertisement  = errors.New("advertisement is not valid JSON")
 	ErrFileIllegalMode           = errors.New("illegal file mode")
-	ErrModeSpecialBits           = errors.New("setuid/setgid/sticky bits are not supported in spec versions older than 3.4.0")
+	ErrModeSpecialBits           = errors.New("setuid/setgid/sticky bits are not supported or functional in spec versions older than 3.6.0")
 	ErrBothIDAndNameSet          = errors.New("cannot set both id and name")
 	ErrLabelTooLong              = errors.New("partition labels may not exceed 36 characters")
 	ErrDoesntMatchGUIDRegex      = errors.New("doesn't match the form \"01234567-89AB-CDEF-EDCB-A98765432101\"")

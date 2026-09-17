@@ -23,8 +23,8 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/accounts"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
 // Service holds the IBM Cloud Resource Manager Service specific information.
@@ -65,7 +65,7 @@ func (s *Service) ListResourceGroups(listResourceGroupsOptions *resourcemanagerv
 
 // GetResourceGroupByName returns the Resource Group with the provided name, if found.
 func (s *Service) GetResourceGroupByName(rgName string) (*resourcemanagerv2.ResourceGroup, error) {
-	accountID, err := utils.GetAccountID()
+	accountID, err := accounts.GetAccountID()
 	if err != nil {
 		return nil, fmt.Errorf("failed getting account id for resource group lookup: %w", err)
 	}

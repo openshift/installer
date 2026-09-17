@@ -8,4 +8,4 @@ package models
 // Object object
 //
 // swagger:model Object
-type Object interface{}
+type Object any

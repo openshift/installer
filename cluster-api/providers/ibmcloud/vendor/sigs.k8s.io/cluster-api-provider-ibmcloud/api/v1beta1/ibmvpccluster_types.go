@@ -19,7 +19,7 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -49,7 +49,7 @@ type IBMVPCClusterSpec struct {
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint capiv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// ControlPlaneLoadBalancer is optional configuration for customizing control plane behavior.
 	// +optional
@@ -83,7 +83,7 @@ type IBMVPCClusterStatus struct {
 
 	// Conditions defines current service state of the load balancer.
 	// +optional
-	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // VPC holds the VPC information.
@@ -121,11 +121,11 @@ func init() {
 }
 
 // GetConditions returns the observations of the operational state of the IBMVPCCluster resource.
-func (r *IBMVPCCluster) GetConditions() capiv1beta1.Conditions {
+func (r *IBMVPCCluster) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the IBMVPCCluster to the predescribed clusterv1.Conditions.
-func (r *IBMVPCCluster) SetConditions(conditions capiv1beta1.Conditions) {
+// SetConditions sets the underlying service state of the IBMVPCCluster to the predescribed clusterv1beta1.Conditions.
+func (r *IBMVPCCluster) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }

@@ -32,9 +32,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch" //nolint:staticcheck
 
-	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	infrav1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 )
 
 // defaultSMT is the default value of simultaneous multithreading.
@@ -48,7 +48,7 @@ type IBMPowerVSMachineTemplateReconciler struct {
 
 func (r *IBMPowerVSMachineTemplateReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrav1beta2.IBMPowerVSMachineTemplate{}).
+		For(&infrav1.IBMPowerVSMachineTemplate{}).
 		Complete(r)
 }
 
@@ -59,13 +59,13 @@ func (r *IBMPowerVSMachineTemplateReconciler) Reconcile(ctx context.Context, req
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Reconciling IBMPowerVSMachineTemplate")
 
-	var machineTemplate infrav1beta2.IBMPowerVSMachineTemplate
+	var machineTemplate infrav1.IBMPowerVSMachineTemplate
 	if err := r.Get(ctx, req.NamespacedName, &machineTemplate); err != nil {
 		log.Error(err, "Unable to fetch ibmpowervsmachinetemplate")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	helper, err := patch.NewHelper(&machineTemplate, r.Client)
+	helper, err := v1beta1patch.NewHelper(&machineTemplate, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to init patch helper: %w", err)
 	}
@@ -89,7 +89,7 @@ func (r *IBMPowerVSMachineTemplateReconciler) Reconcile(ctx context.Context, req
 	return ctrl.Result{}, nil
 }
 
-func getIBMPowerVSMachineCapacity(machineTemplate infrav1beta2.IBMPowerVSMachineTemplate) (corev1.ResourceList, error) {
+func getIBMPowerVSMachineCapacity(machineTemplate infrav1.IBMPowerVSMachineTemplate) (corev1.ResourceList, error) {
 	capacity := make(corev1.ResourceList)
 	memory := strconv.FormatInt(int64(machineTemplate.Spec.Template.Spec.MemoryGiB), 10)
 	capacity[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%sG", memory))
