@@ -72,7 +72,26 @@ func Validate(client API, meta *Metadata, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateMarketplaceImages(client, meta, ic)...)
 	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
 	allErrs = append(allErrs, validateCustomSubnets(client, field.NewPath("platform").Child("azure").Child("subnetSpec"), ic)...)
+	allErrs = append(allErrs, validateWIF(ic, field.NewPath("platform").Child("azure").Child("wifMode"))...)
 	return allErrs.ToAggregate()
+}
+
+// validateWIF validates the Workload Identity Federation configuration. For manual
+// mode, it verifies the user-provided OIDC issuer URL exposes a valid discovery
+// document and a reachable JWKS endpoint.
+func validateWIF(ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !ic.Azure.IsWIFManual() {
+		return allErrs
+	}
+
+	issuerURL := ic.Azure.WIFMode.IssuerURL
+	if err := ValidateOIDCIssuer(context.TODO(), issuerURL); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("issuerURL"), issuerURL, err.Error()))
+	}
+
+	return allErrs
 }
 
 // ValidateDiskEncryptionSet ensures the disk encryption set exists and is valid.

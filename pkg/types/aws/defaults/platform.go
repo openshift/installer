@@ -70,6 +70,11 @@ func SetPlatformDefaults(p *aws.Platform) {
 			logrus.Infof("Adding default service endpoints for region %s", p.Region)
 		}
 	}
+
+	// Default to Manual mode to be backwards compatible
+	if p.STS != nil && p.STS.Mode == "" {
+		p.STS.Mode = aws.STSModeManual
+	}
 }
 
 // InstanceTypes returns a list of instance types, in decreasing priority order, which we should use for a given

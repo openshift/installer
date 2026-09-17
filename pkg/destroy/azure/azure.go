@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	azcoreto "github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
@@ -247,6 +248,29 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("failed to delete public DNS records: %w", err))
+		o.Logger.Debug(err)
+	}
+
+	err = wait.PollUntilContextCancel(
+		waitCtx,
+		1*time.Second,
+		false,
+		func(ctx context.Context) (bool, error) {
+			o.Logger.Debugf("deleting WIF custom role definitions")
+			err = o.deleteWIFCustomRoleDefinitions(ctx)
+			if err != nil {
+				o.Logger.Debug(err)
+				if isAuthError(err) {
+					errs = append(errs, fmt.Errorf("unable to authenticate when deleting WIF custom role definitions: %w", err))
+					return true, err
+				}
+				return false, nil
+			}
+			return true, nil
+		},
+	)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("failed to delete WIF custom role definitions: %w", err))
 		o.Logger.Debug(err)
 	}
 
@@ -890,4 +914,48 @@ func removeSubnetFromNATGateway(ctx context.Context, subnetsClient *armnetwork.S
 		return fmt.Errorf("subnet update operation failed for '%s': %w", subnetName, err)
 	}
 	return nil
+}
+
+// deleteWIFCustomRoleDefinitions removes subscription-scoped custom role
+// definitions that were created for WIF. These are prefixed with the infraID.
+func (o *ClusterUninstaller) deleteWIFCustomRoleDefinitions(ctx context.Context) error {
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: o.Session.CloudConfig,
+		},
+	}
+	authClientFactory, err := armauthorization.NewClientFactory(o.Session.Credentials.SubscriptionID, o.Session.TokenCreds, clientOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create authorization client factory: %w", err)
+	}
+	roleDefClient := authClientFactory.NewRoleDefinitionsClient()
+	scope := fmt.Sprintf("/subscriptions/%s", o.Session.Credentials.SubscriptionID)
+
+	var errs []error
+	pager := roleDefClient.NewListPager(scope, &armauthorization.RoleDefinitionsClientListOptions{
+		Filter: azcoreto.Ptr("type eq 'CustomRole'"),
+	})
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to list custom role definitions: %w", err)
+		}
+		for _, rd := range page.Value {
+			if rd.Properties == nil || rd.Properties.RoleName == nil {
+				continue
+			}
+			roleName := *rd.Properties.RoleName
+			if !strings.HasPrefix(roleName, o.InfraID+"-") {
+				continue
+			}
+			o.Logger.Debugf("deleting WIF custom role definition %s", roleName)
+			_, err := roleDefClient.Delete(ctx, scope, *rd.Name, nil)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to delete custom role %s: %w", roleName, err))
+				continue
+			}
+			o.Logger.Infof("deleted WIF custom role definition %s", roleName)
+		}
+	}
+	return utilerrors.NewAggregate(errs)
 }

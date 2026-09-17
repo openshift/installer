@@ -142,6 +142,13 @@ type Platform struct {
 	// +kubebuilder:validation:Enum="IPv4";"DualStackIPv4Primary";"DualStackIPv6Primary"
 	// +optional
 	IPFamily network.IPFamily `json:"ipFamily,omitempty"`
+
+	// STS configures the use of AWS Security Token Service for
+	// short-term credential provisioning. When set, the cluster
+	// components use IAM roles with OIDC-based web identity tokens
+	// instead of long-lived credentials.
+	// +optional
+	STS *STS `json:"sts,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
@@ -239,6 +246,50 @@ const (
 	// load balancer that serves the Kubernetes API server.
 	ControlPlaneInternalLBSubnetRole SubnetRoleType = "ControlPlaneInternalLB"
 )
+
+// STSMode determines how STS short-term credentials are provisioned.
+// +kubebuilder:validation:Enum="";"Managed";"Manual"
+type STSMode string
+
+const (
+	// STSModeManaged indicates the installer creates the OIDC provider,
+	// S3 bucket, IAM roles, and credential secrets.
+	STSModeManaged STSMode = "Managed"
+
+	// STSModeManual indicates the user pre-creates all STS resources
+	// (e.g. via ccoctl) and provides manifests to the installer.
+	STSModeManual STSMode = "Manual"
+)
+
+// STS configures the use of AWS Security Token Service for
+// short-term credential provisioning.
+type STS struct {
+	// Mode determines how STS resources are provisioned.
+	//
+	// Following are the accepted values:
+	//
+	// * "Managed": The installer creates the OIDC provider, IAM roles,
+	// and credential secrets automatically.
+	//
+	// * "Manual": The user pre-creates all STS resources (e.g. via ccoctl)
+	// and places the manifests in the install directory.
+	//
+	// If this field is not set explicitly, the default value is "Manual".
+	// This default is subject to change over time.
+	//
+	// +optional
+	Mode STSMode `json:"mode,omitempty"`
+}
+
+// IsSTSEnabled returns true when STS is configured.
+func (p *Platform) IsSTSEnabled() bool {
+	return p != nil && p.STS != nil
+}
+
+// IsSTSManaged returns true when the installer manages STS resources.
+func (p *Platform) IsSTSManaged() bool {
+	return p.IsSTSEnabled() && p.STS.Mode == STSModeManaged
+}
 
 // IsPublicOnlySubnetsEnabled returns whether the public-only subnets feature has been enabled via env var.
 func IsPublicOnlySubnetsEnabled() bool {
