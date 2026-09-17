@@ -25,7 +25,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/pagingutils"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/util/paging"
 )
 
 const (
@@ -45,6 +45,15 @@ const (
 	// ibmcloud catalog service cloud-object-storage.
 	CosResourcePlanID = "1e4e33e4-cfa6-4f12-9016-be594a6d5f87"
 )
+
+// InstanceFilter defines the filters for searching resource instances.
+type InstanceFilter struct {
+	ID             string
+	Name           string
+	ResourceID     string
+	ResourcePlanID string
+	Zone           *string
+}
 
 // Service holds the IBM Cloud Resource Controller Service specific information.
 type Service struct {
@@ -87,7 +96,7 @@ func (s *Service) DeleteResourceInstance(options *resourcecontrollerv2.DeleteRes
 }
 
 // GetServiceInstance returns service instance with given name or id. If not found, returns nil.
-// TODO: Combine GetSreviceInstance() and GetInstanceByName().
+// Deprecated. Will be removed in future versions. Use GetResourceInstanceByFilter method instead.
 func (s *Service) GetServiceInstance(id, name string, zone *string) (*resourcecontrollerv2.ResourceInstance, error) {
 	var serviceInstancesList []resourcecontrollerv2.ResourceInstance
 	f := func(start string) (bool, string, error) {
@@ -132,7 +141,7 @@ func (s *Service) GetServiceInstance(id, name string, zone *string) (*resourceco
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, fmt.Errorf("error listing service instances %v", err)
 	}
 	switch len(serviceInstancesList) {
@@ -147,6 +156,7 @@ func (s *Service) GetServiceInstance(id, name string, zone *string) (*resourceco
 }
 
 // GetInstanceByName returns instance with given name, planID and resourceID. If not found, returns nil.
+// Deprecated. Will be removed in future versions. Use GetResourceInstanceByFilter method instead.
 func (s *Service) GetInstanceByName(name, resourceID, planID string) (*resourcecontrollerv2.ResourceInstance, error) {
 	var serviceInstancesList []resourcecontrollerv2.ResourceInstance
 	f := func(start string) (bool, string, error) {
@@ -177,7 +187,7 @@ func (s *Service) GetInstanceByName(name, resourceID, planID string) (*resourcec
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, fmt.Errorf("error listing COS instances %v", err)
 	}
 	switch len(serviceInstancesList) {
@@ -188,6 +198,78 @@ func (s *Service) GetInstanceByName(name, resourceID, planID string) (*resourcec
 	default:
 		errStr := fmt.Errorf("there exist more than one COS instance ID with same name %s, Try setting serviceInstance.ID", name)
 		return nil, errStr
+	}
+}
+
+// GetResourceInstanceByFilter returns instance with given name, id, planID and resourceID. If not found, returns nil.
+func (s *Service) GetResourceInstanceByFilter(filter InstanceFilter) (*resourcecontrollerv2.ResourceInstance, error) {
+	var serviceInstancesList []resourcecontrollerv2.ResourceInstance
+
+	f := func(start string) (bool, string, error) {
+		listServiceInstanceOptions := &resourcecontrollerv2.ListResourceInstancesOptions{}
+
+		// Apply filters if provided.
+		if filter.ResourceID != "" {
+			listServiceInstanceOptions.ResourceID = ptr.To(filter.ResourceID)
+		}
+		if filter.ResourcePlanID != "" {
+			listServiceInstanceOptions.ResourcePlanID = ptr.To(filter.ResourcePlanID)
+		}
+		if filter.ID != "" {
+			listServiceInstanceOptions.GUID = ptr.To(filter.ID)
+		}
+		if filter.Name != "" {
+			listServiceInstanceOptions.Name = ptr.To(filter.Name)
+		}
+		if start != "" {
+			listServiceInstanceOptions.Start = &start
+		}
+
+		serviceInstances, _, err := s.client.ListResourceInstances(listServiceInstanceOptions)
+		if err != nil {
+			fmt.Printf("error listing instances")
+			return false, "", err
+		}
+
+		// Apply optional zone (region) filter.
+		if serviceInstances != nil {
+			for _, resource := range serviceInstances.Resources {
+				if filter.Zone != nil && *filter.Zone != "" {
+					if resource.RegionID != nil && *resource.RegionID == *filter.Zone {
+						serviceInstancesList = append(serviceInstancesList, resource)
+					}
+				} else {
+					serviceInstancesList = append(serviceInstancesList, resource)
+				}
+			}
+
+			nextURL, err := serviceInstances.GetNextStart()
+			if err != nil {
+				return false, "", err
+			}
+			if nextURL == nil {
+				return true, "", nil
+			}
+			return false, *nextURL, nil
+		}
+
+		return true, "", nil
+	}
+
+	if err := paging.Helper(f); err != nil {
+		return nil, fmt.Errorf("error listing resource instances: %v", err)
+	}
+
+	switch len(serviceInstancesList) {
+	case 0:
+		return nil, nil
+	case 1:
+		return &serviceInstancesList[0], nil
+	default:
+		return nil, fmt.Errorf(
+			"found multiple resource instances matching filters (name=%s id=%s); specify a unique filter",
+			filter.Name, filter.ID,
+		)
 	}
 }
 
