@@ -204,6 +204,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Network: capibm.NetworkSource{
 				Type: capibm.SourceTypeProvision,
 				Provision: capibm.NetworkProvisionConfig{
+					Type: capibm.NetworkProvisionTypeDHCPServer,
 					DHCPServer: capibm.DHCPServer{
 						Name: fmt.Sprintf("%s-dhcp", clusterID.InfraID),
 						CIDR: dhcpSubnet,

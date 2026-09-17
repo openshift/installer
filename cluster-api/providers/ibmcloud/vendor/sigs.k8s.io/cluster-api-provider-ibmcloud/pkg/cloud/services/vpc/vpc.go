@@ -22,7 +22,7 @@ import (
 )
 
 //go:generate ../../../../hack/tools/bin/mockgen -source=./vpc.go -destination=./mock/vpc_generated.go -package=mock
-//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/vpc_generated.go > ./mock/_vpc_generated.go && mv ./mock/_vpc_generated.go ./mock/vpc_generated.go"
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/scripts/verify/boilerplate/boilerplate.generatego.txt ./mock/vpc_generated.go > ./mock/_vpc_generated.go && mv ./mock/_vpc_generated.go ./mock/vpc_generated.go"
 
 // Vpc interface defines methods that a Cluster API IBMCLOUD object should implement.
 type Vpc interface {
@@ -40,6 +40,7 @@ type Vpc interface {
 	GetSubnetPublicGateway(options *vpcv1.GetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	SetSubnetPublicGateway(options *vpcv1.SetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	UnsetSubnetPublicGateway(options *vpcv1.UnsetSubnetPublicGatewayOptions) (*core.DetailedResponse, error)
+	GetPublicGateway(options *vpcv1.GetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	CreatePublicGateway(options *vpcv1.CreatePublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	DeletePublicGateway(options *vpcv1.DeletePublicGatewayOptions) (*core.DetailedResponse, error)
 	ListVPCAddressPrefixes(options *vpcv1.ListVPCAddressPrefixesOptions) (*vpcv1.AddressPrefixCollection, *core.DetailedResponse, error)
@@ -48,6 +49,10 @@ type Vpc interface {
 	DeleteLoadBalancer(options *vpcv1.DeleteLoadBalancerOptions) (*core.DetailedResponse, error)
 	ListLoadBalancers(options *vpcv1.ListLoadBalancersOptions) (*vpcv1.LoadBalancerCollection, *core.DetailedResponse, error)
 	GetLoadBalancer(options *vpcv1.GetLoadBalancerOptions) (*vpcv1.LoadBalancer, *core.DetailedResponse, error)
+	CreateLoadBalancerPool(options *vpcv1.CreateLoadBalancerPoolOptions) (*vpcv1.LoadBalancerPool, *core.DetailedResponse, error)
+	ListLoadBalancerPools(options *vpcv1.ListLoadBalancerPoolsOptions) (*vpcv1.LoadBalancerPoolCollection, *core.DetailedResponse, error)
+	CreateLoadBalancerListener(options *vpcv1.CreateLoadBalancerListenerOptions) (*vpcv1.LoadBalancerListener, *core.DetailedResponse, error)
+	ListLoadBalancerListeners(options *vpcv1.ListLoadBalancerListenersOptions) (*vpcv1.LoadBalancerListenerCollection, *core.DetailedResponse, error)
 	CreateLoadBalancerPoolMember(options *vpcv1.CreateLoadBalancerPoolMemberOptions) (*vpcv1.LoadBalancerPoolMember, *core.DetailedResponse, error)
 	DeleteLoadBalancerPoolMember(options *vpcv1.DeleteLoadBalancerPoolMemberOptions) (*core.DetailedResponse, error)
 	ListLoadBalancerPoolMembers(options *vpcv1.ListLoadBalancerPoolMembersOptions) (*vpcv1.LoadBalancerPoolMemberCollection, *core.DetailedResponse, error)
@@ -73,4 +78,15 @@ type Vpc interface {
 	GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error)
 	ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error)
 	GetVPCZonesByRegion(region string) ([]string, error)
+	CreateVolume(options *vpcv1.CreateVolumeOptions) (*vpcv1.Volume, *core.DetailedResponse, error)
+	AttachVolumeToInstance(options *vpcv1.CreateInstanceVolumeAttachmentOptions) (*vpcv1.VolumeAttachment, *core.DetailedResponse, error)
+	GetVolumeAttachments(options *vpcv1.ListInstanceVolumeAttachmentsOptions) (result *vpcv1.VolumeAttachmentCollection, response *core.DetailedResponse, err error)
+	GetVolume(options *vpcv1.GetVolumeOptions) (result *vpcv1.Volume, response *core.DetailedResponse, err error)
+	CreateVPCRoutingTable(options *vpcv1.CreateVPCRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error)
+	DeleteVPCRoutingTable(options *vpcv1.DeleteVPCRoutingTableOptions) (*core.DetailedResponse, error)
+	GetVPCRoutingTable(options *vpcv1.GetVPCRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error)
+	ListVPCRoutingTables(options *vpcv1.ListVPCRoutingTablesOptions) (*vpcv1.RoutingTableCollection, *core.DetailedResponse, error)
+	GetVPCRoutingTableByName(vpcID string, name string) (*vpcv1.RoutingTable, error)
+	GetSubnetRoutingTable(options *vpcv1.GetSubnetRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error)
+	ReplaceSubnetRoutingTable(options *vpcv1.ReplaceSubnetRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error)
 }

@@ -1483,6 +1483,17 @@ spec:
                                 - round_robin
                                 - weighted_round_robin
                                 type: string
+                              failsafePolicy:
+                                description: |-
+                                  failsafePolicy defines the action to take when all members of the pool are unhealthy.
+                                  For route-mode network load balancers, use "bypass" to send traffic directly to member IPs.
+                                  When omitted, the IBM Cloud default for the load balancer profile is used.
+                                enum:
+                                - bypass
+                                - drop
+                                - fail
+                                - forward
+                                type: string
                               healthMonitor:
                                 description: healthMonitor defines the backend pool's
                                   health monitor.
@@ -1572,6 +1583,24 @@ spec:
                           minLength: 1
                           pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
                           type: string
+                        profile:
+                          description: |-
+                            profile defines the profile to use for this load balancer.
+                            Supported values are "application" and "network-fixed".
+                            When omitted, the IBM Cloud default (application) is used.
+                          enum:
+                          - application
+                          - network-fixed
+                          type: string
+                        routeMode:
+                          description: |-
+                            routeMode enables routing mode on the load balancer, making it act as a Layer 3
+                            next-hop router rather than a load balancer. Only valid when profile is "network-fixed".
+                            Required when using the load balancer as a VNF next-hop for a VPC routing table route.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
                         securityGroups:
                           description: securityGroups defines the Security Groups
                             to attach to the load balancer.
@@ -1634,6 +1663,10 @@ spec:
                           - Private
                           type: string
                       type: object
+                      x-kubernetes-validations:
+                      - message: routeMode can only be enabled when profile is network-fixed
+                        rule: '!has(self.routeMode) || self.routeMode != ''Enabled''
+                          || (has(self.profile) && self.profile == ''network-fixed'')'
                     reference:
                       description: reference contains the information to identify
                         an existing Load Balancer.
@@ -1678,13 +1711,15 @@ spec:
                 description: network specifies how the PowerVS network should be sourced.
                 properties:
                   provision:
-                    description: provision provides the configuration for the controller
-                      to CREATE a new Network and DHCP Server.
-                    minProperties: 1
+                    description: |-
+                      provision provides the configuration for the controller to CREATE a new Network.
+                      Exactly one of dhcpServer or dhcpSubnet must be set when type is Provision.
                     properties:
                       dhcpServer:
-                        description: dhcpServer contains the configuration for the
-                          DHCP server that will be created.
+                        description: |-
+                          dhcpServer contains the configuration for creating a new DHCP server (and its associated
+                          private network) via the PowerVS DHCP service API.
+                          Required when type is DHCPServer; forbidden otherwise.
                         minProperties: 1
                         properties:
                           cidr:
@@ -1716,7 +1751,62 @@ spec:
                             - Disabled
                             type: string
                         type: object
+                      dhcpSubnet:
+                        description: |-
+                          dhcpSubnet contains the configuration for creating a plain PowerVS network with DHCP
+                          natively enabled (NetworkCreate.EnableDHCP). This avoids creating a separate DHCP server
+                          resource and is the preferred approach for new clusters.
+                          Required when type is DHCPSubnet; forbidden otherwise.
+                        minProperties: 1
+                        properties:
+                          cidr:
+                            description: cidr is the network CIDR in notation (e.g.
+                              192.168.0.0/24).
+                            maxLength: 49
+                            minLength: 1
+                            pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}($|/[0-9]{1,2})$
+                            type: string
+                          dnsServers:
+                            description: |-
+                              dnsServers is the list of DNS servers for the network.
+                              If omitted, defaults to 127.0.0.1 for private (vlan) networks.
+                            items:
+                              maxLength: 45
+                              type: string
+                            maxItems: 2
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          name:
+                            description: |-
+                              name is the name of the PowerVS network to be created.
+                              If omitted, the name will default to <CLUSTER_NAME>-dhcpsubnet.
+                              Only alphanumeric characters, dashes, and underscores are allowed.
+                            maxLength: 128
+                            minLength: 1
+                            pattern: ^[a-zA-Z0-9-_][a-zA-Z0-9-_]*$
+                            type: string
+                        type: object
+                      type:
+                        description: |-
+                          type defines how the network is provisioned.
+                          DHCPServer creates a dedicated DHCP Server and its managed private network.
+                          DHCPSubnet creates a plain PowerVS network with DHCP natively enabled (no separate DHCP server resource).
+                        enum:
+                        - DHCPServer
+                        - DHCPSubnet
+                        type: string
+                    required:
+                    - type
                     type: object
+                    x-kubernetes-validations:
+                    - message: dhcpServer configuration is required when type is DHCPServer,
+                        and forbidden otherwise
+                      rule: 'self.type == ''DHCPServer'' ? has(self.dhcpServer) :
+                        !has(self.dhcpServer)'
+                    - message: dhcpSubnet configuration is required when type is DHCPSubnet,
+                        and forbidden otherwise
+                      rule: 'self.type == ''DHCPSubnet'' ? has(self.dhcpSubnet) :
+                        !has(self.dhcpSubnet)'
                   reference:
                     description: reference tells the controller to look up an EXISTING
                       PowerVS network.
@@ -1817,6 +1907,27 @@ spec:
                           pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
                           type: string
                       type: object
+                    publicGateway:
+                      description: |-
+                        publicGateway specifies the VPC Public Gateway to attach to this subnet.
+                        Can be identified by name or id.
+                      minProperties: 1
+                      properties:
+                        id:
+                          description: id of the resource.
+                          maxLength: 64
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          maxLength: 128
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: exactly one of id or name must be specified
+                        rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1 : 0) ==
+                          1'
                     reference:
                       description: reference contains the information to identify
                         an existing VPC Subnet.
@@ -2108,6 +2219,241 @@ spec:
                 - message: provision configuration is required when type is Provision,
                     and forbidden otherwise
                   rule: 'self.type == ''Provision'' ? has(self.provision) : !has(self.provision)'
+              vpcPublicGateways:
+                description: |-
+                  vpcPublicGateways defines the VPC Public Gateways that should exist or be created for the cluster's VPC.
+                  A public gateway provides outbound internet access to resources in a subnet. One gateway is required
+                  per zone in which subnets need outbound access.
+                items:
+                  description: |-
+                    VPCPublicGateway defines a VPC Public Gateway to create or reference for the cluster's VPC.
+                    A public gateway provides outbound internet access for resources in a subnet; one is needed per zone.
+                  properties:
+                    provision:
+                      description: provision contains the configuration for provisioning
+                        a new VPC Public Gateway.
+                      minProperties: 1
+                      properties:
+                        name:
+                          description: name of the VPC Public Gateway to be created.
+                          maxLength: 63
+                          minLength: 1
+                          pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
+                          type: string
+                      type: object
+                    reference:
+                      description: reference contains the information to identify
+                        an existing VPC Public Gateway.
+                      minProperties: 1
+                      properties:
+                        id:
+                          description: id of the resource.
+                          maxLength: 64
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          maxLength: 128
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: exactly one of id or name must be specified
+                        rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1 : 0) ==
+                          1'
+                    type:
+                      description: type defines whether to use an existing VPC Public
+                        Gateway or provision a new one.
+                      enum:
+                      - Reference
+                      - Provision
+                      type: string
+                    zone:
+                      description: |-
+                        zone is the IBM Cloud VPC zone in which the public gateway resides or should be created.
+                        Required when type is Provision.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                  required:
+                  - type
+                  type: object
+                  x-kubernetes-validations:
+                  - message: reference configuration is required when type is Reference,
+                      and forbidden otherwise
+                    rule: 'self.type == ''Reference'' ? has(self.reference) : !has(self.reference)'
+                  - message: provision configuration is required when type is Provision,
+                      and forbidden otherwise
+                    rule: 'self.type == ''Provision'' ? has(self.provision) : !has(self.provision)'
+                maxItems: 10
+                type: array
+                x-kubernetes-list-type: atomic
+              vpcRoutingTables:
+                description: vpcRoutingTables defines the VPC Routing Tables that
+                  should exist or be created for the cluster's VPC.
+                items:
+                  description: VPCRoutingTableSource defines a VPC Routing Table that
+                    should exist or be created for the cluster's VPC.
+                  properties:
+                    provision:
+                      description: provision contains the configuration for provisioning
+                        a new Routing Table.
+                      minProperties: 1
+                      properties:
+                        advertiseRoutesTo:
+                          description: advertiseRoutesTo defines the ingress sources
+                            to which routes in this routing table will be advertised.
+                          items:
+                            description: AdvertiseRouteTarget defines the ingress
+                              sources to which routes in a routing table will be advertised.
+                            enum:
+                            - transit_gateway
+                            - direct_link
+                            type: string
+                          maxItems: 2
+                          type: array
+                          x-kubernetes-list-type: set
+                        name:
+                          description: |-
+                            name of the Routing Table to be created.
+                            If omitted, IBM Cloud will generate a name.
+                          maxLength: 63
+                          minLength: 1
+                          pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
+                          type: string
+                        routeDirectLinkIngress:
+                          description: |-
+                            routeDirectLinkIngress defines whether this routing table routes traffic from Direct Link.
+                            Only one routing table per VPC may have this set to Enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
+                        routeTransitGatewayIngress:
+                          description: |-
+                            routeTransitGatewayIngress defines whether this routing table routes traffic from Transit Gateway.
+                            Only one routing table per VPC may have this set to Enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
+                        routeVPCZoneIngress:
+                          description: |-
+                            routeVPCZoneIngress defines whether this routing table routes traffic from subnets in other zones.
+                            Only one routing table per VPC may have this set to Enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
+                        routes:
+                          description: routes defines the set of routes to create
+                            in the routing table.
+                          items:
+                            description: |-
+                              VPCRoutingTableRoute defines a route within a VPC Routing Table.
+                              If action is deliver and nextHop is omitted, the controller will resolve it automatically
+                              from the first private IP of a provisioned load balancer in the cluster status.
+                            properties:
+                              action:
+                                description: action defines the action to perform
+                                  with a packet matching this route.
+                                enum:
+                                - delegate
+                                - delegate_vpc
+                                - deliver
+                                - drop
+                                type: string
+                              advertise:
+                                description: |-
+                                  advertise controls whether this route is advertised to the ingress sources
+                                  configured on the routing table (e.g. Transit Gateway).
+                                  When omitted, the IBM Cloud API defaults to Disabled.
+                                enum:
+                                - Enabled
+                                - Disabled
+                                type: string
+                              destination:
+                                description: |-
+                                  destination is the destination CIDR for the route.
+                                  The host identifier in the CIDR must be zero.
+                                maxLength: 128
+                                minLength: 1
+                                type: string
+                              name:
+                                description: |-
+                                  name is an optional name for the route.
+                                  If unspecified, IBM Cloud will generate a name.
+                                maxLength: 63
+                                minLength: 1
+                                pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
+                                type: string
+                              nextHop:
+                                description: |-
+                                  nextHop is the next-hop IP address for routes with action deliver.
+                                  Must be a unicast IP address within a subnet in the routing table's VPC.
+                                maxLength: 39
+                                minLength: 1
+                                type: string
+                              zone:
+                                description: zone is the name of the availability
+                                  zone to apply the route to.
+                                maxLength: 63
+                                minLength: 1
+                                type: string
+                            required:
+                            - action
+                            - destination
+                            - zone
+                            type: object
+                            x-kubernetes-validations:
+                            - message: nextHop must not be set unless action is deliver
+                              rule: 'self.action != ''deliver'' ? !has(self.nextHop)
+                                : true'
+                          maxItems: 200
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      type: object
+                    reference:
+                      description: |-
+                        reference contains the information to identify an existing Routing Table.
+                        The controller will look up the routing table but will not manage its routes.
+                      minProperties: 1
+                      properties:
+                        id:
+                          description: id of the resource.
+                          maxLength: 64
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          maxLength: 128
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: exactly one of id or name must be specified
+                        rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1 : 0) ==
+                          1'
+                    type:
+                      description: type defines whether to use an existing Routing
+                        Table or provision a new one.
+                      enum:
+                      - Reference
+                      - Provision
+                      type: string
+                  required:
+                  - type
+                  type: object
+                  x-kubernetes-validations:
+                  - message: reference configuration is required when type is Reference,
+                      and forbidden otherwise
+                    rule: 'self.type == ''Reference'' ? has(self.reference) : !has(self.reference)'
+                  - message: provision configuration is required when type is Provision,
+                      and forbidden otherwise
+                    rule: 'self.type == ''Provision'' ? has(self.provision) : !has(self.provision)'
+                maxItems: 10
+                type: array
+                x-kubernetes-list-type: atomic
               vpcSecurityGroups:
                 description: vpcSecurityGroups defines the VPC Security Groups that
                   should exist or be created.
@@ -2830,6 +3176,18 @@ spec:
                       maxLength: 63
                       minLength: 1
                       type: string
+                    privateIPs:
+                      description: |-
+                        privateIPs contains the private IP addresses assigned to this load balancer.
+                        The first entry is used as the next-hop IP for VPC routing table routes when
+                        no explicit nextHop is provided in the route spec.
+                      items:
+                        maxLength: 39
+                        minLength: 1
+                        type: string
+                      maxItems: 100
+                      type: array
+                      x-kubernetes-list-type: set
                     state:
                       description: state is the status of the load balancer.
                       maxLength: 128
@@ -2981,6 +3339,73 @@ spec:
                 - id
                 - name
                 type: object
+              vpcPublicGateways:
+                description: vpcPublicGateways tracks the observed state of VPC Public
+                  Gateways for the cluster.
+                items:
+                  description: VPCPublicGatewayStatus tracks the observed state of
+                    a VPC Public Gateway.
+                  properties:
+                    id:
+                      description: id is the unique cloud identifier for this public
+                        gateway.
+                      maxLength: 64
+                      minLength: 1
+                      type: string
+                    name:
+                      description: name is the name of the public gateway.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                    zone:
+                      description: zone is the IBM Cloud VPC zone where the gateway
+                        resides.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                  required:
+                  - id
+                  - name
+                  type: object
+                maxItems: 10
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+              vpcRoutingTables:
+                description: vpcRoutingTables tracks the observed state of VPC Routing
+                  Tables for the cluster.
+                items:
+                  description: VPCRoutingTableStatus tracks the observed state of
+                    a VPC Routing Table.
+                  properties:
+                    id:
+                      description: id is the unique cloud identifier for this routing
+                        table.
+                      maxLength: 64
+                      minLength: 1
+                      type: string
+                    name:
+                      description: name is the name of the routing table.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                    ready:
+                      description: ready indicates whether the routing table has reached
+                        a stable (active) state.
+                      enum:
+                      - Ready
+                      - NotReady
+                      type: string
+                  required:
+                  - id
+                  - name
+                  type: object
+                maxItems: 10
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
               vpcSecurityGroups:
                 description: vpcSecurityGroups tracks the live observed states of
                   all managed or referenced VPC Security Groups.
@@ -3053,6 +3478,31 @@ spec:
                       maxLength: 63
                       minLength: 1
                       type: string
+                    publicGateway:
+                      description: publicGateway is the observed Public Gateway attached
+                        to this subnet.
+                      properties:
+                        id:
+                          description: id is the unique cloud identifier for this
+                            public gateway.
+                          maxLength: 64
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name is the name of the public gateway.
+                          maxLength: 63
+                          minLength: 1
+                          type: string
+                        zone:
+                          description: zone is the IBM Cloud VPC zone where the gateway
+                            resides.
+                          maxLength: 63
+                          minLength: 1
+                          type: string
+                      required:
+                      - id
+                      - name
+                      type: object
                     zone:
                       description: zone is the actual IBM Cloud zone where the subnet
                         resides.
@@ -4317,6 +4767,17 @@ spec:
                                         - round_robin
                                         - weighted_round_robin
                                         type: string
+                                      failsafePolicy:
+                                        description: |-
+                                          failsafePolicy defines the action to take when all members of the pool are unhealthy.
+                                          For route-mode network load balancers, use "bypass" to send traffic directly to member IPs.
+                                          When omitted, the IBM Cloud default for the load balancer profile is used.
+                                        enum:
+                                        - bypass
+                                        - drop
+                                        - fail
+                                        - forward
+                                        type: string
                                       healthMonitor:
                                         description: healthMonitor defines the backend
                                           pool's health monitor.
@@ -4406,6 +4867,24 @@ spec:
                                   minLength: 1
                                   pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
                                   type: string
+                                profile:
+                                  description: |-
+                                    profile defines the profile to use for this load balancer.
+                                    Supported values are "application" and "network-fixed".
+                                    When omitted, the IBM Cloud default (application) is used.
+                                  enum:
+                                  - application
+                                  - network-fixed
+                                  type: string
+                                routeMode:
+                                  description: |-
+                                    routeMode enables routing mode on the load balancer, making it act as a Layer 3
+                                    next-hop router rather than a load balancer. Only valid when profile is "network-fixed".
+                                    Required when using the load balancer as a VNF next-hop for a VPC routing table route.
+                                  enum:
+                                  - Enabled
+                                  - Disabled
+                                  type: string
                                 securityGroups:
                                   description: securityGroups defines the Security
                                     Groups to attach to the load balancer.
@@ -4468,6 +4947,11 @@ spec:
                                   - Private
                                   type: string
                               type: object
+                              x-kubernetes-validations:
+                              - message: routeMode can only be enabled when profile
+                                  is network-fixed
+                                rule: '!has(self.routeMode) || self.routeMode != ''Enabled''
+                                  || (has(self.profile) && self.profile == ''network-fixed'')'
                             reference:
                               description: reference contains the information to identify
                                 an existing Load Balancer.
@@ -4515,13 +4999,15 @@ spec:
                           be sourced.
                         properties:
                           provision:
-                            description: provision provides the configuration for
-                              the controller to CREATE a new Network and DHCP Server.
-                            minProperties: 1
+                            description: |-
+                              provision provides the configuration for the controller to CREATE a new Network.
+                              Exactly one of dhcpServer or dhcpSubnet must be set when type is Provision.
                             properties:
                               dhcpServer:
-                                description: dhcpServer contains the configuration
-                                  for the DHCP server that will be created.
+                                description: |-
+                                  dhcpServer contains the configuration for creating a new DHCP server (and its associated
+                                  private network) via the PowerVS DHCP service API.
+                                  Required when type is DHCPServer; forbidden otherwise.
                                 minProperties: 1
                                 properties:
                                   cidr:
@@ -4554,7 +5040,62 @@ spec:
                                     - Disabled
                                     type: string
                                 type: object
+                              dhcpSubnet:
+                                description: |-
+                                  dhcpSubnet contains the configuration for creating a plain PowerVS network with DHCP
+                                  natively enabled (NetworkCreate.EnableDHCP). This avoids creating a separate DHCP server
+                                  resource and is the preferred approach for new clusters.
+                                  Required when type is DHCPSubnet; forbidden otherwise.
+                                minProperties: 1
+                                properties:
+                                  cidr:
+                                    description: cidr is the network CIDR in notation
+                                      (e.g. 192.168.0.0/24).
+                                    maxLength: 49
+                                    minLength: 1
+                                    pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}($|/[0-9]{1,2})$
+                                    type: string
+                                  dnsServers:
+                                    description: |-
+                                      dnsServers is the list of DNS servers for the network.
+                                      If omitted, defaults to 127.0.0.1 for private (vlan) networks.
+                                    items:
+                                      maxLength: 45
+                                      type: string
+                                    maxItems: 2
+                                    type: array
+                                    x-kubernetes-list-type: atomic
+                                  name:
+                                    description: |-
+                                      name is the name of the PowerVS network to be created.
+                                      If omitted, the name will default to <CLUSTER_NAME>-dhcpsubnet.
+                                      Only alphanumeric characters, dashes, and underscores are allowed.
+                                    maxLength: 128
+                                    minLength: 1
+                                    pattern: ^[a-zA-Z0-9-_][a-zA-Z0-9-_]*$
+                                    type: string
+                                type: object
+                              type:
+                                description: |-
+                                  type defines how the network is provisioned.
+                                  DHCPServer creates a dedicated DHCP Server and its managed private network.
+                                  DHCPSubnet creates a plain PowerVS network with DHCP natively enabled (no separate DHCP server resource).
+                                enum:
+                                - DHCPServer
+                                - DHCPSubnet
+                                type: string
+                            required:
+                            - type
                             type: object
+                            x-kubernetes-validations:
+                            - message: dhcpServer configuration is required when type
+                                is DHCPServer, and forbidden otherwise
+                              rule: 'self.type == ''DHCPServer'' ? has(self.dhcpServer)
+                                : !has(self.dhcpServer)'
+                            - message: dhcpSubnet configuration is required when type
+                                is DHCPSubnet, and forbidden otherwise
+                              rule: 'self.type == ''DHCPSubnet'' ? has(self.dhcpSubnet)
+                                : !has(self.dhcpSubnet)'
                           reference:
                             description: reference tells the controller to look up
                               an EXISTING PowerVS network.
@@ -4659,6 +5200,27 @@ spec:
                                   pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
                                   type: string
                               type: object
+                            publicGateway:
+                              description: |-
+                                publicGateway specifies the VPC Public Gateway to attach to this subnet.
+                                Can be identified by name or id.
+                              minProperties: 1
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  maxLength: 64
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  maxLength: 128
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: exactly one of id or name must be specified
+                                rule: '(has(self.id) ? 1 : 0) + (has(self.name) ?
+                                  1 : 0) == 1'
                             reference:
                               description: reference contains the information to identify
                                 an existing VPC Subnet.
@@ -4962,6 +5524,250 @@ spec:
                             Provision, and forbidden otherwise
                           rule: 'self.type == ''Provision'' ? has(self.provision)
                             : !has(self.provision)'
+                      vpcPublicGateways:
+                        description: |-
+                          vpcPublicGateways defines the VPC Public Gateways that should exist or be created for the cluster's VPC.
+                          A public gateway provides outbound internet access to resources in a subnet. One gateway is required
+                          per zone in which subnets need outbound access.
+                        items:
+                          description: |-
+                            VPCPublicGateway defines a VPC Public Gateway to create or reference for the cluster's VPC.
+                            A public gateway provides outbound internet access for resources in a subnet; one is needed per zone.
+                          properties:
+                            provision:
+                              description: provision contains the configuration for
+                                provisioning a new VPC Public Gateway.
+                              minProperties: 1
+                              properties:
+                                name:
+                                  description: name of the VPC Public Gateway to be
+                                    created.
+                                  maxLength: 63
+                                  minLength: 1
+                                  pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
+                                  type: string
+                              type: object
+                            reference:
+                              description: reference contains the information to identify
+                                an existing VPC Public Gateway.
+                              minProperties: 1
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  maxLength: 64
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  maxLength: 128
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: exactly one of id or name must be specified
+                                rule: '(has(self.id) ? 1 : 0) + (has(self.name) ?
+                                  1 : 0) == 1'
+                            type:
+                              description: type defines whether to use an existing
+                                VPC Public Gateway or provision a new one.
+                              enum:
+                              - Reference
+                              - Provision
+                              type: string
+                            zone:
+                              description: |-
+                                zone is the IBM Cloud VPC zone in which the public gateway resides or should be created.
+                                Required when type is Provision.
+                              maxLength: 63
+                              minLength: 1
+                              type: string
+                          required:
+                          - type
+                          type: object
+                          x-kubernetes-validations:
+                          - message: reference configuration is required when type
+                              is Reference, and forbidden otherwise
+                            rule: 'self.type == ''Reference'' ? has(self.reference)
+                              : !has(self.reference)'
+                          - message: provision configuration is required when type
+                              is Provision, and forbidden otherwise
+                            rule: 'self.type == ''Provision'' ? has(self.provision)
+                              : !has(self.provision)'
+                        maxItems: 10
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      vpcRoutingTables:
+                        description: vpcRoutingTables defines the VPC Routing Tables
+                          that should exist or be created for the cluster's VPC.
+                        items:
+                          description: VPCRoutingTableSource defines a VPC Routing
+                            Table that should exist or be created for the cluster's
+                            VPC.
+                          properties:
+                            provision:
+                              description: provision contains the configuration for
+                                provisioning a new Routing Table.
+                              minProperties: 1
+                              properties:
+                                advertiseRoutesTo:
+                                  description: advertiseRoutesTo defines the ingress
+                                    sources to which routes in this routing table
+                                    will be advertised.
+                                  items:
+                                    description: AdvertiseRouteTarget defines the
+                                      ingress sources to which routes in a routing
+                                      table will be advertised.
+                                    enum:
+                                    - transit_gateway
+                                    - direct_link
+                                    type: string
+                                  maxItems: 2
+                                  type: array
+                                  x-kubernetes-list-type: set
+                                name:
+                                  description: |-
+                                    name of the Routing Table to be created.
+                                    If omitted, IBM Cloud will generate a name.
+                                  maxLength: 63
+                                  minLength: 1
+                                  pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
+                                  type: string
+                                routeDirectLinkIngress:
+                                  description: |-
+                                    routeDirectLinkIngress defines whether this routing table routes traffic from Direct Link.
+                                    Only one routing table per VPC may have this set to Enabled.
+                                  enum:
+                                  - Enabled
+                                  - Disabled
+                                  type: string
+                                routeTransitGatewayIngress:
+                                  description: |-
+                                    routeTransitGatewayIngress defines whether this routing table routes traffic from Transit Gateway.
+                                    Only one routing table per VPC may have this set to Enabled.
+                                  enum:
+                                  - Enabled
+                                  - Disabled
+                                  type: string
+                                routeVPCZoneIngress:
+                                  description: |-
+                                    routeVPCZoneIngress defines whether this routing table routes traffic from subnets in other zones.
+                                    Only one routing table per VPC may have this set to Enabled.
+                                  enum:
+                                  - Enabled
+                                  - Disabled
+                                  type: string
+                                routes:
+                                  description: routes defines the set of routes to
+                                    create in the routing table.
+                                  items:
+                                    description: |-
+                                      VPCRoutingTableRoute defines a route within a VPC Routing Table.
+                                      If action is deliver and nextHop is omitted, the controller will resolve it automatically
+                                      from the first private IP of a provisioned load balancer in the cluster status.
+                                    properties:
+                                      action:
+                                        description: action defines the action to
+                                          perform with a packet matching this route.
+                                        enum:
+                                        - delegate
+                                        - delegate_vpc
+                                        - deliver
+                                        - drop
+                                        type: string
+                                      advertise:
+                                        description: |-
+                                          advertise controls whether this route is advertised to the ingress sources
+                                          configured on the routing table (e.g. Transit Gateway).
+                                          When omitted, the IBM Cloud API defaults to Disabled.
+                                        enum:
+                                        - Enabled
+                                        - Disabled
+                                        type: string
+                                      destination:
+                                        description: |-
+                                          destination is the destination CIDR for the route.
+                                          The host identifier in the CIDR must be zero.
+                                        maxLength: 128
+                                        minLength: 1
+                                        type: string
+                                      name:
+                                        description: |-
+                                          name is an optional name for the route.
+                                          If unspecified, IBM Cloud will generate a name.
+                                        maxLength: 63
+                                        minLength: 1
+                                        pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
+                                        type: string
+                                      nextHop:
+                                        description: |-
+                                          nextHop is the next-hop IP address for routes with action deliver.
+                                          Must be a unicast IP address within a subnet in the routing table's VPC.
+                                        maxLength: 39
+                                        minLength: 1
+                                        type: string
+                                      zone:
+                                        description: zone is the name of the availability
+                                          zone to apply the route to.
+                                        maxLength: 63
+                                        minLength: 1
+                                        type: string
+                                    required:
+                                    - action
+                                    - destination
+                                    - zone
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: nextHop must not be set unless action
+                                        is deliver
+                                      rule: 'self.action != ''deliver'' ? !has(self.nextHop)
+                                        : true'
+                                  maxItems: 200
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                              type: object
+                            reference:
+                              description: |-
+                                reference contains the information to identify an existing Routing Table.
+                                The controller will look up the routing table but will not manage its routes.
+                              minProperties: 1
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  maxLength: 64
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  maxLength: 128
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: exactly one of id or name must be specified
+                                rule: '(has(self.id) ? 1 : 0) + (has(self.name) ?
+                                  1 : 0) == 1'
+                            type:
+                              description: type defines whether to use an existing
+                                Routing Table or provision a new one.
+                              enum:
+                              - Reference
+                              - Provision
+                              type: string
+                          required:
+                          - type
+                          type: object
+                          x-kubernetes-validations:
+                          - message: reference configuration is required when type
+                              is Reference, and forbidden otherwise
+                            rule: 'self.type == ''Reference'' ? has(self.reference)
+                              : !has(self.reference)'
+                          - message: provision configuration is required when type
+                              is Provision, and forbidden otherwise
+                            rule: 'self.type == ''Provision'' ? has(self.provision)
+                              : !has(self.provision)'
+                        maxItems: 10
+                        type: array
+                        x-kubernetes-list-type: atomic
                       vpcSecurityGroups:
                         description: vpcSecurityGroups defines the VPC Security Groups
                           that should exist or be created.
@@ -6610,12 +7416,34 @@ spec:
                     - message: exactly one of id or name must be specified
                       rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1 : 0) ==
                         1'
+                  stockImage:
+                    description: stockImage identifies an IBM-provided stock catalog
+                      image by Name or ID.
+                    minProperties: 1
+                    properties:
+                      id:
+                        description: id of the resource.
+                        maxLength: 64
+                        minLength: 1
+                        type: string
+                      name:
+                        description: name of the resource.
+                        maxLength: 128
+                        minLength: 1
+                        type: string
+                    type: object
+                    x-kubernetes-validations:
+                    - message: exactly one of id or name must be specified
+                      rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1 : 0) ==
+                        1'
                   type:
-                    description: type defines whether to use an existing image in
-                      IBM Cloud or import a new one via the IBMPowerVSImage CRD.
+                    description: |-
+                      type defines whether to use an existing image in IBM Cloud, import a new one via the IBMPowerVSImage CRD,
+                      or use an IBM-provided stock catalog image.
                     enum:
                     - Reference
                     - Import
+                    - StockImage
                     type: string
                 required:
                 - type
@@ -6627,6 +7455,9 @@ spec:
                 - message: import configuration is required when type is Import, and
                     forbidden otherwise
                   rule: 'self.type == ''Import'' ? has(self.import) : !has(self.import)'
+                - message: stockImage configuration is required when type is StockImage,
+                    and forbidden otherwise
+                  rule: 'self.type == ''StockImage'' ? has(self.stockImage) : !has(self.stockImage)'
               memoryGiB:
                 description: |-
                   memoryGiB is the size of a virtual machine's memory, in GiB.
@@ -7297,13 +8128,34 @@ spec:
                             - message: exactly one of id or name must be specified
                               rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1
                                 : 0) == 1'
+                          stockImage:
+                            description: stockImage identifies an IBM-provided stock
+                              catalog image by Name or ID.
+                            minProperties: 1
+                            properties:
+                              id:
+                                description: id of the resource.
+                                maxLength: 64
+                                minLength: 1
+                                type: string
+                              name:
+                                description: name of the resource.
+                                maxLength: 128
+                                minLength: 1
+                                type: string
+                            type: object
+                            x-kubernetes-validations:
+                            - message: exactly one of id or name must be specified
+                              rule: '(has(self.id) ? 1 : 0) + (has(self.name) ? 1
+                                : 0) == 1'
                           type:
-                            description: type defines whether to use an existing image
-                              in IBM Cloud or import a new one via the IBMPowerVSImage
-                              CRD.
+                            description: |-
+                              type defines whether to use an existing image in IBM Cloud, import a new one via the IBMPowerVSImage CRD,
+                              or use an IBM-provided stock catalog image.
                             enum:
                             - Reference
                             - Import
+                            - StockImage
                             type: string
                         required:
                         - type
@@ -7316,6 +8168,10 @@ spec:
                         - message: import configuration is required when type is Import,
                             and forbidden otherwise
                           rule: 'self.type == ''Import'' ? has(self.import) : !has(self.import)'
+                        - message: stockImage configuration is required when type
+                            is StockImage, and forbidden otherwise
+                          rule: 'self.type == ''StockImage'' ? has(self.stockImage)
+                            : !has(self.stockImage)'
                       memoryGiB:
                         description: |-
                           memoryGiB is the size of a virtual machine's memory, in GiB.
@@ -11804,7 +12660,9 @@ spec:
         env:
         - name: IBM_CREDENTIALS_FILE
           value: /home/.ibmcloud/ibm-credentials.env
-        image: registry.k8s.io/capi-ibmcloud/cluster-api-ibmcloud-controller:v0.15.0-alpha.0
+        - name: IBMCLOUD_STAGING
+          value: ${IBMCLOUD_STAGING:-}
+        image: gcr.io/k8s-staging-capi-ibmcloud/cluster-api-ibmcloud-controller:dev
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

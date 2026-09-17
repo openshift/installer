@@ -16,7 +16,6 @@ package types
 
 import (
 	"github.com/coreos/ignition/v2/config/shared/errors"
-	"github.com/coreos/ignition/v2/config/util"
 
 	"github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
@@ -38,9 +37,6 @@ func (n Disk) Validate(c path.ContextPath) (r report.Report) {
 	}
 	if overlaps, p := n.partitionsOverlap(); overlaps {
 		r.AddOnError(c.Append("partitions", p), errors.ErrPartitionsOverlap)
-	}
-	if n.partitionsMixZeroesAndNonexistence() {
-		r.AddOnError(c.Append("partitions"), errors.ErrZeroesWithShouldNotExist)
 	}
 	if collides, p := n.partitionLabelsCollide(); collides {
 		r.AddOnError(c.Append("partitions", p), errors.ErrDuplicateLabels)
@@ -122,14 +118,4 @@ func (n Disk) partitionsOverlap() (bool, int) {
 		}
 	}
 	return false, 0
-}
-
-func (n Disk) partitionsMixZeroesAndNonexistence() bool {
-	hasZero := false
-	hasShouldNotExist := false
-	for _, p := range n.Partitions {
-		hasShouldNotExist = hasShouldNotExist || util.IsFalse(p.ShouldExist)
-		hasZero = hasZero || (p.Number == 0)
-	}
-	return hasZero && hasShouldNotExist
 }
