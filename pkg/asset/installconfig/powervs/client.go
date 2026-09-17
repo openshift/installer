@@ -1578,7 +1578,8 @@ func (c *Client) CreateVirtualPrivateEndpointGateway(ctx context.Context, name s
 	}
 	createOpts := c.vpcAPI.NewCreateEndpointGatewayOptions(target, idIntf)
 	createOpts.SetName(name)
-	createOpts.SetAllowDnsResolutionBinding(true)
+	// "primary" is the equivalent of the v1beta2 AllowDnsResolutionBinding=true this replaced.
+	createOpts.SetDnsResolutionBindingMode(vpcv1.CreateEndpointGatewayOptionsDnsResolutionBindingModePrimaryConst)
 	rgIntf, err = c.vpcAPI.NewResourceGroupIdentityByID(rgID)
 	if err != nil {
 		return nil, err
