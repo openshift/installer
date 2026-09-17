@@ -63,14 +63,9 @@ func (s *Scheduler) Generate(_ context.Context, dependencies asset.Parents) erro
 			computeReplicas += *pool.Replicas
 		}
 	}
-	if computeReplicas == 0 {
+	if computeReplicas < 2 {
 		// A schedulable host is required for a successful install to complete.
-		// If the install config has 0 replicas for compute hosts, it's one of two cases:
-		//   1. An IPI deployment with no compute hosts.  The deployment can not succeed
-		//      without MastersSchedulable = true.
-		//   2. A UPI deployment.  The deployment may add compute hosts, but to ensure the
-		//      the highest probability of a successful deployment, we default to
-		//      schedulable masters.
+		// Set the control planes to schedulable if the install config has < 2 replicas for compute hosts.
 		logrus.Warningf("Making control-plane schedulable by setting MastersSchedulable to true for Scheduler cluster settings")
 		config.Spec.MastersSchedulable = true
 	}
