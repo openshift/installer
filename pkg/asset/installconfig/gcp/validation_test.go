@@ -2183,3 +2183,107 @@ func TestValidateKMSKeyServiceAgentAccessDomainScoped(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateInstanceTypesDiskTypeDefaults(t *testing.T) {
+	// c3 is the sovereign default instance family and supports all three disk
+	// types, so the choice between them is made by the defaulting code rather
+	// than forced by the instance type.
+	c3 := &compute.MachineType{Name: "c3-standard-4", GuestCpus: 4, MemoryMb: 15360}
+
+	// A sovereign cloud is identified by both a domain-scoped project ID and a
+	// sovereign region, so both must be set.
+	setSovereignCloud := func(ic *types.InstallConfig) {
+		ic.Platform.GCP.ProjectID = "eu0:sovereign-project"
+		ic.Platform.GCP.Region = "u-germany-northeast1"
+	}
+
+	// noMachinePlatform strips the GCP stanzas the fixture pre-populates, so
+	// that the pools look like a minimal user-written install-config.
+	noMachinePlatform := func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform = nil
+		ic.ControlPlane.Platform.GCP = nil
+		ic.Compute[0].Platform.GCP = nil
+	}
+
+	cases := []struct {
+		name string
+		// unavailableDiskTypes are rejected by the region, as pd-ssd is in a
+		// sovereign region.
+		unavailableDiskTypes sets.Set[string]
+		edits                editFunctions
+		expectedErrMsg       string
+	}{
+		{
+			// A minimal install-config has no defaultMachinePlatform and no
+			// per-pool platform stanza, and nothing allocates them, so the
+			// pools have to derive a default from the instance type.
+			name:                 "sovereign cloud with no machine platform defaults to hyperdisk",
+			unavailableDiskTypes: sets.New(gcp.PDSSD),
+			edits:                editFunctions{setSovereignCloud, noMachinePlatform},
+		},
+		{
+			name:                 "sovereign cloud with an empty machine pool defaults to hyperdisk",
+			unavailableDiskTypes: sets.New(gcp.PDSSD),
+			edits:                editFunctions{setSovereignCloud},
+		},
+		{
+			// defaultMachinePlatform present but empty must not pin pd-ssd
+			// either: it says nothing about the disk type.
+			name:                 "sovereign cloud with an empty defaultMachinePlatform defaults to hyperdisk",
+			unavailableDiskTypes: sets.New(gcp.PDSSD),
+			edits: editFunctions{setSovereignCloud, noMachinePlatform, func(ic *types.InstallConfig) {
+				ic.Platform.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+			}},
+		},
+		{
+			// An explicit disk type must still win, even when it is a bad one.
+			name:                 "sovereign cloud honours an explicit disk type",
+			unavailableDiskTypes: sets.New(gcp.PDSSD),
+			edits: editFunctions{setSovereignCloud, func(ic *types.InstallConfig) {
+				ic.ControlPlane.Platform.GCP = &gcp.MachinePool{OSDisk: gcp.OSDisk{DiskType: gcp.PDSSD}}
+			}},
+			expectedErrMsg: `controlPlane\.platform\.gcp\.diskType: Invalid value: "pd-ssd"`,
+		},
+		{
+			name: "sovereign cloud honours defaultMachinePlatform disk type",
+			edits: editFunctions{setSovereignCloud, func(ic *types.InstallConfig) {
+				ic.Platform.GCP.DefaultMachinePlatform = &gcp.MachinePool{OSDisk: gcp.OSDisk{DiskType: gcp.PDBalanced}}
+			}},
+		},
+		{
+			// Public GCP keeps preferring pd-ssd.
+			name:                 "public cloud defaults to pd-ssd",
+			unavailableDiskTypes: sets.New(gcp.HyperDiskBalanced),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(c3, sets.New(validZone), nil).AnyTimes()
+			gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, _, diskType string) (*compute.DiskType, sets.Set[string], error) {
+					if tc.unavailableDiskTypes.Has(diskType) {
+						return nil, nil, nil
+					}
+					return &compute.DiskType{Name: diskType}, sets.New(validZone), nil
+				}).AnyTimes()
+
+			ic := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(ic)
+			}
+
+			errs := validateInstanceTypes(gcpClient, ic)
+			if tc.expectedErrMsg == "" {
+				assert.Empty(t, errs)
+			} else {
+				assert.Regexp(t, tc.expectedErrMsg, errs)
+			}
+		})
+	}
+}

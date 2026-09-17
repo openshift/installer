@@ -268,6 +268,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 
 	defaultInstanceType := ""
 	defaultDiskType := gcp.PDSSD
+	// If this is a sovereign cloud we need to default to Hyperdisk balanced.
+	cloudEnv := gcp.GetCloudEnvironment(ic.GCP.ProjectID, ic.GCP.Region)
+	if cloudEnv == gcp.CloudEnvironmentSovereign {
+		defaultDiskType = gcp.HyperDiskBalanced
+	}
+
 	defaultOnHostMaintenance := string(gcp.OnHostMaintenanceMigrate)
 	defaultConfidentialCompute := string(gcp.DisabledFeature)
 	defaultZones := []string{}
@@ -282,11 +288,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	if ic.GCP.DefaultMachinePlatform != nil {
 		defaultZones = ic.GCP.DefaultMachinePlatform.Zones
 		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
-		if ic.GCP.DefaultMachinePlatform.DiskType != "" {
-			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
-		} else {
-			defaultDiskType = gcp.DefaultDiskTypeForInstance(defaultInstanceType, ic.GCP.ProjectID, ic.GCP.Region)
-		}
+		defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
 
 		if ic.GCP.DefaultMachinePlatform.OnHostMaintenance != "" {
 			defaultOnHostMaintenance = ic.GCP.DefaultMachinePlatform.OnHostMaintenance
@@ -297,6 +299,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		}
 
 		if ic.GCP.DefaultMachinePlatform.InstanceType != "" {
+			// Validate the default pool against the disk type it would actually
+			// get, which is derived when the user did not pin one.
+			dmpDiskType := defaultDiskType
+			if dmpDiskType == "" {
+				dmpDiskType = gcp.DefaultDiskTypeForInstance(defaultInstanceType, ic.GCP.ProjectID, ic.GCP.Region)
+			}
 			allErrs = append(allErrs,
 				ValidateInstanceType(
 					client,
@@ -304,7 +312,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 					ic.GCP.ProjectID,
 					ic.GCP.Region,
 					ic.GCP.DefaultMachinePlatform.Zones,
-					defaultDiskType,
+					dmpDiskType,
 					ic.GCP.DefaultMachinePlatform.InstanceType,
 					defaultInstanceReq,
 					unknownArchitecture,
@@ -334,17 +342,6 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if ic.ControlPlane.Platform.GCP.DiskType != "" {
 				cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
-			} else {
-				// When the user-provided instance type is not recognized and
-				// the disk type is not specified, add an error asking for disk type.
-				family := gcp.GetGCPInstanceFamily(instanceType)
-				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
-					return append(allErrs, field.Required(
-						field.NewPath("controlPlane", "diskType"),
-						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
-					))
-				}
-				cpDiskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 			}
 			if ic.ControlPlane.Platform.GCP.OnHostMaintenance != "" {
 				cpOnHostMaintenance = ic.ControlPlane.Platform.GCP.OnHostMaintenance
@@ -352,6 +349,21 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if ic.ControlPlane.Platform.GCP.ConfidentialCompute != "" {
 				cpConfidentialCompute = ic.ControlPlane.Platform.GCP.ConfidentialCompute
 			}
+		}
+		// Derived outside the platform check above: a pool without a gcp stanza
+		// still gets a disk type, and it has to be the one the instance type
+		// implies rather than a fixed fallback.
+		if cpDiskType == "" {
+			// When the user-provided instance type is not recognized and
+			// the disk type is not specified, add an error asking for disk type.
+			family := gcp.GetGCPInstanceFamily(instanceType)
+			if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+				return append(allErrs, field.Required(
+					field.NewPath("controlPlane", "diskType"),
+					fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
+				))
+			}
+			cpDiskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 		}
 	}
 
@@ -389,9 +401,6 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if instanceType == "" {
 			instanceType = DefaultInstanceTypeForArch(compute.Architecture, ic.GCP.ProjectID, ic.GCP.Region)
 		}
-		if diskType == "" {
-			diskType = gcp.PDSSD
-		}
 		arch := compute.Architecture
 		if compute.Platform.GCP != nil {
 			if compute.Platform.GCP.InstanceType != "" {
@@ -408,18 +417,22 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if compute.Platform.GCP.DiskType != "" {
 				diskType = compute.Platform.GCP.DiskType
-			} else {
-				// When the user-provided instance type is not recognized and
-				// the disk type is not specified, add an error asking for disk type.
-				family := gcp.GetGCPInstanceFamily(instanceType)
-				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
-					return append(allErrs, field.Required(
-						field.NewPath(fmt.Sprintf("compute[%d]", idx), "diskType"),
-						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
-					))
-				}
-				diskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 			}
+		}
+		// Derived outside the platform check above, for the same reason as the
+		// control plane: a pool without a gcp stanza still needs the disk type
+		// its instance type implies.
+		if diskType == "" {
+			// When the user-provided instance type is not recognized and
+			// the disk type is not specified, add an error asking for disk type.
+			family := gcp.GetGCPInstanceFamily(instanceType)
+			if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+				return append(allErrs, field.Required(
+					field.NewPath(fmt.Sprintf("compute[%d]", idx), "diskType"),
+					fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
+				))
+			}
+			diskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 		}
 
 		allErrs = append(allErrs,
