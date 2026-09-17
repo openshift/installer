@@ -23,7 +23,7 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/pagingutils"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/util/paging"
 )
 
 // SecurityGroupByNameNotFound represents an error when security group is not found by name.
@@ -92,7 +92,7 @@ func (s *Service) GetDedicatedHostByName(dHostName string) (*vpcv1.DedicatedHost
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 
@@ -132,6 +132,11 @@ func (s *Service) ListSubnets(options *vpcv1.ListSubnetsOptions) (*vpcv1.SubnetC
 // GetSubnetPublicGateway returns a public gateway attached to the subnet.
 func (s *Service) GetSubnetPublicGateway(options *vpcv1.GetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
 	return s.vpcService.GetSubnetPublicGateway(options)
+}
+
+// GetPublicGateway retrieves a public gateway by ID.
+func (s *Service) GetPublicGateway(options *vpcv1.GetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
+	return s.vpcService.GetPublicGateway(options)
 }
 
 // CreatePublicGateway creates a public gateway for the VPC.
@@ -182,6 +187,26 @@ func (s *Service) ListLoadBalancers(options *vpcv1.ListLoadBalancersOptions) (*v
 // GetLoadBalancer returns a load balancer.
 func (s *Service) GetLoadBalancer(options *vpcv1.GetLoadBalancerOptions) (*vpcv1.LoadBalancer, *core.DetailedResponse, error) {
 	return s.vpcService.GetLoadBalancer(options)
+}
+
+// CreateLoadBalancerPool creates a new load balancer pool.
+func (s *Service) CreateLoadBalancerPool(options *vpcv1.CreateLoadBalancerPoolOptions) (*vpcv1.LoadBalancerPool, *core.DetailedResponse, error) {
+	return s.vpcService.CreateLoadBalancerPool(options)
+}
+
+// ListLoadBalancerPools returns all pools for a load balancer.
+func (s *Service) ListLoadBalancerPools(options *vpcv1.ListLoadBalancerPoolsOptions) (*vpcv1.LoadBalancerPoolCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListLoadBalancerPools(options)
+}
+
+// CreateLoadBalancerListener creates a new listener on a load balancer.
+func (s *Service) CreateLoadBalancerListener(options *vpcv1.CreateLoadBalancerListenerOptions) (*vpcv1.LoadBalancerListener, *core.DetailedResponse, error) {
+	return s.vpcService.CreateLoadBalancerListener(options)
+}
+
+// ListLoadBalancerListeners returns all listeners for a load balancer.
+func (s *Service) ListLoadBalancerListeners(options *vpcv1.ListLoadBalancerListenersOptions) (*vpcv1.LoadBalancerListenerCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListLoadBalancerListeners(options)
 }
 
 // CreateLoadBalancerPoolMember creates a new member and adds the member to the pool.
@@ -266,7 +291,7 @@ func (s *Service) GetVPCByName(vpcName string) (*vpcv1.VPC, error) {
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 
@@ -305,7 +330,7 @@ func (s *Service) GetImageByName(imageName string) (*vpcv1.Image, error) {
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 
@@ -344,7 +369,7 @@ func (s *Service) GetVPCPublicGatewayByName(publicGatewayName string, resourceGr
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 
@@ -388,7 +413,7 @@ func (s *Service) GetVPCSubnetByName(subnetName string) (*vpcv1.Subnet, error) {
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 
@@ -448,7 +473,7 @@ func (s *Service) GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBal
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 
@@ -524,6 +549,92 @@ func (s *Service) GetVPCZonesByRegion(region string) ([]string, error) {
 		zones = append(zones, *zone.Name)
 	}
 	return zones, nil
+}
+
+// GetVolumeAttachments returns the volumeattachments for the instance.
+func (s *Service) GetVolumeAttachments(options *vpcv1.ListInstanceVolumeAttachmentsOptions) (*vpcv1.VolumeAttachmentCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListInstanceVolumeAttachments(options)
+}
+
+// CreateVolume creates a volume.
+func (s *Service) CreateVolume(options *vpcv1.CreateVolumeOptions) (*vpcv1.Volume, *core.DetailedResponse, error) {
+	return s.vpcService.CreateVolume(options)
+}
+
+// AttachVolumeToInstance attaches the given volume to the instance.
+func (s *Service) AttachVolumeToInstance(options *vpcv1.CreateInstanceVolumeAttachmentOptions) (*vpcv1.VolumeAttachment, *core.DetailedResponse, error) {
+	return s.vpcService.CreateInstanceVolumeAttachment(options)
+}
+
+// GetVolume fetches the given volume's status.
+func (s *Service) GetVolume(options *vpcv1.GetVolumeOptions) (result *vpcv1.Volume, response *core.DetailedResponse, err error) {
+	return s.vpcService.GetVolume(options)
+}
+
+// CreateVPCRoutingTable creates a new VPC routing table.
+func (s *Service) CreateVPCRoutingTable(options *vpcv1.CreateVPCRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error) {
+	return s.vpcService.CreateVPCRoutingTable(options)
+}
+
+// DeleteVPCRoutingTable deletes a VPC routing table.
+func (s *Service) DeleteVPCRoutingTable(options *vpcv1.DeleteVPCRoutingTableOptions) (*core.DetailedResponse, error) {
+	return s.vpcService.DeleteVPCRoutingTable(options)
+}
+
+// GetVPCRoutingTable retrieves a VPC routing table by ID.
+func (s *Service) GetVPCRoutingTable(options *vpcv1.GetVPCRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error) {
+	return s.vpcService.GetVPCRoutingTable(options)
+}
+
+// ListVPCRoutingTables lists the routing tables for a VPC.
+func (s *Service) ListVPCRoutingTables(options *vpcv1.ListVPCRoutingTablesOptions) (*vpcv1.RoutingTableCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListVPCRoutingTables(options)
+}
+
+// GetVPCRoutingTableByName looks up a VPC routing table by name within the given VPC.
+// Returns nil if no routing table with that name is found.
+func (s *Service) GetVPCRoutingTableByName(vpcID string, name string) (*vpcv1.RoutingTable, error) {
+	var result *vpcv1.RoutingTable
+	f := func(start string) (bool, string, error) {
+		options := &vpcv1.ListVPCRoutingTablesOptions{
+			VPCID: &vpcID,
+		}
+		if start != "" {
+			options.Start = &start
+		}
+		collection, _, err := s.vpcService.ListVPCRoutingTables(options)
+		if err != nil {
+			return false, "", err
+		}
+		if collection == nil {
+			return true, "", nil
+		}
+		for i := range collection.RoutingTables {
+			rt := &collection.RoutingTables[i]
+			if rt.Name != nil && *rt.Name == name {
+				result = rt
+				return true, "", nil
+			}
+		}
+		if collection.Next != nil && collection.Next.Href != nil && *collection.Next.Href != "" {
+			return false, *collection.Next.Href, nil
+		}
+		return true, "", nil
+	}
+	if err := paging.Helper(f); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetSubnetRoutingTable retrieves the routing table attached to a subnet.
+func (s *Service) GetSubnetRoutingTable(options *vpcv1.GetSubnetRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error) {
+	return s.vpcService.GetSubnetRoutingTable(options)
+}
+
+// ReplaceSubnetRoutingTable replaces the routing table attached to a subnet.
+func (s *Service) ReplaceSubnetRoutingTable(options *vpcv1.ReplaceSubnetRoutingTableOptions) (*vpcv1.RoutingTable, *core.DetailedResponse, error) {
+	return s.vpcService.ReplaceSubnetRoutingTable(options)
 }
 
 // NewService returns a new VPC Service.
