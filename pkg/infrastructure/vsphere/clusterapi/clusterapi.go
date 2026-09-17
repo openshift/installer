@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/vmware/govmomi/object"
-	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
