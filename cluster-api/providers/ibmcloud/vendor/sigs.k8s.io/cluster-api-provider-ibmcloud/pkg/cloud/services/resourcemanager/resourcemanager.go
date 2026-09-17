@@ -22,7 +22,7 @@ import (
 )
 
 //go:generate ../../../../hack/tools/bin/mockgen -source=./resourcemanager.go -destination=./mock/resourcemanager_generated.go -package=mock
-//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/resourcemanager_generated.go > ./mock/_resourcemanager_generated.go && mv ./mock/_resourcemanager_generated.go ./mock/resourcemanager_generated.go"
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/scripts/verify/boilerplate/boilerplate.generatego.txt ./mock/resourcemanager_generated.go > ./mock/_resourcemanager_generated.go && mv ./mock/_resourcemanager_generated.go ./mock/resourcemanager_generated.go"
 
 // ResourceManager interface defines a method that a IBMCLOUD service object should implement in order to
 // use the manage lifecycle of cloud resource groups using Resource Manager APIs.
