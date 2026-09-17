@@ -5,6 +5,7 @@ if [ "$IS_CONTAINER" != "" ]; then
   go install go.uber.org/mock/mockgen
   go generate ./pkg/asset/installconfig/... "${@}"
   go generate ./pkg/destroy/... "${@}"
+  go generate ./pkg/infrastructure/... "${@}"
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
