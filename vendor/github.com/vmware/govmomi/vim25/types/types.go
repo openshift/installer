@@ -7,6 +7,8 @@ package types
 import (
 	"reflect"
 	"time"
+
+	"github.com/vmware/govmomi/vim25/xml"
 )
 
 type AbandonHciWorkflow AbandonHciWorkflowRequestType
@@ -85941,7 +85943,7 @@ type VirtualDevice struct {
 	// An unset value of numaNode is status-quo during Reconfigure time.
 	// If numaNode is unset during ConfigInfo, then it means there is no
 	// affinity for the device.
-	NumaNode int32 `xml:"numaNode,omitempty" json:"numaNode,omitempty" vim:"8.0.0.1"`
+	NumaNode *int32 `xml:"numaNode" json:"numaNode,omitempty" vim:"8.0.0.1"`
 	// Information about device group device is part of.
 	//
 	// Devices in the device group cannot be added/removed individually,
@@ -101481,6 +101483,7 @@ func init() {
 }
 
 type SetCustomValueResponse struct {
+	XMLName xml.Name `xml:"setCustomValueResponse"`
 }
 
 type StartDpuFailover StartDpuFailoverRequestType
