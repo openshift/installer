@@ -19,7 +19,7 @@ package patch
 import (
 	"reflect"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,19 +34,6 @@ const (
 	specPatch   patchType = "spec"
 	statusPatch patchType = "status"
 )
-
-var (
-	preserveUnstructuredKeys = map[string]bool{
-		"kind":       true,
-		"apiVersion": true,
-		"metadata":   true,
-	}
-)
-
-func unstructuredHasStatus(u *unstructured.Unstructured) bool {
-	_, ok := u.Object["status"]
-	return ok
-}
 
 // toUnstructured converts an object to Unstructured.
 // We have to pass in a gvk as we can't rely on GVK being set in a runtime.Object.
@@ -74,10 +61,15 @@ func toUnstructured(obj runtime.Object, gvk schema.GroupVersionKind) (*unstructu
 func unsafeUnstructuredCopy(obj *unstructured.Unstructured, focus patchType, clusterv1ConditionsFieldPath, metav1ConditionsFieldPath []string) *unstructured.Unstructured {
 	// Create the return focused-unstructured object with a preallocated map.
 	res := &unstructured.Unstructured{Object: make(map[string]interface{}, len(obj.Object))}
+	// Ensure the minimum relevant fields are always set (especially when focus is statusPatch)
+	res.SetGroupVersionKind(obj.GroupVersionKind())
+	res.SetNamespace(obj.GetNamespace())
+	res.SetName(obj.GetName())
+	res.SetResourceVersion(obj.GetResourceVersion())
 
 	// Ranges over the keys of the unstructured object, think of this as the very top level of an object
 	// when submitting a yaml to kubectl or a client.
-	// These would be keys like `apiVersion`, `kind`, `metadata`, `spec`, `status`, etc.
+	// These would be keys like `metadata`, `spec`, `status`, etc.
 	for key := range obj.Object {
 		value := obj.Object[key]
 
@@ -85,16 +77,15 @@ func unsafeUnstructuredCopy(obj *unstructured.Unstructured, focus patchType, clu
 		switch focus {
 		case specPatch:
 			// For what we define as `spec` fields, we should preserve everything
-			// that's not `status`.
+			// that's not `status` including things like metadata and data (e.g. for Secrets).
 			preserve = key != string(statusPatch)
 		case statusPatch:
 			// For status, only preserve the status fields.
 			preserve = key == string(focus)
 		}
 
-		// Perform a shallow copy only for the keys we're interested in,
-		// or the ones that should be always preserved (like metadata).
-		if preserve || preserveUnstructuredKeys[key] {
+		// Perform a shallow copy only for the keys we're interested in.
+		if preserve {
 			res.Object[key] = value
 		}
 	}
@@ -126,17 +117,17 @@ var (
 
 func identifyConditionsFieldsPath(obj runtime.Object) ([]string, []string, error) {
 	if obj == nil {
-		return nil, nil, errors.New("cannot identify conditions on a nil object")
+		return nil, nil, pkgerrors.New("cannot identify conditions on a nil object")
 	}
 
 	ptr := reflect.ValueOf(obj)
 	if ptr.Kind() != reflect.Pointer {
-		return nil, nil, errors.New("cannot identify conditions on a object that is not a pointer")
+		return nil, nil, pkgerrors.New("cannot identify conditions on a object that is not a pointer")
 	}
 
 	elem := ptr.Elem()
 	if !elem.IsValid() {
-		return nil, nil, errors.New("obj must be a valid value (non zero value of its type)")
+		return nil, nil, pkgerrors.New("obj must be a valid value (non zero value of its type)")
 	}
 
 	statusField := elem.FieldByName("Status")
@@ -152,7 +143,7 @@ func identifyConditionsFieldsPath(obj runtime.Object) ([]string, []string, error
 
 	if v1beta2Field := statusField.FieldByName("V1Beta2"); v1beta2Field != (reflect.Value{}) {
 		if v1beta2Field.Kind() != reflect.Pointer {
-			return nil, nil, errors.New("obj.status.v1beta2 must be a pointer")
+			return nil, nil, pkgerrors.New("obj.status.v1beta2 must be a pointer")
 		}
 
 		v1beta2Elem := v1beta2Field.Elem()
@@ -178,7 +169,7 @@ func identifyConditionsFieldsPath(obj runtime.Object) ([]string, []string, error
 
 	if deprecatedField := statusField.FieldByName("Deprecated"); deprecatedField != (reflect.Value{}) {
 		if deprecatedField.Kind() != reflect.Pointer {
-			return nil, nil, errors.New("obj.status.deprecated must be a pointer")
+			return nil, nil, pkgerrors.New("obj.status.deprecated must be a pointer")
 		}
 
 		deprecatedElem := deprecatedField.Elem()
@@ -189,7 +180,7 @@ func identifyConditionsFieldsPath(obj runtime.Object) ([]string, []string, error
 		} else {
 			if v1Beta1Field := deprecatedElem.FieldByName("V1Beta1"); v1Beta1Field != (reflect.Value{}) {
 				if v1Beta1Field.Kind() != reflect.Pointer {
-					return nil, nil, errors.New("obj.status.deprecated.v1beta1 must be a pointer")
+					return nil, nil, pkgerrors.New("obj.status.deprecated.v1beta1 must be a pointer")
 				}
 
 				v1Beta1Elem := v1Beta1Field.Elem()

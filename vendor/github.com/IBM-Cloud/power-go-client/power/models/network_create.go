@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -39,6 +40,9 @@ type NetworkCreate struct {
 	// DNS Servers. If not specified, default is 127.0.0.1 for 'vlan' (private network) and 9.9.9.9 for 'pub-vlan' (public network)
 	DNSServers []string `json:"dnsServers"`
 
+	// network will support DHCP
+	EnableDHCP *bool `json:"enableDHCP,omitempty"`
+
 	// Gateway IP Address
 	Gateway string `json:"gateway,omitempty"`
 
@@ -61,9 +65,9 @@ type NetworkCreate struct {
 	// Network Peer information
 	Peer *NetworkCreatePeer `json:"peer,omitempty"`
 
-	// Type of Network - 'vlan' (private network), 'pub-vlan' (public network), 'dhcp-vlan'[DEPRECATED]
+	// Type of Network - 'vlan' (private network), 'pub-vlan' (public network)
 	// Required: true
-	// Enum: ["vlan","pub-vlan","dhcp-vlan"]
+	// Enum: ["vlan","pub-vlan"]
 	Type *string `json:"type"`
 
 	// user tags
@@ -122,18 +126,22 @@ func (m *NetworkCreate) validateAccessConfig(formats strfmt.Registry) error {
 	}
 
 	if err := m.AccessConfig.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("accessConfig")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("accessConfig")
 		}
+
 		return err
 	}
 
 	return nil
 }
 
-var networkCreateTypeAdvertisePropEnum []interface{}
+var networkCreateTypeAdvertisePropEnum []any
 
 func init() {
 	var res []string
@@ -175,7 +183,7 @@ func (m *NetworkCreate) validateAdvertise(formats strfmt.Registry) error {
 	return nil
 }
 
-var networkCreateTypeArpBroadcastPropEnum []interface{}
+var networkCreateTypeArpBroadcastPropEnum []any
 
 func init() {
 	var res []string
@@ -229,11 +237,15 @@ func (m *NetworkCreate) validateIPAddressRanges(formats strfmt.Registry) error {
 
 		if m.IPAddressRanges[i] != nil {
 			if err := m.IPAddressRanges[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -282,11 +294,15 @@ func (m *NetworkCreate) validatePeer(formats strfmt.Registry) error {
 
 	if m.Peer != nil {
 		if err := m.Peer.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("peer")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("peer")
 			}
+
 			return err
 		}
 	}
@@ -294,11 +310,11 @@ func (m *NetworkCreate) validatePeer(formats strfmt.Registry) error {
 	return nil
 }
 
-var networkCreateTypeTypePropEnum []interface{}
+var networkCreateTypeTypePropEnum []any
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["vlan","pub-vlan","dhcp-vlan"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["vlan","pub-vlan"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -313,9 +329,6 @@ const (
 
 	// NetworkCreateTypePubDashVlan captures enum value "pub-vlan"
 	NetworkCreateTypePubDashVlan string = "pub-vlan"
-
-	// NetworkCreateTypeDhcpDashVlan captures enum value "dhcp-vlan"
-	NetworkCreateTypeDhcpDashVlan string = "dhcp-vlan"
 )
 
 // prop value enum
@@ -346,11 +359,15 @@ func (m *NetworkCreate) validateUserTags(formats strfmt.Registry) error {
 	}
 
 	if err := m.UserTags.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 
@@ -390,11 +407,15 @@ func (m *NetworkCreate) contextValidateAccessConfig(ctx context.Context, formats
 	}
 
 	if err := m.AccessConfig.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("accessConfig")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("accessConfig")
 		}
+
 		return err
 	}
 
@@ -412,11 +433,15 @@ func (m *NetworkCreate) contextValidateIPAddressRanges(ctx context.Context, form
 			}
 
 			if err := m.IPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -435,11 +460,15 @@ func (m *NetworkCreate) contextValidatePeer(ctx context.Context, formats strfmt.
 		}
 
 		if err := m.Peer.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("peer")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("peer")
 			}
+
 			return err
 		}
 	}
@@ -450,11 +479,15 @@ func (m *NetworkCreate) contextValidatePeer(ctx context.Context, formats strfmt.
 func (m *NetworkCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 

@@ -23,7 +23,7 @@ import (
 	capipowervsv1beta3 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
 	capivpcv1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/vpc/v1beta2"
 	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
-	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta1"
+	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"

@@ -26,7 +26,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
-	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/pagingutils"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/util/paging"
 )
 
 var currentDate = fmt.Sprintf("%d-%02d-%02d", time.Now().Year(), time.Now().Month(), time.Now().Day())
@@ -49,9 +49,10 @@ func NewService(options *tgapiv1.TransitGatewayApisV1Options) (TransitGateway, e
 		options.Authenticator = auth
 	}
 	options.Version = ptr.To(currentDate)
+
 	tgClient, err := tgapiv1.NewTransitGatewayApisV1(options)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create transit gateway api client: %w", err)
 	}
 
 	return &Service{
@@ -94,7 +95,7 @@ func (s *Service) GetTransitGatewayByName(name string) (*tgapiv1.TransitGateway,
 		return true, "", nil
 	}
 
-	if err := pagingutils.PagingHelper(f); err != nil {
+	if err := paging.Helper(f); err != nil {
 		return nil, err
 	}
 	return &transitGateway, nil

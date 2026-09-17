@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
-	capv "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta1"
+	capv "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	capi "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 
 	machinev1 "github.com/openshift/api/machine/v1beta1"
@@ -105,7 +105,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			}
 			deviceSpec := capv.NetworkDeviceSpec{
 				NetworkName: networkName,
-				DHCP4:       true,
+				DHCP4:       ptr.To(true),
 			}
 
 			// Static IP configured.  Add kargs.
@@ -141,7 +141,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					Datacenter:        providerSpec.Workspace.Datacenter,
 					Server:            providerSpec.Workspace.Server,
 					NumCPUs:           providerSpec.NumCPUs,
-					NumCoresPerSocket: providerSpec.NumCoresPerSocket,
+					NumCoresPerSocket: ptr.To(providerSpec.NumCoresPerSocket),
 					MemoryMiB:         providerSpec.MemoryMiB,
 					DiskGiB:           providerSpec.DiskGiB,
 					Datastore:         providerSpec.Workspace.Datastore,
@@ -150,16 +150,6 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 		}
 		utils.SetMachineOSStreamLabels(vsphereMachine, config)
-
-		// only set failureDomainName if VMGroup is defined as vm-host group
-		// is the only scenario we create vspherefailuredomainspec and vspheredeploymentzone
-		if providerSpec.Workspace.VMGroup != "" {
-			if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
-				vsphereMachine.Spec.FailureDomain = &failureDomainName
-			} else {
-				return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
-			}
-		}
 
 		// If we have additional disks to add to VM, lets iterate through them and add to CAPV machine
 		if len(providerSpec.DataDisks) > 0 {

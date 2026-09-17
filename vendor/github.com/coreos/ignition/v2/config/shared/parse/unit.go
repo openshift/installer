@@ -29,7 +29,7 @@ func ParseUnitContents(content *string) ([]*unit.UnitOption, error) {
 		return []*unit.UnitOption{}, nil
 	}
 	c := strings.NewReader(*content)
-	opts, err := unit.Deserialize(c)
+	opts, err := unit.DeserializeOptions(c)
 	if err != nil {
 		return nil, fmt.Errorf("invalid unit content: %s", err)
 	}
