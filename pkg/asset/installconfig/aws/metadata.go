@@ -352,24 +352,31 @@ func (m *Metadata) populateVPC(ctx context.Context) error {
 	return err
 }
 
-// InstanceTypes retrieves instance type metadata indexed by InstanceType for the configured region.
-func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, error) {
+// InstanceType returns metadata for the named instance type.
+func (m *Metadata) InstanceType(ctx context.Context, instanceType string) (InstanceType, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if len(m.instanceTypes) == 0 {
-		client, err := m.EC2Client(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		m.instanceTypes, err = instanceTypes(ctx, client)
-		if err != nil {
-			return nil, fmt.Errorf("error listing instance types: %w", err)
-		}
+	if t, ok := m.instanceTypes[instanceType]; ok {
+		return t, nil
 	}
 
-	return m.instanceTypes, nil
+	client, err := m.EC2Client(ctx)
+	if err != nil {
+		return InstanceType{}, err
+	}
+
+	t, err := getInstanceType(ctx, client, instanceType)
+	if err != nil {
+		return InstanceType{}, err
+	}
+
+	if m.instanceTypes == nil {
+		m.instanceTypes = map[string]InstanceType{}
+	}
+	m.instanceTypes[instanceType] = t
+
+	return t, nil
 }
 
 // Images retrieves image metadata for the specified AMI ID.
