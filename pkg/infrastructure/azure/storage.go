@@ -531,10 +531,32 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	return createBlockBlob(ctx, in)
 }
 
+func blockBlobClientOptions(clientOpts *arm.ClientOptions, allowSharedKeyAccess bool) *blockblob.ClientOptions {
+	options := &blockblob.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: clientOpts.Cloud,
+		},
+	}
+	if !allowSharedKeyAccess {
+		options.Retry.StatusCodes = []int{
+			http.StatusRequestTimeout,
+			http.StatusTooManyRequests,
+			http.StatusInternalServerError,
+			http.StatusBadGateway,
+			http.StatusServiceUnavailable,
+			http.StatusGatewayTimeout,
+			// Include 403 to retry the observed storage authorization-propagation error.
+			http.StatusForbidden,
+		}
+	}
+	return options
+}
+
 func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, error) {
 	logrus.Debugf("Getting block blob client")
 	var blockBlobClient *blockblob.Client
 	var err error
+	clientOptions := blockBlobClientOptions(in.ClientOpts, in.AllowSharedKeyAccess)
 	if in.AllowSharedKeyAccess {
 		if len(in.StorageAccountKeys) == 0 || in.StorageAccountKeys[0].Value == nil {
 			return "", fmt.Errorf("missing storage account key for shared-key block blob upload")
@@ -546,11 +568,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		blockBlobClient, err = blockblob.NewClientWithSharedKeyCredential(
 			in.BlobURL,
 			sharedKeyCredential,
-			&blockblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
+			clientOptions,
 		)
 		if err != nil {
 			return "", fmt.Errorf("failed to get block blob client: %w", err)
@@ -559,11 +577,7 @@ func createBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 		blockBlobClient, err = blockblob.NewClient(
 			in.BlobURL,
 			in.TokenCredential,
-			&blockblob.ClientOptions{
-				ClientOptions: azcore.ClientOptions{
-					Cloud: in.ClientOpts.Cloud,
-				},
-			},
+			clientOptions,
 		)
 		if err != nil {
 			return "", fmt.Errorf("failed to get block blob client: %w", err)
