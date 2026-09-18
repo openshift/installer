@@ -383,6 +383,8 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 	allErrs = append(allErrs, validateVMArchitecture(fieldPath.Child("type"), instanceType, architecture, capabilities)...)
 	allErrs = append(allErrs, validateSecurityType(fieldPath.Child("settings", "securityType"), securityType, instanceType, capabilities)...)
 
+	allErrs = append(allErrs, validateInstanceTypeRestrictions(client, fieldPath, region, instanceType, icZones)...)
+
 	family, _ := client.GetVirtualMachineFamily(context.TODO(), instanceType, region)
 	if family != "" {
 		allErrs = append(allErrs, validateFamily(fieldPath.Child("type"), instanceType, family)...)
@@ -400,6 +402,71 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 		allErrs = append(allErrs, validateUltraSSD(client, fieldPath.Child("type"), icZones, region, instanceType, capabilities)...)
 	}
 
+	return allErrs
+}
+
+// validateInstanceTypeRestrictions fails validation if the Azure Resource
+// SKU for instanceType in region carries a NotAvailableForSubscription
+// restriction: either for the whole region (Type "Location"), or for a
+// zone the install config would actually use (Type "Zone").
+//
+// QuotaId restrictions are intentionally ignored here: they mean "you'd
+// need to request a quota increase," which is a materially different
+// condition from "this SKU is not offered to your subscription at all."
+// Treating QuotaId the same as NotAvailableForSubscription would produce
+// false positives for the common case of requesting quota before install.
+func validateInstanceTypeRestrictions(client API, fieldPath *field.Path, region, instanceType string, icZones []string) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if instanceType == "" {
+		return allErrs
+	}
+
+	sku, err := client.GetVirtualMachineSku(context.TODO(), instanceType, region)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+	}
+	if sku == nil || sku.Restrictions == nil {
+		return allErrs
+	}
+
+	restrictedZones := sets.New[string]()
+	for _, r := range *sku.Restrictions {
+		if r.ReasonCode != azenc.NotAvailableForSubscription {
+			continue
+		}
+		switch r.Type {
+		case azenc.Location:
+			locations := to.StringSlice(r.Values)
+			if len(locations) > 0 && !slices.ContainsFunc(locations, func(location string) bool {
+				return strings.EqualFold(location, region)
+			}) {
+				continue
+			}
+			errMsg := fmt.Sprintf("instance type %s is not available for this subscription in region %s", instanceType, region)
+			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+		case azenc.Zone:
+			if r.RestrictionInfo != nil {
+				restrictedZones.Insert(to.StringSlice(r.RestrictionInfo.Zones)...)
+			}
+		}
+	}
+	if restrictedZones.Len() == 0 {
+		return allErrs
+	}
+
+	zones := icZones
+	if len(zones) == 0 {
+		allZones, zerr := client.GetAvailabilityZones(context.TODO(), region, instanceType)
+		if zerr != nil {
+			errMsg := fmt.Sprintf("could not determine Availability Zones support in the %s region: %v", region, zerr)
+			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+		}
+		zones = allZones
+	}
+	if blocked := sets.New(zones...).Intersection(restrictedZones); blocked.Len() > 0 {
+		errMsg := fmt.Sprintf("instance type %s is not available for this subscription in zones: %v", instanceType, sets.List(blocked))
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+	}
 	return allErrs
 }
 
