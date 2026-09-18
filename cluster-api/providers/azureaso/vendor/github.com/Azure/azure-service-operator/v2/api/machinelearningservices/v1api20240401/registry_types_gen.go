@@ -23,6 +23,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,machinelearningservices}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -342,7 +343,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Identity":
 	if registry.Identity != nil {
-		identity_ARM, err := (*registry.Identity).ConvertToARM(resolved)
+		identity_ARM, err := registry.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -384,7 +385,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.IntellectualPropertyPublisher = &intellectualPropertyPublisher
 	}
 	if registry.ManagedResourceGroup != nil {
-		managedResourceGroup_ARM, err := (*registry.ManagedResourceGroup).ConvertToARM(resolved)
+		managedResourceGroup_ARM, err := registry.ManagedResourceGroup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -416,7 +417,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Sku":
 	if registry.Sku != nil {
-		sku_ARM, err := (*registry.Sku).ConvertToARM(resolved)
+		sku_ARM, err := registry.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -701,8 +702,6 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 	if source.RegionDetails != nil {
 		regionDetailList := make([]RegistryRegionArmDetails, len(source.RegionDetails))
 		for regionDetailIndex, regionDetailItem := range source.RegionDetails {
-			// Shadow the loop variable to avoid aliasing
-			regionDetailItem := regionDetailItem
 			var regionDetail RegistryRegionArmDetails
 			err := regionDetail.AssignProperties_From_RegistryRegionArmDetails(&regionDetailItem)
 			if err != nil {
@@ -719,8 +718,6 @@ func (registry *Registry_Spec) AssignProperties_From_Registry_Spec(source *stora
 	if source.RegistryPrivateEndpointConnections != nil {
 		registryPrivateEndpointConnectionList := make([]RegistryPrivateEndpointConnection, len(source.RegistryPrivateEndpointConnections))
 		for registryPrivateEndpointConnectionIndex, registryPrivateEndpointConnectionItem := range source.RegistryPrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			registryPrivateEndpointConnectionItem := registryPrivateEndpointConnectionItem
 			var registryPrivateEndpointConnection RegistryPrivateEndpointConnection
 			err := registryPrivateEndpointConnection.AssignProperties_From_RegistryPrivateEndpointConnection(&registryPrivateEndpointConnectionItem)
 			if err != nil {
@@ -829,8 +826,6 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 	if registry.RegionDetails != nil {
 		regionDetailList := make([]storage.RegistryRegionArmDetails, len(registry.RegionDetails))
 		for regionDetailIndex, regionDetailItem := range registry.RegionDetails {
-			// Shadow the loop variable to avoid aliasing
-			regionDetailItem := regionDetailItem
 			var regionDetail storage.RegistryRegionArmDetails
 			err := regionDetailItem.AssignProperties_To_RegistryRegionArmDetails(&regionDetail)
 			if err != nil {
@@ -847,8 +842,6 @@ func (registry *Registry_Spec) AssignProperties_To_Registry_Spec(destination *st
 	if registry.RegistryPrivateEndpointConnections != nil {
 		registryPrivateEndpointConnectionList := make([]storage.RegistryPrivateEndpointConnection, len(registry.RegistryPrivateEndpointConnections))
 		for registryPrivateEndpointConnectionIndex, registryPrivateEndpointConnectionItem := range registry.RegistryPrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			registryPrivateEndpointConnectionItem := registryPrivateEndpointConnectionItem
 			var registryPrivateEndpointConnection storage.RegistryPrivateEndpointConnection
 			err := registryPrivateEndpointConnectionItem.AssignProperties_To_RegistryPrivateEndpointConnection(&registryPrivateEndpointConnection)
 			if err != nil {
@@ -936,8 +929,6 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 	if source.RegionDetails != nil {
 		regionDetailList := make([]RegistryRegionArmDetails, len(source.RegionDetails))
 		for regionDetailIndex, regionDetailItem := range source.RegionDetails {
-			// Shadow the loop variable to avoid aliasing
-			regionDetailItem := regionDetailItem
 			var regionDetail RegistryRegionArmDetails
 			err := regionDetail.Initialize_From_RegistryRegionArmDetails_STATUS(&regionDetailItem)
 			if err != nil {
@@ -954,8 +945,6 @@ func (registry *Registry_Spec) Initialize_From_RegistryTrackedResource_STATUS(so
 	if source.RegistryPrivateEndpointConnections != nil {
 		registryPrivateEndpointConnectionList := make([]RegistryPrivateEndpointConnection, len(source.RegistryPrivateEndpointConnections))
 		for registryPrivateEndpointConnectionIndex, registryPrivateEndpointConnectionItem := range source.RegistryPrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			registryPrivateEndpointConnectionItem := registryPrivateEndpointConnectionItem
 			var registryPrivateEndpointConnection RegistryPrivateEndpointConnection
 			err := registryPrivateEndpointConnection.Initialize_From_RegistryPrivateEndpointConnection_STATUS(&registryPrivateEndpointConnectionItem)
 			if err != nil {
@@ -1325,8 +1314,6 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 	if source.RegionDetails != nil {
 		regionDetailList := make([]RegistryRegionArmDetails_STATUS, len(source.RegionDetails))
 		for regionDetailIndex, regionDetailItem := range source.RegionDetails {
-			// Shadow the loop variable to avoid aliasing
-			regionDetailItem := regionDetailItem
 			var regionDetail RegistryRegionArmDetails_STATUS
 			err := regionDetail.AssignProperties_From_RegistryRegionArmDetails_STATUS(&regionDetailItem)
 			if err != nil {
@@ -1343,8 +1330,6 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_From_RegistryTr
 	if source.RegistryPrivateEndpointConnections != nil {
 		registryPrivateEndpointConnectionList := make([]RegistryPrivateEndpointConnection_STATUS, len(source.RegistryPrivateEndpointConnections))
 		for registryPrivateEndpointConnectionIndex, registryPrivateEndpointConnectionItem := range source.RegistryPrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			registryPrivateEndpointConnectionItem := registryPrivateEndpointConnectionItem
 			var registryPrivateEndpointConnection RegistryPrivateEndpointConnection_STATUS
 			err := registryPrivateEndpointConnection.AssignProperties_From_RegistryPrivateEndpointConnection_STATUS(&registryPrivateEndpointConnectionItem)
 			if err != nil {
@@ -1451,8 +1436,6 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 	if resource.RegionDetails != nil {
 		regionDetailList := make([]storage.RegistryRegionArmDetails_STATUS, len(resource.RegionDetails))
 		for regionDetailIndex, regionDetailItem := range resource.RegionDetails {
-			// Shadow the loop variable to avoid aliasing
-			regionDetailItem := regionDetailItem
 			var regionDetail storage.RegistryRegionArmDetails_STATUS
 			err := regionDetailItem.AssignProperties_To_RegistryRegionArmDetails_STATUS(&regionDetail)
 			if err != nil {
@@ -1469,8 +1452,6 @@ func (resource *RegistryTrackedResource_STATUS) AssignProperties_To_RegistryTrac
 	if resource.RegistryPrivateEndpointConnections != nil {
 		registryPrivateEndpointConnectionList := make([]storage.RegistryPrivateEndpointConnection_STATUS, len(resource.RegistryPrivateEndpointConnections))
 		for registryPrivateEndpointConnectionIndex, registryPrivateEndpointConnectionItem := range resource.RegistryPrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			registryPrivateEndpointConnectionItem := registryPrivateEndpointConnectionItem
 			var registryPrivateEndpointConnection storage.RegistryPrivateEndpointConnection_STATUS
 			err := registryPrivateEndpointConnectionItem.AssignProperties_To_RegistryPrivateEndpointConnection_STATUS(&registryPrivateEndpointConnection)
 			if err != nil {
@@ -1768,8 +1749,6 @@ func (identity *ManagedServiceIdentity) AssignProperties_From_ManagedServiceIden
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -1803,8 +1782,6 @@ func (identity *ManagedServiceIdentity) AssignProperties_To_ManagedServiceIdenti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -1943,8 +1920,6 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_From_ManagedServ
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserAssignedIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserAssignedIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -1984,8 +1959,6 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_To_ManagedServic
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserAssignedIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserAssignedIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -2028,8 +2001,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_From_RegistryOperatorSpec
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2058,8 +2029,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_From_RegistryOperatorSpec
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2085,8 +2054,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_To_RegistryOperatorSpec(d
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2115,8 +2082,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_To_RegistryOperatorSpec(d
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2199,7 +2164,7 @@ func (connection *RegistryPrivateEndpointConnection) ConvertToARM(resolved genru
 		result.Properties.GroupIds = append(result.Properties.GroupIds, item)
 	}
 	if connection.PrivateEndpoint != nil {
-		privateEndpoint_ARM, err := (*connection.PrivateEndpoint).ConvertToARM(resolved)
+		privateEndpoint_ARM, err := connection.PrivateEndpoint.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2211,7 +2176,7 @@ func (connection *RegistryPrivateEndpointConnection) ConvertToARM(resolved genru
 		result.Properties.ProvisioningState = &provisioningState
 	}
 	if connection.RegistryPrivateLinkServiceConnectionState != nil {
-		registryPrivateLinkServiceConnectionState_ARM, err := (*connection.RegistryPrivateLinkServiceConnectionState).ConvertToARM(resolved)
+		registryPrivateLinkServiceConnectionState_ARM, err := connection.RegistryPrivateLinkServiceConnectionState.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2732,8 +2697,6 @@ func (details *RegistryRegionArmDetails) AssignProperties_From_RegistryRegionArm
 	if source.AcrDetails != nil {
 		acrDetailList := make([]AcrDetails, len(source.AcrDetails))
 		for acrDetailIndex, acrDetailItem := range source.AcrDetails {
-			// Shadow the loop variable to avoid aliasing
-			acrDetailItem := acrDetailItem
 			var acrDetail AcrDetails
 			err := acrDetail.AssignProperties_From_AcrDetails(&acrDetailItem)
 			if err != nil {
@@ -2753,8 +2716,6 @@ func (details *RegistryRegionArmDetails) AssignProperties_From_RegistryRegionArm
 	if source.StorageAccountDetails != nil {
 		storageAccountDetailList := make([]StorageAccountDetails, len(source.StorageAccountDetails))
 		for storageAccountDetailIndex, storageAccountDetailItem := range source.StorageAccountDetails {
-			// Shadow the loop variable to avoid aliasing
-			storageAccountDetailItem := storageAccountDetailItem
 			var storageAccountDetail StorageAccountDetails
 			err := storageAccountDetail.AssignProperties_From_StorageAccountDetails(&storageAccountDetailItem)
 			if err != nil {
@@ -2780,8 +2741,6 @@ func (details *RegistryRegionArmDetails) AssignProperties_To_RegistryRegionArmDe
 	if details.AcrDetails != nil {
 		acrDetailList := make([]storage.AcrDetails, len(details.AcrDetails))
 		for acrDetailIndex, acrDetailItem := range details.AcrDetails {
-			// Shadow the loop variable to avoid aliasing
-			acrDetailItem := acrDetailItem
 			var acrDetail storage.AcrDetails
 			err := acrDetailItem.AssignProperties_To_AcrDetails(&acrDetail)
 			if err != nil {
@@ -2801,8 +2760,6 @@ func (details *RegistryRegionArmDetails) AssignProperties_To_RegistryRegionArmDe
 	if details.StorageAccountDetails != nil {
 		storageAccountDetailList := make([]storage.StorageAccountDetails, len(details.StorageAccountDetails))
 		for storageAccountDetailIndex, storageAccountDetailItem := range details.StorageAccountDetails {
-			// Shadow the loop variable to avoid aliasing
-			storageAccountDetailItem := storageAccountDetailItem
 			var storageAccountDetail storage.StorageAccountDetails
 			err := storageAccountDetailItem.AssignProperties_To_StorageAccountDetails(&storageAccountDetail)
 			if err != nil {
@@ -2833,8 +2790,6 @@ func (details *RegistryRegionArmDetails) Initialize_From_RegistryRegionArmDetail
 	if source.AcrDetails != nil {
 		acrDetailList := make([]AcrDetails, len(source.AcrDetails))
 		for acrDetailIndex, acrDetailItem := range source.AcrDetails {
-			// Shadow the loop variable to avoid aliasing
-			acrDetailItem := acrDetailItem
 			var acrDetail AcrDetails
 			err := acrDetail.Initialize_From_AcrDetails_STATUS(&acrDetailItem)
 			if err != nil {
@@ -2854,8 +2809,6 @@ func (details *RegistryRegionArmDetails) Initialize_From_RegistryRegionArmDetail
 	if source.StorageAccountDetails != nil {
 		storageAccountDetailList := make([]StorageAccountDetails, len(source.StorageAccountDetails))
 		for storageAccountDetailIndex, storageAccountDetailItem := range source.StorageAccountDetails {
-			// Shadow the loop variable to avoid aliasing
-			storageAccountDetailItem := storageAccountDetailItem
 			var storageAccountDetail StorageAccountDetails
 			err := storageAccountDetail.Initialize_From_StorageAccountDetails_STATUS(&storageAccountDetailItem)
 			if err != nil {
@@ -2935,8 +2888,6 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_From_RegistryRe
 	if source.AcrDetails != nil {
 		acrDetailList := make([]AcrDetails_STATUS, len(source.AcrDetails))
 		for acrDetailIndex, acrDetailItem := range source.AcrDetails {
-			// Shadow the loop variable to avoid aliasing
-			acrDetailItem := acrDetailItem
 			var acrDetail AcrDetails_STATUS
 			err := acrDetail.AssignProperties_From_AcrDetails_STATUS(&acrDetailItem)
 			if err != nil {
@@ -2956,8 +2907,6 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_From_RegistryRe
 	if source.StorageAccountDetails != nil {
 		storageAccountDetailList := make([]StorageAccountDetails_STATUS, len(source.StorageAccountDetails))
 		for storageAccountDetailIndex, storageAccountDetailItem := range source.StorageAccountDetails {
-			// Shadow the loop variable to avoid aliasing
-			storageAccountDetailItem := storageAccountDetailItem
 			var storageAccountDetail StorageAccountDetails_STATUS
 			err := storageAccountDetail.AssignProperties_From_StorageAccountDetails_STATUS(&storageAccountDetailItem)
 			if err != nil {
@@ -2983,8 +2932,6 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_To_RegistryRegi
 	if details.AcrDetails != nil {
 		acrDetailList := make([]storage.AcrDetails_STATUS, len(details.AcrDetails))
 		for acrDetailIndex, acrDetailItem := range details.AcrDetails {
-			// Shadow the loop variable to avoid aliasing
-			acrDetailItem := acrDetailItem
 			var acrDetail storage.AcrDetails_STATUS
 			err := acrDetailItem.AssignProperties_To_AcrDetails_STATUS(&acrDetail)
 			if err != nil {
@@ -3004,8 +2951,6 @@ func (details *RegistryRegionArmDetails_STATUS) AssignProperties_To_RegistryRegi
 	if details.StorageAccountDetails != nil {
 		storageAccountDetailList := make([]storage.StorageAccountDetails_STATUS, len(details.StorageAccountDetails))
 		for storageAccountDetailIndex, storageAccountDetailItem := range details.StorageAccountDetails {
-			// Shadow the loop variable to avoid aliasing
-			storageAccountDetailItem := storageAccountDetailItem
 			var storageAccountDetail storage.StorageAccountDetails_STATUS
 			err := storageAccountDetailItem.AssignProperties_To_StorageAccountDetails_STATUS(&storageAccountDetail)
 			if err != nil {
@@ -3545,7 +3490,7 @@ func (details *AcrDetails) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "SystemCreatedAcrAccount":
 	if details.SystemCreatedAcrAccount != nil {
-		systemCreatedAcrAccount_ARM, err := (*details.SystemCreatedAcrAccount).ConvertToARM(resolved)
+		systemCreatedAcrAccount_ARM, err := details.SystemCreatedAcrAccount.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4314,7 +4259,7 @@ func (details *StorageAccountDetails) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "SystemCreatedStorageAccount":
 	if details.SystemCreatedStorageAccount != nil {
-		systemCreatedStorageAccount_ARM, err := (*details.SystemCreatedStorageAccount).ConvertToARM(resolved)
+		systemCreatedStorageAccount_ARM, err := details.SystemCreatedStorageAccount.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

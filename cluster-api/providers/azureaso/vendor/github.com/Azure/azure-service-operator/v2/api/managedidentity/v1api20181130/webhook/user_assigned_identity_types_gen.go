@@ -116,7 +116,12 @@ func (identity *UserAssignedIdentity) ValidateUpdate(ctx context.Context, oldRes
 
 // createValidations validates the creation of the resource
 func (identity *UserAssignedIdentity) createValidations() []func(ctx context.Context, obj *v20181130.UserAssignedIdentity) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20181130.UserAssignedIdentity) (admission.Warnings, error){identity.validateResourceReferences, identity.validateOwnerReference, identity.validateSecretDestinations, identity.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20181130.UserAssignedIdentity) (admission.Warnings, error){
+		identity.validateResourceReferences,
+		identity.validateOwnerReference,
+		identity.validateSecretDestinations,
+		identity.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

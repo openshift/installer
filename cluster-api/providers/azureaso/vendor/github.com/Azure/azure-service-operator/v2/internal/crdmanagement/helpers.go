@@ -5,6 +5,7 @@ package crdmanagement
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/rotisserie/eris"
@@ -16,6 +17,8 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/registration"
 )
+
+const CRDFilePrefix = "apiextensions.k8s.io_v1_customresourcedefinition_"
 
 func MakeCRDMap(
 	crds []apiextensions.CustomResourceDefinition,
@@ -100,4 +103,48 @@ func makeMatchString(crd apiextensions.CustomResourceDefinition) string {
 
 	// matchString should be "group/kind"
 	return fmt.Sprintf("%s/%s", group, kind)
+}
+
+// groupFromFilename extracts the API group from a CRD filename.
+// CRD files follow the convention: "apiextensions.k8s.io_v1_customresourcedefinition_{kindPlural}.{group}.yaml".
+// For example, "apiextensions.k8s.io_v1_customresourcedefinition_virtualnetworks.network.azure.com.yaml"
+// returns "network.azure.com".
+func groupFromFilename(filename string) (string, error) {
+	crdName, err := crdNameFromFilename(filename)
+	if err != nil {
+		return "", err
+	}
+
+	// CRD name is "{kindPlural}.{group}", extract group (everything after the first dot)
+	idx := strings.Index(crdName, ".")
+	if idx < 0 || idx == len(crdName)-1 {
+		return "", eris.Errorf("CRD name %q derived from filename %q has no group component", crdName, filename)
+	}
+
+	return crdName[idx+1:], nil
+}
+
+// crdNameFromFilename derives the CRD metadata.name from a CRD filename.
+// CRD files follow the convention: "apiextensions.k8s.io_v1_customresourcedefinition_{crdname}.yaml",
+// where {crdname} is the CRD's metadata.name (e.g. "virtualnetworks.network.azure.com").
+// For example, "apiextensions.k8s.io_v1_customresourcedefinition_virtualnetworks.network.azure.com.yaml"
+// returns "virtualnetworks.network.azure.com".
+func crdNameFromFilename(filename string) (string, error) {
+	if !strings.HasPrefix(filename, CRDFilePrefix) {
+		return "", eris.Errorf("filename %q does not have expected prefix %q", filename, CRDFilePrefix)
+	}
+
+	if !strings.HasSuffix(filename, ".yaml") {
+		return "", eris.Errorf("filename %q does not have .yaml extension", filename)
+	}
+
+	// Strip prefix and .yaml suffix
+	crdName := strings.TrimPrefix(filename, CRDFilePrefix)
+	crdName = strings.TrimSuffix(crdName, ".yaml")
+
+	if crdName == "" {
+		return "", eris.Errorf("filename %q has no CRD name between prefix and extension", filename)
+	}
+
+	return crdName, nil
 }

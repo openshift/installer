@@ -104,7 +104,13 @@ func (administrator *FlexibleServersAdministrator) ValidateUpdate(ctx context.Co
 
 // createValidations validates the creation of the resource
 func (administrator *FlexibleServersAdministrator) createValidations() []func(ctx context.Context, obj *v20220101.FlexibleServersAdministrator) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220101.FlexibleServersAdministrator) (admission.Warnings, error){administrator.validateResourceReferences, administrator.validateOwnerReference, administrator.validateSecretDestinations, administrator.validateConfigMapDestinations, administrator.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20220101.FlexibleServersAdministrator) (admission.Warnings, error){
+		administrator.validateResourceReferences,
+		administrator.validateOwnerReference,
+		administrator.validateSecretDestinations,
+		administrator.validateConfigMapDestinations,
+		administrator.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

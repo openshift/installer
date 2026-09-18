@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kusto}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &Cluster{}
 
 // ConvertFrom populates our Cluster from the provided hub Cluster
 func (cluster *Cluster) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Cluster)
-	if !ok {
-		return fmt.Errorf("expected kusto/v1api20230815/storage/Cluster but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Cluster
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return cluster.AssignProperties_From_Cluster(source)
+	err = cluster.AssignProperties_From_Cluster(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to cluster")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Cluster from our Cluster
 func (cluster *Cluster) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Cluster)
-	if !ok {
-		return fmt.Errorf("expected kusto/v1api20230815/storage/Cluster but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Cluster
+	err := cluster.AssignProperties_To_Cluster(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from cluster")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return cluster.AssignProperties_To_Cluster(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Cluster{}
@@ -86,17 +101,6 @@ func (cluster *Cluster) SecretDestinationExpressions() []*core.DestinationExpres
 		return nil
 	}
 	return cluster.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Cluster{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (cluster *Cluster) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Cluster_STATUS); ok {
-		return cluster.Spec.Initialize_From_Cluster_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Cluster_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Cluster{}
@@ -237,7 +241,7 @@ func (cluster *Cluster) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -352,7 +356,7 @@ func (cluster *Cluster_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 	// Set property "Identity":
 	if cluster.Identity != nil {
-		identity_ARM, err := (*cluster.Identity).ConvertToARM(resolved)
+		identity_ARM, err := cluster.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -430,7 +434,7 @@ func (cluster *Cluster_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.EngineType = &engineType
 	}
 	if cluster.KeyVaultProperties != nil {
-		keyVaultProperties_ARM, err := (*cluster.KeyVaultProperties).ConvertToARM(resolved)
+		keyVaultProperties_ARM, err := cluster.KeyVaultProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -438,7 +442,7 @@ func (cluster *Cluster_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.KeyVaultProperties = &keyVaultProperties
 	}
 	if cluster.LanguageExtensions != nil {
-		languageExtensions_ARM, err := (*cluster.LanguageExtensions).ConvertToARM(resolved)
+		languageExtensions_ARM, err := cluster.LanguageExtensions.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -446,7 +450,7 @@ func (cluster *Cluster_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.LanguageExtensions = &languageExtensions
 	}
 	if cluster.OptimizedAutoscale != nil {
-		optimizedAutoscale_ARM, err := (*cluster.OptimizedAutoscale).ConvertToARM(resolved)
+		optimizedAutoscale_ARM, err := cluster.OptimizedAutoscale.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -487,7 +491,7 @@ func (cluster *Cluster_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.VirtualClusterGraduationProperties = &virtualClusterGraduationProperties
 	}
 	if cluster.VirtualNetworkConfiguration != nil {
-		virtualNetworkConfiguration_ARM, err := (*cluster.VirtualNetworkConfiguration).ConvertToARM(resolved)
+		virtualNetworkConfiguration_ARM, err := cluster.VirtualNetworkConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -497,7 +501,7 @@ func (cluster *Cluster_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 	// Set property "Sku":
 	if cluster.Sku != nil {
-		sku_ARM, err := (*cluster.Sku).ConvertToARM(resolved)
+		sku_ARM, err := cluster.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -834,8 +838,6 @@ func (cluster *Cluster_Spec) AssignProperties_From_Cluster_Spec(source *storage.
 	if source.AcceptedAudiences != nil {
 		acceptedAudienceList := make([]AcceptedAudiences, len(source.AcceptedAudiences))
 		for acceptedAudienceIndex, acceptedAudienceItem := range source.AcceptedAudiences {
-			// Shadow the loop variable to avoid aliasing
-			acceptedAudienceItem := acceptedAudienceItem
 			var acceptedAudience AcceptedAudiences
 			err := acceptedAudience.AssignProperties_From_AcceptedAudiences(&acceptedAudienceItem)
 			if err != nil {
@@ -1023,8 +1025,6 @@ func (cluster *Cluster_Spec) AssignProperties_From_Cluster_Spec(source *storage.
 	if source.TrustedExternalTenants != nil {
 		trustedExternalTenantList := make([]TrustedExternalTenant, len(source.TrustedExternalTenants))
 		for trustedExternalTenantIndex, trustedExternalTenantItem := range source.TrustedExternalTenants {
-			// Shadow the loop variable to avoid aliasing
-			trustedExternalTenantItem := trustedExternalTenantItem
 			var trustedExternalTenant TrustedExternalTenant
 			err := trustedExternalTenant.AssignProperties_From_TrustedExternalTenant(&trustedExternalTenantItem)
 			if err != nil {
@@ -1073,8 +1073,6 @@ func (cluster *Cluster_Spec) AssignProperties_To_Cluster_Spec(destination *stora
 	if cluster.AcceptedAudiences != nil {
 		acceptedAudienceList := make([]storage.AcceptedAudiences, len(cluster.AcceptedAudiences))
 		for acceptedAudienceIndex, acceptedAudienceItem := range cluster.AcceptedAudiences {
-			// Shadow the loop variable to avoid aliasing
-			acceptedAudienceItem := acceptedAudienceItem
 			var acceptedAudience storage.AcceptedAudiences
 			err := acceptedAudienceItem.AssignProperties_To_AcceptedAudiences(&acceptedAudience)
 			if err != nil {
@@ -1261,8 +1259,6 @@ func (cluster *Cluster_Spec) AssignProperties_To_Cluster_Spec(destination *stora
 	if cluster.TrustedExternalTenants != nil {
 		trustedExternalTenantList := make([]storage.TrustedExternalTenant, len(cluster.TrustedExternalTenants))
 		for trustedExternalTenantIndex, trustedExternalTenantItem := range cluster.TrustedExternalTenants {
-			// Shadow the loop variable to avoid aliasing
-			trustedExternalTenantItem := trustedExternalTenantItem
 			var trustedExternalTenant storage.TrustedExternalTenant
 			err := trustedExternalTenantItem.AssignProperties_To_TrustedExternalTenant(&trustedExternalTenant)
 			if err != nil {
@@ -1304,208 +1300,6 @@ func (cluster *Cluster_Spec) AssignProperties_To_Cluster_Spec(destination *stora
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Cluster_STATUS populates our Cluster_Spec from the provided source Cluster_STATUS
-func (cluster *Cluster_Spec) Initialize_From_Cluster_STATUS(source *Cluster_STATUS) error {
-
-	// AcceptedAudiences
-	if source.AcceptedAudiences != nil {
-		acceptedAudienceList := make([]AcceptedAudiences, len(source.AcceptedAudiences))
-		for acceptedAudienceIndex, acceptedAudienceItem := range source.AcceptedAudiences {
-			// Shadow the loop variable to avoid aliasing
-			acceptedAudienceItem := acceptedAudienceItem
-			var acceptedAudience AcceptedAudiences
-			err := acceptedAudience.Initialize_From_AcceptedAudiences_STATUS(&acceptedAudienceItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_AcceptedAudiences_STATUS() to populate field AcceptedAudiences")
-			}
-			acceptedAudienceList[acceptedAudienceIndex] = acceptedAudience
-		}
-		cluster.AcceptedAudiences = acceptedAudienceList
-	} else {
-		cluster.AcceptedAudiences = nil
-	}
-
-	// AllowedFqdnList
-	cluster.AllowedFqdnList = genruntime.CloneSliceOfString(source.AllowedFqdnList)
-
-	// AllowedIpRangeList
-	cluster.AllowedIpRangeList = genruntime.CloneSliceOfString(source.AllowedIpRangeList)
-
-	// EnableAutoStop
-	if source.EnableAutoStop != nil {
-		enableAutoStop := *source.EnableAutoStop
-		cluster.EnableAutoStop = &enableAutoStop
-	} else {
-		cluster.EnableAutoStop = nil
-	}
-
-	// EnableDiskEncryption
-	if source.EnableDiskEncryption != nil {
-		enableDiskEncryption := *source.EnableDiskEncryption
-		cluster.EnableDiskEncryption = &enableDiskEncryption
-	} else {
-		cluster.EnableDiskEncryption = nil
-	}
-
-	// EnableDoubleEncryption
-	if source.EnableDoubleEncryption != nil {
-		enableDoubleEncryption := *source.EnableDoubleEncryption
-		cluster.EnableDoubleEncryption = &enableDoubleEncryption
-	} else {
-		cluster.EnableDoubleEncryption = nil
-	}
-
-	// EnablePurge
-	if source.EnablePurge != nil {
-		enablePurge := *source.EnablePurge
-		cluster.EnablePurge = &enablePurge
-	} else {
-		cluster.EnablePurge = nil
-	}
-
-	// EnableStreamingIngest
-	if source.EnableStreamingIngest != nil {
-		enableStreamingIngest := *source.EnableStreamingIngest
-		cluster.EnableStreamingIngest = &enableStreamingIngest
-	} else {
-		cluster.EnableStreamingIngest = nil
-	}
-
-	// EngineType
-	if source.EngineType != nil {
-		engineType := genruntime.ToEnum(string(*source.EngineType), clusterProperties_EngineType_Values)
-		cluster.EngineType = &engineType
-	} else {
-		cluster.EngineType = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity Identity
-		err := identity.Initialize_From_Identity_STATUS(source.Identity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Identity_STATUS() to populate field Identity")
-		}
-		cluster.Identity = &identity
-	} else {
-		cluster.Identity = nil
-	}
-
-	// KeyVaultProperties
-	if source.KeyVaultProperties != nil {
-		var keyVaultProperty KeyVaultProperties
-		err := keyVaultProperty.Initialize_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
-		}
-		cluster.KeyVaultProperties = &keyVaultProperty
-	} else {
-		cluster.KeyVaultProperties = nil
-	}
-
-	// LanguageExtensions
-	if source.LanguageExtensions != nil {
-		var languageExtension LanguageExtensionsList
-		err := languageExtension.Initialize_From_LanguageExtensionsList_STATUS(source.LanguageExtensions)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_LanguageExtensionsList_STATUS() to populate field LanguageExtensions")
-		}
-		cluster.LanguageExtensions = &languageExtension
-	} else {
-		cluster.LanguageExtensions = nil
-	}
-
-	// Location
-	cluster.Location = genruntime.ClonePointerToString(source.Location)
-
-	// OptimizedAutoscale
-	if source.OptimizedAutoscale != nil {
-		var optimizedAutoscale OptimizedAutoscale
-		err := optimizedAutoscale.Initialize_From_OptimizedAutoscale_STATUS(source.OptimizedAutoscale)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_OptimizedAutoscale_STATUS() to populate field OptimizedAutoscale")
-		}
-		cluster.OptimizedAutoscale = &optimizedAutoscale
-	} else {
-		cluster.OptimizedAutoscale = nil
-	}
-
-	// PublicIPType
-	if source.PublicIPType != nil {
-		publicIPType := genruntime.ToEnum(string(*source.PublicIPType), clusterProperties_PublicIPType_Values)
-		cluster.PublicIPType = &publicIPType
-	} else {
-		cluster.PublicIPType = nil
-	}
-
-	// PublicNetworkAccess
-	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), clusterProperties_PublicNetworkAccess_Values)
-		cluster.PublicNetworkAccess = &publicNetworkAccess
-	} else {
-		cluster.PublicNetworkAccess = nil
-	}
-
-	// RestrictOutboundNetworkAccess
-	if source.RestrictOutboundNetworkAccess != nil {
-		restrictOutboundNetworkAccess := genruntime.ToEnum(string(*source.RestrictOutboundNetworkAccess), clusterProperties_RestrictOutboundNetworkAccess_Values)
-		cluster.RestrictOutboundNetworkAccess = &restrictOutboundNetworkAccess
-	} else {
-		cluster.RestrictOutboundNetworkAccess = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku AzureSku
-		err := sku.Initialize_From_AzureSku_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AzureSku_STATUS() to populate field Sku")
-		}
-		cluster.Sku = &sku
-	} else {
-		cluster.Sku = nil
-	}
-
-	// Tags
-	cluster.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// TrustedExternalTenants
-	if source.TrustedExternalTenants != nil {
-		trustedExternalTenantList := make([]TrustedExternalTenant, len(source.TrustedExternalTenants))
-		for trustedExternalTenantIndex, trustedExternalTenantItem := range source.TrustedExternalTenants {
-			// Shadow the loop variable to avoid aliasing
-			trustedExternalTenantItem := trustedExternalTenantItem
-			var trustedExternalTenant TrustedExternalTenant
-			err := trustedExternalTenant.Initialize_From_TrustedExternalTenant_STATUS(&trustedExternalTenantItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_TrustedExternalTenant_STATUS() to populate field TrustedExternalTenants")
-			}
-			trustedExternalTenantList[trustedExternalTenantIndex] = trustedExternalTenant
-		}
-		cluster.TrustedExternalTenants = trustedExternalTenantList
-	} else {
-		cluster.TrustedExternalTenants = nil
-	}
-
-	// VirtualNetworkConfiguration
-	if source.VirtualNetworkConfiguration != nil {
-		var virtualNetworkConfiguration VirtualNetworkConfiguration
-		err := virtualNetworkConfiguration.Initialize_From_VirtualNetworkConfiguration_STATUS(source.VirtualNetworkConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualNetworkConfiguration_STATUS() to populate field VirtualNetworkConfiguration")
-		}
-		cluster.VirtualNetworkConfiguration = &virtualNetworkConfiguration
-	} else {
-		cluster.VirtualNetworkConfiguration = nil
-	}
-
-	// Zones
-	cluster.Zones = genruntime.CloneSliceOfString(source.Zones)
 
 	// No error
 	return nil
@@ -2047,8 +1841,6 @@ func (cluster *Cluster_STATUS) AssignProperties_From_Cluster_STATUS(source *stor
 	if source.AcceptedAudiences != nil {
 		acceptedAudienceList := make([]AcceptedAudiences_STATUS, len(source.AcceptedAudiences))
 		for acceptedAudienceIndex, acceptedAudienceItem := range source.AcceptedAudiences {
-			// Shadow the loop variable to avoid aliasing
-			acceptedAudienceItem := acceptedAudienceItem
 			var acceptedAudience AcceptedAudiences_STATUS
 			err := acceptedAudience.AssignProperties_From_AcceptedAudiences_STATUS(&acceptedAudienceItem)
 			if err != nil {
@@ -2198,8 +1990,6 @@ func (cluster *Cluster_STATUS) AssignProperties_From_Cluster_STATUS(source *stor
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -2291,8 +2081,6 @@ func (cluster *Cluster_STATUS) AssignProperties_From_Cluster_STATUS(source *stor
 	if source.TrustedExternalTenants != nil {
 		trustedExternalTenantList := make([]TrustedExternalTenant_STATUS, len(source.TrustedExternalTenants))
 		for trustedExternalTenantIndex, trustedExternalTenantItem := range source.TrustedExternalTenants {
-			// Shadow the loop variable to avoid aliasing
-			trustedExternalTenantItem := trustedExternalTenantItem
 			var trustedExternalTenant TrustedExternalTenant_STATUS
 			err := trustedExternalTenant.AssignProperties_From_TrustedExternalTenant_STATUS(&trustedExternalTenantItem)
 			if err != nil {
@@ -2339,8 +2127,6 @@ func (cluster *Cluster_STATUS) AssignProperties_To_Cluster_STATUS(destination *s
 	if cluster.AcceptedAudiences != nil {
 		acceptedAudienceList := make([]storage.AcceptedAudiences_STATUS, len(cluster.AcceptedAudiences))
 		for acceptedAudienceIndex, acceptedAudienceItem := range cluster.AcceptedAudiences {
-			// Shadow the loop variable to avoid aliasing
-			acceptedAudienceItem := acceptedAudienceItem
 			var acceptedAudience storage.AcceptedAudiences_STATUS
 			err := acceptedAudienceItem.AssignProperties_To_AcceptedAudiences_STATUS(&acceptedAudience)
 			if err != nil {
@@ -2489,8 +2275,6 @@ func (cluster *Cluster_STATUS) AssignProperties_To_Cluster_STATUS(destination *s
 	if cluster.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(cluster.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range cluster.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -2577,8 +2361,6 @@ func (cluster *Cluster_STATUS) AssignProperties_To_Cluster_STATUS(destination *s
 	if cluster.TrustedExternalTenants != nil {
 		trustedExternalTenantList := make([]storage.TrustedExternalTenant_STATUS, len(cluster.TrustedExternalTenants))
 		for trustedExternalTenantIndex, trustedExternalTenantItem := range cluster.TrustedExternalTenants {
-			// Shadow the loop variable to avoid aliasing
-			trustedExternalTenantItem := trustedExternalTenantItem
 			var trustedExternalTenant storage.TrustedExternalTenant_STATUS
 			err := trustedExternalTenantItem.AssignProperties_To_TrustedExternalTenant_STATUS(&trustedExternalTenant)
 			if err != nil {
@@ -2692,16 +2474,6 @@ func (audiences *AcceptedAudiences) AssignProperties_To_AcceptedAudiences(destin
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AcceptedAudiences_STATUS populates our AcceptedAudiences from the provided source AcceptedAudiences_STATUS
-func (audiences *AcceptedAudiences) Initialize_From_AcceptedAudiences_STATUS(source *AcceptedAudiences_STATUS) error {
-
-	// Value
-	audiences.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -2914,32 +2686,6 @@ func (azureSku *AzureSku) AssignProperties_To_AzureSku(destination *storage.Azur
 	return nil
 }
 
-// Initialize_From_AzureSku_STATUS populates our AzureSku from the provided source AzureSku_STATUS
-func (azureSku *AzureSku) Initialize_From_AzureSku_STATUS(source *AzureSku_STATUS) error {
-
-	// Capacity
-	azureSku.Capacity = genruntime.ClonePointerToInt(source.Capacity)
-
-	// Name
-	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), azureSku_Name_Values)
-		azureSku.Name = &name
-	} else {
-		azureSku.Name = nil
-	}
-
-	// Tier
-	if source.Tier != nil {
-		tier := genruntime.ToEnum(string(*source.Tier), azureSku_Tier_Values)
-		azureSku.Tier = &tier
-	} else {
-		azureSku.Tier = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Azure SKU definition.
 type AzureSku_STATUS struct {
 	// Capacity: The number of instances of the cluster.
@@ -3071,8 +2817,6 @@ func (operator *ClusterOperatorSpec) AssignProperties_From_ClusterOperatorSpec(s
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3089,8 +2833,6 @@ func (operator *ClusterOperatorSpec) AssignProperties_From_ClusterOperatorSpec(s
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3116,8 +2858,6 @@ func (operator *ClusterOperatorSpec) AssignProperties_To_ClusterOperatorSpec(des
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3134,8 +2874,6 @@ func (operator *ClusterOperatorSpec) AssignProperties_To_ClusterOperatorSpec(des
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3381,8 +3119,6 @@ func (identity *Identity) AssignProperties_From_Identity(source *storage.Identit
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -3416,8 +3152,6 @@ func (identity *Identity) AssignProperties_To_Identity(destination *storage.Iden
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -3435,33 +3169,6 @@ func (identity *Identity) AssignProperties_To_Identity(destination *storage.Iden
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Identity_STATUS populates our Identity from the provided source Identity_STATUS
-func (identity *Identity) Initialize_From_Identity_STATUS(source *Identity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), identity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
 	}
 
 	// No error
@@ -3559,8 +3266,6 @@ func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]Identity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity Identity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_Identity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -3600,8 +3305,6 @@ func (identity *Identity_STATUS) AssignProperties_To_Identity_STATUS(destination
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.Identity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.Identity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_Identity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -3772,22 +3475,6 @@ func (properties *KeyVaultProperties) AssignProperties_To_KeyVaultProperties(des
 	return nil
 }
 
-// Initialize_From_KeyVaultProperties_STATUS populates our KeyVaultProperties from the provided source KeyVaultProperties_STATUS
-func (properties *KeyVaultProperties) Initialize_From_KeyVaultProperties_STATUS(source *KeyVaultProperties_STATUS) error {
-
-	// KeyName
-	properties.KeyName = genruntime.ClonePointerToString(source.KeyName)
-
-	// KeyVaultUri
-	properties.KeyVaultUri = genruntime.ClonePointerToString(source.KeyVaultUri)
-
-	// KeyVersion
-	properties.KeyVersion = genruntime.ClonePointerToString(source.KeyVersion)
-
-	// No error
-	return nil
-}
-
 // Properties of the key vault.
 type KeyVaultProperties_STATUS struct {
 	// KeyName: The name of the key vault key.
@@ -3951,8 +3638,6 @@ func (list *LanguageExtensionsList) AssignProperties_From_LanguageExtensionsList
 	if source.Value != nil {
 		valueList := make([]LanguageExtension, len(source.Value))
 		for valueIndex, valueItem := range source.Value {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			var value LanguageExtension
 			err := value.AssignProperties_From_LanguageExtension(&valueItem)
 			if err != nil {
@@ -3978,8 +3663,6 @@ func (list *LanguageExtensionsList) AssignProperties_To_LanguageExtensionsList(d
 	if list.Value != nil {
 		valueList := make([]storage.LanguageExtension, len(list.Value))
 		for valueIndex, valueItem := range list.Value {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			var value storage.LanguageExtension
 			err := valueItem.AssignProperties_To_LanguageExtension(&value)
 			if err != nil {
@@ -3997,31 +3680,6 @@ func (list *LanguageExtensionsList) AssignProperties_To_LanguageExtensionsList(d
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_LanguageExtensionsList_STATUS populates our LanguageExtensionsList from the provided source LanguageExtensionsList_STATUS
-func (list *LanguageExtensionsList) Initialize_From_LanguageExtensionsList_STATUS(source *LanguageExtensionsList_STATUS) error {
-
-	// Value
-	if source.Value != nil {
-		valueList := make([]LanguageExtension, len(source.Value))
-		for valueIndex, valueItem := range source.Value {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
-			var value LanguageExtension
-			err := value.Initialize_From_LanguageExtension_STATUS(&valueItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_LanguageExtension_STATUS() to populate field Value")
-			}
-			valueList[valueIndex] = value
-		}
-		list.Value = valueList
-	} else {
-		list.Value = nil
 	}
 
 	// No error
@@ -4069,8 +3727,6 @@ func (list *LanguageExtensionsList_STATUS) AssignProperties_From_LanguageExtensi
 	if source.Value != nil {
 		valueList := make([]LanguageExtension_STATUS, len(source.Value))
 		for valueIndex, valueItem := range source.Value {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			var value LanguageExtension_STATUS
 			err := value.AssignProperties_From_LanguageExtension_STATUS(&valueItem)
 			if err != nil {
@@ -4096,8 +3752,6 @@ func (list *LanguageExtensionsList_STATUS) AssignProperties_To_LanguageExtension
 	if list.Value != nil {
 		valueList := make([]storage.LanguageExtension_STATUS, len(list.Value))
 		for valueIndex, valueItem := range list.Value {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			var value storage.LanguageExtension_STATUS
 			err := valueItem.AssignProperties_To_LanguageExtension_STATUS(&value)
 			if err != nil {
@@ -4384,30 +4038,6 @@ func (autoscale *OptimizedAutoscale) AssignProperties_To_OptimizedAutoscale(dest
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_OptimizedAutoscale_STATUS populates our OptimizedAutoscale from the provided source OptimizedAutoscale_STATUS
-func (autoscale *OptimizedAutoscale) Initialize_From_OptimizedAutoscale_STATUS(source *OptimizedAutoscale_STATUS) error {
-
-	// IsEnabled
-	if source.IsEnabled != nil {
-		isEnabled := *source.IsEnabled
-		autoscale.IsEnabled = &isEnabled
-	} else {
-		autoscale.IsEnabled = nil
-	}
-
-	// Maximum
-	autoscale.Maximum = genruntime.ClonePointerToInt(source.Maximum)
-
-	// Minimum
-	autoscale.Minimum = genruntime.ClonePointerToInt(source.Minimum)
-
-	// Version
-	autoscale.Version = genruntime.ClonePointerToInt(source.Version)
 
 	// No error
 	return nil
@@ -4845,16 +4475,6 @@ func (tenant *TrustedExternalTenant) AssignProperties_To_TrustedExternalTenant(d
 	return nil
 }
 
-// Initialize_From_TrustedExternalTenant_STATUS populates our TrustedExternalTenant from the provided source TrustedExternalTenant_STATUS
-func (tenant *TrustedExternalTenant) Initialize_From_TrustedExternalTenant_STATUS(source *TrustedExternalTenant_STATUS) error {
-
-	// Value
-	tenant.Value = genruntime.ClonePointerToString(source.Value)
-
-	// No error
-	return nil
-}
-
 // Represents a tenant ID that is trusted by the cluster.
 type TrustedExternalTenant_STATUS struct {
 	// Value: GUID representing an external tenant.
@@ -5094,45 +4714,6 @@ func (configuration *VirtualNetworkConfiguration) AssignProperties_To_VirtualNet
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualNetworkConfiguration_STATUS populates our VirtualNetworkConfiguration from the provided source VirtualNetworkConfiguration_STATUS
-func (configuration *VirtualNetworkConfiguration) Initialize_From_VirtualNetworkConfiguration_STATUS(source *VirtualNetworkConfiguration_STATUS) error {
-
-	// DataManagementPublicIpReference
-	if source.DataManagementPublicIpId != nil {
-		dataManagementPublicIpReference := genruntime.CreateResourceReferenceFromARMID(*source.DataManagementPublicIpId)
-		configuration.DataManagementPublicIpReference = &dataManagementPublicIpReference
-	} else {
-		configuration.DataManagementPublicIpReference = nil
-	}
-
-	// EnginePublicIpReference
-	if source.EnginePublicIpId != nil {
-		enginePublicIpReference := genruntime.CreateResourceReferenceFromARMID(*source.EnginePublicIpId)
-		configuration.EnginePublicIpReference = &enginePublicIpReference
-	} else {
-		configuration.EnginePublicIpReference = nil
-	}
-
-	// State
-	if source.State != nil {
-		state := genruntime.ToEnum(string(*source.State), virtualNetworkConfiguration_State_Values)
-		configuration.State = &state
-	} else {
-		configuration.State = nil
-	}
-
-	// SubnetReference
-	if source.SubnetId != nil {
-		subnetReference := genruntime.CreateResourceReferenceFromARMID(*source.SubnetId)
-		configuration.SubnetReference = &subnetReference
-	} else {
-		configuration.SubnetReference = nil
 	}
 
 	// No error
@@ -5807,32 +5388,6 @@ func (extension *LanguageExtension) AssignProperties_To_LanguageExtension(destin
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_LanguageExtension_STATUS populates our LanguageExtension from the provided source LanguageExtension_STATUS
-func (extension *LanguageExtension) Initialize_From_LanguageExtension_STATUS(source *LanguageExtension_STATUS) error {
-
-	// LanguageExtensionCustomImageName
-	extension.LanguageExtensionCustomImageName = genruntime.ClonePointerToString(source.LanguageExtensionCustomImageName)
-
-	// LanguageExtensionImageName
-	if source.LanguageExtensionImageName != nil {
-		languageExtensionImageName := genruntime.ToEnum(string(*source.LanguageExtensionImageName), languageExtensionImageName_Values)
-		extension.LanguageExtensionImageName = &languageExtensionImageName
-	} else {
-		extension.LanguageExtensionImageName = nil
-	}
-
-	// LanguageExtensionName
-	if source.LanguageExtensionName != nil {
-		languageExtensionName := genruntime.ToEnum(string(*source.LanguageExtensionName), languageExtensionName_Values)
-		extension.LanguageExtensionName = &languageExtensionName
-	} else {
-		extension.LanguageExtensionName = nil
 	}
 
 	// No error

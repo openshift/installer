@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cdn}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/originGroups/{originGroupName}/origins/{originName}
 type AfdOrigin struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (origin *AfdOrigin) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/originGroups/{originGroupName}/origins/{originName}
 type AfdOriginList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -335,7 +336,7 @@ func (origin *AfdOrigin_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		result.Properties = &arm.AFDOriginProperties{}
 	}
 	if origin.AzureOrigin != nil {
-		azureOrigin_ARM, err := (*origin.AzureOrigin).ConvertToARM(resolved)
+		azureOrigin_ARM, err := origin.AzureOrigin.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -381,7 +382,7 @@ func (origin *AfdOrigin_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		result.Properties.Priority = &priority
 	}
 	if origin.SharedPrivateLinkResource != nil {
-		sharedPrivateLinkResource_ARM, err := (*origin.SharedPrivateLinkResource).ConvertToARM(resolved)
+		sharedPrivateLinkResource_ARM, err := origin.SharedPrivateLinkResource.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1389,8 +1390,6 @@ func (operator *AfdOriginOperatorSpec) AssignProperties_From_AfdOriginOperatorSp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1407,8 +1406,6 @@ func (operator *AfdOriginOperatorSpec) AssignProperties_From_AfdOriginOperatorSp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1434,8 +1431,6 @@ func (operator *AfdOriginOperatorSpec) AssignProperties_To_AfdOriginOperatorSpec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1452,8 +1447,6 @@ func (operator *AfdOriginOperatorSpec) AssignProperties_To_AfdOriginOperatorSpec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1575,7 +1568,7 @@ func (properties *SharedPrivateLinkResourceProperties) ConvertToARM(resolved gen
 
 	// Set property "PrivateLink":
 	if properties.PrivateLink != nil {
-		privateLink_ARM, err := (*properties.PrivateLink).ConvertToARM(resolved)
+		privateLink_ARM, err := properties.PrivateLink.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

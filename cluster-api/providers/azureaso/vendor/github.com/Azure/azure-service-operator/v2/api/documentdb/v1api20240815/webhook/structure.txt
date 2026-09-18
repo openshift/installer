@@ -11,6 +11,8 @@ MongodbDatabaseCollectionThroughputSetting: Object (0 properties)
 
 MongodbDatabaseThroughputSetting: Object (0 properties)
 
+MongodbRoleDefinition: Object (0 properties)
+
 MongodbUserDefinition: Object (0 properties)
 
 SqlDatabase: Object (0 properties)

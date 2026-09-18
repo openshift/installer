@@ -61,6 +61,45 @@ func (m *MockInterface) EXPECT() *MockInterfaceMockRecorder {
 	return m.recorder
 }
 
+// AttachDetachDataDisks mocks base method.
+func (m *MockInterface) AttachDetachDataDisks(ctx context.Context, resourceGroupName, VMScaleSetName, instanceID string, parameters armcompute.AttachDetachDataDisksRequest) (*armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AttachDetachDataDisks", ctx, resourceGroupName, VMScaleSetName, instanceID, parameters)
+	ret0, _ := ret[0].(*armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AttachDetachDataDisks indicates an expected call of AttachDetachDataDisks.
+func (mr *MockInterfaceMockRecorder) AttachDetachDataDisks(ctx, resourceGroupName, VMScaleSetName, instanceID, parameters any) *MockInterfaceAttachDetachDataDisksCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachDetachDataDisks", reflect.TypeOf((*MockInterface)(nil).AttachDetachDataDisks), ctx, resourceGroupName, VMScaleSetName, instanceID, parameters)
+	return &MockInterfaceAttachDetachDataDisksCall{Call: call}
+}
+
+// MockInterfaceAttachDetachDataDisksCall wrap *gomock.Call
+type MockInterfaceAttachDetachDataDisksCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockInterfaceAttachDetachDataDisksCall) Return(arg0 *armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse, arg1 error) *MockInterfaceAttachDetachDataDisksCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockInterfaceAttachDetachDataDisksCall) Do(f func(context.Context, string, string, string, armcompute.AttachDetachDataDisksRequest) (*armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse, error)) *MockInterfaceAttachDetachDataDisksCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockInterfaceAttachDetachDataDisksCall) DoAndReturn(f func(context.Context, string, string, string, armcompute.AttachDetachDataDisksRequest) (*armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse, error)) *MockInterfaceAttachDetachDataDisksCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // BeginUpdate mocks base method.
 func (m *MockInterface) BeginUpdate(ctx context.Context, resourceGroupName, vmScaleSetName, instanceID string, parameters armcompute.VirtualMachineScaleSetVM, options *armcompute.VirtualMachineScaleSetVMsClientBeginUpdateOptions) (*runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientUpdateResponse], error) {
 	m.ctrl.T.Helper()

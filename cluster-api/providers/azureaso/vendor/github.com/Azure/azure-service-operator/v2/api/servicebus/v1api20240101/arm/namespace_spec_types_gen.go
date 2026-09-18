@@ -68,7 +68,8 @@ type SBNamespaceProperties struct {
 	// PublicNetworkAccess: This determines if traffic is allowed over public network. By default it is enabled.
 	PublicNetworkAccess *SBNamespaceProperties_PublicNetworkAccess `json:"publicNetworkAccess,omitempty"`
 
-	// ZoneRedundant: Enabling this property creates a Premium Service Bus Namespace in regions supported availability zones.
+	// ZoneRedundant: This property reflects if zone redundancy has been enabled for namespaces in regions that support
+	// availability zones.
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
@@ -210,5 +211,6 @@ type KeyVaultProperties struct {
 }
 
 type UserAssignedIdentityProperties struct {
+	// UserAssignedIdentity: ARM ID of user Identity selected for encryption
 	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }

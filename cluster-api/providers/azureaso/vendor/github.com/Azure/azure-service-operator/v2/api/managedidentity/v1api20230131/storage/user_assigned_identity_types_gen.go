@@ -22,6 +22,7 @@ import (
 // +kubebuilder:rbac:groups=managedidentity.azure.com,resources={userassignedidentities/status,userassignedidentities/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,managedidentity}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -30,7 +31,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230131.UserAssignedIdentity
 // Generator information:
-// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
+// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}
 type UserAssignedIdentity struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -188,7 +189,7 @@ func (identity *UserAssignedIdentity) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230131.UserAssignedIdentity
 // Generator information:
-// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
+// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}
 type UserAssignedIdentityList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -289,10 +290,11 @@ type UserAssignedIdentityOperatorConfigMaps struct {
 
 // Storage version of v1api20230131.UserAssignedIdentityOperatorSecrets
 type UserAssignedIdentityOperatorSecrets struct {
-	ClientId    *genruntime.SecretDestination `json:"clientId,omitempty"`
-	PrincipalId *genruntime.SecretDestination `json:"principalId,omitempty"`
-	PropertyBag genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
-	TenantId    *genruntime.SecretDestination `json:"tenantId,omitempty"`
+	ClientId       *genruntime.SecretDestination `json:"clientId,omitempty"`
+	PrincipalId    *genruntime.SecretDestination `json:"principalId,omitempty"`
+	PropertyBag    genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SubscriptionId *genruntime.SecretDestination `json:"subscriptionId,omitempty"`
+	TenantId       *genruntime.SecretDestination `json:"tenantId,omitempty"`
 }
 
 func init() {

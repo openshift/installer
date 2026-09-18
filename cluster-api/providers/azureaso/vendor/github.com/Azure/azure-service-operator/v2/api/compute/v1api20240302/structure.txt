@@ -127,7 +127,7 @@ Disk: Resource
 │   ├── Tags: map[string]string
 │   ├── Tier: *string
 │   └── Zones: string[]
-└── Status: Object (43 properties)
+└── Status: Object (44 properties)
     ├── BurstingEnabled: *bool
     ├── BurstingEnabledTime: *string
     ├── CompletionPercent: *float64
@@ -264,6 +264,21 @@ Disk: Resource
     │   │   └── "x64"
     │   └── DiskControllerTypes: *string
     ├── SupportsHibernation: *bool
+    ├── SystemData: *Object (6 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *Enum (4 values)
+    │   │   ├── "Application"
+    │   │   ├── "Key"
+    │   │   ├── "ManagedIdentity"
+    │   │   └── "User"
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   └── LastModifiedByType: *Enum (4 values)
+    │       ├── "Application"
+    │       ├── "Key"
+    │       ├── "ManagedIdentity"
+    │       └── "User"
     ├── Tags: map[string]string
     ├── Tier: *string
     ├── TimeCreated: *string
@@ -285,7 +300,7 @@ DiskAccess: Resource
 │   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── Owner: *genruntime.KnownResourceReference
 │   └── Tags: map[string]string
-└── Status: Object (10 properties)
+└── Status: Object (11 properties)
     ├── Conditions: conditions.Condition[]
     ├── ExtendedLocation: *Object (2 properties)
     │   ├── Name: *string
@@ -297,6 +312,21 @@ DiskAccess: Resource
     ├── PrivateEndpointConnections: Object (1 property)[]
     │   └── Id: *string
     ├── ProvisioningState: *string
+    ├── SystemData: *Object (6 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *Enum (4 values)
+    │   │   ├── "Application"
+    │   │   ├── "Key"
+    │   │   ├── "ManagedIdentity"
+    │   │   └── "User"
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   └── LastModifiedByType: *Enum (4 values)
+    │       ├── "Application"
+    │       ├── "Key"
+    │       ├── "ManagedIdentity"
+    │       └── "User"
     ├── Tags: map[string]string
     ├── TimeCreated: *string
     └── Type: *string
@@ -331,7 +361,7 @@ DiskEncryptionSet: Resource
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── RotationToLatestKeyVersionEnabled: *bool
 │   └── Tags: map[string]string
-└── Status: Object (15 properties)
+└── Status: Object (16 properties)
     ├── ActiveKey: *Object (2 properties)
     │   ├── KeyUrl: *string
     │   └── SourceVault: *Object (1 property)
@@ -374,12 +404,27 @@ DiskEncryptionSet: Resource
     │       └── Id: *string
     ├── ProvisioningState: *string
     ├── RotationToLatestKeyVersionEnabled: *bool
+    ├── SystemData: *Object (6 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *Enum (4 values)
+    │   │   ├── "Application"
+    │   │   ├── "Key"
+    │   │   ├── "ManagedIdentity"
+    │   │   └── "User"
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   └── LastModifiedByType: *Enum (4 values)
+    │       ├── "Application"
+    │       ├── "Key"
+    │       ├── "ManagedIdentity"
+    │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
 
 Snapshot: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (25 properties)
+├── Spec: Object (24 properties)
 │   ├── AzureName: string
 │   ├── CompletionPercent: *float64
 │   ├── CopyCompletionError: *Object (2 properties)
@@ -425,15 +470,6 @@ Snapshot: Resource
 │   │   └── "None"
 │   ├── DiskAccessReference: *genruntime.ResourceReference
 │   ├── DiskSizeGB: *int
-│   ├── DiskState: *Enum (8 values)
-│   │   ├── "ActiveSAS"
-│   │   ├── "ActiveSASFrozen"
-│   │   ├── "ActiveUpload"
-│   │   ├── "Attached"
-│   │   ├── "Frozen"
-│   │   ├── "ReadyToUpload"
-│   │   ├── "Reserved"
-│   │   └── "Unattached"
 │   ├── Encryption: *Object (2 properties)
 │   │   ├── DiskEncryptionSetReference: *genruntime.ResourceReference
 │   │   └── Type: *Enum (3 values)
@@ -501,7 +537,7 @@ Snapshot: Resource
 │   │   └── DiskControllerTypes: *string
 │   ├── SupportsHibernation: *bool
 │   └── Tags: map[string]string
-└── Status: Object (32 properties)
+└── Status: Object (33 properties)
     ├── CompletionPercent: *float64
     ├── Conditions: conditions.Condition[]
     ├── CopyCompletionError: *Object (2 properties)
@@ -626,6 +662,21 @@ Snapshot: Resource
     │   │   └── "x64"
     │   └── DiskControllerTypes: *string
     ├── SupportsHibernation: *bool
+    ├── SystemData: *Object (6 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *Enum (4 values)
+    │   │   ├── "Application"
+    │   │   ├── "Key"
+    │   │   ├── "ManagedIdentity"
+    │   │   └── "User"
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   └── LastModifiedByType: *Enum (4 values)
+    │       ├── "Application"
+    │       ├── "Key"
+    │       ├── "ManagedIdentity"
+    │       └── "User"
     ├── Tags: map[string]string
     ├── TimeCreated: *string
     ├── Type: *string

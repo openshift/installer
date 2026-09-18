@@ -8,7 +8,7 @@ import "github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 type FlexibleServersFirewallRule_Spec struct {
 	Name string `json:"name,omitempty"`
 
-	// Properties: The properties of a firewall rule.
+	// Properties: Properties of a firewall rule.
 	Properties *FirewallRuleProperties `json:"properties,omitempty"`
 }
 
@@ -29,11 +29,12 @@ func (rule *FlexibleServersFirewallRule_Spec) GetType() string {
 	return "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules"
 }
 
-// The properties of a server firewall rule.
+// Properties of a firewall rule.
 type FirewallRuleProperties struct {
-	// EndIpAddress: The end IP address of the server firewall rule. Must be IPv4 format.
+	// EndIpAddress: IP address defining the end of the range of addresses of a firewall rule. Must be expressed in IPv4 format.
 	EndIpAddress *string `json:"endIpAddress,omitempty"`
 
-	// StartIpAddress: The start IP address of the server firewall rule. Must be IPv4 format.
+	// StartIpAddress: IP address defining the start of the range of addresses of a firewall rule. Must be expressed in IPv4
+	// format.
 	StartIpAddress *string `json:"startIpAddress,omitempty"`
 }

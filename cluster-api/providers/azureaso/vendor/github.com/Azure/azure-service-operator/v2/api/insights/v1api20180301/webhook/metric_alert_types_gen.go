@@ -116,7 +116,12 @@ func (alert *MetricAlert) ValidateUpdate(ctx context.Context, oldResource runtim
 
 // createValidations validates the creation of the resource
 func (alert *MetricAlert) createValidations() []func(ctx context.Context, obj *v20180301.MetricAlert) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20180301.MetricAlert) (admission.Warnings, error){alert.validateResourceReferences, alert.validateOwnerReference, alert.validateSecretDestinations, alert.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20180301.MetricAlert) (admission.Warnings, error){
+		alert.validateResourceReferences,
+		alert.validateOwnerReference,
+		alert.validateSecretDestinations,
+		alert.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

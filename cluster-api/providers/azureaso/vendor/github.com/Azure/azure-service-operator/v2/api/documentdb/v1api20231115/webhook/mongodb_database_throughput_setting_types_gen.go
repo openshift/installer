@@ -104,7 +104,12 @@ func (setting *MongodbDatabaseThroughputSetting) ValidateUpdate(ctx context.Cont
 
 // createValidations validates the creation of the resource
 func (setting *MongodbDatabaseThroughputSetting) createValidations() []func(ctx context.Context, obj *v20231115.MongodbDatabaseThroughputSetting) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231115.MongodbDatabaseThroughputSetting) (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20231115.MongodbDatabaseThroughputSetting) (admission.Warnings, error){
+		setting.validateResourceReferences,
+		setting.validateOwnerReference,
+		setting.validateSecretDestinations,
+		setting.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

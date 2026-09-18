@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=resources.azure.com,resources={resourcegroups/status,resourcegroups/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,resources}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20200601.ResourceGroup
 // Generator information:
-// - Generated from: /resources/resource-manager/Microsoft.Resources/stable/2020-06-01/resources.json
+// - Generated from: /resources/resource-manager/Microsoft.Resources/resources/stable/2020-06-01/resources.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}
 type ResourceGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -163,7 +164,7 @@ func (group *ResourceGroup) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20200601.ResourceGroup
 // Generator information:
-// - Generated from: /resources/resource-manager/Microsoft.Resources/stable/2020-06-01/resources.json
+// - Generated from: /resources/resource-manager/Microsoft.Resources/resources/stable/2020-06-01/resources.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}
 type ResourceGroupList struct {
 	metav1.TypeMeta `json:",inline"`

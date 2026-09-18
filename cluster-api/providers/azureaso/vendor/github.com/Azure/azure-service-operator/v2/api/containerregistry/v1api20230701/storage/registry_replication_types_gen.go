@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=containerregistry.azure.com,resources={registryreplications/status,registryreplications/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerregistry}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230701.RegistryReplication
 // Generator information:
-// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/stable/2023-07-01/containerregistry.json
+// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/Registry/stable/2023-07-01/containerregistry.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/replications/{replicationName}
 type RegistryReplication struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (replication *RegistryReplication) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230701.RegistryReplication
 // Generator information:
-// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/stable/2023-07-01/containerregistry.json
+// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/Registry/stable/2023-07-01/containerregistry.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/replications/{replicationName}
 type RegistryReplicationList struct {
 	metav1.TypeMeta `json:",inline"`

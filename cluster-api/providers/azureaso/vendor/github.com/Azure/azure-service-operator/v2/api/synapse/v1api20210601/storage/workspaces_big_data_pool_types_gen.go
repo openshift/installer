@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/synapse/v20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,14 +14,12 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=synapse.azure.com,resources=workspacesbigdatapools,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=synapse.azure.com,resources={workspacesbigdatapools/status,workspacesbigdatapools/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,synapse}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +45,28 @@ func (pool *WorkspacesBigDataPool) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (pool *WorkspacesBigDataPool) SetConditions(conditions conditions.Conditions) {
 	pool.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &WorkspacesBigDataPool{}
+
+// ConvertFrom populates our WorkspacesBigDataPool from the provided hub WorkspacesBigDataPool
+func (pool *WorkspacesBigDataPool) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.WorkspacesBigDataPool)
+	if !ok {
+		return fmt.Errorf("expected synapse/v20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
+	}
+
+	return pool.AssignProperties_From_WorkspacesBigDataPool(source)
+}
+
+// ConvertTo populates the provided hub WorkspacesBigDataPool from our WorkspacesBigDataPool
+func (pool *WorkspacesBigDataPool) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.WorkspacesBigDataPool)
+	if !ok {
+		return fmt.Errorf("expected synapse/v20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
+	}
+
+	return pool.AssignProperties_To_WorkspacesBigDataPool(destination)
 }
 
 var _ configmaps.Exporter = &WorkspacesBigDataPool{}
@@ -142,8 +164,75 @@ func (pool *WorkspacesBigDataPool) SetStatus(status genruntime.ConvertibleStatus
 	return nil
 }
 
-// Hub marks that this WorkspacesBigDataPool is the hub type for conversion
-func (pool *WorkspacesBigDataPool) Hub() {}
+// AssignProperties_From_WorkspacesBigDataPool populates our WorkspacesBigDataPool from the provided source WorkspacesBigDataPool
+func (pool *WorkspacesBigDataPool) AssignProperties_From_WorkspacesBigDataPool(source *storage.WorkspacesBigDataPool) error {
+
+	// ObjectMeta
+	pool.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec WorkspacesBigDataPool_Spec
+	err := spec.AssignProperties_From_WorkspacesBigDataPool_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_WorkspacesBigDataPool_Spec() to populate field Spec")
+	}
+	pool.Spec = spec
+
+	// Status
+	var status WorkspacesBigDataPool_STATUS
+	err = status.AssignProperties_From_WorkspacesBigDataPool_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_WorkspacesBigDataPool_STATUS() to populate field Status")
+	}
+	pool.Status = status
+
+	// Invoke the augmentConversionForWorkspacesBigDataPool interface (if implemented) to customize the conversion
+	var poolAsAny any = pool
+	if augmentedPool, ok := poolAsAny.(augmentConversionForWorkspacesBigDataPool); ok {
+		err := augmentedPool.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkspacesBigDataPool populates the provided destination WorkspacesBigDataPool from our WorkspacesBigDataPool
+func (pool *WorkspacesBigDataPool) AssignProperties_To_WorkspacesBigDataPool(destination *storage.WorkspacesBigDataPool) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *pool.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.WorkspacesBigDataPool_Spec
+	err := pool.Spec.AssignProperties_To_WorkspacesBigDataPool_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_WorkspacesBigDataPool_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.WorkspacesBigDataPool_STATUS
+	err = pool.Status.AssignProperties_To_WorkspacesBigDataPool_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_WorkspacesBigDataPool_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForWorkspacesBigDataPool interface (if implemented) to customize the conversion
+	var poolAsAny any = pool
+	if augmentedPool, ok := poolAsAny.(augmentConversionForWorkspacesBigDataPool); ok {
+		err := augmentedPool.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (pool *WorkspacesBigDataPool) OriginalGVK() *schema.GroupVersionKind {
@@ -163,6 +252,11 @@ type WorkspacesBigDataPoolList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []WorkspacesBigDataPool `json:"items"`
+}
+
+type augmentConversionForWorkspacesBigDataPool interface {
+	AssignPropertiesFrom(src *storage.WorkspacesBigDataPool) error
+	AssignPropertiesTo(dst *storage.WorkspacesBigDataPool) error
 }
 
 // Storage version of v1api20210601.WorkspacesBigDataPool_Spec
@@ -205,20 +299,412 @@ var _ genruntime.ConvertibleSpec = &WorkspacesBigDataPool_Spec{}
 
 // ConvertSpecFrom populates our WorkspacesBigDataPool_Spec from the provided source
 func (pool *WorkspacesBigDataPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == pool {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.WorkspacesBigDataPool_Spec)
+	if ok {
+		// Populate our instance from source
+		return pool.AssignProperties_From_WorkspacesBigDataPool_Spec(src)
 	}
 
-	return source.ConvertSpecTo(pool)
+	// Convert to an intermediate form
+	src = &storage.WorkspacesBigDataPool_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = pool.AssignProperties_From_WorkspacesBigDataPool_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our WorkspacesBigDataPool_Spec
 func (pool *WorkspacesBigDataPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == pool {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.WorkspacesBigDataPool_Spec)
+	if ok {
+		// Populate destination from our instance
+		return pool.AssignProperties_To_WorkspacesBigDataPool_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(pool)
+	// Convert to an intermediate form
+	dst = &storage.WorkspacesBigDataPool_Spec{}
+	err := pool.AssignProperties_To_WorkspacesBigDataPool_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_WorkspacesBigDataPool_Spec populates our WorkspacesBigDataPool_Spec from the provided source WorkspacesBigDataPool_Spec
+func (pool *WorkspacesBigDataPool_Spec) AssignProperties_From_WorkspacesBigDataPool_Spec(source *storage.WorkspacesBigDataPool_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoPause
+	if source.AutoPause != nil {
+		var autoPause AutoPauseProperties
+		err := autoPause.AssignProperties_From_AutoPauseProperties(source.AutoPause)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AutoPauseProperties() to populate field AutoPause")
+		}
+		pool.AutoPause = &autoPause
+	} else {
+		pool.AutoPause = nil
+	}
+
+	// AutoScale
+	if source.AutoScale != nil {
+		var autoScale AutoScaleProperties
+		err := autoScale.AssignProperties_From_AutoScaleProperties(source.AutoScale)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AutoScaleProperties() to populate field AutoScale")
+		}
+		pool.AutoScale = &autoScale
+	} else {
+		pool.AutoScale = nil
+	}
+
+	// AzureName
+	pool.AzureName = source.AzureName
+
+	// CacheSize
+	pool.CacheSize = genruntime.ClonePointerToInt(source.CacheSize)
+
+	// CustomLibraries
+	if source.CustomLibraries != nil {
+		customLibraryList := make([]LibraryInfo, len(source.CustomLibraries))
+		for customLibraryIndex, customLibraryItem := range source.CustomLibraries {
+			var customLibrary LibraryInfo
+			err := customLibrary.AssignProperties_From_LibraryInfo(&customLibraryItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_LibraryInfo() to populate field CustomLibraries")
+			}
+			customLibraryList[customLibraryIndex] = customLibrary
+		}
+		pool.CustomLibraries = customLibraryList
+	} else {
+		pool.CustomLibraries = nil
+	}
+
+	// DefaultSparkLogFolder
+	pool.DefaultSparkLogFolder = genruntime.ClonePointerToString(source.DefaultSparkLogFolder)
+
+	// DynamicExecutorAllocation
+	if source.DynamicExecutorAllocation != nil {
+		var dynamicExecutorAllocation DynamicExecutorAllocation
+		err := dynamicExecutorAllocation.AssignProperties_From_DynamicExecutorAllocation(source.DynamicExecutorAllocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DynamicExecutorAllocation() to populate field DynamicExecutorAllocation")
+		}
+		pool.DynamicExecutorAllocation = &dynamicExecutorAllocation
+	} else {
+		pool.DynamicExecutorAllocation = nil
+	}
+
+	// IsAutotuneEnabled
+	if source.IsAutotuneEnabled != nil {
+		isAutotuneEnabled := *source.IsAutotuneEnabled
+		pool.IsAutotuneEnabled = &isAutotuneEnabled
+	} else {
+		pool.IsAutotuneEnabled = nil
+	}
+
+	// IsComputeIsolationEnabled
+	if source.IsComputeIsolationEnabled != nil {
+		isComputeIsolationEnabled := *source.IsComputeIsolationEnabled
+		pool.IsComputeIsolationEnabled = &isComputeIsolationEnabled
+	} else {
+		pool.IsComputeIsolationEnabled = nil
+	}
+
+	// LibraryRequirements
+	if source.LibraryRequirements != nil {
+		var libraryRequirement LibraryRequirements
+		err := libraryRequirement.AssignProperties_From_LibraryRequirements(source.LibraryRequirements)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_LibraryRequirements() to populate field LibraryRequirements")
+		}
+		pool.LibraryRequirements = &libraryRequirement
+	} else {
+		pool.LibraryRequirements = nil
+	}
+
+	// Location
+	pool.Location = genruntime.ClonePointerToString(source.Location)
+
+	// NodeCount
+	pool.NodeCount = genruntime.ClonePointerToInt(source.NodeCount)
+
+	// NodeSize
+	pool.NodeSize = genruntime.ClonePointerToString(source.NodeSize)
+
+	// NodeSizeFamily
+	pool.NodeSizeFamily = genruntime.ClonePointerToString(source.NodeSizeFamily)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec WorkspacesBigDataPoolOperatorSpec
+		err := operatorSpec.AssignProperties_From_WorkspacesBigDataPoolOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_WorkspacesBigDataPoolOperatorSpec() to populate field OperatorSpec")
+		}
+		pool.OperatorSpec = &operatorSpec
+	} else {
+		pool.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	pool.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		pool.Owner = &owner
+	} else {
+		pool.Owner = nil
+	}
+
+	// ProvisioningState
+	pool.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// SessionLevelPackagesEnabled
+	if source.SessionLevelPackagesEnabled != nil {
+		sessionLevelPackagesEnabled := *source.SessionLevelPackagesEnabled
+		pool.SessionLevelPackagesEnabled = &sessionLevelPackagesEnabled
+	} else {
+		pool.SessionLevelPackagesEnabled = nil
+	}
+
+	// SparkConfigProperties
+	if source.SparkConfigProperties != nil {
+		var sparkConfigProperty SparkConfigProperties
+		err := sparkConfigProperty.AssignProperties_From_SparkConfigProperties(source.SparkConfigProperties)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SparkConfigProperties() to populate field SparkConfigProperties")
+		}
+		pool.SparkConfigProperties = &sparkConfigProperty
+	} else {
+		pool.SparkConfigProperties = nil
+	}
+
+	// SparkEventsFolder
+	pool.SparkEventsFolder = genruntime.ClonePointerToString(source.SparkEventsFolder)
+
+	// SparkVersion
+	pool.SparkVersion = genruntime.ClonePointerToString(source.SparkVersion)
+
+	// Tags
+	pool.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		pool.PropertyBag = propertyBag
+	} else {
+		pool.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkspacesBigDataPool_Spec interface (if implemented) to customize the conversion
+	var poolAsAny any = pool
+	if augmentedPool, ok := poolAsAny.(augmentConversionForWorkspacesBigDataPool_Spec); ok {
+		err := augmentedPool.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkspacesBigDataPool_Spec populates the provided destination WorkspacesBigDataPool_Spec from our WorkspacesBigDataPool_Spec
+func (pool *WorkspacesBigDataPool_Spec) AssignProperties_To_WorkspacesBigDataPool_Spec(destination *storage.WorkspacesBigDataPool_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(pool.PropertyBag)
+
+	// AutoPause
+	if pool.AutoPause != nil {
+		var autoPause storage.AutoPauseProperties
+		err := pool.AutoPause.AssignProperties_To_AutoPauseProperties(&autoPause)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AutoPauseProperties() to populate field AutoPause")
+		}
+		destination.AutoPause = &autoPause
+	} else {
+		destination.AutoPause = nil
+	}
+
+	// AutoScale
+	if pool.AutoScale != nil {
+		var autoScale storage.AutoScaleProperties
+		err := pool.AutoScale.AssignProperties_To_AutoScaleProperties(&autoScale)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AutoScaleProperties() to populate field AutoScale")
+		}
+		destination.AutoScale = &autoScale
+	} else {
+		destination.AutoScale = nil
+	}
+
+	// AzureName
+	destination.AzureName = pool.AzureName
+
+	// CacheSize
+	destination.CacheSize = genruntime.ClonePointerToInt(pool.CacheSize)
+
+	// CustomLibraries
+	if pool.CustomLibraries != nil {
+		customLibraryList := make([]storage.LibraryInfo, len(pool.CustomLibraries))
+		for customLibraryIndex, customLibraryItem := range pool.CustomLibraries {
+			var customLibrary storage.LibraryInfo
+			err := customLibraryItem.AssignProperties_To_LibraryInfo(&customLibrary)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_LibraryInfo() to populate field CustomLibraries")
+			}
+			customLibraryList[customLibraryIndex] = customLibrary
+		}
+		destination.CustomLibraries = customLibraryList
+	} else {
+		destination.CustomLibraries = nil
+	}
+
+	// DefaultSparkLogFolder
+	destination.DefaultSparkLogFolder = genruntime.ClonePointerToString(pool.DefaultSparkLogFolder)
+
+	// DynamicExecutorAllocation
+	if pool.DynamicExecutorAllocation != nil {
+		var dynamicExecutorAllocation storage.DynamicExecutorAllocation
+		err := pool.DynamicExecutorAllocation.AssignProperties_To_DynamicExecutorAllocation(&dynamicExecutorAllocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DynamicExecutorAllocation() to populate field DynamicExecutorAllocation")
+		}
+		destination.DynamicExecutorAllocation = &dynamicExecutorAllocation
+	} else {
+		destination.DynamicExecutorAllocation = nil
+	}
+
+	// IsAutotuneEnabled
+	if pool.IsAutotuneEnabled != nil {
+		isAutotuneEnabled := *pool.IsAutotuneEnabled
+		destination.IsAutotuneEnabled = &isAutotuneEnabled
+	} else {
+		destination.IsAutotuneEnabled = nil
+	}
+
+	// IsComputeIsolationEnabled
+	if pool.IsComputeIsolationEnabled != nil {
+		isComputeIsolationEnabled := *pool.IsComputeIsolationEnabled
+		destination.IsComputeIsolationEnabled = &isComputeIsolationEnabled
+	} else {
+		destination.IsComputeIsolationEnabled = nil
+	}
+
+	// LibraryRequirements
+	if pool.LibraryRequirements != nil {
+		var libraryRequirement storage.LibraryRequirements
+		err := pool.LibraryRequirements.AssignProperties_To_LibraryRequirements(&libraryRequirement)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_LibraryRequirements() to populate field LibraryRequirements")
+		}
+		destination.LibraryRequirements = &libraryRequirement
+	} else {
+		destination.LibraryRequirements = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(pool.Location)
+
+	// NodeCount
+	destination.NodeCount = genruntime.ClonePointerToInt(pool.NodeCount)
+
+	// NodeSize
+	destination.NodeSize = genruntime.ClonePointerToString(pool.NodeSize)
+
+	// NodeSizeFamily
+	destination.NodeSizeFamily = genruntime.ClonePointerToString(pool.NodeSizeFamily)
+
+	// OperatorSpec
+	if pool.OperatorSpec != nil {
+		var operatorSpec storage.WorkspacesBigDataPoolOperatorSpec
+		err := pool.OperatorSpec.AssignProperties_To_WorkspacesBigDataPoolOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_WorkspacesBigDataPoolOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = pool.OriginalVersion
+
+	// Owner
+	if pool.Owner != nil {
+		owner := pool.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(pool.ProvisioningState)
+
+	// SessionLevelPackagesEnabled
+	if pool.SessionLevelPackagesEnabled != nil {
+		sessionLevelPackagesEnabled := *pool.SessionLevelPackagesEnabled
+		destination.SessionLevelPackagesEnabled = &sessionLevelPackagesEnabled
+	} else {
+		destination.SessionLevelPackagesEnabled = nil
+	}
+
+	// SparkConfigProperties
+	if pool.SparkConfigProperties != nil {
+		var sparkConfigProperty storage.SparkConfigProperties
+		err := pool.SparkConfigProperties.AssignProperties_To_SparkConfigProperties(&sparkConfigProperty)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SparkConfigProperties() to populate field SparkConfigProperties")
+		}
+		destination.SparkConfigProperties = &sparkConfigProperty
+	} else {
+		destination.SparkConfigProperties = nil
+	}
+
+	// SparkEventsFolder
+	destination.SparkEventsFolder = genruntime.ClonePointerToString(pool.SparkEventsFolder)
+
+	// SparkVersion
+	destination.SparkVersion = genruntime.ClonePointerToString(pool.SparkVersion)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(pool.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkspacesBigDataPool_Spec interface (if implemented) to customize the conversion
+	var poolAsAny any = pool
+	if augmentedPool, ok := poolAsAny.(augmentConversionForWorkspacesBigDataPool_Spec); ok {
+		err := augmentedPool.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.WorkspacesBigDataPool_STATUS
@@ -255,20 +741,406 @@ var _ genruntime.ConvertibleStatus = &WorkspacesBigDataPool_STATUS{}
 
 // ConvertStatusFrom populates our WorkspacesBigDataPool_STATUS from the provided source
 func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == pool {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.WorkspacesBigDataPool_STATUS)
+	if ok {
+		// Populate our instance from source
+		return pool.AssignProperties_From_WorkspacesBigDataPool_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(pool)
+	// Convert to an intermediate form
+	src = &storage.WorkspacesBigDataPool_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = pool.AssignProperties_From_WorkspacesBigDataPool_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our WorkspacesBigDataPool_STATUS
 func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == pool {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.WorkspacesBigDataPool_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return pool.AssignProperties_To_WorkspacesBigDataPool_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(pool)
+	// Convert to an intermediate form
+	dst = &storage.WorkspacesBigDataPool_STATUS{}
+	err := pool.AssignProperties_To_WorkspacesBigDataPool_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_WorkspacesBigDataPool_STATUS populates our WorkspacesBigDataPool_STATUS from the provided source WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_STATUS) AssignProperties_From_WorkspacesBigDataPool_STATUS(source *storage.WorkspacesBigDataPool_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoPause
+	if source.AutoPause != nil {
+		var autoPause AutoPauseProperties_STATUS
+		err := autoPause.AssignProperties_From_AutoPauseProperties_STATUS(source.AutoPause)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AutoPauseProperties_STATUS() to populate field AutoPause")
+		}
+		pool.AutoPause = &autoPause
+	} else {
+		pool.AutoPause = nil
+	}
+
+	// AutoScale
+	if source.AutoScale != nil {
+		var autoScale AutoScaleProperties_STATUS
+		err := autoScale.AssignProperties_From_AutoScaleProperties_STATUS(source.AutoScale)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AutoScaleProperties_STATUS() to populate field AutoScale")
+		}
+		pool.AutoScale = &autoScale
+	} else {
+		pool.AutoScale = nil
+	}
+
+	// CacheSize
+	pool.CacheSize = genruntime.ClonePointerToInt(source.CacheSize)
+
+	// Conditions
+	pool.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CreationDate
+	pool.CreationDate = genruntime.ClonePointerToString(source.CreationDate)
+
+	// CustomLibraries
+	if source.CustomLibraries != nil {
+		customLibraryList := make([]LibraryInfo_STATUS, len(source.CustomLibraries))
+		for customLibraryIndex, customLibraryItem := range source.CustomLibraries {
+			var customLibrary LibraryInfo_STATUS
+			err := customLibrary.AssignProperties_From_LibraryInfo_STATUS(&customLibraryItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_LibraryInfo_STATUS() to populate field CustomLibraries")
+			}
+			customLibraryList[customLibraryIndex] = customLibrary
+		}
+		pool.CustomLibraries = customLibraryList
+	} else {
+		pool.CustomLibraries = nil
+	}
+
+	// DefaultSparkLogFolder
+	pool.DefaultSparkLogFolder = genruntime.ClonePointerToString(source.DefaultSparkLogFolder)
+
+	// DynamicExecutorAllocation
+	if source.DynamicExecutorAllocation != nil {
+		var dynamicExecutorAllocation DynamicExecutorAllocation_STATUS
+		err := dynamicExecutorAllocation.AssignProperties_From_DynamicExecutorAllocation_STATUS(source.DynamicExecutorAllocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DynamicExecutorAllocation_STATUS() to populate field DynamicExecutorAllocation")
+		}
+		pool.DynamicExecutorAllocation = &dynamicExecutorAllocation
+	} else {
+		pool.DynamicExecutorAllocation = nil
+	}
+
+	// Id
+	pool.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IsAutotuneEnabled
+	if source.IsAutotuneEnabled != nil {
+		isAutotuneEnabled := *source.IsAutotuneEnabled
+		pool.IsAutotuneEnabled = &isAutotuneEnabled
+	} else {
+		pool.IsAutotuneEnabled = nil
+	}
+
+	// IsComputeIsolationEnabled
+	if source.IsComputeIsolationEnabled != nil {
+		isComputeIsolationEnabled := *source.IsComputeIsolationEnabled
+		pool.IsComputeIsolationEnabled = &isComputeIsolationEnabled
+	} else {
+		pool.IsComputeIsolationEnabled = nil
+	}
+
+	// LastSucceededTimestamp
+	pool.LastSucceededTimestamp = genruntime.ClonePointerToString(source.LastSucceededTimestamp)
+
+	// LibraryRequirements
+	if source.LibraryRequirements != nil {
+		var libraryRequirement LibraryRequirements_STATUS
+		err := libraryRequirement.AssignProperties_From_LibraryRequirements_STATUS(source.LibraryRequirements)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_LibraryRequirements_STATUS() to populate field LibraryRequirements")
+		}
+		pool.LibraryRequirements = &libraryRequirement
+	} else {
+		pool.LibraryRequirements = nil
+	}
+
+	// Location
+	pool.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	pool.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NodeCount
+	pool.NodeCount = genruntime.ClonePointerToInt(source.NodeCount)
+
+	// NodeSize
+	pool.NodeSize = genruntime.ClonePointerToString(source.NodeSize)
+
+	// NodeSizeFamily
+	pool.NodeSizeFamily = genruntime.ClonePointerToString(source.NodeSizeFamily)
+
+	// ProvisioningState
+	pool.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// SessionLevelPackagesEnabled
+	if source.SessionLevelPackagesEnabled != nil {
+		sessionLevelPackagesEnabled := *source.SessionLevelPackagesEnabled
+		pool.SessionLevelPackagesEnabled = &sessionLevelPackagesEnabled
+	} else {
+		pool.SessionLevelPackagesEnabled = nil
+	}
+
+	// SparkConfigProperties
+	if source.SparkConfigProperties != nil {
+		var sparkConfigProperty SparkConfigProperties_STATUS
+		err := sparkConfigProperty.AssignProperties_From_SparkConfigProperties_STATUS(source.SparkConfigProperties)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SparkConfigProperties_STATUS() to populate field SparkConfigProperties")
+		}
+		pool.SparkConfigProperties = &sparkConfigProperty
+	} else {
+		pool.SparkConfigProperties = nil
+	}
+
+	// SparkEventsFolder
+	pool.SparkEventsFolder = genruntime.ClonePointerToString(source.SparkEventsFolder)
+
+	// SparkVersion
+	pool.SparkVersion = genruntime.ClonePointerToString(source.SparkVersion)
+
+	// Tags
+	pool.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	pool.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		pool.PropertyBag = propertyBag
+	} else {
+		pool.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkspacesBigDataPool_STATUS interface (if implemented) to customize the conversion
+	var poolAsAny any = pool
+	if augmentedPool, ok := poolAsAny.(augmentConversionForWorkspacesBigDataPool_STATUS); ok {
+		err := augmentedPool.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkspacesBigDataPool_STATUS populates the provided destination WorkspacesBigDataPool_STATUS from our WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_STATUS) AssignProperties_To_WorkspacesBigDataPool_STATUS(destination *storage.WorkspacesBigDataPool_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(pool.PropertyBag)
+
+	// AutoPause
+	if pool.AutoPause != nil {
+		var autoPause storage.AutoPauseProperties_STATUS
+		err := pool.AutoPause.AssignProperties_To_AutoPauseProperties_STATUS(&autoPause)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AutoPauseProperties_STATUS() to populate field AutoPause")
+		}
+		destination.AutoPause = &autoPause
+	} else {
+		destination.AutoPause = nil
+	}
+
+	// AutoScale
+	if pool.AutoScale != nil {
+		var autoScale storage.AutoScaleProperties_STATUS
+		err := pool.AutoScale.AssignProperties_To_AutoScaleProperties_STATUS(&autoScale)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AutoScaleProperties_STATUS() to populate field AutoScale")
+		}
+		destination.AutoScale = &autoScale
+	} else {
+		destination.AutoScale = nil
+	}
+
+	// CacheSize
+	destination.CacheSize = genruntime.ClonePointerToInt(pool.CacheSize)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(pool.Conditions)
+
+	// CreationDate
+	destination.CreationDate = genruntime.ClonePointerToString(pool.CreationDate)
+
+	// CustomLibraries
+	if pool.CustomLibraries != nil {
+		customLibraryList := make([]storage.LibraryInfo_STATUS, len(pool.CustomLibraries))
+		for customLibraryIndex, customLibraryItem := range pool.CustomLibraries {
+			var customLibrary storage.LibraryInfo_STATUS
+			err := customLibraryItem.AssignProperties_To_LibraryInfo_STATUS(&customLibrary)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_LibraryInfo_STATUS() to populate field CustomLibraries")
+			}
+			customLibraryList[customLibraryIndex] = customLibrary
+		}
+		destination.CustomLibraries = customLibraryList
+	} else {
+		destination.CustomLibraries = nil
+	}
+
+	// DefaultSparkLogFolder
+	destination.DefaultSparkLogFolder = genruntime.ClonePointerToString(pool.DefaultSparkLogFolder)
+
+	// DynamicExecutorAllocation
+	if pool.DynamicExecutorAllocation != nil {
+		var dynamicExecutorAllocation storage.DynamicExecutorAllocation_STATUS
+		err := pool.DynamicExecutorAllocation.AssignProperties_To_DynamicExecutorAllocation_STATUS(&dynamicExecutorAllocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DynamicExecutorAllocation_STATUS() to populate field DynamicExecutorAllocation")
+		}
+		destination.DynamicExecutorAllocation = &dynamicExecutorAllocation
+	} else {
+		destination.DynamicExecutorAllocation = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(pool.Id)
+
+	// IsAutotuneEnabled
+	if pool.IsAutotuneEnabled != nil {
+		isAutotuneEnabled := *pool.IsAutotuneEnabled
+		destination.IsAutotuneEnabled = &isAutotuneEnabled
+	} else {
+		destination.IsAutotuneEnabled = nil
+	}
+
+	// IsComputeIsolationEnabled
+	if pool.IsComputeIsolationEnabled != nil {
+		isComputeIsolationEnabled := *pool.IsComputeIsolationEnabled
+		destination.IsComputeIsolationEnabled = &isComputeIsolationEnabled
+	} else {
+		destination.IsComputeIsolationEnabled = nil
+	}
+
+	// LastSucceededTimestamp
+	destination.LastSucceededTimestamp = genruntime.ClonePointerToString(pool.LastSucceededTimestamp)
+
+	// LibraryRequirements
+	if pool.LibraryRequirements != nil {
+		var libraryRequirement storage.LibraryRequirements_STATUS
+		err := pool.LibraryRequirements.AssignProperties_To_LibraryRequirements_STATUS(&libraryRequirement)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_LibraryRequirements_STATUS() to populate field LibraryRequirements")
+		}
+		destination.LibraryRequirements = &libraryRequirement
+	} else {
+		destination.LibraryRequirements = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(pool.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(pool.Name)
+
+	// NodeCount
+	destination.NodeCount = genruntime.ClonePointerToInt(pool.NodeCount)
+
+	// NodeSize
+	destination.NodeSize = genruntime.ClonePointerToString(pool.NodeSize)
+
+	// NodeSizeFamily
+	destination.NodeSizeFamily = genruntime.ClonePointerToString(pool.NodeSizeFamily)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(pool.ProvisioningState)
+
+	// SessionLevelPackagesEnabled
+	if pool.SessionLevelPackagesEnabled != nil {
+		sessionLevelPackagesEnabled := *pool.SessionLevelPackagesEnabled
+		destination.SessionLevelPackagesEnabled = &sessionLevelPackagesEnabled
+	} else {
+		destination.SessionLevelPackagesEnabled = nil
+	}
+
+	// SparkConfigProperties
+	if pool.SparkConfigProperties != nil {
+		var sparkConfigProperty storage.SparkConfigProperties_STATUS
+		err := pool.SparkConfigProperties.AssignProperties_To_SparkConfigProperties_STATUS(&sparkConfigProperty)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SparkConfigProperties_STATUS() to populate field SparkConfigProperties")
+		}
+		destination.SparkConfigProperties = &sparkConfigProperty
+	} else {
+		destination.SparkConfigProperties = nil
+	}
+
+	// SparkEventsFolder
+	destination.SparkEventsFolder = genruntime.ClonePointerToString(pool.SparkEventsFolder)
+
+	// SparkVersion
+	destination.SparkVersion = genruntime.ClonePointerToString(pool.SparkVersion)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(pool.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(pool.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkspacesBigDataPool_STATUS interface (if implemented) to customize the conversion
+	var poolAsAny any = pool
+	if augmentedPool, ok := poolAsAny.(augmentConversionForWorkspacesBigDataPool_STATUS); ok {
+		err := augmentedPool.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForWorkspacesBigDataPool_Spec interface {
+	AssignPropertiesFrom(src *storage.WorkspacesBigDataPool_Spec) error
+	AssignPropertiesTo(dst *storage.WorkspacesBigDataPool_Spec) error
+}
+
+type augmentConversionForWorkspacesBigDataPool_STATUS interface {
+	AssignPropertiesFrom(src *storage.WorkspacesBigDataPool_STATUS) error
+	AssignPropertiesTo(dst *storage.WorkspacesBigDataPool_STATUS) error
 }
 
 // Storage version of v1api20210601.AutoPauseProperties
@@ -279,12 +1151,156 @@ type AutoPauseProperties struct {
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AutoPauseProperties populates our AutoPauseProperties from the provided source AutoPauseProperties
+func (properties *AutoPauseProperties) AssignProperties_From_AutoPauseProperties(source *storage.AutoPauseProperties) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DelayInMinutes
+	properties.DelayInMinutes = genruntime.ClonePointerToInt(source.DelayInMinutes)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		properties.Enabled = &enabled
+	} else {
+		properties.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoPauseProperties interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoPauseProperties populates the provided destination AutoPauseProperties from our AutoPauseProperties
+func (properties *AutoPauseProperties) AssignProperties_To_AutoPauseProperties(destination *storage.AutoPauseProperties) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// DelayInMinutes
+	destination.DelayInMinutes = genruntime.ClonePointerToInt(properties.DelayInMinutes)
+
+	// Enabled
+	if properties.Enabled != nil {
+		enabled := *properties.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoPauseProperties interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210601.AutoPauseProperties_STATUS
 // Auto-pausing properties of a Big Data pool powered by Apache Spark
 type AutoPauseProperties_STATUS struct {
 	DelayInMinutes *int                   `json:"delayInMinutes,omitempty"`
 	Enabled        *bool                  `json:"enabled,omitempty"`
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AutoPauseProperties_STATUS populates our AutoPauseProperties_STATUS from the provided source AutoPauseProperties_STATUS
+func (properties *AutoPauseProperties_STATUS) AssignProperties_From_AutoPauseProperties_STATUS(source *storage.AutoPauseProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DelayInMinutes
+	properties.DelayInMinutes = genruntime.ClonePointerToInt(source.DelayInMinutes)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		properties.Enabled = &enabled
+	} else {
+		properties.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoPauseProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoPauseProperties_STATUS populates the provided destination AutoPauseProperties_STATUS from our AutoPauseProperties_STATUS
+func (properties *AutoPauseProperties_STATUS) AssignProperties_To_AutoPauseProperties_STATUS(destination *storage.AutoPauseProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// DelayInMinutes
+	destination.DelayInMinutes = genruntime.ClonePointerToInt(properties.DelayInMinutes)
+
+	// Enabled
+	if properties.Enabled != nil {
+		enabled := *properties.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoPauseProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.AutoScaleProperties
@@ -296,6 +1312,84 @@ type AutoScaleProperties struct {
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AutoScaleProperties populates our AutoScaleProperties from the provided source AutoScaleProperties
+func (properties *AutoScaleProperties) AssignProperties_From_AutoScaleProperties(source *storage.AutoScaleProperties) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		properties.Enabled = &enabled
+	} else {
+		properties.Enabled = nil
+	}
+
+	// MaxNodeCount
+	properties.MaxNodeCount = genruntime.ClonePointerToInt(source.MaxNodeCount)
+
+	// MinNodeCount
+	properties.MinNodeCount = genruntime.ClonePointerToInt(source.MinNodeCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoScaleProperties interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoScaleProperties populates the provided destination AutoScaleProperties from our AutoScaleProperties
+func (properties *AutoScaleProperties) AssignProperties_To_AutoScaleProperties(destination *storage.AutoScaleProperties) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// Enabled
+	if properties.Enabled != nil {
+		enabled := *properties.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// MaxNodeCount
+	destination.MaxNodeCount = genruntime.ClonePointerToInt(properties.MaxNodeCount)
+
+	// MinNodeCount
+	destination.MinNodeCount = genruntime.ClonePointerToInt(properties.MinNodeCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoScaleProperties interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210601.AutoScaleProperties_STATUS
 // Auto-scaling properties of a Big Data pool powered by Apache Spark
 type AutoScaleProperties_STATUS struct {
@@ -303,6 +1397,84 @@ type AutoScaleProperties_STATUS struct {
 	MaxNodeCount *int                   `json:"maxNodeCount,omitempty"`
 	MinNodeCount *int                   `json:"minNodeCount,omitempty"`
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AutoScaleProperties_STATUS populates our AutoScaleProperties_STATUS from the provided source AutoScaleProperties_STATUS
+func (properties *AutoScaleProperties_STATUS) AssignProperties_From_AutoScaleProperties_STATUS(source *storage.AutoScaleProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		properties.Enabled = &enabled
+	} else {
+		properties.Enabled = nil
+	}
+
+	// MaxNodeCount
+	properties.MaxNodeCount = genruntime.ClonePointerToInt(source.MaxNodeCount)
+
+	// MinNodeCount
+	properties.MinNodeCount = genruntime.ClonePointerToInt(source.MinNodeCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoScaleProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoScaleProperties_STATUS populates the provided destination AutoScaleProperties_STATUS from our AutoScaleProperties_STATUS
+func (properties *AutoScaleProperties_STATUS) AssignProperties_To_AutoScaleProperties_STATUS(destination *storage.AutoScaleProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// Enabled
+	if properties.Enabled != nil {
+		enabled := *properties.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// MaxNodeCount
+	destination.MaxNodeCount = genruntime.ClonePointerToInt(properties.MaxNodeCount)
+
+	// MinNodeCount
+	destination.MinNodeCount = genruntime.ClonePointerToInt(properties.MinNodeCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoScaleProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.DynamicExecutorAllocation
@@ -314,6 +1486,84 @@ type DynamicExecutorAllocation struct {
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_DynamicExecutorAllocation populates our DynamicExecutorAllocation from the provided source DynamicExecutorAllocation
+func (allocation *DynamicExecutorAllocation) AssignProperties_From_DynamicExecutorAllocation(source *storage.DynamicExecutorAllocation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		allocation.Enabled = &enabled
+	} else {
+		allocation.Enabled = nil
+	}
+
+	// MaxExecutors
+	allocation.MaxExecutors = genruntime.ClonePointerToInt(source.MaxExecutors)
+
+	// MinExecutors
+	allocation.MinExecutors = genruntime.ClonePointerToInt(source.MinExecutors)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		allocation.PropertyBag = propertyBag
+	} else {
+		allocation.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDynamicExecutorAllocation interface (if implemented) to customize the conversion
+	var allocationAsAny any = allocation
+	if augmentedAllocation, ok := allocationAsAny.(augmentConversionForDynamicExecutorAllocation); ok {
+		err := augmentedAllocation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DynamicExecutorAllocation populates the provided destination DynamicExecutorAllocation from our DynamicExecutorAllocation
+func (allocation *DynamicExecutorAllocation) AssignProperties_To_DynamicExecutorAllocation(destination *storage.DynamicExecutorAllocation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(allocation.PropertyBag)
+
+	// Enabled
+	if allocation.Enabled != nil {
+		enabled := *allocation.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// MaxExecutors
+	destination.MaxExecutors = genruntime.ClonePointerToInt(allocation.MaxExecutors)
+
+	// MinExecutors
+	destination.MinExecutors = genruntime.ClonePointerToInt(allocation.MinExecutors)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDynamicExecutorAllocation interface (if implemented) to customize the conversion
+	var allocationAsAny any = allocation
+	if augmentedAllocation, ok := allocationAsAny.(augmentConversionForDynamicExecutorAllocation); ok {
+		err := augmentedAllocation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210601.DynamicExecutorAllocation_STATUS
 // Dynamic Executor Allocation Properties
 type DynamicExecutorAllocation_STATUS struct {
@@ -321,6 +1571,84 @@ type DynamicExecutorAllocation_STATUS struct {
 	MaxExecutors *int                   `json:"maxExecutors,omitempty"`
 	MinExecutors *int                   `json:"minExecutors,omitempty"`
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_DynamicExecutorAllocation_STATUS populates our DynamicExecutorAllocation_STATUS from the provided source DynamicExecutorAllocation_STATUS
+func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_From_DynamicExecutorAllocation_STATUS(source *storage.DynamicExecutorAllocation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		allocation.Enabled = &enabled
+	} else {
+		allocation.Enabled = nil
+	}
+
+	// MaxExecutors
+	allocation.MaxExecutors = genruntime.ClonePointerToInt(source.MaxExecutors)
+
+	// MinExecutors
+	allocation.MinExecutors = genruntime.ClonePointerToInt(source.MinExecutors)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		allocation.PropertyBag = propertyBag
+	} else {
+		allocation.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDynamicExecutorAllocation_STATUS interface (if implemented) to customize the conversion
+	var allocationAsAny any = allocation
+	if augmentedAllocation, ok := allocationAsAny.(augmentConversionForDynamicExecutorAllocation_STATUS); ok {
+		err := augmentedAllocation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DynamicExecutorAllocation_STATUS populates the provided destination DynamicExecutorAllocation_STATUS from our DynamicExecutorAllocation_STATUS
+func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_To_DynamicExecutorAllocation_STATUS(destination *storage.DynamicExecutorAllocation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(allocation.PropertyBag)
+
+	// Enabled
+	if allocation.Enabled != nil {
+		enabled := *allocation.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// MaxExecutors
+	destination.MaxExecutors = genruntime.ClonePointerToInt(allocation.MaxExecutors)
+
+	// MinExecutors
+	destination.MinExecutors = genruntime.ClonePointerToInt(allocation.MinExecutors)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDynamicExecutorAllocation_STATUS interface (if implemented) to customize the conversion
+	var allocationAsAny any = allocation
+	if augmentedAllocation, ok := allocationAsAny.(augmentConversionForDynamicExecutorAllocation_STATUS); ok {
+		err := augmentedAllocation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.LibraryInfo
@@ -331,6 +1659,80 @@ type LibraryInfo struct {
 	Path          *string                `json:"path,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type          *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_LibraryInfo populates our LibraryInfo from the provided source LibraryInfo
+func (info *LibraryInfo) AssignProperties_From_LibraryInfo(source *storage.LibraryInfo) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ContainerName
+	info.ContainerName = genruntime.ClonePointerToString(source.ContainerName)
+
+	// Name
+	info.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Path
+	info.Path = genruntime.ClonePointerToString(source.Path)
+
+	// Type
+	info.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		info.PropertyBag = propertyBag
+	} else {
+		info.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryInfo interface (if implemented) to customize the conversion
+	var infoAsAny any = info
+	if augmentedInfo, ok := infoAsAny.(augmentConversionForLibraryInfo); ok {
+		err := augmentedInfo.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LibraryInfo populates the provided destination LibraryInfo from our LibraryInfo
+func (info *LibraryInfo) AssignProperties_To_LibraryInfo(destination *storage.LibraryInfo) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(info.PropertyBag)
+
+	// ContainerName
+	destination.ContainerName = genruntime.ClonePointerToString(info.ContainerName)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(info.Name)
+
+	// Path
+	destination.Path = genruntime.ClonePointerToString(info.Path)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(info.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryInfo interface (if implemented) to customize the conversion
+	var infoAsAny any = info
+	if augmentedInfo, ok := infoAsAny.(augmentConversionForLibraryInfo); ok {
+		err := augmentedInfo.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.LibraryInfo_STATUS
@@ -346,12 +1748,166 @@ type LibraryInfo_STATUS struct {
 	UploadedTimestamp  *string                `json:"uploadedTimestamp,omitempty"`
 }
 
+// AssignProperties_From_LibraryInfo_STATUS populates our LibraryInfo_STATUS from the provided source LibraryInfo_STATUS
+func (info *LibraryInfo_STATUS) AssignProperties_From_LibraryInfo_STATUS(source *storage.LibraryInfo_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ContainerName
+	info.ContainerName = genruntime.ClonePointerToString(source.ContainerName)
+
+	// CreatorId
+	info.CreatorId = genruntime.ClonePointerToString(source.CreatorId)
+
+	// Name
+	info.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Path
+	info.Path = genruntime.ClonePointerToString(source.Path)
+
+	// ProvisioningStatus
+	info.ProvisioningStatus = genruntime.ClonePointerToString(source.ProvisioningStatus)
+
+	// Type
+	info.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UploadedTimestamp
+	info.UploadedTimestamp = genruntime.ClonePointerToString(source.UploadedTimestamp)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		info.PropertyBag = propertyBag
+	} else {
+		info.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryInfo_STATUS interface (if implemented) to customize the conversion
+	var infoAsAny any = info
+	if augmentedInfo, ok := infoAsAny.(augmentConversionForLibraryInfo_STATUS); ok {
+		err := augmentedInfo.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LibraryInfo_STATUS populates the provided destination LibraryInfo_STATUS from our LibraryInfo_STATUS
+func (info *LibraryInfo_STATUS) AssignProperties_To_LibraryInfo_STATUS(destination *storage.LibraryInfo_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(info.PropertyBag)
+
+	// ContainerName
+	destination.ContainerName = genruntime.ClonePointerToString(info.ContainerName)
+
+	// CreatorId
+	destination.CreatorId = genruntime.ClonePointerToString(info.CreatorId)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(info.Name)
+
+	// Path
+	destination.Path = genruntime.ClonePointerToString(info.Path)
+
+	// ProvisioningStatus
+	destination.ProvisioningStatus = genruntime.ClonePointerToString(info.ProvisioningStatus)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(info.Type)
+
+	// UploadedTimestamp
+	destination.UploadedTimestamp = genruntime.ClonePointerToString(info.UploadedTimestamp)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryInfo_STATUS interface (if implemented) to customize the conversion
+	var infoAsAny any = info
+	if augmentedInfo, ok := infoAsAny.(augmentConversionForLibraryInfo_STATUS); ok {
+		err := augmentedInfo.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210601.LibraryRequirements
 // Library requirements for a Big Data pool powered by Apache Spark
 type LibraryRequirements struct {
 	Content     *string                `json:"content,omitempty"`
 	Filename    *string                `json:"filename,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_LibraryRequirements populates our LibraryRequirements from the provided source LibraryRequirements
+func (requirements *LibraryRequirements) AssignProperties_From_LibraryRequirements(source *storage.LibraryRequirements) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Content
+	requirements.Content = genruntime.ClonePointerToString(source.Content)
+
+	// Filename
+	requirements.Filename = genruntime.ClonePointerToString(source.Filename)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		requirements.PropertyBag = propertyBag
+	} else {
+		requirements.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryRequirements interface (if implemented) to customize the conversion
+	var requirementsAsAny any = requirements
+	if augmentedRequirements, ok := requirementsAsAny.(augmentConversionForLibraryRequirements); ok {
+		err := augmentedRequirements.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LibraryRequirements populates the provided destination LibraryRequirements from our LibraryRequirements
+func (requirements *LibraryRequirements) AssignProperties_To_LibraryRequirements(destination *storage.LibraryRequirements) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(requirements.PropertyBag)
+
+	// Content
+	destination.Content = genruntime.ClonePointerToString(requirements.Content)
+
+	// Filename
+	destination.Filename = genruntime.ClonePointerToString(requirements.Filename)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryRequirements interface (if implemented) to customize the conversion
+	var requirementsAsAny any = requirements
+	if augmentedRequirements, ok := requirementsAsAny.(augmentConversionForLibraryRequirements); ok {
+		err := augmentedRequirements.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.LibraryRequirements_STATUS
@@ -363,6 +1919,74 @@ type LibraryRequirements_STATUS struct {
 	Time        *string                `json:"time,omitempty"`
 }
 
+// AssignProperties_From_LibraryRequirements_STATUS populates our LibraryRequirements_STATUS from the provided source LibraryRequirements_STATUS
+func (requirements *LibraryRequirements_STATUS) AssignProperties_From_LibraryRequirements_STATUS(source *storage.LibraryRequirements_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Content
+	requirements.Content = genruntime.ClonePointerToString(source.Content)
+
+	// Filename
+	requirements.Filename = genruntime.ClonePointerToString(source.Filename)
+
+	// Time
+	requirements.Time = genruntime.ClonePointerToString(source.Time)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		requirements.PropertyBag = propertyBag
+	} else {
+		requirements.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryRequirements_STATUS interface (if implemented) to customize the conversion
+	var requirementsAsAny any = requirements
+	if augmentedRequirements, ok := requirementsAsAny.(augmentConversionForLibraryRequirements_STATUS); ok {
+		err := augmentedRequirements.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LibraryRequirements_STATUS populates the provided destination LibraryRequirements_STATUS from our LibraryRequirements_STATUS
+func (requirements *LibraryRequirements_STATUS) AssignProperties_To_LibraryRequirements_STATUS(destination *storage.LibraryRequirements_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(requirements.PropertyBag)
+
+	// Content
+	destination.Content = genruntime.ClonePointerToString(requirements.Content)
+
+	// Filename
+	destination.Filename = genruntime.ClonePointerToString(requirements.Filename)
+
+	// Time
+	destination.Time = genruntime.ClonePointerToString(requirements.Time)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLibraryRequirements_STATUS interface (if implemented) to customize the conversion
+	var requirementsAsAny any = requirements
+	if augmentedRequirements, ok := requirementsAsAny.(augmentConversionForLibraryRequirements_STATUS); ok {
+		err := augmentedRequirements.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210601.SparkConfigProperties
 // SparkConfig Properties for a Big Data pool powered by Apache Spark
 type SparkConfigProperties struct {
@@ -370,6 +1994,74 @@ type SparkConfigProperties struct {
 	Content           *string                `json:"content,omitempty"`
 	Filename          *string                `json:"filename,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_SparkConfigProperties populates our SparkConfigProperties from the provided source SparkConfigProperties
+func (properties *SparkConfigProperties) AssignProperties_From_SparkConfigProperties(source *storage.SparkConfigProperties) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigurationType
+	properties.ConfigurationType = genruntime.ClonePointerToString(source.ConfigurationType)
+
+	// Content
+	properties.Content = genruntime.ClonePointerToString(source.Content)
+
+	// Filename
+	properties.Filename = genruntime.ClonePointerToString(source.Filename)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSparkConfigProperties interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSparkConfigProperties); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SparkConfigProperties populates the provided destination SparkConfigProperties from our SparkConfigProperties
+func (properties *SparkConfigProperties) AssignProperties_To_SparkConfigProperties(destination *storage.SparkConfigProperties) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// ConfigurationType
+	destination.ConfigurationType = genruntime.ClonePointerToString(properties.ConfigurationType)
+
+	// Content
+	destination.Content = genruntime.ClonePointerToString(properties.Content)
+
+	// Filename
+	destination.Filename = genruntime.ClonePointerToString(properties.Filename)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSparkConfigProperties interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSparkConfigProperties); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210601.SparkConfigProperties_STATUS
@@ -382,12 +2074,265 @@ type SparkConfigProperties_STATUS struct {
 	Time              *string                `json:"time,omitempty"`
 }
 
+// AssignProperties_From_SparkConfigProperties_STATUS populates our SparkConfigProperties_STATUS from the provided source SparkConfigProperties_STATUS
+func (properties *SparkConfigProperties_STATUS) AssignProperties_From_SparkConfigProperties_STATUS(source *storage.SparkConfigProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigurationType
+	properties.ConfigurationType = genruntime.ClonePointerToString(source.ConfigurationType)
+
+	// Content
+	properties.Content = genruntime.ClonePointerToString(source.Content)
+
+	// Filename
+	properties.Filename = genruntime.ClonePointerToString(source.Filename)
+
+	// Time
+	properties.Time = genruntime.ClonePointerToString(source.Time)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		properties.PropertyBag = propertyBag
+	} else {
+		properties.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSparkConfigProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSparkConfigProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SparkConfigProperties_STATUS populates the provided destination SparkConfigProperties_STATUS from our SparkConfigProperties_STATUS
+func (properties *SparkConfigProperties_STATUS) AssignProperties_To_SparkConfigProperties_STATUS(destination *storage.SparkConfigProperties_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
+
+	// ConfigurationType
+	destination.ConfigurationType = genruntime.ClonePointerToString(properties.ConfigurationType)
+
+	// Content
+	destination.Content = genruntime.ClonePointerToString(properties.Content)
+
+	// Filename
+	destination.Filename = genruntime.ClonePointerToString(properties.Filename)
+
+	// Time
+	destination.Time = genruntime.ClonePointerToString(properties.Time)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSparkConfigProperties_STATUS interface (if implemented) to customize the conversion
+	var propertiesAsAny any = properties
+	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSparkConfigProperties_STATUS); ok {
+		err := augmentedProperties.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210601.WorkspacesBigDataPoolOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type WorkspacesBigDataPoolOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_WorkspacesBigDataPoolOperatorSpec populates our WorkspacesBigDataPoolOperatorSpec from the provided source WorkspacesBigDataPoolOperatorSpec
+func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_From_WorkspacesBigDataPoolOperatorSpec(source *storage.WorkspacesBigDataPoolOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkspacesBigDataPoolOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForWorkspacesBigDataPoolOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkspacesBigDataPoolOperatorSpec populates the provided destination WorkspacesBigDataPoolOperatorSpec from our WorkspacesBigDataPoolOperatorSpec
+func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_To_WorkspacesBigDataPoolOperatorSpec(destination *storage.WorkspacesBigDataPoolOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkspacesBigDataPoolOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForWorkspacesBigDataPoolOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAutoPauseProperties interface {
+	AssignPropertiesFrom(src *storage.AutoPauseProperties) error
+	AssignPropertiesTo(dst *storage.AutoPauseProperties) error
+}
+
+type augmentConversionForAutoPauseProperties_STATUS interface {
+	AssignPropertiesFrom(src *storage.AutoPauseProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.AutoPauseProperties_STATUS) error
+}
+
+type augmentConversionForAutoScaleProperties interface {
+	AssignPropertiesFrom(src *storage.AutoScaleProperties) error
+	AssignPropertiesTo(dst *storage.AutoScaleProperties) error
+}
+
+type augmentConversionForAutoScaleProperties_STATUS interface {
+	AssignPropertiesFrom(src *storage.AutoScaleProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.AutoScaleProperties_STATUS) error
+}
+
+type augmentConversionForDynamicExecutorAllocation interface {
+	AssignPropertiesFrom(src *storage.DynamicExecutorAllocation) error
+	AssignPropertiesTo(dst *storage.DynamicExecutorAllocation) error
+}
+
+type augmentConversionForDynamicExecutorAllocation_STATUS interface {
+	AssignPropertiesFrom(src *storage.DynamicExecutorAllocation_STATUS) error
+	AssignPropertiesTo(dst *storage.DynamicExecutorAllocation_STATUS) error
+}
+
+type augmentConversionForLibraryInfo interface {
+	AssignPropertiesFrom(src *storage.LibraryInfo) error
+	AssignPropertiesTo(dst *storage.LibraryInfo) error
+}
+
+type augmentConversionForLibraryInfo_STATUS interface {
+	AssignPropertiesFrom(src *storage.LibraryInfo_STATUS) error
+	AssignPropertiesTo(dst *storage.LibraryInfo_STATUS) error
+}
+
+type augmentConversionForLibraryRequirements interface {
+	AssignPropertiesFrom(src *storage.LibraryRequirements) error
+	AssignPropertiesTo(dst *storage.LibraryRequirements) error
+}
+
+type augmentConversionForLibraryRequirements_STATUS interface {
+	AssignPropertiesFrom(src *storage.LibraryRequirements_STATUS) error
+	AssignPropertiesTo(dst *storage.LibraryRequirements_STATUS) error
+}
+
+type augmentConversionForSparkConfigProperties interface {
+	AssignPropertiesFrom(src *storage.SparkConfigProperties) error
+	AssignPropertiesTo(dst *storage.SparkConfigProperties) error
+}
+
+type augmentConversionForSparkConfigProperties_STATUS interface {
+	AssignPropertiesFrom(src *storage.SparkConfigProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.SparkConfigProperties_STATUS) error
+}
+
+type augmentConversionForWorkspacesBigDataPoolOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.WorkspacesBigDataPoolOperatorSpec) error
+	AssignPropertiesTo(dst *storage.WorkspacesBigDataPoolOperatorSpec) error
 }
 
 func init() {

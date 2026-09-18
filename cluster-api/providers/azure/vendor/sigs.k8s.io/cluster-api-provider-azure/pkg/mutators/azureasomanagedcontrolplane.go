@@ -17,22 +17,24 @@ limitations under the License.
 package mutators
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
-	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801"
 	// NOTE: when the hub API version is updated, verify the
 	// ManagedClusterAgentPoolProfile below has every field defined. If a field
 	// isn't defined, the agent pool will be created with a zero/null value, and
 	// then updated to the user-defined value. If the field is immutable, this
 	// update will fail. The linter should catch if there are missing fields,
 	// but verify that check is actually working.
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/storage"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	exputil "sigs.k8s.io/cluster-api/exp/util"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/secret"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -129,9 +131,7 @@ func setManagedClusterServiceCIDR(ctx context.Context, cluster *clusterv1.Cluste
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setManagedClusterServiceCIDR")
 	defer done()
 
-	if cluster.Spec.ClusterNetwork == nil ||
-		cluster.Spec.ClusterNetwork.Services == nil ||
-		len(cluster.Spec.ClusterNetwork.Services.CIDRBlocks) == 0 {
+	if len(cluster.Spec.ClusterNetwork.Services.CIDRBlocks) == 0 {
 		return nil
 	}
 
@@ -162,9 +162,7 @@ func setManagedClusterPodCIDR(ctx context.Context, cluster *clusterv1.Cluster, m
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setManagedClusterPodCIDR")
 	defer done()
 
-	if cluster.Spec.ClusterNetwork == nil ||
-		cluster.Spec.ClusterNetwork.Pods == nil ||
-		len(cluster.Spec.ClusterNetwork.Pods.CIDRBlocks) == 0 {
+	if len(cluster.Spec.ClusterNetwork.Pods.CIDRBlocks) == 0 {
 		return nil
 	}
 
@@ -264,9 +262,14 @@ func agentPoolsFromManagedMachinePools(ctx context.Context, ctrlClient client.Cl
 		return nil, fmt.Errorf("failed to list AzureASOManagedMachinePools: %w", err)
 	}
 
+	// Make sure we don't update the ManagedCluster with different orders of the same set of agent pools.
+	slices.SortFunc(asoManagedMachinePools.Items, func(a, b infrav1.AzureASOManagedMachinePool) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+
 	var agentPools []conversion.Convertible
 	for _, asoManagedMachinePool := range asoManagedMachinePools.Items {
-		machinePool, err := exputil.GetOwnerMachinePool(ctx, ctrlClient, asoManagedMachinePool.ObjectMeta)
+		machinePool, err := util.GetOwnerMachinePool(ctx, ctrlClient, asoManagedMachinePool.ObjectMeta)
 		if err != nil {
 			return nil, err
 		}
@@ -330,12 +333,15 @@ func setAgentPoolProfilesFromAgentPools(managedCluster conversion.Convertible, a
 			EnableFIPS:                        hubPool.Spec.EnableFIPS,
 			EnableNodePublicIP:                hubPool.Spec.EnableNodePublicIP,
 			EnableUltraSSD:                    hubPool.Spec.EnableUltraSSD,
+			GatewayProfile:                    hubPool.Spec.GatewayProfile,
 			GpuInstanceProfile:                hubPool.Spec.GpuInstanceProfile,
+			GpuProfile:                        hubPool.Spec.GpuProfile,
 			HostGroupReference:                hubPool.Spec.HostGroupReference,
 			KubeletConfig:                     hubPool.Spec.KubeletConfig,
 			KubeletDiskType:                   hubPool.Spec.KubeletDiskType,
 			LinuxOSConfig:                     hubPool.Spec.LinuxOSConfig,
 			MaxCount:                          hubPool.Spec.MaxCount,
+			MessageOfTheDay:                   hubPool.Spec.MessageOfTheDay,
 			MaxPods:                           hubPool.Spec.MaxPods,
 			MinCount:                          hubPool.Spec.MinCount,
 			Mode:                              hubPool.Spec.Mode,
@@ -349,6 +355,7 @@ func setAgentPoolProfilesFromAgentPools(managedCluster conversion.Convertible, a
 			OsDiskType:                        hubPool.Spec.OsDiskType,
 			OsSKU:                             hubPool.Spec.OsSKU,
 			OsType:                            hubPool.Spec.OsType,
+			PodIPAllocationMode:               hubPool.Spec.PodIPAllocationMode,
 			PodSubnetReference:                hubPool.Spec.PodSubnetReference,
 			PowerState:                        hubPool.Spec.PowerState,
 			PropertyBag:                       hubPool.Spec.PropertyBag,
@@ -361,6 +368,8 @@ func setAgentPoolProfilesFromAgentPools(managedCluster conversion.Convertible, a
 			Tags:                              hubPool.Spec.Tags,
 			Type:                              hubPool.Spec.Type,
 			UpgradeSettings:                   hubPool.Spec.UpgradeSettings,
+			VirtualMachineNodesStatus:         hubPool.Spec.VirtualMachineNodesStatus,
+			VirtualMachinesProfile:            hubPool.Spec.VirtualMachinesProfile,
 			VmSize:                            hubPool.Spec.VmSize,
 			VnetSubnetReference:               hubPool.Spec.VnetSubnetReference,
 			WindowsProfile:                    hubPool.Spec.WindowsProfile,
@@ -396,8 +405,8 @@ func setManagedClusterCredentials(ctx context.Context, cluster *clusterv1.Cluste
 		return nil
 	}
 
-	secrets := map[string]interface{}{
-		"adminCredentials": map[string]interface{}{
+	secrets := map[string]any{
+		"adminCredentials": map[string]any{
 			"name": cluster.Name + "-" + string(secret.Kubeconfig),
 			"key":  secret.KubeconfigDataName,
 		},

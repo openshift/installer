@@ -116,7 +116,12 @@ func (config *AuthConfig) ValidateUpdate(ctx context.Context, oldResource runtim
 
 // createValidations validates the creation of the resource
 func (config *AuthConfig) createValidations() []func(ctx context.Context, obj *v20240301.AuthConfig) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.AuthConfig) (admission.Warnings, error){config.validateResourceReferences, config.validateOwnerReference, config.validateSecretDestinations, config.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.AuthConfig) (admission.Warnings, error){
+		config.validateResourceReferences,
+		config.validateOwnerReference,
+		config.validateSecretDestinations,
+		config.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

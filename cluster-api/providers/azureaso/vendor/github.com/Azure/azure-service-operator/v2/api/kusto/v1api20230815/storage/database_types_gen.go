@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=kusto.azure.com,resources=databases,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kusto.azure.com,resources={databases/status,databases/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kusto}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230815.Database
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}
 type Database struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (database *Database) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (database *Database) SetConditions(conditions conditions.Conditions) {
 	database.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &Database{}
+
+// ConvertFrom populates our Database from the provided hub Database
+func (database *Database) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.Database)
+	if !ok {
+		return fmt.Errorf("expected kusto/v1api20240413/storage/Database but received %T instead", hub)
+	}
+
+	return database.AssignProperties_From_Database(source)
+}
+
+// ConvertTo populates the provided hub Database from our Database
+func (database *Database) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.Database)
+	if !ok {
+		return fmt.Errorf("expected kusto/v1api20240413/storage/Database but received %T instead", hub)
+	}
+
+	return database.AssignProperties_To_Database(destination)
 }
 
 var _ configmaps.Exporter = &Database{}
@@ -142,8 +164,75 @@ func (database *Database) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this Database is the hub type for conversion
-func (database *Database) Hub() {}
+// AssignProperties_From_Database populates our Database from the provided source Database
+func (database *Database) AssignProperties_From_Database(source *storage.Database) error {
+
+	// ObjectMeta
+	database.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec Database_Spec
+	err := spec.AssignProperties_From_Database_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Database_Spec() to populate field Spec")
+	}
+	database.Spec = spec
+
+	// Status
+	var status Database_STATUS
+	err = status.AssignProperties_From_Database_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Database_STATUS() to populate field Status")
+	}
+	database.Status = status
+
+	// Invoke the augmentConversionForDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Database populates the provided destination Database from our Database
+func (database *Database) AssignProperties_To_Database(destination *storage.Database) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *database.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.Database_Spec
+	err := database.Spec.AssignProperties_To_Database_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Database_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.Database_STATUS
+	err = database.Status.AssignProperties_To_Database_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Database_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (database *Database) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (database *Database) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230815.Database
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}
 type DatabaseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Database `json:"items"`
+}
+
+type augmentConversionForDatabase interface {
+	AssignPropertiesFrom(src *storage.Database) error
+	AssignPropertiesTo(dst *storage.Database) error
 }
 
 // Storage version of v1api20230815.Database_Spec
@@ -186,20 +280,176 @@ var _ genruntime.ConvertibleSpec = &Database_Spec{}
 
 // ConvertSpecFrom populates our Database_Spec from the provided source
 func (database *Database_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.Database_Spec)
+	if ok {
+		// Populate our instance from source
+		return database.AssignProperties_From_Database_Spec(src)
 	}
 
-	return source.ConvertSpecTo(database)
+	// Convert to an intermediate form
+	src = &storage.Database_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = database.AssignProperties_From_Database_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our Database_Spec
 func (database *Database_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.Database_Spec)
+	if ok {
+		// Populate destination from our instance
+		return database.AssignProperties_To_Database_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(database)
+	// Convert to an intermediate form
+	dst = &storage.Database_Spec{}
+	err := database.AssignProperties_To_Database_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Database_Spec populates our Database_Spec from the provided source Database_Spec
+func (database *Database_Spec) AssignProperties_From_Database_Spec(source *storage.Database_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	database.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DatabaseOperatorSpec
+		err := operatorSpec.AssignProperties_From_DatabaseOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		database.OperatorSpec = &operatorSpec
+	} else {
+		database.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	database.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		database.Owner = &owner
+	} else {
+		database.Owner = nil
+	}
+
+	// ReadWrite
+	if source.ReadWrite != nil {
+		var readWrite ReadWriteDatabase
+		err := readWrite.AssignProperties_From_ReadWriteDatabase(source.ReadWrite)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ReadWriteDatabase() to populate field ReadWrite")
+		}
+		database.ReadWrite = &readWrite
+	} else {
+		database.ReadWrite = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabase_Spec interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForDatabase_Spec); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Database_Spec populates the provided destination Database_Spec from our Database_Spec
+func (database *Database_Spec) AssignProperties_To_Database_Spec(destination *storage.Database_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// AzureName
+	destination.AzureName = database.AzureName
+
+	// OperatorSpec
+	if database.OperatorSpec != nil {
+		var operatorSpec storage.DatabaseOperatorSpec
+		err := database.OperatorSpec.AssignProperties_To_DatabaseOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = database.OriginalVersion
+
+	// Owner
+	if database.Owner != nil {
+		owner := database.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// ReadWrite
+	if database.ReadWrite != nil {
+		var readWrite storage.ReadWriteDatabase
+		err := database.ReadWrite.AssignProperties_To_ReadWriteDatabase(&readWrite)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ReadWriteDatabase() to populate field ReadWrite")
+		}
+		destination.ReadWrite = &readWrite
+	} else {
+		destination.ReadWrite = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabase_Spec interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForDatabase_Spec); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230815.Database_STATUS
@@ -214,20 +464,146 @@ var _ genruntime.ConvertibleStatus = &Database_STATUS{}
 
 // ConvertStatusFrom populates our Database_STATUS from the provided source
 func (database *Database_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.Database_STATUS)
+	if ok {
+		// Populate our instance from source
+		return database.AssignProperties_From_Database_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(database)
+	// Convert to an intermediate form
+	src = &storage.Database_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = database.AssignProperties_From_Database_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our Database_STATUS
 func (database *Database_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == database {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.Database_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return database.AssignProperties_To_Database_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(database)
+	// Convert to an intermediate form
+	dst = &storage.Database_STATUS{}
+	err := database.AssignProperties_To_Database_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Database_STATUS populates our Database_STATUS from the provided source Database_STATUS
+func (database *Database_STATUS) AssignProperties_From_Database_STATUS(source *storage.Database_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	database.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Name
+	database.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ReadWrite
+	if source.ReadWrite != nil {
+		var readWrite ReadWriteDatabase_STATUS
+		err := readWrite.AssignProperties_From_ReadWriteDatabase_STATUS(source.ReadWrite)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ReadWriteDatabase_STATUS() to populate field ReadWrite")
+		}
+		database.ReadWrite = &readWrite
+	} else {
+		database.ReadWrite = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Database_STATUS populates the provided destination Database_STATUS from our Database_STATUS
+func (database *Database_STATUS) AssignProperties_To_Database_STATUS(destination *storage.Database_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(database.Conditions)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(database.Name)
+
+	// ReadWrite
+	if database.ReadWrite != nil {
+		var readWrite storage.ReadWriteDatabase_STATUS
+		err := database.ReadWrite.AssignProperties_To_ReadWriteDatabase_STATUS(&readWrite)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ReadWriteDatabase_STATUS() to populate field ReadWrite")
+		}
+		destination.ReadWrite = &readWrite
+	} else {
+		destination.ReadWrite = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDatabase_Spec interface {
+	AssignPropertiesFrom(src *storage.Database_Spec) error
+	AssignPropertiesTo(dst *storage.Database_Spec) error
+}
+
+type augmentConversionForDatabase_STATUS interface {
+	AssignPropertiesFrom(src *storage.Database_STATUS) error
+	AssignPropertiesTo(dst *storage.Database_STATUS) error
 }
 
 // Storage version of v1api20230815.DatabaseOperatorSpec
@@ -238,6 +614,120 @@ type DatabaseOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_DatabaseOperatorSpec populates our DatabaseOperatorSpec from the provided source DatabaseOperatorSpec
+func (operator *DatabaseOperatorSpec) AssignProperties_From_DatabaseOperatorSpec(source *storage.DatabaseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDatabaseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DatabaseOperatorSpec populates the provided destination DatabaseOperatorSpec from our DatabaseOperatorSpec
+func (operator *DatabaseOperatorSpec) AssignProperties_To_DatabaseOperatorSpec(destination *storage.DatabaseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDatabaseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.ReadWriteDatabase
 type ReadWriteDatabase struct {
 	HotCachePeriod     *string                `json:"hotCachePeriod,omitempty"`
@@ -246,6 +736,104 @@ type ReadWriteDatabase struct {
 	Location           *string                `json:"location,omitempty"`
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SoftDeletePeriod   *string                `json:"softDeletePeriod,omitempty"`
+}
+
+// AssignProperties_From_ReadWriteDatabase populates our ReadWriteDatabase from the provided source ReadWriteDatabase
+func (database *ReadWriteDatabase) AssignProperties_From_ReadWriteDatabase(source *storage.ReadWriteDatabase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// HotCachePeriod
+	database.HotCachePeriod = genruntime.ClonePointerToString(source.HotCachePeriod)
+
+	// KeyVaultProperties
+	if source.KeyVaultProperties != nil {
+		var keyVaultProperty KeyVaultProperties
+		err := keyVaultProperty.AssignProperties_From_KeyVaultProperties(source.KeyVaultProperties)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultProperties() to populate field KeyVaultProperties")
+		}
+		database.KeyVaultProperties = &keyVaultProperty
+	} else {
+		database.KeyVaultProperties = nil
+	}
+
+	// Kind
+	database.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	database.Location = genruntime.ClonePointerToString(source.Location)
+
+	// SoftDeletePeriod
+	database.SoftDeletePeriod = genruntime.ClonePointerToString(source.SoftDeletePeriod)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReadWriteDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForReadWriteDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ReadWriteDatabase populates the provided destination ReadWriteDatabase from our ReadWriteDatabase
+func (database *ReadWriteDatabase) AssignProperties_To_ReadWriteDatabase(destination *storage.ReadWriteDatabase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// HotCachePeriod
+	destination.HotCachePeriod = genruntime.ClonePointerToString(database.HotCachePeriod)
+
+	// KeyVaultProperties
+	if database.KeyVaultProperties != nil {
+		var keyVaultProperty storage.KeyVaultProperties
+		err := database.KeyVaultProperties.AssignProperties_To_KeyVaultProperties(&keyVaultProperty)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultProperties() to populate field KeyVaultProperties")
+		}
+		destination.KeyVaultProperties = &keyVaultProperty
+	} else {
+		destination.KeyVaultProperties = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(database.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(database.Location)
+
+	// SoftDeletePeriod
+	destination.SoftDeletePeriod = genruntime.ClonePointerToString(database.SoftDeletePeriod)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReadWriteDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForReadWriteDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230815.ReadWriteDatabase_STATUS
@@ -264,11 +852,272 @@ type ReadWriteDatabase_STATUS struct {
 	Type               *string                    `json:"type,omitempty"`
 }
 
+// AssignProperties_From_ReadWriteDatabase_STATUS populates our ReadWriteDatabase_STATUS from the provided source ReadWriteDatabase_STATUS
+func (database *ReadWriteDatabase_STATUS) AssignProperties_From_ReadWriteDatabase_STATUS(source *storage.ReadWriteDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// HotCachePeriod
+	database.HotCachePeriod = genruntime.ClonePointerToString(source.HotCachePeriod)
+
+	// Id
+	database.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IsFollowed
+	if source.IsFollowed != nil {
+		isFollowed := *source.IsFollowed
+		database.IsFollowed = &isFollowed
+	} else {
+		database.IsFollowed = nil
+	}
+
+	// KeyVaultProperties
+	if source.KeyVaultProperties != nil {
+		var keyVaultProperty KeyVaultProperties_STATUS
+		err := keyVaultProperty.AssignProperties_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+		}
+		database.KeyVaultProperties = &keyVaultProperty
+	} else {
+		database.KeyVaultProperties = nil
+	}
+
+	// Kind
+	database.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	database.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ProvisioningState
+	database.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// SoftDeletePeriod
+	database.SoftDeletePeriod = genruntime.ClonePointerToString(source.SoftDeletePeriod)
+
+	// Statistics
+	if source.Statistics != nil {
+		var statistic DatabaseStatistics_STATUS
+		err := statistic.AssignProperties_From_DatabaseStatistics_STATUS(source.Statistics)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseStatistics_STATUS() to populate field Statistics")
+		}
+		database.Statistics = &statistic
+	} else {
+		database.Statistics = nil
+	}
+
+	// SuspensionDetails
+	if source.SuspensionDetails != nil {
+		var suspensionDetail SuspensionDetails_STATUS
+		err := suspensionDetail.AssignProperties_From_SuspensionDetails_STATUS(source.SuspensionDetails)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SuspensionDetails_STATUS() to populate field SuspensionDetails")
+		}
+		database.SuspensionDetails = &suspensionDetail
+	} else {
+		database.SuspensionDetails = nil
+	}
+
+	// Type
+	database.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReadWriteDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForReadWriteDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ReadWriteDatabase_STATUS populates the provided destination ReadWriteDatabase_STATUS from our ReadWriteDatabase_STATUS
+func (database *ReadWriteDatabase_STATUS) AssignProperties_To_ReadWriteDatabase_STATUS(destination *storage.ReadWriteDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// HotCachePeriod
+	destination.HotCachePeriod = genruntime.ClonePointerToString(database.HotCachePeriod)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(database.Id)
+
+	// IsFollowed
+	if database.IsFollowed != nil {
+		isFollowed := *database.IsFollowed
+		destination.IsFollowed = &isFollowed
+	} else {
+		destination.IsFollowed = nil
+	}
+
+	// KeyVaultProperties
+	if database.KeyVaultProperties != nil {
+		var keyVaultProperty storage.KeyVaultProperties_STATUS
+		err := database.KeyVaultProperties.AssignProperties_To_KeyVaultProperties_STATUS(&keyVaultProperty)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+		}
+		destination.KeyVaultProperties = &keyVaultProperty
+	} else {
+		destination.KeyVaultProperties = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(database.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(database.Location)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(database.ProvisioningState)
+
+	// SoftDeletePeriod
+	destination.SoftDeletePeriod = genruntime.ClonePointerToString(database.SoftDeletePeriod)
+
+	// Statistics
+	if database.Statistics != nil {
+		var statistic storage.DatabaseStatistics_STATUS
+		err := database.Statistics.AssignProperties_To_DatabaseStatistics_STATUS(&statistic)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseStatistics_STATUS() to populate field Statistics")
+		}
+		destination.Statistics = &statistic
+	} else {
+		destination.Statistics = nil
+	}
+
+	// SuspensionDetails
+	if database.SuspensionDetails != nil {
+		var suspensionDetail storage.SuspensionDetails_STATUS
+		err := database.SuspensionDetails.AssignProperties_To_SuspensionDetails_STATUS(&suspensionDetail)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SuspensionDetails_STATUS() to populate field SuspensionDetails")
+		}
+		destination.SuspensionDetails = &suspensionDetail
+	} else {
+		destination.SuspensionDetails = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(database.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReadWriteDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForReadWriteDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDatabaseOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.DatabaseOperatorSpec) error
+	AssignPropertiesTo(dst *storage.DatabaseOperatorSpec) error
+}
+
+type augmentConversionForReadWriteDatabase interface {
+	AssignPropertiesFrom(src *storage.ReadWriteDatabase) error
+	AssignPropertiesTo(dst *storage.ReadWriteDatabase) error
+}
+
+type augmentConversionForReadWriteDatabase_STATUS interface {
+	AssignPropertiesFrom(src *storage.ReadWriteDatabase_STATUS) error
+	AssignPropertiesTo(dst *storage.ReadWriteDatabase_STATUS) error
+}
+
 // Storage version of v1api20230815.DatabaseStatistics_STATUS
 // A class that contains database statistics information.
 type DatabaseStatistics_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Size        *float64               `json:"size,omitempty"`
+}
+
+// AssignProperties_From_DatabaseStatistics_STATUS populates our DatabaseStatistics_STATUS from the provided source DatabaseStatistics_STATUS
+func (statistics *DatabaseStatistics_STATUS) AssignProperties_From_DatabaseStatistics_STATUS(source *storage.DatabaseStatistics_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Size
+	if source.Size != nil {
+		size := *source.Size
+		statistics.Size = &size
+	} else {
+		statistics.Size = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		statistics.PropertyBag = propertyBag
+	} else {
+		statistics.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseStatistics_STATUS interface (if implemented) to customize the conversion
+	var statisticsAsAny any = statistics
+	if augmentedStatistics, ok := statisticsAsAny.(augmentConversionForDatabaseStatistics_STATUS); ok {
+		err := augmentedStatistics.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DatabaseStatistics_STATUS populates the provided destination DatabaseStatistics_STATUS from our DatabaseStatistics_STATUS
+func (statistics *DatabaseStatistics_STATUS) AssignProperties_To_DatabaseStatistics_STATUS(destination *storage.DatabaseStatistics_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(statistics.PropertyBag)
+
+	// Size
+	if statistics.Size != nil {
+		size := *statistics.Size
+		destination.Size = &size
+	} else {
+		destination.Size = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDatabaseStatistics_STATUS interface (if implemented) to customize the conversion
+	var statisticsAsAny any = statistics
+	if augmentedStatistics, ok := statisticsAsAny.(augmentConversionForDatabaseStatistics_STATUS); ok {
+		err := augmentedStatistics.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230815.SuspensionDetails_STATUS
@@ -277,6 +1126,72 @@ type DatabaseStatistics_STATUS struct {
 type SuspensionDetails_STATUS struct {
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SuspensionStartDate *string                `json:"suspensionStartDate,omitempty"`
+}
+
+// AssignProperties_From_SuspensionDetails_STATUS populates our SuspensionDetails_STATUS from the provided source SuspensionDetails_STATUS
+func (details *SuspensionDetails_STATUS) AssignProperties_From_SuspensionDetails_STATUS(source *storage.SuspensionDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SuspensionStartDate
+	details.SuspensionStartDate = genruntime.ClonePointerToString(source.SuspensionStartDate)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSuspensionDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForSuspensionDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SuspensionDetails_STATUS populates the provided destination SuspensionDetails_STATUS from our SuspensionDetails_STATUS
+func (details *SuspensionDetails_STATUS) AssignProperties_To_SuspensionDetails_STATUS(destination *storage.SuspensionDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// SuspensionStartDate
+	destination.SuspensionStartDate = genruntime.ClonePointerToString(details.SuspensionStartDate)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSuspensionDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForSuspensionDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDatabaseStatistics_STATUS interface {
+	AssignPropertiesFrom(src *storage.DatabaseStatistics_STATUS) error
+	AssignPropertiesTo(dst *storage.DatabaseStatistics_STATUS) error
+}
+
+type augmentConversionForSuspensionDetails_STATUS interface {
+	AssignPropertiesFrom(src *storage.SuspensionDetails_STATUS) error
+	AssignPropertiesTo(dst *storage.SuspensionDetails_STATUS) error
 }
 
 func init() {

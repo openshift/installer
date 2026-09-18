@@ -116,7 +116,12 @@ func (image *Image) ValidateUpdate(ctx context.Context, oldResource runtime.Obje
 
 // createValidations validates the creation of the resource
 func (image *Image) createValidations() []func(ctx context.Context, obj *v20210701.Image) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210701.Image) (admission.Warnings, error){image.validateResourceReferences, image.validateOwnerReference, image.validateSecretDestinations, image.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210701.Image) (admission.Warnings, error){
+		image.validateResourceReferences,
+		image.validateOwnerReference,
+		image.validateSecretDestinations,
+		image.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

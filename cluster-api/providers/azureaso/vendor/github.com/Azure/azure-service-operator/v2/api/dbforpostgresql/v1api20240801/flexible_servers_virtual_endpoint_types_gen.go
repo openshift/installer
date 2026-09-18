@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &FlexibleServersVirtualEndpoint{}
 
 // ConvertFrom populates our FlexibleServersVirtualEndpoint from the provided hub FlexibleServersVirtualEndpoint
 func (endpoint *FlexibleServersVirtualEndpoint) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersVirtualEndpoint)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersVirtualEndpoint but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersVirtualEndpoint
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return endpoint.AssignProperties_From_FlexibleServersVirtualEndpoint(source)
+	err = endpoint.AssignProperties_From_FlexibleServersVirtualEndpoint(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to endpoint")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersVirtualEndpoint from our FlexibleServersVirtualEndpoint
 func (endpoint *FlexibleServersVirtualEndpoint) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersVirtualEndpoint)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersVirtualEndpoint but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersVirtualEndpoint
+	err := endpoint.AssignProperties_To_FlexibleServersVirtualEndpoint(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from endpoint")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return endpoint.AssignProperties_To_FlexibleServersVirtualEndpoint(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersVirtualEndpoint{}
@@ -86,17 +101,6 @@ func (endpoint *FlexibleServersVirtualEndpoint) SecretDestinationExpressions() [
 		return nil
 	}
 	return endpoint.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersVirtualEndpoint{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (endpoint *FlexibleServersVirtualEndpoint) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersVirtualEndpoint_STATUS); ok {
-		return endpoint.Spec.Initialize_From_FlexibleServersVirtualEndpoint_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersVirtualEndpoint_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersVirtualEndpoint{}
@@ -252,10 +256,10 @@ type FlexibleServersVirtualEndpoint_Spec struct {
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
-	// EndpointType: The endpoint type for the virtual endpoint.
+	// EndpointType: Type of endpoint for the virtual endpoints.
 	EndpointType *VirtualEndpointResourceProperties_EndpointType `json:"endpointType,omitempty"`
 
-	// Members: List of members for a virtual endpoint
+	// Members: List of flexible servers that one of the virtual endpoints can refer to.
 	Members []string `json:"members,omitempty"`
 
 	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
@@ -488,24 +492,6 @@ func (endpoint *FlexibleServersVirtualEndpoint_Spec) AssignProperties_To_Flexibl
 	return nil
 }
 
-// Initialize_From_FlexibleServersVirtualEndpoint_STATUS populates our FlexibleServersVirtualEndpoint_Spec from the provided source FlexibleServersVirtualEndpoint_STATUS
-func (endpoint *FlexibleServersVirtualEndpoint_Spec) Initialize_From_FlexibleServersVirtualEndpoint_STATUS(source *FlexibleServersVirtualEndpoint_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), virtualEndpointResourceProperties_EndpointType_Values)
-		endpoint.EndpointType = &endpointType
-	} else {
-		endpoint.EndpointType = nil
-	}
-
-	// Members
-	endpoint.Members = genruntime.CloneSliceOfString(source.Members)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (endpoint *FlexibleServersVirtualEndpoint_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -520,14 +506,14 @@ type FlexibleServersVirtualEndpoint_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
-	// EndpointType: The endpoint type for the virtual endpoint.
+	// EndpointType: Type of endpoint for the virtual endpoints.
 	EndpointType *VirtualEndpointResourceProperties_EndpointType_STATUS `json:"endpointType,omitempty"`
 
 	// Id: Fully qualified resource ID for the resource. E.g.
 	// "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
 	Id *string `json:"id,omitempty"`
 
-	// Members: List of members for a virtual endpoint
+	// Members: List of flexible servers that one of the virtual endpoints can refer to.
 	Members []string `json:"members,omitempty"`
 
 	// Name: The name of the resource
@@ -539,7 +525,7 @@ type FlexibleServersVirtualEndpoint_STATUS struct {
 	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
-	// VirtualEndpoints: List of virtual endpoints for a server
+	// VirtualEndpoints: List of virtual endpoints for a flexible server.
 	VirtualEndpoints []string `json:"virtualEndpoints,omitempty"`
 }
 
@@ -785,8 +771,6 @@ func (operator *FlexibleServersVirtualEndpointOperatorSpec) AssignProperties_Fro
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -803,8 +787,6 @@ func (operator *FlexibleServersVirtualEndpointOperatorSpec) AssignProperties_Fro
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -830,8 +812,6 @@ func (operator *FlexibleServersVirtualEndpointOperatorSpec) AssignProperties_To_
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -848,8 +828,6 @@ func (operator *FlexibleServersVirtualEndpointOperatorSpec) AssignProperties_To_
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

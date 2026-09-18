@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -554,8 +555,6 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_From_Storag
 	if source.SignedIdentifiers != nil {
 		signedIdentifierList := make([]SignedIdentifier, len(source.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier SignedIdentifier
 			err := signedIdentifier.AssignProperties_From_SignedIdentifier(&signedIdentifierItem)
 			if err != nil {
@@ -637,8 +636,6 @@ func (share *StorageAccountsFileServicesShare_Spec) AssignProperties_To_StorageA
 	if share.SignedIdentifiers != nil {
 		signedIdentifierList := make([]storage.SignedIdentifier, len(share.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range share.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier storage.SignedIdentifier
 			err := signedIdentifierItem.AssignProperties_To_SignedIdentifier(&signedIdentifier)
 			if err != nil {
@@ -1127,8 +1124,6 @@ func (share *StorageAccountsFileServicesShare_STATUS) AssignProperties_From_Stor
 	if source.SignedIdentifiers != nil {
 		signedIdentifierList := make([]SignedIdentifier_STATUS, len(source.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier SignedIdentifier_STATUS
 			err := signedIdentifier.AssignProperties_From_SignedIdentifier_STATUS(&signedIdentifierItem)
 			if err != nil {
@@ -1255,8 +1250,6 @@ func (share *StorageAccountsFileServicesShare_STATUS) AssignProperties_To_Storag
 	if share.SignedIdentifiers != nil {
 		signedIdentifierList := make([]storage.SignedIdentifier_STATUS, len(share.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range share.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier storage.SignedIdentifier_STATUS
 			err := signedIdentifierItem.AssignProperties_To_SignedIdentifier_STATUS(&signedIdentifier)
 			if err != nil {
@@ -1446,7 +1439,7 @@ func (identifier *SignedIdentifier) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "AccessPolicy":
 	if identifier.AccessPolicy != nil {
-		accessPolicy_ARM, err := (*identifier.AccessPolicy).ConvertToARM(resolved)
+		accessPolicy_ARM, err := identifier.AccessPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1670,8 +1663,6 @@ func (operator *StorageAccountsFileServicesShareOperatorSpec) AssignProperties_F
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1688,8 +1679,6 @@ func (operator *StorageAccountsFileServicesShareOperatorSpec) AssignProperties_F
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1715,8 +1704,6 @@ func (operator *StorageAccountsFileServicesShareOperatorSpec) AssignProperties_T
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1733,8 +1720,6 @@ func (operator *StorageAccountsFileServicesShareOperatorSpec) AssignProperties_T
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

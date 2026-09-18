@@ -116,7 +116,12 @@ func (rule *ServersVirtualNetworkRule) ValidateUpdate(ctx context.Context, oldRe
 
 // createValidations validates the creation of the resource
 func (rule *ServersVirtualNetworkRule) createValidations() []func(ctx context.Context, obj *v20211101.ServersVirtualNetworkRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersVirtualNetworkRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersVirtualNetworkRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

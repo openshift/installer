@@ -81,7 +81,7 @@ func (s *NICSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the network interface.
-func (s *NICSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+func (s *NICSpec) Parameters(ctx context.Context, existing any) (parameters any, err error) {
 	_, log, done := tele.StartSpanWithLogger(ctx, "networkinterfaces.NICSpec.Parameters")
 	defer done()
 

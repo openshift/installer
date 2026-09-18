@@ -116,7 +116,12 @@ func (configuration *FluxConfiguration) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (configuration *FluxConfiguration) createValidations() []func(ctx context.Context, obj *v20230501.FluxConfiguration) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501.FluxConfiguration) (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations, configuration.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20230501.FluxConfiguration) (admission.Warnings, error){
+		configuration.validateResourceReferences,
+		configuration.validateSecretDestinations,
+		configuration.validateConfigMapDestinations,
+		configuration.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

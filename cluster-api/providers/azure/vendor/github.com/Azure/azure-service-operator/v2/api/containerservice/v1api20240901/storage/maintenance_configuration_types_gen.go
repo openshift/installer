@@ -4,6 +4,9 @@
 package storage
 
 import (
+	"fmt"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301/storage"
+	v20250801s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,14 +15,12 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=containerservice.azure.com,resources=maintenanceconfigurations,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=containerservice.azure.com,resources={maintenanceconfigurations/status,maintenanceconfigurations/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +46,28 @@ func (configuration *MaintenanceConfiguration) GetConditions() conditions.Condit
 // SetConditions sets the conditions on the resource status
 func (configuration *MaintenanceConfiguration) SetConditions(conditions conditions.Conditions) {
 	configuration.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &MaintenanceConfiguration{}
+
+// ConvertFrom populates our MaintenanceConfiguration from the provided hub MaintenanceConfiguration
+func (configuration *MaintenanceConfiguration) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250801s.MaintenanceConfiguration)
+	if !ok {
+		return fmt.Errorf("expected containerservice/v1api20250801/storage/MaintenanceConfiguration but received %T instead", hub)
+	}
+
+	return configuration.AssignProperties_From_MaintenanceConfiguration(source)
+}
+
+// ConvertTo populates the provided hub MaintenanceConfiguration from our MaintenanceConfiguration
+func (configuration *MaintenanceConfiguration) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250801s.MaintenanceConfiguration)
+	if !ok {
+		return fmt.Errorf("expected containerservice/v1api20250801/storage/MaintenanceConfiguration but received %T instead", hub)
+	}
+
+	return configuration.AssignProperties_To_MaintenanceConfiguration(destination)
 }
 
 var _ configmaps.Exporter = &MaintenanceConfiguration{}
@@ -142,8 +165,75 @@ func (configuration *MaintenanceConfiguration) SetStatus(status genruntime.Conve
 	return nil
 }
 
-// Hub marks that this MaintenanceConfiguration is the hub type for conversion
-func (configuration *MaintenanceConfiguration) Hub() {}
+// AssignProperties_From_MaintenanceConfiguration populates our MaintenanceConfiguration from the provided source MaintenanceConfiguration
+func (configuration *MaintenanceConfiguration) AssignProperties_From_MaintenanceConfiguration(source *v20250801s.MaintenanceConfiguration) error {
+
+	// ObjectMeta
+	configuration.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec MaintenanceConfiguration_Spec
+	err := spec.AssignProperties_From_MaintenanceConfiguration_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_MaintenanceConfiguration_Spec() to populate field Spec")
+	}
+	configuration.Spec = spec
+
+	// Status
+	var status MaintenanceConfiguration_STATUS
+	err = status.AssignProperties_From_MaintenanceConfiguration_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_MaintenanceConfiguration_STATUS() to populate field Status")
+	}
+	configuration.Status = status
+
+	// Invoke the augmentConversionForMaintenanceConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForMaintenanceConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceConfiguration populates the provided destination MaintenanceConfiguration from our MaintenanceConfiguration
+func (configuration *MaintenanceConfiguration) AssignProperties_To_MaintenanceConfiguration(destination *v20250801s.MaintenanceConfiguration) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *configuration.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250801s.MaintenanceConfiguration_Spec
+	err := configuration.Spec.AssignProperties_To_MaintenanceConfiguration_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_MaintenanceConfiguration_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250801s.MaintenanceConfiguration_STATUS
+	err = configuration.Status.AssignProperties_To_MaintenanceConfiguration_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_MaintenanceConfiguration_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForMaintenanceConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForMaintenanceConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (configuration *MaintenanceConfiguration) OriginalGVK() *schema.GroupVersionKind {
@@ -171,6 +261,11 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2024-09-01")
 
+type augmentConversionForMaintenanceConfiguration interface {
+	AssignPropertiesFrom(src *v20250801s.MaintenanceConfiguration) error
+	AssignPropertiesTo(dst *v20250801s.MaintenanceConfiguration) error
+}
+
 // Storage version of v1api20240901.MaintenanceConfiguration_Spec
 type MaintenanceConfiguration_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
@@ -194,20 +289,240 @@ var _ genruntime.ConvertibleSpec = &MaintenanceConfiguration_Spec{}
 
 // ConvertSpecFrom populates our MaintenanceConfiguration_Spec from the provided source
 func (configuration *MaintenanceConfiguration_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == configuration {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250801s.MaintenanceConfiguration_Spec)
+	if ok {
+		// Populate our instance from source
+		return configuration.AssignProperties_From_MaintenanceConfiguration_Spec(src)
 	}
 
-	return source.ConvertSpecTo(configuration)
+	// Convert to an intermediate form
+	src = &v20250801s.MaintenanceConfiguration_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = configuration.AssignProperties_From_MaintenanceConfiguration_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our MaintenanceConfiguration_Spec
 func (configuration *MaintenanceConfiguration_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == configuration {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250801s.MaintenanceConfiguration_Spec)
+	if ok {
+		// Populate destination from our instance
+		return configuration.AssignProperties_To_MaintenanceConfiguration_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(configuration)
+	// Convert to an intermediate form
+	dst = &v20250801s.MaintenanceConfiguration_Spec{}
+	err := configuration.AssignProperties_To_MaintenanceConfiguration_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_MaintenanceConfiguration_Spec populates our MaintenanceConfiguration_Spec from the provided source MaintenanceConfiguration_Spec
+func (configuration *MaintenanceConfiguration_Spec) AssignProperties_From_MaintenanceConfiguration_Spec(source *v20250801s.MaintenanceConfiguration_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	configuration.AzureName = source.AzureName
+
+	// MaintenanceWindow
+	if source.MaintenanceWindow != nil {
+		var maintenanceWindow MaintenanceWindow
+		err := maintenanceWindow.AssignProperties_From_MaintenanceWindow(source.MaintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceWindow() to populate field MaintenanceWindow")
+		}
+		configuration.MaintenanceWindow = &maintenanceWindow
+	} else {
+		configuration.MaintenanceWindow = nil
+	}
+
+	// NotAllowedTime
+	if source.NotAllowedTime != nil {
+		notAllowedTimeList := make([]TimeSpan, len(source.NotAllowedTime))
+		for notAllowedTimeIndex, notAllowedTimeItem := range source.NotAllowedTime {
+			var notAllowedTime TimeSpan
+			err := notAllowedTime.AssignProperties_From_TimeSpan(&notAllowedTimeItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_TimeSpan() to populate field NotAllowedTime")
+			}
+			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
+		}
+		configuration.NotAllowedTime = notAllowedTimeList
+	} else {
+		configuration.NotAllowedTime = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec MaintenanceConfigurationOperatorSpec
+		err := operatorSpec.AssignProperties_From_MaintenanceConfigurationOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceConfigurationOperatorSpec() to populate field OperatorSpec")
+		}
+		configuration.OperatorSpec = &operatorSpec
+	} else {
+		configuration.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	configuration.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		configuration.Owner = &owner
+	} else {
+		configuration.Owner = nil
+	}
+
+	// TimeInWeek
+	if source.TimeInWeek != nil {
+		timeInWeekList := make([]TimeInWeek, len(source.TimeInWeek))
+		for timeInWeekIndex, timeInWeekItem := range source.TimeInWeek {
+			var timeInWeek TimeInWeek
+			err := timeInWeek.AssignProperties_From_TimeInWeek(&timeInWeekItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_TimeInWeek() to populate field TimeInWeek")
+			}
+			timeInWeekList[timeInWeekIndex] = timeInWeek
+		}
+		configuration.TimeInWeek = timeInWeekList
+	} else {
+		configuration.TimeInWeek = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceConfiguration_Spec interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForMaintenanceConfiguration_Spec); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceConfiguration_Spec populates the provided destination MaintenanceConfiguration_Spec from our MaintenanceConfiguration_Spec
+func (configuration *MaintenanceConfiguration_Spec) AssignProperties_To_MaintenanceConfiguration_Spec(destination *v20250801s.MaintenanceConfiguration_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// AzureName
+	destination.AzureName = configuration.AzureName
+
+	// MaintenanceWindow
+	if configuration.MaintenanceWindow != nil {
+		var maintenanceWindow v20250801s.MaintenanceWindow
+		err := configuration.MaintenanceWindow.AssignProperties_To_MaintenanceWindow(&maintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceWindow() to populate field MaintenanceWindow")
+		}
+		destination.MaintenanceWindow = &maintenanceWindow
+	} else {
+		destination.MaintenanceWindow = nil
+	}
+
+	// NotAllowedTime
+	if configuration.NotAllowedTime != nil {
+		notAllowedTimeList := make([]v20250801s.TimeSpan, len(configuration.NotAllowedTime))
+		for notAllowedTimeIndex, notAllowedTimeItem := range configuration.NotAllowedTime {
+			var notAllowedTime v20250801s.TimeSpan
+			err := notAllowedTimeItem.AssignProperties_To_TimeSpan(&notAllowedTime)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_TimeSpan() to populate field NotAllowedTime")
+			}
+			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
+		}
+		destination.NotAllowedTime = notAllowedTimeList
+	} else {
+		destination.NotAllowedTime = nil
+	}
+
+	// OperatorSpec
+	if configuration.OperatorSpec != nil {
+		var operatorSpec v20250801s.MaintenanceConfigurationOperatorSpec
+		err := configuration.OperatorSpec.AssignProperties_To_MaintenanceConfigurationOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceConfigurationOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = configuration.OriginalVersion
+
+	// Owner
+	if configuration.Owner != nil {
+		owner := configuration.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// TimeInWeek
+	if configuration.TimeInWeek != nil {
+		timeInWeekList := make([]v20250801s.TimeInWeek, len(configuration.TimeInWeek))
+		for timeInWeekIndex, timeInWeekItem := range configuration.TimeInWeek {
+			var timeInWeek v20250801s.TimeInWeek
+			err := timeInWeekItem.AssignProperties_To_TimeInWeek(&timeInWeek)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_TimeInWeek() to populate field TimeInWeek")
+			}
+			timeInWeekList[timeInWeekIndex] = timeInWeek
+		}
+		destination.TimeInWeek = timeInWeekList
+	} else {
+		destination.TimeInWeek = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceConfiguration_Spec interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForMaintenanceConfiguration_Spec); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.MaintenanceConfiguration_STATUS
@@ -227,20 +542,256 @@ var _ genruntime.ConvertibleStatus = &MaintenanceConfiguration_STATUS{}
 
 // ConvertStatusFrom populates our MaintenanceConfiguration_STATUS from the provided source
 func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == configuration {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250801s.MaintenanceConfiguration_STATUS)
+	if ok {
+		// Populate our instance from source
+		return configuration.AssignProperties_From_MaintenanceConfiguration_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(configuration)
+	// Convert to an intermediate form
+	src = &v20250801s.MaintenanceConfiguration_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = configuration.AssignProperties_From_MaintenanceConfiguration_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our MaintenanceConfiguration_STATUS
 func (configuration *MaintenanceConfiguration_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == configuration {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250801s.MaintenanceConfiguration_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return configuration.AssignProperties_To_MaintenanceConfiguration_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(configuration)
+	// Convert to an intermediate form
+	dst = &v20250801s.MaintenanceConfiguration_STATUS{}
+	err := configuration.AssignProperties_To_MaintenanceConfiguration_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_MaintenanceConfiguration_STATUS populates our MaintenanceConfiguration_STATUS from the provided source MaintenanceConfiguration_STATUS
+func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_From_MaintenanceConfiguration_STATUS(source *v20250801s.MaintenanceConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	configuration.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	configuration.Id = genruntime.ClonePointerToString(source.Id)
+
+	// MaintenanceWindow
+	if source.MaintenanceWindow != nil {
+		var maintenanceWindow MaintenanceWindow_STATUS
+		err := maintenanceWindow.AssignProperties_From_MaintenanceWindow_STATUS(source.MaintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+		}
+		configuration.MaintenanceWindow = &maintenanceWindow
+	} else {
+		configuration.MaintenanceWindow = nil
+	}
+
+	// Name
+	configuration.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NotAllowedTime
+	if source.NotAllowedTime != nil {
+		notAllowedTimeList := make([]TimeSpan_STATUS, len(source.NotAllowedTime))
+		for notAllowedTimeIndex, notAllowedTimeItem := range source.NotAllowedTime {
+			var notAllowedTime TimeSpan_STATUS
+			err := notAllowedTime.AssignProperties_From_TimeSpan_STATUS(&notAllowedTimeItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_TimeSpan_STATUS() to populate field NotAllowedTime")
+			}
+			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
+		}
+		configuration.NotAllowedTime = notAllowedTimeList
+	} else {
+		configuration.NotAllowedTime = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDataSTATUSStash v20250301s.SystemData_STATUS
+		err := systemDataSTATUSStash.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+		}
+		var systemDatum SystemData_STATUS
+		err = systemDatum.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+		}
+		configuration.SystemData = &systemDatum
+	} else {
+		configuration.SystemData = nil
+	}
+
+	// TimeInWeek
+	if source.TimeInWeek != nil {
+		timeInWeekList := make([]TimeInWeek_STATUS, len(source.TimeInWeek))
+		for timeInWeekIndex, timeInWeekItem := range source.TimeInWeek {
+			var timeInWeek TimeInWeek_STATUS
+			err := timeInWeek.AssignProperties_From_TimeInWeek_STATUS(&timeInWeekItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_TimeInWeek_STATUS() to populate field TimeInWeek")
+			}
+			timeInWeekList[timeInWeekIndex] = timeInWeek
+		}
+		configuration.TimeInWeek = timeInWeekList
+	} else {
+		configuration.TimeInWeek = nil
+	}
+
+	// Type
+	configuration.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForMaintenanceConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceConfiguration_STATUS populates the provided destination MaintenanceConfiguration_STATUS from our MaintenanceConfiguration_STATUS
+func (configuration *MaintenanceConfiguration_STATUS) AssignProperties_To_MaintenanceConfiguration_STATUS(destination *v20250801s.MaintenanceConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(configuration.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(configuration.Id)
+
+	// MaintenanceWindow
+	if configuration.MaintenanceWindow != nil {
+		var maintenanceWindow v20250801s.MaintenanceWindow_STATUS
+		err := configuration.MaintenanceWindow.AssignProperties_To_MaintenanceWindow_STATUS(&maintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+		}
+		destination.MaintenanceWindow = &maintenanceWindow
+	} else {
+		destination.MaintenanceWindow = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(configuration.Name)
+
+	// NotAllowedTime
+	if configuration.NotAllowedTime != nil {
+		notAllowedTimeList := make([]v20250801s.TimeSpan_STATUS, len(configuration.NotAllowedTime))
+		for notAllowedTimeIndex, notAllowedTimeItem := range configuration.NotAllowedTime {
+			var notAllowedTime v20250801s.TimeSpan_STATUS
+			err := notAllowedTimeItem.AssignProperties_To_TimeSpan_STATUS(&notAllowedTime)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_TimeSpan_STATUS() to populate field NotAllowedTime")
+			}
+			notAllowedTimeList[notAllowedTimeIndex] = notAllowedTime
+		}
+		destination.NotAllowedTime = notAllowedTimeList
+	} else {
+		destination.NotAllowedTime = nil
+	}
+
+	// SystemData
+	if configuration.SystemData != nil {
+		var systemDataSTATUSStash v20250301s.SystemData_STATUS
+		err := configuration.SystemData.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+		}
+		var systemDatum v20250801s.SystemData_STATUS
+		err = systemDataSTATUSStash.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// TimeInWeek
+	if configuration.TimeInWeek != nil {
+		timeInWeekList := make([]v20250801s.TimeInWeek_STATUS, len(configuration.TimeInWeek))
+		for timeInWeekIndex, timeInWeekItem := range configuration.TimeInWeek {
+			var timeInWeek v20250801s.TimeInWeek_STATUS
+			err := timeInWeekItem.AssignProperties_To_TimeInWeek_STATUS(&timeInWeek)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_TimeInWeek_STATUS() to populate field TimeInWeek")
+			}
+			timeInWeekList[timeInWeekIndex] = timeInWeek
+		}
+		destination.TimeInWeek = timeInWeekList
+	} else {
+		destination.TimeInWeek = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(configuration.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForMaintenanceConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMaintenanceConfiguration_Spec interface {
+	AssignPropertiesFrom(src *v20250801s.MaintenanceConfiguration_Spec) error
+	AssignPropertiesTo(dst *v20250801s.MaintenanceConfiguration_Spec) error
+}
+
+type augmentConversionForMaintenanceConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.MaintenanceConfiguration_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.MaintenanceConfiguration_STATUS) error
 }
 
 // Storage version of v1api20240901.MaintenanceConfigurationOperatorSpec
@@ -249,6 +800,120 @@ type MaintenanceConfigurationOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_MaintenanceConfigurationOperatorSpec populates our MaintenanceConfigurationOperatorSpec from the provided source MaintenanceConfigurationOperatorSpec
+func (operator *MaintenanceConfigurationOperatorSpec) AssignProperties_From_MaintenanceConfigurationOperatorSpec(source *v20250801s.MaintenanceConfigurationOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceConfigurationOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForMaintenanceConfigurationOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceConfigurationOperatorSpec populates the provided destination MaintenanceConfigurationOperatorSpec from our MaintenanceConfigurationOperatorSpec
+func (operator *MaintenanceConfigurationOperatorSpec) AssignProperties_To_MaintenanceConfigurationOperatorSpec(destination *v20250801s.MaintenanceConfigurationOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceConfigurationOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForMaintenanceConfigurationOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.MaintenanceWindow
@@ -263,6 +928,136 @@ type MaintenanceWindow struct {
 	UtcOffset       *string                `json:"utcOffset,omitempty"`
 }
 
+// AssignProperties_From_MaintenanceWindow populates our MaintenanceWindow from the provided source MaintenanceWindow
+func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source *v20250801s.MaintenanceWindow) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DurationHours
+	window.DurationHours = genruntime.ClonePointerToInt(source.DurationHours)
+
+	// NotAllowedDates
+	if source.NotAllowedDates != nil {
+		notAllowedDateList := make([]DateSpan, len(source.NotAllowedDates))
+		for notAllowedDateIndex, notAllowedDateItem := range source.NotAllowedDates {
+			var notAllowedDate DateSpan
+			err := notAllowedDate.AssignProperties_From_DateSpan(&notAllowedDateItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_DateSpan() to populate field NotAllowedDates")
+			}
+			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
+		}
+		window.NotAllowedDates = notAllowedDateList
+	} else {
+		window.NotAllowedDates = nil
+	}
+
+	// Schedule
+	if source.Schedule != nil {
+		var schedule Schedule
+		err := schedule.AssignProperties_From_Schedule(source.Schedule)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Schedule() to populate field Schedule")
+		}
+		window.Schedule = &schedule
+	} else {
+		window.Schedule = nil
+	}
+
+	// StartDate
+	window.StartDate = genruntime.ClonePointerToString(source.StartDate)
+
+	// StartTime
+	window.StartTime = genruntime.ClonePointerToString(source.StartTime)
+
+	// UtcOffset
+	window.UtcOffset = genruntime.ClonePointerToString(source.UtcOffset)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		window.PropertyBag = propertyBag
+	} else {
+		window.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow); ok {
+		err := augmentedWindow.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceWindow populates the provided destination MaintenanceWindow from our MaintenanceWindow
+func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destination *v20250801s.MaintenanceWindow) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(window.PropertyBag)
+
+	// DurationHours
+	destination.DurationHours = genruntime.ClonePointerToInt(window.DurationHours)
+
+	// NotAllowedDates
+	if window.NotAllowedDates != nil {
+		notAllowedDateList := make([]v20250801s.DateSpan, len(window.NotAllowedDates))
+		for notAllowedDateIndex, notAllowedDateItem := range window.NotAllowedDates {
+			var notAllowedDate v20250801s.DateSpan
+			err := notAllowedDateItem.AssignProperties_To_DateSpan(&notAllowedDate)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_DateSpan() to populate field NotAllowedDates")
+			}
+			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
+		}
+		destination.NotAllowedDates = notAllowedDateList
+	} else {
+		destination.NotAllowedDates = nil
+	}
+
+	// Schedule
+	if window.Schedule != nil {
+		var schedule v20250801s.Schedule
+		err := window.Schedule.AssignProperties_To_Schedule(&schedule)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Schedule() to populate field Schedule")
+		}
+		destination.Schedule = &schedule
+	} else {
+		destination.Schedule = nil
+	}
+
+	// StartDate
+	destination.StartDate = genruntime.ClonePointerToString(window.StartDate)
+
+	// StartTime
+	destination.StartTime = genruntime.ClonePointerToString(window.StartTime)
+
+	// UtcOffset
+	destination.UtcOffset = genruntime.ClonePointerToString(window.UtcOffset)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow); ok {
+		err := augmentedWindow.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.MaintenanceWindow_STATUS
 // Maintenance window used to configure scheduled auto-upgrade for a Managed Cluster.
 type MaintenanceWindow_STATUS struct {
@@ -273,6 +1068,136 @@ type MaintenanceWindow_STATUS struct {
 	StartDate       *string                `json:"startDate,omitempty"`
 	StartTime       *string                `json:"startTime,omitempty"`
 	UtcOffset       *string                `json:"utcOffset,omitempty"`
+}
+
+// AssignProperties_From_MaintenanceWindow_STATUS populates our MaintenanceWindow_STATUS from the provided source MaintenanceWindow_STATUS
+func (window *MaintenanceWindow_STATUS) AssignProperties_From_MaintenanceWindow_STATUS(source *v20250801s.MaintenanceWindow_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DurationHours
+	window.DurationHours = genruntime.ClonePointerToInt(source.DurationHours)
+
+	// NotAllowedDates
+	if source.NotAllowedDates != nil {
+		notAllowedDateList := make([]DateSpan_STATUS, len(source.NotAllowedDates))
+		for notAllowedDateIndex, notAllowedDateItem := range source.NotAllowedDates {
+			var notAllowedDate DateSpan_STATUS
+			err := notAllowedDate.AssignProperties_From_DateSpan_STATUS(&notAllowedDateItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_DateSpan_STATUS() to populate field NotAllowedDates")
+			}
+			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
+		}
+		window.NotAllowedDates = notAllowedDateList
+	} else {
+		window.NotAllowedDates = nil
+	}
+
+	// Schedule
+	if source.Schedule != nil {
+		var schedule Schedule_STATUS
+		err := schedule.AssignProperties_From_Schedule_STATUS(source.Schedule)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Schedule_STATUS() to populate field Schedule")
+		}
+		window.Schedule = &schedule
+	} else {
+		window.Schedule = nil
+	}
+
+	// StartDate
+	window.StartDate = genruntime.ClonePointerToString(source.StartDate)
+
+	// StartTime
+	window.StartTime = genruntime.ClonePointerToString(source.StartTime)
+
+	// UtcOffset
+	window.UtcOffset = genruntime.ClonePointerToString(source.UtcOffset)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		window.PropertyBag = propertyBag
+	} else {
+		window.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow_STATUS interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow_STATUS); ok {
+		err := augmentedWindow.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceWindow_STATUS populates the provided destination MaintenanceWindow_STATUS from our MaintenanceWindow_STATUS
+func (window *MaintenanceWindow_STATUS) AssignProperties_To_MaintenanceWindow_STATUS(destination *v20250801s.MaintenanceWindow_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(window.PropertyBag)
+
+	// DurationHours
+	destination.DurationHours = genruntime.ClonePointerToInt(window.DurationHours)
+
+	// NotAllowedDates
+	if window.NotAllowedDates != nil {
+		notAllowedDateList := make([]v20250801s.DateSpan_STATUS, len(window.NotAllowedDates))
+		for notAllowedDateIndex, notAllowedDateItem := range window.NotAllowedDates {
+			var notAllowedDate v20250801s.DateSpan_STATUS
+			err := notAllowedDateItem.AssignProperties_To_DateSpan_STATUS(&notAllowedDate)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_DateSpan_STATUS() to populate field NotAllowedDates")
+			}
+			notAllowedDateList[notAllowedDateIndex] = notAllowedDate
+		}
+		destination.NotAllowedDates = notAllowedDateList
+	} else {
+		destination.NotAllowedDates = nil
+	}
+
+	// Schedule
+	if window.Schedule != nil {
+		var schedule v20250801s.Schedule_STATUS
+		err := window.Schedule.AssignProperties_To_Schedule_STATUS(&schedule)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Schedule_STATUS() to populate field Schedule")
+		}
+		destination.Schedule = &schedule
+	} else {
+		destination.Schedule = nil
+	}
+
+	// StartDate
+	destination.StartDate = genruntime.ClonePointerToString(window.StartDate)
+
+	// StartTime
+	destination.StartTime = genruntime.ClonePointerToString(window.StartTime)
+
+	// UtcOffset
+	destination.UtcOffset = genruntime.ClonePointerToString(window.UtcOffset)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow_STATUS interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow_STATUS); ok {
+		err := augmentedWindow.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.SystemData_STATUS
@@ -287,12 +1212,176 @@ type SystemData_STATUS struct {
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20250301s.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20250301s.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.TimeInWeek
 // Time in a week.
 type TimeInWeek struct {
 	Day         *string                `json:"day,omitempty"`
 	HourSlots   []int                  `json:"hourSlots,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_TimeInWeek populates our TimeInWeek from the provided source TimeInWeek
+func (week *TimeInWeek) AssignProperties_From_TimeInWeek(source *v20250801s.TimeInWeek) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Day
+	week.Day = genruntime.ClonePointerToString(source.Day)
+
+	// HourSlots
+	if source.HourSlots != nil {
+		hourSlotList := make([]int, len(source.HourSlots))
+		for hourSlotIndex, hourSlotItem := range source.HourSlots {
+			hourSlotList[hourSlotIndex] = hourSlotItem
+		}
+		week.HourSlots = hourSlotList
+	} else {
+		week.HourSlots = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		week.PropertyBag = propertyBag
+	} else {
+		week.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeInWeek interface (if implemented) to customize the conversion
+	var weekAsAny any = week
+	if augmentedWeek, ok := weekAsAny.(augmentConversionForTimeInWeek); ok {
+		err := augmentedWeek.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TimeInWeek populates the provided destination TimeInWeek from our TimeInWeek
+func (week *TimeInWeek) AssignProperties_To_TimeInWeek(destination *v20250801s.TimeInWeek) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(week.PropertyBag)
+
+	// Day
+	destination.Day = genruntime.ClonePointerToString(week.Day)
+
+	// HourSlots
+	if week.HourSlots != nil {
+		hourSlotList := make([]int, len(week.HourSlots))
+		for hourSlotIndex, hourSlotItem := range week.HourSlots {
+			hourSlotList[hourSlotIndex] = hourSlotItem
+		}
+		destination.HourSlots = hourSlotList
+	} else {
+		destination.HourSlots = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeInWeek interface (if implemented) to customize the conversion
+	var weekAsAny any = week
+	if augmentedWeek, ok := weekAsAny.(augmentConversionForTimeInWeek); ok {
+		err := augmentedWeek.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.TimeInWeek_STATUS
@@ -303,12 +1392,152 @@ type TimeInWeek_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_TimeInWeek_STATUS populates our TimeInWeek_STATUS from the provided source TimeInWeek_STATUS
+func (week *TimeInWeek_STATUS) AssignProperties_From_TimeInWeek_STATUS(source *v20250801s.TimeInWeek_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Day
+	week.Day = genruntime.ClonePointerToString(source.Day)
+
+	// HourSlots
+	if source.HourSlots != nil {
+		hourSlotList := make([]int, len(source.HourSlots))
+		for hourSlotIndex, hourSlotItem := range source.HourSlots {
+			hourSlotList[hourSlotIndex] = hourSlotItem
+		}
+		week.HourSlots = hourSlotList
+	} else {
+		week.HourSlots = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		week.PropertyBag = propertyBag
+	} else {
+		week.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeInWeek_STATUS interface (if implemented) to customize the conversion
+	var weekAsAny any = week
+	if augmentedWeek, ok := weekAsAny.(augmentConversionForTimeInWeek_STATUS); ok {
+		err := augmentedWeek.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TimeInWeek_STATUS populates the provided destination TimeInWeek_STATUS from our TimeInWeek_STATUS
+func (week *TimeInWeek_STATUS) AssignProperties_To_TimeInWeek_STATUS(destination *v20250801s.TimeInWeek_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(week.PropertyBag)
+
+	// Day
+	destination.Day = genruntime.ClonePointerToString(week.Day)
+
+	// HourSlots
+	if week.HourSlots != nil {
+		hourSlotList := make([]int, len(week.HourSlots))
+		for hourSlotIndex, hourSlotItem := range week.HourSlots {
+			hourSlotList[hourSlotIndex] = hourSlotItem
+		}
+		destination.HourSlots = hourSlotList
+	} else {
+		destination.HourSlots = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeInWeek_STATUS interface (if implemented) to customize the conversion
+	var weekAsAny any = week
+	if augmentedWeek, ok := weekAsAny.(augmentConversionForTimeInWeek_STATUS); ok {
+		err := augmentedWeek.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.TimeSpan
 // For example, between 2021-05-25T13:00:00Z and 2021-05-25T14:00:00Z.
 type TimeSpan struct {
 	End         *string                `json:"end,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Start       *string                `json:"start,omitempty"`
+}
+
+// AssignProperties_From_TimeSpan populates our TimeSpan from the provided source TimeSpan
+func (span *TimeSpan) AssignProperties_From_TimeSpan(source *v20250801s.TimeSpan) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// End
+	span.End = genruntime.ClonePointerToString(source.End)
+
+	// Start
+	span.Start = genruntime.ClonePointerToString(source.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		span.PropertyBag = propertyBag
+	} else {
+		span.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeSpan interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForTimeSpan); ok {
+		err := augmentedSpan.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TimeSpan populates the provided destination TimeSpan from our TimeSpan
+func (span *TimeSpan) AssignProperties_To_TimeSpan(destination *v20250801s.TimeSpan) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(span.PropertyBag)
+
+	// End
+	destination.End = genruntime.ClonePointerToString(span.End)
+
+	// Start
+	destination.Start = genruntime.ClonePointerToString(span.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeSpan interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForTimeSpan); ok {
+		err := augmentedSpan.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.TimeSpan_STATUS
@@ -319,6 +1548,108 @@ type TimeSpan_STATUS struct {
 	Start       *string                `json:"start,omitempty"`
 }
 
+// AssignProperties_From_TimeSpan_STATUS populates our TimeSpan_STATUS from the provided source TimeSpan_STATUS
+func (span *TimeSpan_STATUS) AssignProperties_From_TimeSpan_STATUS(source *v20250801s.TimeSpan_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// End
+	span.End = genruntime.ClonePointerToString(source.End)
+
+	// Start
+	span.Start = genruntime.ClonePointerToString(source.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		span.PropertyBag = propertyBag
+	} else {
+		span.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeSpan_STATUS interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForTimeSpan_STATUS); ok {
+		err := augmentedSpan.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TimeSpan_STATUS populates the provided destination TimeSpan_STATUS from our TimeSpan_STATUS
+func (span *TimeSpan_STATUS) AssignProperties_To_TimeSpan_STATUS(destination *v20250801s.TimeSpan_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(span.PropertyBag)
+
+	// End
+	destination.End = genruntime.ClonePointerToString(span.End)
+
+	// Start
+	destination.Start = genruntime.ClonePointerToString(span.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTimeSpan_STATUS interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForTimeSpan_STATUS); ok {
+		err := augmentedSpan.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMaintenanceConfigurationOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250801s.MaintenanceConfigurationOperatorSpec) error
+	AssignPropertiesTo(dst *v20250801s.MaintenanceConfigurationOperatorSpec) error
+}
+
+type augmentConversionForMaintenanceWindow interface {
+	AssignPropertiesFrom(src *v20250801s.MaintenanceWindow) error
+	AssignPropertiesTo(dst *v20250801s.MaintenanceWindow) error
+}
+
+type augmentConversionForMaintenanceWindow_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.MaintenanceWindow_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.MaintenanceWindow_STATUS) error
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.SystemData_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.SystemData_STATUS) error
+}
+
+type augmentConversionForTimeInWeek interface {
+	AssignPropertiesFrom(src *v20250801s.TimeInWeek) error
+	AssignPropertiesTo(dst *v20250801s.TimeInWeek) error
+}
+
+type augmentConversionForTimeInWeek_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.TimeInWeek_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.TimeInWeek_STATUS) error
+}
+
+type augmentConversionForTimeSpan interface {
+	AssignPropertiesFrom(src *v20250801s.TimeSpan) error
+	AssignPropertiesTo(dst *v20250801s.TimeSpan) error
+}
+
+type augmentConversionForTimeSpan_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.TimeSpan_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.TimeSpan_STATUS) error
+}
+
 // Storage version of v1api20240901.DateSpan
 // For example, between '2022-12-23' and '2023-01-05'.
 type DateSpan struct {
@@ -327,12 +1658,136 @@ type DateSpan struct {
 	Start       *string                `json:"start,omitempty"`
 }
 
+// AssignProperties_From_DateSpan populates our DateSpan from the provided source DateSpan
+func (span *DateSpan) AssignProperties_From_DateSpan(source *v20250801s.DateSpan) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// End
+	span.End = genruntime.ClonePointerToString(source.End)
+
+	// Start
+	span.Start = genruntime.ClonePointerToString(source.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		span.PropertyBag = propertyBag
+	} else {
+		span.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDateSpan interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForDateSpan); ok {
+		err := augmentedSpan.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DateSpan populates the provided destination DateSpan from our DateSpan
+func (span *DateSpan) AssignProperties_To_DateSpan(destination *v20250801s.DateSpan) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(span.PropertyBag)
+
+	// End
+	destination.End = genruntime.ClonePointerToString(span.End)
+
+	// Start
+	destination.Start = genruntime.ClonePointerToString(span.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDateSpan interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForDateSpan); ok {
+		err := augmentedSpan.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.DateSpan_STATUS
 // For example, between '2022-12-23' and '2023-01-05'.
 type DateSpan_STATUS struct {
 	End         *string                `json:"end,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Start       *string                `json:"start,omitempty"`
+}
+
+// AssignProperties_From_DateSpan_STATUS populates our DateSpan_STATUS from the provided source DateSpan_STATUS
+func (span *DateSpan_STATUS) AssignProperties_From_DateSpan_STATUS(source *v20250801s.DateSpan_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// End
+	span.End = genruntime.ClonePointerToString(source.End)
+
+	// Start
+	span.Start = genruntime.ClonePointerToString(source.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		span.PropertyBag = propertyBag
+	} else {
+		span.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDateSpan_STATUS interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForDateSpan_STATUS); ok {
+		err := augmentedSpan.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DateSpan_STATUS populates the provided destination DateSpan_STATUS from our DateSpan_STATUS
+func (span *DateSpan_STATUS) AssignProperties_To_DateSpan_STATUS(destination *v20250801s.DateSpan_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(span.PropertyBag)
+
+	// End
+	destination.End = genruntime.ClonePointerToString(span.End)
+
+	// Start
+	destination.Start = genruntime.ClonePointerToString(span.Start)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDateSpan_STATUS interface (if implemented) to customize the conversion
+	var spanAsAny any = span
+	if augmentedSpan, ok := spanAsAny.(augmentConversionForDateSpan_STATUS); ok {
+		err := augmentedSpan.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.Schedule
@@ -346,6 +1801,152 @@ type Schedule struct {
 	Weekly          *WeeklySchedule          `json:"weekly,omitempty"`
 }
 
+// AssignProperties_From_Schedule populates our Schedule from the provided source Schedule
+func (schedule *Schedule) AssignProperties_From_Schedule(source *v20250801s.Schedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AbsoluteMonthly
+	if source.AbsoluteMonthly != nil {
+		var absoluteMonthly AbsoluteMonthlySchedule
+		err := absoluteMonthly.AssignProperties_From_AbsoluteMonthlySchedule(source.AbsoluteMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AbsoluteMonthlySchedule() to populate field AbsoluteMonthly")
+		}
+		schedule.AbsoluteMonthly = &absoluteMonthly
+	} else {
+		schedule.AbsoluteMonthly = nil
+	}
+
+	// Daily
+	if source.Daily != nil {
+		var daily DailySchedule
+		err := daily.AssignProperties_From_DailySchedule(source.Daily)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DailySchedule() to populate field Daily")
+		}
+		schedule.Daily = &daily
+	} else {
+		schedule.Daily = nil
+	}
+
+	// RelativeMonthly
+	if source.RelativeMonthly != nil {
+		var relativeMonthly RelativeMonthlySchedule
+		err := relativeMonthly.AssignProperties_From_RelativeMonthlySchedule(source.RelativeMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RelativeMonthlySchedule() to populate field RelativeMonthly")
+		}
+		schedule.RelativeMonthly = &relativeMonthly
+	} else {
+		schedule.RelativeMonthly = nil
+	}
+
+	// Weekly
+	if source.Weekly != nil {
+		var weekly WeeklySchedule
+		err := weekly.AssignProperties_From_WeeklySchedule(source.Weekly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_WeeklySchedule() to populate field Weekly")
+		}
+		schedule.Weekly = &weekly
+	} else {
+		schedule.Weekly = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForSchedule); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Schedule populates the provided destination Schedule from our Schedule
+func (schedule *Schedule) AssignProperties_To_Schedule(destination *v20250801s.Schedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// AbsoluteMonthly
+	if schedule.AbsoluteMonthly != nil {
+		var absoluteMonthly v20250801s.AbsoluteMonthlySchedule
+		err := schedule.AbsoluteMonthly.AssignProperties_To_AbsoluteMonthlySchedule(&absoluteMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AbsoluteMonthlySchedule() to populate field AbsoluteMonthly")
+		}
+		destination.AbsoluteMonthly = &absoluteMonthly
+	} else {
+		destination.AbsoluteMonthly = nil
+	}
+
+	// Daily
+	if schedule.Daily != nil {
+		var daily v20250801s.DailySchedule
+		err := schedule.Daily.AssignProperties_To_DailySchedule(&daily)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DailySchedule() to populate field Daily")
+		}
+		destination.Daily = &daily
+	} else {
+		destination.Daily = nil
+	}
+
+	// RelativeMonthly
+	if schedule.RelativeMonthly != nil {
+		var relativeMonthly v20250801s.RelativeMonthlySchedule
+		err := schedule.RelativeMonthly.AssignProperties_To_RelativeMonthlySchedule(&relativeMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RelativeMonthlySchedule() to populate field RelativeMonthly")
+		}
+		destination.RelativeMonthly = &relativeMonthly
+	} else {
+		destination.RelativeMonthly = nil
+	}
+
+	// Weekly
+	if schedule.Weekly != nil {
+		var weekly v20250801s.WeeklySchedule
+		err := schedule.Weekly.AssignProperties_To_WeeklySchedule(&weekly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_WeeklySchedule() to populate field Weekly")
+		}
+		destination.Weekly = &weekly
+	} else {
+		destination.Weekly = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForSchedule); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.Schedule_STATUS
 // One and only one of the schedule types should be specified. Choose either 'daily', 'weekly', 'absoluteMonthly' or
 // 'relativeMonthly' for your maintenance schedule.
@@ -357,12 +1958,220 @@ type Schedule_STATUS struct {
 	Weekly          *WeeklySchedule_STATUS          `json:"weekly,omitempty"`
 }
 
+// AssignProperties_From_Schedule_STATUS populates our Schedule_STATUS from the provided source Schedule_STATUS
+func (schedule *Schedule_STATUS) AssignProperties_From_Schedule_STATUS(source *v20250801s.Schedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AbsoluteMonthly
+	if source.AbsoluteMonthly != nil {
+		var absoluteMonthly AbsoluteMonthlySchedule_STATUS
+		err := absoluteMonthly.AssignProperties_From_AbsoluteMonthlySchedule_STATUS(source.AbsoluteMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
+		}
+		schedule.AbsoluteMonthly = &absoluteMonthly
+	} else {
+		schedule.AbsoluteMonthly = nil
+	}
+
+	// Daily
+	if source.Daily != nil {
+		var daily DailySchedule_STATUS
+		err := daily.AssignProperties_From_DailySchedule_STATUS(source.Daily)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DailySchedule_STATUS() to populate field Daily")
+		}
+		schedule.Daily = &daily
+	} else {
+		schedule.Daily = nil
+	}
+
+	// RelativeMonthly
+	if source.RelativeMonthly != nil {
+		var relativeMonthly RelativeMonthlySchedule_STATUS
+		err := relativeMonthly.AssignProperties_From_RelativeMonthlySchedule_STATUS(source.RelativeMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
+		}
+		schedule.RelativeMonthly = &relativeMonthly
+	} else {
+		schedule.RelativeMonthly = nil
+	}
+
+	// Weekly
+	if source.Weekly != nil {
+		var weekly WeeklySchedule_STATUS
+		err := weekly.AssignProperties_From_WeeklySchedule_STATUS(source.Weekly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_WeeklySchedule_STATUS() to populate field Weekly")
+		}
+		schedule.Weekly = &weekly
+	} else {
+		schedule.Weekly = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForSchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Schedule_STATUS populates the provided destination Schedule_STATUS from our Schedule_STATUS
+func (schedule *Schedule_STATUS) AssignProperties_To_Schedule_STATUS(destination *v20250801s.Schedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// AbsoluteMonthly
+	if schedule.AbsoluteMonthly != nil {
+		var absoluteMonthly v20250801s.AbsoluteMonthlySchedule_STATUS
+		err := schedule.AbsoluteMonthly.AssignProperties_To_AbsoluteMonthlySchedule_STATUS(&absoluteMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AbsoluteMonthlySchedule_STATUS() to populate field AbsoluteMonthly")
+		}
+		destination.AbsoluteMonthly = &absoluteMonthly
+	} else {
+		destination.AbsoluteMonthly = nil
+	}
+
+	// Daily
+	if schedule.Daily != nil {
+		var daily v20250801s.DailySchedule_STATUS
+		err := schedule.Daily.AssignProperties_To_DailySchedule_STATUS(&daily)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DailySchedule_STATUS() to populate field Daily")
+		}
+		destination.Daily = &daily
+	} else {
+		destination.Daily = nil
+	}
+
+	// RelativeMonthly
+	if schedule.RelativeMonthly != nil {
+		var relativeMonthly v20250801s.RelativeMonthlySchedule_STATUS
+		err := schedule.RelativeMonthly.AssignProperties_To_RelativeMonthlySchedule_STATUS(&relativeMonthly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RelativeMonthlySchedule_STATUS() to populate field RelativeMonthly")
+		}
+		destination.RelativeMonthly = &relativeMonthly
+	} else {
+		destination.RelativeMonthly = nil
+	}
+
+	// Weekly
+	if schedule.Weekly != nil {
+		var weekly v20250801s.WeeklySchedule_STATUS
+		err := schedule.Weekly.AssignProperties_To_WeeklySchedule_STATUS(&weekly)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_WeeklySchedule_STATUS() to populate field Weekly")
+		}
+		destination.Weekly = &weekly
+	} else {
+		destination.Weekly = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForSchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.AbsoluteMonthlySchedule
 // For schedules like: 'recur every month on the 15th' or 'recur every 3 months on the 20th'.
 type AbsoluteMonthlySchedule struct {
 	DayOfMonth     *int                   `json:"dayOfMonth,omitempty"`
 	IntervalMonths *int                   `json:"intervalMonths,omitempty"`
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AbsoluteMonthlySchedule populates our AbsoluteMonthlySchedule from the provided source AbsoluteMonthlySchedule
+func (schedule *AbsoluteMonthlySchedule) AssignProperties_From_AbsoluteMonthlySchedule(source *v20250801s.AbsoluteMonthlySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DayOfMonth
+	schedule.DayOfMonth = genruntime.ClonePointerToInt(source.DayOfMonth)
+
+	// IntervalMonths
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteMonthlySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForAbsoluteMonthlySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AbsoluteMonthlySchedule populates the provided destination AbsoluteMonthlySchedule from our AbsoluteMonthlySchedule
+func (schedule *AbsoluteMonthlySchedule) AssignProperties_To_AbsoluteMonthlySchedule(destination *v20250801s.AbsoluteMonthlySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// DayOfMonth
+	destination.DayOfMonth = genruntime.ClonePointerToInt(schedule.DayOfMonth)
+
+	// IntervalMonths
+	destination.IntervalMonths = genruntime.ClonePointerToInt(schedule.IntervalMonths)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteMonthlySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForAbsoluteMonthlySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.AbsoluteMonthlySchedule_STATUS
@@ -373,6 +2182,88 @@ type AbsoluteMonthlySchedule_STATUS struct {
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AbsoluteMonthlySchedule_STATUS populates our AbsoluteMonthlySchedule_STATUS from the provided source AbsoluteMonthlySchedule_STATUS
+func (schedule *AbsoluteMonthlySchedule_STATUS) AssignProperties_From_AbsoluteMonthlySchedule_STATUS(source *v20250801s.AbsoluteMonthlySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DayOfMonth
+	schedule.DayOfMonth = genruntime.ClonePointerToInt(source.DayOfMonth)
+
+	// IntervalMonths
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteMonthlySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForAbsoluteMonthlySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AbsoluteMonthlySchedule_STATUS populates the provided destination AbsoluteMonthlySchedule_STATUS from our AbsoluteMonthlySchedule_STATUS
+func (schedule *AbsoluteMonthlySchedule_STATUS) AssignProperties_To_AbsoluteMonthlySchedule_STATUS(destination *v20250801s.AbsoluteMonthlySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// DayOfMonth
+	destination.DayOfMonth = genruntime.ClonePointerToInt(schedule.DayOfMonth)
+
+	// IntervalMonths
+	destination.IntervalMonths = genruntime.ClonePointerToInt(schedule.IntervalMonths)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteMonthlySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForAbsoluteMonthlySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDateSpan interface {
+	AssignPropertiesFrom(src *v20250801s.DateSpan) error
+	AssignPropertiesTo(dst *v20250801s.DateSpan) error
+}
+
+type augmentConversionForDateSpan_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.DateSpan_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.DateSpan_STATUS) error
+}
+
+type augmentConversionForSchedule interface {
+	AssignPropertiesFrom(src *v20250801s.Schedule) error
+	AssignPropertiesTo(dst *v20250801s.Schedule) error
+}
+
+type augmentConversionForSchedule_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.Schedule_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.Schedule_STATUS) error
+}
+
 // Storage version of v1api20240901.DailySchedule
 // For schedules like: 'recur every day' or 'recur every 3 days'.
 type DailySchedule struct {
@@ -380,11 +2271,123 @@ type DailySchedule struct {
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_DailySchedule populates our DailySchedule from the provided source DailySchedule
+func (schedule *DailySchedule) AssignProperties_From_DailySchedule(source *v20250801s.DailySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IntervalDays
+	schedule.IntervalDays = genruntime.ClonePointerToInt(source.IntervalDays)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDailySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForDailySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DailySchedule populates the provided destination DailySchedule from our DailySchedule
+func (schedule *DailySchedule) AssignProperties_To_DailySchedule(destination *v20250801s.DailySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// IntervalDays
+	destination.IntervalDays = genruntime.ClonePointerToInt(schedule.IntervalDays)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDailySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForDailySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.DailySchedule_STATUS
 // For schedules like: 'recur every day' or 'recur every 3 days'.
 type DailySchedule_STATUS struct {
 	IntervalDays *int                   `json:"intervalDays,omitempty"`
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_DailySchedule_STATUS populates our DailySchedule_STATUS from the provided source DailySchedule_STATUS
+func (schedule *DailySchedule_STATUS) AssignProperties_From_DailySchedule_STATUS(source *v20250801s.DailySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IntervalDays
+	schedule.IntervalDays = genruntime.ClonePointerToInt(source.IntervalDays)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDailySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForDailySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DailySchedule_STATUS populates the provided destination DailySchedule_STATUS from our DailySchedule_STATUS
+func (schedule *DailySchedule_STATUS) AssignProperties_To_DailySchedule_STATUS(destination *v20250801s.DailySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// IntervalDays
+	destination.IntervalDays = genruntime.ClonePointerToInt(schedule.IntervalDays)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDailySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForDailySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.RelativeMonthlySchedule
@@ -396,6 +2399,74 @@ type RelativeMonthlySchedule struct {
 	WeekIndex      *string                `json:"weekIndex,omitempty"`
 }
 
+// AssignProperties_From_RelativeMonthlySchedule populates our RelativeMonthlySchedule from the provided source RelativeMonthlySchedule
+func (schedule *RelativeMonthlySchedule) AssignProperties_From_RelativeMonthlySchedule(source *v20250801s.RelativeMonthlySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DayOfWeek
+	schedule.DayOfWeek = genruntime.ClonePointerToString(source.DayOfWeek)
+
+	// IntervalMonths
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
+
+	// WeekIndex
+	schedule.WeekIndex = genruntime.ClonePointerToString(source.WeekIndex)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRelativeMonthlySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForRelativeMonthlySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RelativeMonthlySchedule populates the provided destination RelativeMonthlySchedule from our RelativeMonthlySchedule
+func (schedule *RelativeMonthlySchedule) AssignProperties_To_RelativeMonthlySchedule(destination *v20250801s.RelativeMonthlySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// DayOfWeek
+	destination.DayOfWeek = genruntime.ClonePointerToString(schedule.DayOfWeek)
+
+	// IntervalMonths
+	destination.IntervalMonths = genruntime.ClonePointerToInt(schedule.IntervalMonths)
+
+	// WeekIndex
+	destination.WeekIndex = genruntime.ClonePointerToString(schedule.WeekIndex)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRelativeMonthlySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForRelativeMonthlySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.RelativeMonthlySchedule_STATUS
 // For schedules like: 'recur every month on the first Monday' or 'recur every 3 months on last Friday'.
 type RelativeMonthlySchedule_STATUS struct {
@@ -403,6 +2474,74 @@ type RelativeMonthlySchedule_STATUS struct {
 	IntervalMonths *int                   `json:"intervalMonths,omitempty"`
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	WeekIndex      *string                `json:"weekIndex,omitempty"`
+}
+
+// AssignProperties_From_RelativeMonthlySchedule_STATUS populates our RelativeMonthlySchedule_STATUS from the provided source RelativeMonthlySchedule_STATUS
+func (schedule *RelativeMonthlySchedule_STATUS) AssignProperties_From_RelativeMonthlySchedule_STATUS(source *v20250801s.RelativeMonthlySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DayOfWeek
+	schedule.DayOfWeek = genruntime.ClonePointerToString(source.DayOfWeek)
+
+	// IntervalMonths
+	schedule.IntervalMonths = genruntime.ClonePointerToInt(source.IntervalMonths)
+
+	// WeekIndex
+	schedule.WeekIndex = genruntime.ClonePointerToString(source.WeekIndex)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRelativeMonthlySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForRelativeMonthlySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RelativeMonthlySchedule_STATUS populates the provided destination RelativeMonthlySchedule_STATUS from our RelativeMonthlySchedule_STATUS
+func (schedule *RelativeMonthlySchedule_STATUS) AssignProperties_To_RelativeMonthlySchedule_STATUS(destination *v20250801s.RelativeMonthlySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// DayOfWeek
+	destination.DayOfWeek = genruntime.ClonePointerToString(schedule.DayOfWeek)
+
+	// IntervalMonths
+	destination.IntervalMonths = genruntime.ClonePointerToInt(schedule.IntervalMonths)
+
+	// WeekIndex
+	destination.WeekIndex = genruntime.ClonePointerToString(schedule.WeekIndex)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRelativeMonthlySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForRelativeMonthlySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240901.WeeklySchedule
@@ -413,12 +2552,176 @@ type WeeklySchedule struct {
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_WeeklySchedule populates our WeeklySchedule from the provided source WeeklySchedule
+func (schedule *WeeklySchedule) AssignProperties_From_WeeklySchedule(source *v20250801s.WeeklySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DayOfWeek
+	schedule.DayOfWeek = genruntime.ClonePointerToString(source.DayOfWeek)
+
+	// IntervalWeeks
+	schedule.IntervalWeeks = genruntime.ClonePointerToInt(source.IntervalWeeks)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWeeklySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForWeeklySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WeeklySchedule populates the provided destination WeeklySchedule from our WeeklySchedule
+func (schedule *WeeklySchedule) AssignProperties_To_WeeklySchedule(destination *v20250801s.WeeklySchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// DayOfWeek
+	destination.DayOfWeek = genruntime.ClonePointerToString(schedule.DayOfWeek)
+
+	// IntervalWeeks
+	destination.IntervalWeeks = genruntime.ClonePointerToInt(schedule.IntervalWeeks)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWeeklySchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForWeeklySchedule); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240901.WeeklySchedule_STATUS
 // For schedules like: 'recur every Monday' or 'recur every 3 weeks on Wednesday'.
 type WeeklySchedule_STATUS struct {
 	DayOfWeek     *string                `json:"dayOfWeek,omitempty"`
 	IntervalWeeks *int                   `json:"intervalWeeks,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_WeeklySchedule_STATUS populates our WeeklySchedule_STATUS from the provided source WeeklySchedule_STATUS
+func (schedule *WeeklySchedule_STATUS) AssignProperties_From_WeeklySchedule_STATUS(source *v20250801s.WeeklySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DayOfWeek
+	schedule.DayOfWeek = genruntime.ClonePointerToString(source.DayOfWeek)
+
+	// IntervalWeeks
+	schedule.IntervalWeeks = genruntime.ClonePointerToInt(source.IntervalWeeks)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWeeklySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForWeeklySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WeeklySchedule_STATUS populates the provided destination WeeklySchedule_STATUS from our WeeklySchedule_STATUS
+func (schedule *WeeklySchedule_STATUS) AssignProperties_To_WeeklySchedule_STATUS(destination *v20250801s.WeeklySchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// DayOfWeek
+	destination.DayOfWeek = genruntime.ClonePointerToString(schedule.DayOfWeek)
+
+	// IntervalWeeks
+	destination.IntervalWeeks = genruntime.ClonePointerToInt(schedule.IntervalWeeks)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWeeklySchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForWeeklySchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAbsoluteMonthlySchedule interface {
+	AssignPropertiesFrom(src *v20250801s.AbsoluteMonthlySchedule) error
+	AssignPropertiesTo(dst *v20250801s.AbsoluteMonthlySchedule) error
+}
+
+type augmentConversionForAbsoluteMonthlySchedule_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.AbsoluteMonthlySchedule_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.AbsoluteMonthlySchedule_STATUS) error
+}
+
+type augmentConversionForDailySchedule interface {
+	AssignPropertiesFrom(src *v20250801s.DailySchedule) error
+	AssignPropertiesTo(dst *v20250801s.DailySchedule) error
+}
+
+type augmentConversionForDailySchedule_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.DailySchedule_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.DailySchedule_STATUS) error
+}
+
+type augmentConversionForRelativeMonthlySchedule interface {
+	AssignPropertiesFrom(src *v20250801s.RelativeMonthlySchedule) error
+	AssignPropertiesTo(dst *v20250801s.RelativeMonthlySchedule) error
+}
+
+type augmentConversionForRelativeMonthlySchedule_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.RelativeMonthlySchedule_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.RelativeMonthlySchedule_STATUS) error
+}
+
+type augmentConversionForWeeklySchedule interface {
+	AssignPropertiesFrom(src *v20250801s.WeeklySchedule) error
+	AssignPropertiesTo(dst *v20250801s.WeeklySchedule) error
+}
+
+type augmentConversionForWeeklySchedule_STATUS interface {
+	AssignPropertiesFrom(src *v20250801s.WeeklySchedule_STATUS) error
+	AssignPropertiesTo(dst *v20250801s.WeeklySchedule_STATUS) error
 }
 
 func init() {

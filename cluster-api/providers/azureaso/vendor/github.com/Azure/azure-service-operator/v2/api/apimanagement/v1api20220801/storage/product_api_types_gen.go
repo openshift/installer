@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +13,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources=productapis,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources={productapis/status,productapis/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220801.ProductApi
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimproducts.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimproducts.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/apis/{apiId}
 type ProductApi struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +44,42 @@ func (productApi *ProductApi) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (productApi *ProductApi) SetConditions(conditions conditions.Conditions) {
 	productApi.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &ProductApi{}
+
+// ConvertFrom populates our ProductApi from the provided hub ProductApi
+func (productApi *ProductApi) ConvertFrom(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var source storage.ProductApi
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
+	}
+
+	err = productApi.AssignProperties_From_ProductApi(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to productApi")
+	}
+
+	return nil
+}
+
+// ConvertTo populates the provided hub ProductApi from our ProductApi
+func (productApi *ProductApi) ConvertTo(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var destination storage.ProductApi
+	err := productApi.AssignProperties_To_ProductApi(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from productApi")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
+	}
+
+	return nil
 }
 
 var _ configmaps.Exporter = &ProductApi{}
@@ -142,8 +177,75 @@ func (productApi *ProductApi) SetStatus(status genruntime.ConvertibleStatus) err
 	return nil
 }
 
-// Hub marks that this ProductApi is the hub type for conversion
-func (productApi *ProductApi) Hub() {}
+// AssignProperties_From_ProductApi populates our ProductApi from the provided source ProductApi
+func (productApi *ProductApi) AssignProperties_From_ProductApi(source *storage.ProductApi) error {
+
+	// ObjectMeta
+	productApi.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec ProductApi_Spec
+	err := spec.AssignProperties_From_ProductApi_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_ProductApi_Spec() to populate field Spec")
+	}
+	productApi.Spec = spec
+
+	// Status
+	var status ProductApi_STATUS
+	err = status.AssignProperties_From_ProductApi_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_ProductApi_STATUS() to populate field Status")
+	}
+	productApi.Status = status
+
+	// Invoke the augmentConversionForProductApi interface (if implemented) to customize the conversion
+	var productApiAsAny any = productApi
+	if augmentedProductApi, ok := productApiAsAny.(augmentConversionForProductApi); ok {
+		err := augmentedProductApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ProductApi populates the provided destination ProductApi from our ProductApi
+func (productApi *ProductApi) AssignProperties_To_ProductApi(destination *storage.ProductApi) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *productApi.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.ProductApi_Spec
+	err := productApi.Spec.AssignProperties_To_ProductApi_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_ProductApi_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.ProductApi_STATUS
+	err = productApi.Status.AssignProperties_To_ProductApi_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_ProductApi_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForProductApi interface (if implemented) to customize the conversion
+	var productApiAsAny any = productApi
+	if augmentedProductApi, ok := productApiAsAny.(augmentConversionForProductApi); ok {
+		err := augmentedProductApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (productApi *ProductApi) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +259,17 @@ func (productApi *ProductApi) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20220801.ProductApi
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimproducts.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimproducts.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/apis/{apiId}
 type ProductApiList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ProductApi `json:"items"`
+}
+
+type augmentConversionForProductApi interface {
+	AssignPropertiesFrom(src *storage.ProductApi) error
+	AssignPropertiesTo(dst *storage.ProductApi) error
 }
 
 // Storage version of v1api20220801.ProductApi_Spec
@@ -185,20 +292,152 @@ var _ genruntime.ConvertibleSpec = &ProductApi_Spec{}
 
 // ConvertSpecFrom populates our ProductApi_Spec from the provided source
 func (productApi *ProductApi_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == productApi {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.ProductApi_Spec)
+	if ok {
+		// Populate our instance from source
+		return productApi.AssignProperties_From_ProductApi_Spec(src)
 	}
 
-	return source.ConvertSpecTo(productApi)
+	// Convert to an intermediate form
+	src = &storage.ProductApi_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = productApi.AssignProperties_From_ProductApi_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our ProductApi_Spec
 func (productApi *ProductApi_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == productApi {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.ProductApi_Spec)
+	if ok {
+		// Populate destination from our instance
+		return productApi.AssignProperties_To_ProductApi_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(productApi)
+	// Convert to an intermediate form
+	dst = &storage.ProductApi_Spec{}
+	err := productApi.AssignProperties_To_ProductApi_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_ProductApi_Spec populates our ProductApi_Spec from the provided source ProductApi_Spec
+func (productApi *ProductApi_Spec) AssignProperties_From_ProductApi_Spec(source *storage.ProductApi_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	productApi.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ProductApiOperatorSpec
+		err := operatorSpec.AssignProperties_From_ProductApiOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ProductApiOperatorSpec() to populate field OperatorSpec")
+		}
+		productApi.OperatorSpec = &operatorSpec
+	} else {
+		productApi.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	productApi.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		productApi.Owner = &owner
+	} else {
+		productApi.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		productApi.PropertyBag = propertyBag
+	} else {
+		productApi.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProductApi_Spec interface (if implemented) to customize the conversion
+	var productApiAsAny any = productApi
+	if augmentedProductApi, ok := productApiAsAny.(augmentConversionForProductApi_Spec); ok {
+		err := augmentedProductApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ProductApi_Spec populates the provided destination ProductApi_Spec from our ProductApi_Spec
+func (productApi *ProductApi_Spec) AssignProperties_To_ProductApi_Spec(destination *storage.ProductApi_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(productApi.PropertyBag)
+
+	// AzureName
+	destination.AzureName = productApi.AzureName
+
+	// OperatorSpec
+	if productApi.OperatorSpec != nil {
+		var operatorSpec storage.ProductApiOperatorSpec
+		err := productApi.OperatorSpec.AssignProperties_To_ProductApiOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ProductApiOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = productApi.OriginalVersion
+
+	// Owner
+	if productApi.Owner != nil {
+		owner := productApi.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProductApi_Spec interface (if implemented) to customize the conversion
+	var productApiAsAny any = productApi
+	if augmentedProductApi, ok := productApiAsAny.(augmentConversionForProductApi_Spec); ok {
+		err := augmentedProductApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.ProductApi_STATUS
@@ -211,20 +450,116 @@ var _ genruntime.ConvertibleStatus = &ProductApi_STATUS{}
 
 // ConvertStatusFrom populates our ProductApi_STATUS from the provided source
 func (productApi *ProductApi_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == productApi {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.ProductApi_STATUS)
+	if ok {
+		// Populate our instance from source
+		return productApi.AssignProperties_From_ProductApi_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(productApi)
+	// Convert to an intermediate form
+	src = &storage.ProductApi_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = productApi.AssignProperties_From_ProductApi_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our ProductApi_STATUS
 func (productApi *ProductApi_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == productApi {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.ProductApi_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return productApi.AssignProperties_To_ProductApi_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(productApi)
+	// Convert to an intermediate form
+	dst = &storage.ProductApi_STATUS{}
+	err := productApi.AssignProperties_To_ProductApi_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_ProductApi_STATUS populates our ProductApi_STATUS from the provided source ProductApi_STATUS
+func (productApi *ProductApi_STATUS) AssignProperties_From_ProductApi_STATUS(source *storage.ProductApi_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	productApi.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		productApi.PropertyBag = propertyBag
+	} else {
+		productApi.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProductApi_STATUS interface (if implemented) to customize the conversion
+	var productApiAsAny any = productApi
+	if augmentedProductApi, ok := productApiAsAny.(augmentConversionForProductApi_STATUS); ok {
+		err := augmentedProductApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ProductApi_STATUS populates the provided destination ProductApi_STATUS from our ProductApi_STATUS
+func (productApi *ProductApi_STATUS) AssignProperties_To_ProductApi_STATUS(destination *storage.ProductApi_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(productApi.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(productApi.Conditions)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProductApi_STATUS interface (if implemented) to customize the conversion
+	var productApiAsAny any = productApi
+	if augmentedProductApi, ok := productApiAsAny.(augmentConversionForProductApi_STATUS); ok {
+		err := augmentedProductApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForProductApi_Spec interface {
+	AssignPropertiesFrom(src *storage.ProductApi_Spec) error
+	AssignPropertiesTo(dst *storage.ProductApi_Spec) error
+}
+
+type augmentConversionForProductApi_STATUS interface {
+	AssignPropertiesFrom(src *storage.ProductApi_STATUS) error
+	AssignPropertiesTo(dst *storage.ProductApi_STATUS) error
 }
 
 // Storage version of v1api20220801.ProductApiOperatorSpec
@@ -233,6 +568,125 @@ type ProductApiOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ProductApiOperatorSpec populates our ProductApiOperatorSpec from the provided source ProductApiOperatorSpec
+func (operator *ProductApiOperatorSpec) AssignProperties_From_ProductApiOperatorSpec(source *storage.ProductApiOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProductApiOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProductApiOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ProductApiOperatorSpec populates the provided destination ProductApiOperatorSpec from our ProductApiOperatorSpec
+func (operator *ProductApiOperatorSpec) AssignProperties_To_ProductApiOperatorSpec(destination *storage.ProductApiOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForProductApiOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProductApiOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForProductApiOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.ProductApiOperatorSpec) error
+	AssignPropertiesTo(dst *storage.ProductApiOperatorSpec) error
 }
 
 func init() {

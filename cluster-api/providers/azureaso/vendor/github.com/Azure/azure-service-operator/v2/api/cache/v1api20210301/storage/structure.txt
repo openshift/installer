@@ -56,10 +56,14 @@ RedisEnterpriseDatabase: Resource
 │   │   ├── Args: *string
 │   │   ├── Name: *string
 │   │   └── PropertyBag: genruntime.PropertyBag
-│   ├── OperatorSpec: *Object (3 properties)
+│   ├── OperatorSpec: *Object (4 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
 │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   │   ├── SecretExpressions: *core.DestinationExpression[]
+│   │   └── Secrets: *Object (3 properties)
+│   │       ├── PrimaryKey: *genruntime.SecretDestination
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       └── SecondaryKey: *genruntime.SecretDestination
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── Persistence: *Object (5 properties)
@@ -107,6 +111,8 @@ augmentConversionForPrivateEndpointConnection_STATUS: Interface
 augmentConversionForRedisEnterprise: Interface
 
 augmentConversionForRedisEnterpriseDatabase: Interface
+
+augmentConversionForRedisEnterpriseDatabaseOperatorSecrets: Interface
 
 augmentConversionForRedisEnterpriseDatabaseOperatorSpec: Interface
 

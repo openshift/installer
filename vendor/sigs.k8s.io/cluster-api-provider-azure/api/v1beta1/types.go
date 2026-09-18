@@ -368,6 +368,16 @@ type LoadBalancerSpec struct {
 	BackendPool BackendPool `json:"backendPool,omitempty"`
 
 	LoadBalancerClassSpec `json:",inline"`
+
+	// AvailabilityZones is a list of availability zones for the load balancer.
+	// When specified for an internal load balancer, the frontend IP configuration
+	// will be zone-redundant across the specified zones.
+	// For public load balancers, this should be set on the associated public IP addresses instead.
+	// +optional
+	// +listType=set
+	// +kubebuilder:validation:MaxItems=3
+	// +kubebuilder:validation:items:Pattern=`^[1-3]$`
+	AvailabilityZones []string `json:"availabilityZones,omitempty"`
 }
 
 // SKU defines an Azure load balancer SKU.

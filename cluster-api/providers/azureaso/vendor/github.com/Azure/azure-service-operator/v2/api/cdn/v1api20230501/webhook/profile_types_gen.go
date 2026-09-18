@@ -116,7 +116,12 @@ func (profile *Profile) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (profile *Profile) createValidations() []func(ctx context.Context, obj *v20230501.Profile) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501.Profile) (admission.Warnings, error){profile.validateResourceReferences, profile.validateOwnerReference, profile.validateSecretDestinations, profile.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501.Profile) (admission.Warnings, error){
+		profile.validateResourceReferences,
+		profile.validateOwnerReference,
+		profile.validateSecretDestinations,
+		profile.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

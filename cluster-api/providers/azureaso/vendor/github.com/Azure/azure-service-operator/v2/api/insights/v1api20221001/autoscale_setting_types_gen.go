@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,insights}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -343,7 +344,7 @@ func (setting *AutoscaleSetting_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties.Notifications = append(result.Properties.Notifications, *item_ARM.(*arm.AutoscaleNotification))
 	}
 	if setting.PredictiveAutoscalePolicy != nil {
-		predictiveAutoscalePolicy_ARM, err := (*setting.PredictiveAutoscalePolicy).ConvertToARM(resolved)
+		predictiveAutoscalePolicy_ARM, err := setting.PredictiveAutoscalePolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -564,8 +565,6 @@ func (setting *AutoscaleSetting_Spec) AssignProperties_From_AutoscaleSetting_Spe
 	if source.Notifications != nil {
 		notificationList := make([]AutoscaleNotification, len(source.Notifications))
 		for notificationIndex, notificationItem := range source.Notifications {
-			// Shadow the loop variable to avoid aliasing
-			notificationItem := notificationItem
 			var notification AutoscaleNotification
 			err := notification.AssignProperties_From_AutoscaleNotification(&notificationItem)
 			if err != nil {
@@ -614,8 +613,6 @@ func (setting *AutoscaleSetting_Spec) AssignProperties_From_AutoscaleSetting_Spe
 	if source.Profiles != nil {
 		profileList := make([]AutoscaleProfile, len(source.Profiles))
 		for profileIndex, profileItem := range source.Profiles {
-			// Shadow the loop variable to avoid aliasing
-			profileItem := profileItem
 			var profile AutoscaleProfile
 			err := profile.AssignProperties_From_AutoscaleProfile(&profileItem)
 			if err != nil {
@@ -672,8 +669,6 @@ func (setting *AutoscaleSetting_Spec) AssignProperties_To_AutoscaleSetting_Spec(
 	if setting.Notifications != nil {
 		notificationList := make([]storage.AutoscaleNotification, len(setting.Notifications))
 		for notificationIndex, notificationItem := range setting.Notifications {
-			// Shadow the loop variable to avoid aliasing
-			notificationItem := notificationItem
 			var notification storage.AutoscaleNotification
 			err := notificationItem.AssignProperties_To_AutoscaleNotification(&notification)
 			if err != nil {
@@ -725,8 +720,6 @@ func (setting *AutoscaleSetting_Spec) AssignProperties_To_AutoscaleSetting_Spec(
 	if setting.Profiles != nil {
 		profileList := make([]storage.AutoscaleProfile, len(setting.Profiles))
 		for profileIndex, profileItem := range setting.Profiles {
-			// Shadow the loop variable to avoid aliasing
-			profileItem := profileItem
 			var profile storage.AutoscaleProfile
 			err := profileItem.AssignProperties_To_AutoscaleProfile(&profile)
 			if err != nil {
@@ -785,8 +778,6 @@ func (setting *AutoscaleSetting_Spec) Initialize_From_Autoscalesetting_STATUS(so
 	if source.Notifications != nil {
 		notificationList := make([]AutoscaleNotification, len(source.Notifications))
 		for notificationIndex, notificationItem := range source.Notifications {
-			// Shadow the loop variable to avoid aliasing
-			notificationItem := notificationItem
 			var notification AutoscaleNotification
 			err := notification.Initialize_From_AutoscaleNotification_STATUS(&notificationItem)
 			if err != nil {
@@ -815,8 +806,6 @@ func (setting *AutoscaleSetting_Spec) Initialize_From_Autoscalesetting_STATUS(so
 	if source.Profiles != nil {
 		profileList := make([]AutoscaleProfile, len(source.Profiles))
 		for profileIndex, profileItem := range source.Profiles {
-			// Shadow the loop variable to avoid aliasing
-			profileItem := profileItem
 			var profile AutoscaleProfile
 			err := profile.Initialize_From_AutoscaleProfile_STATUS(&profileItem)
 			if err != nil {
@@ -1110,8 +1099,6 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_From_Autoscale
 	if source.Notifications != nil {
 		notificationList := make([]AutoscaleNotification_STATUS, len(source.Notifications))
 		for notificationIndex, notificationItem := range source.Notifications {
-			// Shadow the loop variable to avoid aliasing
-			notificationItem := notificationItem
 			var notification AutoscaleNotification_STATUS
 			err := notification.AssignProperties_From_AutoscaleNotification_STATUS(&notificationItem)
 			if err != nil {
@@ -1140,8 +1127,6 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_From_Autoscale
 	if source.Profiles != nil {
 		profileList := make([]AutoscaleProfile_STATUS, len(source.Profiles))
 		for profileIndex, profileItem := range source.Profiles {
-			// Shadow the loop variable to avoid aliasing
-			profileItem := profileItem
 			var profile AutoscaleProfile_STATUS
 			err := profile.AssignProperties_From_AutoscaleProfile_STATUS(&profileItem)
 			if err != nil {
@@ -1214,8 +1199,6 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalese
 	if autoscalesetting.Notifications != nil {
 		notificationList := make([]storage.AutoscaleNotification_STATUS, len(autoscalesetting.Notifications))
 		for notificationIndex, notificationItem := range autoscalesetting.Notifications {
-			// Shadow the loop variable to avoid aliasing
-			notificationItem := notificationItem
 			var notification storage.AutoscaleNotification_STATUS
 			err := notificationItem.AssignProperties_To_AutoscaleNotification_STATUS(&notification)
 			if err != nil {
@@ -1244,8 +1227,6 @@ func (autoscalesetting *Autoscalesetting_STATUS) AssignProperties_To_Autoscalese
 	if autoscalesetting.Profiles != nil {
 		profileList := make([]storage.AutoscaleProfile_STATUS, len(autoscalesetting.Profiles))
 		for profileIndex, profileItem := range autoscalesetting.Profiles {
-			// Shadow the loop variable to avoid aliasing
-			profileItem := profileItem
 			var profile storage.AutoscaleProfile_STATUS
 			err := profileItem.AssignProperties_To_AutoscaleProfile_STATUS(&profile)
 			if err != nil {
@@ -1320,7 +1301,7 @@ func (notification *AutoscaleNotification) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "Email":
 	if notification.Email != nil {
-		email_ARM, err := (*notification.Email).ConvertToARM(resolved)
+		email_ARM, err := notification.Email.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1420,8 +1401,6 @@ func (notification *AutoscaleNotification) AssignProperties_From_AutoscaleNotifi
 	if source.Webhooks != nil {
 		webhookList := make([]WebhookNotification, len(source.Webhooks))
 		for webhookIndex, webhookItem := range source.Webhooks {
-			// Shadow the loop variable to avoid aliasing
-			webhookItem := webhookItem
 			var webhook WebhookNotification
 			err := webhook.AssignProperties_From_WebhookNotification(&webhookItem)
 			if err != nil {
@@ -1467,8 +1446,6 @@ func (notification *AutoscaleNotification) AssignProperties_To_AutoscaleNotifica
 	if notification.Webhooks != nil {
 		webhookList := make([]storage.WebhookNotification, len(notification.Webhooks))
 		for webhookIndex, webhookItem := range notification.Webhooks {
-			// Shadow the loop variable to avoid aliasing
-			webhookItem := webhookItem
 			var webhook storage.WebhookNotification
 			err := webhookItem.AssignProperties_To_WebhookNotification(&webhook)
 			if err != nil {
@@ -1519,8 +1496,6 @@ func (notification *AutoscaleNotification) Initialize_From_AutoscaleNotification
 	if source.Webhooks != nil {
 		webhookList := make([]WebhookNotification, len(source.Webhooks))
 		for webhookIndex, webhookItem := range source.Webhooks {
-			// Shadow the loop variable to avoid aliasing
-			webhookItem := webhookItem
 			var webhook WebhookNotification
 			err := webhook.Initialize_From_WebhookNotification_STATUS(&webhookItem)
 			if err != nil {
@@ -1624,8 +1599,6 @@ func (notification *AutoscaleNotification_STATUS) AssignProperties_From_Autoscal
 	if source.Webhooks != nil {
 		webhookList := make([]WebhookNotification_STATUS, len(source.Webhooks))
 		for webhookIndex, webhookItem := range source.Webhooks {
-			// Shadow the loop variable to avoid aliasing
-			webhookItem := webhookItem
 			var webhook WebhookNotification_STATUS
 			err := webhook.AssignProperties_From_WebhookNotification_STATUS(&webhookItem)
 			if err != nil {
@@ -1671,8 +1644,6 @@ func (notification *AutoscaleNotification_STATUS) AssignProperties_To_AutoscaleN
 	if notification.Webhooks != nil {
 		webhookList := make([]storage.WebhookNotification_STATUS, len(notification.Webhooks))
 		for webhookIndex, webhookItem := range notification.Webhooks {
-			// Shadow the loop variable to avoid aliasing
-			webhookItem := webhookItem
 			var webhook storage.WebhookNotification_STATUS
 			err := webhookItem.AssignProperties_To_WebhookNotification_STATUS(&webhook)
 			if err != nil {
@@ -1729,7 +1700,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Capacity":
 	if profile.Capacity != nil {
-		capacity_ARM, err := (*profile.Capacity).ConvertToARM(resolved)
+		capacity_ARM, err := profile.Capacity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1739,7 +1710,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "FixedDate":
 	if profile.FixedDate != nil {
-		fixedDate_ARM, err := (*profile.FixedDate).ConvertToARM(resolved)
+		fixedDate_ARM, err := profile.FixedDate.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1755,7 +1726,7 @@ func (profile *AutoscaleProfile) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Recurrence":
 	if profile.Recurrence != nil {
-		recurrence_ARM, err := (*profile.Recurrence).ConvertToARM(resolved)
+		recurrence_ARM, err := profile.Recurrence.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1885,8 +1856,6 @@ func (profile *AutoscaleProfile) AssignProperties_From_AutoscaleProfile(source *
 	if source.Rules != nil {
 		ruleList := make([]ScaleRule, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ScaleRule
 			err := rule.AssignProperties_From_ScaleRule(&ruleItem)
 			if err != nil {
@@ -1951,8 +1920,6 @@ func (profile *AutoscaleProfile) AssignProperties_To_AutoscaleProfile(destinatio
 	if profile.Rules != nil {
 		ruleList := make([]storage.ScaleRule, len(profile.Rules))
 		for ruleIndex, ruleItem := range profile.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ScaleRule
 			err := ruleItem.AssignProperties_To_ScaleRule(&rule)
 			if err != nil {
@@ -2022,8 +1989,6 @@ func (profile *AutoscaleProfile) Initialize_From_AutoscaleProfile_STATUS(source 
 	if source.Rules != nil {
 		ruleList := make([]ScaleRule, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ScaleRule
 			err := rule.Initialize_From_ScaleRule_STATUS(&ruleItem)
 			if err != nil {
@@ -2175,8 +2140,6 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_From_AutoscaleProfile_S
 	if source.Rules != nil {
 		ruleList := make([]ScaleRule_STATUS, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ScaleRule_STATUS
 			err := rule.AssignProperties_From_ScaleRule_STATUS(&ruleItem)
 			if err != nil {
@@ -2241,8 +2204,6 @@ func (profile *AutoscaleProfile_STATUS) AssignProperties_To_AutoscaleProfile_STA
 	if profile.Rules != nil {
 		ruleList := make([]storage.ScaleRule_STATUS, len(profile.Rules))
 		for ruleIndex, ruleItem := range profile.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ScaleRule_STATUS
 			err := ruleItem.AssignProperties_To_ScaleRule_STATUS(&rule)
 			if err != nil {
@@ -2282,8 +2243,6 @@ func (operator *AutoscaleSettingOperatorSpec) AssignProperties_From_AutoscaleSet
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2300,8 +2259,6 @@ func (operator *AutoscaleSettingOperatorSpec) AssignProperties_From_AutoscaleSet
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2327,8 +2284,6 @@ func (operator *AutoscaleSettingOperatorSpec) AssignProperties_To_AutoscaleSetti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2345,8 +2300,6 @@ func (operator *AutoscaleSettingOperatorSpec) AssignProperties_To_AutoscaleSetti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3098,7 +3051,7 @@ func (recurrence *Recurrence) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "Schedule":
 	if recurrence.Schedule != nil {
-		schedule_ARM, err := (*recurrence.Schedule).ConvertToARM(resolved)
+		schedule_ARM, err := recurrence.Schedule.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3601,7 +3554,7 @@ func (rule *ScaleRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 	// Set property "MetricTrigger":
 	if rule.MetricTrigger != nil {
-		metricTrigger_ARM, err := (*rule.MetricTrigger).ConvertToARM(resolved)
+		metricTrigger_ARM, err := rule.MetricTrigger.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3611,7 +3564,7 @@ func (rule *ScaleRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 	// Set property "ScaleAction":
 	if rule.ScaleAction != nil {
-		scaleAction_ARM, err := (*rule.ScaleAction).ConvertToARM(resolved)
+		scaleAction_ARM, err := rule.ScaleAction.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4192,7 +4145,10 @@ type WebhookNotification struct {
 	Properties map[string]string `json:"properties,omitempty"`
 
 	// ServiceUri: the service address to receive the notification.
-	ServiceUri *string `json:"serviceUri,omitempty"`
+	ServiceUri *string `json:"serviceUri,omitempty" optionalSecretPair:"ServiceUri"`
+
+	// ServiceUriFromSecret: the service address to receive the notification.
+	ServiceUriFromSecret *genruntime.SecretReference `json:"serviceUriFromSecret,omitempty" optionalSecretPair:"ServiceUri"`
 }
 
 var _ genruntime.ARMTransformer = &WebhookNotification{}
@@ -4215,6 +4171,14 @@ func (notification *WebhookNotification) ConvertToARM(resolved genruntime.Conver
 	// Set property "ServiceUri":
 	if notification.ServiceUri != nil {
 		serviceUri := *notification.ServiceUri
+		result.ServiceUri = &serviceUri
+	}
+	if notification.ServiceUriFromSecret != nil {
+		serviceUriSecret, err := resolved.ResolvedSecrets.Lookup(*notification.ServiceUriFromSecret)
+		if err != nil {
+			return nil, eris.Wrap(err, "looking up secret for property ServiceUri")
+		}
+		serviceUri := serviceUriSecret
 		result.ServiceUri = &serviceUri
 	}
 	return result, nil
@@ -4246,6 +4210,8 @@ func (notification *WebhookNotification) PopulateFromARM(owner genruntime.Arbitr
 		notification.ServiceUri = &serviceUri
 	}
 
+	// no assignment for property "ServiceUriFromSecret"
+
 	// No error
 	return nil
 }
@@ -4258,6 +4224,14 @@ func (notification *WebhookNotification) AssignProperties_From_WebhookNotificati
 
 	// ServiceUri
 	notification.ServiceUri = genruntime.ClonePointerToString(source.ServiceUri)
+
+	// ServiceUriFromSecret
+	if source.ServiceUriFromSecret != nil {
+		serviceUriFromSecret := source.ServiceUriFromSecret.Copy()
+		notification.ServiceUriFromSecret = &serviceUriFromSecret
+	} else {
+		notification.ServiceUriFromSecret = nil
+	}
 
 	// No error
 	return nil
@@ -4273,6 +4247,14 @@ func (notification *WebhookNotification) AssignProperties_To_WebhookNotification
 
 	// ServiceUri
 	destination.ServiceUri = genruntime.ClonePointerToString(notification.ServiceUri)
+
+	// ServiceUriFromSecret
+	if notification.ServiceUriFromSecret != nil {
+		serviceUriFromSecret := notification.ServiceUriFromSecret.Copy()
+		destination.ServiceUriFromSecret = &serviceUriFromSecret
+	} else {
+		destination.ServiceUriFromSecret = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -4291,9 +4273,6 @@ func (notification *WebhookNotification) Initialize_From_WebhookNotification_STA
 	// Properties
 	notification.Properties = genruntime.CloneMapOfStringToString(source.Properties)
 
-	// ServiceUri
-	notification.ServiceUri = genruntime.ClonePointerToString(source.ServiceUri)
-
 	// No error
 	return nil
 }
@@ -4302,9 +4281,6 @@ func (notification *WebhookNotification) Initialize_From_WebhookNotification_STA
 type WebhookNotification_STATUS struct {
 	// Properties: a property bag of settings. This value can be empty.
 	Properties map[string]string `json:"properties,omitempty"`
-
-	// ServiceUri: the service address to receive the notification.
-	ServiceUri *string `json:"serviceUri,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &WebhookNotification_STATUS{}
@@ -4329,12 +4305,6 @@ func (notification *WebhookNotification_STATUS) PopulateFromARM(owner genruntime
 		}
 	}
 
-	// Set property "ServiceUri":
-	if typedInput.ServiceUri != nil {
-		serviceUri := *typedInput.ServiceUri
-		notification.ServiceUri = &serviceUri
-	}
-
 	// No error
 	return nil
 }
@@ -4344,9 +4314,6 @@ func (notification *WebhookNotification_STATUS) AssignProperties_From_WebhookNot
 
 	// Properties
 	notification.Properties = genruntime.CloneMapOfStringToString(source.Properties)
-
-	// ServiceUri
-	notification.ServiceUri = genruntime.ClonePointerToString(source.ServiceUri)
 
 	// No error
 	return nil
@@ -4359,9 +4326,6 @@ func (notification *WebhookNotification_STATUS) AssignProperties_To_WebhookNotif
 
 	// Properties
 	destination.Properties = genruntime.CloneMapOfStringToString(notification.Properties)
-
-	// ServiceUri
-	destination.ServiceUri = genruntime.ClonePointerToString(notification.ServiceUri)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -4622,8 +4586,6 @@ func (trigger *MetricTrigger) AssignProperties_From_MetricTrigger(source *storag
 	if source.Dimensions != nil {
 		dimensionList := make([]ScaleRuleMetricDimension, len(source.Dimensions))
 		for dimensionIndex, dimensionItem := range source.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension ScaleRuleMetricDimension
 			err := dimension.AssignProperties_From_ScaleRuleMetricDimension(&dimensionItem)
 			if err != nil {
@@ -4715,8 +4677,6 @@ func (trigger *MetricTrigger) AssignProperties_To_MetricTrigger(destination *sto
 	if trigger.Dimensions != nil {
 		dimensionList := make([]storage.ScaleRuleMetricDimension, len(trigger.Dimensions))
 		for dimensionIndex, dimensionItem := range trigger.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension storage.ScaleRuleMetricDimension
 			err := dimensionItem.AssignProperties_To_ScaleRuleMetricDimension(&dimension)
 			if err != nil {
@@ -4810,8 +4770,6 @@ func (trigger *MetricTrigger) Initialize_From_MetricTrigger_STATUS(source *Metri
 	if source.Dimensions != nil {
 		dimensionList := make([]ScaleRuleMetricDimension, len(source.Dimensions))
 		for dimensionIndex, dimensionItem := range source.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension ScaleRuleMetricDimension
 			err := dimension.Initialize_From_ScaleRuleMetricDimension_STATUS(&dimensionItem)
 			if err != nil {
@@ -5041,8 +4999,6 @@ func (trigger *MetricTrigger_STATUS) AssignProperties_From_MetricTrigger_STATUS(
 	if source.Dimensions != nil {
 		dimensionList := make([]ScaleRuleMetricDimension_STATUS, len(source.Dimensions))
 		for dimensionIndex, dimensionItem := range source.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension ScaleRuleMetricDimension_STATUS
 			err := dimension.AssignProperties_From_ScaleRuleMetricDimension_STATUS(&dimensionItem)
 			if err != nil {
@@ -5129,8 +5085,6 @@ func (trigger *MetricTrigger_STATUS) AssignProperties_To_MetricTrigger_STATUS(de
 	if trigger.Dimensions != nil {
 		dimensionList := make([]storage.ScaleRuleMetricDimension_STATUS, len(trigger.Dimensions))
 		for dimensionIndex, dimensionItem := range trigger.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension storage.ScaleRuleMetricDimension_STATUS
 			err := dimensionItem.AssignProperties_To_ScaleRuleMetricDimension_STATUS(&dimension)
 			if err != nil {
@@ -5385,8 +5339,6 @@ func (schedule *RecurrentSchedule) AssignProperties_From_RecurrentSchedule(sourc
 	if source.Hours != nil {
 		hourList := make([]int, len(source.Hours))
 		for hourIndex, hourItem := range source.Hours {
-			// Shadow the loop variable to avoid aliasing
-			hourItem := hourItem
 			hourList[hourIndex] = hourItem
 		}
 		schedule.Hours = hourList
@@ -5398,8 +5350,6 @@ func (schedule *RecurrentSchedule) AssignProperties_From_RecurrentSchedule(sourc
 	if source.Minutes != nil {
 		minuteList := make([]int, len(source.Minutes))
 		for minuteIndex, minuteItem := range source.Minutes {
-			// Shadow the loop variable to avoid aliasing
-			minuteItem := minuteItem
 			minuteList[minuteIndex] = minuteItem
 		}
 		schedule.Minutes = minuteList
@@ -5426,8 +5376,6 @@ func (schedule *RecurrentSchedule) AssignProperties_To_RecurrentSchedule(destina
 	if schedule.Hours != nil {
 		hourList := make([]int, len(schedule.Hours))
 		for hourIndex, hourItem := range schedule.Hours {
-			// Shadow the loop variable to avoid aliasing
-			hourItem := hourItem
 			hourList[hourIndex] = hourItem
 		}
 		destination.Hours = hourList
@@ -5439,8 +5387,6 @@ func (schedule *RecurrentSchedule) AssignProperties_To_RecurrentSchedule(destina
 	if schedule.Minutes != nil {
 		minuteList := make([]int, len(schedule.Minutes))
 		for minuteIndex, minuteItem := range schedule.Minutes {
-			// Shadow the loop variable to avoid aliasing
-			minuteItem := minuteItem
 			minuteList[minuteIndex] = minuteItem
 		}
 		destination.Minutes = minuteList
@@ -5472,8 +5418,6 @@ func (schedule *RecurrentSchedule) Initialize_From_RecurrentSchedule_STATUS(sour
 	if source.Hours != nil {
 		hourList := make([]int, len(source.Hours))
 		for hourIndex, hourItem := range source.Hours {
-			// Shadow the loop variable to avoid aliasing
-			hourItem := hourItem
 			hourList[hourIndex] = hourItem
 		}
 		schedule.Hours = hourList
@@ -5485,8 +5429,6 @@ func (schedule *RecurrentSchedule) Initialize_From_RecurrentSchedule_STATUS(sour
 	if source.Minutes != nil {
 		minuteList := make([]int, len(source.Minutes))
 		for minuteIndex, minuteItem := range source.Minutes {
-			// Shadow the loop variable to avoid aliasing
-			minuteItem := minuteItem
 			minuteList[minuteIndex] = minuteItem
 		}
 		schedule.Minutes = minuteList
@@ -5592,8 +5534,6 @@ func (schedule *RecurrentSchedule_STATUS) AssignProperties_From_RecurrentSchedul
 	if source.Hours != nil {
 		hourList := make([]int, len(source.Hours))
 		for hourIndex, hourItem := range source.Hours {
-			// Shadow the loop variable to avoid aliasing
-			hourItem := hourItem
 			hourList[hourIndex] = hourItem
 		}
 		schedule.Hours = hourList
@@ -5605,8 +5545,6 @@ func (schedule *RecurrentSchedule_STATUS) AssignProperties_From_RecurrentSchedul
 	if source.Minutes != nil {
 		minuteList := make([]int, len(source.Minutes))
 		for minuteIndex, minuteItem := range source.Minutes {
-			// Shadow the loop variable to avoid aliasing
-			minuteItem := minuteItem
 			minuteList[minuteIndex] = minuteItem
 		}
 		schedule.Minutes = minuteList
@@ -5633,8 +5571,6 @@ func (schedule *RecurrentSchedule_STATUS) AssignProperties_To_RecurrentSchedule_
 	if schedule.Hours != nil {
 		hourList := make([]int, len(schedule.Hours))
 		for hourIndex, hourItem := range schedule.Hours {
-			// Shadow the loop variable to avoid aliasing
-			hourItem := hourItem
 			hourList[hourIndex] = hourItem
 		}
 		destination.Hours = hourList
@@ -5646,8 +5582,6 @@ func (schedule *RecurrentSchedule_STATUS) AssignProperties_To_RecurrentSchedule_
 	if schedule.Minutes != nil {
 		minuteList := make([]int, len(schedule.Minutes))
 		for minuteIndex, minuteItem := range schedule.Minutes {
-			// Shadow the loop variable to avoid aliasing
-			minuteItem := minuteItem
 			minuteList[minuteIndex] = minuteItem
 		}
 		destination.Minutes = minuteList

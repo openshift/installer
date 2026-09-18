@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &FlexibleServersBackup{}
 
 // ConvertFrom populates our FlexibleServersBackup from the provided hub FlexibleServersBackup
 func (backup *FlexibleServersBackup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersBackup)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersBackup but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersBackup
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return backup.AssignProperties_From_FlexibleServersBackup(source)
+	err = backup.AssignProperties_From_FlexibleServersBackup(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to backup")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersBackup from our FlexibleServersBackup
 func (backup *FlexibleServersBackup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersBackup)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersBackup but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersBackup
+	err := backup.AssignProperties_To_FlexibleServersBackup(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from backup")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return backup.AssignProperties_To_FlexibleServersBackup(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersBackup{}
@@ -86,17 +101,6 @@ func (backup *FlexibleServersBackup) SecretDestinationExpressions() []*core.Dest
 		return nil
 	}
 	return backup.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersBackup{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (backup *FlexibleServersBackup) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersBackup_STATUS); ok {
-		return backup.Spec.Initialize_From_FlexibleServersBackup_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersBackup_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersBackup{}
@@ -426,13 +430,6 @@ func (backup *FlexibleServersBackup_Spec) AssignProperties_To_FlexibleServersBac
 	return nil
 }
 
-// Initialize_From_FlexibleServersBackup_STATUS populates our FlexibleServersBackup_Spec from the provided source FlexibleServersBackup_STATUS
-func (backup *FlexibleServersBackup_Spec) Initialize_From_FlexibleServersBackup_STATUS(source *FlexibleServersBackup_STATUS) error {
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (backup *FlexibleServersBackup_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -444,10 +441,10 @@ func (backup *FlexibleServersBackup_Spec) SetAzureName(azureName string) {
 }
 
 type FlexibleServersBackup_STATUS struct {
-	// BackupType: Backup type.
+	// BackupType: Type of backup.
 	BackupType *ServerBackupProperties_BackupType_STATUS `json:"backupType,omitempty"`
 
-	// CompletedTime: Backup completed time (ISO8601 format).
+	// CompletedTime: Time(ISO8601 format) at which the backup was completed.
 	CompletedTime *string `json:"completedTime,omitempty"`
 
 	// Conditions: The observed state of the resource
@@ -460,7 +457,7 @@ type FlexibleServersBackup_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Source: Backup source
+	// Source: Source of the backup.
 	Source *string `json:"source,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -714,8 +711,6 @@ func (operator *FlexibleServersBackupOperatorSpec) AssignProperties_From_Flexibl
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -732,8 +727,6 @@ func (operator *FlexibleServersBackupOperatorSpec) AssignProperties_From_Flexibl
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -759,8 +752,6 @@ func (operator *FlexibleServersBackupOperatorSpec) AssignProperties_To_FlexibleS
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -777,8 +768,6 @@ func (operator *FlexibleServersBackupOperatorSpec) AssignProperties_To_FlexibleS
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

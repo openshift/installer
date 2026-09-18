@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimapiversionsets.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimapiversionsets.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apiVersionSets/{versionSetId}
 type ApiVersionSet struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &ApiVersionSet{}
 
 // ConvertFrom populates our ApiVersionSet from the provided hub ApiVersionSet
 func (versionSet *ApiVersionSet) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.ApiVersionSet)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/ApiVersionSet but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.ApiVersionSet
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return versionSet.AssignProperties_From_ApiVersionSet(source)
+	err = versionSet.AssignProperties_From_ApiVersionSet(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to versionSet")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub ApiVersionSet from our ApiVersionSet
 func (versionSet *ApiVersionSet) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.ApiVersionSet)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/ApiVersionSet but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.ApiVersionSet
+	err := versionSet.AssignProperties_To_ApiVersionSet(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from versionSet")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return versionSet.AssignProperties_To_ApiVersionSet(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &ApiVersionSet{}
@@ -86,17 +101,6 @@ func (versionSet *ApiVersionSet) SecretDestinationExpressions() []*core.Destinat
 		return nil
 	}
 	return versionSet.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &ApiVersionSet{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (versionSet *ApiVersionSet) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*ApiVersionSet_STATUS); ok {
-		return versionSet.Spec.Initialize_From_ApiVersionSet_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type ApiVersionSet_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ApiVersionSet{}
@@ -238,7 +242,7 @@ func (versionSet *ApiVersionSet) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimapiversionsets.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimapiversionsets.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apiVersionSets/{versionSetId}
 type ApiVersionSetList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -570,33 +574,6 @@ func (versionSet *ApiVersionSet_Spec) AssignProperties_To_ApiVersionSet_Spec(des
 	return nil
 }
 
-// Initialize_From_ApiVersionSet_STATUS populates our ApiVersionSet_Spec from the provided source ApiVersionSet_STATUS
-func (versionSet *ApiVersionSet_Spec) Initialize_From_ApiVersionSet_STATUS(source *ApiVersionSet_STATUS) error {
-
-	// Description
-	versionSet.Description = genruntime.ClonePointerToString(source.Description)
-
-	// DisplayName
-	versionSet.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
-
-	// VersionHeaderName
-	versionSet.VersionHeaderName = genruntime.ClonePointerToString(source.VersionHeaderName)
-
-	// VersionQueryName
-	versionSet.VersionQueryName = genruntime.ClonePointerToString(source.VersionQueryName)
-
-	// VersioningScheme
-	if source.VersioningScheme != nil {
-		versioningScheme := genruntime.ToEnum(string(*source.VersioningScheme), apiVersionSetContractProperties_VersioningScheme_Values)
-		versionSet.VersioningScheme = &versioningScheme
-	} else {
-		versionSet.VersioningScheme = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (versionSet *ApiVersionSet_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -907,8 +884,6 @@ func (operator *ApiVersionSetOperatorSpec) AssignProperties_From_ApiVersionSetOp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -925,8 +900,6 @@ func (operator *ApiVersionSetOperatorSpec) AssignProperties_From_ApiVersionSetOp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -952,8 +925,6 @@ func (operator *ApiVersionSetOperatorSpec) AssignProperties_To_ApiVersionSetOper
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -970,8 +941,6 @@ func (operator *ApiVersionSetOperatorSpec) AssignProperties_To_ApiVersionSetOper
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

@@ -4,7 +4,10 @@
 package storage
 
 import (
-	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
+	"fmt"
+	v20230801s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
+	v20241101s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101/storage"
+	v20250401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20250401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -13,21 +16,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=cache.azure.com,resources=redisenterprises,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.azure.com,resources={redisenterprises/status,redisenterprises/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cache}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230701.RedisEnterprise
 // Generator information:
-// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/stable/2023-07-01/redisenterprise.json
+// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/RedisEnterprise/stable/2023-07-01/redisenterprise.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redisEnterprise/{clusterName}
 type RedisEnterprise struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -46,6 +47,28 @@ func (enterprise *RedisEnterprise) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (enterprise *RedisEnterprise) SetConditions(conditions conditions.Conditions) {
 	enterprise.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &RedisEnterprise{}
+
+// ConvertFrom populates our RedisEnterprise from the provided hub RedisEnterprise
+func (enterprise *RedisEnterprise) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250401s.RedisEnterprise)
+	if !ok {
+		return fmt.Errorf("expected cache/v1api20250401/storage/RedisEnterprise but received %T instead", hub)
+	}
+
+	return enterprise.AssignProperties_From_RedisEnterprise(source)
+}
+
+// ConvertTo populates the provided hub RedisEnterprise from our RedisEnterprise
+func (enterprise *RedisEnterprise) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250401s.RedisEnterprise)
+	if !ok {
+		return fmt.Errorf("expected cache/v1api20250401/storage/RedisEnterprise but received %T instead", hub)
+	}
+
+	return enterprise.AssignProperties_To_RedisEnterprise(destination)
 }
 
 var _ configmaps.Exporter = &RedisEnterprise{}
@@ -143,8 +166,75 @@ func (enterprise *RedisEnterprise) SetStatus(status genruntime.ConvertibleStatus
 	return nil
 }
 
-// Hub marks that this RedisEnterprise is the hub type for conversion
-func (enterprise *RedisEnterprise) Hub() {}
+// AssignProperties_From_RedisEnterprise populates our RedisEnterprise from the provided source RedisEnterprise
+func (enterprise *RedisEnterprise) AssignProperties_From_RedisEnterprise(source *v20250401s.RedisEnterprise) error {
+
+	// ObjectMeta
+	enterprise.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec RedisEnterprise_Spec
+	err := spec.AssignProperties_From_RedisEnterprise_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_RedisEnterprise_Spec() to populate field Spec")
+	}
+	enterprise.Spec = spec
+
+	// Status
+	var status RedisEnterprise_STATUS
+	err = status.AssignProperties_From_RedisEnterprise_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_RedisEnterprise_STATUS() to populate field Status")
+	}
+	enterprise.Status = status
+
+	// Invoke the augmentConversionForRedisEnterprise interface (if implemented) to customize the conversion
+	var enterpriseAsAny any = enterprise
+	if augmentedEnterprise, ok := enterpriseAsAny.(augmentConversionForRedisEnterprise); ok {
+		err := augmentedEnterprise.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterprise populates the provided destination RedisEnterprise from our RedisEnterprise
+func (enterprise *RedisEnterprise) AssignProperties_To_RedisEnterprise(destination *v20250401s.RedisEnterprise) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *enterprise.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250401s.RedisEnterprise_Spec
+	err := enterprise.Spec.AssignProperties_To_RedisEnterprise_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_RedisEnterprise_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250401s.RedisEnterprise_STATUS
+	err = enterprise.Status.AssignProperties_To_RedisEnterprise_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_RedisEnterprise_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForRedisEnterprise interface (if implemented) to customize the conversion
+	var enterpriseAsAny any = enterprise
+	if augmentedEnterprise, ok := enterpriseAsAny.(augmentConversionForRedisEnterprise); ok {
+		err := augmentedEnterprise.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (enterprise *RedisEnterprise) OriginalGVK() *schema.GroupVersionKind {
@@ -158,7 +248,7 @@ func (enterprise *RedisEnterprise) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230701.RedisEnterprise
 // Generator information:
-// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/stable/2023-07-01/redisenterprise.json
+// - Generated from: /redisenterprise/resource-manager/Microsoft.Cache/RedisEnterprise/stable/2023-07-01/redisenterprise.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redisEnterprise/{clusterName}
 type RedisEnterpriseList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -171,6 +261,11 @@ type RedisEnterpriseList struct {
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2023-07-01")
+
+type augmentConversionForRedisEnterprise interface {
+	AssignPropertiesFrom(src *v20250401s.RedisEnterprise) error
+	AssignPropertiesTo(dst *v20250401s.RedisEnterprise) error
+}
 
 // Storage version of v1api20230701.RedisEnterprise_Spec
 type RedisEnterprise_Spec struct {
@@ -197,20 +292,300 @@ var _ genruntime.ConvertibleSpec = &RedisEnterprise_Spec{}
 
 // ConvertSpecFrom populates our RedisEnterprise_Spec from the provided source
 func (enterprise *RedisEnterprise_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == enterprise {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250401s.RedisEnterprise_Spec)
+	if ok {
+		// Populate our instance from source
+		return enterprise.AssignProperties_From_RedisEnterprise_Spec(src)
 	}
 
-	return source.ConvertSpecTo(enterprise)
+	// Convert to an intermediate form
+	src = &v20250401s.RedisEnterprise_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = enterprise.AssignProperties_From_RedisEnterprise_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our RedisEnterprise_Spec
 func (enterprise *RedisEnterprise_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == enterprise {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250401s.RedisEnterprise_Spec)
+	if ok {
+		// Populate destination from our instance
+		return enterprise.AssignProperties_To_RedisEnterprise_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(enterprise)
+	// Convert to an intermediate form
+	dst = &v20250401s.RedisEnterprise_Spec{}
+	err := enterprise.AssignProperties_To_RedisEnterprise_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_RedisEnterprise_Spec populates our RedisEnterprise_Spec from the provided source RedisEnterprise_Spec
+func (enterprise *RedisEnterprise_Spec) AssignProperties_From_RedisEnterprise_Spec(source *v20250401s.RedisEnterprise_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	enterprise.AzureName = source.AzureName
+
+	// Encryption
+	if source.Encryption != nil {
+		propertyBag.Add("Encryption", *source.Encryption)
+	} else {
+		propertyBag.Remove("Encryption")
+	}
+
+	// HighAvailability
+	if source.HighAvailability != nil {
+		propertyBag.Add("HighAvailability", *source.HighAvailability)
+	} else {
+		propertyBag.Remove("HighAvailability")
+	}
+
+	// Identity
+	if source.Identity != nil {
+		propertyBag.Add("Identity", *source.Identity)
+	} else {
+		propertyBag.Remove("Identity")
+	}
+
+	// Kind
+	if source.Kind != nil {
+		propertyBag.Add("Kind", *source.Kind)
+	} else {
+		propertyBag.Remove("Kind")
+	}
+
+	// Location
+	enterprise.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MinimumTlsVersion
+	enterprise.MinimumTlsVersion = genruntime.ClonePointerToString(source.MinimumTlsVersion)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec RedisEnterpriseOperatorSpec
+		err := operatorSpec.AssignProperties_From_RedisEnterpriseOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RedisEnterpriseOperatorSpec() to populate field OperatorSpec")
+		}
+		enterprise.OperatorSpec = &operatorSpec
+	} else {
+		enterprise.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	enterprise.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		enterprise.Owner = &owner
+	} else {
+		enterprise.Owner = nil
+	}
+
+	// Sku
+	if source.Sku != nil {
+		var skuStash v20241101s.Sku
+		err := skuStash.AssignProperties_From_Sku(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field SkuStash from Sku")
+		}
+		var skuStashLocal v20230801s.Sku
+		err = skuStashLocal.AssignProperties_From_Sku(&skuStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field SkuStash")
+		}
+		var sku Sku
+		err = sku.AssignProperties_From_Sku(&skuStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku from SkuStash")
+		}
+		enterprise.Sku = &sku
+	} else {
+		enterprise.Sku = nil
+	}
+
+	// Tags
+	enterprise.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Zones
+	enterprise.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		enterprise.PropertyBag = propertyBag
+	} else {
+		enterprise.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterprise_Spec interface (if implemented) to customize the conversion
+	var enterpriseAsAny any = enterprise
+	if augmentedEnterprise, ok := enterpriseAsAny.(augmentConversionForRedisEnterprise_Spec); ok {
+		err := augmentedEnterprise.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterprise_Spec populates the provided destination RedisEnterprise_Spec from our RedisEnterprise_Spec
+func (enterprise *RedisEnterprise_Spec) AssignProperties_To_RedisEnterprise_Spec(destination *v20250401s.RedisEnterprise_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(enterprise.PropertyBag)
+
+	// AzureName
+	destination.AzureName = enterprise.AzureName
+
+	// Encryption
+	if propertyBag.Contains("Encryption") {
+		var encryption v20250401s.ClusterProperties_Encryption
+		err := propertyBag.Pull("Encryption", &encryption)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Encryption' from propertyBag")
+		}
+
+		destination.Encryption = &encryption
+	} else {
+		destination.Encryption = nil
+	}
+
+	// HighAvailability
+	if propertyBag.Contains("HighAvailability") {
+		var highAvailability string
+		err := propertyBag.Pull("HighAvailability", &highAvailability)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'HighAvailability' from propertyBag")
+		}
+
+		destination.HighAvailability = &highAvailability
+	} else {
+		destination.HighAvailability = nil
+	}
+
+	// Identity
+	if propertyBag.Contains("Identity") {
+		var identity v20250401s.ManagedServiceIdentity
+		err := propertyBag.Pull("Identity", &identity)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
+		}
+
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Kind
+	if propertyBag.Contains("Kind") {
+		var kind string
+		err := propertyBag.Pull("Kind", &kind)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Kind' from propertyBag")
+		}
+
+		destination.Kind = &kind
+	} else {
+		destination.Kind = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(enterprise.Location)
+
+	// MinimumTlsVersion
+	destination.MinimumTlsVersion = genruntime.ClonePointerToString(enterprise.MinimumTlsVersion)
+
+	// OperatorSpec
+	if enterprise.OperatorSpec != nil {
+		var operatorSpec v20250401s.RedisEnterpriseOperatorSpec
+		err := enterprise.OperatorSpec.AssignProperties_To_RedisEnterpriseOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RedisEnterpriseOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = enterprise.OriginalVersion
+
+	// Owner
+	if enterprise.Owner != nil {
+		owner := enterprise.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Sku
+	if enterprise.Sku != nil {
+		var skuStash v20230801s.Sku
+		err := enterprise.Sku.AssignProperties_To_Sku(&skuStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field SkuStash from Sku")
+		}
+		var skuStashLocal v20241101s.Sku
+		err = skuStash.AssignProperties_To_Sku(&skuStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field SkuStash")
+		}
+		var sku v20250401s.Sku
+		err = skuStashLocal.AssignProperties_To_Sku(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku from SkuStash")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(enterprise.Tags)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(enterprise.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterprise_Spec interface (if implemented) to customize the conversion
+	var enterpriseAsAny any = enterprise
+	if augmentedEnterprise, ok := enterpriseAsAny.(augmentConversionForRedisEnterprise_Spec); ok {
+		err := augmentedEnterprise.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230701.RedisEnterprise_STATUS
@@ -236,20 +611,378 @@ var _ genruntime.ConvertibleStatus = &RedisEnterprise_STATUS{}
 
 // ConvertStatusFrom populates our RedisEnterprise_STATUS from the provided source
 func (enterprise *RedisEnterprise_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == enterprise {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250401s.RedisEnterprise_STATUS)
+	if ok {
+		// Populate our instance from source
+		return enterprise.AssignProperties_From_RedisEnterprise_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(enterprise)
+	// Convert to an intermediate form
+	src = &v20250401s.RedisEnterprise_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = enterprise.AssignProperties_From_RedisEnterprise_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our RedisEnterprise_STATUS
 func (enterprise *RedisEnterprise_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == enterprise {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250401s.RedisEnterprise_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return enterprise.AssignProperties_To_RedisEnterprise_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(enterprise)
+	// Convert to an intermediate form
+	dst = &v20250401s.RedisEnterprise_STATUS{}
+	err := enterprise.AssignProperties_To_RedisEnterprise_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_RedisEnterprise_STATUS populates our RedisEnterprise_STATUS from the provided source RedisEnterprise_STATUS
+func (enterprise *RedisEnterprise_STATUS) AssignProperties_From_RedisEnterprise_STATUS(source *v20250401s.RedisEnterprise_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	enterprise.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Encryption
+	if source.Encryption != nil {
+		propertyBag.Add("Encryption", *source.Encryption)
+	} else {
+		propertyBag.Remove("Encryption")
+	}
+
+	// HighAvailability
+	if source.HighAvailability != nil {
+		propertyBag.Add("HighAvailability", *source.HighAvailability)
+	} else {
+		propertyBag.Remove("HighAvailability")
+	}
+
+	// HostName
+	enterprise.HostName = genruntime.ClonePointerToString(source.HostName)
+
+	// Id
+	enterprise.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Identity
+	if source.Identity != nil {
+		propertyBag.Add("Identity", *source.Identity)
+	} else {
+		propertyBag.Remove("Identity")
+	}
+
+	// Kind
+	if source.Kind != nil {
+		propertyBag.Add("Kind", *source.Kind)
+	} else {
+		propertyBag.Remove("Kind")
+	}
+
+	// Location
+	enterprise.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MinimumTlsVersion
+	enterprise.MinimumTlsVersion = genruntime.ClonePointerToString(source.MinimumTlsVersion)
+
+	// Name
+	enterprise.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateEndpointConnections
+	if source.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
+			var privateEndpointConnectionSTATUSStash v20241101s.PrivateEndpointConnection_STATUS
+			err := privateEndpointConnectionSTATUSStash.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnection_STATUSStash from PrivateEndpointConnections")
+			}
+			var privateEndpointConnectionSTATUSStashLocal v20230801s.PrivateEndpointConnection_STATUS
+			err = privateEndpointConnectionSTATUSStashLocal.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnection_STATUSStash")
+			}
+			var privateEndpointConnection PrivateEndpointConnection_STATUS
+			err = privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionSTATUSStashLocal)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections from PrivateEndpointConnection_STATUSStash")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		enterprise.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		enterprise.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	enterprise.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RedisVersion
+	enterprise.RedisVersion = genruntime.ClonePointerToString(source.RedisVersion)
+
+	// RedundancyMode
+	if source.RedundancyMode != nil {
+		propertyBag.Add("RedundancyMode", *source.RedundancyMode)
+	} else {
+		propertyBag.Remove("RedundancyMode")
+	}
+
+	// ResourceState
+	enterprise.ResourceState = genruntime.ClonePointerToString(source.ResourceState)
+
+	// Sku
+	if source.Sku != nil {
+		var skuSTATUSStash v20241101s.Sku_STATUS
+		err := skuSTATUSStash.AssignProperties_From_Sku_STATUS(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku_STATUSStash from Sku")
+		}
+		var skuSTATUSStashLocal v20230801s.Sku_STATUS
+		err = skuSTATUSStashLocal.AssignProperties_From_Sku_STATUS(&skuSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku_STATUSStash")
+		}
+		var sku Sku_STATUS
+		err = sku.AssignProperties_From_Sku_STATUS(&skuSTATUSStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku from Sku_STATUSStash")
+		}
+		enterprise.Sku = &sku
+	} else {
+		enterprise.Sku = nil
+	}
+
+	// Tags
+	enterprise.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	enterprise.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Zones
+	enterprise.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		enterprise.PropertyBag = propertyBag
+	} else {
+		enterprise.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterprise_STATUS interface (if implemented) to customize the conversion
+	var enterpriseAsAny any = enterprise
+	if augmentedEnterprise, ok := enterpriseAsAny.(augmentConversionForRedisEnterprise_STATUS); ok {
+		err := augmentedEnterprise.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterprise_STATUS populates the provided destination RedisEnterprise_STATUS from our RedisEnterprise_STATUS
+func (enterprise *RedisEnterprise_STATUS) AssignProperties_To_RedisEnterprise_STATUS(destination *v20250401s.RedisEnterprise_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(enterprise.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(enterprise.Conditions)
+
+	// Encryption
+	if propertyBag.Contains("Encryption") {
+		var encryption v20250401s.ClusterProperties_Encryption_STATUS
+		err := propertyBag.Pull("Encryption", &encryption)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Encryption' from propertyBag")
+		}
+
+		destination.Encryption = &encryption
+	} else {
+		destination.Encryption = nil
+	}
+
+	// HighAvailability
+	if propertyBag.Contains("HighAvailability") {
+		var highAvailability string
+		err := propertyBag.Pull("HighAvailability", &highAvailability)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'HighAvailability' from propertyBag")
+		}
+
+		destination.HighAvailability = &highAvailability
+	} else {
+		destination.HighAvailability = nil
+	}
+
+	// HostName
+	destination.HostName = genruntime.ClonePointerToString(enterprise.HostName)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(enterprise.Id)
+
+	// Identity
+	if propertyBag.Contains("Identity") {
+		var identity v20250401s.ManagedServiceIdentity_STATUS
+		err := propertyBag.Pull("Identity", &identity)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
+		}
+
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Kind
+	if propertyBag.Contains("Kind") {
+		var kind string
+		err := propertyBag.Pull("Kind", &kind)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Kind' from propertyBag")
+		}
+
+		destination.Kind = &kind
+	} else {
+		destination.Kind = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(enterprise.Location)
+
+	// MinimumTlsVersion
+	destination.MinimumTlsVersion = genruntime.ClonePointerToString(enterprise.MinimumTlsVersion)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(enterprise.Name)
+
+	// PrivateEndpointConnections
+	if enterprise.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]v20250401s.PrivateEndpointConnection_STATUS, len(enterprise.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range enterprise.PrivateEndpointConnections {
+			var privateEndpointConnectionSTATUSStash v20230801s.PrivateEndpointConnection_STATUS
+			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnectionSTATUSStash)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnection_STATUSStash from PrivateEndpointConnections")
+			}
+			var privateEndpointConnectionSTATUSStashLocal v20241101s.PrivateEndpointConnection_STATUS
+			err = privateEndpointConnectionSTATUSStash.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnectionSTATUSStashLocal)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnection_STATUSStash")
+			}
+			var privateEndpointConnection v20250401s.PrivateEndpointConnection_STATUS
+			err = privateEndpointConnectionSTATUSStashLocal.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections from PrivateEndpointConnection_STATUSStash")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		destination.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		destination.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(enterprise.ProvisioningState)
+
+	// RedisVersion
+	destination.RedisVersion = genruntime.ClonePointerToString(enterprise.RedisVersion)
+
+	// RedundancyMode
+	if propertyBag.Contains("RedundancyMode") {
+		var redundancyMode string
+		err := propertyBag.Pull("RedundancyMode", &redundancyMode)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'RedundancyMode' from propertyBag")
+		}
+
+		destination.RedundancyMode = &redundancyMode
+	} else {
+		destination.RedundancyMode = nil
+	}
+
+	// ResourceState
+	destination.ResourceState = genruntime.ClonePointerToString(enterprise.ResourceState)
+
+	// Sku
+	if enterprise.Sku != nil {
+		var skuSTATUSStash v20230801s.Sku_STATUS
+		err := enterprise.Sku.AssignProperties_To_Sku_STATUS(&skuSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku_STATUSStash from Sku")
+		}
+		var skuSTATUSStashLocal v20241101s.Sku_STATUS
+		err = skuSTATUSStash.AssignProperties_To_Sku_STATUS(&skuSTATUSStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku_STATUSStash")
+		}
+		var sku v20250401s.Sku_STATUS
+		err = skuSTATUSStashLocal.AssignProperties_To_Sku_STATUS(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku from Sku_STATUSStash")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(enterprise.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(enterprise.Type)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(enterprise.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterprise_STATUS interface (if implemented) to customize the conversion
+	var enterpriseAsAny any = enterprise
+	if augmentedEnterprise, ok := enterpriseAsAny.(augmentConversionForRedisEnterprise_STATUS); ok {
+		err := augmentedEnterprise.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForRedisEnterprise_Spec interface {
+	AssignPropertiesFrom(src *v20250401s.RedisEnterprise_Spec) error
+	AssignPropertiesTo(dst *v20250401s.RedisEnterprise_Spec) error
+}
+
+type augmentConversionForRedisEnterprise_STATUS interface {
+	AssignPropertiesFrom(src *v20250401s.RedisEnterprise_STATUS) error
+	AssignPropertiesTo(dst *v20250401s.RedisEnterprise_STATUS) error
 }
 
 // Storage version of v1api20230701.PrivateEndpointConnection_STATUS
@@ -260,7 +993,7 @@ type PrivateEndpointConnection_STATUS struct {
 }
 
 // AssignProperties_From_PrivateEndpointConnection_STATUS populates our PrivateEndpointConnection_STATUS from the provided source PrivateEndpointConnection_STATUS
-func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *storage.PrivateEndpointConnection_STATUS) error {
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *v20230801s.PrivateEndpointConnection_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -288,7 +1021,7 @@ func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_Privat
 }
 
 // AssignProperties_To_PrivateEndpointConnection_STATUS populates the provided destination PrivateEndpointConnection_STATUS from our PrivateEndpointConnection_STATUS
-func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *storage.PrivateEndpointConnection_STATUS) error {
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *v20230801s.PrivateEndpointConnection_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
 
@@ -323,6 +1056,120 @@ type RedisEnterpriseOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_RedisEnterpriseOperatorSpec populates our RedisEnterpriseOperatorSpec from the provided source RedisEnterpriseOperatorSpec
+func (operator *RedisEnterpriseOperatorSpec) AssignProperties_From_RedisEnterpriseOperatorSpec(source *v20250401s.RedisEnterpriseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRedisEnterpriseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisEnterpriseOperatorSpec populates the provided destination RedisEnterpriseOperatorSpec from our RedisEnterpriseOperatorSpec
+func (operator *RedisEnterpriseOperatorSpec) AssignProperties_To_RedisEnterpriseOperatorSpec(destination *v20250401s.RedisEnterpriseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisEnterpriseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRedisEnterpriseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.Sku
 // SKU parameters supplied to the create RedisEnterprise operation.
 type Sku struct {
@@ -332,7 +1179,7 @@ type Sku struct {
 }
 
 // AssignProperties_From_Sku populates our Sku from the provided source Sku
-func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
+func (sku *Sku) AssignProperties_From_Sku(source *v20230801s.Sku) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -370,7 +1217,7 @@ func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
 }
 
 // AssignProperties_To_Sku populates the provided destination Sku from our Sku
-func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
+func (sku *Sku) AssignProperties_To_Sku(destination *v20230801s.Sku) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
 
@@ -422,7 +1269,7 @@ type Sku_STATUS struct {
 }
 
 // AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20230801s.Sku_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -460,7 +1307,7 @@ func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STAT
 }
 
 // AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20230801s.Sku_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
 
@@ -504,18 +1351,23 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_S
 }
 
 type augmentConversionForPrivateEndpointConnection_STATUS interface {
-	AssignPropertiesFrom(src *storage.PrivateEndpointConnection_STATUS) error
-	AssignPropertiesTo(dst *storage.PrivateEndpointConnection_STATUS) error
+	AssignPropertiesFrom(src *v20230801s.PrivateEndpointConnection_STATUS) error
+	AssignPropertiesTo(dst *v20230801s.PrivateEndpointConnection_STATUS) error
+}
+
+type augmentConversionForRedisEnterpriseOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250401s.RedisEnterpriseOperatorSpec) error
+	AssignPropertiesTo(dst *v20250401s.RedisEnterpriseOperatorSpec) error
 }
 
 type augmentConversionForSku interface {
-	AssignPropertiesFrom(src *storage.Sku) error
-	AssignPropertiesTo(dst *storage.Sku) error
+	AssignPropertiesFrom(src *v20230801s.Sku) error
+	AssignPropertiesTo(dst *v20230801s.Sku) error
 }
 
 type augmentConversionForSku_STATUS interface {
-	AssignPropertiesFrom(src *storage.Sku_STATUS) error
-	AssignPropertiesTo(dst *storage.Sku_STATUS) error
+	AssignPropertiesFrom(src *v20230801s.Sku_STATUS) error
+	AssignPropertiesTo(dst *v20230801s.Sku_STATUS) error
 }
 
 func init() {

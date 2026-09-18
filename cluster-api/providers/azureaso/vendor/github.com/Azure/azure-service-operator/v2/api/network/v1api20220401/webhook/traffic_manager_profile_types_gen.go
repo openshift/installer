@@ -116,7 +116,12 @@ func (profile *TrafficManagerProfile) ValidateUpdate(ctx context.Context, oldRes
 
 // createValidations validates the creation of the resource
 func (profile *TrafficManagerProfile) createValidations() []func(ctx context.Context, obj *v20220401.TrafficManagerProfile) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220401.TrafficManagerProfile) (admission.Warnings, error){profile.validateResourceReferences, profile.validateOwnerReference, profile.validateSecretDestinations, profile.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220401.TrafficManagerProfile) (admission.Warnings, error){
+		profile.validateResourceReferences,
+		profile.validateOwnerReference,
+		profile.validateSecretDestinations,
+		profile.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

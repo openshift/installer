@@ -9,7 +9,8 @@ FederatedIdentityCredential: Resource
 ├── Spec: Object (8 properties)
 │   ├── Audiences: string[]
 │   ├── AzureName: string
-│   ├── Issuer: *string
+│   ├── Issuer: Validated<*string> (1 rule)
+│   │   └── Rule 0: Pattern: "^[a-zA-Z][a-zA-Z0-9+-.]*:[^\\s]*$"
 │   ├── IssuerFromConfig: *genruntime.ConfigMapReference
 │   ├── OperatorSpec: *Object (2 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]

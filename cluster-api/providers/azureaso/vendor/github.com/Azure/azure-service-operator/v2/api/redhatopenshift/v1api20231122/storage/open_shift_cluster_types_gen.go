@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=redhatopenshift.azure.com,resources={openshiftclusters/status,openshiftclusters/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,redhatopenshift}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20231122.OpenShiftCluster
 // Generator information:
-// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/openshiftclusters/stable/2023-11-22/redhatopenshift.json
+// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/OpenShiftClusters/stable/2023-11-22/redhatopenshift.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RedHatOpenShift/openShiftClusters/{resourceName}
 type OpenShiftCluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (cluster *OpenShiftCluster) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20231122.OpenShiftCluster
 // Generator information:
-// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/openshiftclusters/stable/2023-11-22/redhatopenshift.json
+// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/OpenShiftClusters/stable/2023-11-22/redhatopenshift.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RedHatOpenShift/openShiftClusters/{resourceName}
 type OpenShiftClusterList struct {
 	metav1.TypeMeta `json:",inline"`
