@@ -8483,6 +8483,14 @@ spec:
                     description: ClusterOSImage overrides the url provided in rhcos.json
                       to download the RHCOS OVA
                     type: string
+                  credentialType:
+                    description: |-
+                      CredentialType determines whether credentials are global or component-scoped.
+                      When omitted, global credentials are used for backward compatibility.
+                    enum:
+                    - global
+                    - component-scoped
+                    type: string
                   datacenter:
                     description: |-
                       Datacenter is the name of the datacenter to use in the vCenter.
@@ -8611,9 +8619,7 @@ spec:
                       the definition of region, zone and the vCenter topology.
                       If this is omitted failure domains (regions and zones) will not be used.
                     items:
-                      description: |-
-                        FailureDomain holds the region and zone failure domain and
-                        the vCenter topology of that failure domain.
+                      description: the vCenter topology of that failure domain.
                       properties:
                         name:
                           description: |-
@@ -8966,8 +8972,87 @@ spec:
                         VCenter stores the vCenter connection fields
                         https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
                       properties:
+                        componentCredentials:
+                          description: |-
+                            ComponentCredentials contains credentials for each vSphere component when
+                            the platform uses component-scoped credentials.
+                          properties:
+                            cloudControllerManager:
+                              description: |-
+                                CloudControllerManager is used by the vSphere Cloud Controller Manager to
+                                manage cloud-provider integration, including node and load-balancer state.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            machineManagement:
+                              description: |-
+                                MachineManagement is used by the Machine API and installer-side operations
+                                to provision, configure, and remove virtual machines in vCenter.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            storage:
+                              description: |-
+                                Storage is used by the vSphere CSI driver to provision and manage storage
+                                volumes and related vSphere storage resources.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            vsphereProblemDetector:
+                              description: |-
+                                VSphereProblemDetector is used by the vSphere Problem Detector to inspect
+                                the vSphere environment and report configuration and permission problems.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                          required:
+                          - cloudControllerManager
+                          - machineManagement
+                          - storage
+                          - vsphereProblemDetector
+                          type: object
                         datacenters:
-                          description: Datacenter in which VMs are located.
+                          description: Datacenters in which VMs are located.
                           items:
                             type: string
                           minItems: 1
