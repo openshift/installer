@@ -24,15 +24,19 @@ import (
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
-// Provider is the vSphere implementation of the clusterapi InfraProvider.
+// Provider is the PowerVS implementation of the clusterapi InfraProvider.
 type Provider struct {
 	clusterapi.InfraProvider
+	// provisionTimeoutMinutes is populated from Platform.ProvisionTimeoutMinutes
+	// during PreProvision and used by ProvisionTimeout.
+	provisionTimeoutMinutes int
 }
 
 var _ clusterapi.Timeouts = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
+var _ clusterapi.PreProvider = (*Provider)(nil)
 
 // Name returns the PowerVS provider name.
 func (p Provider) Name() string {
@@ -63,9 +67,18 @@ func (p Provider) NetworkTimeout() time.Duration {
 	return 30 * time.Minute
 }
 
+// PreProvision reads install-config fields needed before CAPI provisioning begins.
+func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	p.provisionTimeoutMinutes = in.InstallConfig.Config.Platform.PowerVS.ProvisionTimeoutMinutes
+	return nil
+}
+
 // ProvisionTimeout allows platform provider to override the timeout
 // when waiting for the machines to provision.
 func (p Provider) ProvisionTimeout() time.Duration {
+	if p.provisionTimeoutMinutes > 0 {
+		return time.Duration(p.provisionTimeoutMinutes) * time.Minute
+	}
 	return 15 * time.Minute
 }
 
@@ -93,6 +106,30 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	if err = in.Client.Get(ctx, key, powerVSCluster); err != nil {
 		return fmt.Errorf("failed to get PowerVS cluster in InfraReady: %w", err)
 	}
+
+	// (staging only): make the bootstrap ignition bucket publicly readable.
+	// Uncomment this block when testing in a staging environment if nodes cannot
+	// exchange IAM tokens and must fetch bootstrap.ign via public COS access.
+	// DO NOT enable for production — this grants unauthenticated read on the ignition bucket.
+	//
+	// if powervsconfig.IsStagingMode() {
+	// 	if powerVSCluster.Spec.CosInstance != nil &&
+	// 		powerVSCluster.Status.COSInstance != nil &&
+	// 		powerVSCluster.Status.COSInstance.ID != nil {
+	// 		infraClient, clientErr := powervsconfig.NewClient()
+	// 		if clientErr != nil {
+	// 			return fmt.Errorf("failed to create PowerVS client for COS ACL: %w", clientErr)
+	// 		}
+	// 		cosGUID := *powerVSCluster.Status.COSInstance.ID
+	// 		cosBucket := powerVSCluster.Spec.CosInstance.BucketName
+	// 		logrus.Infof("InfraReady (staging): granting public IAM access on COS bucket %s", cosBucket)
+	// 		if err = infraClient.SetCOSBucketPublicIAMPolicy(ctx, cosGUID, cosBucket); err != nil {
+	// 			return fmt.Errorf("failed to set public IAM policy on bootstrap ignition bucket: %w", err)
+	// 		}
+	// 	} else {
+	// 		logrus.Warnf("InfraReady (staging): skipping public-read ACL – COS instance status not populated")
+	// 	}
+	// }
 	logrus.Debugf("InfraReady: powerVSCluster = %+v", powerVSCluster)
 	logrus.Debugf("InfraReady: powerVSCluster.Status = %+v", powerVSCluster.Status)
 	if powerVSCluster.Status.VPC == nil || powerVSCluster.Status.VPC.ID == nil {
@@ -310,7 +347,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 
 	// SAD: client in the Metadata struct is lowercase and therefore private
 	// client = in.InstallConfig.PowerVS.client
-	client, err = powervsconfig.NewClient()
+	client, err = powervsconfig.NewClientWithEndpoints(in.InstallConfig.Config.Platform.PowerVS.ServiceEndpoints)
 	if err != nil {
 		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
 	}

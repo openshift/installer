@@ -223,7 +223,7 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 			ID: zoneID,
 		}
 	case powervstypes.Name:
-		client, err := icpowervs.NewClient()
+		client, err := icpowervs.NewClientWithEndpoints(installConfig.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "failed to get IBM PowerVS client")
 		}

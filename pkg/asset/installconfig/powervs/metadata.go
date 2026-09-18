@@ -37,8 +37,9 @@ type MetadataAPI interface {
 // do not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	BaseDomain      string
-	PublishStrategy types.PublishingStrategy
+	BaseDomain       string
+	PublishStrategy  types.PublishingStrategy
+	ServiceEndpoints []configv1.PowerVSServiceEndpoint
 
 	accountID      string
 	apiKey         string
@@ -51,7 +52,11 @@ type Metadata struct {
 
 // NewMetadata initializes a new Metadata object.
 func NewMetadata(config *types.InstallConfig) *Metadata {
-	return &Metadata{BaseDomain: config.BaseDomain, PublishStrategy: config.Publish}
+	return &Metadata{
+		BaseDomain:       config.BaseDomain,
+		PublishStrategy:  config.Publish,
+		ServiceEndpoints: config.Platform.PowerVS.ServiceEndpoints,
+	}
 }
 
 func (m *Metadata) client() (*Client, error) {
@@ -59,7 +64,7 @@ func (m *Metadata) client() (*Client, error) {
 		return m.sessionClient, nil
 	}
 
-	client, err := NewClient()
+	client, err := NewClientWithEndpoints(m.ServiceEndpoints)
 	if err != nil {
 		return nil, err
 	}

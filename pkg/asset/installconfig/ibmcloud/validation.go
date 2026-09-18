@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -47,6 +48,10 @@ func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) fie
 
 	if ic.Platform.IBMCloud.NetworkResourceGroupName != "" || ic.Platform.IBMCloud.VPCName != "" {
 		allErrs = append(allErrs, validateExistingVPC(client, ic, path)...)
+	}
+
+	if ic.Platform.IBMCloud.COSInstanceCRN != "" {
+		allErrs = append(allErrs, validateCOSInstanceCRN(client, ic.Platform.IBMCloud.COSInstanceCRN, path.Child("cosInstanceCRN"))...)
 	}
 
 	if ic.Platform.IBMCloud.DefaultMachinePlatform != nil {
@@ -473,6 +478,62 @@ func validateEndpoint(endpoint string) error {
 	// Verify the endpoint is accessible
 	_, err = http.Head(endpoint) //nolint:gosec // we expect the user to provide safe endpoints, as we only wish to validation the server responds
 	return err
+}
+
+// validateCOSInstanceCRN validates the format and existence of a COS instance CRN.
+// Expected format: crn:v1:bluemix:public:cloud-object-storage:global:a/<account_id>:<instance_id>::.
+func validateCOSInstanceCRN(client API, crn string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if crn == "" {
+		allErrs = append(allErrs, field.Required(fldPath, "COS instance CRN cannot be empty"))
+		return allErrs
+	}
+
+	// A well-formed CRN has exactly 10 colon-delimited segments:
+	//   crn : v1 : bluemix : public : cloud-object-storage : global : a/<acct> : <instance> : : (trailing empty segments)
+	parts := strings.SplitN(crn, ":", 10)
+	if len(parts) != 10 {
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN must contain exactly 10 colon-separated segments"))
+		return allErrs
+	}
+
+	// Enforce each structural field with an allow-list.
+	switch {
+	case parts[0] != "crn":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN must start with 'crn'"))
+	case parts[1] != "v1":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN version must be 'v1'"))
+	case parts[2] != "bluemix":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN cname must be 'bluemix'"))
+	case parts[3] != "public":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN ctype must be 'public'"))
+	case parts[4] != "cloud-object-storage":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN service name must be 'cloud-object-storage'"))
+	case parts[5] != "global":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN location must be 'global'"))
+	case !strings.HasPrefix(parts[6], "a/") || len(parts[6]) <= 2:
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN account segment must be of the form 'a/<account_id>'"))
+	case parts[7] == "":
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "COS instance CRN instance ID must not be empty"))
+	}
+
+	if len(allErrs) > 0 {
+		return allErrs
+	}
+
+	// Verify the COS instance exists and is actually a COS resource.
+	ctx := context.TODO()
+	instance, err := client.GetResourceInstance(ctx, crn)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, fmt.Sprintf("failed to verify COS instance: %v", err)))
+		return allErrs
+	}
+	if instance.ResourceID == nil || *instance.ResourceID != cosServicePlanID {
+		allErrs = append(allErrs, field.Invalid(fldPath, crn, "CRN does not refer to a Cloud Object Storage instance"))
+	}
+
+	return allErrs
 }
 
 // getMachinePoolZones will return the zones if they have been specified or return nil if the MachinePoolPlatform or values are not specified
