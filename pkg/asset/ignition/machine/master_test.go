@@ -37,7 +37,8 @@ func TestMasterGenerate(t *testing.T) {
 				Name:     "master",
 				Replicas: ptr.To[int64](3),
 			},
-		})
+		},
+	)
 
 	rootCAParents := asset.Parents{}
 	rootCAParents.Add(&tls.SignerKeyParams{})
