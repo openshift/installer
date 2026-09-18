@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/version/versioninfo"
 	"github.com/openshift/library-go/pkg/crypto"
 )
@@ -370,6 +371,12 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 		for i := range newConfig.Platform.VSphere.VCenters {
 			newConfig.Platform.VSphere.VCenters[i].Username = ""
 			newConfig.Platform.VSphere.VCenters[i].Password = ""
+			if credentials := newConfig.Platform.VSphere.VCenters[i].ComponentCredentials; credentials != nil {
+				credentials.MachineManagement = vspheretypes.Credential{}
+				credentials.Storage = vspheretypes.Credential{}
+				credentials.CloudControllerManager = vspheretypes.Credential{}
+				credentials.VSphereProblemDetector = vspheretypes.Credential{}
+			}
 			newConfig.Platform.VSphere.VCenters[i].Port = 0
 		}
 

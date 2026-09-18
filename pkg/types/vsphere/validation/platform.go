@@ -32,6 +32,9 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 	}
 
 	allErrs := field.ErrorList{}
+	if p.CredentialType != "" && p.CredentialType != vsphere.CredentialTypeGlobal && p.CredentialType != vsphere.CredentialTypeComponentScoped {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("credentialType"), p.CredentialType, []string{string(vsphere.CredentialTypeGlobal), string(vsphere.CredentialTypeComponentScoped)}))
+	}
 	// diskType is optional, but if provided should pass validation
 	if len(p.DiskType) != 0 {
 		allErrs = append(allErrs, validateDiskType(p, fldPath)...)
@@ -55,8 +58,9 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 	} else {
 		// agent-based installation allows the credentials to be optional
 		if len(p.VCenters) > 0 {
-			if p.VCenters[0].Username != "" && p.VCenters[0].Password != "" &&
-				p.VCenters[0].Server != "" && len(p.VCenters[0].Datacenters) != 0 {
+			if p.CredentialType == vsphere.CredentialTypeComponentScoped ||
+				(p.VCenters[0].Username != "" && p.VCenters[0].Password != "" &&
+					p.VCenters[0].Server != "" && len(p.VCenters[0].Datacenters) != 0) {
 				allErrs = append(allErrs, validateVCenters(p, fldPath.Child("vcenters"))...)
 			}
 		}
@@ -135,24 +139,59 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	allErrs := field.ErrorList{}
 
 	for index, vCenter := range p.VCenters {
+		vcenterPath := fldPath.Index(index)
 		if len(vCenter.Server) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("server"), "must be the domain name or IP address of the vCenter"))
-		} else {
-			if err := validate.Host(vCenter.Server); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Index(index).Child("server"), vCenter.Server, "must be the domain name or IP address of the vCenter"))
-			}
+			allErrs = append(allErrs, field.Required(vcenterPath.Child("server"), "must be the domain name or IP address of the vCenter"))
+		} else if err := validate.Host(vCenter.Server); err != nil {
+			allErrs = append(allErrs, field.Invalid(vcenterPath.Child("server"), vCenter.Server, "must be the domain name or IP address of the vCenter"))
 		}
+
+		if p.CredentialType == vsphere.CredentialTypeComponentScoped {
+			if vCenter.Username != "" || vCenter.Password != "" {
+				allErrs = append(allErrs, field.Forbidden(vcenterPath.Child("user"), "must not be set when credentialType is component-scoped"))
+				allErrs = append(allErrs, field.Forbidden(vcenterPath.Child("password"), "must not be set when credentialType is component-scoped"))
+			}
+			if vCenter.ComponentCredentials == nil {
+				allErrs = append(allErrs, field.Required(vcenterPath.Child("componentCredentials"), "must specify credentials for every vSphere component"))
+			} else {
+				for name, credential := range componentCredentials(vCenter.ComponentCredentials) {
+					if credential.User == "" {
+						allErrs = append(allErrs, field.Required(vcenterPath.Child("componentCredentials", name, "user"), "must specify the username"))
+					}
+					if credential.Password == "" {
+						allErrs = append(allErrs, field.Required(vcenterPath.Child("componentCredentials", name, "password"), "must specify the password"))
+					}
+				}
+			}
+			if vCenter.Datacenters == nil || len(vCenter.Datacenters) == 0 {
+				allErrs = append(allErrs, field.Required(vcenterPath.Child("datacenters"), "must specify at least one datacenter"))
+			}
+			continue
+		}
+
 		if len(vCenter.Username) == 0 {
 			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("user"), "must specify the user"))
 		}
 		if len(vCenter.Password) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("password"), "must specify the password"))
+			allErrs = append(allErrs, field.Required(vcenterPath.Child("password"), "must specify the password"))
+		}
+		if vCenter.ComponentCredentials != nil {
+			allErrs = append(allErrs, field.Forbidden(vcenterPath.Child("componentCredentials"), "must not be set when credentialType is global"))
 		}
 		if len(vCenter.Datacenters) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("datacenters"), "must specify at least one datacenter"))
+			allErrs = append(allErrs, field.Required(vcenterPath.Child("datacenters"), "must specify at least one datacenter"))
 		}
 	}
 	return allErrs
+}
+
+func componentCredentials(credentials *vsphere.ComponentCredentials) map[string]vsphere.Credential {
+	return map[string]vsphere.Credential{
+		"machineManagement":      credentials.MachineManagement,
+		"storage":                credentials.Storage,
+		"cloudControllerManager": credentials.CloudControllerManager,
+		"vsphereProblemDetector": credentials.VSphereProblemDetector,
+	}
 }
 
 func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fldPath *field.Path, isLegacyUpi bool) field.ErrorList { //nolint:gocyclo

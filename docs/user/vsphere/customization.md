@@ -84,3 +84,47 @@ platform:
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+## vCenter credential types
+
+`platform.vSphere.credentialType` accepts `global` or `component-scoped`. If it is omitted, `global` is used for backward compatibility.
+
+With `global`, each `vcenters` entry must contain `user` and `password`; `componentCredentials` must not be set. These credentials are used by the installer and by the generated vSphere credential Secret.
+
+With `component-scoped`, `user` and `password` must be omitted from every `vcenters` entry. Each entry must contain complete credentials for `machineManagement`, `storage`, `cloudControllerManager`, and `vsphereProblemDetector`:
+
+```yaml
+platform:
+  vsphere:
+    credentialType: component-scoped
+    vcenters:
+    - server: vcenter.example.com
+      datacenters:
+      - DC1
+      componentCredentials:
+        machineManagement:
+          user: ocp-machine-api@vsphere.local
+          password: machine-api-password
+        storage:
+          user: ocp-csi@vsphere.local
+          password: csi-password
+        cloudControllerManager:
+          user: ocp-ccm@vsphere.local
+          password: ccm-password
+        vsphereProblemDetector:
+          user: ocp-diagnostics@vsphere.local
+          password: diagnostics-password
+```
+
+The `machineManagement` credential is used for installer-side vCenter operations, including VM provisioning and cleanup. Its privileges must therefore include the installer provisioning privileges described in [Privileges](privileges.md). Each component credential must have the privileges required by its corresponding OpenShift component. Credentials are stored in the install configuration and generated Secrets; protect the install-config directory accordingly.
+
+The installer creates these four Secrets for component-scoped manual installations:
+
+| Component | Secret | Namespace |
+|---|---|---|
+| Machine API | `vsphere-cloud-credentials` | `openshift-machine-api` |
+| vSphere CSI | `vmware-vsphere-cloud-credentials` | `openshift-cluster-csi-drivers` |
+| Cloud Controller Manager | `vsphere-cloud-credentials` | `openshift-cloud-controller-manager` |
+| Problem Detector | `vsphere-cloud-credentials` | `openshift-cluster-storage-operator` |
+
+Each Secret contains `<vcenter-server>.username` and `<vcenter-server>.password` keys for every configured vCenter, with the credentials selected for that component. These Secrets are intended for `credentialsMode: Manual`; the Cloud Credential Operator does not reconcile them in that mode.
