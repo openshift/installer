@@ -120,6 +120,42 @@ func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorL
 	return allErrs
 }
 
+// ValidateCapacityReservationGroup ensures each capacity reservation group exists in the cluster region.
+func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	clusterRegion := ic.Platform.Azure.Region
+
+	validate := func(group *aztypes.CapacityReservationGroup, fieldPath *field.Path) {
+		if group == nil {
+			return
+		}
+		result, err := client.GetCapacityReservationGroup(context.TODO(), group.SubscriptionID, group.ResourceGroup, group.Name)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath, group, err.Error()))
+		} else if result != nil && result.Location != nil && !strings.EqualFold(*result.Location, clusterRegion) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, group,
+				fmt.Sprintf("capacity reservation group is in %s, but the cluster region is %s", *result.Location, clusterRegion)))
+		}
+	}
+
+	if ic.Platform.Azure.DefaultMachinePlatform != nil {
+		validate(ic.Platform.Azure.DefaultMachinePlatform.CapacityReservationGroup,
+			field.NewPath("platform").Child("azure", "defaultMachinePlatform", "capacityReservationGroup"))
+	}
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
+		validate(ic.ControlPlane.Platform.Azure.CapacityReservationGroup,
+			field.NewPath("controlPlane").Child("platform", "azure", "capacityReservationGroup"))
+	}
+	for idx, compute := range ic.Compute {
+		if compute.Platform.Azure != nil {
+			validate(compute.Platform.Azure.CapacityReservationGroup,
+				field.NewPath("compute").Index(idx).Child("platform", "azure", "capacityReservationGroup"))
+		}
+	}
+
+	return allErrs
+}
+
 func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztypes.DiskEncryptionSet, desFieldPath *field.Path, clusterRegion string) error {
 	resp, requestErr := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 	if requestErr != nil {
@@ -751,6 +787,7 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
 	allErrs = append(allErrs, ValidateDiskEncryptionSet(client, ic)...)
 	allErrs = append(allErrs, ValidateSecurityProfileDiskEncryptionSet(client, ic)...)
+	allErrs = append(allErrs, ValidateCapacityReservationGroup(client, ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
