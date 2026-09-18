@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi/mock"
+	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -33,6 +34,12 @@ const (
 	testImageName = testInfraID + "-rhcos"
 	testBucket    = testInfraID + "-rhcos-image"
 	testImageRef  = "projects/" + testProjectID + "/global/images/" + testImageName
+
+	// The artifact URL as the rhcos asset formats it: the download location plus
+	// the digest of the compressed artifact.
+	testDownloadURL = "https://example.com/rhcos.tar.gz"
+	testChecksum    = "abc123"
+	testImageURL    = testDownloadURL + "?" + rhcosutils.CompressedSHA256Param + "=" + testChecksum
 )
 
 // testPreProvisionInput builds a sovereign-cloud input whose control plane and
@@ -96,7 +103,7 @@ func TestPublishRHCOSImageReusesExistingImage(t *testing.T) {
 	// A retried PreProvision must short circuit: no download, no staging, no
 	// second Images.Insert.
 	ref, err := publishRHCOSImage(context.Background(),
-		testPreProvisionInput("https://example.com/rhcos.tar.gz"), client, failingDownloader(t))
+		testPreProvisionInput(testImageURL), client, failingDownloader(t))
 
 	assert.NoError(t, err)
 	assert.Equal(t, testImageRef, ref)
@@ -108,7 +115,7 @@ func TestPublishRHCOSImageRejectsUnusableExistingImage(t *testing.T) {
 		Return(&compute.Image{Name: testImageName, Status: "FAILED"}, nil)
 
 	_, err := publishRHCOSImage(context.Background(),
-		testPreProvisionInput("https://example.com/rhcos.tar.gz"), client, failingDownloader(t))
+		testPreProvisionInput(testImageURL), client, failingDownloader(t))
 
 	assert.ErrorContains(t, err, "is not usable (status FAILED)")
 	assert.ErrorContains(t, err, "delete it and retry the install")
@@ -122,7 +129,7 @@ func TestPublishRHCOSImageSurfacesLookupFailure(t *testing.T) {
 		Return(nil, errors.New("failed to check for existing image: quota exceeded"))
 
 	_, err := publishRHCOSImage(context.Background(),
-		testPreProvisionInput("https://example.com/rhcos.tar.gz"), client, failingDownloader(t))
+		testPreProvisionInput(testImageURL), client, failingDownloader(t))
 
 	assert.ErrorContains(t, err, "quota exceeded")
 }
@@ -150,15 +157,15 @@ func TestPublishRHCOSImage(t *testing.T) {
 	)
 
 	var gotURL, gotChecksum string
-	in := testPreProvisionInput("https://example.com/rhcos.tar.gz?sha256=abc123")
+	in := testPreProvisionInput(testImageURL)
 	ref, err := publishRHCOSImage(context.Background(), in, client, stubDownloader(t, &gotURL, &gotChecksum))
 
 	assert.NoError(t, err)
 	assert.Equal(t, testImageRef, ref)
 	// The checksum is carried in the URL query and must be split out rather
 	// than passed to the mirror as part of the download URL.
-	assert.Equal(t, "https://example.com/rhcos.tar.gz", gotURL)
-	assert.Equal(t, "abc123", gotChecksum)
+	assert.Equal(t, testDownloadURL, gotURL)
+	assert.Equal(t, testChecksum, gotChecksum)
 	// The temp directory holding the artifact is removed on the way out.
 	assert.NoFileExists(t, uploadedPath)
 }
@@ -198,7 +205,7 @@ func TestPublishRHCOSImageCleansUpStagingOnFailure(t *testing.T) {
 
 			var url, checksum string
 			_, err := publishRHCOSImage(context.Background(),
-				testPreProvisionInput("https://example.com/rhcos.tar.gz"), client, stubDownloader(t, &url, &checksum))
+				testPreProvisionInput(testImageURL), client, stubDownloader(t, &url, &checksum))
 
 			assert.EqualError(t, err, tc.expectedError)
 		})
@@ -215,7 +222,7 @@ func TestPublishRHCOSImageSkipsCleanupWhenBucketWasNeverCreated(t *testing.T) {
 
 	var url, checksum string
 	_, err := publishRHCOSImage(context.Background(),
-		testPreProvisionInput("https://example.com/rhcos.tar.gz"), client, stubDownloader(t, &url, &checksum))
+		testPreProvisionInput(testImageURL), client, stubDownloader(t, &url, &checksum))
 
 	assert.EqualError(t, err, "failed to create staging bucket: permission denied")
 }
@@ -233,7 +240,7 @@ func TestPublishRHCOSImageReportsCleanupFailureWithoutFailingInstall(t *testing.
 	// must not abort the install: destroy cleans the bucket up later.
 	var url, checksum string
 	ref, err := publishRHCOSImage(context.Background(),
-		testPreProvisionInput("https://example.com/rhcos.tar.gz"), client, stubDownloader(t, &url, &checksum))
+		testPreProvisionInput(testImageURL), client, stubDownloader(t, &url, &checksum))
 
 	assert.NoError(t, err)
 	assert.Equal(t, testImageRef, ref)
@@ -265,11 +272,15 @@ func TestDownloadRHCOSImage(t *testing.T) {
 			expectedCalls: 3,
 		},
 		{
-			name:          "skips verification when no checksum is supplied",
-			expectedCalls: 1,
+			// An empty checksum means the stream metadata or the URL plumbing is
+			// broken. Downloading anyway would publish an unverified boot image.
+			name:          "rejects an empty checksum",
+			expectedError: "refusing to download RHCOS image",
+			expectedCalls: 0,
 		},
 		{
-			name: "retries a failing mirror",
+			name:     "retries a failing mirror",
+			checksum: checksum,
 			handler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusServiceUnavailable)
 			},
@@ -329,7 +340,7 @@ func TestDownloadRHCOSImageRemovesTempDirOnFailure(t *testing.T) {
 	before, err := filepath.Glob(filepath.Join(os.TempDir(), "rhcos-gcp-*"))
 	require.NoError(t, err)
 
-	_, err = downloadRHCOSImage(srv.URL+"/rhcos.tar.gz", "")
+	_, err = downloadRHCOSImage(srv.URL+"/rhcos.tar.gz", testChecksum)
 	assert.Error(t, err)
 
 	// A failed install attempt must not leave partial multi-gigabyte downloads

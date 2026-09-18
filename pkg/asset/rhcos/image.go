@@ -119,10 +119,12 @@ func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *
 	case gcp.Name:
 		// For sovereign clouds, the pre-built images in rhcos-cloud are not
 		// accessible. Return the download URL so that PreProvision can upload
-		// a cluster-specific image.
+		// a cluster-specific image. The compressed digest is the one that can be
+		// verified here: GCP builds the image from the tar.gz as served, so the
+		// upload never decompresses the artifact.
 		if gcp.GetCloudEnvironment(ic.Config.Platform.GCP.ProjectID, ic.Config.Platform.GCP.Region) == gcp.CloudEnvironmentSovereign {
 			if a, ok := streamArch.Artifacts["gcp"]; ok {
-				return rhcos.FindArtifactURL(a)
+				return rhcos.FindCompressedArtifactURL(a)
 			}
 			return "", fmt.Errorf("%s: No GCP artifact found for image upload", streamArchPrefix)
 		}

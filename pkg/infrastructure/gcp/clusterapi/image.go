@@ -21,6 +21,7 @@ import (
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/rhcos"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -118,12 +119,14 @@ func publishRHCOSImage(ctx context.Context, in clusterapi.PreProvisionInput, cli
 
 	logrus.Infof("Uploading RHCOS image for cluster %s", in.InfraID)
 
-	// Parse download URL and extract sha256 checksum
+	// Parse download URL and extract the sha256 checksum. This is the digest of
+	// the compressed artifact, not the "sha256" parameter used elsewhere in the
+	// installer, because the tarball is staged and imaged exactly as served.
 	parsedURL, err := url.Parse(imageURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse RHCOS image URL: %w", err)
 	}
-	sha256Checksum := parsedURL.Query().Get("sha256")
+	sha256Checksum := parsedURL.Query().Get(rhcos.CompressedSHA256Param)
 	parsedURL.RawQuery = ""
 	downloadURL := parsedURL.String()
 
@@ -191,8 +194,16 @@ func publishRHCOSImage(ctx context.Context, in clusterapi.PreProvisionInput, cli
 }
 
 // downloadRHCOSImage downloads the RHCOS tar.gz file without decompressing it.
-// GCP compute image creation requires the original tar.gz format.
+// GCP compute image creation requires the original tar.gz format, so
+// sha256Checksum is the digest of the compressed artifact.
 func downloadRHCOSImage(imageURL string, sha256Checksum string) (string, error) {
+	// This becomes the boot image for every machine in the cluster, so refuse to
+	// download it at all rather than skipping verification: an empty checksum
+	// here means the stream metadata or the URL plumbing is broken.
+	if sha256Checksum == "" {
+		return "", fmt.Errorf("refusing to download RHCOS image from %s without a sha256 checksum", imageURL)
+	}
+
 	logrus.Infof("Downloading RHCOS image from %s", imageURL)
 
 	tmpDir, err := os.MkdirTemp("", "rhcos-gcp-*")
@@ -219,25 +230,18 @@ func downloadRHCOSImage(imageURL string, sha256Checksum string) (string, error) 
 		}
 		defer f.Close()
 
-		var reader io.Reader = resp.Body
 		hasher := sha256.New()
-		if sha256Checksum != "" {
-			reader = io.TeeReader(resp.Body, hasher)
-		}
-
-		written, err := io.Copy(f, reader)
+		written, err := io.Copy(f, io.TeeReader(resp.Body, hasher))
 		if err != nil {
 			return fmt.Errorf("failed to write RHCOS image: %w", err)
 		}
 		logrus.Debugf("Downloaded RHCOS image: %d bytes", written)
 
-		if sha256Checksum != "" {
-			foundChecksum := fmt.Sprintf("%x", hasher.Sum(nil))
-			if sha256Checksum != foundChecksum {
-				return fmt.Errorf("checksum mismatch for RHCOS image: expected=%s found=%s", sha256Checksum, foundChecksum)
-			}
-			logrus.Debug("RHCOS image checksum verification passed")
+		foundChecksum := fmt.Sprintf("%x", hasher.Sum(nil))
+		if sha256Checksum != foundChecksum {
+			return fmt.Errorf("checksum mismatch for RHCOS image: expected=%s found=%s", sha256Checksum, foundChecksum)
 		}
+		logrus.Debug("RHCOS image checksum verification passed")
 
 		return nil
 	})
