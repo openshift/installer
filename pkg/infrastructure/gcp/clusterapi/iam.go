@@ -245,3 +245,9 @@ func isBadStatusError(err error) bool {
 	var ae *googleapi.Error
 	return errors.As(err, &ae) && (ae.Code == http.StatusBadRequest)
 }
+
+// isNotFoundError returns true if the error matches a missing resource.
+func isNotFoundError(err error) bool {
+	var ae *googleapi.Error
+	return errors.As(err, &ae) && (ae.Code == http.StatusNotFound)
+}

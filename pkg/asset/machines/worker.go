@@ -687,7 +687,15 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName)
+			computeImage := rhcosImage.Compute
+			if gcptypes.NeedsRHCOSUpload(ic.Platform.GCP, &mpool) {
+				// The image uploaded during PreProvision is built from the control
+				// plane artifact and shared with compute. Safe only because sovereign
+				// clouds have no arm64 instances, so the pools cannot differ in
+				// architecture. See uploadRHCOSImage.
+				computeImage = gcptypes.RHCOSImageRef(ic.Platform.GCP.ProjectID, clusterID.InfraID)
+			}
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, computeImage, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

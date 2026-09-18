@@ -77,7 +77,14 @@ func ValidateDefaultDiskType(p *gcp.MachinePool, fldPath *field.Path) field.Erro
 	return allErrs
 }
 
-// ValidateOSImageForSovereignCloud checks that an OS image is specified for sovereign cloud environments.
+// ValidateOSImageForSovereignCloud validates the OS image for sovereign cloud
+// environments.
+//
+// Specifying an image is optional: when it is omitted, the installer uploads a
+// cluster-specific RHCOS image during provisioning, because the public
+// rhcos-cloud images are not reachable from a sovereign cloud. When an image is
+// specified, both name and project are required -- there is no public image
+// project to fall back on for a partially specified reference.
 func ValidateOSImageForSovereignCloud(platform *gcp.Platform, pool *gcp.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -86,8 +93,6 @@ func ValidateOSImageForSovereignCloud(platform *gcp.Platform, pool *gcp.MachineP
 	}
 
 	if pool == nil || pool.OSImage == nil {
-		allErrs = append(allErrs, field.Required(fldPath.Child("osImage"),
-			"must specify an OS image for sovereign cloud environments (domain-scoped project ID and u- region prefix)"))
 		return allErrs
 	}
 

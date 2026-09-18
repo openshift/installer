@@ -267,7 +267,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	allErrs := field.ErrorList{}
 
 	defaultInstanceType := ""
-	defaultDiskType := gcp.PDSSD
+	// An empty defaultDiskType means no disk type was pinned by the user. Each
+	// pool then derives its own from its effective instance type, which is what
+	// lets a sovereign cloud settle on hyperdisk-balanced instead of pd-ssd.
+	// Defaulting it to a concrete type here would hide that choice from every
+	// pool that does not carry its own platform stanza.
+	defaultDiskType := ""
 	defaultOnHostMaintenance := string(gcp.OnHostMaintenanceMigrate)
 	defaultConfidentialCompute := string(gcp.DisabledFeature)
 	defaultZones := []string{}
@@ -282,11 +287,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	if ic.GCP.DefaultMachinePlatform != nil {
 		defaultZones = ic.GCP.DefaultMachinePlatform.Zones
 		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
-		if ic.GCP.DefaultMachinePlatform.DiskType != "" {
-			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
-		} else {
-			defaultDiskType = gcp.DefaultDiskTypeForInstance(defaultInstanceType, ic.GCP.ProjectID, ic.GCP.Region)
-		}
+		defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
 
 		if ic.GCP.DefaultMachinePlatform.OnHostMaintenance != "" {
 			defaultOnHostMaintenance = ic.GCP.DefaultMachinePlatform.OnHostMaintenance
@@ -297,6 +298,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		}
 
 		if ic.GCP.DefaultMachinePlatform.InstanceType != "" {
+			// Validate the default pool against the disk type it would actually
+			// get, which is derived when the user did not pin one.
+			dmpDiskType := defaultDiskType
+			if dmpDiskType == "" {
+				dmpDiskType = gcp.DefaultDiskTypeForInstance(defaultInstanceType, ic.GCP.ProjectID, ic.GCP.Region)
+			}
 			allErrs = append(allErrs,
 				ValidateInstanceType(
 					client,
@@ -304,7 +311,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 					ic.GCP.ProjectID,
 					ic.GCP.Region,
 					ic.GCP.DefaultMachinePlatform.Zones,
-					defaultDiskType,
+					dmpDiskType,
 					ic.GCP.DefaultMachinePlatform.InstanceType,
 					defaultInstanceReq,
 					unknownArchitecture,
@@ -334,17 +341,6 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if ic.ControlPlane.Platform.GCP.DiskType != "" {
 				cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
-			} else {
-				// When the user-provided instance type is not recognized and
-				// the disk type is not specified, add an error asking for disk type.
-				family := gcp.GetGCPInstanceFamily(instanceType)
-				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
-					return append(allErrs, field.Required(
-						field.NewPath("controlPlane", "diskType"),
-						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
-					))
-				}
-				cpDiskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 			}
 			if ic.ControlPlane.Platform.GCP.OnHostMaintenance != "" {
 				cpOnHostMaintenance = ic.ControlPlane.Platform.GCP.OnHostMaintenance
@@ -352,6 +348,21 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if ic.ControlPlane.Platform.GCP.ConfidentialCompute != "" {
 				cpConfidentialCompute = ic.ControlPlane.Platform.GCP.ConfidentialCompute
 			}
+		}
+		// Derived outside the platform check above: a pool without a gcp stanza
+		// still gets a disk type, and it has to be the one the instance type
+		// implies rather than a fixed fallback.
+		if cpDiskType == "" {
+			// When the user-provided instance type is not recognized and
+			// the disk type is not specified, add an error asking for disk type.
+			family := gcp.GetGCPInstanceFamily(instanceType)
+			if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+				return append(allErrs, field.Required(
+					field.NewPath("controlPlane", "diskType"),
+					fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
+				))
+			}
+			cpDiskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 		}
 	}
 
@@ -389,9 +400,6 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if instanceType == "" {
 			instanceType = DefaultInstanceTypeForArch(compute.Architecture, ic.GCP.ProjectID, ic.GCP.Region)
 		}
-		if diskType == "" {
-			diskType = gcp.PDSSD
-		}
 		arch := compute.Architecture
 		if compute.Platform.GCP != nil {
 			if compute.Platform.GCP.InstanceType != "" {
@@ -408,18 +416,22 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if compute.Platform.GCP.DiskType != "" {
 				diskType = compute.Platform.GCP.DiskType
-			} else {
-				// When the user-provided instance type is not recognized and
-				// the disk type is not specified, add an error asking for disk type.
-				family := gcp.GetGCPInstanceFamily(instanceType)
-				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
-					return append(allErrs, field.Required(
-						field.NewPath(fmt.Sprintf("compute[%d]", idx), "diskType"),
-						fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
-					))
-				}
-				diskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 			}
+		}
+		// Derived outside the platform check above, for the same reason as the
+		// control plane: a pool without a gcp stanza still needs the disk type
+		// its instance type implies.
+		if diskType == "" {
+			// When the user-provided instance type is not recognized and
+			// the disk type is not specified, add an error asking for disk type.
+			family := gcp.GetGCPInstanceFamily(instanceType)
+			if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+				return append(allErrs, field.Required(
+					field.NewPath(fmt.Sprintf("compute[%d]", idx), "diskType"),
+					fmt.Sprintf("instance type %s requires a disk type to be set", instanceType),
+				))
+			}
+			diskType = gcp.DefaultDiskTypeForInstance(instanceType, ic.GCP.ProjectID, ic.GCP.Region)
 		}
 
 		allErrs = append(allErrs,
@@ -839,11 +851,21 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 	var defaultImage *compute.Image
 	var defaultOsImage *gcp.OSImage
 
+	// Check if this is a sovereign cloud installation
+	isSovereignCloud := gcp.GetCloudEnvironment(ic.GCP.ProjectID, ic.GCP.Region) == gcp.CloudEnvironmentSovereign
+
 	if ic.GCP.DefaultMachinePlatform != nil && ic.GCP.DefaultMachinePlatform.OSImage != nil {
 		defaultOsImage = ic.GCP.DefaultMachinePlatform.OSImage
-		defaultImage, err = client.GetImage(context.TODO(), defaultOsImage.Name, defaultOsImage.Project)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"), *defaultOsImage, fmt.Sprintf(errorMessage, err)))
+		if isSovereignCloud && defaultOsImage.Project == "" {
+			allErrs = append(allErrs, field.Required(
+				field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage", "project"),
+				"must specify image project for sovereign cloud"))
+		}
+		if defaultOsImage.Project != "" {
+			defaultImage, err = client.GetImage(context.TODO(), defaultOsImage.Name, defaultOsImage.Project)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"), *defaultOsImage, fmt.Sprintf(errorMessage, err)))
+			}
 		}
 	}
 
@@ -852,9 +874,16 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 		osImage := defaultOsImage
 		if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.OSImage != nil {
 			osImage = ic.ControlPlane.Platform.GCP.OSImage
-			image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+			if isSovereignCloud && osImage.Project == "" {
+				allErrs = append(allErrs, field.Required(
+					field.NewPath("controlPlane", "platform", "gcp", "osImage", "project"),
+					"must specify image project for sovereign cloud"))
+			}
+			if osImage.Project != "" {
+				image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
+				if err != nil {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+				}
 			}
 		}
 		if image != nil {
@@ -870,9 +899,16 @@ func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorL
 		fieldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.GCP != nil && compute.Platform.GCP.OSImage != nil {
 			osImage = compute.Platform.GCP.OSImage
-			image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+			if isSovereignCloud && osImage.Project == "" {
+				allErrs = append(allErrs, field.Required(
+					fieldPath.Child("platform", "gcp", "osImage", "project"),
+					"must specify image project for sovereign cloud"))
+			}
+			if osImage.Project != "" {
+				image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
+				if err != nil {
+					allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+				}
 			}
 		}
 		if image != nil {
