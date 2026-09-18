@@ -636,10 +636,11 @@ else
 
     rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
-    if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+    if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ] && [ ! -f wait-for-ceo.done ]
     then
         record_service_stage_start "wait-for-ceo"
         echo "Waiting for CEO to finish..."
+        podman rm -f wait-for-ceo 2>/dev/null || true
         bootkube_podman_run \
             --name wait-for-ceo \
             --volume "$PWD:/assets:z" \
@@ -647,6 +648,7 @@ else
             /usr/bin/cluster-etcd-operator \
             wait-for-ceo \
             --kubeconfig /assets/auth/kubeconfig
+        touch wait-for-ceo.done
         record_service_stage_success
     fi
 fi
