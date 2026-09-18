@@ -725,13 +725,49 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 		return fmt.Errorf("failed to initialize process state for controller %q: %w", ct.Name, err)
 	}
 
-	// Run the controller and store its state.
-	logrus.Infof("Running process: %s with args %v", ct.Name, ct.Args)
-	if err := pr.Start(ctx, c.logWriter, c.logWriter); err != nil {
-		return fmt.Errorf("failed to start controller %q: %w", ct.Name, err)
+	// Run the controller and store its state with retry logic.
+	const maxRetries = 3
+	var lastErr error
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		logrus.Infof("Running process: %s (attempt %d/%d)", ct.Name, attempt, maxRetries)
+		if err := pr.Start(ctx, c.logWriter, c.logWriter); err == nil {
+			ct.state = pr
+			return nil // Success
+		} else {
+			lastErr = err
+			if attempt < maxRetries {
+				logrus.Warnf("Process %s failed on attempt %d/%d: %v. Retrying...", ct.Name, attempt, maxRetries, err)
+				// Exponential backoff: 100ms, 200ms, 400ms
+				select {
+				case <-time.After(time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond):
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+				// Create fresh process state for next attempt
+				pr = &process.State{
+					Path:         ct.Path,
+					Args:         ct.Args,
+					Dir:          ct.Dir,
+					Env:          env,
+					StartTimeout: 60 * time.Second,
+					StopTimeout:  10 * time.Second,
+				}
+				if healthCheckHostPort != "" {
+					pr.HealthCheck = &process.HealthCheck{
+						URL: url.URL{
+							Scheme: "http",
+							Host:   healthCheckHostPort,
+							Path:   "/healthz",
+						},
+					}
+				}
+				if err := pr.Init(ct.Name); err != nil {
+					return fmt.Errorf("failed to initialize process state for controller %q: %w", ct.Name, err)
+				}
+			}
+		}
 	}
-	ct.state = pr
-	return nil
+	return fmt.Errorf("failed to start controller %q after %d attempts: %w", ct.Name, maxRetries, lastErr)
 }
 
 // certificatesToPEM converts x509 certificates and a private key to PEM format.
