@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/powervc"
 )
@@ -145,7 +146,8 @@ func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 // createNoProxy combines user-provided & platform-specific values to create a comma-separated
 // list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, machineCIDR,
 // localhost, 127.0.0.1, api.clusterdomain, api-int.clusterdomain.
-// If platform is AWS, GCP, Azure, or OpenStack add 169.254.169.254 to the list of NO_PROXY addresses.
+// If platform is AWS, GCP, Azure, OpenStack, PowerVC, or IBM Cloud add 169.254.169.254
+// to the list of NO_PROXY addresses.
 // If platform is AWS, add ".ec2.internal" for region us-east-1 or for all other regions add
 // ".<aws_region>.compute.internal" to the list of NO_PROXY addresses. We should not proxy
 // the instance metadata services:
@@ -153,6 +155,7 @@ func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
 // https://cloud.google.com/compute/docs/storing-retrieving-metadata
+// https://cloud.ibm.com/docs/vpc?topic=vpc-imd-about
 func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
 	set := BuildNoProxySet(installConfig.Config)
 
@@ -161,7 +164,7 @@ func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
 	// FIXME: The cluster-network-operator duplicates this code in pkg/util/proxyconfig/no_proxy.go,
 	//  if altering this list of platforms, you must ALSO alter the code in cluster-network-operator.
 	switch platform {
-	case aws.Name, gcp.Name, azure.Name, openstack.Name, powervc.Name:
+	case aws.Name, gcp.Name, azure.Name, openstack.Name, powervc.Name, ibmcloud.Name:
 		set.Insert("169.254.169.254")
 	}
 
@@ -175,7 +178,11 @@ func createNoProxy(installConfig *installconfig.InstallConfig) (string, error) {
 		}
 	}
 
-	// TODO: IBM[#95]: proxy
+	if platform == ibmcloud.Name {
+		// HTTPS metadata must use the hostname, not the link-local IP.
+		// https://cloud.ibm.com/docs/vpc?topic=vpc-imd-about
+		set.Insert("api.metadata.cloud.ibm.com")
+	}
 
 	if platform == azure.Name && installConfig.Azure.CloudName != azure.PublicCloud {
 		// https://learn.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16
