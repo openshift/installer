@@ -24,6 +24,12 @@ func getAgent(keys []string) (agent.Agent, string, error) {
 	return newAgent(keys)
 }
 
+// getAgentWithoutSSHAuthSock creates an agent without using SSH_AUTH_SOCK,
+// always loading keys from files/environment.
+func getAgentWithoutSSHAuthSock(keys []string) (agent.Agent, string, error) {
+	return newAgent(keys)
+}
+
 // newAgent initializes an SSH Agent with the keys.
 // If no keys are provided, it loads all the keys from the user's environment.
 func newAgent(keyPaths []string) (agent.Agent, string, error) {
