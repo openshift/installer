@@ -5,6 +5,7 @@ import (
 	"net"
 	"path"
 	"regexp"
+	goslices "slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -178,7 +179,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 		topoKey := normalizedTopologyKey(failureDomain)
 		duplicate := false
 		for _, entry := range fdTopologies[topoKey] {
-			if slices.Equal(failureDomain.Topology.Networks, entry.networks) {
+			if goslices.Equal(failureDomain.Topology.Networks, entry.networks) {
 				allErrs = append(allErrs, field.Invalid(fldPath.Index(index), failureDomain.Name,
 					fmt.Sprintf("failure domain %q has identical topology (same server, datacenter, computeCluster, datastore, networks, resourcePool, hostGroup) as %q; this provides no additional fault tolerance", failureDomain.Name, entry.name)))
 				duplicate = true

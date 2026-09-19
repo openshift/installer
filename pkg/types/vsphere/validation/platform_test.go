@@ -659,6 +659,13 @@ func TestValidatePlatform(t *testing.T) {
 			name: "Valid: different server (not duplicate)",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
+				p.VCenters = append(p.VCenters, vsphere.VCenter{
+					Server:      "other-vcenter",
+					Port:        443,
+					Username:    "test-username",
+					Password:    "test-password",
+					Datacenters: []string{"test-datacenter"},
+				})
 				p.FailureDomains[1].Topology = p.FailureDomains[0].Topology
 				p.FailureDomains[1].Server = "other-vcenter"
 				return p
