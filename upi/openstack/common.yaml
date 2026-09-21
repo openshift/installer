@@ -47,3 +47,4 @@
       # Port names
       os_port_api: "{{ os_net_id }}-api-port"
       os_port_ingress: "{{ os_net_id }}-ingress-port"
+    when: os_net_id is defined
