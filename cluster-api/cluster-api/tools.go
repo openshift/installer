@@ -1,5 +1,5 @@
 package main
 
 import (
-	_ "sigs.k8s.io/cluster-api"
+	_ "sigs.k8s.io/cluster-api/core"
 )
