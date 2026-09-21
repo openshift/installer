@@ -45,6 +45,7 @@ var (
 type Metrics map[string]Samples
 type Samples = model.Samples
 type Sample = model.Sample
+type Time = model.Time
 type Metric = model.Metric
 type LabelValue = model.LabelValue
 type LabelName = model.LabelName
@@ -109,8 +110,12 @@ func ParseMetrics(data string, output *Metrics) error {
 // proto messages in a map where the metric names are the keys, along with any
 // error encountered.
 func TextToMetricFamilies(in io.Reader) (map[string]*dto.MetricFamily, error) {
-	var textParser expfmt.TextParser
+	textParser := expfmt.NewTextParser(model.UTF8Validation)
 	return textParser.TextToMetricFamilies(in)
+}
+
+func MetricFamilyToText(out io.Writer, in *dto.MetricFamily) (written int, err error) {
+	return expfmt.MetricFamilyToText(out, in)
 }
 
 // PrintSample returns formatted representation of metric Sample

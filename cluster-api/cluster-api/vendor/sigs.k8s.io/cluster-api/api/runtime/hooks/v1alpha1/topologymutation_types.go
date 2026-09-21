@@ -22,8 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	runtimecatalog "sigs.k8s.io/cluster-api/exp/runtime/catalog"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimecatalog "sigs.k8s.io/cluster-api/api/runtime/catalog"
 )
 
 // GeneratePatchesRequest is the request of the GeneratePatches hook.
@@ -209,7 +209,7 @@ type DiscoverVariablesResponse struct {
 
 	// variables are variable schemas for variables defined by the DiscoverVariables hook.
 	// +optional
-	Variables []clusterv1beta1.ClusterClassVariable `json:"variables,omitempty"`
+	Variables []clusterv1.ClusterClassVariable `json:"variables,omitempty"`
 }
 
 var _ ResponseObject = &DiscoverVariablesResponse{}
