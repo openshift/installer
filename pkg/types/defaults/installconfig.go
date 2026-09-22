@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
@@ -31,6 +32,10 @@ var (
 
 // SetInstallConfigDefaults sets the defaults for the install config.
 func SetInstallConfigDefaults(c *types.InstallConfig) {
+	if c.IsOKD() && c.FeatureSet == configv1.Default {
+		c.FeatureSet = configv1.OKD
+	}
+
 	if c.Networking == nil {
 		c.Networking = &types.Networking{}
 	}
