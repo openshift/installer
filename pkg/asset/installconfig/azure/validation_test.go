@@ -1929,3 +1929,44 @@ func TestValidateUserAssignedIdentities(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateFamilyIsolatedEbdsv5Allowed(t *testing.T) {
+	path := field.NewPath("controlPlane", "platform", "azure")
+	caps := map[string]string{
+		"vCPUsAvailable":               "112",
+		"MemoryGB":                     "672",
+		"PremiumIO":                    "True",
+		"HyperVGenerations":            "V1,V2",
+		"AcceleratedNetworkingEnabled": "True",
+		"CpuArchitectureType":          "x64",
+	}
+
+	cases := []struct {
+		name, sku, family string
+	}{
+		{"isolated Ebdsv5", "Standard_E112ibds_v5", "standardEIBDSv5Family"},
+		{"isolated Ebsv5", "Standard_E112ibs_v5", "standardEIBSv5Family"},
+		{"shared Ebdsv5", "Standard_E16bds_v5", "standardEBDSv5Family"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			familyErrs := validateFamily(field.NewPath("type"), tc.sku, tc.family)
+			assert.Empty(t, familyErrs, "family %s should be accepted", tc.family)
+
+			ctrl := gomock.NewController(t)
+			client := mock.NewMockAPI(ctrl)
+			client.EXPECT().GetVirtualMachineFamily(gomock.Any(), tc.sku, validRegion).Return(tc.family, nil)
+
+			errs := ValidateInstanceType(client, path, validRegion, tc.sku, "Premium_LRS", controlPlaneReq, false, "", nil, types.ArchitectureAMD64, "", caps)
+			assert.Empty(t, errs, "instance type %s (family %s) should pass install-config validation", tc.sku, tc.family)
+		})
+	}
+
+	t.Run("windows-only family still rejected", func(t *testing.T) {
+		errs := validateFamily(field.NewPath("type"), "Standard_NV6ads_A10_v5", "standardNVSv4Family")
+		if assert.NotEmpty(t, errs) {
+			assert.Contains(t, errs.ToAggregate().Error(), "currently only supported on Windows")
+		}
+	})
+}
