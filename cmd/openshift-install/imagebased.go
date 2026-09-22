@@ -76,11 +76,26 @@ var (
 		},
 	}
 
+	imageBasedContainerfileTarget = target{
+		name: "Image-based Installer Containerfile",
+		command: &cobra.Command{
+			Use:   "containerfile <seed-image>",
+			Short: "Generates a Containerfile that builds into a configured seed image",
+			Args:  cobra.ExactArgs(1),
+		},
+		assets: []asset.WritableAsset{
+			&configimage.Containerfile{},
+			&kubeconfig.ImageBasedAdminClient{},
+			&password.KubeadminPassword{},
+		},
+	}
+
 	imageBasedTargets = []target{
 		imageBasedInstallationConfigTemplateTarget,
 		imageBasedInstallationImageTarget,
 		imageBasedConfigTemplateTarget,
 		imageBasedConfigImageTarget,
+		imageBasedContainerfileTarget,
 	}
 )
 
@@ -95,7 +110,16 @@ func newImageBasedCreateCmd(ctx context.Context) *cobra.Command {
 
 	for _, t := range imageBasedTargets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(ctx, t.assets...)
+		if t.name == "Image-based Installer Containerfile" {
+			t.command.Args = cobra.ExactArgs(1)
+			t.command.Run = func(cmd *cobra.Command, args []string) {
+				containerfile := &configimage.Containerfile{}
+				containerfile.SetSeedImage(args[0])
+				runTargetCmd(ctx, containerfile, &kubeconfig.ImageBasedAdminClient{}, &password.KubeadminPassword{})(cmd, args)
+			}
+		} else {
+			t.command.Run = runTargetCmd(ctx, t.assets...)
+		}
 		cmd.AddCommand(t.command)
 	}
 
